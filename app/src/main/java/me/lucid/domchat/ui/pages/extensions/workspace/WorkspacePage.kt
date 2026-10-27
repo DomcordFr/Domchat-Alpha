@@ -153,7 +153,8 @@ fun WorkspacePage(vm: WorkspaceVM = koinViewModel()) {
             onDismissRequest = { deleteTarget = null },
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.workspace_page_delete)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.workspace_page_delete)) },
             text = { Text(stringResource(R.string.workspace_page_delete_confirm)) },
             confirmButton = {
                 DomChatGlassPillButton(

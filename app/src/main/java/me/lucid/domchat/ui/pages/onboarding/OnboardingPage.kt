@@ -64,6 +64,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -969,7 +970,8 @@ private fun ManualModelsPage(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showInfo = false },
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("A tiny recommendation") },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text("A tiny recommendation") },
             text = {
                 Text("Pick one fast and cheap model for everyday chat, plus one stronger model for harder questions.")
             },

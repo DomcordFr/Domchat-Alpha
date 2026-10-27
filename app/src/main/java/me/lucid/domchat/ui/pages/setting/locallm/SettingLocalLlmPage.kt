@@ -485,7 +485,8 @@ fun SettingLocalLlmPage(
     modelPendingDelete?.let { model ->
         AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { modelPendingDelete = null },
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.local_llm_delete_confirm_title)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.local_llm_delete_confirm_title)) },
             text = { Text(stringResource(R.string.local_llm_delete_confirm_message, model.displayName)) },
             confirmButton = {
                 TextButton(onClick = {
@@ -517,7 +518,8 @@ fun SettingLocalLlmPage(
     sherpaModelPendingDelete?.let { model ->
         AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { sherpaModelPendingDelete = null },
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("Delete ${model.displayName}?") },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text("Delete ${model.displayName}?") },
             text = { Text("The downloaded speech model files will be removed from this device.") },
             confirmButton = {
                 TextButton(onClick = {

@@ -480,7 +480,8 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                 pendingAssistantImpact = null
             },
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.assistant_delete_confirm_title)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.assistant_delete_confirm_title)) },
             text = {
                 Text(
                     stringResource(

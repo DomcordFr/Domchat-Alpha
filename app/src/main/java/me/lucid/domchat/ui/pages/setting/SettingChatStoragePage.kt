@@ -604,7 +604,8 @@ fun SettingChatStoragePage(
             onDismissRequest = { pendingDeletion = null },
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title)) },
             text = {
                 Text(
                     context.getString(

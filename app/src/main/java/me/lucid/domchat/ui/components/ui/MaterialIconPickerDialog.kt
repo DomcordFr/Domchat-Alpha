@@ -56,7 +56,8 @@ fun MaterialIconPickerDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.setting_provider_page_select_icon)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.setting_provider_page_select_icon)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)

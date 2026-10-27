@@ -165,7 +165,8 @@ fun AssistantMemorySettings(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showReembedConfirmation = false },
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("Re-embed all memories?") },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text("Re-embed all memories?") },
             text = {
                 Text(
                     "This will regenerate and replace embeddings for every Core and Episodic " +
@@ -222,7 +223,8 @@ fun AssistantMemorySettings(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { memoryDialogState.dismiss() },
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.assistant_page_manage_memory_title)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.assistant_page_manage_memory_title)) },
             text = {
                 TextField(
                     value = memory.content,

@@ -162,7 +162,8 @@ fun AssistantPromptSubPage(
                     onDismissRequest = { introPendingDelete = null },
                     containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
                     title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("Delete intro?") },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text("Delete intro?") },
                     text = { Text("This intro will be removed from the character.") },
                     confirmButton = {
                         DomChatGlassPillButton(

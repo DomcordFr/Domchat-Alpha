@@ -274,7 +274,8 @@ private fun CancelDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.imggen_page_cancel_generation_title)) },
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    Text(stringResource(R.string.imggen_page_cancel_generation_title)) },
         text = { Text(stringResource(R.string.imggen_page_cancel_generation_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
