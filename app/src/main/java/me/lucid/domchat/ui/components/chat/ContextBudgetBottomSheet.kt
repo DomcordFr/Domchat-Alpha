@@ -59,6 +59,8 @@ import me.lucid.domchat.data.model.ContextBudgetConfig
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
+import me.lucid.domchat.ui.components.ui.DomChatSlider
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 
@@ -337,17 +339,13 @@ fun ContextBudgetBottomSheet(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 val contextSteps = listOf(8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576)
                                 val currentStepIndex = contextSteps.indexOfFirst { it >= maxContextTokens }.takeIf { it != -1 } ?: 4
-                                Slider(
+                                DomChatSlider(
                                     value = currentStepIndex.toFloat(),
                                     onValueChange = { index: Float ->
                                         maxContextTokens = contextSteps[index.toInt().coerceIn(0, contextSteps.lastIndex)]
                                     },
                                     valueRange = 0f..7f,
                                     steps = 6,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color(0xFF3B82F6)
-                                    )
                                 )
                                 Text(
                                     text = "Supported for 128k+ / 1M+ context models. Context Meter gauges against this limit.",
@@ -387,15 +385,11 @@ fun ContextBudgetBottomSheet(
                                         color = Color(0xFFF59E0B)
                                     )
                                 }
-                                Slider(
+                                DomChatSlider(
                                     value = maxResponseTokens.toFloat(),
                                     onValueChange = { newVal: Float -> maxResponseTokens = newVal.toInt() },
                                     valueRange = 1024f..16384f,
                                     steps = 14,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color(0xFFF59E0B)
-                                    )
                                 )
                                 Text(
                                     text = "Tokens safely reserved for AI message generation to prevent mid-sentence cutoff.",
@@ -435,7 +429,7 @@ fun ContextBudgetBottomSheet(
                                         color = Color(0xFF3B82F6)
                                     )
                                 }
-                                Slider(
+                                DomChatSlider(
                                     value = systemPercent.toFloat(),
                                     onValueChange = { newVal: Float ->
                                         systemPercent = newVal.toInt()
@@ -443,10 +437,6 @@ fun ContextBudgetBottomSheet(
                                         historyPercent = (100 - systemPercent - memoryPercent).coerceIn(20, 85)
                                     },
                                     valueRange = 10f..45f,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color(0xFF3B82F6)
-                                    )
                                 )
                                 Text(
                                     text = "Allocated to character card definition, user persona, scenario, and prompt presets.",
@@ -486,17 +476,13 @@ fun ContextBudgetBottomSheet(
                                         color = Color(0xFF10B981)
                                     )
                                 }
-                                Slider(
+                                DomChatSlider(
                                     value = historyPercent.toFloat(),
                                     onValueChange = { newVal: Float ->
                                         historyPercent = newVal.toInt()
                                         memoryPercent = (100 - systemPercent - historyPercent).coerceIn(5, 40)
                                     },
                                     valueRange = 30f..85f,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color(0xFF10B981)
-                                    )
                                 )
                                 Text(
                                     text = "Maximum historical conversational turns packed into prompt before summarization.",
@@ -536,17 +522,13 @@ fun ContextBudgetBottomSheet(
                                         color = Color(0xFF8B5CF6)
                                     )
                                 }
-                                Slider(
+                                DomChatSlider(
                                     value = memoryPercent.toFloat(),
                                     onValueChange = { newVal: Float ->
                                         memoryPercent = newVal.toInt()
                                         historyPercent = (100 - systemPercent - memoryPercent).coerceIn(20, 85)
                                     },
                                     valueRange = 5f..35f,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color(0xFF8B5CF6)
-                                    )
                                 )
                                 Text(
                                     text = "Reserved for dynamic world info entries triggered by keywords and associative memories.",
@@ -599,25 +581,22 @@ fun ContextBudgetBottomSheet(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Reset Button
-                        Button(
-                            onClick = {
-                                maxContextTokens = 131072
-                                maxResponseTokens = 4096
-                                systemPercent = 25
-                                historyPercent = 60
-                                memoryPercent = 15
-                                autoPrune = true
-                            },
+                        Box(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isDark) Color(0xFF1A1A22) else Color(0xFFE5E5EA),
-                                contentColor = if (isDark) Color.White else Color.Black
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Reset to Recommended 128k Defaults", fontSize = 13.sp)
+                            DomChatGlassPillButton(
+                                text = "Reset to Recommended 128k Defaults",
+                                icon = Icons.Rounded.Refresh,
+                                onClick = {
+                                    maxContextTokens = 131072
+                                    maxResponseTokens = 4096
+                                    systemPercent = 25
+                                    historyPercent = 60
+                                    memoryPercent = 15
+                                    autoPrune = true
+                                }
+                            )
                         }
                     }
                 }

@@ -106,6 +106,10 @@ import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.components.ui.DomChatSlider
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.components.ui.DomChatGlassChip
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContentColor
@@ -1902,7 +1906,7 @@ fun MinimalChatInput(
                         Text("Temperature", style = MaterialTheme.typography.bodyMedium)
                         Text(String.format(java.util.Locale.US, "%.2f", tempDraft), color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(value = tempDraft, onValueChange = { tempDraft = it }, valueRange = 0.0f..2.0f)
+                    DomChatSlider(value = tempDraft, onValueChange = { tempDraft = it }, valueRange = 0.0f..2.0f)
                 }
 
                 // Min-P
@@ -1914,7 +1918,7 @@ fun MinimalChatInput(
                         Text("Min-P Sampling", style = MaterialTheme.typography.bodyMedium)
                         Text(String.format(java.util.Locale.US, "%.2f", minPDraft), color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(value = minPDraft, onValueChange = { minPDraft = it }, valueRange = 0.0f..1.0f)
+                    DomChatSlider(value = minPDraft, onValueChange = { minPDraft = it }, valueRange = 0.0f..1.0f)
                 }
 
                 // Top-P
@@ -1926,7 +1930,7 @@ fun MinimalChatInput(
                         Text("Top-P", style = MaterialTheme.typography.bodyMedium)
                         Text(String.format(java.util.Locale.US, "%.2f", topPDraft), color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(value = topPDraft, onValueChange = { topPDraft = it }, valueRange = 0.0f..1.0f)
+                    DomChatSlider(value = topPDraft, onValueChange = { topPDraft = it }, valueRange = 0.0f..1.0f)
                 }
 
                 // Frequency Penalty
@@ -1938,7 +1942,7 @@ fun MinimalChatInput(
                         Text("Frequency Penalty", style = MaterialTheme.typography.bodyMedium)
                         Text(String.format(java.util.Locale.US, "%.2f", freqDraft), color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(value = freqDraft, onValueChange = { freqDraft = it }, valueRange = -2.0f..2.0f)
+                    DomChatSlider(value = freqDraft, onValueChange = { freqDraft = it }, valueRange = -2.0f..2.0f)
                 }
 
                 // Presence Penalty
@@ -1950,7 +1954,7 @@ fun MinimalChatInput(
                         Text("Presence Penalty", style = MaterialTheme.typography.bodyMedium)
                         Text(String.format(java.util.Locale.US, "%.2f", presDraft), color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(value = presDraft, onValueChange = { presDraft = it }, valueRange = -2.0f..2.0f)
+                    DomChatSlider(value = presDraft, onValueChange = { presDraft = it }, valueRange = -2.0f..2.0f)
                 }
 
                 // Repetition Penalty
@@ -1962,18 +1966,18 @@ fun MinimalChatInput(
                         Text("Repetition Penalty", style = MaterialTheme.typography.bodyMedium)
                         Text(String.format(java.util.Locale.US, "%.2f", repDraft), color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(value = repDraft, onValueChange = { repDraft = it }, valueRange = 1.0f..2.0f)
+                    DomChatSlider(value = repDraft, onValueChange = { repDraft = it }, valueRange = 1.0f..2.0f)
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = { showSamplersSheet = false }) {
-                        Text("Cancel")
-                    }
+                    DomChatGlassPillButton(text = "Cancel", onClick = { showSamplersSheet = false })
                     Spacer(Modifier.width(8.dp))
-                    Button(
+                    DomChatGlassPillButton(
+                        text = "Apply",
+                        accent = true,
                         onClick = {
                             onUpdateAssistant(
                                 assistant.copy(
@@ -1987,9 +1991,7 @@ fun MinimalChatInput(
                             )
                             showSamplersSheet = false
                         }
-                    ) {
-                        Text("Apply")
-                    }
+                    )
                 }
             }
         }
@@ -2016,32 +2018,35 @@ fun MinimalChatInput(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Chat Wallpaper & Effects",
+                    text = "Per Chat Wallpaper",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                DomChatGlassChip(
+                    text = if (existingConfig != null) "Set for this chat" else "No wallpaper set",
+                    accent = existingConfig != null
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Button(
-                        modifier = Modifier.weight(1f),
+                    DomChatGlassPillButton(
+                        text = "Choose Wallpaper",
                         onClick = {
                             wallpaperPicker.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
-                        }
-                    ) {
-                        Text("Choose Wallpaper")
-                    }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                     if (chatBgDraft != null) {
-                        OutlinedButton(
+                        DomChatGlassPillButton(
+                            text = "Remove",
+                            destructive = true,
                             onClick = {
                                 chatBgDraft = null
                             }
-                        ) {
-                            Text("Remove")
-                        }
+                        )
                     }
                 }
 
@@ -2056,9 +2061,9 @@ fun MinimalChatInput(
                             onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) MaterialTheme.colorScheme.primaryContainer else domChatCardContainerColor(),
-                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) MaterialTheme.colorScheme.onPrimaryContainer else if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-                            border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.12f))
+                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.55f),
+                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Text(
                                 "Full Image",
@@ -2072,9 +2077,9 @@ fun MinimalChatInput(
                             onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) MaterialTheme.colorScheme.primaryContainer else domChatCardContainerColor(),
-                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) MaterialTheme.colorScheme.onPrimaryContainer else if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-                            border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.12f))
+                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.55f),
+                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Text(
                                 "Bottom Fade",
@@ -2095,7 +2100,7 @@ fun MinimalChatInput(
                         Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface)
                         Text("${blurDraft.toInt()} dp", color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(
+                    DomChatSlider(
                         value = blurDraft,
                         onValueChange = { blurDraft = it },
                         valueRange = 0f..100f
@@ -2112,7 +2117,7 @@ fun MinimalChatInput(
                             Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface)
                             Text("${(blurHeightFractionDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
                         }
-                        Slider(
+                        DomChatSlider(
                             value = blurHeightFractionDraft,
                             onValueChange = { blurHeightFractionDraft = it },
                             valueRange = 0.05f..1.0f
@@ -2129,7 +2134,7 @@ fun MinimalChatInput(
                         Text("Background Dim", style = MaterialTheme.typography.bodyMedium)
                         Text("${(dimDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
                     }
-                    Slider(
+                    DomChatSlider(
                         value = dimDraft,
                         onValueChange = { dimDraft = it },
                         valueRange = 0f..0.95f
@@ -2140,7 +2145,9 @@ fun MinimalChatInput(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(
+                    DomChatGlassPillButton(
+                        text = "Save for this chat",
+                        accent = true,
                         onClick = {
                             val updatedConfig = me.lucid.domchat.data.datastore.ConversationWallpaperConfig(
                                 backgroundUri = chatBgDraft,
@@ -2166,8 +2173,6 @@ fun MinimalChatInput(
                             }
                             showWallpaperSheet = false
                         }
-                    ) {
-                        Text("Save for this chat")
                     }
                 }
             }

@@ -82,6 +82,9 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.components.ui.DomChatGlassChip
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
@@ -266,12 +269,7 @@ fun PromptPresetsBottomSheet(
     }
 
     ApplyDialogWindowBlur()
-    val sheetBase = if (isDark) Color(0xFF14151C) else Color(0xFFF6F6F9)
-    val effectiveSheetContainerColor = androidx.compose.ui.graphics.lerp(
-        sheetBase,
-        domChatSheetContainerColor(),
-        settings.displaySetting.glassAlpha.coerceIn(0.2f, 1f)
-    ).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.88f, 0.98f))
+    val effectiveSheetContainerColor = domChatSheetContainerColor()
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
@@ -316,17 +314,10 @@ fun PromptPresetsBottomSheet(
                         )
                         if (conversation != null) {
                             Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                color = if (isChatSpecific) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                shape = CircleShape
-                            ) {
-                                Text(
-                                    text = if (isChatSpecific) "Chat Specific" else "Using Global",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                    color = if (isChatSpecific) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                )
-                            }
+                            DomChatGlassChip(
+                                text = if (isChatSpecific) "Chat Specific" else "Using Global",
+                                accent = isChatSpecific
+                            )
                         }
                     }
 
@@ -338,21 +329,20 @@ fun PromptPresetsBottomSheet(
                 }
 
                 if (!isEditingOrCreating) {
-                    IconButton(
+                    Surface(
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
                             openCreate()
                         },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer)
+                        shape = CircleShape,
+                        color = Color(0xFF141520).copy(alpha = 0.75f),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Add,
                             contentDescription = "New Preset",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.White.copy(alpha = 0.92f),
+                            modifier = Modifier.padding(8.dp).size(20.dp)
                         )
                     }
                 } else {
@@ -378,29 +368,22 @@ fun PromptPresetsBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(
-                        onClick = { toggleAll(true) },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text("Enable All", fontSize = 12.sp)
-                    }
-                    TextButton(
-                        onClick = { toggleAll(false) },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text("Turn Off All", fontSize = 12.sp)
-                    }
+                    DomChatGlassPillButton(
+                        text = "Enable All",
+                        onClick = { toggleAll(true) }
+                    )
+                    DomChatGlassPillButton(
+                        text = "Turn Off All",
+                        onClick = { toggleAll(false) }
+                    )
                 }
 
                 if (isChatSpecific) {
-                    TextButton(
-                        onClick = { resetToGlobal() },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Reset to Global", fontSize = 12.sp)
-                    }
+                    DomChatGlassPillButton(
+                        text = "Reset to Global",
+                        icon = Icons.Rounded.Refresh,
+                        onClick = { resetToGlobal() }
+                    )
                 }
             }
 
@@ -411,9 +394,9 @@ fun PromptPresetsBottomSheet(
                 exit = shrinkVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeOut()
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.65f),
+                    color = Color(0xFF141520).copy(alpha = 0.75f),
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 12.dp)
@@ -432,7 +415,18 @@ fun PromptPresetsBottomSheet(
                             label = { Text("Preset Title") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White.copy(alpha = 0.9f),
+                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -443,7 +437,18 @@ fun PromptPresetsBottomSheet(
                             label = { Text("Short Description / Tagline") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White.copy(alpha = 0.9f),
+                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -455,7 +460,18 @@ fun PromptPresetsBottomSheet(
                             minLines = 4,
                             maxLines = 8,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White.copy(alpha = 0.9f),
+                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -477,11 +493,11 @@ fun PromptPresetsBottomSheet(
                                         haptics.perform(HapticPattern.Pop)
                                         formPosition = pos
                                     },
-                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.45f),
                                     shape = RoundedCornerShape(10.dp),
                                     border = BorderStroke(
                                         0.5.dp,
-                                        if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
+                                        if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
                                     ),
                                     modifier = Modifier.weight(1f)
                                 ) {
@@ -499,7 +515,7 @@ fun PromptPresetsBottomSheet(
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                                 fontSize = 11.sp
                                             ),
-                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -524,7 +540,7 @@ fun PromptPresetsBottomSheet(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = formDepth.toFloat(),
                                 onValueChange = { formDepth = it.toInt() },
                                 valueRange = 0f..10f,
@@ -539,19 +555,18 @@ fun PromptPresetsBottomSheet(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
                         ) {
-                            TextButton(onClick = { isEditingOrCreating = false }) {
-                                Text("Cancel")
-                            }
+                            DomChatGlassPillButton(
+                                text = "Cancel",
+                                onClick = { isEditingOrCreating = false }
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Button(
+                            DomChatGlassPillButton(
+                                text = "Save Preset",
+                                accent = true,
                                 onClick = {
-                                    haptics.perform(HapticPattern.Pop)
                                     savePreset()
-                                },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("Save Preset")
-                            }
+                                }
+                            )
                         }
                     }
                 }
@@ -570,14 +585,14 @@ fun PromptPresetsBottomSheet(
 
                     Surface(
                         color = if (isEnabled) {
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                            Color(0xFF141520).copy(alpha = 0.80f)
                         } else {
-                            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f)
+                            Color(0xFF141520).copy(alpha = 0.45f)
                         },
                         shape = RoundedCornerShape(18.dp),
                         border = BorderStroke(
                             width = if (isEnabled) 1.5.dp else 0.5.dp,
-                            color = if (isEnabled) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.12f)
+                            brush = if (isEnabled) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -638,22 +653,13 @@ fun PromptPresetsBottomSheet(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                        shape = RoundedCornerShape(6.dp),
-                                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
-                                    ) {
-                                        Text(
-                                            text = when (preset.injectionPosition) {
-                                                PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                                                PresetInjectionPosition.AT_DEPTH -> "Depth ${preset.depth}"
-                                                PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                                            },
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                        )
-                                    }
+                                    DomChatGlassChip(
+                                        text = when (preset.injectionPosition) {
+                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                                            PresetInjectionPosition.AT_DEPTH -> "Depth ${preset.depth}"
+                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                        }
+                                    )
                                 }
 
                                 if (preset.description.isNotBlank()) {
