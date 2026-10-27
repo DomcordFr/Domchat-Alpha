@@ -525,14 +525,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 Text(
                     text = "Delete ${char.name}?",
                     fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else Color.Black
+                    color = Color.White
                 )
             },
             text = {
                 Text(
                     text = "This will permanently remove this character from your library. Associated chat sessions will be preserved in your history.",
                     fontSize = 13.5.sp,
-                    color = if (isDark) Color(0xFFAAAAAA) else Color(0xFF555555)
+                    color = Color(0xFFAAAAAA)
                 )
             },
             confirmButton = {
@@ -575,7 +575,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 Text(
                     text = "Export ${char.name}",
                     fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else Color.Black
+                    color = Color.White
                 )
             },
             text = {
@@ -877,8 +877,9 @@ fun CharacterInspectorSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-    val sheetBgColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor()
-    val contentTextColor = if (isDark) Color(0xFFF2F2F7) else Color(0xFF14151C)
+    // Charter: character popups are always a black glass plate, independent of glass/luminance settings.
+    val sheetBgColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor()
+    val contentTextColor = Color(0xFFF2F2F7)
     val cardBgColor = Color(0xFF141520).copy(alpha = 0.55f)
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
@@ -887,7 +888,7 @@ fun CharacterInspectorSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = true,
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = sheetBgColor,
         contentColor = contentTextColor,
         dragHandle = null,
         shape = sheetShape,
@@ -950,7 +951,7 @@ fun CharacterInspectorSheet(
                         Text(
                             text = "Created by ${assistant.creator.truncateCreator(10)}",
                             fontSize = 13.5.sp,
-                            color = if (isDark) Color(0xFFA0A0A8) else Color(0xFF6B6B75)
+                            color = Color(0xFFA0A0A8)
                         )
                     }
 
@@ -963,8 +964,8 @@ fun CharacterInspectorSheet(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f))
-                                .border(0.5.dp, if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.10f), RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.10f))
+                                .border(0.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
@@ -978,15 +979,15 @@ fun CharacterInspectorSheet(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.04f))
-                                    .border(0.5.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
+                                    .background(Color.White.copy(alpha = 0.08f))
+                                    .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = "v${assistant.characterVersion}",
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = if (isDark) Color(0xFFBBBBBB) else Color(0xFF666666)
+                                    color = Color(0xFFBBBBBB)
                                 )
                             }
                         }
@@ -1007,7 +1008,7 @@ fun CharacterInspectorSheet(
                             text = notesBlurb,
                             fontSize = 13.sp,
                             lineHeight = 18.sp,
-                            color = if (isDark) Color(0xFFC0C0C8) else Color(0xFF4A4A52),
+                            color = Color(0xFFC0C0C8),
                             maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -1029,8 +1030,8 @@ fun CharacterInspectorSheet(
                                 .weight(1f)
                                 .height(48.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isDark) Color.White else Color(0xFF14151C),
-                                contentColor = if (isDark) Color.Black else Color.White
+                                containerColor = Color.White,
+                                contentColor = Color.Black
                             ),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -1130,7 +1131,7 @@ fun CharacterInspectorSheet(
                                         Text(
                                             text = "TTS voice binding for audio",
                                             fontSize = 11.sp,
-                                            color = if (isDark) Color(0xFF888888) else Color(0xFF777777)
+                                            color = Color(0xFF888888)
                                         )
                                     }
                                 }
@@ -1168,7 +1169,7 @@ fun CharacterInspectorSheet(
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
                                         if (isSelected) {
-                                            if (isDark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.08f)
+                                            Color.White.copy(alpha = 0.16f)
                                         } else Color.Transparent
                                     )
                                     .clickable { selectedTab = index }
@@ -1218,7 +1219,7 @@ fun CharacterInspectorSheet(
                                         Text(
                                             text = "No creator notes provided for this character.",
                                             fontSize = 13.sp,
-                                            color = if (isDark) Color(0xFF888888) else Color(0xFF777777)
+                                            color = Color(0xFF888888)
                                         )
                                     }
                                 }
@@ -1259,7 +1260,7 @@ fun CharacterInspectorSheet(
                                             Text(
                                                 text = "No system prompt or definition configured for this character.",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = Color(0xFF88888A)
                                             )
                                         }
                                     }
@@ -1288,7 +1289,7 @@ fun CharacterInspectorSheet(
                                         Text(
                                             text = "No scenario opening greeting set. Starting a chat will open into a freeform conversation.",
                                             fontSize = 12.5.sp,
-                                            color = if (isDark) Color(0xFF888888) else Color(0xFF777777)
+                                            color = Color(0xFF888888)
                                         )
                                     }
                                 } else {
@@ -1300,7 +1301,7 @@ fun CharacterInspectorSheet(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clip(RoundedCornerShape(12.dp))
-                                                    .background(if (isDark) Color(0xFF141520) else Color(0xFFEBEBF0))
+                                                    .background(Color(0xFF141520))
                                                     .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
                                                     .padding(horizontal = 8.dp, vertical = 6.dp)
                                             ) {
@@ -1318,7 +1319,7 @@ fun CharacterInspectorSheet(
                                                                     if (isGreetingSelected) {
                                                                         Color(0xFFA78BFA).copy(alpha = 0.35f)
                                                                     } else {
-                                                                        if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.04f)
+                                                                        Color.White.copy(alpha = 0.05f)
                                                                     }
                                                                 )
                                                                 .border(
@@ -1335,7 +1336,7 @@ fun CharacterInspectorSheet(
                                                                 text = if (idx == 0) "Intro #1 (Default)" else "Greeting #${idx + 1}",
                                                                 fontSize = 12.sp,
                                                                 fontWeight = if (isGreetingSelected) FontWeight.Bold else FontWeight.Medium,
-                                                                color = if (isGreetingSelected) (if (isDark) Color.White else Color(0xFF5B21B6)) else contentTextColor.copy(alpha = 0.75f)
+                                                                color = if (isGreetingSelected) Color.White else contentTextColor.copy(alpha = 0.75f)
                                                             )
                                                         }
                                                     }
