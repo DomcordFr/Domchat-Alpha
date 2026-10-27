@@ -550,7 +550,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                     Surface(
                         modifier = Modifier.align(Alignment.Center),
                         shape = RoundedCornerShape(28.dp),
-                        color = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                        color = androidx.compose.ui.graphics.Color(0xFF141520),
                         tonalElevation = 6.dp,
                         shadowElevation = 8.dp
                     ) {
@@ -1631,7 +1631,7 @@ private fun ModelPickerFab(
             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
+        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Icon(

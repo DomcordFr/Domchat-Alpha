@@ -163,7 +163,7 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 Surface(
                     modifier = Modifier.align(Alignment.Center),
                     shape = RoundedCornerShape(28.dp),
-                    color = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                    color = androidx.compose.ui.graphics.Color(0xFF141520),
                     tonalElevation = 6.dp,
                     shadowElevation = 8.dp,
                 ) {
@@ -775,7 +775,7 @@ private fun ProviderVoicesFab(
             if (discovered.isEmpty()) fetchVoices()
         },
         shape = AppShapes.CardLarge,
-        containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
+        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Icon(icon, contentDescription = contentDescription)

@@ -148,7 +148,7 @@ fun SettingPromptInjectionsPage(
                         modifier = Modifier
                             .align(Alignment.BottomCenter),
                         shape = RoundedCornerShape(28.dp),
-                        color = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                        color = androidx.compose.ui.graphics.Color(0xFF141520),
                         tonalElevation = 6.dp,
                         shadowElevation = 8.dp
                     ) {
@@ -231,7 +231,7 @@ fun SettingPromptInjectionsPage(
                             }
                         },
                         shape = AppShapes.CardLarge,
-                        containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
                         contentColor = MaterialTheme.colorScheme.onSurface
                     ) {
                         Icon(

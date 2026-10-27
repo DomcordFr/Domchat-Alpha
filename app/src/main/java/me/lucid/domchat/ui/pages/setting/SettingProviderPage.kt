@@ -528,7 +528,7 @@ fun SettingProviderPage(
                             }
                         },
                         shape = AppShapes.CardLarge,
-                        containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
                         contentColor = MaterialTheme.colorScheme.onSurface
                     ) {
                         Icon(

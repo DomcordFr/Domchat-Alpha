@@ -323,7 +323,7 @@ private fun ProviderTypeSelector(
                 border = BorderStroke(
                     0.5.dp,
                     if (selected) Color(0xFFA78BFA).copy(alpha = 0.5f)
-                    else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                    else Color.White.copy(alpha = 0.12f)
                 ),
             ) {
                 Row(
@@ -611,7 +611,7 @@ private fun ColumnScope.ProviderConfigureComfyUI(
             .border(
                 0.5.dp,
                 if (provider.workflowJson.isBlank()) Color(0xFFFF453A).copy(alpha = 0.45f)
-                else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                else Color.White.copy(alpha = 0.12f),
                 AppShapes.CardMedium
             ),
         shape = AppShapes.CardMedium,
@@ -798,7 +798,7 @@ private fun OpenAICompatibilityModeSetting(
                     border = BorderStroke(
                         0.5.dp,
                         if (isSel) Color(0xFFA78BFA).copy(alpha = 0.5f)
-                        else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                        else Color.White.copy(alpha = 0.12f)
                     ),
                 ) {
                     Text(

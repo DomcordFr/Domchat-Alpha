@@ -240,7 +240,7 @@ private fun KeylessOptionsDescription() {
         KeylessSearchService.backends.forEach { backend ->
             Surface(
                 shape = AppShapes.ListItem,
-                color = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                color = androidx.compose.ui.graphics.Color(0xFF141520),
             ) {
                 Column(
                     modifier = Modifier
@@ -361,7 +361,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                         showCommonOptions = true
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ) {
                     Icon(
@@ -1252,7 +1252,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF141520)Highest
+                                color = androidx.compose.ui.graphics.Color(0xFF141520)
                             ) {
                                 Row(
                                     modifier = Modifier

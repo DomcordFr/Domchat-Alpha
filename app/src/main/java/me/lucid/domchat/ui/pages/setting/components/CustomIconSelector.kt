@@ -349,7 +349,7 @@ private fun LobeHubIconOption(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.CardMedium,
-        color = androidx.compose.ui.graphics.Color(0xFF141520)High,
+        color = androidx.compose.ui.graphics.Color(0xFF141520),
     ) {
         Row(
             modifier = Modifier

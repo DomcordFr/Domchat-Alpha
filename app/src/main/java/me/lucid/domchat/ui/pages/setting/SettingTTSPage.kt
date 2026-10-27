@@ -171,7 +171,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         showFilterSettingsDialog = true
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ) {
                     Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.setting_tts_settings_title))
@@ -1377,7 +1377,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF141520)Highest
+                                color = androidx.compose.ui.graphics.Color(0xFF141520)
                             ) {
                                 Row(
                                     modifier = Modifier
