@@ -567,7 +567,7 @@
     <string name="setting_display_page_show_user_avatar_title">Show User Avatar</string>
     <string name="setting_display_page_show_assistant_bubbles_title">Message Bubbles for Characters</string>
     <string name="setting_display_page_show_assistant_bubbles_desc">Show chat bubbles around character messages</string>
-    <string name="setting_display_page_title">Display & Theme Settings</string>
+    <string name="setting_display_page_title">Display &amp; Theme Settings</string>
     <string name="setting_mcp_page_add_header">Add Header</string>
     <string name="setting_mcp_page_add_one_to_get_started">Add one to get started</string>
     <string name="setting_mcp_page_basic_settings">Basic Settings</string>
