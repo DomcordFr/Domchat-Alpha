@@ -106,6 +106,7 @@ fun TagsInput(
             tagName = ""
             showError = false
         }, title = {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Text(stringResource(R.string.tag_input_dialog_title))
         }, text = {
             Column {

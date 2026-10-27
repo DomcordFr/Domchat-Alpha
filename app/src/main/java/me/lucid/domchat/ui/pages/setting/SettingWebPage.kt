@@ -548,6 +548,7 @@ fun SettingWebPage(
                 pendingStart = null
             },
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(stringResource(R.string.setting_page_web_server_background_setup_title))
             },
             text = {

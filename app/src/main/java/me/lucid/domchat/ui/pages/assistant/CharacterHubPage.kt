@@ -519,9 +519,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     characterToDelete?.let { char ->
         AlertDialog(
             onDismissRequest = { characterToDelete = null },
-            shape = RoundedCornerShape(20.dp),
+            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(
                     text = "Delete ${char.name}?",
                     fontWeight = FontWeight.Bold,
@@ -569,9 +570,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     showExportDialogFor?.let { char ->
         AlertDialog(
             onDismissRequest = { showExportDialogFor = null },
-            shape = RoundedCornerShape(20.dp),
+            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(
                     text = "Export ${char.name}",
                     fontWeight = FontWeight.Bold,
@@ -876,7 +878,7 @@ fun CharacterInspectorSheet(
     onDelete: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
     // Charter: character popups are always a black glass plate, independent of glass/luminance settings.
     val sheetBgColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor()
     val contentTextColor = Color(0xFFF2F2F7)
@@ -894,6 +896,7 @@ fun CharacterInspectorSheet(
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Box(
             modifier = Modifier
                 .fillMaxWidth()

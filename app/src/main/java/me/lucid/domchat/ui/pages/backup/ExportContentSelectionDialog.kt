@@ -120,6 +120,7 @@ fun ExportContentSelectionDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

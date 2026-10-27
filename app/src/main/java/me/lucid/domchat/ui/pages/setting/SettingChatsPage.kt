@@ -551,7 +551,7 @@ fun SettingChatsPage(
         ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            shape = RoundedCornerShape(24.dp),
+            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },
             text = { Text("This will permanently remove the selected conversations from your database.") },

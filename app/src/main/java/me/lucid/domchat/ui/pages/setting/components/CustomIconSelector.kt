@@ -140,6 +140,7 @@ fun CustomIconSelector(
     if (showPickOption) {
         AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { showPickOption = false },
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(text = stringResource(R.string.setting_provider_page_select_icon))
             },
             text = {
@@ -240,6 +241,7 @@ private fun LobeHubIconPickerSheet(
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()

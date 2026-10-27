@@ -759,7 +759,7 @@ private fun EditActionDialog(
     ApplyDialogWindowBlur()
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(24.dp),
+        shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = {
             Text(

@@ -273,7 +273,8 @@ private fun CancelDialog(
     AlertDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.imggen_page_cancel_generation_title)) },
+        title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.imggen_page_cancel_generation_title)) },
         text = { Text(stringResource(R.string.imggen_page_cancel_generation_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
@@ -931,6 +932,7 @@ private fun SettingsBottomSheet(
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()

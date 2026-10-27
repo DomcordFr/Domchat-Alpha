@@ -459,6 +459,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                 }
             }
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1305,9 +1306,10 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                        contentColor = Color(0xFFF2F2F7)
                     ),
-                    shape = RoundedCornerShape(24.dp)
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                 ) {
                     Row(
                         modifier = Modifier

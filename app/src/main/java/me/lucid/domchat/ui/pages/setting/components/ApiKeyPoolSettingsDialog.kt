@@ -67,6 +67,7 @@ fun ApiKeyPoolSettingsDialog(
             )
         },
         title = {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Text(
                 text = stringResource(R.string.api_key_pool_settings_title),
                 style = MaterialTheme.typography.headlineSmall,

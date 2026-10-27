@@ -291,7 +291,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                     color = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.70f),
                     border = BorderStroke(
                         if (isEnabled) 1.dp else 0.5.dp,

@@ -916,6 +916,7 @@ private fun EntryEditorSheet(
             }
         }
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()

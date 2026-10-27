@@ -36,7 +36,8 @@ fun ImportConfigDialog(
     AlertDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismissRequest,
-        title = { Text(stringResource(R.string.assistant_importer_import_character)) },
+        title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.assistant_importer_import_character)) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState())

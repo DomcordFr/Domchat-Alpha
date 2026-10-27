@@ -627,6 +627,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                 }
             }
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1007,6 +1008,7 @@ private fun SearchServiceEditorSheet(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var currentService by remember(service) { mutableStateOf(service) }
 
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
         containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,

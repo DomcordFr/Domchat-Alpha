@@ -344,7 +344,8 @@ private fun CustomThemeColorDialog(
     AlertDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.assistant_page_custom_color)) },
+        title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.assistant_page_custom_color)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 SaturationValuePicker(

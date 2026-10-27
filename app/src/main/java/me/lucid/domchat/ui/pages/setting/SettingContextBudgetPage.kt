@@ -152,7 +152,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
@@ -248,7 +248,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
@@ -387,7 +387,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
@@ -489,7 +489,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {

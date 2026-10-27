@@ -312,7 +312,8 @@ fun WorkspaceDetailPage(id: String) {
         AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = vm::dismissPythonInstallError,
-            title = { Text(stringResource(R.string.workspace_detail_python_install_failed)) },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.workspace_detail_python_install_failed)) },
             text = {
                 Text(
                     text = message,
@@ -341,7 +342,8 @@ fun WorkspaceDetailPage(id: String) {
     installError?.let { message ->
         val context = LocalContext.current
         AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = vm::dismissInstallError,
-            title = { Text(stringResource(R.string.workspace_detail_rootfs_install_failed)) },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.workspace_detail_rootfs_install_failed)) },
             text = {
                 Text(
                     text = message,

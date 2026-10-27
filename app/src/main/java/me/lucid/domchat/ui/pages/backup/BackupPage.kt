@@ -579,6 +579,7 @@ private fun WebDavPage(
                 skipPartiallyExpanded = true
             ),
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -788,7 +789,7 @@ private fun BackupItemCard(
 ) {
     val isDark = LocalDarkMode.current
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         colors = androidx.compose.material3.CardDefaults.cardColors(
             containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.05f)
         ),

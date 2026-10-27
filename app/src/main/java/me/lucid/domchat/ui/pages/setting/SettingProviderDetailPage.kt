@@ -807,6 +807,7 @@ private fun ConnectionTesterButton(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showTestDialog = false },
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(stringResource(R.string.setting_provider_page_test_connection))
             },
             text = {
@@ -2091,6 +2092,7 @@ private fun ModelPicker(
                 skipPartiallyExpanded = true
             )
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             var filterText by remember { mutableStateOf("") }
             val filterKeywords = filterText.split(" ").filter { it.isNotBlank() }
             val filteredModels = models.fastFilter {

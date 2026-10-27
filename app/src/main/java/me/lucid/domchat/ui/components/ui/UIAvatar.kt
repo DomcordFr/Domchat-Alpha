@@ -183,6 +183,7 @@ fun UIAvatar(
                 showPickOption = false
             },
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(text = stringResource(id = R.string.avatar_change_avatar))
             },
             text = {

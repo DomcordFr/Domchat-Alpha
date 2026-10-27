@@ -155,6 +155,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = { showConsoleSheet = false },
             sheetState = sheetState
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

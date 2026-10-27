@@ -541,6 +541,7 @@ private fun McpConnectionsSheet(
             ) { Icon(Icons.Rounded.KeyboardArrowDown, null, tint = iconColor) }
         },
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()

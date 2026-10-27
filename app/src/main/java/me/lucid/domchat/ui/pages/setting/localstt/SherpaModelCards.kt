@@ -342,7 +342,8 @@ fun SherpaModelSettingsSheet(
         AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete ${model.displayName}?") },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("Delete ${model.displayName}?") },
             text = { Text("The downloaded model files will be removed from this device.") },
             confirmButton = {
                 TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }

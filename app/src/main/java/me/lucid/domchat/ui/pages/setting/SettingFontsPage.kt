@@ -146,7 +146,8 @@ fun SettingFontsPage(vm: SettingVM = koinViewModel()) {
         AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showResetAllDialog = false },
-            title = { Text(stringResource(R.string.setting_fonts_reset_all_title)) },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.setting_fonts_reset_all_title)) },
             text = { Text(stringResource(R.string.setting_fonts_reset_all_desc)) },
             confirmButton = {
                 TextButton(onClick = {

@@ -732,7 +732,7 @@ private fun ProviderListView(
                             onAddProvider(provider)
                         },
                         modifier = Modifier.fillMaxWidth().border(1.dp, presetBorder, RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                         color = presetBg
                     ) {
                         Row(
@@ -1472,7 +1472,7 @@ private fun AddButton(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(24.dp)),
-                                shape = RoundedCornerShape(24.dp),
+                                shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                                 color = if (isDark) Color.White.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceContainerHighest,
                             ) {
                                 Row(
@@ -1516,7 +1516,7 @@ private fun AddButton(
                                 .fillMaxWidth()
                                 .border(1.dp, if (isDark) Color.White.copy(alpha = 0.20f) else Color.Transparent, RoundedCornerShape(24.dp)),
                             color = if (isDark) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(24.dp)
+                            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                         ) {
                             Row(
                                 modifier = Modifier

@@ -164,7 +164,8 @@ fun AssistantLocalToolSubPage(
         androidx.compose.material3.AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showNotificationAccessDialog = false },
-            title = { Text(stringResource(R.string.notification_access_title)) },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.notification_access_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.notification_access_desc))

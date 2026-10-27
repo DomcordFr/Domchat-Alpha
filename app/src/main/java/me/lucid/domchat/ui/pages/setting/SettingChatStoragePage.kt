@@ -603,7 +603,8 @@ fun SettingChatStoragePage(
         AlertDialog(
             onDismissRequest = { pendingDeletion = null },
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-            title = { Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title)) },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title)) },
             text = {
                 Text(
                     context.getString(
@@ -736,6 +737,7 @@ fun SettingChatStoragePage(
             containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             sheetState = sheetState,
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             OtherUploadsSheet(
                 files = otherUploadFiles,
                 isLoading = isLoadingOtherUploads,
@@ -762,6 +764,7 @@ fun SettingChatStoragePage(
         }
     }
     if (showEmbeddingCacheInspector) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         ModalBottomSheet(
             onDismissRequest = { showEmbeddingCacheInspector = false },
             sheetGesturesEnabled = false,
@@ -889,7 +892,7 @@ private fun AppStorageHeroCard(
     val isDark = LocalDarkMode.current
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         color = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.05f),
         border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f))
     ) {

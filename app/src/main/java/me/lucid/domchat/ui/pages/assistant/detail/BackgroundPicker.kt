@@ -249,6 +249,7 @@ fun BackgroundPicker(
                 showPickOption = false
             },
             title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(stringResource(R.string.assistant_page_select_background))
             },
             text = {

@@ -128,6 +128,7 @@ fun ApiKeyPoolBottomSheet(
         },
         containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()

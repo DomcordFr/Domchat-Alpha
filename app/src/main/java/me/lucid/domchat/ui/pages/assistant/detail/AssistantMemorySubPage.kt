@@ -164,7 +164,8 @@ fun AssistantMemorySettings(
         AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showReembedConfirmation = false },
-            title = { Text("Re-embed all memories?") },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("Re-embed all memories?") },
             text = {
                 Text(
                     "This will regenerate and replace embeddings for every Core and Episodic " +
@@ -220,7 +221,8 @@ fun AssistantMemorySettings(
         AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { memoryDialogState.dismiss() },
-            title = { Text(stringResource(R.string.assistant_page_manage_memory_title)) },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text(stringResource(R.string.assistant_page_manage_memory_title)) },
             text = {
                 TextField(
                     value = memory.content,
@@ -412,7 +414,7 @@ fun AssistantMemorySettings(
                     Surface(
                         color = assistantGlassColor(),
         border = assistantGlassBorder(),
-                        shape = RoundedCornerShape(24.dp)
+                        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
@@ -618,7 +620,7 @@ private fun MemoryModeIndicator(mode: MemoryMode) {
     )
 
     Surface(
-        shape = RoundedCornerShape(24.dp),
+        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
         color = backgroundColor,
         modifier = Modifier.animateContentSize()
     ) {
@@ -679,7 +681,7 @@ private fun RagSettingsCard(
         Surface(
             color = assistantGlassColor(),
         border = assistantGlassBorder(),
-            shape = RoundedCornerShape(24.dp)
+            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 var threshold by remember(assistant.ragSimilarityThreshold) {
@@ -833,7 +835,7 @@ private fun MemoryStatisticsCard(
     Surface(
         color = assistantGlassColor(),
         border = assistantGlassBorder(),
-        shape = RoundedCornerShape(24.dp)
+        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -1131,7 +1133,7 @@ private fun ManageMemoriesSection(
                 Surface(
                     color = assistantGlassColor(),
         border = assistantGlassBorder(),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -1332,7 +1334,7 @@ private fun MemoryDebugger(
     Surface(
         color = assistantGlassColor(),
         border = assistantGlassBorder(),
-        shape = RoundedCornerShape(24.dp)
+        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

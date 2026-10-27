@@ -968,7 +968,8 @@ private fun ManualModelsPage(
         AlertDialog(
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showInfo = false },
-            title = { Text("A tiny recommendation") },
+            title = {
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur() Text("A tiny recommendation") },
             text = {
                 Text("Pick one fast and cheap model for everyday chat, plus one stronger model for harder questions.")
             },

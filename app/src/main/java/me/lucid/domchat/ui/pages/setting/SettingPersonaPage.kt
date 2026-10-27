@@ -450,7 +450,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     // Persona Creator/Editor Dialog
     if (showEditor) {
         ApplyDialogWindowBlur()
-        val dialogShape = RoundedCornerShape(20.dp)
+        val dialogShape = me.lucid.domchat.ui.theme.AppShapes.Dialog
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
             modifier = Modifier

@@ -262,6 +262,7 @@ private fun DefaultSTTModelSetting(
             },
             sheetState = sheetState
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1201,7 +1202,7 @@ private fun HelperReasoningSettings(
                 .border(
                     width = 1.dp,
                     color = Color.White.copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(20.dp)
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                 )
                 .clickable {
                     haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
