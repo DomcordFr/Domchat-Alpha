@@ -335,15 +335,15 @@ fun SettingLorebookDetailPage(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Toggle assistants FAB - same size as Add, gray like floating toolbar
+                // Toggle assistants FAB - same size as Add, dark glass pill
                 FloatingActionButton(
                     onClick = { 
                         showAssistantToggleSheet = true
                         haptics.perform(HapticPattern.Tick)
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = Color(0xFF141520).copy(alpha = 0.75f),
+                    contentColor = Color.White.copy(alpha = 0.92f)
                 ) {
                     Icon(
                         Icons.Rounded.ToggleOn,
@@ -421,7 +421,8 @@ fun SettingLorebookDetailPage(
                 item(key = "empty") {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+                            containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                         ),
                         shape = AppShapes.CardLarge
                     ) {
@@ -691,8 +692,9 @@ private fun EntryCard(
     Card(
         onClick = onEdit,
         colors = CardDefaults.cardColors(
-            containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
         ),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         shape = AppShapes.CardLarge
     ) {
         Row(
@@ -1472,7 +1474,8 @@ private fun LorebookEntryAttachmentItem(
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh
+            color = Color(0xFF141520).copy(alpha = 0.55f),
+            border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -1641,8 +1644,9 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                 
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        containerColor = Color(0xFF141520).copy(alpha = 0.55f)
                     ),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     shape = shape
                 ) {
                     Row(
