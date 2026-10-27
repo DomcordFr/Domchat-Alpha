@@ -126,7 +126,7 @@ fun ApiKeyPoolBottomSheet(
                 Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null)
             }
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
     ) {
         Column(
             modifier = Modifier
@@ -561,6 +561,7 @@ private fun ApiKeyEditDialog(
     val haptics = rememberPremiumHaptics()
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
             Text(

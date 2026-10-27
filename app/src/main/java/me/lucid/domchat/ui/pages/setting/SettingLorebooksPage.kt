@@ -610,7 +610,7 @@ internal fun LorebookCreatorSheet(
     val isDark = LocalDarkMode.current
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,

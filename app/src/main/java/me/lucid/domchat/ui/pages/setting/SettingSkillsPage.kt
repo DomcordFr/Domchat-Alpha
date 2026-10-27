@@ -774,7 +774,7 @@ fun SkillEditorSheet(
     val isDark = LocalDarkMode.current
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -1261,8 +1261,7 @@ fun SkillEditorSheet(
     }
 
     deletePackagePath?.let { relativePath ->
-        AlertDialog(
-            onDismissRequest = { deletePackagePath = null },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { deletePackagePath = null },
             title = { Text("Delete skill file?") },
             text = { Text(relativePath, fontFamily = FontFamily.Monospace) },
             confirmButton = {
@@ -1414,6 +1413,7 @@ private fun SkillPackageTextEditorDialog(
     var content by remember(relativePath, initialContent) { mutableStateOf(initialContent) }
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
             Column {
@@ -1469,8 +1469,7 @@ private fun AddSkillPackageFileDialog(
             relativePath == "SKILL.md"
         )
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    AlertDialog(        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),        onDismissRequest = onDismiss,
         title = { Text("New package file") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1566,7 +1565,7 @@ private fun SkillExportDialog(
     val isDark = LocalDarkMode.current
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         shape = sheetShape,
         onDismissRequest = onDismiss,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)

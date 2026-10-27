@@ -733,7 +733,7 @@ fun SettingChatStoragePage(
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { showOtherUploadsInspector = false },
-            containerColor = domChatSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             sheetState = sheetState,
         ) {
             OtherUploadsSheet(
@@ -765,7 +765,7 @@ fun SettingChatStoragePage(
         ModalBottomSheet(
             onDismissRequest = { showEmbeddingCacheInspector = false },
             sheetGesturesEnabled = false,
-            containerColor = domChatSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             dragHandle = {
                 IconButton(onClick = { showEmbeddingCacheInspector = false }) {
                     Icon(Icons.Rounded.KeyboardArrowDown, null)
@@ -1003,7 +1003,9 @@ private fun StorageStatPill(
 ) {
     Surface(
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.secondaryContainer,
+        color = if (LocalDarkMode.current) Color(0xFF141520).copy(alpha = 0.55f) else MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     ) {
         Text(
             text = text,
@@ -1371,7 +1373,9 @@ private fun DeleteButton(
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
+        color = Color(0xFF141520).copy(alpha = 0.55f),
+        contentColor = Color(0xFFFF6B6B),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         IconButton(onClick = onDelete) {
             Icon(

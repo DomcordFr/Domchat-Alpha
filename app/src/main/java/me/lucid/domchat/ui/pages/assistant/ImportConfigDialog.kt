@@ -34,6 +34,7 @@ fun ImportConfigDialog(
     var importLorebooks by remember { mutableStateOf(hasLorebooks) }
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.assistant_importer_import_character)) },
         text = {

@@ -75,6 +75,7 @@ fun ExportKeySelectionDialog(
     }
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
             Row(

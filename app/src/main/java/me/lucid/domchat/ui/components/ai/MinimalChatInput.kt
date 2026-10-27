@@ -106,7 +106,6 @@ import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
-import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip

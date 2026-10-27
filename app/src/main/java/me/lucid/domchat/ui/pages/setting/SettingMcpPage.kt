@@ -476,8 +476,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
 
     setupRequiredPreset?.let { preset ->
         val context = LocalContext.current
-        AlertDialog(
-            onDismissRequest = { setupRequiredPreset = null },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { setupRequiredPreset = null },
             icon = { Icon(Icons.Rounded.Info, null) },
             title = { Text("${preset.name} needs app setup") },
             text = {
@@ -529,7 +528,7 @@ private fun McpConnectionsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = false,
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         dragHandle = {
             ApplyDialogWindowBlur()
             IconButton(
@@ -882,7 +881,7 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
         val scope = rememberCoroutineScope()
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 state.dismiss()
             },
@@ -1406,7 +1405,7 @@ private fun McpImportModal(
     val parseErrorMessage = stringResource(R.string.setting_mcp_page_import_parse_error)
 
     ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {

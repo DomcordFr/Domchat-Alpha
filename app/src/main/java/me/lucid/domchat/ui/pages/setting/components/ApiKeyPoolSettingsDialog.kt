@@ -55,6 +55,7 @@ fun ApiKeyPoolSettingsDialog(
     var selectedStrategy by remember { mutableStateOf(initialConfig.strategy) }
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         shape = AppShapes.Dialog,
         icon = {

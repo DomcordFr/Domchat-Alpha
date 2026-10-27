@@ -251,7 +251,7 @@ private fun DefaultSTTModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
@@ -386,7 +386,7 @@ private fun DefaultTranslationModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
@@ -502,7 +502,7 @@ private fun DefaultSuggestionModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
@@ -617,7 +617,7 @@ private fun DefaultTitleModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
@@ -739,7 +739,7 @@ private fun DefaultSummarizerModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
@@ -826,7 +826,7 @@ private fun DefaultSubagentModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
@@ -945,7 +945,7 @@ private fun DefaultOcrModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = modelSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {

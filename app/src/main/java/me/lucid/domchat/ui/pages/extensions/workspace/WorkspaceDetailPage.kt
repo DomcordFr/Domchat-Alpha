@@ -310,6 +310,7 @@ fun WorkspaceDetailPage(id: String) {
 
     pythonInstallError?.let { message ->
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = vm::dismissPythonInstallError,
             title = { Text(stringResource(R.string.workspace_detail_python_install_failed)) },
             text = {
@@ -339,8 +340,7 @@ fun WorkspaceDetailPage(id: String) {
 
     installError?.let { message ->
         val context = LocalContext.current
-        AlertDialog(
-            onDismissRequest = vm::dismissInstallError,
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = vm::dismissInstallError,
             title = { Text(stringResource(R.string.workspace_detail_rootfs_install_failed)) },
             text = {
                 Text(
@@ -367,8 +367,7 @@ fun WorkspaceDetailPage(id: String) {
     }
 
     deleteTarget?.let { entry ->
-        AlertDialog(
-            onDismissRequest = { deleteTarget = null },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.workspace_page_delete)) },
             text = { Text(stringResource(R.string.workspace_detail_will_delete, entry.path)) },
             confirmButton = {
@@ -802,6 +801,7 @@ private fun InstallRootfsDialog(
     }
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.workspace_detail_shell_installing)) },
         text = {
@@ -844,6 +844,7 @@ private fun InstallPythonDialog(
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
             Text(

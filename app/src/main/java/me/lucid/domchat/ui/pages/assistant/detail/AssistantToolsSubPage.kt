@@ -353,7 +353,7 @@ fun AssistantToolsSubPage(
 
             if (showMcpPicker) {
                 ModalBottomSheet(
-                    containerColor = assistantGlassColor(),
+                    containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                     onDismissRequest = { showMcpPicker = false },
                     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                 ) {
@@ -416,8 +416,7 @@ fun AssistantToolsSubPage(
     }
 
     if (showNotificationAccessDialog && pendingNotificationAccess.specialAccesses.isNotEmpty()) {
-        AlertDialog(
-            onDismissRequest = { showNotificationAccessDialog = false },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { showNotificationAccessDialog = false },
             title = { Text(stringResource(R.string.notification_access_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -459,7 +458,7 @@ private fun WorkspaceBindingDialog(
     onSelect: (String?) -> Unit,
 ) {
     ModalBottomSheet(
-        containerColor = assistantGlassColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),

@@ -483,8 +483,7 @@ fun SettingLocalLlmPage(
     }
 
     modelPendingDelete?.let { model ->
-        AlertDialog(
-            onDismissRequest = { modelPendingDelete = null },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { modelPendingDelete = null },
             title = { Text(stringResource(R.string.local_llm_delete_confirm_title)) },
             text = { Text(stringResource(R.string.local_llm_delete_confirm_message, model.displayName)) },
             confirmButton = {
@@ -515,8 +514,7 @@ fun SettingLocalLlmPage(
     }
 
     sherpaModelPendingDelete?.let { model ->
-        AlertDialog(
-            onDismissRequest = { sherpaModelPendingDelete = null },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { sherpaModelPendingDelete = null },
             title = { Text("Delete ${model.displayName}?") },
             text = { Text("The downloaded speech model files will be removed from this device.") },
             confirmButton = {
@@ -792,7 +790,7 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
 
     if (showSheet) {
         ModalBottomSheet(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = { showSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
@@ -881,7 +879,7 @@ private fun ModelSettingsSheet(
     }
 
     ModalBottomSheet(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = {
             if (name.trim() != model.displayName) onRename(name)
             onDismiss()
@@ -983,6 +981,7 @@ private fun ModelSettingsSheet(
 
     if (showDeleteConfirm) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text(stringResource(R.string.local_llm_delete_confirm_title)) },
             text = { Text(stringResource(R.string.local_llm_delete_confirm_message, model.displayName)) },

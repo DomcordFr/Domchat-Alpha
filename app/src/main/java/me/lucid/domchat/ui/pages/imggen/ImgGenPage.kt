@@ -271,6 +271,7 @@ private fun CancelDialog(
     onConfirm: () -> Unit
 ) {
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.imggen_page_cancel_generation_title)) },
         text = { Text(stringResource(R.string.imggen_page_cancel_generation_message)) },
@@ -925,7 +926,7 @@ private fun SettingsBottomSheet(
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() }

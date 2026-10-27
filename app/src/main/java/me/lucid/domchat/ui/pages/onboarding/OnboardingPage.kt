@@ -964,6 +964,7 @@ private fun ManualModelsPage(
     }
     if (showInfo) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showInfo = false },
             title = { Text("A tiny recommendation") },
             text = {

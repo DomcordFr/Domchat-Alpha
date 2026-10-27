@@ -953,7 +953,7 @@ private fun ImportProviderButton(
         ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { showImportDialog = false },
-            containerColor = if (isDark) Color(0xFF14151C).copy(alpha = 0.88f) else MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             modifier = Modifier.border(1.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f), AppShapes.CardLarge),
             title = {
                 Text(
@@ -1059,6 +1059,7 @@ private fun ImportProviderButton(
 
     importSession?.let { session ->
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = {},
             title = {
                 Text(

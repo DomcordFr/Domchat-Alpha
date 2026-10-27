@@ -162,6 +162,7 @@ fun AssistantMemorySettings(
 
     if (showReembedConfirmation) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showReembedConfirmation = false },
             title = { Text("Re-embed all memories?") },
             text = {
@@ -192,6 +193,7 @@ fun AssistantMemorySettings(
     // Embedding progress dialog
     if (embeddingProgress != null && embeddingProgress.isRunning) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { },
             title = { Text(stringResource(R.string.assistant_memory_generating_embeddings)) },
             text = {
@@ -216,6 +218,7 @@ fun AssistantMemorySettings(
     // Memory edit dialog
     memoryDialogState.EditStateContent { memory, update ->
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { memoryDialogState.dismiss() },
             title = { Text(stringResource(R.string.assistant_page_manage_memory_title)) },
             text = {
@@ -1030,7 +1033,7 @@ private fun ManageMemoriesSection(
                         expanded = showSortMenu,
                         onDismissRequest = { showSortMenu = false },
                         shape = RoundedCornerShape(18.dp),
-                        containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        containerColor = if (isDark) Color(0xFF0E0F18).copy(alpha = 0.97f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     ) {
                         MemorySortOrder.entries.forEach { order ->
@@ -1187,6 +1190,7 @@ private fun MemoryItem(
     
     if (showDeleteConfirmation) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text(stringResource(R.string.assistant_page_delete)) },
             text = { 

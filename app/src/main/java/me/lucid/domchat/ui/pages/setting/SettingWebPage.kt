@@ -543,8 +543,7 @@ fun SettingWebPage(
     }
 
     if (showBackgroundSetupDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
                 showBackgroundSetupDialog = false
                 pendingStart = null
             },

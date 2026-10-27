@@ -53,6 +53,7 @@ fun MaterialIconPickerDialog(
     }
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.setting_provider_page_select_icon)) },
         text = {

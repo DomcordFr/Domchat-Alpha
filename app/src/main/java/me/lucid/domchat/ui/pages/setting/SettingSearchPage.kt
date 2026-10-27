@@ -608,7 +608,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         var currentService by remember(service) { mutableStateOf(service) }
 
         ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 editingService = null
             },
@@ -1008,7 +1008,7 @@ private fun SearchServiceEditorSheet(
     var currentService by remember(service) { mutableStateOf(service) }
 
     ModalBottomSheet(
-        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
         sheetGesturesEnabled = false,
@@ -1139,7 +1139,7 @@ internal fun AddSearchServiceButton(
         val scope = androidx.compose.runtime.rememberCoroutineScope()
         
         ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 showBottomSheet = false
             },
@@ -1557,6 +1557,7 @@ internal fun CommonOptionsDialog(
     }
     
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismissRequest,
         title = {
             Text(stringResource(R.string.setting_page_search_common_options))

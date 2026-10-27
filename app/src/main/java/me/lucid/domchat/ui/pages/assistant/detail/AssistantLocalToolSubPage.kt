@@ -162,6 +162,7 @@ fun AssistantLocalToolSubPage(
 
     if (showNotificationAccessDialog && pendingNotificationAccess.specialAccesses.isNotEmpty()) {
         androidx.compose.material3.AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showNotificationAccessDialog = false },
             title = { Text(stringResource(R.string.notification_access_title)) },
             text = {

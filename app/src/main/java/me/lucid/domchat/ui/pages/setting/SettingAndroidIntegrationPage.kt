@@ -449,6 +449,7 @@ fun SettingAndroidIntegrationPage(
     // Reset Confirmation Dialog
     if (showResetDialog) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showResetDialog = false },
             title = { Text(stringResource(R.string.reset)) },
             text = { Text(stringResource(R.string.setting_android_integration_reset_actions_confirm)) },
@@ -700,8 +701,8 @@ private fun ActionCard(
             if (action.isCustomPrompt) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isDark) Color(0xFF1E293B) else MaterialTheme.colorScheme.tertiaryContainer,
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f))
+                    color = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else MaterialTheme.colorScheme.tertiaryContainer,
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Text(
                         text = "Input",
@@ -759,7 +760,7 @@ private fun EditActionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(24.dp),
-        containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.95f) else Color.White,
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = {
             Text(
                 if (isNew) stringResource(R.string.text_selection_add_action)

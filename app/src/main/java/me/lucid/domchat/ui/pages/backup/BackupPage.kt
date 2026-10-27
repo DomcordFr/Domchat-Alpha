@@ -566,7 +566,7 @@ private fun WebDavPage(
     if (showBackupFiles) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = domChatSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             tonalElevation = 0.dp,
             dragHandle = {
@@ -706,8 +706,7 @@ private fun WebDavPage(
 
     // Permission explanation dialog
     if (showPermissionDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
                 // User dismissed - proceed without permissions
                 showPermissionDialog = false
                 showRestartDialog = true
@@ -1229,8 +1228,7 @@ private fun ImportExportPage(
 
     // Permission explanation dialog
     if (showPermissionDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
                 // User dismissed - proceed without permissions
                 showPermissionDialog = false
                 showRestartDialog = true

@@ -178,6 +178,7 @@ fun UIAvatar(
 
     if (showPickOption) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = {
                 showPickOption = false
             },
@@ -244,7 +245,7 @@ fun UIAvatar(
     }
 
     if (showEmojiPicker) {
-        ModalBottomSheet(
+        ModalBottomSheet(containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 showEmojiPicker = false
             },
@@ -265,6 +266,7 @@ fun UIAvatar(
 
     if (showUrlInput) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = {
                 showUrlInput = false
             },

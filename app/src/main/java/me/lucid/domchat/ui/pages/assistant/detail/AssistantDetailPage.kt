@@ -253,7 +253,7 @@ fun AssistantDetailPage(
                                 expanded = showExportMenu,
                                 onDismissRequest = { showExportMenu = false },
                                 shape = RoundedCornerShape(18.dp),
-                                containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                containerColor = if (isDark) Color(0xFF0E0F18).copy(alpha = 0.97f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             ) {
                                 DropdownMenuItem(

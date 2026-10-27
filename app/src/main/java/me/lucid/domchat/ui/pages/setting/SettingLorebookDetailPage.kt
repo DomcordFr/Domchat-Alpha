@@ -899,7 +899,7 @@ private fun EntryEditorSheet(
     
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
@@ -1291,7 +1291,7 @@ private fun LorebookEditorSheet(
     
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState
     ) {
@@ -1586,7 +1586,7 @@ private fun AssistantLorebookToggleSheet(
     
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = false,

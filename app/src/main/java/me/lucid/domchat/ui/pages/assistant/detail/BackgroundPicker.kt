@@ -244,6 +244,7 @@ fun BackgroundPicker(
 
     if (showPickOption) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = {
                 showPickOption = false
             },
@@ -300,6 +301,7 @@ fun BackgroundPicker(
 
     if (showUrlInput) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = {
                 showUrlInput = false
             },

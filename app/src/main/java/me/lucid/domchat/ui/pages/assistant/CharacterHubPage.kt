@@ -887,7 +887,7 @@ fun CharacterInspectorSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = true,
-        containerColor = sheetBgColor,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         contentColor = contentTextColor,
         dragHandle = null,
         shape = sheetShape,

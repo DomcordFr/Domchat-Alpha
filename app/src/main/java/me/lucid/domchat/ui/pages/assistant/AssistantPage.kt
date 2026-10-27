@@ -475,8 +475,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
 
     pendingAssistantDelete?.let { assistant ->
         val impact = pendingAssistantImpact
-        AlertDialog(
-            onDismissRequest = {
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
                 pendingAssistantDelete = null
                 pendingAssistantImpact = null
             },
@@ -556,7 +555,7 @@ fun AssistantCreationSheet(
 ) {
     state.EditStateContent { assistant, update ->
         ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 state.dismiss()
             },

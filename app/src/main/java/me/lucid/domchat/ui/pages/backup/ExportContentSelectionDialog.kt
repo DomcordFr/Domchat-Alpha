@@ -117,6 +117,7 @@ fun ExportContentSelectionDialog(
     val apiKeysSelected = selectedContentMap[BackupContentOption.API_KEYS] ?: false
 
     AlertDialog(
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
             Row(

@@ -138,8 +138,7 @@ fun CustomIconSelector(
     }
 
     if (showPickOption) {
-        AlertDialog(
-            onDismissRequest = { showPickOption = false },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { showPickOption = false },
             title = {
                 Text(text = stringResource(R.string.setting_provider_page_select_icon))
             },
@@ -237,7 +236,7 @@ private fun LobeHubIconPickerSheet(
     }
 
     ModalBottomSheet(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {

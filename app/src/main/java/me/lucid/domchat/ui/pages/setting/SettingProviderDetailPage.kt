@@ -804,6 +804,7 @@ private fun ConnectionTesterButton(
         }
         var testState: UiState<String> by remember { mutableStateOf(UiState.Idle) }
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showTestDialog = false },
             title = {
                 Text(stringResource(R.string.setting_provider_page_test_connection))
@@ -2083,7 +2084,7 @@ private fun ModelPicker(
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
     if (showModal) {
         ModalBottomSheet(
-            containerColor = domChatSheetContainerColor(),
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             contentColor = domChatSheetContentColor(),
             onDismissRequest = { showModal = false },
             sheetState = rememberModalBottomSheetState(

@@ -144,6 +144,7 @@ fun SettingFontsPage(vm: SettingVM = koinViewModel()) {
 
     if (showResetAllDialog) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showResetAllDialog = false },
             title = { Text(stringResource(R.string.setting_fonts_reset_all_title)) },
             text = { Text(stringResource(R.string.setting_fonts_reset_all_desc)) },
@@ -644,8 +645,7 @@ private fun FontConfigSection(
 
     // Reset Dialog
     if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
+        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { showResetDialog = false },
             title = { Text(stringResource(R.string.setting_fonts_reset_title, title)) },
             text = { Text(stringResource(R.string.setting_fonts_reset_desc, title)) },
             confirmButton = {

@@ -151,7 +151,7 @@ fun WebViewPage(url: String, content: String) {
 
     if (showConsoleSheet) {
         ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = { showConsoleSheet = false },
             sheetState = sheetState
         ) {

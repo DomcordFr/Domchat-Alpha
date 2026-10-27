@@ -262,7 +262,7 @@ fun SherpaModelSettingsSheet(
     ModalBottomSheet(
         onDismissRequest = ::saveAndDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
     ) {
         Column(
             modifier = Modifier
@@ -340,6 +340,7 @@ fun SherpaModelSettingsSheet(
 
     if (showDeleteConfirmation) {
         AlertDialog(
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text("Delete ${model.displayName}?") },
             text = { Text("The downloaded model files will be removed from this device.") },

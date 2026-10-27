@@ -440,7 +440,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
         val scope = rememberCoroutineScope()
 
         ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 editingProvider = null
             },
@@ -819,7 +819,7 @@ private fun TtsProviderEditorSheet(
     val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
-        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
         sheetGesturesEnabled = false,
@@ -906,8 +906,7 @@ internal fun TtsTextFilterSettingsDialog(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingRule by remember { mutableStateOf<me.lucid.domchat.data.datastore.TtsTextFilterRule?>(null) }
 
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
+    androidx.compose.material3.AlertDialog(        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),        onDismissRequest = onDismiss,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1096,8 +1095,7 @@ private fun TtsFilterRuleEditDialog(
     var pattern by remember { mutableStateOf(rule?.pattern ?: "*") }
     var mode by remember { mutableStateOf(rule?.mode ?: me.lucid.domchat.data.datastore.TtsFilterMode.SKIP) }
     
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
+    androidx.compose.material3.AlertDialog(        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),        onDismissRequest = onDismiss,
         title = {
             Text(
                 if (rule != null) {
@@ -1243,7 +1241,7 @@ internal fun AddTTSProviderButton(
         val scope = rememberCoroutineScope()
         
         ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 showBottomSheet = false
             },
