@@ -77,13 +77,16 @@ fun <T> Select(
         }
     ) {
         Surface(
-            color = if (isDark) Color(0xFF161824).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.90f),
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)),
+            color = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.90f),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(
+                0.5f.dp,
+                if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
+            ),
             tonalElevation = 0.dp,
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .domChatBlurEffect(if (isDark) Color(0xFF161824) else Color.White, RoundedCornerShape(16.dp))
+                .domChatBlurEffect(if (isDark) Color(0xFF141520) else Color.White, RoundedCornerShape(20.dp))
         ) {
             Row(
                 modifier = Modifier
@@ -115,9 +118,12 @@ fun <T> Select(
             onDismissRequest = {
                 expanded = false
             },
-            shape = RoundedCornerShape(18.dp),
-            containerColor = if (isDark) Color(0xFF141522).copy(alpha = 0.95f) else Color.White,
-            border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+            shape = RoundedCornerShape(20.dp),
+            containerColor = if (isDark) Color(0xFF0E0F18).copy(alpha = 0.97f) else Color.White,
+            border = BorderStroke(
+                0.5f.dp,
+                if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
+            ),
         ) {
             options.fastForEach { option ->
                 DropdownMenuItem(

@@ -217,6 +217,7 @@ import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.modifier.domChatSoftEdgeBorder
 import me.lucid.domchat.ui.modifier.blurredContainerColor
+import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
@@ -2971,7 +2972,7 @@ private fun ChatToolbar(
 ) {
     val scope = rememberCoroutineScope()
     val isDark = LocalDarkMode.current
-    val topContainerColor = domChatFloatingSurfaceColor()
+    val topContainerColor = domChatIconPillContainerColor()
     val topContainerBorder = if (isDark) {
         BorderStroke(1.dp, Color.White.copy(alpha = 0.14f))
     } else {
@@ -3051,7 +3052,7 @@ private fun ChatToolbar(
                     },
                     contentDescription = "Messages",
                     shape = buttonShape,
-                    containerColor = blurredContainerColor(topContainerColor),
+                    containerColor = topContainerColor,
                     border = topContainerBorder,
                     modifier = Modifier
                         .size(topPillSize)

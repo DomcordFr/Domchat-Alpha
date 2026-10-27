@@ -91,6 +91,9 @@ import me.lucid.domchat.ui.components.nav.AetherDrawerSearch
 import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.ui.text.style.TextAlign
 import me.lucid.domchat.ui.modifier.domChatSoftEdgeBorder
+
+import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
+import me.lucid.domchat.ui.modifier.domChatChromeTextShadow
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -179,7 +182,7 @@ fun ColumnScope.ConversationList(
                             .padding(horizontal = 16.dp, vertical = 20.dp),
                         shape = RoundedCornerShape(20.dp),
                         color = domChatCardContainerColor(),
-                        border = domChatSoftEdgeBorder()
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                     ) {
                         Column(
                             modifier = Modifier
@@ -204,13 +207,17 @@ fun ColumnScope.ConversationList(
                             }
                             Text(
                                 text = stringResource(id = R.string.chat_page_no_conversations),
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    shadow = domChatChromeTextShadow()
+                                ),
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "Start a new conversation or select a character to begin",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    shadow = domChatChromeTextShadow(softText = true)
+                                ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                                 textAlign = TextAlign.Center
                             )
@@ -332,7 +339,7 @@ fun ColumnScope.ConversationList(
             onExpandedChange = onSearchExpandedChange,
             placeholder = stringResource(id = R.string.chat_page_search_placeholder),
             hint = stringResource(R.string.chat_page_search_hint),
-            containerColor = domChatCardContainerColor(),
+            containerColor = domChatIconPillContainerColor(),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(1f),
@@ -356,7 +363,9 @@ private fun DateHeaderItem(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.copy(
+                shadow = domChatChromeTextShadow()
+            ),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
@@ -383,7 +392,9 @@ private fun PinnedHeader(
         Spacer(Modifier.size(8.dp))
         Text(
             text = stringResource(R.string.pinned_chats),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.copy(
+                shadow = domChatChromeTextShadow()
+            ),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
@@ -544,6 +555,9 @@ private fun ConversationItem(
                         text = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) },
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            shadow = domChatChromeTextShadow()
+                        ),
                         color = Color.White,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                     )
@@ -563,7 +577,10 @@ private fun ConversationItem(
                     val timeStr = "%d:%02d %s".format(hour12, zdt.minute, amPm)
                     Text(
                         text = "$msgCount messages · $timeStr",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            shadow = domChatChromeTextShadow(softText = true)
+                        ),
                         color = Color.White.copy(alpha = 0.65f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

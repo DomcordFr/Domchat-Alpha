@@ -83,9 +83,11 @@ fun AetherDrawerSearch(
                         },
                         modifier = Modifier.size(36.dp),
                     ) {
+                        val closeTint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                         Icon(
                             imageVector = RoundedCloseIcon,
                             contentDescription = null,
+                            tint = closeTint,
                             modifier = Modifier.size(20.dp),
                         )
                     }

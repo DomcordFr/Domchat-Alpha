@@ -311,6 +311,9 @@ data class DisplaySetting(
     val glassAlpha: Float = 0.40f,
     val glassBlur: Float = 20f,
     val glassBaseLuminance: Float = 0f,
+    // When true, drawer/side-menu and chat popovers follow glassAlpha + glassBaseLuminance
+    // instead of their hardcoded charcoal surfaces.
+    val linkChromeToGlass: Boolean = true,
     val backgroundBlurMode: me.lucid.domchat.data.model.BackgroundBlurMode = me.lucid.domchat.data.model.BackgroundBlurMode.FULL,
     val globalBackgroundBlurHeightFraction: Float = 0.75f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,

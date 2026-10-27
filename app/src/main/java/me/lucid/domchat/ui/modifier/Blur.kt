@@ -198,6 +198,70 @@ fun domChatBaseToneColor(): Color {
 }
 
 /**
+ * Charcoal chrome surface for the side drawer/menu.
+ * Follows the [DisplaySetting.linkChromeToGlass] toggle: when linked it tracks
+ * glassAlpha + glassBaseLuminance (fully transparent at 0%), otherwise keeps the
+ * legacy fixed charcoal glass.
+ */
+@Composable
+fun domChatChromeSurfaceColor(): Color {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    val alpha = if (display.linkChromeToGlass) {
+        display.glassAlpha.coerceIn(0f, 1f)
+    } else {
+        0.55f
+    }
+    if (alpha <= 0.001f) return Color.Transparent
+    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF141520)
+    return base.copy(alpha = alpha)
+}
+
+/** Charcoal glass floor for chrome fills so chrome never outshines the content behind it. */
+const val DOMCHAT_CHROME_FLOOR_ALPHA = 0.45f
+
+/**
+ * True when the drawer/menu surfaces sit on a nearly transparent glass (linked chrome + low
+ * glassAlpha). Callers use it to add text shadows so labels stay readable with no backdrop.
+ */
+@Composable
+fun domChatNeedsLegibilityShadow(): Boolean {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    return display.linkChromeToGlass && display.glassAlpha.coerceIn(0f, 1f) < 0.25f
+}
+
+/** Subtle dark halo for text rendered over transparent chrome surfaces. */
+@Composable
+fun domChatChromeTextShadow(softText: Boolean = false): androidx.compose.ui.graphics.Shadow? {
+    if (!domChatNeedsLegibilityShadow()) return null
+    return androidx.compose.ui.graphics.Shadow(
+        color = Color.Black.copy(alpha = if (softText) 0.8f else 0.65f),
+        offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+        blurRadius = 4f,
+    )
+}
+
+/**
+ * Icon pill backgrounds (hamburger / toolbar actions / floating chrome buttons).
+ * Dark, subtle, and readable: floors at [DOMCHAT_CHROME_FLOOR_ALPHA] so pills stay
+ * visible against fully transparent content, never bright white.
+ */
+@Composable
+fun domChatIconPillContainerColor(): Color {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    val alpha = if (display.linkChromeToGlass) {
+        maxOf(display.glassAlpha.coerceIn(0f, 1f), DOMCHAT_CHROME_FLOOR_ALPHA)
+    } else {
+        0.55f
+    }
+    if (alpha <= 0.001f) return Color.Transparent
+    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF141520)
+    return base.copy(alpha = alpha)
+}
+
+/**
  * Charcoal floating fill. Glass alpha and base luminance are dynamically derived from settings.
  */
 @Composable

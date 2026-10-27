@@ -555,6 +555,28 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             colors = sliderColors
                         )
 
+                        // Connect side menu + chat popovers to the glass sliders above
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Connect Side Menu & Popovers", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    "Side menu and chat popovers follow the opacity, blur, and tone sliders. Off keeps them a fixed charcoal glass.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isDark) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            HapticSwitch(
+                                checked = settings.displaySetting.linkChromeToGlass,
+                                onCheckedChange = {
+                                    updateDisplaySetting(settings.displaySetting.copy(linkChromeToGlass = it))
+                                }
+                            )
+                        }
+
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
                             color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
