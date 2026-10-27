@@ -69,7 +69,7 @@ fun WaveOriginPickerDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = androidx.compose.ui.graphics.Color(0xFF141520)Low,
             modifier = Modifier
                 .fillMaxWidth(0.92f)
                 .padding(16.dp),

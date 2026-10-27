@@ -1266,7 +1266,7 @@ private fun SetupButton(
             shape = shape,
             contentPadding = PaddingValues(horizontal = 16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (neutral) setupCardColor() else Color(0xFF0D0E16).copy(alpha = 0.92f),
+                containerColor = if (neutral) setupCardColor() else Color(0xFF0D0E16),
                 contentColor = if (neutral) Color(0xFFF2F2F7) else Color.White,
             ),
             modifier = modifier
@@ -1291,7 +1291,7 @@ private fun SetupButton(
             contentPadding = PaddingValues(horizontal = 16.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = Color(0xFFF2F2F7),
-                containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                containerColor = Color(0xFF141520),
             ),
             modifier = modifier
                 .height(52.dp)

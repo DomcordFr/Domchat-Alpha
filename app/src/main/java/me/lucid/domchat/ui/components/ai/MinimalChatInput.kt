@@ -63,6 +63,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -2036,7 +2037,7 @@ fun MinimalChatInput(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.widthIn(max = 200.dp)
                     )
                     if (chatBgDraft != null) {
                         DomChatGlassPillButton(
@@ -2147,6 +2148,8 @@ fun MinimalChatInput(
                     DomChatGlassPillButton(
                         text = "Save for this chat",
                         accent = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
                         onClick = {
                             val updatedConfig = me.lucid.domchat.data.datastore.ConversationWallpaperConfig(
                                 backgroundUri = chatBgDraft,

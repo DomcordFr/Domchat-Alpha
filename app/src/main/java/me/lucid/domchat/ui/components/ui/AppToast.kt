@@ -348,7 +348,7 @@ private fun ToastContent(
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = contentColor.copy(alpha = 0.15f)
+            color = Color.White.copy(alpha = 0.20f)
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -432,8 +432,8 @@ private fun ToastContent(
 
 @Composable
 private fun getToastColors(type: ToastType): Triple<Color, Color, ImageVector?> {
-    // Dark glassy toast plates: near-black translucent fill + colored accents on top.
-    val base = Color(0xFF0D0E16).copy(alpha = 0.82f)
+    // Dark glassy toast plates: near-black solid-ish fill + colored accents on top.
+    val base = Color(0xFF0D0E16).copy(alpha = 0.95f)
     return when (type) {
         ToastType.Normal -> if(LocalDarkMode.current) {
             Triple(

@@ -271,9 +271,9 @@ fun SettingWebPage(
                 Card(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.9f)
+                        containerColor = Color(0xFF141520)
                     ),
-                    border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 0.dp)
                         .padding(bottom = 12.dp)
@@ -485,7 +485,7 @@ fun SettingWebPage(
                 item {
                     Card(
                         shape = AppShapes.CardLarge,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFF141520)),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp)
                     ) {
                         Column(
@@ -518,7 +518,7 @@ fun SettingWebPage(
                 item {
                     Card(
                         shape = AppShapes.CardLarge,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFF2C1517)),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Column(
@@ -729,8 +729,9 @@ private fun CopyAddressButton(
 ) {
     Surface(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.secondaryContainer,
+        color = Color(0xFF141520),
         shape = AppShapes.ButtonPill,
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         Box(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -740,7 +741,7 @@ private fun CopyAddressButton(
                 Icons.Rounded.ContentCopy,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                tint = Color.White
             )
         }
     }

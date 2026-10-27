@@ -831,7 +831,7 @@ fun SkillEditorSheet(
                             onClick = { showIconPicker = true },
                             modifier = Modifier.size(56.dp),
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer
+                            color = androidx.compose.ui.graphics.Color(0xFF141520)
                         ) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),

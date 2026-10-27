@@ -12,6 +12,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -150,6 +152,22 @@ fun DebouncedTextField(
                 maxHeightInLines = maxLines
             )
         },
-        shape = AppShapes.InputField
+        shape = AppShapes.InputField,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFF141520),
+            unfocusedContainerColor = Color(0xFF141520),
+            disabledContainerColor = Color(0xFF141520),
+            focusedTextColor = Color(0xFFF2F2F7),
+            unfocusedTextColor = Color(0xFFF2F2F7),
+            disabledTextColor = Color(0xFFF2F2F7).copy(alpha = 0.5f),
+            cursorColor = Color.White,
+            focusedBorderColor = Color.White.copy(alpha = 0.30f),
+            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+            disabledBorderColor = Color.White.copy(alpha = 0.06f),
+            focusedLabelColor = Color(0xFFB9A8FC),
+            unfocusedLabelColor = Color(0xFF8A8A96),
+            focusedPlaceholderColor = Color(0xFF8A8A96),
+            unfocusedPlaceholderColor = Color(0xFF8A8A96)
+        )
     )
 }

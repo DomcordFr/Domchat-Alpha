@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.setting
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -325,6 +328,19 @@ fun SettingPage(
                     },
                     singleLine = true,
                     shape = AppShapes.InputField,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF141520),
+                        unfocusedContainerColor = Color(0xFF141520),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color(0xFFA78BFA).copy(alpha = 0.5f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96)
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -436,8 +452,10 @@ private fun ProviderConfigWarningCard(navController: NavHostController) {
         onClick = { navController.navigate(Screen.SettingProvider) },
         shape = AppShapes.CardLarge,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
+            containerColor = Color(0xFF141520),
+            contentColor = Color(0xFFF2F2F7)
         ),
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(
@@ -450,18 +468,18 @@ private fun ProviderConfigWarningCard(navController: NavHostController) {
             Icon(
                 imageVector = Icons.Rounded.Warning,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer
+                tint = Color(0xFFFF453A)
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.setting_page_config_api_title),
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = Color(0xFFF2F2F7)
                 )
                 Text(
                     text = stringResource(R.string.setting_page_config_api_desc),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                    color = Color(0xFFF2F2F7).copy(alpha = 0.65f)
                 )
             }
         }

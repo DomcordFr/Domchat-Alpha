@@ -289,9 +289,10 @@ fun blurredContainerColor(
 /** Sheets use dynamic base luminance tone layered with glass alpha. Directly follows glassAlpha setting. */
 @Composable
 fun domChatSheetContainerColor(): Color {
+    // Opacity floor: at 0% glass alpha the plate must stay solid, never transparent.
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    if (alpha <= 0.001f) return Color.Transparent
+    if (alpha <= 0.02f) return Color(0xFF141520)
     val base = domChatBaseToneColor()
     return base.copy(alpha = alpha)
 }

@@ -192,7 +192,7 @@ fun SettingLocalLlmPage(
                 item {
                     Surface(
                         shape = AppShapes.CardMedium,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        color = androidx.compose.ui.graphics.Color(0xFF141520),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(
@@ -817,7 +817,7 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                 )
                 Surface(
                     shape = AppShapes.CardSmall,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = androidx.compose.ui.graphics.Color(0xFF141520),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(

@@ -127,7 +127,7 @@ fun DomChatGlassChip(
     accent: Boolean = false,
 ) {
     Surface(
-        color = Color(DOMCHAT_UNIFIED_CARD_COLOR).copy(alpha = 0.75f),
+        color = Color(DOMCHAT_UNIFIED_CARD_COLOR),
         shape = AppShapes.Tag,
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         tonalElevation = 0.dp,
@@ -135,9 +135,9 @@ fun DomChatGlassChip(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = if (accent) DomChatAccent else Color.White.copy(alpha = 0.85f),
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
             maxLines = 1,
         )
     }

@@ -407,17 +407,14 @@ private fun ApiKeyCard(
         onClick = onEdit,
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = if (hasError) {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f)
-            } else if (!entry.enabled) {
-                MaterialTheme.colorScheme.surfaceContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            }
+            containerColor = Color(0xFF141520),
+            contentColor = Color(0xFFF2F2F7)
         ),
         border = if (hasError) {
-            BorderStroke(1.5.dp, MaterialTheme.colorScheme.error)
-        } else null,
+            BorderStroke(1.5.dp, Color(0xFFFF453A))
+        } else {
+            BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+        },
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isDragging) 6.dp else 0.dp
         ),
@@ -474,11 +471,11 @@ private fun ApiKeyCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = if (hasError) {
-                            MaterialTheme.colorScheme.onErrorContainer
+                            Color(0xFFFF453A)
                         } else if (!entry.enabled) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            Color(0xFFF2F2F7).copy(alpha = 0.55f)
                         } else {
-                            MaterialTheme.colorScheme.onSurface
+                            Color(0xFFF2F2F7)
                         }
                     )
                     IconButton(
@@ -500,9 +497,9 @@ private fun ApiKeyCard(
                     maxLines = if (isRevealed) 3 else 1,
                     overflow = TextOverflow.Ellipsis,
                     color = if (hasError) {
-                        MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                        Color(0xFFFF453A).copy(alpha = 0.8f)
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        Color(0xFFF2F2F7).copy(alpha = 0.55f)
                     }
                 )
 

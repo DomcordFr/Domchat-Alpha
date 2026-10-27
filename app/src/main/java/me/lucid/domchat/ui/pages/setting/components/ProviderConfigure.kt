@@ -13,6 +13,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SuggestionChip
 import org.koin.core.parameter.parametersOf
 import androidx.compose.foundation.layout.PaddingValues
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.LocalContentColor
@@ -70,6 +71,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -266,7 +268,7 @@ private fun ProviderTypeSelector(
         modifier = Modifier
             .fillMaxWidth()
             .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy((-1).dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         ProviderSetting.Types.forEachIndexed { index, type ->
             val selected = selectedType == type
@@ -279,18 +281,18 @@ private fun ProviderTypeSelector(
             )
             val containerColor by animateColorAsState(
                 targetValue = if (selected) {
-                    MaterialTheme.colorScheme.secondaryContainer
+                    Color(0xFFA78BFA).copy(alpha = 0.22f)
                 } else {
-                    Color.Transparent
+                    Color(0xFF141520)
                 },
                 animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
                 label = "provider_type_container"
             )
             val contentColor by animateColorAsState(
                 targetValue = if (selected) {
-                    MaterialTheme.colorScheme.onSecondaryContainer
+                    Color(0xFFC9B4FF)
                 } else {
-                    MaterialTheme.colorScheme.onSurface
+                    Color(0xFFF2F2F7).copy(alpha = 0.70f)
                 },
                 animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
                 label = "provider_type_content"
@@ -315,13 +317,14 @@ private fun ProviderTypeSelector(
                             }
                         }
                     ),
-                shape = SegmentedButtonDefaults.itemShape(
-                    index = index,
-                    count = ProviderSetting.Types.size
-                ),
+                shape = AppShapes.ButtonPill,
                 color = containerColor,
                 contentColor = contentColor,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                border = BorderStroke(
+                    0.5.dp,
+                    if (selected) Color(0xFFA78BFA).copy(alpha = 0.5f)
+                    else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                ),
             ) {
                 Row(
                     modifier = Modifier
@@ -562,10 +565,12 @@ private fun ColumnScope.ProviderConfigureComfyUI(
     }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardMedium),
         shape = AppShapes.CardMedium,
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f),
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        color = Color(0xFF141520),
+        contentColor = Color(0xFFF2F2F7),
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -578,7 +583,7 @@ private fun ColumnScope.ProviderConfigureComfyUI(
             Text(
                 text = stringResource(R.string.setting_provider_page_comfyui_setup_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f),
+                color = Color(0xFFF2F2F7).copy(alpha = 0.65f),
             )
         }
     }
@@ -591,30 +596,27 @@ private fun ColumnScope.ProviderConfigureComfyUI(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    Button(
+    DomChatGlassPillButton(
+        text = stringResource(R.string.setting_provider_page_comfyui_import_workflow),
         onClick = {
-            haptics.perform(HapticPattern.Pop)
             workflowLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
         },
         modifier = Modifier.fillMaxWidth(),
-        shape = AppShapes.ButtonPill,
-    ) {
-        Text(stringResource(R.string.setting_provider_page_comfyui_import_workflow))
-    }
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+    )
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                0.5.dp,
+                if (provider.workflowJson.isBlank()) Color(0xFFFF453A).copy(alpha = 0.45f)
+                else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                AppShapes.CardMedium
+            ),
         shape = AppShapes.CardMedium,
-        color = if (provider.workflowJson.isBlank()) {
-            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f)
-        } else {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
-        },
-        contentColor = if (provider.workflowJson.isBlank()) {
-            MaterialTheme.colorScheme.onErrorContainer
-        } else {
-            MaterialTheme.colorScheme.onPrimaryContainer
-        },
+        color = Color(0xFF141520),
+        contentColor = Color(0xFFF2F2F7),
     ) {
         Text(
             text = stringResource(
@@ -765,6 +767,7 @@ private fun OpenAICompatibilityModeSetting(
     selected: OpenAICompatibilityMode,
     onSelected: (OpenAICompatibilityMode) -> Unit,
 ) {
+    val haptics = rememberPremiumHaptics()
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
@@ -776,22 +779,39 @@ private fun OpenAICompatibilityModeSetting(
             style = MaterialTheme.typography.bodyMedium,
         )
         val modes = OpenAICompatibilityMode.entries
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            modes.forEachIndexed { index, mode ->
-                SegmentedButton(
-                    selected = selected == mode,
-                    onClick = { onSelected(mode) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
-                    label = {
-                        Text(
-                            when (mode) {
-                                OpenAICompatibilityMode.AUTO -> stringResource(R.string.setting_provider_page_compatibility_auto)
-                                OpenAICompatibilityMode.ENABLED -> stringResource(R.string.setting_provider_page_compatibility_on)
-                                OpenAICompatibilityMode.DISABLED -> stringResource(R.string.setting_provider_page_compatibility_off)
-                            }
-                        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            modes.forEach { mode ->
+                val isSel = selected == mode
+                Surface(
+                    selected = isSel,
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        onSelected(mode)
                     },
-                )
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.ButtonPill,
+                    color = if (isSel) Color(0xFFA78BFA).copy(alpha = 0.22f) else Color(0xFF141520),
+                    contentColor = if (isSel) Color(0xFFC9B4FF) else Color(0xFFF2F2F7).copy(alpha = 0.70f),
+                    border = BorderStroke(
+                        0.5.dp,
+                        if (isSel) Color(0xFFA78BFA).copy(alpha = 0.5f)
+                        else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                    ),
+                ) {
+                    Text(
+                        when (mode) {
+                            OpenAICompatibilityMode.AUTO -> stringResource(R.string.setting_provider_page_compatibility_auto)
+                            OpenAICompatibilityMode.ENABLED -> stringResource(R.string.setting_provider_page_compatibility_on)
+                            OpenAICompatibilityMode.DISABLED -> stringResource(R.string.setting_provider_page_compatibility_off)
+                        },
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp)
+                    )
+                }
             }
         }
     }

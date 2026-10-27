@@ -52,6 +52,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import me.lucid.domchat.ui.components.ui.DomChatSlider
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -250,17 +251,14 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         )
                                     }
                                 }
-                                FilledTonalButton(
+                                DomChatGlassPillButton(
+                                    text = if (globalBg.isNullOrBlank()) "Choose" else "Change",
                                     onClick = {
-                                        haptics.perform(HapticPattern.Pop)
                                         globalWallpaperPicker.launch(
                                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                         )
-                                    },
-                                    shape = AppShapes.ButtonPill
-                                ) {
-                                    Text(if (globalBg.isNullOrBlank()) "Choose" else "Change")
-                                }
+                                    }
+                                )
                             }
                         }
                     )
@@ -819,12 +817,11 @@ private fun GlassPresetSelector(
     modifier: Modifier = Modifier
 ) {
     val presets = listOf("Clear Glass", "Dark Glass", "Liquid Frost")
-    val isDark = LocalDarkMode.current
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        color = if (isDark) Color(0xFF141522).copy(alpha = 0.70f) else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.50f),
-        border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f))
+        color = Color(0xFF0E0F18),
+        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f))
     ) {
         Row(
             modifier = Modifier
@@ -839,9 +836,7 @@ private fun GlassPresetSelector(
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .background(
-                            if (isSelected) {
-                                if (isDark) Color.White.copy(alpha = 0.20f) else MaterialTheme.colorScheme.primaryContainer
-                            } else Color.Transparent
+                            if (isSelected) Color(0xFF141520) else Color.Transparent
                         )
                         .clickable { onSelect(name) }
                         .padding(vertical = 8.dp, horizontal = 2.dp),
@@ -853,11 +848,7 @@ private fun GlassPresetSelector(
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                             fontSize = 12.sp
                         ),
-                        color = if (isSelected) {
-                            if (isDark) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            if (isDark) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         textAlign = TextAlign.Center

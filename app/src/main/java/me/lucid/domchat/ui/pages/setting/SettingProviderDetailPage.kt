@@ -550,7 +550,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                     Surface(
                         modifier = Modifier.align(Alignment.Center),
                         shape = RoundedCornerShape(28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        color = androidx.compose.ui.graphics.Color(0xFF141520)High,
                         tonalElevation = 6.dp,
                         shadowElevation = 8.dp
                     ) {
@@ -1237,7 +1237,7 @@ private fun LocalHuggingFaceInstallFab(
             showSheet = true
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
         Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.local_llm_install_url_action))
@@ -1631,7 +1631,7 @@ private fun ModelPickerFab(
             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        containerColor = androidx.compose.ui.graphics.Color(0xFF141520)High,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Icon(
@@ -2593,7 +2593,7 @@ private fun ModelCapabilityProbeButton(
             },
             enabled = enabled && !isLoading,
             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-            color = MaterialTheme.colorScheme.secondaryContainer,
+            color = androidx.compose.ui.graphics.Color(0xFF141520),
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             interactionSource = interactionSource,
             modifier = Modifier

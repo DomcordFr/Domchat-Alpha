@@ -398,7 +398,7 @@ fun AssistantMemorySettings(
 
                 if (embeddingStatus != null) {
                     Surface(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        color = androidx.compose.ui.graphics.Color(0xFF141520),
                         shape = AppShapes.ListItem,
                         modifier = Modifier.fillMaxWidth(),
                     ) {

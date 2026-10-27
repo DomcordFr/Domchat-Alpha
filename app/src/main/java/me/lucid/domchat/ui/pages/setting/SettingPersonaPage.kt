@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -391,18 +392,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (!isActive) {
-                                Button(
-                                    onClick = { setActive(persona.id) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isDark) Color.White else Color.Black,
-                                        contentColor = if (isDark) Color.Black else Color.White
-                                    )
-                                ) {
-                                    Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Use in Chat", fontSize = 12.sp)
-                                }
+                                DomChatGlassPillButton(
+                                    text = "Use in Chat",
+                                    icon = Icons.Rounded.Check,
+                                    onClick = { setActive(persona.id) }
+                                )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
 

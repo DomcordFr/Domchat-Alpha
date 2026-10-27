@@ -122,6 +122,7 @@ import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalToaster
+import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.AssistantExportImport
@@ -296,60 +297,24 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 .padding(padding)
                 .statusBarsPadding()
         ) {
-            // Header Bar — same geometry as OneUITopAppBar pages: back at start, title centered, actions at end
-            Box(
+            // 1. Standalone top row: back button only
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BackButton()
-                }
-
-                Text(
-                    text = "Characters",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else Color.Black,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 96.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Import Character button
-                    IconButton(onClick = {
-                        importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
-                    }) {
-                        Icon(
-                            imageVector = Icons.Rounded.FileUpload,
-                            contentDescription = "Import Character Card",
-                            tint = if (isDark) Color.White else Color.Black
-                        )
-                    }
-
-                    // Grid/List toggle
-                    IconButton(onClick = { isGridView = !isGridView }) {
-                        Icon(
-                            imageVector = if (isGridView) Icons.Rounded.ViewList else Icons.Rounded.GridView,
-                            contentDescription = "Toggle View",
-                            tint = if (isDark) Color.White else Color.Black
-                        )
-                    }
-                }
+                BackButton()
             }
+
+            // 2. Large page title
+            Text(
+                text = "Characters",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isDark) Color.White else Color.Black,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
 
             // Search Bar
             OutlinedTextField(
@@ -368,12 +333,15 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = AppShapes.InputField,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = if (isDark) Color(0xFF0D0D0D) else Color.White,
-                    unfocusedContainerColor = if (isDark) Color(0xFF080808) else Color(0xFFEFEFEF),
-                    focusedBorderColor = if (isDark) Color.White.copy(0.3f) else Color.Black.copy(0.3f),
-                    unfocusedBorderColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE0E0E0)
+                    focusedContainerColor = Color(0xFF141520),
+                    unfocusedContainerColor = Color(0xFF141520),
+                    focusedBorderColor = Color.White.copy(0.3f),
+                    unfocusedBorderColor = Color.White.copy(0.12f),
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    cursorColor = Color.White
                 )
             )
 
@@ -400,7 +368,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         val selected = sortOption == option
                         Surface(
                             onClick = { sortOption = option },
-                            color = if (selected) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.55f),
+                            color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF141520),
                             shape = RoundedCornerShape(10.dp),
                             border = androidx.compose.foundation.BorderStroke(
                                 0.5.dp,
@@ -419,6 +387,48 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
+                    }
+                }
+            }
+
+            // 5. Actions Row (BELOW sorting): Upload Character + Grid/List toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                DomChatGlassPillButton(
+                    text = "Upload Character",
+                    icon = Icons.Rounded.FileUpload,
+                    onClick = {
+                        importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
+                    }
+                )
+
+                Surface(
+                    onClick = { isGridView = !isGridView },
+                    shape = AppShapes.ButtonPill,
+                    color = Color(0xFF141520),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isGridView) Icons.Rounded.ViewList else Icons.Rounded.GridView,
+                            contentDescription = "Toggle View",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = if (isGridView) "List View" else "Grid View",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White
+                        )
                     }
                 }
             }

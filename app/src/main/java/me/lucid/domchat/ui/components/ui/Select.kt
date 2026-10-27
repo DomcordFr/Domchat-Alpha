@@ -77,16 +77,16 @@ fun <T> Select(
         }
     ) {
         Surface(
-            color = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.90f),
+            color = Color(0xFF141520),
             shape = RoundedCornerShape(20.dp),
             border = BorderStroke(
                 0.5f.dp,
-                if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
+                LiquidGlassTokens.SpecularBorderSubtle
             ),
             tonalElevation = 0.dp,
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .domChatBlurEffect(if (isDark) Color(0xFF141520) else Color.White, RoundedCornerShape(20.dp))
+                .domChatBlurEffect(Color(0xFF141520), RoundedCornerShape(20.dp))
         ) {
             Row(
                 modifier = Modifier
@@ -99,7 +99,7 @@ fun <T> Select(
                     text = optionToString(selectedOption),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                    color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.End
@@ -108,7 +108,7 @@ fun <T> Select(
                 Icon(
                     imageVector = Icons.Rounded.KeyboardArrowDown,
                     contentDescription = stringResource(R.string.a11y_expand),
-                    tint = if (isDark) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.rotate(rotation)
                 )
             }
@@ -119,10 +119,10 @@ fun <T> Select(
                 expanded = false
             },
             shape = RoundedCornerShape(20.dp),
-            containerColor = if (isDark) Color(0xFF0E0F18).copy(alpha = 0.97f) else Color.White,
+            containerColor = Color(0xFF0E0F18),
             border = BorderStroke(
                 0.5f.dp,
-                if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
+                LiquidGlassTokens.SpecularBorderSubtle
             ),
         ) {
             options.fastForEach { option ->

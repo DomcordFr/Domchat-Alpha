@@ -124,7 +124,7 @@ fun CustomIconSelector(
                     .align(Alignment.TopEnd)
                     .size(20.dp),
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.errorContainer,
+                color = androidx.compose.ui.graphics.Color(0xFF2C1517),
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 shadowElevation = 2.dp,
             ) {
@@ -349,7 +349,7 @@ private fun LobeHubIconOption(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.CardMedium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = androidx.compose.ui.graphics.Color(0xFF141520)High,
     ) {
         Row(
             modifier = Modifier

@@ -163,15 +163,15 @@ private fun StrategyOptionCard(
         shape = AppShapes.CardSmall,
         colors = CardDefaults.cardColors(
             containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                Color(0xFFA78BFA).copy(alpha = 0.18f)
             } else {
-                MaterialTheme.colorScheme.surfaceContainer
+                Color(0xFF141520)
             },
         ),
         border = if (selected) {
-            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+            BorderStroke(1.5.dp, Color(0xFFA78BFA).copy(alpha = 0.6f))
         } else {
-            null
+            BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
         },
     ) {
         Row(
@@ -191,12 +191,12 @@ private fun StrategyOptionCard(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                    color = if (selected) Color(0xFFC9B4FF) else Color(0xFFF2F2F7),
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color(0xFFF2F2F7).copy(alpha = 0.55f),
                 )
             }
         }

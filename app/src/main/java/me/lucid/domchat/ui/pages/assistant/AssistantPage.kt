@@ -702,7 +702,7 @@ private fun AssistantItemContent(
                                 val tag = settings.assistantTags.find { it.id == tagId } ?: return@fastForEach
                                 Surface(
                                     shape = RoundedCornerShape(50),
-                                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                                    color = androidx.compose.ui.graphics.Color(0xFF141520),
                                 ) {
                                     Text(
                                         text = tag.name,
