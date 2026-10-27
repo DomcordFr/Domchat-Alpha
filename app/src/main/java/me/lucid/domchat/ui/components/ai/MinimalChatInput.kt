@@ -1744,7 +1744,7 @@ fun MinimalChatInput(
                             Text("Fade Duration", style = MaterialTheme.typography.bodyMedium)
                             Text("${durationDraft.toInt()} ms", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
-                        Slider(
+                        DomChatSlider(
                             value = durationDraft,
                             onValueChange = { durationDraft = it },
                             valueRange = 100f..1000f,
@@ -1760,7 +1760,7 @@ fun MinimalChatInput(
                             Text("Starting Opacity", style = MaterialTheme.typography.bodyMedium)
                             Text("${(startAlphaDraft * 100).toInt()}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
-                        Slider(
+                        DomChatSlider(
                             value = startAlphaDraft,
                             onValueChange = { startAlphaDraft = it },
                             valueRange = 0f..0.8f,
@@ -1840,7 +1840,7 @@ fun MinimalChatInput(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Slider(
+                    DomChatSlider(
                         value = depthDraft,
                         onValueChange = { depthDraft = it },
                         valueRange = 0f..10f,

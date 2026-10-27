@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -362,7 +363,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 Text("Window Capacity", style = MaterialTheme.typography.bodyMedium)
                                 Text("$maxContextTokens tokens", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = maxContextTokens.toFloat(),
                                 onValueChange = {
                                     val step = 4096f
@@ -375,12 +376,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     haptics.perform(HapticPattern.Tick)
                                     persist(newMaxContext = maxContextTokens)
                                 },
-                                valueRange = 4096f..262144f,
-                                colors = androidx.compose.material3.SliderDefaults.colors(
-                                    thumbColor = Color.White,
-                                    activeTrackColor = Color(0xFF3B82F6),
-                                    inactiveTrackColor = Color.White.copy(alpha = 0.12f)
-                                )
+                                valueRange = 4096f..262144f
                             )
                         }
                     }
@@ -419,7 +415,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 }
                                 Text("$historyPercent% ($historyTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF10B981))
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = historyPercent.toFloat(),
                                 onValueChange = {
                                     val newHist = it.roundToInt().coerceIn(15, 80)
@@ -432,12 +428,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     persist(newHistoryPercent = historyPercent)
                                 },
                                 valueRange = 15f..80f,
-                                steps = 64,
-                                colors = androidx.compose.material3.SliderDefaults.colors(
-                                    thumbColor = Color.White,
-                                    activeTrackColor = Color(0xFF10B981),
-                                    inactiveTrackColor = Color.White.copy(alpha = 0.12f)
-                                )
+                                steps = 64
                             )
                         }
 
@@ -454,7 +445,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 }
                                 Text("$memoryPercent% ($memoryTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF8B5CF6))
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = memoryPercent.toFloat(),
                                 onValueChange = {
                                     val newMem = it.roundToInt().coerceIn(5, 50)
@@ -467,12 +458,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     persist(newMemoryPercent = memoryPercent)
                                 },
                                 valueRange = 5f..50f,
-                                steps = 44,
-                                colors = androidx.compose.material3.SliderDefaults.colors(
-                                    thumbColor = Color.White,
-                                    activeTrackColor = Color(0xFF8B5CF6),
-                                    inactiveTrackColor = Color.White.copy(alpha = 0.12f)
-                                )
+                                steps = 44
                             )
                         }
 
@@ -526,7 +512,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 Text("Max Response Tokens", style = MaterialTheme.typography.bodyMedium)
                                 Text("$maxResponseTokens tk", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = maxResponseTokens.toFloat(),
                                 onValueChange = {
                                     val step = 256f
@@ -539,12 +525,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     haptics.perform(HapticPattern.Tick)
                                     persist(newMaxResponse = maxResponseTokens)
                                 },
-                                valueRange = 512f..16384f,
-                                colors = androidx.compose.material3.SliderDefaults.colors(
-                                    thumbColor = Color.White,
-                                    activeTrackColor = Color(0xFF3B82F6),
-                                    inactiveTrackColor = Color.White.copy(alpha = 0.12f)
-                                )
+                                valueRange = 512f..16384f
                             )
                         }
 

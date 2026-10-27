@@ -104,7 +104,7 @@ fun AssistantRagMemorySubPage(
                     var threshold by remember(assistant.ragSimilarityThreshold) {
                         mutableFloatStateOf(assistant.ragSimilarityThreshold)
                     }
-                    Slider(
+                    DomChatSlider(
                         value = threshold,
                         onValueChange = { newValue ->
                             threshold = newValue
@@ -150,7 +150,7 @@ fun AssistantRagMemorySubPage(
                     var limit by remember(assistant.ragLimit) {
                         mutableFloatStateOf(assistant.ragLimit.toFloat())
                     }
-                    Slider(
+                    DomChatSlider(
                         value = limit,
                         onValueChange = { newValue ->
                             limit = newValue

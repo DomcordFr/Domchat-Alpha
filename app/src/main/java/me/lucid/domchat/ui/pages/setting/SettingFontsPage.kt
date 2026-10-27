@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -696,7 +697,7 @@ private fun FontAxisSlider(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.width(90.dp)
         )
-        Slider(
+        DomChatSlider(
             value = localValue,
             onValueChange = { newValue ->
                 localValue = newValue

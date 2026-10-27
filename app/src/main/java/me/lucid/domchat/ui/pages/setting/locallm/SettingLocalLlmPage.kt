@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Upgrade
 import androidx.compose.material3.AlertDialog
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -1045,7 +1046,7 @@ private fun SliderRow(
             Text(label, style = MaterialTheme.typography.labelLarge)
             Text(valueText, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Slider(value = value, onValueChange = onChange, valueRange = valueRange, steps = steps)
+        DomChatSlider(value = value, onValueChange = onChange, valueRange = valueRange, steps = steps)
     }
 }
 

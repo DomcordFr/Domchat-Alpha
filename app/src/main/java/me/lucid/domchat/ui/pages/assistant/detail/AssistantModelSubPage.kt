@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -199,7 +200,7 @@ fun AssistantModelSubPage(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Slider(
+                        DomChatSlider(
                             value = assistant.temperature ?: 1.0f,
                             onValueChange = { onUpdate(assistant.copy(temperature = it.toFixed(2).toFloatOrNull() ?: 0.6f)) },
                             valueRange = 0f..2f,
@@ -255,7 +256,7 @@ fun AssistantModelSubPage(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Slider(
+                        DomChatSlider(
                             value = assistant.topP ?: 0.9f,
                             onValueChange = { onUpdate(assistant.copy(topP = it.toFixed(2).toFloatOrNull() ?: 0.9f)) },
                             valueRange = 0f..1f,

@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.ToggleOn
 import androidx.compose.material3.Card
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -1092,7 +1093,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                             singleLine = true,
                         )
                     }
-                    Slider(
+                    DomChatSlider(
                         value = tokenBudget.coerceIn(100, 8192).toFloat(),
                         onValueChange = { newVal: Float ->
                             val parsed = newVal.toInt()
@@ -1415,7 +1416,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Slider(
+                    DomChatSlider(
                         value = tokenBudget.coerceIn(512, 16384).toFloat(),
                         onValueChange = { newVal: Float ->
                             val parsed = newVal.toInt()

@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Icon
 
 import androidx.compose.material3.MaterialTheme
@@ -296,7 +297,7 @@ private fun FontSizeSettingItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Slider(
+                DomChatSlider(
                     value = value,
                     onValueChange = { onValueChange(it) },
                     valueRange = 0.5f..2f,

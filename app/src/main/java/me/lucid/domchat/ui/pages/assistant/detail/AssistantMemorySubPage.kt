@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.AlertDialog
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -695,7 +696,7 @@ private fun RagSettingsCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                Slider(
+                DomChatSlider(
                     value = threshold,
                     onValueChange = { newValue ->
                         threshold = newValue
@@ -767,7 +768,7 @@ private fun ConsolidationSettingsCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Slider(
+                DomChatSlider(
                     value = assistant.consolidationDelayMinutes.toFloat(),
                     onValueChange = { onUpdateAssistant(assistant.copy(consolidationDelayMinutes = it.toInt())) },
                     valueRange = 0f..240f,

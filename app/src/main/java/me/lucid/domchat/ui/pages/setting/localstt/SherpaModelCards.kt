@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -299,7 +300,7 @@ fun SherpaModelSettingsSheet(
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("CPU threads: ${config.numThreads}", style = MaterialTheme.typography.titleSmall)
-                Slider(
+                DomChatSlider(
                     value = config.numThreads.toFloat(),
                     onValueChange = {
                         config = config.copy(numThreads = it.roundToInt().coerceIn(1, 8))

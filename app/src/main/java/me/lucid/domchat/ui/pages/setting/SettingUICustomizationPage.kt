@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalTextStyle
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -304,7 +305,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = displaySetting.streamingFadeDurationMs.toFloat(),
                                 onValueChange = {
                                     updateDisplaySetting(displaySetting.copy(streamingFadeDurationMs = it.toInt()))
@@ -336,7 +337,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = displaySetting.streamingFadeStartAlpha,
                                 onValueChange = {
                                     updateDisplaySetting(displaySetting.copy(streamingFadeStartAlpha = (it * 100).roundToInt() / 100f))
@@ -460,7 +461,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Slider(
+                        DomChatSlider(
                             value = displaySetting.fontSizeRatio,
                             onValueChange = {
                                 updateDisplaySetting(displaySetting.copy(fontSizeRatio = it))

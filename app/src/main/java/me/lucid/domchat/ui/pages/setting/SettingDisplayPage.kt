@@ -51,6 +51,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -286,7 +287,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 Text("Wallpaper Dimming", style = MaterialTheme.typography.bodyMedium)
                                 Text("${(localDim * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = localDim,
                                 onValueChange = {
                                     if ((it * 100).toInt() != (localDim * 100).toInt()) {
@@ -308,7 +309,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 Text("Wallpaper Blur", style = MaterialTheme.typography.bodyMedium)
                                 Text("${localBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                             }
-                            Slider(
+                            DomChatSlider(
                                 value = localBlur,
                                 onValueChange = {
                                     if (it.roundToInt() != localBlur.roundToInt()) {
@@ -354,7 +355,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     Text("Fade Blur Height", style = MaterialTheme.typography.bodyMedium)
                                     Text("${(localFadeHeight * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 }
-                                Slider(
+                                DomChatSlider(
                                     value = localFadeHeight,
                                     onValueChange = {
                                         if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
@@ -408,12 +409,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) { mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha) }
                         var localBubbleBlur by remember(settings.displaySetting.chatBubbleBlur) { mutableFloatStateOf(settings.displaySetting.chatBubbleBlur) }
                         var localBubbleTone by remember(settings.displaySetting.chatBubbleTone) { mutableFloatStateOf(settings.displaySetting.chatBubbleTone) }
-
-                        val sliderColors = SliderDefaults.colors(
-                            thumbColor = if (isDark) Color.White else MaterialTheme.colorScheme.primary,
-                            activeTrackColor = if (isDark) Color.White.copy(alpha = 0.85f) else MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.1f)
-                        )
 
                         // --- SECTION 1: PANELS & SHEETS ---
                         Text(
@@ -483,7 +478,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             Text("UI Glass Opacity", style = MaterialTheme.typography.bodyMedium)
                             Text("${(localGlassAlpha * 100).roundToInt()}% (${((1f - localGlassAlpha) * 100).roundToInt()}% transparent)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         }
-                        Slider(
+                        DomChatSlider(
                             value = localGlassAlpha,
                             onValueChange = {
                                 val rounded = (it * 100f).roundToInt() / 100f
@@ -492,8 +487,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     updateDisplaySetting(settings.displaySetting.copy(glassAlpha = rounded))
                                 }
                             },
-                            valueRange = 0f..1.0f,
-                            colors = sliderColors
+                            valueRange = 0f..1.0f
                         )
 
                         // Glass Blur Slider (0 to 100 dp)
@@ -505,7 +499,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             Text("UI Glass Blur Radius", style = MaterialTheme.typography.bodyMedium)
                             Text("${localGlassBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         }
-                        Slider(
+                        DomChatSlider(
                             value = localGlassBlur,
                             onValueChange = {
                                 val rounded = it.roundToInt().toFloat()
@@ -514,8 +508,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     updateDisplaySetting(settings.displaySetting.copy(glassBlur = rounded))
                                 }
                             },
-                            valueRange = 0f..100f,
-                            colors = sliderColors
+                            valueRange = 0f..100f
                         )
 
                         // Glass Foundation Tone Slider (0.0 = OLED Black, 1.0 = Pure White)
@@ -535,7 +528,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Slider(
+                        DomChatSlider(
                             value = localBaseLuminance,
                             onValueChange = {
                                 val rounded = (it * 100f).roundToInt() / 100f
@@ -544,8 +537,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     updateDisplaySetting(settings.displaySetting.copy(glassBaseLuminance = rounded))
                                 }
                             },
-                            valueRange = 0f..1.0f,
-                            colors = sliderColors
+                            valueRange = 0f..1.0f
                         )
 
                         // Connect side menu + chat popovers to the glass sliders above
@@ -651,7 +643,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Slider(
+                        DomChatSlider(
                             value = localBubbleAlpha,
                             onValueChange = {
                                 val rounded = (it * 100f).roundToInt() / 100f
@@ -660,8 +652,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     updateDisplaySetting(settings.displaySetting.copy(chatBubbleAlpha = rounded))
                                 }
                             },
-                            valueRange = 0f..1.0f,
-                            colors = sliderColors
+                            valueRange = 0f..1.0f
                         )
 
                         // Chat Bubble Blur Slider (0 to 100 dp)
@@ -673,7 +664,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             Text("Bubble Blur Radius", style = MaterialTheme.typography.bodyMedium)
                             Text("${localBubbleBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         }
-                        Slider(
+                        DomChatSlider(
                             value = localBubbleBlur,
                             onValueChange = {
                                 val rounded = it.roundToInt().toFloat()
@@ -682,8 +673,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     updateDisplaySetting(settings.displaySetting.copy(chatBubbleBlur = rounded))
                                 }
                             },
-                            valueRange = 0f..100f,
-                            colors = sliderColors
+                            valueRange = 0f..100f
                         )
 
                         // Chat Bubble Base Tone Slider
@@ -703,7 +693,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        Slider(
+                        DomChatSlider(
                             value = localBubbleTone,
                             onValueChange = {
                                 val rounded = (it * 100f).roundToInt() / 100f
@@ -712,8 +702,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     updateDisplaySetting(settings.displaySetting.copy(chatBubbleTone = rounded))
                                 }
                             },
-                            valueRange = 0f..1.0f,
-                            colors = sliderColors
+                            valueRange = 0f..1.0f
                         )
                     }
                 }
