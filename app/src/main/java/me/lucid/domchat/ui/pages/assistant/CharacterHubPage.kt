@@ -296,70 +296,58 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 .padding(padding)
                 .statusBarsPadding()
         ) {
-            // Header Bar
-            Row(
+            // Header Bar — same geometry as OneUITopAppBar pages: back at start, title centered, actions at end
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .height(52.dp)
             ) {
-                BackButton()
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Characters",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color.Black
-                    )
-                    Text(
-                        text = "${filteredAssistants.size} characters loaded",
-                        fontSize = 12.sp,
-                        color = Color(0xFF888888)
-                    )
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BackButton()
                 }
 
-                // Import Character button
-                IconButton(onClick = {
-                    importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
-                }) {
-                    Icon(
-                        imageVector = Icons.Rounded.FileUpload,
-                        contentDescription = "Import Character Card",
-                        tint = if (isDark) Color.White else Color.Black
-                    )
-                }
+                Text(
+                    text = "Characters",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color.White else Color.Black,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 96.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-                // Grid/List toggle
-                IconButton(onClick = { isGridView = !isGridView }) {
-                    Icon(
-                        imageVector = if (isGridView) Icons.Rounded.ViewList else Icons.Rounded.GridView,
-                        contentDescription = "Toggle View",
-                        tint = if (isDark) Color.White else Color.Black
-                    )
-                }
-
-                // Sort toggle
-                IconButton(onClick = {
-                    val next = when (sortOption) {
-                        CharacterSortOption.RECENT -> CharacterSortOption.NAME
-                        CharacterSortOption.NAME -> CharacterSortOption.CREATOR
-                        CharacterSortOption.CREATOR -> CharacterSortOption.RECENT
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Import Character button
+                    IconButton(onClick = {
+                        importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
+                    }) {
+                        Icon(
+                            imageVector = Icons.Rounded.FileUpload,
+                            contentDescription = "Import Character Card",
+                            tint = if (isDark) Color.White else Color.Black
+                        )
                     }
-                    sortOption = next
-                    val label = when (next) {
-                        CharacterSortOption.RECENT -> "Recent"
-                        CharacterSortOption.NAME -> "Name (A-Z)"
-                        CharacterSortOption.CREATOR -> "Creator"
+
+                    // Grid/List toggle
+                    IconButton(onClick = { isGridView = !isGridView }) {
+                        Icon(
+                            imageVector = if (isGridView) Icons.Rounded.ViewList else Icons.Rounded.GridView,
+                            contentDescription = "Toggle View",
+                            tint = if (isDark) Color.White else Color.Black
+                        )
                     }
-                    toaster.show("Sorted by: $label")
-                }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Sort,
-                        contentDescription = "Sort",
-                        tint = if (isDark) Color.White else Color.Black
-                    )
                 }
             }
 
@@ -389,7 +377,53 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            // Count on the left, sorting options on the right
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${filteredAssistants.size} characters loaded",
+                    fontSize = 12.sp,
+                    color = Color(0xFF888888)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    CharacterSortOption.entries.forEach { option ->
+                        val selected = sortOption == option
+                        Surface(
+                            onClick = { sortOption = option },
+                            color = if (selected) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.55f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp,
+                                if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                            )
+                        ) {
+                            Text(
+                                text = when (option) {
+                                    CharacterSortOption.RECENT -> "Recent"
+                                    CharacterSortOption.NAME -> "Name"
+                                    CharacterSortOption.CREATOR -> "Creator"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (selected) Color.White else Color(0xFF888888),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Character Gallery Content
             AnimatedContent(
