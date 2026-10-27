@@ -114,8 +114,8 @@ private fun DomChatGlassPillButtonContent(
                 },
                 maxLines = 1,
             )
+            content?.invoke(this)
         }
-        content?.invoke(this)
     }
 }
 

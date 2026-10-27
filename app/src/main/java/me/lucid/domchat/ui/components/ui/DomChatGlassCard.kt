@@ -2,7 +2,7 @@ package me.lucid.domchat.ui.components.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BoxScope
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import me.lucid.domchat.ui.theme.LiquidGlassTokens

@@ -128,8 +128,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             // Description
             item {
                 val isDark = LocalDarkMode.current
-                val cardBg = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f)
-                val cardBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = AppShapes.CardLarge,
@@ -203,8 +203,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             // Quick 1-Tap Text Type Presets
             item {
                 val isDark = LocalDarkMode.current
-                val cardBg = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f)
-                val cardBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = AppShapes.CardLarge,
@@ -275,8 +275,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             if (displaySetting.rpStyleRules.isEmpty()) {
                 item {
                     val isDark = LocalDarkMode.current
-                    val cardBg = if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.03f)
-                    val cardBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                    val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                    val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = AppShapes.CardLarge,
@@ -331,8 +331,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 }
                 item {
                     val isDark = LocalDarkMode.current
-                    val cardBg = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f)
-                    val cardBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                    val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                    val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = AppShapes.CardLarge,
@@ -413,8 +413,8 @@ private fun RpStyleRuleItem(
         MaterialTheme.colorScheme.onSurface
     }
     val isDark = LocalDarkMode.current
-    val cardBg = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f)
-    val cardBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+    val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+    val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
 
     Card(
         colors = CardDefaults.cardColors(containerColor = cardBg),

@@ -422,8 +422,8 @@ fun SettingLorebookDetailPage(
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = Color(0xFF141520).copy(alpha = 0.55f),
-                        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                         ),
+                        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                         shape = AppShapes.CardLarge
                     ) {
                         Column(

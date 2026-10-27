@@ -6,6 +6,7 @@ import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import me.lucid.domchat.ui.theme.AppShapes
@@ -44,6 +46,17 @@ fun SecureOutlinedTextField(
             PasswordVisualTransformation()
         },
         shape = AppShapes.InputField,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFF141520).copy(alpha = 0.55f),
+            unfocusedContainerColor = Color(0xFF141520).copy(alpha = 0.45f),
+            focusedTextColor = Color(0xFFF2F2F7),
+            unfocusedTextColor = Color(0xFFF2F2F7),
+            cursorColor = Color.White,
+            focusedBorderColor = Color(0xFFA78BFA).copy(alpha = 0.5f),
+            unfocusedBorderColor = Color(0xFF3A3D4A),
+            focusedLabelColor = Color(0xFFB9A8FC),
+            unfocusedLabelColor = Color(0xFF8A8A96),
+        ),
         trailingIcon = {
             IconButton(onClick = { visible = !visible }) {
                 Icon(

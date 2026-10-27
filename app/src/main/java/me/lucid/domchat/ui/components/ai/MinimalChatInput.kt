@@ -2172,7 +2172,7 @@ fun MinimalChatInput(
                             }
                             showWallpaperSheet = false
                         }
-                    }
+                    )
                 }
             }
         }

@@ -478,8 +478,10 @@ private fun LocalModelSetupBottomBar(
     onContinue: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 3.dp,
+        color = Color(0xFF0D0E16).copy(alpha = 0.97f),
+        contentColor = Color(0xFFF2F2F7),
+        tonalElevation = 0.dp,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         Row(
             modifier = Modifier
@@ -496,7 +498,7 @@ private fun LocalModelSetupBottomBar(
                     "Download at least one chat model to continue."
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFF9A9AA2),
                 modifier = Modifier.weight(1f),
             )
             Button(
@@ -945,7 +947,7 @@ private fun ManualModelsPage(
                         Text(
                             text = "No models came back from this provider yet.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color(0xFF9A9AA2),
                             modifier = Modifier.padding(8.dp),
                         )
                     }
@@ -1261,8 +1263,8 @@ private fun SetupButton(
             shape = shape,
             contentPadding = PaddingValues(horizontal = 16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (neutral) setupCardColor() else MaterialTheme.colorScheme.primary,
-                contentColor = if (neutral) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary,
+                containerColor = if (neutral) setupCardColor() else Color(0xFF0D0E16).copy(alpha = 0.92f),
+                contentColor = if (neutral) Color(0xFFF2F2F7) else Color.White,
             ),
             modifier = modifier
                 .height(52.dp)
@@ -1282,11 +1284,11 @@ private fun SetupButton(
             },
             interactionSource = interactionSource,
             shape = shape,
-            border = BorderStroke(3.dp, setupCardColor()),
+            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
             contentPadding = PaddingValues(horizontal = 16.dp),
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onSurface,
-                containerColor = if (LocalDarkMode.current) Color.Black else MaterialTheme.colorScheme.surface,
+                contentColor = Color(0xFFF2F2F7),
+                containerColor = Color(0xFF141520).copy(alpha = 0.55f),
             ),
             modifier = modifier
                 .height(52.dp)
@@ -1335,13 +1337,14 @@ private fun ProviderPresetCard(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFFF2F2F7),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFF9A9AA2),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1355,14 +1358,14 @@ private fun ProviderCustomCard(onClick: () -> Unit) {
         onClick = onClick,
         minHeight = 82.dp,
         shape = AppShapes.CardMedium,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        color = setupCardColor(),
+        contentColor = Color(0xFFF2F2F7),
     ) {
         Icon(
             imageVector = Icons.Rounded.Add,
             contentDescription = null,
             modifier = Modifier.size(40.dp),
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            tint = Color(0xFFF2F2F7),
         )
         Column(
             modifier = Modifier.weight(1f),
@@ -1371,12 +1374,12 @@ private fun ProviderCustomCard(onClick: () -> Unit) {
             Text(
                 text = "Custom provider",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = Color(0xFFF2F2F7),
             )
             Text(
                 text = "Use your own OpenAI-compatible endpoint",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                color = Color(0xFFF2F2F7).copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1408,6 +1411,7 @@ private fun GuidedProviderCard(
             }
             .clip(AppShapes.CardLarge)
             .background(setupCardColor())
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -1431,6 +1435,7 @@ private fun GuidedProviderCard(
                 text = provider.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFFF2F2F7),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1438,7 +1443,7 @@ private fun GuidedProviderCard(
         Text(
             text = description,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color(0xFF9A9AA2),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -1451,7 +1456,7 @@ private fun SetupListCard(
     minHeight: Dp = 82.dp,
     shape: androidx.compose.ui.graphics.Shape = AppShapes.CardMedium,
     color: Color = setupCardColor(),
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    contentColor: Color = Color(0xFFF2F2F7),
     content: @Composable RowScope.() -> Unit,
 ) {
     val haptics = rememberPremiumHaptics()
@@ -1472,6 +1477,7 @@ private fun SetupListCard(
             }
             .clip(shape)
             .background(color)
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -1504,7 +1510,7 @@ private fun SetupModelSelectableRow(
             provider = provider,
             modifier = Modifier.size(38.dp),
             color = Color.Transparent,
-            contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onSurface,
+            contentColor = Color.White,
         )
         Column(
             modifier = Modifier.weight(1f),
@@ -1514,13 +1520,14 @@ private fun SetupModelSelectableRow(
                 text = model.displayName.ifBlank { model.modelId },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFFF2F2F7),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = model.modelId,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFF9A9AA2),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1573,7 +1580,9 @@ private fun SetupModelFeatureCard(
 ) {
     Surface(
         color = setupCardColor(),
+        contentColor = Color(0xFFF2F2F7),
         shape = RoundedCornerShape(10.dp),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -1588,6 +1597,7 @@ private fun SetupModelFeatureCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
+                    color = Color(0xFFF2F2F7),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1595,7 +1605,7 @@ private fun SetupModelFeatureCard(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFF9A9AA2),
             )
             selector()
         }
@@ -1646,7 +1656,8 @@ private fun groupedCardShape(position: ItemPosition) = when (position) {
 
 @Composable
 private fun setupCardColor(): Color {
-    return MaterialTheme.colorScheme.surfaceContainerLow
+    // Unified dark-glass charcoal fill so onboarding matches settings cards.
+    return Color(0xFF141520).copy(alpha = 0.55f)
 }
 
 private enum class SetupPage {
@@ -1751,6 +1762,17 @@ private fun CustomProviderKeyPage(
                 },
                 label = { Text("Base URL") },
                 shape = AppShapes.InputField,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                    unfocusedContainerColor = Color(0xFF141520).copy(alpha = 0.45f),
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color(0xFFA78BFA).copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color(0xFF3A3D4A),
+                    focusedLabelColor = Color(0xFFB9A8FC),
+                    unfocusedLabelColor = Color(0xFF8A8A96),
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(12.dp))

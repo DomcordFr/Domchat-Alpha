@@ -193,16 +193,12 @@ private fun AetherAboutItem(
             }
         },
         enabled = onClick != null,
-        color = if (darkTheme) {
-            Color(0xFF141520).copy(alpha = 0.85f)
-        } else {
-            Color.White.copy(alpha = 0.90f)
-        },
-        contentColor = if (darkTheme) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+        color = Color(0xFF141520).copy(alpha = 0.85f),
+        contentColor = Color(0xFFF2F2F7),
         shape = RoundedCornerShape(16.dp),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (darkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)
+            Color.White.copy(alpha = 0.08f)
         ),
         interactionSource = interactionSource,
         modifier = Modifier.fillMaxWidth().graphicsLayer {
@@ -225,13 +221,13 @@ private fun AetherAboutItem(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Color(0xFFF2F2F7),
                 )
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color(0xFF9A9AA2),
                     )
                 }
             }
@@ -240,7 +236,7 @@ private fun AetherAboutItem(
                     Icon(
                         trailing,
                         null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = Color(0xFF9A9AA2),
                     )
                 }
             }
