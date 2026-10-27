@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.pages.extensions.workspace
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Terminal
@@ -49,6 +52,7 @@ import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -147,26 +151,27 @@ fun WorkspacePage(vm: WorkspaceVM = koinViewModel()) {
     deleteTarget?.let { workspace ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.workspace_page_delete)) },
             text = { Text(stringResource(R.string.workspace_page_delete_confirm)) },
             confirmButton = {
-                TextButton(
+                DomChatGlassPillButton(
+                    text = stringResource(R.string.common_confirm),
                     onClick = {
                         haptics.perform(HapticPattern.Thud)
                         vm.delete(workspace)
                         deleteTarget = null
                     }
-                ) {
-                    Text(stringResource(R.string.common_confirm))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { 
-                    haptics.perform(HapticPattern.Pop)
-                    deleteTarget = null 
-                }) {
-                    Text(stringResource(R.string.common_cancel))
-                }
+                DomChatGlassPillButton(
+                    text = stringResource(R.string.common_cancel),
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        deleteTarget = null
+                    }
+                )
             },
         )
     }
@@ -176,13 +181,10 @@ fun WorkspacePage(vm: WorkspaceVM = koinViewModel()) {
 private fun EmptyWorkspaceState() {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (LocalDarkMode.current) {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            }
+            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
         ),
-        shape = AppShapes.CardLarge
+        shape = AppShapes.CardLarge,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge)
     ) {
         Box(
             modifier = Modifier
@@ -277,6 +279,7 @@ private fun EditWorkspaceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = { Text(title) },
         text = {
             OutlinedTextField(
@@ -290,20 +293,33 @@ private fun EditWorkspaceDialog(
                 supportingText = if (isDuplicate) {
                     { Text(stringResource(R.string.workspace_page_name_duplicate)) }
                 } else null,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color.White.copy(alpha = 0.9f),
+                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                    focusedSupportingTextColor = Color(0xFFFF6B6B),
+                ),
             )
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm(trimmedName) },
+            DomChatGlassPillButton(
+                text = stringResource(R.string.common_save),
+                accent = true,
                 enabled = name.isNotBlank() && !isDuplicate,
-            ) {
-                Text(stringResource(R.string.common_save))
-            }
+                onClick = { onConfirm(trimmedName) },
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_cancel))
-            }
+            DomChatGlassPillButton(
+                text = stringResource(R.string.common_cancel),
+                onClick = onDismiss,
+            )
         },
     )
 }

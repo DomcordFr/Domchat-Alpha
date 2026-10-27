@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -250,7 +251,7 @@ private fun SliderSettingCard(
                 color = MaterialTheme.colorScheme.primary
             )
         }
-        Slider(
+        DomChatSlider(
             value = value,
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,

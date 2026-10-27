@@ -12,7 +12,11 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
+import me.lucid.domchat.ui.components.ui.DomChatSlider
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -295,6 +299,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             } else {
                 items(displaySetting.rpStyleRules, key = { it.id }) { rule ->
                     RpStyleRuleItem(
+                        modifier = Modifier.animateItem(placementSpec = androidx.compose.animation.core.spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow)),
                         rule = rule,
                         onToggle = { enabled ->
                             updateDisplaySetting(
@@ -399,7 +404,8 @@ private fun RpStyleRuleItem(
     rule: RpStyleRule,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val previewColor = try {
         Color(android.graphics.Color.parseColor(rule.colorHex))
@@ -413,7 +419,7 @@ private fun RpStyleRuleItem(
     Card(
         colors = CardDefaults.cardColors(containerColor = cardBg),
         shape = AppShapes.CardLarge,
-        modifier = Modifier.border(1.dp, cardBorder, AppShapes.CardLarge),
+        modifier = modifier.border(1.dp, cardBorder, AppShapes.CardLarge),
         onClick = onEdit
     ) {
         ListItem(
@@ -487,8 +493,8 @@ private fun RpStyleRuleDialog(
     ApplyDialogWindowBlur()
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = if (isDark) Color(0xFF14151C).copy(alpha = 0.88f) else MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.border(1.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f), AppShapes.CardLarge),
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        modifier = Modifier.border(1.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge),
         title = {
             Text(
                 if (rule != null) {
@@ -559,6 +565,17 @@ private fun RpStyleRuleDialog(
                         }
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color.White.copy(alpha = 0.9f),
+                        focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                    ),
                 )
                 
                 OutlinedTextField(
@@ -591,6 +608,17 @@ private fun RpStyleRuleDialog(
                         )
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color.White.copy(alpha = 0.9f),
+                        focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                    ),
                 )
                 
                 // Color presets row
@@ -637,15 +665,12 @@ private fun RpStyleRuleDialog(
                     // Red slider
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("R", modifier = Modifier.width(20.dp), color = Color(0xFFFF5252), fontWeight = FontWeight.Bold)
-                        androidx.compose.material3.Slider(
+                        DomChatSlider(
                             value = red.toFloat(),
                             onValueChange = { red = it.toInt(); updateColorFromRgb() },
                             valueRange = 0f..255f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFFFF5252),
-                                activeTrackColor = Color(0xFFFF5252),
-                                inactiveTrackColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.1f)
-                            ),
+                            activeTrackColorOverride = Color(0xFFFF5252),
+                            thumbColorOverride = Color(0xFFFF5252),
                             modifier = Modifier.weight(1f)
                         )
                         Text("$red", modifier = Modifier.width(36.dp), color = if (isDark) Color.White else Color.Unspecified)
@@ -653,15 +678,12 @@ private fun RpStyleRuleDialog(
                     // Green slider
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("G", modifier = Modifier.width(20.dp), color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
-                        androidx.compose.material3.Slider(
+                        DomChatSlider(
                             value = green.toFloat(),
                             onValueChange = { green = it.toInt(); updateColorFromRgb() },
                             valueRange = 0f..255f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFF4CAF50),
-                                activeTrackColor = Color(0xFF4CAF50),
-                                inactiveTrackColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.1f)
-                            ),
+                            activeTrackColorOverride = Color(0xFF4CAF50),
+                            thumbColorOverride = Color(0xFF4CAF50),
                             modifier = Modifier.weight(1f)
                         )
                         Text("$green", modifier = Modifier.width(36.dp), color = if (isDark) Color.White else Color.Unspecified)
@@ -669,15 +691,12 @@ private fun RpStyleRuleDialog(
                     // Blue slider
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("B", modifier = Modifier.width(20.dp), color = Color(0xFF448AFF), fontWeight = FontWeight.Bold)
-                        androidx.compose.material3.Slider(
+                        DomChatSlider(
                             value = blue.toFloat(),
                             onValueChange = { blue = it.toInt(); updateColorFromRgb() },
                             valueRange = 0f..255f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFF448AFF),
-                                activeTrackColor = Color(0xFF448AFF),
-                                inactiveTrackColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.1f)
-                            ),
+                            activeTrackColorOverride = Color(0xFF448AFF),
+                            thumbColorOverride = Color(0xFF448AFF),
                             modifier = Modifier.weight(1f)
                         )
                         Text("$blue", modifier = Modifier.width(36.dp), color = if (isDark) Color.White else Color.Unspecified)
@@ -686,7 +705,9 @@ private fun RpStyleRuleDialog(
             }
         },
         confirmButton = {
-            Button(
+            DomChatGlassPillButton(
+                text = stringResource(R.string.save),
+                accent = true,
                 onClick = {
                     if (pattern.isNotBlank()) {
                         onSave(
@@ -698,20 +719,14 @@ private fun RpStyleRuleDialog(
                             )
                         )
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isDark) Color.White else Color.Black,
-                    contentColor = if (isDark) Color.Black else Color.White
-                ),
-                shape = AppShapes.CardMedium
-            ) {
-                Text(stringResource(R.string.save))
-            }
+                }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Unspecified)
-            }
+            DomChatGlassPillButton(
+                text = stringResource(R.string.cancel),
+                onClick = onDismiss
+            )
         }
     )
 }

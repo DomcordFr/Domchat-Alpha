@@ -649,12 +649,12 @@
     <string name="setting_page_config">Config</string>
     <string name="setting_page_config_api_desc">You haven\'t configured API and models yet.</string>
     <string name="setting_page_config_api_title">Please configure API</string>
-    <string name="setting_page_data_backup">Data Management</string>
-    <string name="setting_page_data_backup_desc">Backup and restore app data</string>
+    <string name="setting_page_data_backup">Backups &amp; Restore</string>
+    <string name="setting_page_data_backup_desc">Backup, restore and import your data</string>
     <string name="setting_page_data_settings">Data Settings</string>
     <string name="setting_page_default_model">Default Models</string>
     <string name="setting_page_default_model_desc">Choose default models</string>
-    <string name="setting_page_display_setting">Advanced Settings</string>
+    <string name="setting_page_display_setting">Display &amp; Appearance</string>
     <string name="setting_page_display_setting_desc">Manage display options</string>
     <string name="setting_page_documentation">Documentation</string>
     <string name="setting_page_documentation_desc">View user manual and help docs</string>
@@ -663,7 +663,7 @@
     <string name="setting_page_dynamic_color">Dynamic Color</string>
     <string name="setting_page_dynamic_color_desc">Use Material You dynamic colors</string>
     <string name="setting_page_general_settings">General Settings</string>
-    <string name="setting_page_mcp">Plugins</string>
+    <string name="setting_page_mcp">Tool Servers</string>
     <string name="setting_page_mcp_desc">Connect tools and services</string>
     <string name="setting_page_model_and_services">Models &amp; Services</string>
     <string name="setting_page_no_share_app">No share app found</string>
@@ -1061,7 +1061,7 @@
     <string name="loading">Loading...</string>
 
     <!-- Add-ons -->
-    <string name="setting_page_prompt_injections">Add-ons</string>
+    <string name="setting_page_prompt_injections">Prompt Add-ons</string>
     <string name="setting_page_prompt_injections_desc">Skills and lorebooks</string>
     <string name="prompt_injections_page_injection_types">Add-on Types</string>
     <string name="prompt_injections_page_modes">Skills</string>
@@ -1365,7 +1365,7 @@
     <string name="new_chat_action_more">More</string>
     
     <!-- UI Customization -->
-    <string name="setting_ui_customization_title">UI Customization</string>
+    <string name="setting_ui_customization_title">Interface Customization</string>
     
     <!-- Minimal Input Picker -->
     <string name="minimal_input_camera">Camera</string>

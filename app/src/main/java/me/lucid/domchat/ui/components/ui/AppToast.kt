@@ -345,7 +345,7 @@ private fun ToastContent(
         shape = RoundedCornerShape(28.dp),
         color = containerColor,
         contentColor = contentColor,
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
             color = contentColor.copy(alpha = 0.15f)
@@ -432,38 +432,40 @@ private fun ToastContent(
 
 @Composable
 private fun getToastColors(type: ToastType): Triple<Color, Color, ImageVector?> {
+    // Dark glassy toast plates: near-black translucent fill + colored accents on top.
+    val base = Color(0xFF0D0E16).copy(alpha = 0.82f)
     return when (type) {
         ToastType.Normal -> if(LocalDarkMode.current) {
             Triple(
-                MaterialTheme.colorScheme.surfaceContainerLow,
-                MaterialTheme.colorScheme.onSurface,
+                base,
+                Color(0xFFF2F2F7),
                 null
             )
         } else {
             Triple(
-                MaterialTheme.colorScheme.surfaceContainerHigh,
-                MaterialTheme.colorScheme.onSurface,
+                base,
+                Color(0xFFF2F2F7),
                 null
             )
         }
         ToastType.Success -> Triple(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
+            base,
+            Color(0xFF7EE2A8),
             Icons.Default.CheckCircle
         )
         ToastType.Info -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
+            base,
+            Color(0xFF93C5FD),
             Icons.Default.Info
         )
         ToastType.Warning -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
+            base,
+            Color(0xFFFFD479),
             Icons.Default.Warning
         )
         ToastType.Error -> Triple(
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer,
+            base,
+            Color(0xFFFF6B6B),
             Icons.Default.Error
         )
     }

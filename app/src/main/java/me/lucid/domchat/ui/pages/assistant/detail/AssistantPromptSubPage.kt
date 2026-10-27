@@ -53,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -89,6 +90,8 @@ import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.components.ui.Select
 import me.lucid.domchat.ui.components.ui.Tag
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import androidx.compose.ui.text.font.FontFamily
 import me.lucid.domchat.utils.UiState
 import me.lucid.domchat.utils.insertAtCursor
@@ -157,10 +160,13 @@ fun AssistantPromptSubPage(
             introPendingDelete?.let { pendingIndex ->
                 AlertDialog(
                     onDismissRequest = { introPendingDelete = null },
+                    containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
                     title = { Text("Delete intro?") },
                     text = { Text("This intro will be removed from the character.") },
                     confirmButton = {
-                        TextButton(
+                        DomChatGlassPillButton(
+                            text = stringResource(R.string.delete),
+                            destructive = true,
                             onClick = {
                                 haptics.perform(HapticPattern.Error)
                                 val newList = intros.toMutableList()
@@ -170,14 +176,13 @@ fun AssistantPromptSubPage(
                                 }
                                 introPendingDelete = null
                             }
-                        ) {
-                            Text(stringResource(R.string.delete))
-                        }
+                        )
                     },
                     dismissButton = {
-                        TextButton(onClick = { introPendingDelete = null }) {
-                            Text(stringResource(R.string.cancel))
-                        }
+                        DomChatGlassPillButton(
+                            text = stringResource(R.string.cancel),
+                            onClick = { introPendingDelete = null }
+                        )
                     }
                 )
             }
@@ -645,6 +650,17 @@ private fun FullScreenSystemPromptEditor(
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
                             fontFamily = FontFamily.Monospace,
                             lineHeight = 20.sp
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            cursorColor = Color.White.copy(alpha = 0.9f),
+                            focusedPlaceholderColor = Color.White.copy(alpha = 0.45f),
+                            unfocusedPlaceholderColor = Color.White.copy(alpha = 0.30f),
                         ),
                     )
                 }

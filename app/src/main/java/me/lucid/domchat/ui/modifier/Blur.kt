@@ -330,8 +330,13 @@ fun domChatCardContentColor(): Color {
     }
 }
 
+/**
+ * Pop-up surface for settings and persona editors (per design charter):
+ * near-black glass plate with a fixed, readable tone — never transparent,
+ * always behind the specular border dialogs carry.
+ */
 @Composable
-fun domChatDialogContainerColor(): Color = domChatSheetContainerColor()
+fun domChatDialogContainerColor(): Color = Color(0xFF0D0E16).copy(alpha = 0.97f)
 
 @Composable
 fun domChatSoftEdgeBorder(): BorderStroke = BorderStroke(

@@ -419,7 +419,7 @@ private fun FontConfigSection(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Box(
-                                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+                                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
@@ -428,7 +428,7 @@ private fun FontConfigSection(
                                                 FontSource.SystemCode -> stringResource(R.string.setting_fonts_builtin)
                                                 FontSource.Custom -> stringResource(R.string.setting_fonts_custom)
                                             },
-                                            style = MaterialTheme.typography.labelMedium.copy(
+                                            style = MaterialTheme.typography.labelSmall.copy(
                                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
                                             ),
                                             color = if (isSelected) {

@@ -88,6 +88,7 @@ import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
@@ -551,7 +552,7 @@ fun SettingChatsPage(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             shape = RoundedCornerShape(24.dp),
-            containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.95f) else Color.White,
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },
             text = { Text("This will permanently remove the selected conversations from your database.") },
             confirmButton = {

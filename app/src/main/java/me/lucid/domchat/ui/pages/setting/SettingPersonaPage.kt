@@ -84,7 +84,7 @@ import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
-import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import androidx.compose.ui.graphics.Brush
 import me.lucid.domchat.utils.plus
@@ -450,14 +450,15 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     // Persona Creator/Editor Dialog
     if (showEditor) {
         ApplyDialogWindowBlur()
-        val dialogShape = RoundedCornerShape(28.dp)
+        val dialogShape = RoundedCornerShape(20.dp)
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
             modifier = Modifier
-                .padding(horizontal = 20.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,
-            containerColor = domChatFloatingSurfaceColor(),
+            containerColor = domChatDialogContainerColor(),
             title = {
                 Text(
                     text = if (editingTargetId == null) "Create Persona" else "Edit Persona",

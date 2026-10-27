@@ -8,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +57,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -434,8 +436,8 @@ fun SettingChatStoragePage(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color.Black
+                                    containerColor = Color.White.copy(alpha = 0.12f),
+                                    contentColor = Color.White.copy(alpha = 0.92f)
                                 )
                             ) {
                                 Icon(
@@ -493,14 +495,14 @@ fun SettingChatStoragePage(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color.Black,
-                                    disabledContainerColor = Color.White.copy(alpha = 0.12f),
+                                    containerColor = Color.White.copy(alpha = 0.12f),
+                                    contentColor = Color.White.copy(alpha = 0.92f),
+                                    disabledContainerColor = Color.White.copy(alpha = 0.06f),
                                     disabledContentColor = Color.White.copy(alpha = 0.35f)
                                 )
                             ) {
                                 if (isCleaningEmbeddingCache) {
-                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.Black)
+                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
                                 } else {
                                     Icon(
                                         imageVector = Icons.Rounded.Delete,
@@ -538,6 +540,12 @@ fun SettingChatStoragePage(
                                         filter = option
                                     },
                                     label = { Text(stringResource(option.labelRes)) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Color.White.copy(alpha = 0.14f),
+                                        selectedLabelColor = Color.White,
+                                        containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                        labelColor = Color.White.copy(alpha = 0.7f)
+                                    )
                                 )
                             }
                         }
@@ -554,6 +562,12 @@ fun SettingChatStoragePage(
                                         sort = option
                                     },
                                     label = { Text(stringResource(option.labelRes)) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Color.White.copy(alpha = 0.14f),
+                                        selectedLabelColor = Color.White,
+                                        containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                        labelColor = Color.White.copy(alpha = 0.7f)
+                                    )
                                 )
                             }
                         }
@@ -587,6 +601,7 @@ fun SettingChatStoragePage(
         val fallbackFileName = stringResource(R.string.setting_chat_storage_file_fallback)
         AlertDialog(
             onDismissRequest = { pendingDeletion = null },
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title)) },
             text = {
                 Text(
@@ -597,7 +612,9 @@ fun SettingChatStoragePage(
                 )
             },
             confirmButton = {
-                Button(
+                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                    text = stringResource(R.string.delete),
+                    destructive = true,
                     onClick = {
                         val target = attachment
                         pendingDeletion = null
@@ -610,14 +627,13 @@ fun SettingChatStoragePage(
                             )
                         }
                     }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeletion = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                    text = stringResource(R.string.cancel),
+                    onClick = { pendingDeletion = null }
+                )
             }
         )
     }
@@ -626,6 +642,7 @@ fun SettingChatStoragePage(
         val fallbackFileName = stringResource(R.string.setting_chat_storage_file_fallback)
         AlertDialog(
             onDismissRequest = { pendingOtherUploadDeletion = null },
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_untracked_file_title)) },
             text = {
                 Text(
@@ -636,7 +653,9 @@ fun SettingChatStoragePage(
                 )
             },
             confirmButton = {
-                Button(
+                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                    text = stringResource(R.string.delete),
+                    destructive = true,
                     onClick = {
                         val target = file
                         pendingOtherUploadDeletion = null
@@ -656,14 +675,13 @@ fun SettingChatStoragePage(
                             }
                         }
                     }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { pendingOtherUploadDeletion = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                    text = stringResource(R.string.cancel),
+                    onClick = { pendingOtherUploadDeletion = null }
+                )
             }
         )
     }
@@ -671,12 +689,15 @@ fun SettingChatStoragePage(
     if (pendingDeleteAllOtherUploads) {
         AlertDialog(
             onDismissRequest = { pendingDeleteAllOtherUploads = false },
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_orphaned_title)) },
             text = {
                 Text(stringResource(R.string.setting_chat_storage_delete_orphaned_message))
             },
             confirmButton = {
-                Button(
+                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                    text = stringResource(R.string.setting_chat_storage_delete_all),
+                    destructive = true,
                     onClick = {
                         pendingDeleteAllOtherUploads = false
                         scope.launch {
@@ -696,14 +717,13 @@ fun SettingChatStoragePage(
                             )
                         }
                     }
-                ) {
-                    Text(stringResource(R.string.setting_chat_storage_delete_all))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeleteAllOtherUploads = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                    text = stringResource(R.string.cancel),
+                    onClick = { pendingDeleteAllOtherUploads = false }
+                )
             }
         )
     }
@@ -712,6 +732,7 @@ fun SettingChatStoragePage(
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { showOtherUploadsInspector = false },
+            containerColor = domChatSheetContainerColor(),
             sheetState = sheetState,
         ) {
             OtherUploadsSheet(

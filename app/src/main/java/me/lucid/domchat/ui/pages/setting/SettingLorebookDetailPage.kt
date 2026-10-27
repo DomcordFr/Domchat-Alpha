@@ -894,8 +894,9 @@ private fun EntryEditorSheet(
         }
     }
     
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
@@ -1285,8 +1286,9 @@ private fun LorebookEditorSheet(
         }
     }
     
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState
     ) {
@@ -1318,7 +1320,8 @@ containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceCon
                 // Cover picker - book-like aspect ratio
                 Surface(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = Color(0xFF141520).copy(alpha = 0.6f),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier.size(width = 56.dp, height = 78.dp),
                     onClick = { imagePickerLauncher.launch("image/*") }
                 ) {
@@ -1577,8 +1580,9 @@ private fun AssistantLorebookToggleSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     
+    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = false,

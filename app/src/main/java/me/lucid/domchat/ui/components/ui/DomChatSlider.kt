@@ -21,11 +21,14 @@ fun DomChatSlider(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
     onValueChangeFinished: (() -> Unit)? = null,
+    activeTrackColorOverride: Color? = null,
+    thumbColorOverride: Color? = null,
 ) {
     val isDark = LocalDarkMode.current
     val sliderColors = SliderDefaults.colors(
-        thumbColor = if (isDark) Color.White else MaterialTheme.colorScheme.primary,
-        activeTrackColor = if (isDark) Color.White.copy(alpha = 0.85f) else MaterialTheme.colorScheme.primary,
+        thumbColor = thumbColorOverride ?: if (isDark) Color.White else MaterialTheme.colorScheme.primary,
+        activeTrackColor = activeTrackColorOverride
+            ?: if (isDark) Color.White.copy(alpha = 0.85f) else MaterialTheme.colorScheme.primary,
         inactiveTrackColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.1f)
     )
     Slider(

@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastFilter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.Icons
@@ -105,9 +106,14 @@ fun McpPickerButton(
                         badge = {
                             if (enabledServers.isNotEmpty()) {
                                 Badge(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                    containerColor = Color(0xFF141520).copy(alpha = 0.9f),
+                                    contentColor = Color.White.copy(alpha = 0.9f)
                                 ) {
-                                    Text(text = enabledServers.size.toString())
+                                    Text(
+                                        text = enabledServers.size.toString(),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                        modifier = Modifier.padding(horizontal = 2.dp)
+                                    )
                                 }
                             }
                         }

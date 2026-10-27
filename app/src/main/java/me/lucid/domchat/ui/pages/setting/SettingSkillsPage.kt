@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -538,11 +539,7 @@ fun DismissibleBannerCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (LocalDarkMode.current) {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            }
+            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
         ),
         shape = AppShapes.CardLarge
     ) {
@@ -682,7 +679,8 @@ private fun SkillAssistantToggleRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .background(Color(0xFF141520).copy(alpha = 0.55f))
+            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -798,9 +796,9 @@ fun SkillEditorSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.86f)
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp)
-                .fillMaxSize(),
+                .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
@@ -994,11 +992,7 @@ fun SkillEditorSheet(
                 }
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (LocalDarkMode.current) {
-                            MaterialTheme.colorScheme.surfaceContainerLow
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
+                        containerColor = Color(0xFF141520).copy(alpha = 0.55f)
                     ),
                     shape = AppShapes.CardLarge
                 ) {
@@ -1310,11 +1304,7 @@ private fun SkillPackageFilesCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (LocalDarkMode.current) {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
-            }
+            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
         ),
         shape = AppShapes.CardLarge,
     ) {

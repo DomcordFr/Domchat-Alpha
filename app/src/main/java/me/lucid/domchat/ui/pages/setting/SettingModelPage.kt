@@ -164,11 +164,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
 }
 
 @Composable
-private fun modelSheetContainerColor(): Color = androidx.compose.ui.graphics.lerp(
-    Color(0xFF14151C).copy(alpha = 0.92f),
-    domChatSheetContainerColor(),
-    0.35f
-).copy(alpha = 0.94f)
+private fun modelSheetContainerColor(): Color = domChatSheetContainerColor()
 
 @Composable
 private fun DefaultTtsVoiceSetting(

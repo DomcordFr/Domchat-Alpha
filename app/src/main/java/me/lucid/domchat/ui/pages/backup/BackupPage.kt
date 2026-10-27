@@ -566,11 +566,7 @@ private fun WebDavPage(
     if (showBackupFiles) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = androidx.compose.ui.graphics.lerp(
-                Color(0xFF14151C).copy(alpha = 0.92f),
-                domChatSheetContainerColor(),
-                0.35f
-            ).copy(alpha = 0.94f),
+            containerColor = domChatSheetContainerColor(),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             tonalElevation = 0.dp,
             dragHandle = {
@@ -1315,6 +1311,7 @@ private fun BackupDialog(
 ) {
     AlertDialog(
         onDismissRequest = {}, // Disallow dismissing by clicking outside
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = { Text(stringResource(R.string.backup_page_restart_app)) },
         text = { 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1323,8 +1320,8 @@ private fun BackupDialog(
                 result?.let {
                     if (it.sanitization.skippedRows > 0 || it.settingsCleanup.totalIssuesFixed > 0 || it.settingsCleanup.unsupportedZipEntriesBytes > 0) {                        Card(
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                contentColor = Color(0xFFFF6B6B)
                             )
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
@@ -1363,8 +1360,8 @@ private fun BackupDialog(
                     if (envTargets.isNotEmpty()) {
                         Card(
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                contentColor = Color(0xFFA78BFA)
                             )
                         ) {
                             Column(
@@ -1389,11 +1386,10 @@ private fun BackupDialog(
             }
         },
         confirmButton = {
-            Button(
+            me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+                text = stringResource(R.string.backup_page_restart_app),
                 onClick = onConfirm
-            ) {
-                Text(stringResource(R.string.backup_page_restart_app))
-            }
+            )
         },
     )
 }

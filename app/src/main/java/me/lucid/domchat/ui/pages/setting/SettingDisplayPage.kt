@@ -172,18 +172,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
             // Theme & Interface Customization
             item {
-                val navController = me.lucid.domchat.ui.context.LocalNavController.current
                 val isDark = LocalDarkMode.current
                 
                 SettingsGroup(
                     title = stringResource(R.string.setting_page_theme_setting)
                 ) {
-                    SettingGroupItem(
-                        title = stringResource(R.string.setting_ui_customization_title),
-                        subtitle = stringResource(R.string.setting_display_ui_customization_desc),
-                        onClick = { navController.navigate(me.lucid.domchat.Screen.SettingUICustomization) }
-                    )
-
                     SettingGroupItem(
                         title = "Themes",
                         subtitle = "OLED Liquid Glass",

@@ -115,6 +115,8 @@ import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.ToastType
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.components.ui.UIAvatar
@@ -484,7 +486,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         AlertDialog(
             onDismissRequest = { characterToDelete = null },
             shape = RoundedCornerShape(20.dp),
-            containerColor = if (isDark) Color(0xFF141418) else Color.White,
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
                 Text(
                     text = "Delete ${char.name}?",
@@ -500,7 +502,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 )
             },
             confirmButton = {
-                TextButton(
+                DomChatGlassPillButton(
+                    text = "Delete",
+                    destructive = true,
                     onClick = {
                         val toDelete = char
                         characterToDelete = null
@@ -516,14 +520,13 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             )
                         )
                     }
-                ) {
-                    Text("Delete", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { characterToDelete = null }) {
-                    Text("Cancel", color = if (isDark) Color.White else Color.Black)
-                }
+                DomChatGlassPillButton(
+                    text = "Cancel",
+                    onClick = { characterToDelete = null }
+                )
             }
         )
     }
@@ -533,7 +536,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         AlertDialog(
             onDismissRequest = { showExportDialogFor = null },
             shape = RoundedCornerShape(20.dp),
-            containerColor = if (isDark) Color(0xFF141418) else Color.White,
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
                 Text(
                     text = "Export ${char.name}",
@@ -543,7 +546,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
+                    DomChatGlassPillButton(
+                        text = "SillyTavern Character Card (PNG)",
                         onClick = {
                             val target = char
                             showExportDialogFor = null
@@ -559,17 +563,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isDark) Color(0xFF22222A) else Color(0xFFF0F0F4),
-                            contentColor = if (isDark) Color.White else Color.Black
-                        )
-                    ) {
-                        Text("SillyTavern Character Card (PNG)")
-                    }
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                    Button(
+                    DomChatGlassPillButton(
+                        text = "Character Card V2 (JSON)",
                         onClick = {
                             val target = char
                             showExportDialogFor = null
@@ -581,22 +579,16 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 exportJsonLauncher.launch("${target.name.replace(" ", "_")}.json")
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isDark) Color(0xFF22222A) else Color(0xFFF0F0F4),
-                            contentColor = if (isDark) Color.White else Color.Black
-                        )
-                    ) {
-                        Text("Character Card V2 (JSON)")
-                    }
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { showExportDialogFor = null }) {
-                    Text("Close", color = if (isDark) Color.White else Color.Black)
-                }
+                DomChatGlassPillButton(
+                    text = "Close",
+                    onClick = { showExportDialogFor = null }
+                )
             }
         )
     }
@@ -851,10 +843,10 @@ fun CharacterInspectorSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-    val sheetBgColor = if (isDark) Color(0xFF07080C) else Color(0xFFF7F7FA)
+    val sheetBgColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor()
     val contentTextColor = if (isDark) Color(0xFFF2F2F7) else Color(0xFF14151C)
-    val cardBgColor = if (isDark) Color(0xFF0F1018) else Color.White
-    val cardBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+    val cardBgColor = Color(0xFF141520).copy(alpha = 0.55f)
+    val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
 
     ModalBottomSheet(
@@ -865,7 +857,7 @@ fun CharacterInspectorSheet(
         contentColor = contentTextColor,
         dragHandle = null,
         shape = sheetShape,
-        modifier = Modifier,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
         Box(
             modifier = Modifier
@@ -1297,7 +1289,9 @@ fun CharacterInspectorSheet(
                                                                 )
                                                                 .border(
                                                                     0.5.dp,
-                                                                    if (isGreetingSelected) Color(0xFFA78BFA) else cardBorderColor,
+                                                                    if (isGreetingSelected) {
+                                                                        Brush.verticalGradient(listOf(Color(0xFFA78BFA), Color(0xFFA78BFA)))
+                                                                    } else cardBorderColor,
                                                                     RoundedCornerShape(8.dp)
                                                                 )
                                                                 .clickable { activeGreetingIndex = idx }
