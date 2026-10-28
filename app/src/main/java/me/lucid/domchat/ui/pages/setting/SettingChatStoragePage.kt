@@ -53,7 +53,7 @@ import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.VideoFile
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DialogProperties
+import androidx.compose.ui.window.DialogProperties
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
