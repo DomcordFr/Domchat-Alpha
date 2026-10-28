@@ -98,7 +98,7 @@ fun ApiKeyPoolButton(
         targetValue = if (isDark) {
             Color(0xFF000000)
         } else {
-            Color(0xFF000000)est
+            Color(0xFF000000)
         },
         label = "ApiKeyPoolButtonCircleColor"
     )

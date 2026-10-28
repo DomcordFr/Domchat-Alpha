@@ -421,7 +421,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                                 containerColor = if (LocalDarkMode.current) {
                                     Color(0xFF000000)
                                 } else {
-                                    Color(0xFF000000)est
+                                    Color(0xFF000000)
                                 }
                             ),
                             shape = AppShapes.CardLarge
@@ -820,7 +820,7 @@ internal fun SearchProvidersContent(
                             containerColor = if (LocalDarkMode.current) {
                                 Color(0xFF000000)
                             } else {
-                                Color(0xFF000000)est
+                                Color(0xFF000000)
                             }
                         ),
                         shape = AppShapes.CardLarge
@@ -1351,7 +1351,7 @@ private fun SearchServiceItemContent(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
-            .background(Color(0xFF000000)est)
+            .background(Color(0xFF000000))
             .clickable {
                 haptics.perform(HapticPattern.Pop)
                 onClick()
@@ -1408,7 +1408,7 @@ private fun SearchServiceItemContent(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color(0xFF000000)est
+                                    Color(0xFF000000)
                                 )
                             )
                         )

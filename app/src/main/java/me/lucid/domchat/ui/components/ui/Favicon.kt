@@ -21,6 +21,7 @@ import coil3.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Public
 import me.lucid.common.http.urlPartsOrNull
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun Favicon(

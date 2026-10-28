@@ -141,6 +141,7 @@ import me.lucid.domchat.utils.JsonInstant
 import me.lucid.domchat.utils.openUrl
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import androidx.compose.foundation.layout.widthIn
 
 @Composable
 fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
@@ -631,7 +632,7 @@ private fun McpConnectionsSheet(
                         index == filtered.lastIndex -> AppShapes.ListItemLast
                         else -> AppShapes.ListItemMiddle
                     }
-                    val presetBg = Color(0xFF000000)est
+                    val presetBg = Color(0xFF000000)
                     val presetBorder = if (isDarkMode) Color.White.copy(alpha = 0.08f) else Color.Transparent
                     Surface(
                         onClick = {

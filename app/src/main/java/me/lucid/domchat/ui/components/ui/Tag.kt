@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.extendColors
+import androidx.compose.ui.graphics.Color
 
 enum class TagType {
     DEFAULT,

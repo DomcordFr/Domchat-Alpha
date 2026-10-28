@@ -23,6 +23,7 @@ import me.lucid.domchat.R
 import me.lucid.domchat.ui.components.ai.resolveReasoningConfig
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.components.ui.OutlinedNumberInput
+import androidx.compose.ui.graphics.Color
 
 private data class ReasoningPreset(
     val labelRes: Int,

@@ -243,7 +243,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                                 containerColor = if (LocalDarkMode.current) {
                                     Color(0xFF000000)
                                 } else {
-                                    Color(0xFF000000)est
+                                    Color(0xFF000000)
                                 }
                             ),
                             shape = AppShapes.CardLarge
@@ -610,7 +610,7 @@ internal fun TtsProvidersContent(
                             containerColor = if (LocalDarkMode.current) {
                                 Color(0xFF000000)
                             } else {
-                                Color(0xFF000000)est
+                                Color(0xFF000000)
                             }
                         ),
                         shape = AppShapes.CardLarge
@@ -930,7 +930,7 @@ internal fun TtsTextFilterSettingsDialog(
             ) {
                 androidx.compose.material3.Card(
                     colors = androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = Color(0xFF000000)est
+                        containerColor = Color(0xFF000000)
                     ),
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
                 ) {
@@ -950,7 +950,7 @@ internal fun TtsTextFilterSettingsDialog(
                         item {
                             androidx.compose.material3.Card(
                                 colors = androidx.compose.material3.CardDefaults.cardColors(
-                                    containerColor = Color(0xFF000000)est
+                                    containerColor = Color(0xFF000000)
                                 ),
                                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
                             ) {
@@ -1044,7 +1044,7 @@ private fun TtsFilterRuleItem(
     
     androidx.compose.material3.Card(
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = Color(0xFF000000)est
+            containerColor = Color(0xFF000000)
         ),
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         onClick = onEdit
@@ -1448,7 +1448,7 @@ private fun TTSProviderItemContent(
     dragHandle: @Composable () -> Unit
 ) {
     val backgroundColor by androidx.compose.animation.animateColorAsState(
-        targetValue = Color(0xFF000000)est,
+        targetValue = Color(0xFF000000),
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
         label = "ttsProviderBackground"
     )

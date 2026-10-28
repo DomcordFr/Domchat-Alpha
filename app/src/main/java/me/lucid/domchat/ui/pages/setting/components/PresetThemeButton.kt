@@ -39,6 +39,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.PresetTheme
 import me.lucid.domchat.ui.theme.PresetThemes
 import me.lucid.domchat.ui.theme.normalizePresetThemeId
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun PresetThemeButton(

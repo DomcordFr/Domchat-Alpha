@@ -41,6 +41,7 @@ import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.utils.JsonInstant
 import java.util.UUID
 import kotlin.io.encoding.Base64
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun ShareSheet(

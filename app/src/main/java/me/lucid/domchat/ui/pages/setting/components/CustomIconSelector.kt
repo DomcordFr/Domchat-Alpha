@@ -69,6 +69,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.JsonInstant
 import me.lucid.domchat.utils.jsonPrimitiveOrNull
 import org.koin.compose.koinInject
+import androidx.compose.ui.graphics.Color
 
 private const val LOBEHUB_PNG_META_URL = "https://unpkg.com/@lobehub/icons-static-png@latest/?meta"
 

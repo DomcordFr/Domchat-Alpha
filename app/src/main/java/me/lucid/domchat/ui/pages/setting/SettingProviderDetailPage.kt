@@ -201,6 +201,8 @@ import kotlin.uuid.Uuid
 import me.lucid.domchat.data.model.Tag as DataTag
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.pages.backup.ExportKeySelectionDialog
+import androidx.compose.foundation.layout.widthIn
+import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 
 internal fun resolveProviderModel(
     resolver: ModelMetadataResolver,
@@ -685,7 +687,7 @@ private fun SettingProviderConfigPage(
             Card(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF000000)est
+                    containerColor = Color(0xFF000000)
                 )
             ) {
                 ProviderConfigure(
@@ -704,7 +706,7 @@ private fun SettingProviderConfigPage(
             Card(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF000000)est
+                    containerColor = Color(0xFF000000)
                 )
             ) {
                 Column(

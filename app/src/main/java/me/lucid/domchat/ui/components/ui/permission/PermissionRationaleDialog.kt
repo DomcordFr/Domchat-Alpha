@@ -31,6 +31,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning
 import me.lucid.domchat.R
+import androidx.compose.ui.graphics.Color
 
 /**
  * 权限请求说明对话框

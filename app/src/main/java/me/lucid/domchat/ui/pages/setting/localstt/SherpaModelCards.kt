@@ -55,6 +55,7 @@ import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SherpaInstalledModelCard(
@@ -73,7 +74,7 @@ fun SherpaInstalledModelCard(
             containerColor = if (isDark) {
                 Color(0xFF000000)
             } else {
-                Color(0xFF000000)est
+                Color(0xFF000000)
             },
         ),
     ) {
@@ -134,7 +135,7 @@ fun SherpaDownloadableModelCard(
             containerColor = if (isDark) {
                 Color(0xFF000000)
             } else {
-                Color(0xFF000000)est
+                Color(0xFF000000)
             },
         ),
     ) {

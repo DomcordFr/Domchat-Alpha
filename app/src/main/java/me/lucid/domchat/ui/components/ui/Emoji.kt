@@ -55,6 +55,7 @@ import me.lucid.domchat.R
 import me.lucid.domchat.utils.Emoji
 import me.lucid.domchat.utils.EmojiData
 import org.koin.compose.koinInject
+import androidx.compose.ui.graphics.Color
 
 @Preview
 @Composable

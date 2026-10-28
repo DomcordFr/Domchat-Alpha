@@ -106,6 +106,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.plus
 import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
+import androidx.compose.foundation.layout.widthIn
 
 private val COMMON_LANGUAGES = listOf(
     "English", "Spanish", "French", "German", "Italian", "Portuguese",

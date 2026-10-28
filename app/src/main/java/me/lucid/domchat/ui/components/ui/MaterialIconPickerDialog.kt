@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.components.ui.icons.ModeIcons
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun MaterialIconPickerDialog(

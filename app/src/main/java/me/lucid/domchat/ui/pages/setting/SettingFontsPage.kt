@@ -87,6 +87,8 @@ import me.lucid.domchat.utils.FontFileManager
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.widthIn
+import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 
 
 internal const val PhoneSystemFontToggleTag = "phone_system_font_toggle"

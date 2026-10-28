@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Close
 import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Tag
 import kotlin.uuid.Uuid
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun TagsInput(

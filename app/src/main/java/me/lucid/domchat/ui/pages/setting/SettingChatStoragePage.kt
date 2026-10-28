@@ -141,6 +141,8 @@ import me.lucid.domchat.utils.openAttachmentUri
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import androidx.compose.foundation.layout.widthIn
+import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 
 private const val CATEGORY_CHAT = "chat_attachments"
 private const val CATEGORY_ASSISTANT_MEDIA = "assistant_media"

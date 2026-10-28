@@ -42,6 +42,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.utils.DownloadProgress
 import me.lucid.domchat.utils.UpdateChecker
 import me.lucid.domchat.utils.UpdateInfo
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun UpdateDialog(
@@ -116,7 +117,7 @@ fun UpdateDialog(
                 }
 
                 Surface(
-                    color = Color(0xFF000000)est,
+                    color = Color(0xFF000000),
                     shape = AppShapes.CardMedium,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -149,7 +150,7 @@ fun UpdateDialog(
                                 .height(5.dp)
                                 .clip(RoundedCornerShape(50)),
                             color = MaterialTheme.colorScheme.primary,
-                            trackColor = Color(0xFF000000)est
+                            trackColor = Color(0xFF000000)
                         )
                         Text(
                             text = if (isDownloaded) {
@@ -175,7 +176,7 @@ fun UpdateDialog(
                         .fillMaxWidth()
                         .heightIn(max = 220.dp)
                         .clip(AppShapes.CardMedium)
-                        .background(Color(0xFF000000)est)
+                        .background(Color(0xFF000000))
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {

@@ -37,6 +37,7 @@ import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {

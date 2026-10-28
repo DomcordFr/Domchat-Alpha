@@ -276,7 +276,7 @@ private fun TtsProviderConfigTab(
                     containerColor = if (LocalDarkMode.current) {
                         Color(0xFF000000)
                     } else {
-                        Color(0xFF000000)est
+                        Color(0xFF000000)
                     }
                 )
             ) {

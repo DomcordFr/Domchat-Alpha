@@ -100,6 +100,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SettingLocalLlmPage(
@@ -435,7 +436,7 @@ fun SettingLocalLlmPage(
                 SectionHeader("HuggingFace Configuration")
                 Card(
                     shape = AppShapes.CardMedium,
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)est),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(
@@ -560,7 +561,7 @@ private fun InstalledModelCard(
     Card(
         onClick = onClick,
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)est),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -605,7 +606,7 @@ private fun ImportedDownloadCard(
             containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) {
                 Color(0xFF000000)
             } else {
-                Color(0xFF000000)est
+                Color(0xFF000000)
             }
         ),
         modifier = Modifier.fillMaxWidth(),
@@ -662,7 +663,7 @@ private fun DownloadableModelCard(
     Card(
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF000000)est
+            containerColor = Color(0xFF000000)
         ),
         modifier = Modifier.fillMaxWidth(),
     ) {

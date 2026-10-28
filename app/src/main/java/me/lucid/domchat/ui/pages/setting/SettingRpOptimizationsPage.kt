@@ -78,6 +78,8 @@ import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.layout.widthIn
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 @Composable
 fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {

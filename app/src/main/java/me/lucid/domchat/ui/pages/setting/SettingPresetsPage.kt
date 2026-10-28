@@ -86,6 +86,8 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.widthIn
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 
 @OptIn(ExperimentalMaterial3Api::class, kotlin.ExperimentalStdlibApi::class)
 @Composable
@@ -362,7 +364,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         ) {
                             // Token estimate badge
                             Surface(
-                                color = Color(0xFF000000)est,
+                                color = Color(0xFF000000),
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
                             ) {
@@ -376,7 +378,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
 
                             // Char count badge
                             Surface(
-                                color = Color(0xFF000000)est,
+                                color = Color(0xFF000000),
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
                             ) {

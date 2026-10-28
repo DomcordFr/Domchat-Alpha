@@ -101,6 +101,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.uuid.Uuid
+import androidx.compose.foundation.layout.widthIn
 
 private enum class ChatSortOrder {
     RECENTLY_UPDATED,
@@ -249,7 +250,7 @@ fun SettingChatsPage(
                         Text(
                             "Search all chats...",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.6f)
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                     },
                     leadingIcon = {

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 
 /**
  * A chip that displays a document/file attachment with an appropriate style.
@@ -57,7 +58,7 @@ fun DocumentChip(
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             tonalElevation = 4.dp,
-            color = Color(0xFF000000)est
+            color = Color(0xFF000000)
         ) {
             Column(
                 modifier = Modifier
@@ -96,7 +97,7 @@ fun DocumentChip(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = Color(0xFF000000)est.copy(alpha = 0.94f),
+                    color = Color(0xFF000000).copy(alpha = 0.94f),
                     tonalElevation = 3.dp,
                     modifier = Modifier
                         .padding(4.dp)

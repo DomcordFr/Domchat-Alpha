@@ -58,6 +58,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.utils.LorebookExportImport
 import me.lucid.domchat.utils.SkillExportImport
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SettingPromptInjectionsPage(

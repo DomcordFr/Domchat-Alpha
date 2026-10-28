@@ -939,7 +939,7 @@ fun MinimalChatInput(
                                 color = if (LocalDarkMode.current) 
                                     Color(0xFF000000)  // Darker in dark mode
                                 else 
-                                    Color(0xFF000000)est,  // Darker in light mode
+                                    Color(0xFF000000),  // Darker in light mode
                                 shape = RoundedCornerShape(16.dp),  // Optical roundness: 24dp outer - 8dp padding = 16dp
                                 modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 8.dp, bottom = 4.dp)  // Aligned with text
                             ) {
@@ -3366,7 +3366,7 @@ private fun MinimalPickerContent(
         AlertDialog(
             onDismissRequest = { showContextSummaryEditDialog = false },
             shape = RoundedCornerShape(28.dp),
-            containerColor = Color(0xFF000000)est,
+            containerColor = Color(0xFF000000),
             title = {
                 Text(
                     text = stringResource(R.string.context_refresh_edit_summary),

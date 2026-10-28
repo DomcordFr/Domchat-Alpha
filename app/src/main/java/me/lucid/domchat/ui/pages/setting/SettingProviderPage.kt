@@ -195,6 +195,9 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import me.lucid.domchat.data.model.Tag as DataTag
 import kotlin.uuid.Uuid
+import androidx.compose.foundation.layout.widthIn
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 
 
 @Composable
@@ -725,7 +728,7 @@ private fun ProviderListView(
                         modifier = Modifier.padding(horizontal = 32.dp)
                     )
                     
-                    val presetBg = Color(0xFF000000)est
+                    val presetBg = Color(0xFF000000)
                     val presetBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent
                     Surface(
                         onClick = {
@@ -1481,7 +1484,7 @@ private fun AddButton(
                                     .fillMaxWidth()
                                     .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(24.dp)),
                                 shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                                color = Color(0xFF000000)est,
+                                color = Color(0xFF000000),
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1573,7 +1576,7 @@ private fun AddButton(
                                 .fillMaxWidth()
                                 .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, shape),
                             shape = shape,
-                            color = Color(0xFF000000)est
+                            color = Color(0xFF000000)
                         ) {
                             Row(
                                 modifier = Modifier
