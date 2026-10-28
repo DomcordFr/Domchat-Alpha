@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -185,8 +186,10 @@ fun ExportKeySelectionDialog(
                                     color = if (isChecked) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
                                     border = androidx.compose.foundation.BorderStroke(
                                         0.5.dp,
-                                        if (isChecked) Color.White.copy(alpha = 0.5f)
-                                        else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                        if (isChecked)
+                                            androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.5f))
+                                        else
+                                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                                     ),
                                     onClick = {
                                         haptics.perform(HapticPattern.Tick)

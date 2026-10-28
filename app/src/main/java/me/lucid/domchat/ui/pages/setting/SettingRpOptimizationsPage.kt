@@ -264,7 +264,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                     },
                                     label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color.White.copy(alpha = 0.18f),,
+                                        selectedContainerColor = Color.White.copy(alpha = 0.18f),
                                         selectedLabelColor = if (isDark) Color.White else Color(0xFFFFFFFF)
                                     )
                                 )

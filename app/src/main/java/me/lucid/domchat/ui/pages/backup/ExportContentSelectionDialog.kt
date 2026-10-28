@@ -215,8 +215,10 @@ fun ExportContentSelectionDialog(
                             color = if (isChecked) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
                             border = androidx.compose.foundation.BorderStroke(
                                 0.5.dp,
-                                if (isChecked) Color.White.copy(alpha = 0.5f)
-                                else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                if (isChecked)
+                                    androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.5f))
+                                else
+                                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                             ),
                             onClick = {
                                 if (isEnabled) {
