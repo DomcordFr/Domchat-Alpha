@@ -285,7 +285,7 @@ fun SettingWebPage(
                             .background(
                                 brush = Brush.verticalGradient(
                                     colorStops = arrayOf(
-                                        0.0f to (if (isRunning) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFF3B82F6).copy(alpha = 0.12f)),
+                                        0.0f to (if (isRunning) Color(0xFF10B981).copy(alpha = 0.15f) else Color.Transparent),
                                         0.45f to Color.Transparent,
                                     )
                                 )
@@ -311,13 +311,13 @@ fun SettingWebPage(
                                     modifier = Modifier
                                         .size(8.dp)
                                         .clip(androidx.compose.foundation.shape.CircleShape)
-                                        .background(if (isRunning) Color(0xFF10B981) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)))
+                                        .background(if (isRunning) Color(0xFF10B981) else (if (isDark) Color(0xFFA6A6A6) else Color(0xFF6E6E73)))
                                 )
                                 Text(
                                     text = stringResource(serverState.statusTextResId()),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isRunning) Color(0xFF34D399) else (if (isDark) Color(0xFF94A3B8) else Color.White.copy(alpha = 0.65f))
+                                    color = if (isRunning) Color(0xFF34D399) else (if (isDark) Color(0xFFA6A6A6) else Color.White.copy(alpha = 0.65f))
                                 )
                             }
                         }
@@ -331,7 +331,7 @@ fun SettingWebPage(
                             Text(
                                 text = stringResource(R.string.setting_page_web_server_hero_desc),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isDark) Color(0xFF94A3B8) else Color.White.copy(alpha = 0.65f)
+                                color = if (isDark) Color(0xFFA6A6A6) else Color.White.copy(alpha = 0.65f)
                             )
 
                             WebActionButtons(
@@ -622,7 +622,7 @@ private fun WebActionButtons(
                 icon = Icons.AutoMirrored.Rounded.OpenInNew,
                 enabled = showOpenButton,
                 onClick = onOpenClick,
-                containerColor = if (LocalDarkMode.current) Color(0xFF1E202E).copy(alpha = 0.85f) else Color.White,
+                containerColor = if (LocalDarkMode.current) Color(0xFF000000).copy(alpha = 0.85f) else Color.White,
                 contentColor = if (LocalDarkMode.current) Color.White else Color.Black,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)

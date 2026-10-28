@@ -191,7 +191,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier
                                         .weight(systemPercent.toFloat())
                                         .fillMaxHeight()
-                                        .background(Color(0xFF3B82F6))
+                                        .background(Color(0xFFF2F2F7))
                                 )
                                 Box(
                                     modifier = Modifier
@@ -214,7 +214,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF3B82F6)))
+                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFF2F2F7)))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Column {
                                     Text("System Prompt", fontSize = 11.sp, color = Color(0xFFAAAAAA))
@@ -275,14 +275,14 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) {
-                                        if (isDark) Color(0xFF1E293B).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.9f)
+                                        Color.White.copy(alpha = 0.18f)
                                     } else {
                                         Color.White.copy(alpha = 0.05f)
                                     },
                                     border = BorderStroke(
                                         1.dp,
                                         if (selected) {
-                                            if (isDark) Color(0xFF60A5FA).copy(alpha = 0.8f) else Color(0xFF2563EB)
+                                            Color.White.copy(alpha = 0.5f)
                                         } else {
                                             Color.White.copy(alpha = 0.08f)
                                         }
@@ -301,9 +301,9 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                         ),
                                         color = if (selected) {
-                                            if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
+                                            if (isDark) Color(0xFFA6A6A6) else Color(0xFF636366)
                                         } else {
-                                            if (isDark) Color(0xFFE2E8F0) else Color.White
+                                            if (isDark) Color(0xFFF2F2F7) else Color.White
                                         }
                                     )
                                 }
@@ -319,14 +319,14 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) {
-                                        if (isDark) Color(0xFF1E293B).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.9f)
+                                        Color.White.copy(alpha = 0.18f)
                                     } else {
                                         Color.White.copy(alpha = 0.05f)
                                     },
                                     border = BorderStroke(
                                         1.dp,
                                         if (selected) {
-                                            if (isDark) Color(0xFF60A5FA).copy(alpha = 0.8f) else Color(0xFF2563EB)
+                                            Color.White.copy(alpha = 0.5f)
                                         } else {
                                             Color.White.copy(alpha = 0.08f)
                                         }
@@ -345,9 +345,9 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                         ),
                                         color = if (selected) {
-                                            if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
+                                            if (isDark) Color(0xFFA6A6A6) else Color(0xFF636366)
                                         } else {
-                                            if (isDark) Color(0xFFE2E8F0) else Color.White
+                                            if (isDark) Color(0xFFF2F2F7) else Color.White
                                         }
                                     )
                                 }
@@ -469,11 +469,11 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.Psychology, null, tint = Color(0xFF3B82F6), modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Rounded.Psychology, null, tint = Color(0xFFF2F2F7), modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
                                     Text("System Prompt & Persona", style = MaterialTheme.typography.bodyMedium)
                                 }
-                                Text("$systemPercent% ($systemTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3B82F6))
+                                Text("$systemPercent% ($systemTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFFF2F2F7))
                             }
                             Text(
                                 text = "Automatically takes the remaining context allocation ($systemPercent%)",

@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -128,7 +129,7 @@ fun ExportContentSelectionDialog(
                 Icon(
                     imageVector = Icons.Rounded.Inventory2,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.White,
                     modifier = Modifier.size(24.dp),
                 )
                 Text(
@@ -146,7 +147,7 @@ fun ExportContentSelectionDialog(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color(0xFFA6A6A6),
                 )
 
                 // Select All / Deselect All
@@ -154,7 +155,15 @@ fun ExportContentSelectionDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    OutlinedButton(
+                    OutlinedButton(                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color(0xFFF2F2F7)
+                        ),
+            border = androidx.compose.foundation.BorderStroke(
+                        0.5.dp,
+                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                        ),
+
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
                             BackupContentOption.entries.forEach { selectedContentMap[it] = true }
@@ -166,7 +175,15 @@ fun ExportContentSelectionDialog(
                         Text(stringResource(R.string.backup_export_select_all))
                     }
 
-                    OutlinedButton(
+                    OutlinedButton(                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color(0xFFF2F2F7)
+                        ),
+            border = androidx.compose.foundation.BorderStroke(
+                        0.5.dp,
+                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                        ),
+
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
                             BackupContentOption.entries.forEach { selectedContentMap[it] = false }
@@ -195,11 +212,12 @@ fun ExportContentSelectionDialog(
 
                         Surface(
                             shape = AppShapes.CardSmall,
-                            color = if (isEnabled) {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f)
-                            },
+                            color = if (isChecked) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp,
+                                if (isChecked) Color.White.copy(alpha = 0.5f)
+                                else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                            ),
                             onClick = {
                                 if (isEnabled) {
                                     haptics.perform(HapticPattern.Tick)
@@ -226,9 +244,9 @@ fun ExportContentSelectionDialog(
                                         imageVector = option.icon(),
                                         contentDescription = null,
                                         tint = if (isEnabled && isChecked) {
-                                            MaterialTheme.colorScheme.primary
+                                            Color.White
                                         } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                            Color(0xFF8A8A96)
                                         },
                                         modifier = Modifier.size(22.dp),
                                     )
@@ -239,9 +257,9 @@ fun ExportContentSelectionDialog(
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = if (isEnabled) {
-                                                MaterialTheme.colorScheme.onSurface
+                                                Color(0xFFF2F2F7)
                                             } else {
-                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                                Color(0xFFF2F2F7).copy(alpha = 0.38f)
                                             },
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
@@ -250,9 +268,9 @@ fun ExportContentSelectionDialog(
                                             text = stringResource(option.descRes),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = if (isEnabled) {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                                Color(0xFFA6A6A6)
                                             } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                                                Color(0xFFA6A6A6).copy(alpha = 0.38f)
                                             },
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
@@ -293,7 +311,7 @@ fun ExportContentSelectionDialog(
                                                 allKeys.size,
                                             ),
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = Color.White.copy(alpha = 0.9f),
                                             fontWeight = FontWeight.Medium,
                                         )
                                         Icon(
@@ -303,7 +321,7 @@ fun ExportContentSelectionDialog(
                                                 Icons.Rounded.KeyboardArrowDown
                                             },
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary,
+                                            tint = Color.White.copy(alpha = 0.9f),
                                             modifier = Modifier.size(18.dp),
                                         )
                                     }
@@ -325,7 +343,7 @@ fun ExportContentSelectionDialog(
                                                     text = providerName,
                                                     style = MaterialTheme.typography.labelSmall,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.secondary,
+                                                    color = Color.White.copy(alpha = 0.65f),
                                                     modifier = Modifier.padding(top = 4.dp),
                                                 )
                                                 keys.forEach { item ->
@@ -369,7 +387,11 @@ fun ExportContentSelectionDialog(
             }
         },
         confirmButton = {
-            Button(
+            Button(                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
+                ),
+
                 onClick = {
                     haptics.perform(HapticPattern.Pop)
                     val selectedOptions = selectedContentMap.filterValues { it }.keys.toSet()
@@ -393,10 +415,14 @@ fun ExportContentSelectionDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
+                ),
+onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
         },
-        shape = AppShapes.Dialog,
+        shape = AppShapes.SettingDialog,
     )
 }

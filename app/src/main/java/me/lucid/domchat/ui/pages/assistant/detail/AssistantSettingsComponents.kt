@@ -42,7 +42,7 @@ import androidx.compose.ui.graphics.Color
 @Composable
 fun assistantGlassColor(): Color {
     return if (me.lucid.domchat.ui.theme.LocalDarkMode.current) {
-        Color(0xFF141520).copy(alpha = 0.55f)
+        Color(0xFF000000).copy(alpha = 0.55f)
     } else {
         MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.70f)
     }

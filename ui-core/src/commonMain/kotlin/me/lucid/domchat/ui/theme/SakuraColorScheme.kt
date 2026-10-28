@@ -9,7 +9,18 @@ import androidx.compose.ui.graphics.Color
 fun sakuraColorScheme(dark: Boolean): ColorScheme = if (dark) SakuraDark else SakuraLight
 
 fun ColorScheme.withDomChatAmoledSurface(dark: Boolean): ColorScheme = if (dark) {
-    copy(background = Color.Black, surface = Color.Black)
+    copy(
+        background = Color.Black,
+        surface = Color.Black,
+        surfaceVariant = Color.Black,
+        surfaceDim = Color.Black,
+        surfaceContainerLowest = Color.Black,
+        surfaceContainerLow = Color.Black,
+        surfaceContainer = Color.Black,
+        surfaceContainerHigh = Color.Black,
+        surfaceContainerHighest = Color.Black,
+        surfaceTint = Color.Black,
+    )
 } else {
     this
 }

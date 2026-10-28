@@ -223,12 +223,17 @@ fun ModelSelector(
     if (popup) {
         val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
             onDismissRequest = {
                 popup = false
             },
             sheetState = state,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             sheetGesturesEnabled = true,
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
@@ -616,7 +621,7 @@ internal fun ColumnScope.ModelList(
                                             HeartIcon,
                                             contentDescription = null,
                                             modifier = Modifier.size(20.dp),
-                                            tint = MaterialTheme.colorScheme.primary,
+                                            tint = Color.White,
                                         )
                                     }
                                 },
@@ -685,7 +690,7 @@ internal fun ColumnScope.ModelList(
                                 ProviderBalanceText(
                                     providerSetting = item.provider,
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = Color.White.copy(alpha = 0.65f),
                                 )
                             }
                         }
@@ -725,7 +730,7 @@ internal fun ColumnScope.ModelList(
                                                 HeartIcon,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(20.dp),
-                                                tint = MaterialTheme.colorScheme.primary,
+                                                tint = Color.White,
                                             )
                                         } else {
                                             Icon(
@@ -797,7 +802,7 @@ internal fun ColumnScope.ModelList(
             ) {
                 val isDark = LocalDarkMode.current
                 val searchFieldShape = RoundedCornerShape(16.dp)
-                val searchBg = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+                val searchBg = Color(0xFF000000)
                 val searchBorder = Brush.verticalGradient(
                     listOf(
                         Color.White.copy(alpha = if (isDark) 0.25f else 0.15f),
@@ -823,12 +828,12 @@ internal fun ColumnScope.ModelList(
                         unfocusedBorderColor = Color.Transparent,
                         disabledBorderColor = Color.Transparent,
                         errorBorderColor = Color.Transparent,
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        focusedLeadingIconColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurface
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.45f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.45f),
+                        focusedLeadingIconColor = Color.White.copy(alpha = 0.65f),
+                        unfocusedLeadingIconColor = Color.White.copy(alpha = 0.65f)
                     ),
                     leadingIcon = {
                         Icon(Icons.Rounded.Search, null)
@@ -854,7 +859,7 @@ internal fun ColumnScope.ModelList(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Rounded.Sort,
                                     contentDescription = "Sort",
-                                    tint = if (sortOrder != ModelSortOrder.DEFAULT) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = if (sortOrder != ModelSortOrder.DEFAULT) Color.White else Color.White.copy(alpha = 0.65f),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -892,7 +897,7 @@ internal fun ColumnScope.ModelList(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                    Color(0xFF000000)
                                 )
                             )
                         )
@@ -902,7 +907,7 @@ internal fun ColumnScope.ModelList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .background(Color(0xFF000000))
                 )
             }
 
@@ -945,15 +950,11 @@ internal fun ColumnScope.ModelList(
                                 interactionSource = interactionSource,
                                 shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                                 color = if (isActive) {
-                                    Color.White.copy(alpha = 0.20f)
+                                    Color.White.copy(alpha = 0.18f)
                                 } else {
-                                    if (LocalDarkMode.current) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f)
+                                    Color(0xFF000000)
                                 },
-                                contentColor = if (isActive) {
-                                    Color.White
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                },
+                                contentColor = Color.White,
                                 modifier = Modifier
                                     .graphicsLayer {
                                         scaleX = scale
@@ -968,7 +969,7 @@ internal fun ColumnScope.ModelList(
                                     ProviderIcon(
                                         provider = provider,
                                         modifier = Modifier.size(22.dp),
-                                        contentColor = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                        contentColor = Color.White
                                     )
                                     Text(
                                         text = provider.name,
@@ -1045,7 +1046,7 @@ private fun ModelSectionHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.White.copy(alpha = 0.65f),
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -1087,11 +1088,7 @@ private fun ModelItem(
                     provider = providerSetting,
                     modifier = Modifier.size(32.dp),
                     color = Color.Transparent,
-                    contentColor = if (select) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+                    contentColor = Color.White,
                 )
             },
             metadata = {
@@ -1110,12 +1107,15 @@ private fun ModelItem(
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         Card(
-            modifier = modifier,
+            modifier = modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
+            ),
             shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
             colors = CardDefaults.cardColors(
-                containerColor = if (select) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.surfaceContainerHighest,
-                contentColor = if (select) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                containerColor = Color(0xFF000000),
+                contentColor = Color.White,
             )
         ) {
             Row(
@@ -1150,7 +1150,7 @@ private fun ModelItem(
                         provider = providerSetting,
                         modifier = Modifier.size(32.dp),
                         color = Color.Transparent,
-                        contentColor = if (select) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        contentColor = Color.White
                     )
                     Column(
                         modifier = Modifier.weight(1f),

@@ -193,7 +193,7 @@ fun SettingAndroidIntegrationPage(
                                         text = stringResource(R.string.text_selection_demo_text),
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.padding(16.dp),
-                                        color = if (LocalDarkMode.current) Color(0xFFE2E8F0) else Color.White
+                                        color = if (LocalDarkMode.current) Color(0xFFF2F2F7) else Color.White
                                     )
                                 }
                             }
@@ -712,7 +712,7 @@ private fun ActionCard(
                     Text(
                         text = "Input",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isDark) Color(0xFF93C5FD) else Color(0xFFFFFFFF),
+                        color = if (isDark) Color(0xFFA6A6A6) else Color(0xFFFFFFFF),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -766,7 +766,7 @@ private fun EditActionDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier.widthIn(max = 360.dp),
-        shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = {
             Text(
@@ -820,7 +820,7 @@ private fun EditActionDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f))
+                Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
             }
         }
     )

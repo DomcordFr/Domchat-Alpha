@@ -557,7 +557,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                MaterialTheme.colorScheme.background
+                                Color(0xFF000000)
                             )
                         )
                     )
@@ -951,7 +951,7 @@ internal fun SearchProvidersContent(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -1126,8 +1126,8 @@ internal fun AddSearchServiceButton(
         FloatingActionButton(
             onClick = openSearchProviderSheet,
             shape = CircleShape,
-            containerColor = if (isDark) Color.White else Color.Black,
-            contentColor = if (isDark) Color.Black else Color.White
+            containerColor = Color(0xFFFFFFFF),
+            contentColor = Color(0xFF000000)
         ) {
             Icon(Icons.Rounded.Add, stringResource(R.string.setting_page_search_add_provider))
         }

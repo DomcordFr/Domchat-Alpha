@@ -71,11 +71,7 @@ fun SherpaInstalledModelCard(
         modifier = modifier.fillMaxWidth(),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = if (isDark) {
-                Color(0xFF000000)
-            } else {
-                Color(0xFF000000)
-            },
+            containerColor = Color(0xFF000000)
         ),
     ) {
         Row(
@@ -132,11 +128,7 @@ fun SherpaDownloadableModelCard(
         modifier = modifier.fillMaxWidth(),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = if (isDark) {
-                Color(0xFF000000)
-            } else {
-                Color(0xFF000000)
-            },
+            containerColor = Color(0xFF000000)
         ),
     ) {
         Column(

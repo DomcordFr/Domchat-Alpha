@@ -200,8 +200,8 @@ fun OnboardingPage(vm: OnboardingVM = koinViewModel()) {
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = if (isDark) Color.Black else MaterialTheme.colorScheme.surface,
-        contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+        color = Color(0xFF000000),
+        contentColor = Color(0xFFF2F2F7),
     ) {
         AnimatedContent(
             targetState = page,
@@ -310,7 +310,8 @@ fun OnboardingPage(vm: OnboardingVM = koinViewModel()) {
 
                 SetupPage.LocalModels -> SettingLocalLlmPage(
                     navigationIcon = {
-                        IconButton(onClick = {
+                        IconButton(
+        onClick = {
                             haptics.perform(HapticPattern.Pop)
                             handleBack()
                         }) {
@@ -479,7 +480,7 @@ private fun LocalModelSetupBottomBar(
     onContinue: () -> Unit,
 ) {
     Surface(
-        color = Color(0xFF0D0E16).copy(alpha = 0.97f),
+        color = Color(0xFF000000),
         contentColor = Color(0xFFF2F2F7),
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
@@ -502,7 +503,11 @@ private fun LocalModelSetupBottomBar(
                 color = Color(0xFF9A9AA2),
                 modifier = Modifier.weight(1f),
             )
-            Button(
+            Button(                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
+                ),
+
                 onClick = onContinue,
                 enabled = canContinue && !loading,
                 shape = AppShapes.ButtonRounded,
@@ -593,7 +598,7 @@ private fun IntroPage(
 @Composable
 private fun IntroRipple(progress: Float) {
     val isDark = LocalDarkMode.current
-    val blendColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surface
+    val blendColor = Color(0xFF000000)
     val colors = listOf(
         lerp(MaterialTheme.colorScheme.primary, blendColor, 0.34f),
         lerp(MaterialTheme.colorScheme.secondary, blendColor, 0.42f),
@@ -633,7 +638,8 @@ private fun CenterTextPage(
 ) {
     SetupScaffold(
         bottom = {
-            SingleArrowButton(onClick = onNext)
+            SingleArrowButton(
+        onClick = onNext)
         }
     ) {
         Box(
@@ -817,7 +823,7 @@ private fun LinkOutPage(
     SetupScaffold(
         bottom = {
             CenteredSetupButton(
-                text = button,
+        text = button,
                 icon = Icons.AutoMirrored.Rounded.OpenInNew,
                 onClick = {
                     val target = url ?: return@CenteredSetupButton
@@ -854,7 +860,7 @@ private fun PasteKeyPage(
     SetupScaffold(
         bottom = {
             SetupButton(
-                filled = true,
+        filled = true,
                 enabled = apiKey.isNotBlank() && !loading,
                 icon = Icons.AutoMirrored.Rounded.ArrowForward,
                 onClick = onContinue,
@@ -937,7 +943,8 @@ private fun ManualModelsPage(
                     lineHeight = MaterialTheme.typography.titleLarge.lineHeight,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = { showInfo = true }) {
+                IconButton(
+        onClick = { showInfo = true }) {
                     Icon(Icons.Rounded.Info, contentDescription = null)
                 }
             }
@@ -976,7 +983,11 @@ private fun ManualModelsPage(
                 Text("Pick one fast and cheap model for everyday chat, plus one stronger model for harder questions.")
             },
             confirmButton = {
-                TextButton(onClick = { showInfo = false }) {
+                TextButton(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFFFFF),
+                    contentColor = Color(0xFF000000)
+                    ),
+onClick = { showInfo = false }) {
                     Text("Got it")
                 }
             }
@@ -1092,7 +1103,7 @@ private fun SuccessPage(
     SetupScaffold(
         bottom = {
             CenteredSetupButton(
-                text = "Start chatting",
+        text = "Start chatting",
                 onClick = onDone,
             )
         }
@@ -1119,7 +1130,7 @@ private fun SetupScaffold(
     content: @Composable () -> Unit,
 ) {
     val isDark = LocalDarkMode.current
-    val bgColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surface
+    val bgColor = Color(0xFF000000)
     Box(modifier = Modifier.fillMaxSize()) {
         content()
         Box(
@@ -1146,7 +1157,7 @@ private fun SetupScaffold(
 
 @Composable
 private fun CenteredSetupButton(
-    text: String,
+        text: String,
     icon: ImageVector? = null,
     enabled: Boolean = true,
     onClick: () -> Unit,
@@ -1156,7 +1167,7 @@ private fun CenteredSetupButton(
         contentAlignment = Alignment.Center,
     ) {
         SetupButton(
-            text = text,
+        text = text,
             icon = icon,
             filled = true,
             enabled = enabled,
@@ -1182,13 +1193,13 @@ private fun TwoSetupButtons(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         SetupButton(
-            text = leftText,
+        text = leftText,
             filled = false,
             onClick = onLeft,
             modifier = Modifier.weight(leftWeight),
         )
         SetupButton(
-            text = rightText,
+        text = rightText,
             icon = rightIcon,
             filled = true,
             neutral = rightNeutral,
@@ -1200,7 +1211,8 @@ private fun TwoSetupButtons(
 }
 
 @Composable
-private fun SingleArrowButton(onClick: () -> Unit) {
+private fun SingleArrowButton(
+        onClick: () -> Unit) {
     SetupButton(
         icon = Icons.AutoMirrored.Rounded.ArrowForward,
         filled = true,
@@ -1213,7 +1225,7 @@ private fun SingleArrowButton(onClick: () -> Unit) {
 
 @Composable
 private fun SetupButton(
-    modifier: Modifier = Modifier,
+        modifier: Modifier = Modifier,
     text: String? = null,
     icon: ImageVector? = null,
     filled: Boolean,
@@ -1266,8 +1278,8 @@ private fun SetupButton(
             shape = shape,
             contentPadding = PaddingValues(horizontal = 16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (neutral) setupCardColor() else Color(0xFF0D0E16),
-                contentColor = if (neutral) Color(0xFFF2F2F7) else Color.White,
+                containerColor = setupCardColor(),
+                contentColor = Color(0xFFF2F2F7),
             ),
             modifier = modifier
                 .height(52.dp)
@@ -1291,7 +1303,7 @@ private fun SetupButton(
             contentPadding = PaddingValues(horizontal = 16.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = Color(0xFFF2F2F7),
-                containerColor = Color(0xFF141520),
+                containerColor = Color(0xFF000000),
             ),
             modifier = modifier
                 .height(52.dp)
@@ -1556,9 +1568,11 @@ private fun SelectionCircle(selected: Boolean) {
             .clip(CircleShape)
             .then(
                 if (selected) {
-                    Modifier.background(MaterialTheme.colorScheme.primary)
+                    Modifier
+                        .background(Color.White.copy(alpha = 0.18f))
+                        .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                 } else {
-                    Modifier.border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    Modifier.border(1.dp, Color.White.copy(alpha = 0.22f), CircleShape)
                 }
             ),
         contentAlignment = Alignment.Center,
@@ -1567,7 +1581,7 @@ private fun SelectionCircle(selected: Boolean) {
             Icon(
                 imageVector = Icons.Rounded.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color.White,
                 modifier = Modifier.size(18.dp),
             )
         }
@@ -1618,7 +1632,7 @@ private fun SetupModelFeatureCard(
 @Composable
 private fun FadingLazyColumn(content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
     val isDark = LocalDarkMode.current
-    val bgColor = if (isDark) Color.Black else MaterialTheme.colorScheme.surface
+    val bgColor = Color(0xFF000000)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1659,8 +1673,8 @@ private fun groupedCardShape(position: ItemPosition) = when (position) {
 
 @Composable
 private fun setupCardColor(): Color {
-    // Unified dark-glass charcoal fill so onboarding matches settings cards.
-    return Color(0xFF141520).copy(alpha = 0.55f)
+    // Unified solid black fill so onboarding matches settings cards.
+    return Color(0xFF000000)
 }
 
 private enum class SetupPage {
@@ -1706,7 +1720,7 @@ private fun CustomProviderKeyPage(
     SetupScaffold(
         bottom = {
             SetupButton(
-                filled = true,
+        filled = true,
                 enabled = apiKey.isNotBlank() && baseUrl.isNotBlank() && !loading,
                 icon = Icons.AutoMirrored.Rounded.ArrowForward,
                 onClick = onContinue,
@@ -1735,7 +1749,7 @@ private fun CustomProviderKeyPage(
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 apiTypes.forEachIndexed { index, type ->
                     SegmentedButton(
-                        modifier = Modifier.weight(1f),
+        modifier = Modifier.weight(1f),
                         selected = selectedType == type,
                         onClick = {
                             val newProvider = when (type) {
@@ -1766,14 +1780,14 @@ private fun CustomProviderKeyPage(
                 label = { Text("Base URL") },
                 shape = AppShapes.InputField,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF141520).copy(alpha = 0.55f),
-                    unfocusedContainerColor = Color(0xFF141520).copy(alpha = 0.45f),
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
                     focusedTextColor = Color(0xFFF2F2F7),
                     unfocusedTextColor = Color(0xFFF2F2F7),
                     cursorColor = Color.White,
-                    focusedBorderColor = Color(0xFFA78BFA).copy(alpha = 0.5f),
-                    unfocusedBorderColor = Color(0xFF3A3D4A),
-                    focusedLabelColor = Color(0xFFB9A8FC),
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedLabelColor = Color(0xFFF2F2F7),
                     unfocusedLabelColor = Color(0xFF8A8A96),
                 ),
                 modifier = Modifier.fillMaxWidth()

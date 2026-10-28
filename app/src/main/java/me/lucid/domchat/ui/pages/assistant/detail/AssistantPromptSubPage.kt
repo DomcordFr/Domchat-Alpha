@@ -308,7 +308,7 @@ fun AssistantPromptSubPage(
                                     }
 
                                     Surface(
-                                        color = androidx.compose.ui.graphics.Color(0xFF141520),
+                                        color = androidx.compose.ui.graphics.Color(0xFF000000),
                                         shape = me.lucid.domchat.ui.theme.AppShapes.CardSmall,
                                         modifier = Modifier
                                             .width(100.dp)

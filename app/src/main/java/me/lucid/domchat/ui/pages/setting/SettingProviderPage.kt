@@ -336,8 +336,8 @@ fun SettingProviderPage(
                                     }
                                 },
                                 shape = CircleShape,
-                                containerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
-                                contentColor = if (isDark) Color.White else Color.Black
+                                containerColor = Color(0xFFFFFFFF),
+                                contentColor = Color(0xFF000000)
                             ) {
                                 Icon(
                                     Icons.Rounded.Settings,
@@ -417,7 +417,7 @@ fun SettingProviderPage(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -426,7 +426,22 @@ fun SettingProviderPage(
                             Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
                         }
                     }
-                } else null
+                } else null,
+                colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFF000000),
+                unfocusedContainerColor = Color(0xFF000000),
+                focusedTextColor = Color(0xFFF2F2F7),
+                unfocusedTextColor = Color(0xFFF2F2F7),
+                cursorColor = Color.White,
+                focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                focusedPlaceholderColor = Color(0xFF8A8A96),
+                unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                focusedLeadingIconColor = Color(0xFF8A8A96),
+                unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                focusedTrailingIconColor = Color(0xFF8A8A96),
+                unfocusedTrailingIconColor = Color(0xFF8A8A96)
+            )
             )
             
             // Tag filter row - only show when there are tags
@@ -532,8 +547,8 @@ fun SettingProviderPage(
                             }
                         },
                         shape = AppShapes.CardLarge,
-                        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
-                        contentColor = Color.White
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ) {
                         Icon(
                             Icons.Rounded.Settings,
@@ -597,7 +612,7 @@ private fun SearchBarWithToggle(
             onValueChange = onSearchQueryChange,
             placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
             modifier = Modifier.weight(1f),
-            shape = AppShapes.SearchField,
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
             trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -606,7 +621,22 @@ private fun SearchBarWithToggle(
                         Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
                     }
                 }
-            } else null
+            } else null,
+            colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFF000000),
+            unfocusedContainerColor = Color(0xFF000000),
+            focusedTextColor = Color(0xFFF2F2F7),
+            unfocusedTextColor = Color(0xFFF2F2F7),
+            cursorColor = Color.White,
+            focusedBorderColor = Color.White.copy(alpha = 0.38f),
+            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+            focusedPlaceholderColor = Color(0xFF8A8A96),
+            unfocusedPlaceholderColor = Color(0xFF8A8A96),
+            focusedLeadingIconColor = Color(0xFF8A8A96),
+            unfocusedLeadingIconColor = Color(0xFF8A8A96),
+            focusedTrailingIconColor = Color(0xFF8A8A96),
+            unfocusedTrailingIconColor = Color(0xFF8A8A96)
+        )
         )
         IconButton(onClick = onToggleViewMode) {
             Icon(
@@ -674,8 +704,8 @@ private fun ProviderListView(
             if (providers.isEmpty() && matchingPreset == null) {
                 item(key = "empty") {
                     val isDark = LocalDarkMode.current
-                    val emptyCardBg = if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.03f)
-                    val emptyBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                    val emptyCardBg = Color(0xFF000000)
+                    val emptyBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -729,13 +759,13 @@ private fun ProviderListView(
                     )
                     
                     val presetBg = Color(0xFF000000)
-                    val presetBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent
+                    val presetBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Surface(
                         onClick = {
                             val provider = matchingPreset.toProviderSetting()
                             onAddProvider(provider)
                         },
-                        modifier = Modifier.fillMaxWidth().border(1.dp, presetBorder, RoundedCornerShape(24.dp)),
+                        modifier = Modifier.fillMaxWidth().border(0.5.dp, presetBorder, RoundedCornerShape(24.dp)),
                         shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                         color = presetBg
                     ) {
@@ -880,7 +910,7 @@ private fun ProviderListView(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -942,8 +972,8 @@ private fun ImportProviderButton(
         FloatingActionButton(
             onClick = openImportDialog,
             shape = CircleShape,
-            containerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
-            contentColor = if (isDark) Color.White else Color.Black
+            containerColor = Color(0xFFFFFFFF),
+            contentColor = Color(0xFF000000)
         ) {
             Icon(Icons.AutoMirrored.Rounded.Input, stringResource(R.string.import_label))
         }
@@ -960,8 +990,8 @@ private fun ImportProviderButton(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
                 .widthIn(max = 360.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.Dialog),
-            shape = AppShapes.Dialog,
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
+            shape = AppShapes.SettingDialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
                 Text(
@@ -992,7 +1022,11 @@ private fun ImportProviderButton(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            shape = MaterialTheme.shapes.large
+                            shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFFFFFF),
+                                contentColor = Color(0xFF000000)
+                            )
                         ) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
@@ -1025,7 +1059,15 @@ private fun ImportProviderButton(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            shape = MaterialTheme.shapes.large
+                            shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color(0xFFF2F2F7)
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp,
+                                me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                            )
                         ) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
@@ -1372,8 +1414,8 @@ private fun AddButton(
         FloatingActionButton(
             onClick = openProviderSheet,
             shape = CircleShape,
-            containerColor = if (isDark) Color.White else Color.Black,
-            contentColor = if (isDark) Color.Black else Color.White
+            containerColor = Color(0xFFFFFFFF),
+            contentColor = Color(0xFF000000)
         ) {
             Icon(Icons.Rounded.Add, stringResource(R.string.add))
         }
@@ -1414,7 +1456,7 @@ private fun AddButton(
                     onValueChange = { searchQuery = it },
                     placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = AppShapes.SearchField,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -1423,7 +1465,22 @@ private fun AddButton(
                                 Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
                             }
                         }
-                    } else null
+                    } else null,
+                    colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedPlaceholderColor = Color(0xFF8A8A96),
+                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                    focusedLeadingIconColor = Color(0xFF8A8A96),
+                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                    focusedTrailingIconColor = Color(0xFF8A8A96),
+                    unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                )
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -1482,7 +1539,7 @@ private fun AddButton(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(24.dp)),
+                                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(24.dp)),
                                 shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                                 color = Color(0xFF000000),
                             ) {
@@ -1497,10 +1554,10 @@ private fun AddButton(
                                         imageVector = Icons.Rounded.PhoneAndroid,
                                         contentDescription = null,
                                         modifier = Modifier.size(40.dp),
-                                        tint = if (isDark) Color.White else Color.White,
+                                        tint = Color.White,
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = preset.name, style = MaterialTheme.typography.titleMedium, color = if (isDark) Color.White else Color.White)
+                                        Text(text = preset.name, style = MaterialTheme.typography.titleMedium, color = Color.White)
                                         Text(
                                             text = preset.description,
                                             style = MaterialTheme.typography.bodySmall,
@@ -1525,8 +1582,8 @@ private fun AddButton(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, if (isDark) Color.White.copy(alpha = 0.20f) else Color.Transparent, RoundedCornerShape(24.dp)),
-                            color = if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFF000000),
+                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(24.dp)),
+                            color = Color(0xFF000000),
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                         ) {
                             Row(
@@ -1540,13 +1597,13 @@ private fun AddButton(
                                     imageVector = Icons.Rounded.Add,
                                     contentDescription = null,
                                     modifier = Modifier.size(40.dp),
-                                    tint = if (isDark) Color.White else Color(0xFFFFFFFF)
+                                    tint = Color.White
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = stringResource(R.string.setting_provider_page_add_custom_provider),
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if (isDark) Color.White else Color(0xFFFFFFFF)
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -1574,7 +1631,7 @@ private fun AddButton(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, shape),
+                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, shape),
                             shape = shape,
                             color = Color(0xFF000000)
                         ) {
@@ -1708,9 +1765,9 @@ private fun ProviderItemContent(
 ) {
     // Define the normal card color (glassy styling)
     val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
-    val normalCardColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f)
-    val cardBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
-    val disabledBackground = if (isDark) Color.White.copy(alpha = 0.02f) else Color.Black.copy(alpha = 0.015f)
+    val normalCardColor = Color(0xFF000000)
+    val cardBorderColor = Color.White.copy(alpha = 0.08f)
+    val disabledBackground = Color.White.copy(alpha = 0.02f)
     
     Row(
         modifier = Modifier

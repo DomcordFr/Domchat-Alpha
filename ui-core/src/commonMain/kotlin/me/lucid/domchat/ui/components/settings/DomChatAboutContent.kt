@@ -78,11 +78,11 @@ fun AetherAboutContent(
         )
         Spacer(Modifier.height(8.dp))
         Surface(
-            color = if (darkTheme) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.14f),
+            color = Color(0xFF000000),
             shape = CircleShape,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
-                if (darkTheme) Color.White.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.40f)
+                Color.White.copy(alpha = 0.20f)
             ),
             modifier = Modifier
                 .padding(vertical = 4.dp)
@@ -101,7 +101,7 @@ fun AetherAboutContent(
                 text = "v$versionName",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = if (darkTheme) Color(0xFFDDD6FE) else Color(0xFF6D28D9),
+                color = Color.White,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             )
         }
@@ -197,8 +197,14 @@ private fun AetherAboutItem(
         contentColor = Color(0xFFF2F2F7),
         shape = RoundedCornerShape(16.dp),
         border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            Color.White.copy(alpha = 0.08f)
+            0.5.dp,
+            androidx.compose.ui.graphics.Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.22f),
+                    Color.White.copy(alpha = 0.05f),
+                    Color.Transparent
+                )
+            )
         ),
         interactionSource = interactionSource,
         modifier = Modifier.fillMaxWidth().graphicsLayer {
@@ -212,7 +218,7 @@ private fun AetherAboutItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, null, tint = Color.White)
             }
             Column(
                 modifier = Modifier.weight(1f).padding(end = 8.dp),

@@ -448,7 +448,7 @@ private fun TtsVoiceTab(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background,
+                            Color(0xFF000000),
                         )
                     )
                 )
@@ -972,8 +972,8 @@ private fun VoiceSelectionCircle(selected: Boolean) {
                     Modifier.background(Color.White)
                 } else {
                     Modifier.border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.outline,
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.22f),
                         shape = CircleShape,
                     )
                 }
@@ -984,7 +984,7 @@ private fun VoiceSelectionCircle(selected: Boolean) {
             Icon(
                 imageVector = Icons.Rounded.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color(0xFF000000),
                 modifier = Modifier.size(18.dp),
             )
         }

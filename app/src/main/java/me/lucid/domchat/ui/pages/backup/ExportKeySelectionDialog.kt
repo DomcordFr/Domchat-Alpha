@@ -86,7 +86,7 @@ fun ExportKeySelectionDialog(
                 Icon(
                     imageVector = Icons.Rounded.Key,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
@@ -104,14 +104,14 @@ fun ExportKeySelectionDialog(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFFA6A6A6)
                 )
 
                 if (allKeys.isEmpty()) {
                     Text(
                         text = stringResource(R.string.backup_export_no_keys),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color(0xFFA6A6A6),
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
@@ -120,7 +120,15 @@ fun ExportKeySelectionDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedButton(
+                        OutlinedButton(                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color(0xFF000000),
+                            contentColor = Color(0xFFF2F2F7)
+                            ),
+            border = androidx.compose.foundation.BorderStroke(
+                            0.5.dp,
+                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                            ),
+
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
                                 allKeys.forEach { selectedMap[it.entry.id] = true }
@@ -131,7 +139,15 @@ fun ExportKeySelectionDialog(
                             Text(stringResource(R.string.backup_export_select_all))
                         }
 
-                        OutlinedButton(
+                        OutlinedButton(                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color(0xFF000000),
+                            contentColor = Color(0xFFF2F2F7)
+                            ),
+            border = androidx.compose.foundation.BorderStroke(
+                            0.5.dp,
+                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                            ),
+
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
                                 allKeys.forEach { selectedMap[it.entry.id] = false }
@@ -157,7 +173,7 @@ fun ExportKeySelectionDialog(
                                     text = providerName,
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = Color.White.copy(alpha = 0.9f),
                                     modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
                                 )
                             }
@@ -166,7 +182,12 @@ fun ExportKeySelectionDialog(
                                 val isChecked = selectedMap[item.entry.id] ?: false
                                 Surface(
                                     shape = AppShapes.CardSmall,
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    color = if (isChecked) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        0.5.dp,
+                                        if (isChecked) Color.White.copy(alpha = 0.5f)
+                                        else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                    ),
                                     onClick = {
                                         haptics.perform(HapticPattern.Tick)
                                         selectedMap[item.entry.id] = !isChecked
@@ -206,7 +227,11 @@ fun ExportKeySelectionDialog(
             }
         },
         confirmButton = {
-            Button(
+            Button(                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
+                ),
+
                 onClick = {
                     haptics.perform(HapticPattern.Pop)
                     val selectedIds = selectedMap.filterValues { it }.keys.toSet()
@@ -218,10 +243,14 @@ fun ExportKeySelectionDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
+                ),
+onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
         },
-        shape = AppShapes.Dialog
+        shape = AppShapes.SettingDialog
     )
 }

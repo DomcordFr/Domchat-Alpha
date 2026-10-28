@@ -231,8 +231,8 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                             showImportDialog = true
                         },
                         shape = CircleShape,
-                        containerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
-                        contentColor = if (isDark) Color.White else Color.Black,
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000),
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.Input, "Import MCP configuration")
                     }
@@ -242,8 +242,8 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                             showConnectionsSheet = true
                         },
                         shape = CircleShape,
-                        containerColor = if (isDark) Color.White else Color.Black,
-                        contentColor = if (isDark) Color.Black else Color.White,
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000),
                     ) {
                         Icon(Icons.Rounded.Add, "Add connection")
                     }
@@ -405,7 +405,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                         .height(120.dp)
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color.Transparent, MaterialTheme.colorScheme.background)
+                                listOf(Color.Transparent, Color(0xFF000000))
                             )
                         )
                 )
@@ -535,17 +535,16 @@ private fun McpConnectionsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = false,
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(
+            width = 0.5.dp,
+            brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+        ),
         dragHandle = {
             ApplyDialogWindowBlur()
-            IconButton(
-                onClick = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                }
-            ) { Icon(Icons.Rounded.KeyboardArrowDown, null, tint = iconColor) }
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
         },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -566,27 +565,28 @@ private fun McpConnectionsSheet(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
-                shape = AppShapes.SearchField,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, null, tint = iconColor) },
                 trailingIcon = if (searchQuery.isNotEmpty()) {
                     { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = iconColor) } }
                 } else null,
                 placeholder = { Text("Search connections", color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.65f)) },
-                colors = if (isDarkMode) {
-                    OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedLeadingIconColor = Color.White,
-                        unfocusedLeadingIconColor = Color.White,
-                        focusedTrailingIconColor = Color.White,
-                        unfocusedTrailingIconColor = Color.White,
-                        focusedPlaceholderColor = Color.White.copy(alpha = 0.7f),
-                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
-                    )
-                } else {
-                    OutlinedTextFieldDefaults.colors()
-                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedPlaceholderColor = Color(0xFF8A8A96),
+                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                    focusedLeadingIconColor = Color(0xFF8A8A96),
+                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                    focusedTrailingIconColor = Color(0xFF8A8A96),
+                    unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                )
             )
             Spacer(Modifier.height(16.dp))
             LazyColumn(
@@ -595,8 +595,8 @@ private fun McpConnectionsSheet(
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 item {
-                    val customBg = if (isDarkMode) Color.White.copy(alpha = 0.12f) else Color(0xFF000000)
-                    val customBorder = if (isDarkMode) Color.White.copy(alpha = 0.2f) else Color.Transparent
+                    val customBg = Color(0xFF000000)
+                    val customBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Surface(
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
@@ -605,7 +605,7 @@ private fun McpConnectionsSheet(
                         shape = AppShapes.CardMedium,
                         color = customBg,
                         contentColor = customServerContentColor,
-                        modifier = Modifier.border(1.dp, customBorder, AppShapes.CardMedium)
+                        modifier = Modifier.border(0.5.dp, customBorder, AppShapes.CardMedium)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -727,9 +727,9 @@ private fun McpServerItem(
     ) { animatedShape ->
         // Define the normal card color (glassy styling)
         val isDark = LocalDarkMode.current
-        val normalCardColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f)
-        val cardBorderColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
-        val disabledBackground = if (isDark) Color.White.copy(alpha = 0.02f) else Color.Black.copy(alpha = 0.015f)
+        val normalCardColor = Color(0xFF000000)
+        val cardBorderColor = Color.White.copy(alpha = 0.08f)
+        val disabledBackground = Color.White.copy(alpha = 0.02f)
         
         // Grayscale modifier for disabled items
         val saturationMatrix = remember { 

@@ -213,7 +213,7 @@ fun domChatChromeSurfaceColor(): Color {
         0.55f
     }
     if (alpha <= 0.001f) return Color.Transparent
-    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF000000)
+    val base = Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -257,7 +257,7 @@ fun domChatIconPillContainerColor(): Color {
         0.55f
     }
     if (alpha <= 0.001f) return Color.Transparent
-    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF000000)
+    val base = Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -271,7 +271,7 @@ fun domChatFloatingSurfaceColor(
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
-    val base = domChatBaseToneColor()
+    val base = Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -282,7 +282,7 @@ fun blurredContainerColor(
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
-    val base = domChatBaseToneColor()
+    val base = Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -293,7 +293,7 @@ fun domChatSheetContainerColor(): Color {
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.02f) return Color(0xFF000000)
-    val base = domChatBaseToneColor()
+    val base = Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -315,7 +315,7 @@ fun domChatCardContainerColor(): Color {
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
-    val base = domChatBaseToneColor()
+    val base = Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 

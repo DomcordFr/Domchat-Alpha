@@ -57,7 +57,7 @@ fun ApiKeyPoolSettingsDialog(
     AlertDialog(
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
-        shape = AppShapes.Dialog,
+        shape = AppShapes.SettingDialog,
         icon = {
             Icon(
                 imageVector = Icons.Rounded.Tune,

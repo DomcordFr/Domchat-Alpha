@@ -913,41 +913,39 @@ private fun AppStorageHeroCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Storage,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Storage,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+            Column {
+                Text(
+                    text = stringResource(R.string.setting_chat_storage_app_storage_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
                 )
-                Column {
-                    Text(
-                        text = stringResource(R.string.setting_chat_storage_app_storage_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color.White,
-                    )
-                    Text(
-                        text = if (snapshot.isScanning) {
-                            stringResource(R.string.setting_storage_scanning)
-                        } else {
-                            snapshot.totalBytes.fileSizeToString()
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White.copy(alpha = 0.88f),
-                    )
-                }
+                Text(
+                    text = if (snapshot.isScanning) {
+                        stringResource(R.string.setting_storage_scanning)
+                    } else {
+                        snapshot.totalBytes.fileSizeToString()
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White.copy(alpha = 0.88f),
+                )
             }
         }
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
@@ -996,6 +994,7 @@ private fun AppStorageHeroCard(
                     }
                 }
             }
+        }
     }
     }
 }

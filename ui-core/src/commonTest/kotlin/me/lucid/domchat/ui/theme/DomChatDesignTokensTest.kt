@@ -42,8 +42,8 @@ class AetherDesignTokensTest {
         val amoledScheme = sakuraColorScheme(true).withDomChatAmoledSurface(true)
         assertEquals(Color.Black, amoledScheme.background)
         assertEquals(Color.Black, amoledScheme.surface)
-        assertEquals(sakuraColorScheme(true).surfaceContainerHighest, amoledScheme.surfaceContainerHighest)
-        assertNotEquals(Color.Black, amoledScheme.surfaceContainerHighest)
+        assertEquals(Color.Black, amoledScheme.surfaceContainerHighest)
+        assertEquals(Color.Black, amoledScheme.surfaceTint)
     }
 
     @Test

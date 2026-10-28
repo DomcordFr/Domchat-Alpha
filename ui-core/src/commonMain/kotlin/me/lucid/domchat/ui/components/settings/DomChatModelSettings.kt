@@ -46,34 +46,20 @@ fun DomChatModelFeatureCard(
 ) {
     val cardShape = RoundedCornerShape(16.dp)
     Card(
-        modifier = modifier.then(
-            if (darkTheme) {
-                Modifier.border(
-                    0.5.dp,
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = 0.22f),
-                            Color.White.copy(alpha = 0.06f),
-                            Color.Transparent
-                        )
-                    ),
-                    cardShape
+        modifier = modifier.border(
+            0.5.dp,
+            Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.22f),
+                    Color.White.copy(alpha = 0.06f),
+                    Color.Transparent
                 )
-            } else {
-                Modifier.border(
-                    0.5.dp,
-                    Color.Black.copy(alpha = 0.06f),
-                    cardShape
-                )
-            }
+            ),
+            cardShape
         ),
         shape = cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = if (darkTheme) {
-                Color(0xFF0F111A).copy(alpha = 0.88f)
-            } else {
-                Color.White.copy(alpha = 0.90f)
-            },
+            containerColor = Color(0xFF000000),
         ),
     ) {
         Column(
@@ -88,10 +74,7 @@ fun DomChatModelFeatureCard(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (darkTheme) Color.White.copy(alpha = 0.08f)
-                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                        ),
+                        .background(Color.White.copy(alpha = 0.08f)),
                     contentAlignment = Alignment.Center
                 ) {
                     icon()
@@ -157,17 +140,12 @@ fun DomChatGroupedModelRow(
         spring(dampingRatio = 0.5f, stiffness = 400f),
         label = "model_item_bottom_end",
     )
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val contentColor = Color(0xFFF2F2F7)
     val rowShape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
-    val isDark = MaterialTheme.colorScheme.background.red < 0.5f
     val rowBackground = if (selected) {
-        if (isDark) Color.White.copy(alpha = 0.18f) else Color.Black.copy(alpha = 0.12f)
+        Color.White.copy(alpha = 0.18f)
     } else {
-        if (isDark) Color(0xFF1E2029).copy(alpha = 0.55f) else Color(0xFFE8E9F0).copy(alpha = 0.55f)
+        Color(0xFF000000)
     }
     val borderBrush = Brush.verticalGradient(
         listOf(

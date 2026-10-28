@@ -51,8 +51,8 @@ fun AetherProvidersBottomBar(
             Surface(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 shape = RoundedCornerShape(28.dp),
-                color = Color(0xFF141520).copy(alpha = 0.85f),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f)),
                 shadowElevation = 8.dp,
             ) {
                 Row(
@@ -67,7 +67,7 @@ fun AetherProvidersBottomBar(
                                 .then(
                                     if (selected) {
                                         Modifier
-                                            .background(Color.White.copy(alpha = 0.22f))
+                                            .background(Color.White.copy(alpha = 0.18f))
                                             .border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape)
                                     } else {
                                         Modifier.clickable {

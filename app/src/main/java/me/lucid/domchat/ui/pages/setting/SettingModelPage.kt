@@ -251,9 +251,14 @@ private fun DefaultSTTModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -387,9 +392,14 @@ private fun DefaultTranslationModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -503,9 +513,14 @@ private fun DefaultSuggestionModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -618,9 +633,14 @@ private fun DefaultTitleModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -740,9 +760,14 @@ private fun DefaultSummarizerModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -827,9 +852,14 @@ private fun DefaultSubagentModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -946,9 +976,14 @@ private fun DefaultOcrModelSetting(
     if (showModal) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            contentColor = domChatSheetContentColor(),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -1196,12 +1231,10 @@ private fun HelperReasoningSettings(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(
-                    color = if (isAmoled) Color(0xFF000000) else Color.White.copy(alpha = 0.05f)
-                )
+                .background(color = Color(0xFF000000))
                 .border(
-                    width = 1.dp,
-                    color = Color(0xFF000000),
+                    width = 0.5.dp,
+                    brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                 )
                 .clickable {

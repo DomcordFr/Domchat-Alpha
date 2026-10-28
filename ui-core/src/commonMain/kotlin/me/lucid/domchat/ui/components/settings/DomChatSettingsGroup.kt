@@ -49,7 +49,7 @@ fun AetherSettingsGroup(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                color = Color.White.copy(alpha = 0.9f),
                 modifier = Modifier.padding(start = titleStartPadding, bottom = 2.dp),
             )
         }
@@ -57,8 +57,8 @@ fun AetherSettingsGroup(
             modifier = Modifier
                 .padding(horizontal = horizontalPadding)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = Color(0xFF141520).copy(alpha = 0.55f),
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF000000),
             border = androidx.compose.foundation.BorderStroke(
                 0.5.dp,
                 Brush.verticalGradient(
@@ -138,14 +138,14 @@ fun DomChatSettingGroupItem(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Medium,
-                        color = if (darkTheme) Color.White else MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     ),
                 )
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = if (darkTheme) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         ),
                     )
                 }
@@ -189,14 +189,14 @@ fun DomChatSettingGroupInputItem(
                         text = title,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Medium,
-                            color = if (darkTheme) Color.White else MaterialTheme.colorScheme.onSurface
+                            color = Color.White
                         ),
                     )
                     if (subtitle != null) {
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = if (darkTheme) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             ),
                         )
                     }

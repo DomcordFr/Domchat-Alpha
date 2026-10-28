@@ -112,8 +112,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
                 shape = CircleShape,
-                containerColor = if (isDark) Color.White else Color.Black,
-                contentColor = if (isDark) Color.Black else Color.White
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
             ) {
                 Icon(Icons.Rounded.Add, stringResource(R.string.setting_rp_add_rule))
             }
@@ -264,7 +264,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                     },
                                     label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = if (isDark) Color.White.copy(alpha = 0.2f) else Color(0xFF000000),
+                                        selectedContainerColor = Color.White.copy(alpha = 0.18f),,
                                         selectedLabelColor = if (isDark) Color.White else Color(0xFFFFFFFF)
                                     )
                                 )
@@ -499,8 +499,8 @@ private fun RpStyleRuleDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .widthIn(max = 360.dp)
-            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.Dialog),
-        shape = AppShapes.Dialog,
+            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
+        shape = AppShapes.SettingDialog,
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = {
             Text(

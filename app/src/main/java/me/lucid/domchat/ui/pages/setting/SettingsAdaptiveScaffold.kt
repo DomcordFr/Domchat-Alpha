@@ -108,7 +108,7 @@ fun AdaptiveSettingsScaffold(
     Row(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF000000))
     ) {
         CompositionLocalProvider(LocalSettingsWideLayout provides true) {
             SettingsNavigationPane(selected = selected)

@@ -766,7 +766,7 @@ private fun SettingProviderConfigPage(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -1155,7 +1155,7 @@ private fun ModelList(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )

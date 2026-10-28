@@ -180,8 +180,8 @@ fun SettingLorebooksPage(vm: SettingVM = koinViewModel()) {
                             importLauncher.launch(arrayOf("application/json", "*/*"))
                         },
                         shape = CircleShape,
-                        containerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
-                        contentColor = if (isDark) Color.White else Color.Black
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Input,
@@ -195,8 +195,8 @@ fun SettingLorebooksPage(vm: SettingVM = koinViewModel()) {
                             haptics.perform(HapticPattern.Pop)
                         },
                         shape = CircleShape,
-                        containerColor = if (isDark) Color.White else Color.Black,
-                        contentColor = if (isDark) Color.Black else Color.White
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
                     }
@@ -458,7 +458,7 @@ fun LorebooksPageContent(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -512,7 +512,7 @@ private fun LorebookCard(
             }
             Surface(
                 shape = bookShape,
-                color = if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f),
+                color = Color(0xFF000000),
                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f)),
                 modifier = Modifier.size(width = 50.dp, height = 70.dp)
             ) {
@@ -608,7 +608,7 @@ internal fun LorebookCreatorSheet(
     
     ApplyDialogWindowBlur()
     val isDark = LocalDarkMode.current
-    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
+    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
     ModalBottomSheet(
         containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         shape = sheetShape,
@@ -638,7 +638,7 @@ internal fun LorebookCreatorSheet(
                 // Cover picker - book-like aspect ratio
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f),
+                    color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f)),
                     modifier = Modifier.size(width = 56.dp, height = 78.dp),
                     onClick = { imagePickerLauncher.launch("image/*") }
@@ -706,7 +706,7 @@ internal fun LorebookCreatorSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.cancel), color = if (isDark) Color(0xFFAAAAAA) else Color(0xFF666666))
+                    Text(stringResource(R.string.cancel), color = Color(0xFFA6A6A6))
                 }
                 Spacer(Modifier.width(8.dp))
                 Button(
@@ -721,8 +721,8 @@ internal fun LorebookCreatorSheet(
                     enabled = name.isNotBlank(),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDark) Color.White else Color.Black,
-                        contentColor = if (isDark) Color.Black else Color.White
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     )
                 ) {
                     Text(stringResource(R.string.create))

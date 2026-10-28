@@ -231,8 +231,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                     haptics.perform(HapticPattern.Pop)
                     openCreate()
                 },
-                containerColor = if (isDark) Color.White else Color.Black,
-                contentColor = if (isDark) Color.Black else Color.White,
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000),
                 shape = CircleShape
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add Preset")
@@ -508,8 +508,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
                 .widthIn(max = 360.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.Dialog),
-            shape = AppShapes.Dialog,
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
+            shape = AppShapes.SettingDialog,
             containerColor = domChatDialogContainerColor(),
             title = { Text(if (editingPreset == null) "Create Prompt Preset" else "Edit Prompt Preset") },
             text = {
@@ -551,8 +551,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                 Button(
                     onClick = { saveDraft() },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDark) Color.White else Color.Black,
-                        contentColor = if (isDark) Color.Black else Color.White
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ),
                     shape = AppShapes.CardMedium
                 ) {

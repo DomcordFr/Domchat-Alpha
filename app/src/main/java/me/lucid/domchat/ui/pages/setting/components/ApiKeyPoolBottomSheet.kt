@@ -623,6 +623,6 @@ private fun ApiKeyEditDialog(
                 Text(stringResource(R.string.cancel))
             }
         },
-        shape = AppShapes.Dialog
+        shape = AppShapes.SettingDialog
     )
 }

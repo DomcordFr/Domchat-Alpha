@@ -206,8 +206,8 @@ fun SettingSkillsPage(
                             importLauncher.launch(arrayOf("application/json", "text/markdown", "application/zip", "*/*"))
                         },
                         shape = CircleShape,
-                        containerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
-                        contentColor = if (isDark) Color.White else Color.Black
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Input,
@@ -221,8 +221,8 @@ fun SettingSkillsPage(
                             showAddDialog = true
                         },
                         shape = CircleShape,
-                        containerColor = if (isDark) Color.White else Color.Black,
-                        contentColor = if (isDark) Color.Black else Color.White
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
                     }
@@ -524,7 +524,7 @@ fun SkillsPageContent(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -773,7 +773,7 @@ fun SkillEditorSheet(
 
     ApplyDialogWindowBlur()
     val isDark = LocalDarkMode.current
-    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
+    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
     ModalBottomSheet(
         containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         shape = sheetShape,
@@ -1571,7 +1571,7 @@ private fun SkillExportDialog(
 
     ApplyDialogWindowBlur()
     val isDark = LocalDarkMode.current
-    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
+    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
     ModalBottomSheet(
         containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         shape = sheetShape,

@@ -172,8 +172,8 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         showFilterSettingsDialog = true
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
-                    contentColor = Color.White
+                    containerColor = Color(0xFFFFFFFF),
+                    contentColor = Color(0xFF000000)
                 ) {
                     Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.setting_tts_settings_title))
                 }
@@ -388,7 +388,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                MaterialTheme.colorScheme.background
+                                Color(0xFF000000)
                             )
                         )
                     )
@@ -748,7 +748,7 @@ internal fun TtsProvidersContent(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -1219,8 +1219,8 @@ internal fun AddTTSProviderButton(
         FloatingActionButton(
             onClick = openTtsProviderSheet,
             shape = CircleShape,
-            containerColor = if (isDark) Color.White else Color.Black,
-            contentColor = if (isDark) Color.Black else Color.White
+            containerColor = Color(0xFFFFFFFF),
+            contentColor = Color(0xFF000000)
         ) {
             Icon(Icons.Rounded.Add, stringResource(R.string.setting_tts_page_add_provider_content_description))
         }

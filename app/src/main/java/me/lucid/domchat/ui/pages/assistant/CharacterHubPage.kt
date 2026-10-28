@@ -275,7 +275,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     }
 
     Scaffold(
-        containerColor = if (isDark) Color(0xFF000000) else Color(0xFFF7F7F7),
+        containerColor = Color(0xFF000000),
+        topBar = {
+            me.lucid.domchat.ui.components.nav.OneUITopAppBar(
+                title = "Characters",
+                scrollBehavior = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+                navigationIcon = { BackButton() }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -296,25 +303,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // 1. Standalone top row: back button only (flush to the top)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 0.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BackButton()
-            }
-
-            // 2. Large page title directly under the back button
-            Text(
-                text = "Characters",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color.Black,
-                modifier = Modifier.padding(start = 20.dp, top = 0.dp, bottom = 10.dp)
-            )
-
             // Search Bar
             OutlinedTextField(
                 value = searchQuery,
@@ -323,11 +311,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 4.dp),
                 placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF888888)) },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF888888))
+                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
                         }
                     }
                 },
@@ -336,8 +324,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFF000000),
                     unfocusedContainerColor = Color(0xFF000000),
-                    focusedBorderColor = Color.White.copy(0.3f),
-                    unfocusedBorderColor = Color.White.copy(0.12f),
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                     focusedTextColor = Color(0xFFF2F2F7),
                     unfocusedTextColor = Color(0xFFF2F2F7),
                     cursorColor = Color.White
@@ -354,7 +342,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 Text(
                     text = "${filteredAssistants.size} characters loaded",
                     fontSize = 12.sp,
-                    color = Color(0xFF888888)
+                    color = Color(0xFF8A8A96)
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -761,7 +749,7 @@ fun CharacterPortraitCard(
                             Color.Transparent,
                             Color.Black.copy(alpha = 0.35f),
                             Color.Black.copy(alpha = 0.85f),
-                            Color.Black.copy(alpha = 0.98f)
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -845,13 +833,13 @@ fun CharacterListRow(
                 text = assistant.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = if (isDark) Color.White else Color.Black
+                color = Color.White
             )
             if (!assistant.creator.isNullOrBlank()) {
                 Text(
                     text = "by ${assistant.creator.truncateCreator(10)}",
                     fontSize = 12.sp,
-                    color = Color(0xFF888888)
+                    color = Color(0xFF8A8A96)
                 )
             }
         }
@@ -865,7 +853,7 @@ fun CharacterListRow(
             Text(
                 text = "$introsCount greeting${if (introsCount > 1) "s" else ""}",
                 fontSize = 11.sp,
-                color = if (isDark) Color(0xFFAAAAAA) else Color(0xFF666666)
+                color = Color(0xFF8A8A96)
             )
         }
     }
@@ -938,7 +926,7 @@ fun CharacterInspectorSheet(
                                         sheetBgColor.copy(alpha = 0.15f),
                                         sheetBgColor.copy(alpha = 0.50f),
                                         sheetBgColor.copy(alpha = 0.85f),
-                                        sheetBgColor
+                                        sheetBgColor.copy(alpha = 1f)
                                     )
                                 )
                             )
@@ -1143,7 +1131,7 @@ fun CharacterInspectorSheet(
                                         Text(
                                             text = "TTS voice binding for audio",
                                             fontSize = 11.sp,
-                                            color = Color(0xFF888888)
+                                            color = Color(0xFF8A8A96)
                                         )
                                     }
                                 }
@@ -1231,7 +1219,7 @@ fun CharacterInspectorSheet(
                                         Text(
                                             text = "No creator notes provided for this character.",
                                             fontSize = 13.sp,
-                                            color = Color(0xFF888888)
+                                            color = Color(0xFF8A8A96)
                                         )
                                     }
                                 }
@@ -1301,7 +1289,7 @@ fun CharacterInspectorSheet(
                                         Text(
                                             text = "No scenario opening greeting set. Starting a chat will open into a freeform conversation.",
                                             fontSize = 12.5.sp,
-                                            color = Color(0xFF888888)
+                                            color = Color(0xFF8A8A96)
                                         )
                                     }
                                 } else {

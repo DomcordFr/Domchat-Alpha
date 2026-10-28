@@ -176,7 +176,7 @@ fun BackupPage(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(Color(0xFF000000))
                     .padding(top = innerPadding.calculateTopPadding())
             ) {
                 when (currentTab) {
@@ -190,7 +190,7 @@ fun BackupPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = innerPadding.calculateTopPadding())
-                    .background(MaterialTheme.colorScheme.background),
+                    .background(Color(0xFF000000)),
                 userScrollEnabled = true,
             ) { page ->
                 when (BackupTab.entries[page]) {
@@ -220,10 +220,10 @@ private fun BackupTabPillBar(
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.9f),
-            border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+            color = Color(0xFF000000),
+            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
             shadowElevation = 0.dp,
-            modifier = Modifier.domChatBlurEffect(if (isDark) Color(0xFF141520) else Color.White, RoundedCornerShape(28.dp))
+            modifier = Modifier.domChatBlurEffect(Color(0xFF000000), RoundedCornerShape(28.dp))
         ) {
             Row(
                 modifier = Modifier.padding(4.dp),
@@ -237,8 +237,8 @@ private fun BackupTabPillBar(
                             .then(
                                 if (selected) {
                                     Modifier
-                                        .background(if (isDark) Color.White.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                                        .border(1.dp, if (isDark) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), CircleShape)
+                                        .background(Color.White.copy(alpha = 0.18f))
+                                        .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
                                 } else {
                                     Modifier.clickable {
                                         haptics.perform(HapticPattern.Tick)
@@ -253,9 +253,9 @@ private fun BackupTabPillBar(
                             imageVector = tab.icon,
                             contentDescription = stringResource(tab.titleRes),
                             tint = if (selected) {
-                                if (isDark) Color.White else MaterialTheme.colorScheme.primary
+                                Color.White
                             } else {
-                                if (isDark) Color.White.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                Color.White.copy(alpha = 0.5f)
                             },
                             modifier = Modifier.size(24.dp),
                         )
@@ -270,7 +270,7 @@ private fun BackupTabPillBar(
 private fun BackupCardLabel(@StringRes titleRes: Int) {
     Text(
         text = stringResource(titleRes),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Color(0xFFA6A6A6),
     )
 }
 
@@ -336,8 +336,9 @@ private fun WebDavPage(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Surface(
-                color = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = Color(0xFF000000),
                 shape = AppShapes.CardLarge,
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
@@ -386,7 +387,8 @@ private fun WebDavPage(
                                     Icons.Rounded.VisibilityOff
                                 else
                                     Icons.Rounded.Visibility
-                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                IconButton(
+        onClick = { passwordVisible = !passwordVisible }) {
                                     Icon(imageVector = image, null)
                                 }
                             },
@@ -465,9 +467,9 @@ private fun WebDavPage(
                                     }
                                 },
                                 shape = CircleShape,
-                                color = Color.Transparent,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                color = Color(0xFF000000),
+                                contentColor = Color.White,
+                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier.size(40.dp),
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -493,7 +495,7 @@ private fun WebDavPage(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.background
+                            Color(0xFF000000)
                         )
                     )
                 )
@@ -512,9 +514,8 @@ private fun WebDavPage(
                     showBackupFiles = true
                 },
                 shape = CircleShape,
-                containerColor = if (LocalDarkMode.current) Color(0xFF1E202E).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.9f),
-                contentColor = if (LocalDarkMode.current) Color.White else Color.Black,
-                modifier = Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000)
             ) {
                 Icon(
                     Icons.Rounded.SystemUpdateAlt,
@@ -727,7 +728,11 @@ private fun WebDavPage(
                 }
             },
             confirmButton = {
-                Button(
+                Button(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFFFFF),
+                    contentColor = Color(0xFF000000)
+                    ),
+
                     onClick = {
                         showPermissionDialog = false
                         when {
@@ -757,7 +762,11 @@ private fun WebDavPage(
                 }
             },
             dismissButton = {
-                TextButton(
+                TextButton(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFFFFF),
+                    contentColor = Color(0xFF000000)
+                    ),
+
                     onClick = {
                         showPermissionDialog = false
                         showRestartDialog = true
@@ -791,9 +800,9 @@ private fun BackupItemCard(
     Card(
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.05f)
+            containerColor = Color(0xFF000000)
         ),
-        border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f))
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     ) {
         Column(
             modifier = Modifier
@@ -814,12 +823,12 @@ private fun BackupItemCard(
                 Text(
                     text = item.lastModified.toLocalDateTime(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFFA6A6A6)
                 )
                 Text(
                     text = item.size.fileSizeToString(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFFA6A6A6)
                 )
             }
         }
@@ -1249,7 +1258,11 @@ private fun ImportExportPage(
                 }
             },
             confirmButton = {
-                Button(
+                Button(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFFFFF),
+                    contentColor = Color(0xFF000000)
+                    ),
+
                     onClick = {
                         showPermissionDialog = false
                         when {
@@ -1279,7 +1292,11 @@ private fun ImportExportPage(
                 }
             },
             dismissButton = {
-                TextButton(
+                TextButton(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFFFFF),
+                    contentColor = Color(0xFF000000)
+                    ),
+
                     onClick = {
                         showPermissionDialog = false
                         showRestartDialog = true
@@ -1319,7 +1336,7 @@ private fun BackupDialog(
                 result?.let {
                     if (it.sanitization.skippedRows > 0 || it.settingsCleanup.totalIssuesFixed > 0 || it.settingsCleanup.unsupportedZipEntriesBytes > 0) {                        Card(
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                containerColor = Color(0xFF000000).copy(alpha = 0.55f),
                                 contentColor = Color(0xFFFF6B6B)
                             )
                         ) {
@@ -1359,8 +1376,8 @@ private fun BackupDialog(
                     if (envTargets.isNotEmpty()) {
                         Card(
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = Color(0xFF141520).copy(alpha = 0.55f),
-                                contentColor = Color(0xFFA78BFA)
+                                containerColor = Color(0xFF000000).copy(alpha = 0.55f),
+                                contentColor = Color(0xFFF2F2F7)
                             )
                         ) {
                             Column(

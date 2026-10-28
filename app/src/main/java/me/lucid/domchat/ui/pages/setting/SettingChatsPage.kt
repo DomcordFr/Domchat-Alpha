@@ -273,13 +273,23 @@ fun SettingChatsPage(
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = cardBg,
-                        unfocusedContainerColor = cardBg,
-                        focusedBorderColor = Color.White.copy(alpha = 0.6f),
-                        unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f),
-                    ),
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    cursorColor = Color.White,
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedPlaceholderColor = Color(0xFF8A8A96),
+                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                    focusedLeadingIconColor = Color(0xFF8A8A96),
+                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                    focusedTrailingIconColor = Color(0xFF8A8A96),
+                    unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                )
+                    ,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -320,13 +330,13 @@ fun SettingChatsPage(
                 exit = fadeOut()
             ) {
                 Surface(
-                    color = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.9f),
+                    color = Color(0xFF000000),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .domChatBlurEffect(if (isDark) Color(0xFF000000) else Color.White, RoundedCornerShape(18.dp)),
+                        .domChatBlurEffect(Color(0xFF000000), RoundedCornerShape(18.dp)),
                     shape = RoundedCornerShape(18.dp),
-                    border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f))
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Row(
                         modifier = Modifier
@@ -339,7 +349,7 @@ fun SettingChatsPage(
                             text = "${selectedChatIds.size} of ${filteredConversations.size} selected",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (isDark) Color.White else Color.Black
+                            color = Color.White
                         )
 
                         Row(
@@ -358,7 +368,7 @@ fun SettingChatsPage(
                             ) {
                                 Text(
                                     if (selectedChatIds.size == filteredConversations.size) "Deselect" else "Select All",
-                                    color = if (isDark) Color(0xFF93C5FD) else Color.White,
+                                    color = if (isDark) Color(0xFFA6A6A6) else Color.White,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -555,7 +565,7 @@ fun SettingChatsPage(
             onDismissRequest = { showDeleteConfirmDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier.widthIn(max = 360.dp),
-            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },
             text = { Text("This will permanently remove the selected conversations from your database.") },

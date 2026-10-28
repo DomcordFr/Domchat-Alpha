@@ -243,11 +243,18 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        topBar = {
+            OneUITopAppBar(
+                title = "Personas",
+                scrollBehavior = scrollBehavior,
+                navigationIcon = { BackButton() }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { openCreate() },
-                containerColor = Color.White,
-                contentColor = Color.Black,
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFF000000),
                 shape = CircleShape
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "New Persona")
@@ -258,29 +265,10 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .consumeWindowInsets(innerPadding)
-                .statusBarsPadding(),
+                .consumeWindowInsets(innerPadding),
             contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. Standalone top row: back button only (flush to the top)
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BackButton()
-                }
-            }
-            // 2. Large page title directly under the back button
-            item {
-                Text(
-                    text = "Personas",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
             // Search Bar
             item {
                 OutlinedTextField(
@@ -295,10 +283,19 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         )
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.White,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -364,7 +361,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                             Text(
                                                 text = persona.pronouns,
                                                 fontSize = 11.sp,
-                                                color = if (isDark) Color(0xFFCCCCCC) else Color(0xFF555555)
+                                                color = Color(0xFFA6A6A6)
                                             )
                                         }
                                     }
@@ -373,14 +370,14 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(6.dp))
-                                                .background(if (isDark) Color.White else Color.Black)
+                                                .background(Color(0xFFFFFFFF))
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = "ACTIVE",
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (isDark) Color.Black else Color.White
+                                                color = Color(0xFF000000)
                                             )
                                         }
                                     }
@@ -418,7 +415,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             Surface(
                                 onClick = { openEdit(persona) },
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
+                                color = Color(0xFF000000),
                                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.15f))
                             ) {
                                 Row(
@@ -459,7 +456,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     // Persona Creator/Editor Dialog
     if (showEditor) {
         ApplyDialogWindowBlur()
-        val dialogShape = me.lucid.domchat.ui.theme.AppShapes.Dialog
+        val dialogShape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -479,10 +476,10 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             text = {
                 val inputShape = RoundedCornerShape(14.dp)
                 val inputColors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f),
-                    unfocusedContainerColor = if (isDark) Color.White.copy(alpha = 0.03f) else Color.Black.copy(alpha = 0.02f),
-                    focusedBorderColor = if (isDark) Color.White.copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.35f),
-                    unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.12f),
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                 )
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -506,7 +503,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         Surface(
                             onClick = { imagePickerLauncher.launch("image/*") },
                             shape = RoundedCornerShape(12.dp),
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
+                            color = Color(0xFF000000),
                             border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f))
                         ) {
                             Row(
@@ -557,8 +554,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     onClick = { savePersona() },
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDark) Color.White else Color.Black,
-                        contentColor = if (isDark) Color.Black else Color.White
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     )
                 ) {
                     Text("Save")
@@ -566,7 +563,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             },
             dismissButton = {
                 TextButton(onClick = { showEditor = false }) {
-                    Text("Cancel", color = if (isDark) Color(0xFFAAAAAA) else Color(0xFF666666))
+                    Text("Cancel", color = Color(0xFFA6A6A6))
                 }
             }
         )

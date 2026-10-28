@@ -187,9 +187,9 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         subtitle = "OLED Liquid Glass",
                         trailing = {
                             Surface(
-                                color = if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFF000000),
+                                color = Color(0xFF000000),
                                 shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.15f) else Color.Transparent)
+                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Text(
                                     text = "Coming Soon",
@@ -574,7 +574,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                            color = Color.White.copy(alpha = 0.08f)
                         )
 
                         // --- SECTION 2: CHAT BUBBLES & REASONING BADGES ---
