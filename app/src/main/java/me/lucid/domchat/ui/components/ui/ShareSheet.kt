@@ -57,7 +57,7 @@ fun ShareSheet(
         var currentQrIndex by remember(qrValues) { mutableStateOf(0) }
 
         ModalBottomSheet(
-            containerColor = androidx.compose.material3.Color(0xFF000000),
+            containerColor = Color(0xFF000000),
             onDismissRequest = {
                 state.dismiss()
             },

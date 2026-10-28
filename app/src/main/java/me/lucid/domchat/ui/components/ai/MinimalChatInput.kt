@@ -4006,7 +4006,7 @@ private fun ExpandButtonOverlay(
                 imageVector = androidx.compose.material.icons.Icons.Rounded.Fullscreen,
                 contentDescription = "Expand",
                 modifier = Modifier.size(20.dp),
-                tint = androidx.compose.material3.Color.White.copy(alpha = 0.65f)
+                tint = Color.White.copy(alpha = 0.65f)
             )
         }
     }
