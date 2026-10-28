@@ -2985,7 +2985,7 @@ private fun MinimalPickerContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, bottom = 8.dp),
+                            .padding(horizontal = 16.dp).padding(bottom = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Photos button - full width row
