@@ -19,7 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -907,7 +908,10 @@ internal fun TtsTextFilterSettingsDialog(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingRule by remember { mutableStateOf<me.lucid.domchat.data.datastore.TtsTextFilterRule?>(null) }
 
-    androidx.compose.material3.AlertDialog(        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),        onDismissRequest = onDismiss,
+    AlertDialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        onDismissRequest = onDismiss,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1096,7 +1100,10 @@ private fun TtsFilterRuleEditDialog(
     var pattern by remember { mutableStateOf(rule?.pattern ?: "*") }
     var mode by remember { mutableStateOf(rule?.mode ?: me.lucid.domchat.data.datastore.TtsFilterMode.SKIP) }
     
-    androidx.compose.material3.AlertDialog(        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),        onDismissRequest = onDismiss,
+    AlertDialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        onDismissRequest = onDismiss,
         title = {
             Text(
                 if (rule != null) {

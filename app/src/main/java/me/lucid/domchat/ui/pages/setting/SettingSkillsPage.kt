@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.NoteAdd
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -1261,7 +1262,10 @@ fun SkillEditorSheet(
     }
 
     deletePackagePath?.let { relativePath ->
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { deletePackagePath = null },
+        AlertDialog(
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            onDismissRequest = { deletePackagePath = null },
             title = { Text("Delete skill file?") },
             text = { Text(relativePath, fontFamily = FontFamily.Monospace) },
             confirmButton = {
@@ -1413,6 +1417,7 @@ private fun SkillPackageTextEditorDialog(
     var content by remember(relativePath, initialContent) { mutableStateOf(initialContent) }
 
     AlertDialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         onDismissRequest = onDismiss,
         title = {
@@ -1469,7 +1474,10 @@ private fun AddSkillPackageFileDialog(
             relativePath == "SKILL.md"
         )
 
-    AlertDialog(        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),        onDismissRequest = onDismiss,
+    AlertDialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        onDismissRequest = onDismiss,
         title = { Text("New package file") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

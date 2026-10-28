@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -543,7 +544,10 @@ fun SettingWebPage(
     }
 
     if (showBackgroundSetupDialog) {
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
+        AlertDialog(
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            onDismissRequest = {
                 showBackgroundSetupDialog = false
                 pendingStart = null
             },
