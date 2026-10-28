@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -143,12 +144,15 @@ fun SettingFontsPage(vm: SettingVM = koinViewModel()) {
     }
 
     if (showResetAllDialog) {
+        ApplyDialogWindowBlur()
         AlertDialog(
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showResetAllDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-    Text(stringResource(R.string.setting_fonts_reset_all_title)) },
+                Text(stringResource(R.string.setting_fonts_reset_all_title))
+            },
             text = { Text(stringResource(R.string.setting_fonts_reset_all_desc)) },
             confirmButton = {
                 TextButton(onClick = {
@@ -352,14 +356,14 @@ private fun FontConfigSection(
                         Text(
                             text = subtitle,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                     }
                     IconButton(onClick = { showResetDialog = true }) {
                         Icon(
                             Icons.Rounded.Refresh,
                             stringResource(R.string.setting_fonts_reset_all),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White.copy(alpha = 0.65f)
                         )
                     }
                 }
@@ -373,7 +377,7 @@ private fun FontConfigSection(
                         Text(
                             text = stringResource(R.string.setting_fonts_font_source),
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color.White
                         )
                         
                         Row(
@@ -438,7 +442,7 @@ private fun FontConfigSection(
                                             color = if (isSelected) {
                                                 if (isDark) Color.White else Color.Black
                                             } else {
-                                                if (isDark) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                                if (isDark) Color.White.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.65f)
                                             }
                                         )
                                     }
@@ -462,7 +466,7 @@ private fun FontConfigSection(
                                         ),
                                         RoundedCornerShape(12.dp)
                                     )
-                                    .background(domChatCardContainerColor())
+                                    .background(Color(0xFF000000))
                                     .padding(12.dp)
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
@@ -478,7 +482,7 @@ private fun FontConfigSection(
                                                 config.customAxes.size
                                             ),
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color.White.copy(alpha = 0.65f)
                                         )
                                     }
                                 }
@@ -488,7 +492,7 @@ private fun FontConfigSection(
                                     Icon(
                                         Icons.Rounded.Delete,
                                         stringResource(R.string.setting_fonts_remove),
-                                        tint = MaterialTheme.colorScheme.error
+                                        tint = Color(0xFFFF453A)
                                     )
                                 }
                             }
@@ -501,7 +505,7 @@ private fun FontConfigSection(
                             Text(
                                 text = stringResource(R.string.setting_fonts_axes),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                             
                             FontAxisSlider(
@@ -529,7 +533,7 @@ private fun FontConfigSection(
                             Text(
                                 text = stringResource(R.string.setting_fonts_axes),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                             
                             config.customAxes.forEach { axis ->
@@ -553,7 +557,7 @@ private fun FontConfigSection(
                             Text(
                                 text = stringResource(R.string.setting_fonts_typography),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                             
                             FontAxisSlider(
@@ -583,7 +587,7 @@ private fun FontConfigSection(
                             Text(
                                 text = stringResource(R.string.setting_fonts_opentype_features),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                             
                             config.features.forEach { feature ->
@@ -602,7 +606,7 @@ private fun FontConfigSection(
                                         Text(
                                             text = feature.tag,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color.White.copy(alpha = 0.65f)
                                         )
                                     }
                                     HapticSwitch(
@@ -647,7 +651,12 @@ private fun FontConfigSection(
 
     // Reset Dialog
     if (showResetDialog) {
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { showResetDialog = false },
+        ApplyDialogWindowBlur()
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.setting_fonts_reset_title, title)) },
             text = { Text(stringResource(R.string.setting_fonts_reset_desc, title)) },
             confirmButton = {
@@ -772,7 +781,7 @@ private fun FontPreviewCard(fontSettings: FontSettings) {
                         ),
                         RoundedCornerShape(12.dp)
                     )
-                    .background(domChatCardContainerColor())
+                    .background(Color(0xFF000000))
                     .padding(12.dp)
             ) {
                 Text(
@@ -784,7 +793,7 @@ private fun FontPreviewCard(fontSettings: FontSettings) {
                         lineHeight = (18 * normalizedFontSettings.codeFont.lineHeight).sp,
                         letterSpacing = normalizedFontSettings.codeFont.letterSpacing.sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             }
         }

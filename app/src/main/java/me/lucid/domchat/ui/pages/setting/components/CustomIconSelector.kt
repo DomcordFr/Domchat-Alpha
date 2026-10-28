@@ -125,7 +125,7 @@ fun CustomIconSelector(
                     .size(20.dp),
                 shape = CircleShape,
                 color = androidx.compose.ui.graphics.Color(0xFF2C1517),
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                contentColor = Color(0xFFFF453A),
                 shadowElevation = 2.dp,
             ) {
                 Icon(
@@ -298,7 +298,7 @@ private fun LobeHubIconPickerSheet(
                     ) {
                         Text(
                             text = loadError.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
+                            color = Color(0xFFFF453A),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Spacer(modifier = Modifier.size(12.dp))
@@ -349,7 +349,7 @@ private fun LobeHubIconOption(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.CardMedium,
-        color = androidx.compose.ui.graphics.Color(0xFF141520),
+        color = androidx.compose.ui.graphics.Color(0xFF000000),
     ) {
         Row(
             modifier = Modifier
@@ -362,7 +362,7 @@ private fun LobeHubIconOption(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    .background(Color(0xFF000000)),
                 contentAlignment = Alignment.Center,
             ) {
                 AsyncImage(

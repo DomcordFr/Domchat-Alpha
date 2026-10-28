@@ -365,7 +365,7 @@ fun SkillsPageContent(
                         )
                     )
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                         shape = emptyShape,
                         border = BorderStroke(0.5.dp, borderBrush)
                     ) {
@@ -383,7 +383,7 @@ fun SkillsPageContent(
                                     imageVector = Icons.Rounded.Category,
                                     contentDescription = null,
                                     modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                                 )
                                 Text(
                                     text = stringResource(R.string.skills_page_empty_title),
@@ -392,7 +392,7 @@ fun SkillsPageContent(
                                 Text(
                                     text = stringResource(R.string.skills_page_empty_desc),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White.copy(alpha = 0.65f)
                                 )
                             }
                         }
@@ -539,7 +539,7 @@ fun DismissibleBannerCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
+            containerColor = Color(0xFF000000)
         ),
         shape = AppShapes.CardLarge
     ) {
@@ -557,7 +557,7 @@ fun DismissibleBannerCard(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             }
             IconButton(
@@ -571,7 +571,7 @@ fun DismissibleBannerCard(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = stringResource(R.string.banner_dismiss),
                     modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.White.copy(alpha = 0.65f)
                 )
             }
         }
@@ -615,7 +615,7 @@ private fun SkillCard(
 
     Card(
         onClick = onEdit,
-        colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         shape = shape,
         border = BorderStroke(0.5.dp, borderBrush)
     ) {
@@ -658,7 +658,7 @@ private fun SkillCard(
                     Text(
                         text = skill.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -679,7 +679,7 @@ private fun SkillAssistantToggleRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF141520).copy(alpha = 0.55f))
+            .background(Color(0xFF000000))
             .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -831,7 +831,7 @@ fun SkillEditorSheet(
                             onClick = { showIconPicker = true },
                             modifier = Modifier.size(56.dp),
                             shape = RoundedCornerShape(12.dp),
-                            color = androidx.compose.ui.graphics.Color(0xFF141520)
+                            color = androidx.compose.ui.graphics.Color(0xFF000000)
                         ) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -841,7 +841,7 @@ fun SkillEditorSheet(
                                     imageVector = ModeIcons.getIcon(icon ?: "category"),
                                     contentDescription = null,
                                     modifier = Modifier.size(28.dp),
-                                    tint = MaterialTheme.colorScheme.onTertiaryContainer
+                                    tint = Color(0xFFFFFFFF)
                                 )
                             }
                         }
@@ -992,7 +992,7 @@ fun SkillEditorSheet(
                 }
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF141520).copy(alpha = 0.55f)
+                        containerColor = Color(0xFF000000)
                     ),
                     shape = AppShapes.CardLarge
                 ) {
@@ -1303,7 +1303,7 @@ private fun SkillPackageFilesCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
+            containerColor = Color(0xFF000000)
         ),
         shape = AppShapes.CardLarge,
     ) {
@@ -1321,7 +1321,7 @@ private fun SkillPackageFilesCard(
                         "${skill.name.ifBlank { "skill" }}/ · ${entries.count { !it.isDirectory }} files",
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1338,7 +1338,7 @@ private fun SkillPackageFilesCard(
                     "This skill has no package files yet.",
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                 )
             } else {
                 entries.forEach { entry ->
@@ -1350,8 +1350,8 @@ private fun SkillPackageFilesCard(
                             Icon(
                                 imageVector = if (entry.isDirectory) Icons.Rounded.Folder else Icons.Rounded.Description,
                                 contentDescription = null,
-                                tint = if (entry.isDirectory) MaterialTheme.colorScheme.tertiary
-                                else MaterialTheme.colorScheme.primary,
+                                tint = if (entry.isDirectory) Color.White.copy(alpha = 0.65f)
+                                else Color.White,
                             )
                         },
                         headlineContent = {
@@ -1383,7 +1383,7 @@ private fun SkillPackageFilesCard(
                                             Icon(
                                                 Icons.Rounded.Delete,
                                                 contentDescription = stringResource(R.string.delete),
-                                                tint = MaterialTheme.colorScheme.error,
+                                                tint = Color(0xFFFF453A),
                                             )
                                         }
                                     }
@@ -1422,7 +1422,7 @@ private fun SkillPackageTextEditorDialog(
                     relativePath,
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1581,7 +1581,7 @@ private fun SkillExportDialog(
                 text = stringResource(R.string.skill_export_format),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                color = if (isDark) Color.White else Color.White,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -1596,7 +1596,7 @@ private fun SkillExportDialog(
                 onClick = {
                     skillMdLauncher.launch(SkillExportImport.getSuggestedFileName(skill, "skill_md"))
                 },
-                colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                 shape = RoundedCornerShape(18.dp),
                 border = BorderStroke(0.5.dp, borderBrush)
             ) {
@@ -1612,7 +1612,7 @@ private fun SkillExportDialog(
 
             Card(
                 onClick = { skillPackageLauncher.launch("${skill.name.ifBlank { "skill" }}.zip") },
-                colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                 shape = RoundedCornerShape(18.dp),
                 border = BorderStroke(0.5.dp, borderBrush)
             ) {

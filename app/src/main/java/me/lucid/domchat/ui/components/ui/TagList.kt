@@ -70,7 +70,7 @@ fun TagsInput(
                                 value.filter { it != tag.id }, tags
                             )
                         },
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.White.copy(alpha = 0.65f)
                 )
             })
         }
@@ -116,7 +116,7 @@ fun TagsInput(
                         text = stringResource(R.string.tag_input_dialog_existing_tags),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -143,7 +143,7 @@ fun TagsInput(
                         text = stringResource(R.string.tag_input_dialog_create_new),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }

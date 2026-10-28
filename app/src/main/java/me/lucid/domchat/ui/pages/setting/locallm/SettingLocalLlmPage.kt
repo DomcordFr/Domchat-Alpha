@@ -192,7 +192,7 @@ fun SettingLocalLlmPage(
                 item {
                     Surface(
                         shape = AppShapes.CardMedium,
-                        color = androidx.compose.ui.graphics.Color(0xFF141520),
+                        color = androidx.compose.ui.graphics.Color(0xFF000000),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(
@@ -342,7 +342,7 @@ fun SettingLocalLlmPage(
                 Text(
                     "These models run speech-to-text fully on-device. Audio is not uploaded.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
                 )
             }
@@ -435,7 +435,7 @@ fun SettingLocalLlmPage(
                 SectionHeader("HuggingFace Configuration")
                 Card(
                     shape = AppShapes.CardMedium,
-                    colors = CardDefaults.cardColors(containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)est),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(
@@ -445,7 +445,7 @@ fun SettingLocalLlmPage(
                         Text(
                             text = "Set a HuggingFace token to download gated models like Gemma 3.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                         DebouncedTextField(
                             value = huggingFaceToken,
@@ -526,7 +526,7 @@ fun SettingLocalLlmPage(
                     haptics.perform(HapticPattern.Thud)
                     sttVm.delete(model)
                     sherpaModelPendingDelete = null
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text("Delete", color = Color(0xFFFF453A)) }
             },
             dismissButton = {
                 TextButton(onClick = { sherpaModelPendingDelete = null }) { Text("Cancel") }
@@ -540,7 +540,7 @@ private fun SectionHeader(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+        color = Color.White,
         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
     )
 }
@@ -560,7 +560,7 @@ private fun InstalledModelCard(
     Card(
         onClick = onClick,
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)est),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -575,7 +575,7 @@ private fun InstalledModelCard(
                     Text(
                         "%.1f GB".format(model.sizeInBytes / 1_000_000_000f),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 }
                 if (hasUpdate && download == null) {
@@ -603,9 +603,9 @@ private fun ImportedDownloadCard(
         shape = AppShapes.CardMedium,
         colors = CardDefaults.cardColors(
             containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) {
-                MaterialTheme.colorScheme.surfaceContainerLow
+                Color(0xFF000000)
             } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
+                Color(0xFF000000)est
             }
         ),
         modifier = Modifier.fillMaxWidth(),
@@ -633,7 +633,7 @@ private fun ImportedDownloadCard(
                     Text(
                         stringResource(R.string.local_llm_install_url_hint),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 }
             }
@@ -662,7 +662,7 @@ private fun DownloadableModelCard(
     Card(
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+            containerColor = Color(0xFF000000)est
         ),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -680,7 +680,7 @@ private fun DownloadableModelCard(
                     Text(
                         stringResource(R.string.local_llm_catalog_size_format, meta.sizeInGb, meta.minDeviceMemoryInGb),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 }
             }
@@ -732,14 +732,14 @@ private fun DownloadStatus(
                     Text(
                         stringResource(R.string.local_llm_download_progress, download.progress.percent),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 } else {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     Text(
                         stringResource(R.string.local_llm_downloading_button),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 }
                 onCancel?.let {
@@ -753,7 +753,7 @@ private fun DownloadStatus(
                 Text(
                     stringResource(R.string.local_llm_status_error_format, download.message),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
+                    color = Color(0xFFFF453A),
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(onClick = onDismissError) { Text(stringResource(R.string.cancel)) }
@@ -817,7 +817,7 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                 )
                 Surface(
                     shape = AppShapes.CardSmall,
-                    color = androidx.compose.ui.graphics.Color(0xFF141520),
+                    color = androidx.compose.ui.graphics.Color(0xFF000000),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -827,12 +827,12 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                         Icon(
                             Icons.Rounded.Info,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            tint = Color(0xFFFFFFFF)
                         )
                         Text(
                             text = stringResource(R.string.local_llm_format_info),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                            color = Color(0xFFFFFFFF)
                         )
                     }
                 }
@@ -970,7 +970,7 @@ private fun ModelSettingsSheet(
                 Text(
                     stringResource(R.string.local_llm_try_gpu_desc),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                 )
             }
 
@@ -978,7 +978,7 @@ private fun ModelSettingsSheet(
                 onClick = { showDeleteConfirm = true },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.local_llm_delete_model), color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.local_llm_delete_model), color = Color(0xFFFF453A))
             }
         }
     }
@@ -1025,7 +1025,7 @@ private fun LocalChatBackendToggle(
             Text(
                 stringResource(R.string.setting_provider_page_backend_model_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
         }
         HapticSwitch(
@@ -1047,7 +1047,7 @@ private fun SliderRow(
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.labelLarge)
-            Text(valueText, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.65f))
         }
         DomChatSlider(value = value, onValueChange = onChange, valueRange = valueRange, steps = steps)
     }

@@ -61,7 +61,7 @@ fun WaveOriginPickerDialog(
     var oy by remember { mutableStateOf(initialY) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current
-    val primary = MaterialTheme.colorScheme.primary
+    val primary = Color.White
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -69,7 +69,7 @@ fun WaveOriginPickerDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = androidx.compose.ui.graphics.Color(0xFF141520),
+            color = androidx.compose.ui.graphics.Color(0xFF000000),
             modifier = Modifier
                 .fillMaxWidth(0.92f)
                 .padding(16.dp),
@@ -83,7 +83,7 @@ fun WaveOriginPickerDialog(
                     "Drag the dot around the screen edges to choose where the glow wave " +
                         "washes in from — e.g. next to your side button.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                 )
 
                 Box(
@@ -92,7 +92,7 @@ fun WaveOriginPickerDialog(
                         .fillMaxWidth(0.58f)
                         .aspectRatio(9f / 19.5f)
                         .clip(RoundedCornerShape(26.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(Color(0xFF000000))
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(26.dp))
                         .onSizeChanged { boxSize = it }
                         .pointerInput(Unit) {

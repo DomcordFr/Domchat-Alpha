@@ -54,8 +54,8 @@ fun DomChatDestructiveConfirmDialog(
             ),
         shape = AppShapes.Dialog,
         containerColor = containerColor,
-        titleContentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-        textContentColor = if (isDark) Color(0xFFD1D1D6) else MaterialTheme.colorScheme.onSurfaceVariant,
+        titleContentColor = if (isDark) Color(0xFFF2F2F7) else Color.White,
+        textContentColor = if (isDark) Color(0xFFD1D1D6) else Color.White.copy(alpha = 0.65f),
         tonalElevation = AppSurface.TonalElevation,
         title = {
             Text(
@@ -67,7 +67,7 @@ fun DomChatDestructiveConfirmDialog(
             Text(
                 text = consequence,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
         },
         confirmButton = {

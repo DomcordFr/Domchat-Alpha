@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -288,7 +289,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             val density = androidx.compose.ui.platform.LocalDensity.current
             val unlockThresholdPx = with(density) { 35.dp.toPx() }
             val fadeProgress = (kotlin.math.abs(dragOffset) / unlockThresholdPx).coerceIn(0f, 1f)
-            val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            val backgroundColor = Color(0xFF000000)
             
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
@@ -319,7 +320,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                                         imageVector = Icons.Rounded.Extension,
                                         contentDescription = null,
                                         modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                        tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                                     )
                                     Text(
                                         text = stringResource(R.string.setting_mcp_page_no_mcp_servers_found),
@@ -328,7 +329,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = stringResource(R.string.setting_mcp_page_add_one_to_get_started),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                         textAlign = TextAlign.Center
                                     )
                                 }
@@ -476,7 +477,12 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
 
     setupRequiredPreset?.let { preset ->
         val context = LocalContext.current
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { setupRequiredPreset = null },
+        ApplyDialogWindowBlur()
+        AlertDialog(
+            onDismissRequest = { setupRequiredPreset = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             icon = { Icon(Icons.Rounded.Info, null) },
             title = { Text("${preset.name} needs app setup") },
             text = {
@@ -511,10 +517,10 @@ private fun McpConnectionsSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val isDarkMode = LocalDarkMode.current
-    val titleColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
-    val iconColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-    val itemTextColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
-    val customServerContentColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+    val titleColor = if (isDarkMode) Color.White else Color.White
+    val iconColor = if (isDarkMode) Color.White else Color.White.copy(alpha = 0.65f)
+    val itemTextColor = if (isDarkMode) Color.White else Color.White
+    val customServerContentColor = if (isDarkMode) Color.White else Color(0xFFFFFFFF)
 
     val filtered = remember(searchQuery) {
         if (searchQuery.isBlank()) POPULAR_MCP_CONNECTIONS else POPULAR_MCP_CONNECTIONS.filter {
@@ -565,7 +571,7 @@ private fun McpConnectionsSheet(
                 trailingIcon = if (searchQuery.isNotEmpty()) {
                     { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = iconColor) } }
                 } else null,
-                placeholder = { Text("Search connections", color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text("Search connections", color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.65f)) },
                 colors = if (isDarkMode) {
                     OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
@@ -588,7 +594,7 @@ private fun McpConnectionsSheet(
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 item {
-                    val customBg = if (isDarkMode) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primaryContainer
+                    val customBg = if (isDarkMode) Color.White.copy(alpha = 0.12f) else Color(0xFF000000)
                     val customBorder = if (isDarkMode) Color.White.copy(alpha = 0.2f) else Color.Transparent
                     Surface(
                         onClick = {
@@ -625,7 +631,7 @@ private fun McpConnectionsSheet(
                         index == filtered.lastIndex -> AppShapes.ListItemLast
                         else -> AppShapes.ListItemMiddle
                     }
-                    val presetBg = if (isDarkMode) Color.White.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                    val presetBg = Color(0xFF000000)est
                     val presetBorder = if (isDarkMode) Color.White.copy(alpha = 0.08f) else Color.Transparent
                     Surface(
                         onClick = {
@@ -660,7 +666,7 @@ private fun McpConnectionsSheet(
                                 Text(
                                     preset.description,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
@@ -845,7 +851,7 @@ private fun McpServerItem(
                     Text(
                         text = errorMessage,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
+                        color = Color(0xFFFF453A),
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1307,7 +1313,7 @@ private fun McpToolsConfigure(
             Card(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = androidx.compose.material3.CardDefaults.cardColors(
-                    containerColor = Color(0xFF141520).copy(alpha = 0.55f)
+                    containerColor = Color(0xFF000000)
                 ),
                 modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.CardLarge)
             ) {
@@ -1329,7 +1335,7 @@ private fun McpToolsConfigure(
                         Text(
                             text = tool.description ?: "",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.75f),
                         )
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1425,7 +1431,7 @@ private fun McpImportModal(
             Text(
                 text = stringResource(R.string.setting_mcp_page_import_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
             OutlinedTextField(
                 value = jsonText,
@@ -1444,7 +1450,7 @@ private fun McpImportModal(
                     {
                         Text(
                             text = message,
-                            color = MaterialTheme.colorScheme.error,
+                            color = Color(0xFFFF453A),
                         )
                     }
                 },

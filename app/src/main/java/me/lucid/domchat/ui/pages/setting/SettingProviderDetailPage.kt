@@ -44,6 +44,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -550,7 +551,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                     Surface(
                         modifier = Modifier.align(Alignment.Center),
                         shape = RoundedCornerShape(28.dp),
-                        color = androidx.compose.ui.graphics.Color(0xFF141520),
+                        color = androidx.compose.ui.graphics.Color(0xFF000000),
                         tonalElevation = 6.dp,
                         shadowElevation = 8.dp
                     ) {
@@ -563,7 +564,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                                     .clip(CircleShape)
                                     .then(
                                         if (pager.currentPage == 0)
-                                            Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                                            Modifier.background(Color(0xFF000000))
                                         else Modifier.clickable {
                                             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
                                             scope.launch { pager.animateScrollToPage(0) }
@@ -576,8 +577,8 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                                     imageVector = Icons.Rounded.Settings,
                                     contentDescription = stringResource(R.string.setting_provider_page_configuration),
                                     tint = if (pager.currentPage == 0)
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        Color(0xFFFFFFFF)
+                                    else Color.White.copy(alpha = 0.65f),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -587,7 +588,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                                     .clip(CircleShape)
                                     .then(
                                         if (pager.currentPage == 1)
-                                            Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                                            Modifier.background(Color(0xFF000000))
                                         else Modifier.clickable {
                                             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
                                             scope.launch { pager.animateScrollToPage(1) }
@@ -600,8 +601,8 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                                     imageVector = Icons.Rounded.ViewModule,
                                     contentDescription = stringResource(R.string.setting_provider_page_models),
                                     tint = if (pager.currentPage == 1)
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        Color(0xFFFFFFFF)
+                                    else Color.White.copy(alpha = 0.65f),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -684,7 +685,7 @@ private fun SettingProviderConfigPage(
             Card(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = CardDefaults.cardColors(
-                    containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+                    containerColor = Color(0xFF000000)est
                 )
             ) {
                 ProviderConfigure(
@@ -703,7 +704,7 @@ private fun SettingProviderConfigPage(
             Card(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = CardDefaults.cardColors(
-                    containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+                    containerColor = Color(0xFF000000)est
                 )
             ) {
                 Column(
@@ -803,11 +804,13 @@ private fun ConnectionTesterButton(
             mutableStateOf(provider.models.firstOrNull { it.type == ModelType.CHAT })
         }
         var testState: UiState<String> by remember { mutableStateOf(UiState.Idle) }
+        ApplyDialogWindowBlur()
         AlertDialog(
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showTestDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
-                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(stringResource(R.string.setting_provider_page_test_connection))
             },
             text = {
@@ -1011,7 +1014,7 @@ private fun ModelList(
                         onValueChange = { searchQuery = it },
                         placeholder = { Text("Search provider models...") },
                         leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.65f))
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -1237,8 +1240,8 @@ private fun LocalHuggingFaceInstallFab(
             showSheet = true
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+        contentColor = Color(0xFFFFFFFF),
     ) {
         Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.local_llm_install_url_action))
     }
@@ -1631,8 +1634,8 @@ private fun ModelPickerFab(
             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-        contentColor = MaterialTheme.colorScheme.onSurface
+        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+        contentColor = Color.White
     ) {
         Icon(
             Icons.Rounded.Widgets,
@@ -1727,7 +1730,7 @@ private fun ModelPickerFab(
                     onValueChange = { filterText = it },
                     placeholder = { Text("Search models...") },
                     leadingIcon = {
-                        Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.65f))
                     },
                     trailingIcon = {
                         if (filterText.isNotBlank()) {
@@ -1791,7 +1794,7 @@ private fun ModelPickerFab(
                         Text(
                             text = stringResource(R.string.setting_provider_page_reload_models_error, error),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
+                            color = Color(0xFFFF453A),
                         )
                     }
                 LazyColumn(
@@ -1813,7 +1816,7 @@ private fun ModelPickerFab(
                                         else R.string.setting_provider_page_no_models_no_api_key
                                     ),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
@@ -1873,7 +1876,7 @@ private fun ModelPickerFab(
                                 },
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else Color.Transparent
+                                containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) Color(0xFF000000) else Color.Transparent
                             )
                         ) {
                             Row(
@@ -1901,7 +1904,7 @@ private fun ModelPickerFab(
                                     Text(
                                         text = model.modelId,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                     )
                                     FlowRow(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -2049,11 +2052,11 @@ private fun ModelSelectionCircle(selected: Boolean) {
             .clip(CircleShape)
             .then(
                 if (selected) {
-                    Modifier.background(MaterialTheme.colorScheme.primary)
+                    Modifier.background(Color.White)
                 } else {
                     Modifier.border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = Color.White.copy(alpha = 0.18f),
                         shape = CircleShape,
                     )
                 }
@@ -2064,7 +2067,7 @@ private fun ModelSelectionCircle(selected: Boolean) {
             Icon(
                 imageVector = Icons.Rounded.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color.Black,
                 modifier = Modifier.size(18.dp),
             )
         }
@@ -2178,7 +2181,7 @@ private fun ModelPicker(
                                         else R.string.setting_provider_page_no_models_no_api_key
                                     ),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
@@ -2189,7 +2192,7 @@ private fun ModelPicker(
                         Card(
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHigh
+                                containerColor = Color(0xFF000000)
                             )
                         ) {
                             Row(
@@ -2219,7 +2222,7 @@ private fun ModelPicker(
                                     Text(
                                         text = it.modelId,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                     )
 
                                     FlowRow(
@@ -2593,8 +2596,8 @@ private fun ModelCapabilityProbeButton(
             },
             enabled = enabled && !isLoading,
             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-            color = androidx.compose.ui.graphics.Color(0xFF141520),
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = androidx.compose.ui.graphics.Color(0xFF000000),
+            contentColor = Color(0xFFFFFFFF),
             interactionSource = interactionSource,
             modifier = Modifier
                 .fillMaxWidth()
@@ -2637,7 +2640,7 @@ private fun ModelCapabilityProbeButton(
                 Text(
                     text = stringResource(R.string.setting_provider_page_probe_capabilities_progress),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                 )
             }
         }
@@ -2718,7 +2721,7 @@ private fun BackendModelToggle(
             Text(
                 stringResource(R.string.setting_provider_page_backend_model_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.65f)
             )
         }
         HapticSwitch(
@@ -3172,9 +3175,9 @@ private fun ModelCard(
                 .clip(RoundedCornerShape(0.dp))
                 .background(
                     color = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) 
-                        MaterialTheme.colorScheme.surfaceContainerLow 
+                        Color(0xFF000000) 
                     else 
-                        MaterialTheme.colorScheme.surfaceContainerHigh
+                        Color(0xFF000000)
                 )
                 .clickable {
                     dialogState.open(model.copy())
@@ -3240,7 +3243,7 @@ private fun BuiltInToolsSettings(
         Text(
             text = stringResource(R.string.setting_page_built_in_tools_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = Color.White.copy(alpha = 0.65f)
         )
 
         val availableTools = listOf(
@@ -3260,7 +3263,7 @@ private fun BuiltInToolsSettings(
                 modifier = Modifier.fillMaxWidth(),
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = androidx.compose.material3.CardDefaults.cardColors(
-                    containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHigh
+                    containerColor = Color(0xFF000000)
                 )
             ) {
                 Row(
@@ -3281,7 +3284,7 @@ private fun BuiltInToolsSettings(
                         Text(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                     }
                     HapticSwitch(
@@ -3320,7 +3323,7 @@ private fun ProviderOverrideSettings(
         Text(
             text = stringResource(R.string.setting_provider_page_provider_override_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = Color.White.copy(alpha = 0.65f)
         )
 
         if (providerOverride != null) {

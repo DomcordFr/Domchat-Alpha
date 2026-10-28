@@ -74,15 +74,15 @@ fun AetherAboutContent(
             text = appName,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Color.White,
         )
         Spacer(Modifier.height(8.dp))
         Surface(
-            color = if (darkTheme) Color(0xFF8B5CF6).copy(alpha = 0.22f) else Color(0xFF7C3AED).copy(alpha = 0.14f),
+            color = if (darkTheme) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.14f),
             shape = CircleShape,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
-                if (darkTheme) Color(0xFFA78BFA).copy(alpha = 0.55f) else Color(0xFF8B5CF6).copy(alpha = 0.40f)
+                if (darkTheme) Color.White.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.40f)
             ),
             modifier = Modifier
                 .padding(vertical = 4.dp)
@@ -149,8 +149,8 @@ fun AetherAboutContent(
         Spacer(Modifier.height(32.dp))
         Text(
             text = "Domchat v1.0",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+            color = Color.White,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
@@ -163,7 +163,7 @@ private fun AboutSectionTitle(title: String) {
         text = title,
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = Color.White,
         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
     )
 }
@@ -193,7 +193,7 @@ private fun AetherAboutItem(
             }
         },
         enabled = onClick != null,
-        color = Color(0xFF141520).copy(alpha = 0.85f),
+        color = Color(0xFF000000),
         contentColor = Color(0xFFF2F2F7),
         shape = RoundedCornerShape(16.dp),
         border = androidx.compose.foundation.BorderStroke(

@@ -47,14 +47,14 @@ fun SecureOutlinedTextField(
         },
         shape = AppShapes.InputField,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF141520),
-            unfocusedContainerColor = Color(0xFF141520),
+            focusedContainerColor = Color(0xFF000000),
+            unfocusedContainerColor = Color(0xFF000000),
             focusedTextColor = Color(0xFFF2F2F7),
             unfocusedTextColor = Color(0xFFF2F2F7),
             cursorColor = Color.White,
             focusedBorderColor = Color.White.copy(alpha = 0.30f),
             unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-            focusedLabelColor = Color(0xFFB9A8FC),
+            focusedLabelColor = Color.White,
             unfocusedLabelColor = Color(0xFF8A8A96),
         ),
         trailingIcon = {

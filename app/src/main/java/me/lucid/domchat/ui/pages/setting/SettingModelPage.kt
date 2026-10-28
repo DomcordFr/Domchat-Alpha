@@ -135,7 +135,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
                     text = stringResource(R.string.setting_model_page_group_conversation),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color.White,
                     modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
                 )
             }
@@ -152,7 +152,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
                     text = stringResource(R.string.setting_model_page_group_processing),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color.White,
                     modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 4.dp)
                 )
             }
@@ -1188,7 +1188,7 @@ private fun HelperReasoningSettings(
         Text(
             text = stringResource(R.string.assistant_page_thinking_budget),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Color.White,
             modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
         )
 
@@ -1197,11 +1197,11 @@ private fun HelperReasoningSettings(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .background(
-                    color = if (isAmoled) Color(0xFF10121A).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.05f)
+                    color = if (isAmoled) Color(0xFF000000) else Color.White.copy(alpha = 0.05f)
                 )
                 .border(
                     width = 1.dp,
-                    color = Color.White.copy(alpha = 0.08f),
+                    color = Color(0xFF000000),
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                 )
                 .clickable {
@@ -1219,7 +1219,7 @@ private fun HelperReasoningSettings(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Color.White
                 )
             }
             Column(
@@ -1229,18 +1229,18 @@ private fun HelperReasoningSettings(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             }
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = Color.White.copy(alpha = 0.65f)
             )
         }
     }

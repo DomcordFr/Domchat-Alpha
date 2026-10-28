@@ -395,7 +395,7 @@ fun MinimalChatInput(
     val isAmoled = amoledMode && isDarkMode
     // Picker sheet styling - optical roundness: outer (40dp) = button corners (24dp) + padding (16dp)
     // Sheet uses surfaceContainerLow always, buttons inside handle OLED colors
-    val pickerSheetColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val pickerSheetColor = Color(0xFF000000)
     val pickerSheetShape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
     
     // Camera permission - must be in parent, not inside ModalBottomSheet
@@ -882,7 +882,7 @@ fun MinimalChatInput(
                             imageVector = if (sttRecording) Icons.Rounded.Stop else Icons.Rounded.Add,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = if (isDarkMode) Color(0xFFF2F2F7) else Color.White.copy(alpha = 0.65f)
                         )
                     }
                 }
@@ -937,9 +937,9 @@ fun MinimalChatInput(
                         if (!isQuestionnaireActive && !isToolApprovalActive && state.isEditing()) {
                             Surface(
                                 color = if (LocalDarkMode.current) 
-                                    MaterialTheme.colorScheme.surfaceContainerLowest  // Darker in dark mode
+                                    Color(0xFF000000)  // Darker in dark mode
                                 else 
-                                    MaterialTheme.colorScheme.surfaceContainerHighest,  // Darker in light mode
+                                    Color(0xFF000000)est,  // Darker in light mode
                                 shape = RoundedCornerShape(16.dp),  // Optical roundness: 24dp outer - 8dp padding = 16dp
                                 modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 8.dp, bottom = 4.dp)  // Aligned with text
                             ) {
@@ -982,10 +982,10 @@ fun MinimalChatInput(
                                     .zIndex(10f)
                             ) {
                                 Surface(
-                                    color = blurredContainerColor(MaterialTheme.colorScheme.surfaceContainer),
+                                    color = blurredContainerColor(Color(0xFF000000)),
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .domChatBlurEffect(MaterialTheme.colorScheme.surfaceContainer, inputShape)
+                                        .domChatBlurEffect(Color(0xFF000000), inputShape)
                                         .clickable(
                                             interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                                             indication = null
@@ -1132,7 +1132,7 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.05f))
+                                            .background(Color(0xFF000000))
                                             .border(
                                                 width = 1.2.dp,
                                                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
@@ -1192,7 +1192,7 @@ fun MinimalChatInput(
                                                 imageVector = Icons.Rounded.Stop,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(18.dp),
-                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                tint = Color(0xFFFF453A),
                                             )
                                         }
                                         DomChatComposerAction.Send,
@@ -1217,7 +1217,7 @@ fun MinimalChatInput(
                                                 imageVector = Icons.Rounded.Close,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(18.dp),
-                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                tint = Color(0xFFFF453A),
                                             )
                                         }
                                         DomChatComposerAction.Stt,
@@ -1229,7 +1229,7 @@ fun MinimalChatInput(
                                                 tint = if (action == DomChatComposerAction.SttRecording) {
                                                     MaterialTheme.colorScheme.onPrimary
                                                 } else {
-                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                    Color.White.copy(alpha = 0.65f)
                                                 },
                                             )
                                         }
@@ -1419,7 +1419,7 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.05f))
+                                            .background(Color(0xFF000000))
                                             .border(
                                                 width = 1.2.dp,
                                                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
@@ -1462,7 +1462,7 @@ fun MinimalChatInput(
                                     },
                                     modifier = Modifier.size(AppSize.ChromePill),
                                     containerColorOverride = if (currentAction == DomChatComposerAction.Picker) {
-                                        MaterialTheme.colorScheme.surfaceVariant
+                                        Color(0xFF000000)
                                     } else {
                                         null
                                     },
@@ -1473,7 +1473,7 @@ fun MinimalChatInput(
                                                 imageVector = Icons.Rounded.Stop,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
-                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                tint = Color(0xFFFF453A),
                                             )
                                         }
                                         DomChatComposerAction.Send,
@@ -1498,7 +1498,7 @@ fun MinimalChatInput(
                                                 imageVector = Icons.Rounded.Close,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
-                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                tint = Color(0xFFFF453A),
                                             )
                                         }
                                         else -> {
@@ -1506,7 +1506,7 @@ fun MinimalChatInput(
                                                 imageVector = Icons.Rounded.ArrowUpward,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
-                                                tint = if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                tint = if (isDarkMode) Color(0xFFF2F2F7) else Color.White.copy(alpha = 0.65f),
                                             )
                                         }
                                     }
@@ -1702,7 +1702,7 @@ fun MinimalChatInput(
                 Text(
                     text = "Customize how AI replies appear during streaming: fade in smoothly vs snapping word by word.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
 
                 Row(
@@ -1712,7 +1712,7 @@ fun MinimalChatInput(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Smooth Fade-in Animation", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
-                        Text("Fade text smoothly from transparency", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Fade text smoothly from transparency", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
                     }
                     me.lucid.domchat.ui.components.ui.HapticSwitch(
                         checked = fadeInDraft,
@@ -1728,7 +1728,7 @@ fun MinimalChatInput(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Continuous Fluid Stream", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
-                            Text("Flow text continuously rather than waiting for word chunks", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Flow text continuously rather than waiting for word chunks", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
                         }
                         me.lucid.domchat.ui.components.ui.HapticSwitch(
                             checked = continuousDraft,
@@ -1813,7 +1813,7 @@ fun MinimalChatInput(
                 Text(
                     text = "Injected into context depth to guide tone, scenario, or persona behavior.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
                 OutlinedTextField(
                     value = noteDraft,
@@ -2052,7 +2052,7 @@ fun MinimalChatInput(
 
                 // Blur Mode: Full Image vs Bottom Fade
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface)
+                    Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2061,8 +2061,8 @@ fun MinimalChatInput(
                             onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.55f),
-                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color(0xFF000000),
+                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else Color.White,
                             border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Text(
@@ -2077,8 +2077,8 @@ fun MinimalChatInput(
                             onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.55f),
-                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color(0xFF000000),
+                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else Color.White,
                             border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Text(
@@ -2097,7 +2097,7 @@ fun MinimalChatInput(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface)
+                        Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
                         Text("${blurDraft.toInt()} dp", color = MaterialTheme.colorScheme.primary)
                     }
                     DomChatSlider(
@@ -2114,7 +2114,7 @@ fun MinimalChatInput(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface)
+                            Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
                             Text("${(blurHeightFractionDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
                         }
                         DomChatSlider(
@@ -2306,13 +2306,13 @@ private fun WorkspaceRequiredCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(Color(0xFF000000)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.FolderOpen,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = Color(0xFFFFFFFF),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -2323,12 +2323,12 @@ private fun WorkspaceRequiredCard(
                 Text(
                     text = stringResource(R.string.workspace_required_card_title, fileName),
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Text(
                     text = stringResource(R.string.workspace_required_card_description),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             }
             IconButton(
@@ -2338,7 +2338,7 @@ private fun WorkspaceRequiredCard(
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = stringResource(R.string.cancel),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.White.copy(alpha = 0.65f)
                 )
             }
         }
@@ -2396,7 +2396,7 @@ private fun CharacterQuestionsCard(
                             questionnaire.questions.size
                         ),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     IconButton(
                         onClick = onNext,
@@ -2461,7 +2461,7 @@ private fun CharacterQuestionOptionRow(
         color = if (selected) {
             MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            Color(0xFF000000)
         },
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
@@ -2483,13 +2483,13 @@ private fun CharacterQuestionOptionRow(
             Text(
                 text = option.label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                color = if (selected) MaterialTheme.colorScheme.primary else Color.White
             )
             option.description?.takeIf { it.isNotBlank() }?.let { description ->
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -2547,7 +2547,7 @@ private fun ToolApprovalCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = Color(0xFF000000),
                     modifier = Modifier.size(34.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -2555,7 +2555,7 @@ private fun ToolApprovalCard(
                             imageVector = Icons.Rounded.Terminal,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = Color(0xFFFFFFFF)
                         )
                     }
                 }
@@ -2563,12 +2563,12 @@ private fun ToolApprovalCard(
                     Text(
                         text = stringResource(R.string.tool_approval_title),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     Text(
                         text = approval.displayName(),
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -2579,14 +2579,14 @@ private fun ToolApprovalCard(
             if (summary.isNotBlank()) {
                 Surface(
                     shape = RoundedCornerShape(18.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = Color(0xFF000000),
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = summary,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
@@ -2648,7 +2648,7 @@ private fun ToolApprovalActionRow(
         color = if (selected) {
             MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            Color(0xFF000000)
         },
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
@@ -2672,18 +2672,18 @@ private fun ToolApprovalActionRow(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    color = if (selected) MaterialTheme.colorScheme.primary else Color.White
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -2765,7 +2765,7 @@ private fun MinimalPickerContent(
     val isDarkMode = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
     // Sheet background uses surfaceContainerLow always
-    val sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val sheetContainerColor = Color(0xFF000000)
     
     // Camera state
     var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
@@ -2816,9 +2816,9 @@ private fun MinimalPickerContent(
     }
     
     // Button shapes for grouped appearance (24dp outer corners, 10dp inner, matches floating toolbar)
-    val leftButtonShape = RoundedCornerShape(topStart = 24.dp, topEnd = 10.dp, bottomStart = 24.dp, bottomEnd = 10.dp)
-    val middleButtonShape = RoundedCornerShape(10.dp)
-    val rightButtonShape = RoundedCornerShape(topStart = 10.dp, topEnd = 24.dp, bottomStart = 10.dp, bottomEnd = 24.dp)
+    val leftButtonShape = RoundedCornerShape(12.dp)
+    val middleButtonShape = RoundedCornerShape(12.dp)
+    val rightButtonShape = RoundedCornerShape(12.dp)
 
     fun importImages(
         uris: List<Uri>,
@@ -2934,7 +2934,7 @@ private fun MinimalPickerContent(
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF141520).copy(alpha = 0.5f),
+            color = Color(0xFF000000),
             border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)
         ) {
@@ -2982,19 +2982,42 @@ private fun MinimalPickerContent(
                 when (pageIndex) {
                 0 -> {
                     // File upload buttons - grouped with corner shapes (no outer container)
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp)
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            .padding(horizontal = 16.dp, bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Camera button - icon only, no label
-                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        // Photos button - full width row
+                        MinimalFileButtonGroupedIconOnly(
+                            icon = Icons.Rounded.Image,
+                            shape = leftButtonShape,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            onClick = {
+                                imagePickerLauncher.launch(
+                                    PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
+                                )
+                            }
+                        )
+
+                        // Files button - full width row
+                        MinimalFileButtonGroupedIconOnly(
+                            icon = Icons.Rounded.FolderOpen,
+                            shape = middleButtonShape,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            onClick = {
+                                filePickerLauncher.launch("*/*")
+                            }
+                        )
+
+                        // Camera button - full width row
+                        Box(modifier = Modifier.fillMaxWidth().height(56.dp)) {
                             PermissionManager(permissionState = cameraPermission) {
                                 MinimalFileButtonGroupedIconOnly(
                                     icon = Icons.Rounded.CameraAlt,
-                                    shape = leftButtonShape,
+                                    shape = rightButtonShape,
                                     modifier = Modifier.fillMaxSize(),
                                     onClick = {
                                         if (cameraPermission.allRequiredPermissionsGranted) {
@@ -3012,30 +3035,6 @@ private fun MinimalPickerContent(
                                 )
                             }
                         }
-                        
-                        // Photos button - icon only, no label
-                        MinimalFileButtonGroupedIconOnly(
-                            icon = Icons.Rounded.Image,
-                            shape = middleButtonShape,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            onClick = {
-                                imagePickerLauncher.launch(
-                                    PickVisualMediaRequest(
-                                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                                    )
-                                )
-                            }
-                        )
-                        
-                        // Files button - icon only, no label
-                        MinimalFileButtonGroupedIconOnly(
-                            icon = Icons.Rounded.FolderOpen,
-                            shape = rightButtonShape,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            onClick = {
-                                filePickerLauncher.launch("*/*")
-                            }
-                        )
                     }
                 }
                 1 -> {
@@ -3077,7 +3076,7 @@ private fun MinimalPickerContent(
                                 imageVector = Icons.Rounded.Edit,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = if (hasAuthorsNote) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (hasAuthorsNote) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
                             )
                         },
                         title = "Author's Note",
@@ -3097,7 +3096,7 @@ private fun MinimalPickerContent(
                                     imageVector = Icons.Rounded.Book,
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
-                                    tint = if (lorebooksActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    tint = if (lorebooksActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
                                 )
                             },
                             title = stringResource(R.string.minimal_input_lorebooks),
@@ -3114,7 +3113,7 @@ private fun MinimalPickerContent(
                                 imageVector = Icons.Rounded.Image,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = if (hasCustomBg) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (hasCustomBg) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
                             )
                         },
                         title = "Wallpaper & Effects",
@@ -3223,7 +3222,7 @@ private fun MinimalPickerContent(
                                 imageVector = Icons.Rounded.AutoAwesome,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = if (streamingFadeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (streamingFadeEnabled) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
                             )
                         },
                         title = "Streaming Animation",
@@ -3251,7 +3250,7 @@ private fun MinimalPickerContent(
                                     imageVector = Icons.Rounded.Search,
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
-                                    tint = if (enableSearch) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    tint = if (enableSearch) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
                                 )
                             }
                         },
@@ -3277,7 +3276,7 @@ private fun MinimalPickerContent(
                                     },
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
-                                    tint = if (skillsActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    tint = if (skillsActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
                                 )
                             },
                             title = stringResource(R.string.minimal_input_skills),
@@ -3303,7 +3302,7 @@ private fun MinimalPickerContent(
                                     imageVector = Icons.Rounded.Extension,
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
-                                    tint = if (pluginsActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = if (pluginsActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f),
                                 )
                             },
                             title = stringResource(R.string.minimal_input_plugins),
@@ -3367,7 +3366,7 @@ private fun MinimalPickerContent(
         AlertDialog(
             onDismissRequest = { showContextSummaryEditDialog = false },
             shape = RoundedCornerShape(28.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            containerColor = Color(0xFF000000)est,
             title = {
                 Text(
                     text = stringResource(R.string.context_refresh_edit_summary),
@@ -3496,13 +3495,13 @@ private fun MinimalFileButton(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = Color.White.copy(alpha = 0.65f)
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.65f)
             )
         }
     }
@@ -3532,13 +3531,13 @@ private fun MinimalFileButtonCompact(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = Color.White.copy(alpha = 0.65f)
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.65f)
             )
         }
     }
@@ -3575,13 +3574,13 @@ private fun MinimalFileButtonGrouped(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = Color.White.copy(alpha = 0.65f)
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.65f)
             )
         }
     }
@@ -3616,7 +3615,7 @@ private fun MinimalFileButtonGroupedIconOnly(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = Color.White.copy(alpha = 0.65f)
             )
         }
     }
@@ -3634,7 +3633,7 @@ private fun MinimalPickerItem(
     Surface(
         onClick = onClick,
         color = cardBg,
-        contentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+        contentColor = if (isDark) Color(0xFFF2F2F7) else Color.White,
         shape = RoundedCornerShape(14.dp),
         border = androidx.compose.foundation.BorderStroke(
             0.5.dp,
@@ -3664,12 +3663,12 @@ private fun MinimalPickerItem(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface
+                    color = if (isDark) Color(0xFFF2F2F7) else Color.White
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isDark) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isDark) Color.White.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -3812,7 +3811,7 @@ private fun ChatScrollToBottomButton(
 
     Surface(
         shape = CircleShape,
-        color = blurredContainerColor(MaterialTheme.colorScheme.surfaceContainer),
+        color = blurredContainerColor(Color(0xFF000000)),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         modifier = modifier
             .size(36.dp)
@@ -3820,7 +3819,7 @@ private fun ChatScrollToBottomButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .domChatBlurEffect(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+            .domChatBlurEffect(Color(0xFF000000), CircleShape)
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
@@ -3836,7 +3835,7 @@ private fun ChatScrollToBottomButton(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = stringResource(R.string.chat_page_scroll_to_bottom),
                 modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = Color.White.copy(alpha = 0.65f),
             )
         }
     }
@@ -3954,7 +3953,7 @@ private fun ChatSuggestionsRow(
             if (visible || targetAlpha > 0f) {
                 val suggestionShape = RoundedCornerShape(16.dp)
                 val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
-                val chipColor = if (isDark) Color(0xFF141522).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.85f)
+                val chipColor = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.85f)
                 val chipBorder = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
                 Surface(
                     shape = suggestionShape,
@@ -3978,7 +3977,7 @@ private fun ChatSuggestionsRow(
                         text = suggestion,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isDark) Color(0xFFF1F5F9) else MaterialTheme.colorScheme.onSurface
+                        color = if (isDark) Color(0xFFF1F5F9) else Color.White
                     )
                 }
             }
@@ -4007,7 +4006,7 @@ private fun ExpandButtonOverlay(
                 imageVector = androidx.compose.material.icons.Icons.Rounded.Fullscreen,
                 contentDescription = "Expand",
                 modifier = Modifier.size(20.dp),
-                tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                tint = androidx.compose.material3.Color.White.copy(alpha = 0.65f)
             )
         }
     }

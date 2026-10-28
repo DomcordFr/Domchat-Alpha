@@ -38,7 +38,7 @@ fun Favicon(
         modifier = modifier
             .size(20.dp)
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainer),
+            .background(Color(0xFF000000)),
         contentDescription = null,
         contentScale = ContentScale.Crop,
         placeholder = rememberVectorPainter(Icons.Rounded.Public),

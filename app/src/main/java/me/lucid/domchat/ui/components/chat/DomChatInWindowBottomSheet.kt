@@ -46,8 +46,9 @@ import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /**
  * Unified sleek drag handle pill for all bottom sheets and popovers across DomChat.
@@ -82,7 +83,7 @@ fun DomChatInWindowBottomSheet(
     visible: Boolean = true,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    shape: Shape = AppShapes.BottomSheet,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
     },
@@ -94,14 +95,8 @@ fun DomChatInWindowBottomSheet(
 
     val scope = rememberCoroutineScope()
     val isDark = LocalDarkMode.current
-    val sheetBg = domChatSheetContainerColor()
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (isDark) 0.22f else 0.12f),
-            Color.White.copy(alpha = if (isDark) 0.05f else 0.03f),
-            Color.Transparent
-        )
-    )
+    val sheetBg = Color(0xFF000000)
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
 
     var sheetHeightPx by remember { mutableFloatStateOf(1000f) }
     val offsetY = remember { Animatable(1200f) }
@@ -262,7 +257,7 @@ fun AetherGlassBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    shape: Shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    shape: Shape = AppShapes.BottomSheet,
     dragHandle: @Composable (() -> Unit)? = {
         AetherSheetDragHandle()
     },
@@ -271,13 +266,8 @@ fun AetherGlassBottomSheet(
 ) {
     if (!visible) return
     val isDark = LocalDarkMode.current
-    val dynamicSheetBg = domChatSheetContainerColor()
-    val sheetBg = if (isDark) {
-        androidx.compose.ui.graphics.lerp(Color(0xFF14151C), dynamicSheetBg, 0.4f).copy(alpha = 0.92f)
-    } else {
-        dynamicSheetBg
-    }
-    val contentColor = if (isDark) Color(0xFFF2F2F7) else Color(0xFF14151C)
+    val sheetBg = Color(0xFF000000)
+    val contentColor = if (isDark) Color.White else Color.Black
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -300,7 +290,7 @@ fun AetherInWindowBottomSheet(
     visible: Boolean = true,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    shape: Shape = AppShapes.BottomSheet,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
     },

@@ -151,7 +151,7 @@ fun ApiKeyPoolBottomSheet(
                     Text(
                         text = provider.name.ifBlank { "Provider" },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 }
 
@@ -165,7 +165,7 @@ fun ApiKeyPoolBottomSheet(
                         Icon(
                             imageVector = Icons.Rounded.Tune,
                             contentDescription = stringResource(R.string.api_key_pool_settings_title),
-                            tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (isDark) Color.White else Color.White.copy(alpha = 0.65f),
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -179,7 +179,7 @@ fun ApiKeyPoolBottomSheet(
                         Icon(
                             imageVector = Icons.Rounded.Add,
                             contentDescription = stringResource(R.string.api_key_pool_add_key),
-                            tint = if (isDark) Color.White else MaterialTheme.colorScheme.primary,
+                            tint = if (isDark) Color.White else Color.White,
                             modifier = Modifier.size(28.dp),
                         )
                     }
@@ -199,12 +199,12 @@ fun ApiKeyPoolBottomSheet(
                         imageVector = Icons.Rounded.Key,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f),
                     )
                     Text(
                         text = stringResource(R.string.api_key_pool_empty),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                     Button(
                         onClick = {
@@ -305,7 +305,7 @@ fun ApiKeyPoolBottomSheet(
                                                 imageVector = Icons.Rounded.DragIndicator,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(22.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                tint = Color.White.copy(alpha = 0.65f)
                                             )
                                         }
                                     }
@@ -407,7 +407,7 @@ private fun ApiKeyCard(
         onClick = onEdit,
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF141520),
+            containerColor = Color(0xFF000000),
             contentColor = Color(0xFFF2F2F7)
         ),
         border = if (hasError) {
@@ -430,9 +430,9 @@ private fun ApiKeyCard(
             Surface(
                 shape = CircleShape,
                 color = when {
-                    hasError -> MaterialTheme.colorScheme.error
+                    hasError -> Color(0xFFFF453A)
                     !entry.enabled -> MaterialTheme.colorScheme.outlineVariant
-                    else -> MaterialTheme.colorScheme.secondary
+                    else -> Color.White.copy(alpha = 0.65f)
                 },
                 modifier = Modifier.size(28.dp)
             ) {
@@ -446,8 +446,8 @@ private fun ApiKeyCard(
                         fontWeight = FontWeight.Bold,
                         color = when {
                             hasError -> MaterialTheme.colorScheme.onError
-                            !entry.enabled -> MaterialTheme.colorScheme.onSurfaceVariant
-                            else -> MaterialTheme.colorScheme.onSecondary
+                            !entry.enabled -> Color.White.copy(alpha = 0.65f)
+                            else -> Color.Black
                         }
                     )
                 }
@@ -485,7 +485,7 @@ private fun ApiKeyCard(
                         Icon(
                             imageVector = if (isRevealed) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                             contentDescription = if (isRevealed) "Hide Key" else "Reveal Key",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = Color.White.copy(alpha = 0.65f),
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -513,12 +513,12 @@ private fun ApiKeyCard(
                             imageVector = Icons.Rounded.Warning,
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = Color(0xFFFF453A)
                         )
                         Text(
                             text = stringResource(R.string.api_key_auth_error_warning),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
+                            color = Color(0xFFFF453A),
                             maxLines = 2,
                         )
                     }
@@ -597,7 +597,7 @@ private fun ApiKeyEditDialog(
                             Icon(
                                 imageVector = if (keyVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }

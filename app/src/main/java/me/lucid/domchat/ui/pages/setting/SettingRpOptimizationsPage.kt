@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -128,7 +129,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             // Description
             item {
                 val isDark = LocalDarkMode.current
-                val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                val cardBg = Color(0xFF000000)
                 val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -147,14 +148,14 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                         Text(
                             text = stringResource(R.string.setting_rp_custom_text_styling_desc),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                         
                         // Supported patterns section
                         Text(
                             text = stringResource(R.string.setting_rp_supported_patterns),
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color.White
                         )
                         Column(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -182,16 +183,16 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                         modifier = Modifier
                                             .background(
-                                                if (isDark) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant,
+                                                Color(0xFF000000),
                                                 RoundedCornerShape(4.dp)
                                             )
                                             .padding(horizontal = 6.dp, vertical = 2.dp),
-                                        color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = if (isDark) Color.White else Color.White.copy(alpha = 0.65f)
                                     )
                                     Text(
                                         text = desc,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = Color.White.copy(alpha = 0.65f)
                                     )
                                 }
                             }
@@ -203,7 +204,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             // Quick 1-Tap Text Type Presets
             item {
                 val isDark = LocalDarkMode.current
-                val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                val cardBg = Color(0xFF000000)
                 val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -222,7 +223,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                         Text(
                             text = "Tap to instantly add or toggle formatting rules for common roleplay text styles.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                         Row(
                             modifier = Modifier
@@ -261,8 +262,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                     },
                                     label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = if (isDark) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.primaryContainer,
-                                        selectedLabelColor = if (isDark) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+                                        selectedContainerColor = if (isDark) Color.White.copy(alpha = 0.2f) else Color(0xFF000000),
+                                        selectedLabelColor = if (isDark) Color.White else Color(0xFFFFFFFF)
                                     )
                                 )
                             }
@@ -275,7 +276,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             if (displaySetting.rpStyleRules.isEmpty()) {
                 item {
                     val isDark = LocalDarkMode.current
-                    val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                    val cardBg = Color(0xFF000000)
                     val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -291,7 +292,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                             Text(
                                 text = stringResource(R.string.setting_rp_no_rules),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -325,13 +326,13 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                     Text(
                         text = stringResource(R.string.setting_fonts_preview),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = Color.White,
                         modifier = Modifier.padding(start = 16.dp)
                     )
                 }
                 item {
                     val isDark = LocalDarkMode.current
-                    val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+                    val cardBg = Color(0xFF000000)
                     val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -346,7 +347,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                 val color = try {
                                     Color(android.graphics.Color.parseColor(rule.colorHex))
                                 } catch (e: Exception) {
-                                    MaterialTheme.colorScheme.onSurface
+                                    Color.White
                                 }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -410,10 +411,10 @@ private fun RpStyleRuleItem(
     val previewColor = try {
         Color(android.graphics.Color.parseColor(rule.colorHex))
     } catch (e: Exception) {
-        MaterialTheme.colorScheme.onSurface
+        Color.White
     }
     val isDark = LocalDarkMode.current
-    val cardBg = Color(0xFF141520).copy(alpha = 0.55f)
+    val cardBg = Color(0xFF000000)
     val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
 
     Card(
@@ -442,7 +443,7 @@ private fun RpStyleRuleItem(
                 Text(
                     text = rule.colorHex,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             },
             trailingContent = {
@@ -453,7 +454,7 @@ private fun RpStyleRuleItem(
                         Icon(
                             Icons.Rounded.Delete,
                             stringResource(R.string.setting_tts_filter_delete),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = Color(0xFFFF453A)
                         )
                     }
                     HapticSwitch(
@@ -493,8 +494,12 @@ private fun RpStyleRuleDialog(
     ApplyDialogWindowBlur()
     AlertDialog(
         onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .widthIn(max = 360.dp)
+            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.Dialog),
+        shape = AppShapes.Dialog,
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-        modifier = Modifier.border(1.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge),
         title = {
             Text(
                 if (rule != null) {
@@ -511,7 +516,7 @@ private fun RpStyleRuleDialog(
                 Text(
                     text = "Quick Style Presets",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
                 Row(
                     modifier = Modifier
@@ -625,7 +630,7 @@ private fun RpStyleRuleDialog(
                 Text(
                     text = stringResource(R.string.setting_rp_presets),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),

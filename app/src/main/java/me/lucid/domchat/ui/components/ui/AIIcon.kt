@@ -64,7 +64,7 @@ fun ProviderIcon(
     provider: ProviderSetting,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
 ) {
@@ -116,7 +116,7 @@ fun ModelIcon(
     provider: ProviderSetting?,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
 ) {
@@ -151,7 +151,7 @@ private fun AIIcon(
     name: String,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
 ) {
@@ -184,7 +184,7 @@ fun AutoAIIcon(
     name: String,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
 ) {
@@ -216,7 +216,7 @@ fun AutoProviderIcon(
     baseUrl: String? = null,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
 ) {
@@ -382,7 +382,7 @@ fun AutoAIIconWithUrl(
     customIconUri: String? = null,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
     fallback: @Composable (() -> Unit)? = null,
@@ -528,7 +528,7 @@ fun CatalogIcon(
     name: String,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     padding: Dp = 4.dp,
 ) {
@@ -659,7 +659,7 @@ private fun RemoteIcon(
     iconKey: String? = null,
     fallbackUrl: String? = null,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = LocalContentColor.current,
     tint: Boolean = false,
     padding: Dp = 4.dp,

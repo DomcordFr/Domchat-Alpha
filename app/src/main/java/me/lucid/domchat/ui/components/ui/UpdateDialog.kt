@@ -75,7 +75,7 @@ fun UpdateDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = AppShapes.CardLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = Color(0xFF000000),
             tonalElevation = 6.dp,
             modifier = Modifier.widthIn(max = 420.dp)
         ) {
@@ -93,7 +93,7 @@ fun UpdateDialog(
                     },
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
 
                 AnimatedContent(
@@ -111,12 +111,12 @@ fun UpdateDialog(
                             else -> "A new version is ready to download."
                         },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                 }
 
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    color = Color(0xFF000000)est,
                     shape = AppShapes.CardMedium,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -128,13 +128,13 @@ fun UpdateDialog(
                             text = info.version,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color.White
                         )
                         if (primaryDownload != null) {
                             Text(
                                 text = "${primaryDownload.size} - ${primaryDownload.name}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -149,7 +149,7 @@ fun UpdateDialog(
                                 .height(5.dp)
                                 .clip(RoundedCornerShape(50)),
                             color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            trackColor = Color(0xFF000000)est
                         )
                         Text(
                             text = if (isDownloaded) {
@@ -158,7 +158,7 @@ fun UpdateDialog(
                                 "${(progress.progress * 100).toInt().coerceIn(0, 100)}%"
                             },
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                     }
                 }
@@ -167,7 +167,7 @@ fun UpdateDialog(
                     text = "Release notes",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
 
                 Box(
@@ -175,7 +175,7 @@ fun UpdateDialog(
                         .fillMaxWidth()
                         .heightIn(max = 220.dp)
                         .clip(AppShapes.CardMedium)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        .background(Color(0xFF000000)est)
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
@@ -207,8 +207,8 @@ fun UpdateDialog(
                                 .fillMaxWidth()
                                 .height(52.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.onSurface,
-                                contentColor = MaterialTheme.colorScheme.surface
+                                containerColor = Color.White,
+                                contentColor = Color(0xFF000000)
                             )
                         ) {
                             Text(

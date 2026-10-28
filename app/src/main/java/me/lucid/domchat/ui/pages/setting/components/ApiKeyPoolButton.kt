@@ -69,36 +69,36 @@ fun ApiKeyPoolButton(
 
     val containerColor by animateColorAsState(
         targetValue = when {
-            hasAuthError -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f)
-            isDark -> MaterialTheme.colorScheme.surfaceContainerHigh
-            else -> MaterialTheme.colorScheme.surfaceContainerLowest
+            hasAuthError -> Color(0xFF000000)
+            isDark -> Color(0xFF000000)
+            else -> Color(0xFF000000)
         },
         label = "ApiKeyPoolButtonColor"
     )
 
     val iconColor by animateColorAsState(
         targetValue = when {
-            hasAuthError -> MaterialTheme.colorScheme.error
+            hasAuthError -> Color(0xFFFF453A)
             isDark -> Color.White
-            else -> MaterialTheme.colorScheme.onSurface
+            else -> Color.White
         },
         label = "ApiKeyPoolButtonIconColor"
     )
 
     val textColor by animateColorAsState(
         targetValue = when {
-            hasAuthError -> MaterialTheme.colorScheme.onErrorContainer
+            hasAuthError -> Color(0xFFFF453A)
             isDark -> Color.White
-            else -> MaterialTheme.colorScheme.onSurface
+            else -> Color.White
         },
         label = "ApiKeyPoolButtonTextColor"
     )
 
     val circleColor by animateColorAsState(
         targetValue = if (isDark) {
-            MaterialTheme.colorScheme.surfaceContainerLow
+            Color(0xFF000000)
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
+            Color(0xFF000000)est
         },
         label = "ApiKeyPoolButtonCircleColor"
     )
@@ -106,7 +106,7 @@ fun ApiKeyPoolButton(
     val circleTextColor by animateColorAsState(
         targetValue = when {
             isDark -> Color.White
-            else -> MaterialTheme.colorScheme.onSurface
+            else -> Color.White
         },
         label = "ApiKeyPoolButtonCircleTextColor"
     )
@@ -118,7 +118,7 @@ fun ApiKeyPoolButton(
             .height(buttonHeight),
         shape = AppShapes.ButtonPill,
         color = containerColor,
-        border = if (hasAuthError) BorderStroke(1.5.dp, MaterialTheme.colorScheme.error) else null,
+        border = if (hasAuthError) BorderStroke(1.5.dp, Color(0xFFFF453A)) else null,
         onClick = {
             haptics.perform(HapticPattern.Pop)
             showSheet = true
@@ -182,13 +182,13 @@ fun ApiKeyPoolButton(
                             imageVector = Icons.Rounded.Warning,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.error,
+                            tint = Color(0xFFFF453A),
                         )
                         Text(
                             text = "Auth Error",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.error,
+                            color = Color(0xFFFF453A),
                         )
                     }
                 }

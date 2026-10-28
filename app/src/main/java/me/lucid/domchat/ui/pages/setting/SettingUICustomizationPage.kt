@@ -302,7 +302,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                 Text(
                                     text = "${displaySetting.streamingFadeDurationMs} ms",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = Color.White
                                 )
                             }
                             DomChatSlider(
@@ -334,7 +334,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                 Text(
                                     text = "${(displaySetting.streamingFadeStartAlpha * 100).toInt()}%",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = Color.White
                                 )
                             }
                             DomChatSlider(

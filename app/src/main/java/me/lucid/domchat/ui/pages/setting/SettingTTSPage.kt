@@ -171,8 +171,8 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         showFilterSettingsDialog = true
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-                    contentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+                    contentColor = Color.White
                 ) {
                     Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.setting_tts_settings_title))
                 }
@@ -241,9 +241,9 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (LocalDarkMode.current) {
-                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                    Color(0xFF000000)
                                 } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                    Color(0xFF000000)est
                                 }
                             ),
                             shape = AppShapes.CardLarge
@@ -262,7 +262,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                                         imageVector = Icons.AutoMirrored.Rounded.VolumeUp,
                                         contentDescription = null,
                                         modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                        tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                                     )
                                     Text(
                                         text = stringResource(R.string.setting_tts_page_empty_title),
@@ -271,7 +271,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = stringResource(R.string.setting_tts_page_empty_desc),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                         textAlign = TextAlign.Center
                                     )
                                 }
@@ -608,9 +608,9 @@ internal fun TtsProvidersContent(
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = if (LocalDarkMode.current) {
-                                MaterialTheme.colorScheme.surfaceContainerLow
+                                Color(0xFF000000)
                             } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
+                                Color(0xFF000000)est
                             }
                         ),
                         shape = AppShapes.CardLarge
@@ -629,7 +629,7 @@ internal fun TtsProvidersContent(
                                     imageVector = Icons.AutoMirrored.Rounded.VolumeUp,
                                     contentDescription = null,
                                     modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                                 )
                                 Text(
                                     text = stringResource(R.string.setting_tts_page_empty_title),
@@ -638,7 +638,7 @@ internal fun TtsProvidersContent(
                                 Text(
                                     text = stringResource(R.string.setting_tts_page_empty_desc),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -930,7 +930,7 @@ internal fun TtsTextFilterSettingsDialog(
             ) {
                 androidx.compose.material3.Card(
                     colors = androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+                        containerColor = Color(0xFF000000)est
                     ),
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
                 ) {
@@ -938,7 +938,7 @@ internal fun TtsTextFilterSettingsDialog(
                         text = stringResource(R.string.setting_tts_filter_desc),
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                 }
 
@@ -950,7 +950,7 @@ internal fun TtsTextFilterSettingsDialog(
                         item {
                             androidx.compose.material3.Card(
                                 colors = androidx.compose.material3.CardDefaults.cardColors(
-                                    containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+                                    containerColor = Color(0xFF000000)est
                                 ),
                                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
                             ) {
@@ -964,7 +964,7 @@ internal fun TtsTextFilterSettingsDialog(
                                     Text(
                                         text = stringResource(R.string.setting_tts_filter_empty),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                         textAlign = TextAlign.Center
                                     )
                                     IconButton(onClick = { showAddDialog = true }) {
@@ -1038,13 +1038,13 @@ private fun TtsFilterRuleItem(
         me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ -> stringResource(R.string.setting_tts_filter_only_read)
     }
     val modeColor = when (rule.mode) {
-        me.lucid.domchat.data.datastore.TtsFilterMode.SKIP -> MaterialTheme.colorScheme.error
-        me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ -> MaterialTheme.colorScheme.primary
+        me.lucid.domchat.data.datastore.TtsFilterMode.SKIP -> Color(0xFFFF453A)
+        me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ -> Color.White
     }
     
     androidx.compose.material3.Card(
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+            containerColor = Color(0xFF000000)est
         ),
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         onClick = onEdit
@@ -1074,7 +1074,7 @@ private fun TtsFilterRuleItem(
                         Icon(
                             Icons.Rounded.Delete,
                             stringResource(R.string.setting_tts_filter_delete),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = Color(0xFFFF453A)
                         )
                     }
                     HapticSwitch(
@@ -1127,7 +1127,7 @@ private fun TtsFilterRuleEditDialog(
                 Text(
                     text = stringResource(R.string.setting_tts_filter_mode),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1160,7 +1160,7 @@ private fun TtsFilterRuleEditDialog(
                         )
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             }
         },
@@ -1306,7 +1306,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                        containerColor = Color(0xFF000000),
                         contentColor = Color(0xFFF2F2F7)
                     ),
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
@@ -1322,13 +1322,13 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                             imageVector = Icons.Rounded.Add,
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = Color(0xFFFFFFFF)
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Custom OpenAI-compatible TTS",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = Color(0xFFFFFFFF)
                             )
                         }
                     }
@@ -1377,7 +1377,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF141520)
+                                color = androidx.compose.ui.graphics.Color(0xFF000000)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1395,7 +1395,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                                 imageVector = Icons.Rounded.PhoneAndroid,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
-                                                tint = MaterialTheme.colorScheme.onSurface,
+                                                tint = Color.White,
                                             )
                                         }
                                     } else {
@@ -1403,7 +1403,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                             name = preset.name,
                                             customIconUri = preset.customIconUri,
                                             modifier = Modifier.size(40.dp),
-                                            contentColor = MaterialTheme.colorScheme.onSurface,
+                                            contentColor = Color.White,
                                         )
                                     }
 
@@ -1411,7 +1411,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                         Text(
                                             text = preset.name,
                                             style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
+                                            color = Color.White,
                                         )
                                     }
 
@@ -1448,12 +1448,12 @@ private fun TTSProviderItemContent(
     dragHandle: @Composable () -> Unit
 ) {
     val backgroundColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest,
+        targetValue = Color(0xFF000000)est,
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
         label = "ttsProviderBackground"
     )
     val textColor by androidx.compose.animation.animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.onSurface,
+        targetValue = Color.White,
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
         label = "ttsProviderTextColor"
     )

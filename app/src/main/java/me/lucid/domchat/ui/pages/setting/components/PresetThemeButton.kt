@@ -162,8 +162,8 @@ fun PresetThemeButtonGroup(
                         .background(
                             brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.surface,
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                                    Color(0xFF000000),
+                                    Color(0xFF000000)
                                 )
                             )
                         )
@@ -179,8 +179,8 @@ fun PresetThemeButtonGroup(
                         .background(
                             brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                                    MaterialTheme.colorScheme.surface
+                                    Color(0xFF000000),
+                                    Color(0xFF000000)
                                 )
                             )
                         )

@@ -213,8 +213,8 @@ fun PhysicsSwipeToDelete(
     }
     
     // Background color
-    val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLowest
-    val fadeColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHigh
+    val backgroundColor = Color(0xFF000000)
+    val fadeColor = Color(0xFF000000)
     
     Box(
         modifier = modifier
@@ -244,7 +244,7 @@ fun PhysicsSwipeToDelete(
                             isUnlocked = false
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = Color(0xFF000000),
                     alpha = (offsetX.value.absoluteValue / unlockThresholdPx).coerceIn(0f, 1f)
                 ) {
                     Icon(
@@ -262,7 +262,7 @@ fun PhysicsSwipeToDelete(
                         haptics.perform(HapticPattern.Error)
                         onDelete()
                     },
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    containerColor = Color(0xFF000000),
                     alpha = (offsetX.value.absoluteValue / unlockThresholdPx).coerceIn(0f, 1f)
                 ) {
                     Icon(

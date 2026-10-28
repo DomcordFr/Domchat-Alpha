@@ -213,7 +213,7 @@ fun domChatChromeSurfaceColor(): Color {
         0.55f
     }
     if (alpha <= 0.001f) return Color.Transparent
-    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF141520)
+    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -244,20 +244,20 @@ fun domChatChromeTextShadow(softText: Boolean = false): androidx.compose.ui.grap
 
 /**
  * Icon pill backgrounds (hamburger / toolbar actions / floating chrome buttons).
- * Dark, subtle, and readable: floors at [DOMCHAT_CHROME_FLOOR_ALPHA] so pills stay
- * visible against fully transparent content, never bright white.
+ * When linked, tracks glassAlpha exactly (fully transparent at 0%) — same behavior
+ * as the chat bar. Falls back to fixed charcoal glass when unlinked.
  */
 @Composable
 fun domChatIconPillContainerColor(): Color {
     val settings = LocalSettings.current
     val display = settings.displaySetting
     val alpha = if (display.linkChromeToGlass) {
-        maxOf(display.glassAlpha.coerceIn(0f, 1f), DOMCHAT_CHROME_FLOOR_ALPHA)
+        display.glassAlpha.coerceIn(0f, 1f)
     } else {
         0.55f
     }
     if (alpha <= 0.001f) return Color.Transparent
-    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF141520)
+    val base = if (display.linkChromeToGlass) domChatBaseToneColor() else Color(0xFF000000)
     return base.copy(alpha = alpha)
 }
 
@@ -292,7 +292,7 @@ fun domChatSheetContainerColor(): Color {
     // Opacity floor: at 0% glass alpha the plate must stay solid, never transparent.
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    if (alpha <= 0.02f) return Color(0xFF141520)
+    if (alpha <= 0.02f) return Color(0xFF000000)
     val base = domChatBaseToneColor()
     return base.copy(alpha = alpha)
 }
@@ -303,9 +303,9 @@ fun domChatSheetContentColor(): Color {
     val isDark = LocalDarkMode.current
     val luminance = settings.displaySetting.glassBaseLuminance.coerceIn(0f, 1f)
     return when {
-        luminance >= 0.55f -> Color(0xFF14151C)
+        luminance >= 0.55f -> Color(0xFF000000)
         isDark -> Color(0xFFF2F2F7)
-        else -> MaterialTheme.colorScheme.onSurface
+        else -> Color.White
     }
 }
 
@@ -325,9 +325,9 @@ fun domChatCardContentColor(): Color {
     val isDark = LocalDarkMode.current
     val luminance = settings.displaySetting.glassBaseLuminance.coerceIn(0f, 1f)
     return when {
-        luminance >= 0.55f -> Color(0xFF14151C)
+        luminance >= 0.55f -> Color(0xFF000000)
         isDark -> Color(0xFFF2F2F7)
-        else -> MaterialTheme.colorScheme.onSurface
+        else -> Color.White
     }
 }
 
@@ -337,7 +337,7 @@ fun domChatCardContentColor(): Color {
  * always behind the specular border dialogs carry.
  */
 @Composable
-fun domChatDialogContainerColor(): Color = Color(0xFF0D0E16).copy(alpha = 0.97f)
+fun domChatDialogContainerColor(): Color = Color(0xFF000000)
 
 @Composable
 fun domChatSoftEdgeBorder(): BorderStroke = BorderStroke(

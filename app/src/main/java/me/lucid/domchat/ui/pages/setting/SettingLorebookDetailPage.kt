@@ -301,7 +301,7 @@ fun SettingLorebookDetailPage(
                             expanded = showExportMenu,
                             onDismissRequest = { showExportMenu = false },
                             shape = RoundedCornerShape(18.dp),
-                            containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = Color(0xFF000000),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {
                             DropdownMenuItem(
@@ -342,7 +342,7 @@ fun SettingLorebookDetailPage(
                         haptics.perform(HapticPattern.Tick)
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = Color(0xFF141520).copy(alpha = 0.75f),
+                    containerColor = Color(0xFF000000),
                     contentColor = Color.White.copy(alpha = 0.92f)
                 ) {
                     Icon(
@@ -380,7 +380,7 @@ fun SettingLorebookDetailPage(
                         Text(
                             text = lorebook.description,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.65f),
                             textAlign = TextAlign.Center,
                             maxLines = 3,
                             overflow = TextOverflow.Ellipsis,
@@ -421,7 +421,7 @@ fun SettingLorebookDetailPage(
                 item(key = "empty") {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                            containerColor = Color(0xFF000000),
                         ),
                         border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                         shape = AppShapes.CardLarge
@@ -440,7 +440,7 @@ fun SettingLorebookDetailPage(
                             Text(
                                 text = stringResource(R.string.lorebook_detail_add_entry_hint),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -692,7 +692,7 @@ private fun EntryCard(
     Card(
         onClick = onEdit,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF141520).copy(alpha = 0.55f)
+            containerColor = Color(0xFF000000)
         ),
         border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         shape = AppShapes.CardLarge
@@ -706,7 +706,7 @@ private fun EntryCard(
             // Leading Content (Number)
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondary,
+                color = Color.White.copy(alpha = 0.65f),
                 modifier = Modifier.size(28.dp)
             ) {
                 Box(
@@ -717,7 +717,7 @@ private fun EntryCard(
                         text = priority.toString(),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondary
+                        color = Color.Black
                     )
                 }
             }
@@ -738,7 +738,7 @@ private fun EntryCard(
                 Text(
                     text = entry.prompt.take(50) + if (entry.prompt.length > 50) "..." else "",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 1
                 )
                 Text(
@@ -748,7 +748,7 @@ private fun EntryCard(
                         LorebookActivationType.RAG -> stringResource(R.string.activation_rag)
                     },
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = Color.White.copy(alpha = 0.65f)
                 )
             }
 
@@ -1080,7 +1080,7 @@ private fun EntryEditorSheet(
                         Text(
                             text = if (tokenBudget <= 0) "Unlimited" else "$tokenBudget tokens",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                         DebouncedTextField(
                             value = tokenBudget.toString(),
@@ -1324,7 +1324,7 @@ private fun LorebookEditorSheet(
                 // Cover picker - book-like aspect ratio
                 Surface(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                    color = Color(0xFF141520).copy(alpha = 0.6f),
+                    color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier.size(width = 56.dp, height = 78.dp),
                     onClick = { imagePickerLauncher.launch("image/*") }
@@ -1347,7 +1347,7 @@ private fun LorebookEditorSheet(
                                     androidx.compose.material.icons.Icons.Rounded.AddPhotoAlternate,
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    tint = Color(0xFFFFFFFF)
                                 )
                             }
                         }
@@ -1359,7 +1359,7 @@ private fun LorebookEditorSheet(
                     Text(
                         text = stringResource(R.string.lorebooks_page_name),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     DebouncedTextField(
                         value = name,
@@ -1416,7 +1416,7 @@ private fun LorebookEditorSheet(
                         Text(
                             text = if (tokenBudget <= 0) "Unlimited" else "$tokenBudget tokens",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                     }
                     DomChatSlider(
@@ -1475,7 +1475,7 @@ private fun LorebookEntryAttachmentItem(
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-            color = Color(0xFF141520).copy(alpha = 0.55f),
+            color = Color(0xFF000000),
             border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
         ) {
             Box(
@@ -1500,7 +1500,7 @@ private fun LorebookEntryAttachmentItem(
                                 Icons.Rounded.VideoLibrary,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = Color.White
                             )
                             Text(
                                 text = attachment.fileName,
@@ -1521,7 +1521,7 @@ private fun LorebookEntryAttachmentItem(
                                 Icons.Rounded.AudioFile,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = Color.White
                             )
                             Text(
                                 text = attachment.fileName,
@@ -1542,7 +1542,7 @@ private fun LorebookEntryAttachmentItem(
                                 Icons.Rounded.AttachFile,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = Color.White
                             )
                             Text(
                                 text = attachment.fileName,
@@ -1566,8 +1566,8 @@ private fun LorebookEntryAttachmentItem(
                 .size(20.dp)
                 .clickable { onRemove() }
                 .align(Alignment.TopEnd)
-                .background(MaterialTheme.colorScheme.secondary, CircleShape),
-            tint = MaterialTheme.colorScheme.onSecondary
+                .background(Color.White.copy(alpha = 0.65f), CircleShape),
+            tint = Color.Black
         )
     }
 }
@@ -1645,7 +1645,7 @@ private fun AssistantLorebookToggleSheet(
                 
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF141520).copy(alpha = 0.55f)
+                        containerColor = Color(0xFF000000)
                     ),
                     border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     shape = shape

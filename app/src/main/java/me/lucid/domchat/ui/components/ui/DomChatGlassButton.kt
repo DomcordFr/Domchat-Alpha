@@ -28,7 +28,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 private const val DOMCHAT_DESTRUCTIVE = 0xFFFF6B6B.toInt()
-private val DomChatAccent = Color(0xFFA78BFA)
+private val DomChatAccent = Color.White
 
 /**
  * Dark glassy pill button (enable/disable actions, saves, resets).
@@ -79,8 +79,12 @@ private fun DomChatGlassPillButtonContent(
         onClick = onClick,
         enabled = enabled,
         shape = AppShapes.ButtonPill,
-        color = Color(DOMCHAT_UNIFIED_CARD_COLOR).copy(alpha = if (enabled) 0.75f else 0.45f),
-        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        color = if (enabled) Color(0xFFFFFFFF) else Color(0xFFFFFFFF).copy(alpha = 0.45f),
+        border = BorderStroke(
+            0.5.dp,
+            if (destructive) BorderStroke(0.5.dp, Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.6f)).brush
+            else LiquidGlassTokens.SpecularBorderSubtle
+        ),
         tonalElevation = 0.dp,
         modifier = modifier,
     ) {
@@ -96,8 +100,7 @@ private fun DomChatGlassPillButtonContent(
                     modifier = Modifier.size(14.dp),
                     tint = when {
                         destructive -> Color(DOMCHAT_DESTRUCTIVE)
-                        accent -> DomChatAccent
-                        else -> Color.White.copy(alpha = 0.9f)
+                        else -> Color(0xFF000000)
                     }
                 )
             }
@@ -107,10 +110,9 @@ private fun DomChatGlassPillButtonContent(
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = when {
-                    !enabled -> Color.White.copy(alpha = 0.4f)
+                    !enabled -> Color(0xFF000000).copy(alpha = 0.4f)
                     destructive -> Color(DOMCHAT_DESTRUCTIVE)
-                    accent -> DomChatAccent
-                    else -> Color.White.copy(alpha = 0.92f)
+                    else -> Color(0xFF000000)
                 },
                 maxLines = 1,
             )

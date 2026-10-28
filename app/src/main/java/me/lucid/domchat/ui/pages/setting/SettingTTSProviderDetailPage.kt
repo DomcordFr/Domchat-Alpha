@@ -163,7 +163,7 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 Surface(
                     modifier = Modifier.align(Alignment.Center),
                     shape = RoundedCornerShape(28.dp),
-                    color = androidx.compose.ui.graphics.Color(0xFF141520),
+                    color = androidx.compose.ui.graphics.Color(0xFF000000),
                     tonalElevation = 6.dp,
                     shadowElevation = 8.dp,
                 ) {
@@ -239,7 +239,7 @@ private fun DetailTabButton(
             .clip(CircleShape)
             .then(
                 if (selected) {
-                    Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                    Modifier.background(Color(0xFF000000))
                 } else {
                     Modifier.clickable(onClick = onClick)
                 }
@@ -249,9 +249,9 @@ private fun DetailTabButton(
     ) {
         icon(
             if (selected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
+                Color(0xFFFFFFFF)
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                Color.White.copy(alpha = 0.65f)
             }
         )
     }
@@ -274,9 +274,9 @@ private fun TtsProviderConfigTab(
                 shape = AppShapes.CardLarge,
                 colors = CardDefaults.cardColors(
                     containerColor = if (LocalDarkMode.current) {
-                        MaterialTheme.colorScheme.surfaceContainerLow
+                        Color(0xFF000000)
                     } else {
-                        MaterialTheme.colorScheme.surfaceContainerHighest
+                        Color(0xFF000000)est
                     }
                 )
             ) {
@@ -344,13 +344,13 @@ private fun TtsVoiceTab(
                         Text(
                             text = "No voices yet",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.65f),
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Add or fetch voices to use this provider.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 32.dp),
                         )
@@ -581,7 +581,7 @@ private fun TtsVoiceRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(0.dp))
-                .background(if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(Color(0xFF000000))
                 .clickable(onClick = onEdit)
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -775,8 +775,8 @@ private fun ProviderVoicesFab(
             if (discovered.isEmpty()) fetchVoices()
         },
         shape = AppShapes.CardLarge,
-        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+        contentColor = Color.White,
     ) {
         Icon(icon, contentDescription = contentDescription)
     }
@@ -853,7 +853,7 @@ private fun ProviderVoicesFab(
                             Text(
                                 text = if (isFetching) "Loading voices..." else "No voices found",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = Color.White.copy(alpha = 0.65f),
                                 textAlign = TextAlign.Center,
                             )
                             if (!isFetching && discovered.isEmpty()) {
@@ -894,7 +894,7 @@ private fun ProviderVoicesFab(
                             },
                         shape = AppShapes.CardLarge,
                         colors = CardDefaults.cardColors(
-                            containerColor = if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else Color.Transparent
+                            containerColor = if (LocalDarkMode.current) Color(0xFF000000) else Color.Transparent
                         ),
                     ) {
                         Row(
@@ -918,7 +918,7 @@ private fun ProviderVoicesFab(
                                         voice.enginePackageName,
                                     ).filter { it.isNotBlank() }.joinToString(" - "),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
@@ -969,7 +969,7 @@ private fun VoiceSelectionCircle(selected: Boolean) {
             .clip(CircleShape)
             .then(
                 if (selected) {
-                    Modifier.background(MaterialTheme.colorScheme.primary)
+                    Modifier.background(Color.White)
                 } else {
                     Modifier.border(
                         width = 2.dp,

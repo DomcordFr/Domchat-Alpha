@@ -71,9 +71,9 @@ fun SherpaInstalledModelCard(
         shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = if (isDark) {
-                MaterialTheme.colorScheme.surfaceContainerLow
+                Color(0xFF000000)
             } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
+                Color(0xFF000000)est
             },
         ),
     ) {
@@ -97,7 +97,7 @@ fun SherpaInstalledModelCard(
                         if (model.streaming) "Live transcription" else "Speech to text",
                     ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                 )
             }
             dragHandle()
@@ -111,7 +111,7 @@ fun SherpaModelDragHandle(modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Rounded.DragIndicator,
             contentDescription = "Reorder model",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = Color.White.copy(alpha = 0.65f),
         )
     }
 }
@@ -132,9 +132,9 @@ fun SherpaDownloadableModelCard(
         shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = if (isDark) {
-                MaterialTheme.colorScheme.surfaceContainerLow
+                Color(0xFF000000)
             } else {
-                MaterialTheme.colorScheme.surfaceContainerHighest
+                Color(0xFF000000)est
             },
         ),
     ) {
@@ -160,14 +160,14 @@ fun SherpaDownloadableModelCard(
                             if (model.streaming) "Live transcription" else "Speech to text",
                         ).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                 }
             }
             Text(
                 text = model.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
             SherpaDownloadStatus(
                 state = download,
@@ -220,7 +220,7 @@ private fun SherpaDownloadStatus(
                         "Downloading ${formatBytes(state.progress.bytesDownloaded)} of ${formatBytes(state.progress.totalBytes)}"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                 )
                 TextButton(onClick = onCancel) { Text("Cancel") }
             }
@@ -230,7 +230,7 @@ private fun SherpaDownloadStatus(
             Text(
                 text = state.message,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
+                color = Color(0xFFFF453A),
             )
             TextButton(onClick = onDismissFailure) { Text("Dismiss") }
         }
@@ -278,7 +278,7 @@ fun SherpaModelSettingsSheet(
             Text(
                 text = if (model.streaming) "This model can publish live partial transcripts while you speak." else "This model transcribes completed speech segments.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
             OutlinedTextField(
                 value = displayName,
@@ -333,7 +333,7 @@ fun SherpaModelSettingsSheet(
                     .fillMaxWidth()
                     .widthIn(max = 360.dp),
             ) {
-                Text("Delete downloaded model", color = MaterialTheme.colorScheme.error)
+                Text("Delete downloaded model", color = Color(0xFFFF453A))
             }
         }
     }
@@ -347,7 +347,7 @@ fun SherpaModelSettingsSheet(
     Text("Delete ${model.displayName}?") },
             text = { Text("The downloaded model files will be removed from this device.") },
             confirmButton = {
-                TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = onDelete) { Text("Delete", color = Color(0xFFFF453A)) }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }

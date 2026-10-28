@@ -53,6 +53,7 @@ import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.VideoFile
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -544,7 +545,7 @@ fun SettingChatStoragePage(
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = Color.White.copy(alpha = 0.14f),
                                         selectedLabelColor = Color.White,
-                                        containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                        containerColor = Color(0xFF000000),
                                         labelColor = Color.White.copy(alpha = 0.7f)
                                     )
                                 )
@@ -566,7 +567,7 @@ fun SettingChatStoragePage(
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = Color.White.copy(alpha = 0.14f),
                                         selectedLabelColor = Color.White,
-                                        containerColor = Color(0xFF141520).copy(alpha = 0.55f),
+                                        containerColor = Color(0xFF000000),
                                         labelColor = Color.White.copy(alpha = 0.7f)
                                     )
                                 )
@@ -600,12 +601,15 @@ fun SettingChatStoragePage(
 
     pendingDeletion?.let { attachment ->
         val fallbackFileName = stringResource(R.string.setting_chat_storage_file_fallback)
+        ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { pendingDeletion = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-    Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title)) },
+                Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title))
+            },
             text = {
                 Text(
                     context.getString(
@@ -643,8 +647,11 @@ fun SettingChatStoragePage(
 
     pendingOtherUploadDeletion?.let { file ->
         val fallbackFileName = stringResource(R.string.setting_chat_storage_file_fallback)
+        ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { pendingOtherUploadDeletion = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_untracked_file_title)) },
             text = {
@@ -690,8 +697,11 @@ fun SettingChatStoragePage(
     }
 
     if (pendingDeleteAllOtherUploads) {
+        ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { pendingDeleteAllOtherUploads = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_orphaned_title)) },
             text = {
@@ -792,7 +802,7 @@ fun SettingChatStoragePage(
                     items(embeddingCacheStats) { stat ->
                         val isSelected = stat.modelId in activeEmbeddingModelIds
                         Surface(
-                            color = domChatCardContainerColor(),
+                            color = Color(0xFF000000),
                             border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f)),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -812,7 +822,7 @@ fun SettingChatStoragePage(
                                     Text(
                                         text = "${stat.count} vectors · ${stat.estimatedBytes.fileSizeToString()}",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = Color.White.copy(alpha = 0.65f)
                                     )
                                 }
                                 
@@ -826,7 +836,7 @@ fun SettingChatStoragePage(
                                             pendingModelCacheDeletion = stat.modelId
                                         }
                                     ) {
-                                        Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error)
+                                        Icon(Icons.Rounded.Delete, null, tint = Color(0xFFFF453A))
                                     }
                                 }
                             }
@@ -894,110 +904,97 @@ private fun AppStorageHeroCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        color = if (isDark) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.05f),
-        border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f))
+        color = Color(0xFF000000),
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = if (isDark) 0.15f else 0.08f),
-                            Color.Transparent
-                        )
-                    )
-                )
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Storage,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Column {
-                        Text(
-                            text = stringResource(R.string.setting_chat_storage_app_storage_title),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = if (snapshot.isScanning) {
-                                stringResource(R.string.setting_storage_scanning)
-                            } else {
-                                snapshot.totalBytes.fileSizeToString()
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
-                        )
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Text(
-                    text = if (snapshot.isScanning) {
-                        stringResource(R.string.setting_chat_storage_chat_usage_scanning)
-                    } else {
-                        stringResource(
-                            R.string.setting_chat_storage_chat_usage_value,
-                            snapshot.chatBytes.fileSizeToString(),
-                            snapshot.chatCount
-                        )
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Icon(
+                    imageVector = Icons.Rounded.Storage,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp),
                 )
-                if (!snapshot.isScanning) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        StorageStatPill(
-                            text = stringResource(
-                                R.string.setting_chat_storage_stat_app,
-                                snapshot.appBytes.fileSizeToString()
-                            )
-                        )
-                        StorageStatPill(
-                            text = stringResource(
-                                R.string.setting_chat_storage_stat_data,
-                                snapshot.dataBytes.fileSizeToString()
-                            )
-                        )
-                        StorageStatPill(
-                            text = stringResource(
-                                R.string.setting_chat_storage_stat_cache,
-                                snapshot.cacheBytes.fileSizeToString()
-                            )
-                        )
-                        if (chatSummary.overview.duplicateSizeBytes > 0L) {
-                            StorageStatPill(
-                                text = stringResource(
-                                    R.string.setting_chat_storage_stat_chat_dupes,
-                                    chatSummary.overview.duplicateSizeBytes.fileSizeToString()
-                                )
-                            )
-                        }
-                    }
+                Column {
+                    Text(
+                        text = stringResource(R.string.setting_chat_storage_app_storage_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color.White,
+                    )
+                    Text(
+                        text = if (snapshot.isScanning) {
+                            stringResource(R.string.setting_storage_scanning)
+                        } else {
+                            snapshot.totalBytes.fileSizeToString()
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White.copy(alpha = 0.88f),
+                    )
                 }
             }
         }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                text = if (snapshot.isScanning) {
+                    stringResource(R.string.setting_chat_storage_chat_usage_scanning)
+                } else {
+                    stringResource(
+                        R.string.setting_chat_storage_chat_usage_value,
+                        snapshot.chatBytes.fileSizeToString(),
+                        snapshot.chatCount
+                    )
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.65f),
+            )
+            if (!snapshot.isScanning) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    StorageStatPill(
+                        text = stringResource(
+                            R.string.setting_chat_storage_stat_app,
+                            snapshot.appBytes.fileSizeToString()
+                        )
+                    )
+                    StorageStatPill(
+                        text = stringResource(
+                            R.string.setting_chat_storage_stat_data,
+                            snapshot.dataBytes.fileSizeToString()
+                        )
+                    )
+                    StorageStatPill(
+                        text = stringResource(
+                            R.string.setting_chat_storage_stat_cache,
+                            snapshot.cacheBytes.fileSizeToString()
+                        )
+                    )
+                    if (chatSummary.overview.duplicateSizeBytes > 0L) {
+                        StorageStatPill(
+                            text = stringResource(
+                                R.string.setting_chat_storage_stat_chat_dupes,
+                                chatSummary.overview.duplicateSizeBytes.fileSizeToString()
+                            )
+                        )
+                    }
+                }
+            }
+    }
     }
 }
 
@@ -1007,14 +1004,14 @@ private fun StorageStatPill(
 ) {
     Surface(
         shape = CircleShape,
-        color = if (LocalDarkMode.current) Color(0xFF141520).copy(alpha = 0.55f) else MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+        color = Color(0xFF000000),
+        contentColor = if (LocalDarkMode.current) Color.White else Color(0xFFFFFFFF),
         border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = Color(0xFFFFFFFF),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
         )
     }
@@ -1091,7 +1088,7 @@ private fun ResolutionSliderCard(
                 stringResource(R.string.setting_chat_storage_px_long_edge, it)
             } ?: stringResource(R.string.setting_chat_storage_original_size),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.White,
         )
         DomChatSlider(
             value = sliderValue,
@@ -1127,7 +1124,7 @@ private fun AutoDeleteSliderCard(
                 stringResource(R.string.setting_chat_storage_days_value, it)
             } ?: stringResource(R.string.setting_chat_storage_never),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.White,
         )
         DomChatSlider(
             value = sliderValue,
@@ -1171,7 +1168,7 @@ private fun EmptyFilesCard(
     val isDark = LocalDarkMode.current
     Surface(
         shape = AppShapes.CardMedium,
-        color = domChatCardContainerColor(),
+        color = Color(0xFF000000),
         border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -1196,7 +1193,7 @@ private fun EmptyFilesCard(
                     stringResource(R.string.setting_chat_storage_empty_default_desc)
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
         }
     }
@@ -1234,7 +1231,7 @@ private fun StorageImageTile(
     val isDark = LocalDarkMode.current
     Surface(
         shape = AppShapes.CardMedium,
-        color = domChatCardContainerColor(),
+        color = Color(0xFF000000),
         border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -1277,7 +1274,7 @@ private fun StorageImageTile(
                 Text(
                     text = imageMetadataLabel(attachment),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1305,7 +1302,7 @@ private fun StorageFileTile(
             )
         },
         shape = AppShapes.CardMedium,
-        color = domChatCardContainerColor(),
+        color = Color(0xFF000000),
         border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -1313,7 +1310,7 @@ private fun StorageFileTile(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (isDark) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f))
+                    .background(Color(0xFF000000))
                     .padding(14.dp),
             ) {
                 Row(
@@ -1323,7 +1320,7 @@ private fun StorageFileTile(
                     Icon(
                         imageVector = attachment.kind.icon(),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint = Color(0xFFFFFFFF),
                         modifier = Modifier.size(28.dp),
                     )
                     Text(
@@ -1333,7 +1330,7 @@ private fun StorageFileTile(
                             .uppercase()
                             .take(8),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f),
+                        color = Color(0xFFFFFFFF).copy(alpha = 0.82f),
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -1360,7 +1357,7 @@ private fun StorageFileTile(
                 Text(
                     text = fileMetadataLabel(context, attachment),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1377,7 +1374,7 @@ private fun DeleteButton(
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = Color(0xFF141520).copy(alpha = 0.55f),
+        color = Color(0xFF000000),
         contentColor = Color(0xFFFF6B6B),
         border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
     ) {
@@ -1385,7 +1382,7 @@ private fun DeleteButton(
             Icon(
                 imageVector = Icons.Rounded.Delete,
                 contentDescription = stringResource(R.string.delete),
-                tint = MaterialTheme.colorScheme.error,
+                tint = Color(0xFFFF453A),
             )
         }
     }
@@ -1519,7 +1516,7 @@ private fun OtherUploadsSheet(
                 stringResource(R.string.setting_chat_storage_other_uploads_desc)
             },
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color.White.copy(alpha = 0.65f),
         )
         if (isLoading) {
             Box(
@@ -1559,7 +1556,7 @@ private fun OtherUploadsSheet(
                     files.sumOf { it.sizeBytes }.fileSizeToString()
                 ),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = Color.White,
             )
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
@@ -1594,7 +1591,7 @@ private fun OtherUploadTile(
         Surface(
             onClick = onOpen,
             shape = AppShapes.CardMedium,
-            color = domChatCardContainerColor(),
+            color = Color(0xFF000000),
             border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -1635,7 +1632,7 @@ private fun OtherUploadTile(
                     Text(
                         text = otherUploadMetadataLabel(file),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1646,7 +1643,7 @@ private fun OtherUploadTile(
         Surface(
             onClick = onOpen,
             shape = AppShapes.CardMedium,
-            color = domChatCardContainerColor(),
+            color = Color(0xFF000000),
             border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -1654,7 +1651,7 @@ private fun OtherUploadTile(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(if (isDark) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f))
+                        .background(Color(0xFF000000))
                         .padding(14.dp),
                 ) {
                     Row(
@@ -1664,7 +1661,7 @@ private fun OtherUploadTile(
                         Icon(
                             imageVector = mimeToStorageIcon(file.mime),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            tint = Color(0xFFFFFFFF),
                             modifier = Modifier.size(28.dp),
                         )
                         Text(
@@ -1677,7 +1674,7 @@ private fun OtherUploadTile(
                                 ?.take(8)
                                 ?: context.getString(R.string.setting_chat_storage_file_fallback).uppercase(),
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f),
+                            color = Color(0xFFFFFFFF).copy(alpha = 0.82f),
                             fontWeight = FontWeight.Bold,
                         )
                     }
@@ -1706,7 +1703,7 @@ private fun OtherUploadTile(
                     Text(
                         text = otherUploadMetadataLabel(file),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )

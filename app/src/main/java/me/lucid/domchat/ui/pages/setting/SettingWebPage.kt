@@ -271,7 +271,7 @@ fun SettingWebPage(
                 Card(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF141520)
+                        containerColor = Color(0xFF000000)
                     ),
                     border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
@@ -300,7 +300,7 @@ fun SettingWebPage(
                                 text = stringResource(R.string.setting_page_web_server_hero_title),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                color = if (isDark) Color.White else Color.White
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -316,7 +316,7 @@ fun SettingWebPage(
                                     text = stringResource(serverState.statusTextResId()),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isRunning) Color(0xFF34D399) else (if (isDark) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant)
+                                    color = if (isRunning) Color(0xFF34D399) else (if (isDark) Color(0xFF94A3B8) else Color.White.copy(alpha = 0.65f))
                                 )
                             }
                         }
@@ -330,7 +330,7 @@ fun SettingWebPage(
                             Text(
                                 text = stringResource(R.string.setting_page_web_server_hero_desc),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isDark) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isDark) Color(0xFF94A3B8) else Color.White.copy(alpha = 0.65f)
                             )
 
                             WebActionButtons(
@@ -485,7 +485,7 @@ fun SettingWebPage(
                 item {
                     Card(
                         shape = AppShapes.CardLarge,
-                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFF141520)),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFF000000)),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp)
                     ) {
                         Column(
@@ -495,12 +495,12 @@ fun SettingWebPage(
                             Text(
                                 text = stringResource(R.string.setting_page_web_server_background_warning_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = Color(0xFFFFFFFF)
                             )
                             Text(
                                 text = stringResource(R.string.setting_page_web_server_background_warning_desc),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.92f)
+                                color = Color(0xFFFFFFFF).copy(alpha = 0.92f)
                             )
                             TextButton(
                                 onClick = {
@@ -528,12 +528,12 @@ fun SettingWebPage(
                             Text(
                                 text = stringResource(R.string.setting_page_web_server_error),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                color = Color(0xFFFF453A)
                             )
                             Text(
                                 text = serverState.error.orEmpty(),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.9f)
+                                color = Color(0xFFFF453A).copy(alpha = 0.9f)
                             )
                         }
                     }
@@ -729,7 +729,7 @@ private fun CopyAddressButton(
 ) {
     Surface(
         onClick = onClick,
-        color = Color(0xFF141520),
+        color = Color(0xFF000000),
         shape = AppShapes.ButtonPill,
         border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
     ) {

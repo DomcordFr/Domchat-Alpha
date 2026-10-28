@@ -231,7 +231,7 @@ private fun KeylessOptionsDescription() {
         Text(
             text = stringResource(R.string.setting_search_keyless_explainer),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color.White.copy(alpha = 0.65f),
         )
         Text(
             text = stringResource(R.string.setting_search_keyless_backends_label),
@@ -240,7 +240,7 @@ private fun KeylessOptionsDescription() {
         KeylessSearchService.backends.forEach { backend ->
             Surface(
                 shape = AppShapes.ListItem,
-                color = androidx.compose.ui.graphics.Color(0xFF141520),
+                color = androidx.compose.ui.graphics.Color(0xFF000000),
             ) {
                 Column(
                     modifier = Modifier
@@ -251,18 +251,18 @@ private fun KeylessOptionsDescription() {
                     Text(
                         text = backend.name,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                     )
                     Text(
                         text = backend.role,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                     )
                     backend.status?.takeIf { it.isNotBlank() }?.let { status ->
                         Text(
                             text = status,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.65f),
                         )
                     }
                 }
@@ -361,8 +361,8 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                         showCommonOptions = true
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-                    contentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+                    contentColor = Color.White
                 ) {
                     Icon(
                         Icons.Rounded.Settings,
@@ -419,9 +419,9 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (LocalDarkMode.current) {
-                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                    Color(0xFF000000)
                                 } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                    Color(0xFF000000)est
                                 }
                             ),
                             shape = AppShapes.CardLarge
@@ -440,7 +440,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                                         imageVector = Icons.Rounded.Search,
                                         contentDescription = null,
                                         modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                        tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                                     )
                                     Text(
                                         text = stringResource(R.string.setting_search_empty_title),
@@ -449,7 +449,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = stringResource(R.string.setting_search_empty_desc),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                         textAlign = TextAlign.Center
                                     )
                                 }
@@ -707,7 +707,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                 Text(
                                     text = stringResource(R.string.setting_search_bing_no_config),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White.copy(alpha = 0.65f)
                                 )
                             }
                             is SearchServiceOptions.FirecrawlOptions -> {
@@ -818,9 +818,9 @@ internal fun SearchProvidersContent(
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = if (LocalDarkMode.current) {
-                                MaterialTheme.colorScheme.surfaceContainerLow
+                                Color(0xFF000000)
                             } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
+                                Color(0xFF000000)est
                             }
                         ),
                         shape = AppShapes.CardLarge
@@ -839,7 +839,7 @@ internal fun SearchProvidersContent(
                                     imageVector = Icons.Rounded.Search,
                                     contentDescription = null,
                                     modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                                 )
                                 Text(
                                     text = stringResource(R.string.setting_search_empty_title),
@@ -848,7 +848,7 @@ internal fun SearchProvidersContent(
                                 Text(
                                     text = stringResource(R.string.setting_search_empty_desc),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -1061,7 +1061,7 @@ private fun SearchServiceEditorSheet(
                         is SearchServiceOptions.BingLocalOptions -> Text(
                             text = stringResource(R.string.setting_search_bing_no_config),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.65f)
                         )
                         is SearchServiceOptions.FirecrawlOptions -> FirecrawlOptions(currentService as SearchServiceOptions.FirecrawlOptions) { currentService = it }
                         is SearchServiceOptions.JinaOptions -> JinaOptions(currentService as SearchServiceOptions.JinaOptions) { currentService = it }
@@ -1252,7 +1252,7 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF141520)
+                                color = androidx.compose.ui.graphics.Color(0xFF000000)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1265,18 +1265,18 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                         name = preset.name,
                                         catalogSnapshot = catalogSnapshot,
                                         modifier = Modifier.size(40.dp),
-                                        contentColor = MaterialTheme.colorScheme.onSurface,
+                                        contentColor = Color.White,
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = preset.name,
                                             style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
+                                            color = Color.White,
                                         )
                                         Text(
                                             text = context.getString(preset.descriptionRes),
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = Color.White.copy(alpha = 0.65f),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -1323,7 +1323,7 @@ private fun SearchServiceEditHeader(
             service = service,
             catalogSnapshot = catalogSnapshot,
             modifier = Modifier.size(32.dp),
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            contentColor = Color.White,
         )
         Text(
             text = if (service is SearchServiceOptions.KeylessOptions) {
@@ -1351,7 +1351,7 @@ private fun SearchServiceItemContent(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
-            .background(if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest)
+            .background(Color(0xFF000000)est)
             .clickable {
                 haptics.perform(HapticPattern.Pop)
                 onClick()
@@ -1408,7 +1408,7 @@ private fun SearchServiceItemContent(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    if (LocalDarkMode.current) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerHighest
+                                    Color(0xFF000000)est
                                 )
                             )
                         )

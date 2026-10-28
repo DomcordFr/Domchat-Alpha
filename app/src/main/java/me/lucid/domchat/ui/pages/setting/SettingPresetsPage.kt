@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -249,7 +250,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(16.dp),
-                    color = if (isDark) Color(0xFF141522).copy(alpha = 0.5f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                    color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder)
                 ) {
                     Row(
@@ -260,7 +261,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         Icon(
                             imageVector = Icons.Rounded.Psychology,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
                         Column(modifier = Modifier.weight(1f)) {
@@ -268,13 +269,13 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 text = "System & Formatting Locks",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                color = if (isDark) Color.White else Color.White
                             )
                             Spacer(Modifier.height(2.dp))
                             Text(
                                 text = "Presets inject dynamic rules, anti-AI guidelines, and context locks into your conversations.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (isDark) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isDark) Color.White.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -292,7 +293,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-                    color = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.70f),
+                    color = Color(0xFF000000),
                     border = BorderStroke(
                         if (isEnabled) 1.dp else 0.5.dp,
                         if (isEnabled) {
@@ -321,17 +322,17 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                         text = preset.name,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                        color = if (isDark) Color.White else Color.White
                                     )
                                     if (preset.isSystem) {
                                         Surface(
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                            color = Color.White.copy(alpha = 0.15f),
                                             shape = RoundedCornerShape(6.dp)
                                         ) {
                                             Text(
                                                 text = "Default",
                                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = MaterialTheme.colorScheme.primary,
+                                                color = Color.White,
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
@@ -342,7 +343,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = preset.description,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = if (isDark) Color.White.copy(alpha = 0.65f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = if (isDark) Color.White.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.65f)
                                     )
                                 }
                             }
@@ -361,35 +362,35 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         ) {
                             // Token estimate badge
                             Surface(
-                                color = if (isDark) Color(0xFF202234).copy(alpha = 0.8f) else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                color = Color(0xFF000000)est,
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
                             ) {
                                 Text(
                                     text = "~$tokenEstimate tok",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    color = if (isDark) Color.White else Color.White,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                                 )
                             }
 
                             // Char count badge
                             Surface(
-                                color = if (isDark) Color(0xFF202234).copy(alpha = 0.8f) else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                color = Color(0xFF000000)est,
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
                             ) {
                                 Text(
                                     text = "$charCount c · ${lineCount}L",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isDark) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.65f),
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                                 )
                             }
 
                             // Injection position pill
                             val (posLabel, posColor) = when (preset.injectionPosition) {
-                                PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color(0xFFA78BFA)
+                                PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color.White
                                 PresetInjectionPosition.AT_DEPTH -> "Depth @ ${preset.depth}" to Color(0xFF38BDF8)
                                 PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF34D399)
                             }
@@ -410,7 +411,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         if (preset.content.isNotBlank()) {
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
-                                color = if (isDark) Color(0xFF0C0D14).copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceContainerLow,
+                                color = Color(0xFF000000),
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.06f))
                             ) {
@@ -421,7 +422,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                         fontSize = 11.sp,
                                         lineHeight = 15.sp
                                     ),
-                                    color = if (isDark) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (isDark) Color.White.copy(alpha = 0.75f) else Color.White.copy(alpha = 0.65f),
                                     maxLines = 4,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.padding(10.dp)
@@ -481,9 +482,9 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
 
                                 if (!preset.isSystem) {
                                     TextButton(onClick = { deletePreset(preset.id) }) {
-                                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFFFF453A))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Delete", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                        Text("Delete", style = MaterialTheme.typography.labelSmall, color = Color(0xFFFF453A))
                                     }
                                 }
                             }
@@ -502,8 +503,12 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
         ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            containerColor = if (isDark) Color(0xFF14151C).copy(alpha = 0.88f) else MaterialTheme.colorScheme.surfaceContainerLow,
-            modifier = Modifier.border(1.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f), AppShapes.CardLarge),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier
+                .widthIn(max = 360.dp)
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.Dialog),
+            shape = AppShapes.Dialog,
+            containerColor = domChatDialogContainerColor(),
             title = { Text(if (editingPreset == null) "Create Prompt Preset" else "Edit Prompt Preset") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -536,7 +541,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                     Text(
                         text = "Estimated tokens: ~$estTokens · ${draftContent.length} chars",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color.White
                     )
                 }
             },

@@ -77,7 +77,7 @@ fun <T> Select(
         }
     ) {
         Surface(
-            color = Color(0xFF141520),
+            color = Color(0xFF000000),
             shape = RoundedCornerShape(20.dp),
             border = BorderStroke(
                 0.5f.dp,
@@ -86,7 +86,7 @@ fun <T> Select(
             tonalElevation = 0.dp,
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .domChatBlurEffect(Color(0xFF141520), RoundedCornerShape(20.dp))
+                .domChatBlurEffect(Color(0xFF000000), RoundedCornerShape(20.dp))
         ) {
             Row(
                 modifier = Modifier
@@ -119,7 +119,7 @@ fun <T> Select(
                 expanded = false
             },
             shape = RoundedCornerShape(20.dp),
-            containerColor = Color(0xFF0E0F18),
+            containerColor = Color(0xFF000000),
             border = BorderStroke(
                 0.5f.dp,
                 LiquidGlassTokens.SpecularBorderSubtle

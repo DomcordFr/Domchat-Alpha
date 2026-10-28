@@ -50,7 +50,7 @@ fun TextAvatar(
     text: String,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    color: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = Color(0xFF000000),
     contentColor: Color = MaterialTheme.colorScheme.onSecondary
 ) {
     Box(
@@ -163,7 +163,7 @@ fun UIAvatar(
                 if (onUpdate != null) showPickOption = true
             },
             tonalElevation = 4.dp,
-            color = MaterialTheme.colorScheme.secondaryContainer,
+            color = Color(0xFF000000),
             content = avatarContent
         )
     } else {
@@ -171,7 +171,7 @@ fun UIAvatar(
             shape = rememberAvatarShape(loading),
             modifier = modifier.size(32.dp),
             tonalElevation = 4.dp,
-            color = MaterialTheme.colorScheme.secondaryContainer,
+            color = Color(0xFF000000),
             content = avatarContent
         )
     }

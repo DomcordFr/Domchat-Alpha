@@ -316,7 +316,7 @@ fun SettingPage(
                         Icon(
                             Icons.Rounded.Search,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White.copy(alpha = 0.65f)
                         )
                     },
                     trailingIcon = {
@@ -329,12 +329,12 @@ fun SettingPage(
                     singleLine = true,
                     shape = AppShapes.InputField,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF141520),
-                        unfocusedContainerColor = Color(0xFF141520),
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
                         focusedTextColor = Color(0xFFF2F2F7),
                         unfocusedTextColor = Color(0xFFF2F2F7),
                         cursorColor = Color.White,
-                        focusedBorderColor = Color(0xFFA78BFA).copy(alpha = 0.5f),
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedPlaceholderColor = Color(0xFF8A8A96),
                         unfocusedPlaceholderColor = Color(0xFF8A8A96),
@@ -363,7 +363,7 @@ fun SettingPage(
                             Text(
                                 text = "No settings matched \"$trimmedQuery\"",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = Color.White.copy(alpha = 0.65f),
                                 modifier = Modifier.padding(20.dp)
                             )
                         } else {
@@ -383,7 +383,7 @@ fun SettingPage(
                                             Icons.Rounded.ChevronRight,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            tint = Color.White.copy(alpha = 0.65f)
                                         )
                                     },
                                     contentPadding = mainItemPadding,
@@ -426,7 +426,7 @@ fun SettingPage(
                                             Icons.Rounded.ChevronRight,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            tint = Color.White.copy(alpha = 0.65f)
                                         )
                                     },
                                     contentPadding = mainItemPadding,
@@ -452,7 +452,7 @@ private fun ProviderConfigWarningCard(navController: NavHostController) {
         onClick = { navController.navigate(Screen.SettingProvider) },
         shape = AppShapes.CardLarge,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF141520),
+            containerColor = Color(0xFF000000),
             contentColor = Color(0xFFF2F2F7)
         ),
         border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),

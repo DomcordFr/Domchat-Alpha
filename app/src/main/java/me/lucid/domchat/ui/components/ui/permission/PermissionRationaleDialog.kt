@@ -53,7 +53,7 @@ internal fun PermissionRationaleDialog(
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = Color(0xFF000000)
             )
         ) {
             Column(
@@ -91,7 +91,7 @@ internal fun PermissionRationaleDialog(
                         stringResource(R.string.permission_desc_require_permission)
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     textAlign = TextAlign.Center
                 )
 
@@ -172,7 +172,7 @@ private fun PermissionItem(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            containerColor = Color(0xFF000000)
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -197,14 +197,14 @@ private fun PermissionItem(
                     if (permissionInfo.required) {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
+                                containerColor = Color(0xFF000000)
                             ),
                             shape = RoundedCornerShape(4.dp)
                         ) {
                             Text(
                                 text = stringResource(R.string.permission_required),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                color = Color(0xFFFF453A),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }

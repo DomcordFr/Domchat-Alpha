@@ -295,7 +295,7 @@ fun LorebooksPageContent(
                         )
                     )
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                         shape = emptyShape,
                         border = BorderStroke(0.5.dp, borderBrush)
                     ) {
@@ -310,7 +310,7 @@ fun LorebooksPageContent(
                                 Icons.Rounded.Book,
                                 contentDescription = null,
                                 modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                             )
                             Text(
                                 text = stringResource(R.string.lorebooks_page_empty_title),
@@ -319,7 +319,7 @@ fun LorebooksPageContent(
                             Text(
                                 text = stringResource(R.string.lorebooks_page_empty_desc),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -483,7 +483,7 @@ private fun LorebookCard(
     )
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         shape = cardShape,
         border = BorderStroke(0.5.dp, borderBrush)
     ) {
@@ -537,7 +537,7 @@ private fun LorebookCard(
                                 Icons.Rounded.Book,
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                tint = Color(0xFFFFFFFF)
                             )
                         }
                     }
@@ -561,14 +561,14 @@ private fun LorebookCard(
                         stringResource(R.string.lorebooks_page_no_description) 
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = stringResource(R.string.lorebooks_page_entries_count, lorebook.entries.size),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
             }
 
@@ -661,7 +661,7 @@ internal fun LorebookCreatorSheet(
                                     Icons.Rounded.AddPhotoAlternate,
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    tint = Color(0xFFFFFFFF)
                                 )
                             }
                         }
@@ -673,7 +673,7 @@ internal fun LorebookCreatorSheet(
                     Text(
                         text = stringResource(R.string.lorebooks_page_name),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     OutlinedTextField(
                         value = name,

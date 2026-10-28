@@ -57,7 +57,7 @@ fun DocumentChip(
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             tonalElevation = 4.dp,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest
+            color = Color(0xFF000000)est
         ) {
             Column(
                 modifier = Modifier
@@ -69,7 +69,7 @@ fun DocumentChip(
                     text = extension.take(4),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.65f)
                 )
                 
                 Text(
@@ -77,7 +77,7 @@ fun DocumentChip(
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
             }
         }
@@ -96,7 +96,7 @@ fun DocumentChip(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.94f),
+                    color = Color(0xFF000000)est.copy(alpha = 0.94f),
                     tonalElevation = 3.dp,
                     modifier = Modifier
                         .padding(4.dp)
@@ -107,7 +107,7 @@ fun DocumentChip(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = null,
                             modifier = Modifier.size(15.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White.copy(alpha = 0.65f)
                         )
                     }
                 }

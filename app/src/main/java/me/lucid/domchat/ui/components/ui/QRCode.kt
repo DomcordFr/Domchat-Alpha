@@ -54,7 +54,7 @@ fun QRCode(
             Text(
                 text = "This configuration is too large to show as a QR code. Use the share button instead.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(24.dp)
             )

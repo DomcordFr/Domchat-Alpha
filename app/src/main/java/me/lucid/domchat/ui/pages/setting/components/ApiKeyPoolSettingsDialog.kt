@@ -62,7 +62,7 @@ fun ApiKeyPoolSettingsDialog(
             Icon(
                 imageVector = Icons.Rounded.Tune,
                 contentDescription = null,
-                tint = if (isDark) Color.White else MaterialTheme.colorScheme.primary,
+                tint = if (isDark) Color.White else Color.White,
                 modifier = Modifier.size(28.dp),
             )
         },
@@ -86,7 +86,7 @@ fun ApiKeyPoolSettingsDialog(
                     text = stringResource(R.string.api_key_pool_strategy_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color.White,
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -163,13 +163,13 @@ private fun StrategyOptionCard(
         shape = AppShapes.CardSmall,
         colors = CardDefaults.cardColors(
             containerColor = if (selected) {
-                Color(0xFFA78BFA).copy(alpha = 0.18f)
+                Color.White.copy(alpha = 0.18f)
             } else {
-                Color(0xFF141520)
+                Color(0xFF000000)
             },
         ),
         border = if (selected) {
-            BorderStroke(1.5.dp, Color(0xFFA78BFA).copy(alpha = 0.6f))
+            BorderStroke(1.5.dp, Color.White.copy(alpha = 0.4f))
         } else {
             BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
         },
@@ -191,7 +191,7 @@ private fun StrategyOptionCard(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (selected) Color(0xFFC9B4FF) else Color(0xFFF2F2F7),
+                    color = if (selected) Color.White else Color(0xFFF2F2F7),
                 )
                 Text(
                     text = description,

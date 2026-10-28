@@ -48,6 +48,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -240,18 +241,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        topBar = {
-            OneUITopAppBar(
-                title = "Personas",
-                navigationIcon = { BackButton() },
-                scrollBehavior = scrollBehavior
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { openCreate() },
-                containerColor = if (isDark) Color.White else Color.Black,
-                contentColor = if (isDark) Color.Black else Color.White,
+                containerColor = Color.White,
+                contentColor = Color.Black,
                 shape = CircleShape
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "New Persona")
@@ -262,10 +256,29 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .consumeWindowInsets(innerPadding),
+                .consumeWindowInsets(innerPadding)
+                .statusBarsPadding(),
             contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // 1. Standalone top row: back button only (flush to the top)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BackButton()
+                }
+            }
+            // 2. Large page title directly under the back button
+            item {
+                Text(
+                    text = "Personas",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
             // Search Bar
             item {
                 OutlinedTextField(
@@ -276,14 +289,14 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         Icon(
                             Icons.Rounded.Search,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White.copy(alpha = 0.65f)
                         )
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -304,7 +317,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     color = if (isActive) {
                         if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)
                     } else {
-                        domChatCardContainerColor()
+                        Color(0xFF000000)
                     },
                     shape = cardShape,
                     border = BorderStroke(
@@ -336,7 +349,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = persona.name,
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                        color = if (isDark) Color.White else Color.White
                                     )
 
                                     if (persona.pronouns.isNotBlank()) {
@@ -376,7 +389,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = persona.description,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -425,7 +438,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     Icon(
                                         Icons.Rounded.Delete,
                                         contentDescription = "Delete",
-                                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                        tint = Color(0xFFFF453A).copy(alpha = 0.8f),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -447,8 +460,9 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         val dialogShape = me.lucid.domchat.ui.theme.AppShapes.Dialog
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .fillMaxWidth()
+                .widthIn(max = 360.dp)
                 .padding(horizontal = 12.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,
@@ -457,7 +471,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 Text(
                     text = if (editingTargetId == null) "Create Persona" else "Edit Persona",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                    color = if (isDark) Color.White else Color.White
                 )
             },
             text = {

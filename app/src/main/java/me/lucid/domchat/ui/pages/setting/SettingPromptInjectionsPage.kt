@@ -148,7 +148,7 @@ fun SettingPromptInjectionsPage(
                         modifier = Modifier
                             .align(Alignment.BottomCenter),
                         shape = RoundedCornerShape(28.dp),
-                        color = androidx.compose.ui.graphics.Color(0xFF141520),
+                        color = androidx.compose.ui.graphics.Color(0xFF000000),
                         tonalElevation = 6.dp,
                         shadowElevation = 8.dp
                     ) {
@@ -161,7 +161,7 @@ fun SettingPromptInjectionsPage(
                                     .clip(CircleShape)
                                     .then(
                                         if (pagerState.currentPage == 0) {
-                                            Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                                            Modifier.background(Color(0xFF000000))
                                         } else {
                                             Modifier.clickable {
                                                 haptics.perform(HapticPattern.Tick)
@@ -176,9 +176,9 @@ fun SettingPromptInjectionsPage(
                                     imageVector = Icons.Rounded.Category,
                                     contentDescription = null,
                                     tint = if (pagerState.currentPage == 0) {
-                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                        Color(0xFFFFFFFF)
                                     } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                        Color.White.copy(alpha = 0.65f)
                                     },
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -189,7 +189,7 @@ fun SettingPromptInjectionsPage(
                                     .clip(CircleShape)
                                     .then(
                                         if (pagerState.currentPage == 1) {
-                                            Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                                            Modifier.background(Color(0xFF000000))
                                         } else {
                                             Modifier.clickable {
                                                 haptics.perform(HapticPattern.Tick)
@@ -204,9 +204,9 @@ fun SettingPromptInjectionsPage(
                                     imageVector = Icons.Rounded.Book,
                                     contentDescription = null,
                                     tint = if (pagerState.currentPage == 1) {
-                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                        Color(0xFFFFFFFF)
                                     } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                        Color.White.copy(alpha = 0.65f)
                                     },
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -231,8 +231,8 @@ fun SettingPromptInjectionsPage(
                             }
                         },
                         shape = AppShapes.CardLarge,
-                        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+                        contentColor = Color.White
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Input,

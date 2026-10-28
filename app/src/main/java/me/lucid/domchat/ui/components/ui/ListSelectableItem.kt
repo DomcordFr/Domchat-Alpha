@@ -56,7 +56,7 @@ fun ListSelectableItem(
     // Physics: Background color animation
     val backgroundColor by animateColorAsState(
         targetValue = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
+            Color(0xFF000000)
         } else {
             Color.Transparent
         },

@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Shape
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /** Unified near-black glassy fill used by cards in settings and glassy popovers. */
-const val DOMCHAT_UNIFIED_CARD_COLOR = 0xFF141520
+const val DOMCHAT_UNIFIED_CARD_COLOR = 0xFF000000
 
 /**
  * The one true card design (from the "no lorebooks yet" card):

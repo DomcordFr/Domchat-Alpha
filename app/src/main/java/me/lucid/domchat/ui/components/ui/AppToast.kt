@@ -342,7 +342,7 @@ private fun ToastContent(
     val isLongMessage = toast.message.length > 80
 
     Surface(
-        shape = RoundedCornerShape(28.dp),
+        shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
         color = containerColor,
         contentColor = contentColor,
         tonalElevation = 0.dp,
@@ -433,7 +433,7 @@ private fun ToastContent(
 @Composable
 private fun getToastColors(type: ToastType): Triple<Color, Color, ImageVector?> {
     // Dark glassy toast plates: near-black solid-ish fill + colored accents on top.
-    val base = Color(0xFF0D0E16).copy(alpha = 0.95f)
+    val base = Color(0xFF000000)
     return when (type) {
         ToastType.Normal -> if(LocalDarkMode.current) {
             Triple(

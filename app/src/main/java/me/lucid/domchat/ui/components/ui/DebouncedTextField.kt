@@ -154,9 +154,9 @@ fun DebouncedTextField(
         },
         shape = AppShapes.InputField,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF141520),
-            unfocusedContainerColor = Color(0xFF141520),
-            disabledContainerColor = Color(0xFF141520),
+            focusedContainerColor = Color(0xFF000000),
+            unfocusedContainerColor = Color(0xFF000000),
+            disabledContainerColor = Color(0xFF000000),
             focusedTextColor = Color(0xFFF2F2F7),
             unfocusedTextColor = Color(0xFFF2F2F7),
             disabledTextColor = Color(0xFFF2F2F7).copy(alpha = 0.5f),
@@ -164,7 +164,7 @@ fun DebouncedTextField(
             focusedBorderColor = Color.White.copy(alpha = 0.30f),
             unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
             disabledBorderColor = Color.White.copy(alpha = 0.06f),
-            focusedLabelColor = Color(0xFFB9A8FC),
+            focusedLabelColor = Color.White,
             unfocusedLabelColor = Color(0xFF8A8A96),
             focusedPlaceholderColor = Color(0xFF8A8A96),
             unfocusedPlaceholderColor = Color(0xFF8A8A96)

@@ -73,7 +73,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val isDark = LocalDarkMode.current
-    val cardBg = domChatCardContainerColor()
+    val cardBg = Color(0xFF000000)
 
     val currentConfig = settings.displaySetting.contextBudgetConfig
 
@@ -174,7 +174,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             Text(
                                 text = "${maxContextTokens / 1024}k total limit",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                         }
 
@@ -203,7 +203,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier
                                         .weight(memoryPercent.toFloat())
                                         .fillMaxHeight()
-                                        .background(Color(0xFF8B5CF6))
+                                        .background(Color.White)
                                 )
                             }
                         }
@@ -232,7 +232,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             }
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF8B5CF6)))
+                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color.White))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Column {
                                     Text("Memory & Lore", fontSize = 11.sp, color = Color(0xFFAAAAAA))
@@ -303,7 +303,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                         color = if (selected) {
                                             if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
                                         } else {
-                                            if (isDark) Color(0xFFE2E8F0) else MaterialTheme.colorScheme.onSurface
+                                            if (isDark) Color(0xFFE2E8F0) else Color.White
                                         }
                                     )
                                 }
@@ -347,7 +347,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                         color = if (selected) {
                                             if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
                                         } else {
-                                            if (isDark) Color(0xFFE2E8F0) else MaterialTheme.colorScheme.onSurface
+                                            if (isDark) Color(0xFFE2E8F0) else Color.White
                                         }
                                     )
                                 }
@@ -361,7 +361,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Window Capacity", style = MaterialTheme.typography.bodyMedium)
-                                Text("$maxContextTokens tokens", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                                Text("$maxContextTokens tokens", style = MaterialTheme.typography.labelLarge, color = Color.White)
                             }
                             DomChatSlider(
                                 value = maxContextTokens.toFloat(),
@@ -439,11 +439,11 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.AutoStories, null, tint = Color(0xFF8B5CF6), modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Rounded.AutoStories, null, tint = Color.White, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
                                     Text("Memory & Lorebooks", style = MaterialTheme.typography.bodyMedium)
                                 }
-                                Text("$memoryPercent% ($memoryTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF8B5CF6))
+                                Text("$memoryPercent% ($memoryTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color.White)
                             }
                             DomChatSlider(
                                 value = memoryPercent.toFloat(),
@@ -478,7 +478,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             Text(
                                 text = "Automatically takes the remaining context allocation ($systemPercent%)",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             )
                         }
                     }
@@ -510,7 +510,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Max Response Tokens", style = MaterialTheme.typography.bodyMedium)
-                                Text("$maxResponseTokens tk", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                                Text("$maxResponseTokens tk", style = MaterialTheme.typography.labelLarge, color = Color.White)
                             }
                             DomChatSlider(
                                 value = maxResponseTokens.toFloat(),
@@ -542,7 +542,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 Text(
                                     text = "Automatically drop oldest message turns to maintain context headroom",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White.copy(alpha = 0.65f)
                                 )
                             }
                             HapticSwitch(

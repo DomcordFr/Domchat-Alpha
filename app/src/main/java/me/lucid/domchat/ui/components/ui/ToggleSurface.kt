@@ -30,9 +30,9 @@ fun ToggleSurface(
     checked: Boolean,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(50),
-    checkedColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    uncheckedColor: Color = MaterialTheme.colorScheme.surface,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    checkedColor: Color = Color(0xFF000000),
+    uncheckedColor: Color = Color(0xFF000000),
+    contentColor: Color = Color.White,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
@@ -47,7 +47,7 @@ fun ToggleSurface(
     )
 
     val animatedContentColor by animateColorAsState(
-        targetValue = if (checked) contentColor else MaterialTheme.colorScheme.onSurface,
+        targetValue = if (checked) contentColor else Color.White,
         animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessLow),
         label = "toggle_content_color"
     )

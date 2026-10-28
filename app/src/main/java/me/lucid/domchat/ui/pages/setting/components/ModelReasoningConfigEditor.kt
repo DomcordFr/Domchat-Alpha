@@ -94,7 +94,7 @@ fun ModelReasoningConfigEditor(
         Text(
             text = stringResource(R.string.setting_provider_page_reasoning_format_desc),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color.White.copy(alpha = 0.65f),
         )
 
         val types = ReasoningModeType.entries

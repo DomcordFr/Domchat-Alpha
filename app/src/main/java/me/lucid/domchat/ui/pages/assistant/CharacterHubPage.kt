@@ -295,25 +295,24 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .statusBarsPadding()
         ) {
-            // 1. Standalone top row: back button only
+            // 1. Standalone top row: back button only (flush to the top)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 0.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 BackButton()
             }
 
-            // 2. Large page title
+            // 2. Large page title directly under the back button
             Text(
                 text = "Characters",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (isDark) Color.White else Color.Black,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                modifier = Modifier.padding(start = 20.dp, top = 0.dp, bottom = 10.dp)
             )
 
             // Search Bar
@@ -335,8 +334,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 singleLine = true,
                 shape = AppShapes.InputField,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF141520),
-                    unfocusedContainerColor = Color(0xFF141520),
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
                     focusedBorderColor = Color.White.copy(0.3f),
                     unfocusedBorderColor = Color.White.copy(0.12f),
                     focusedTextColor = Color(0xFFF2F2F7),
@@ -368,7 +367,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         val selected = sortOption == option
                         Surface(
                             onClick = { sortOption = option },
-                            color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF141520),
+                            color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
                             shape = RoundedCornerShape(10.dp),
                             border = androidx.compose.foundation.BorderStroke(
                                 0.5.dp,
@@ -410,7 +409,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 Surface(
                     onClick = { isGridView = !isGridView },
                     shape = AppShapes.ButtonPill,
-                    color = Color(0xFF141520),
+                    color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Row(
@@ -892,7 +891,7 @@ fun CharacterInspectorSheet(
     // Charter: character popups are always a black glass plate, independent of glass/luminance settings.
     val sheetBgColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor()
     val contentTextColor = Color(0xFFF2F2F7)
-    val cardBgColor = Color(0xFF141520).copy(alpha = 0.55f)
+    val cardBgColor = Color(0xFF000000)
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
 
@@ -992,7 +991,7 @@ fun CharacterInspectorSheet(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.White.copy(alpha = 0.08f))
+                                    .background(Color(0xFF000000))
                                     .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
@@ -1131,7 +1130,7 @@ fun CharacterInspectorSheet(
                                     Icon(
                                         Icons.Rounded.RecordVoiceOver,
                                         contentDescription = null,
-                                        tint = Color(0xFFA78BFA),
+                                        tint = Color.White,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Column {
@@ -1255,7 +1254,7 @@ fun CharacterInspectorSheet(
                                                     text = "Character Definition & System Prompt",
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFFA78BFA)
+                                                    color = Color.White
                                                 )
                                                 Spacer(modifier = Modifier.height(8.dp))
                                                 MarkdownBlock(
@@ -1314,7 +1313,7 @@ fun CharacterInspectorSheet(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clip(RoundedCornerShape(12.dp))
-                                                    .background(Color(0xFF141520))
+                                                    .background(Color(0xFF000000))
                                                     .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
                                                     .padding(horizontal = 8.dp, vertical = 6.dp)
                                             ) {
@@ -1330,7 +1329,7 @@ fun CharacterInspectorSheet(
                                                                 .clip(RoundedCornerShape(8.dp))
                                                                 .background(
                                                                     if (isGreetingSelected) {
-                                                                        Color(0xFFA78BFA).copy(alpha = 0.35f)
+                                                                        Color.White.copy(alpha = 0.35f)
                                                                     } else {
                                                                         Color.White.copy(alpha = 0.05f)
                                                                     }
@@ -1338,7 +1337,7 @@ fun CharacterInspectorSheet(
                                                                 .border(
                                                                     0.5.dp,
                                                                     if (isGreetingSelected) {
-                                                                        Brush.verticalGradient(listOf(Color(0xFFA78BFA), Color(0xFFA78BFA)))
+                                                                        Brush.verticalGradient(listOf(Color.White, Color.White))
                                                                     } else cardBorderColor,
                                                                     RoundedCornerShape(8.dp)
                                                                 )

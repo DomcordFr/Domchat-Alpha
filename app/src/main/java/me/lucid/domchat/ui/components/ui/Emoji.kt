@@ -81,7 +81,7 @@ fun EmojiPicker(
                     .fillMaxWidth()
                     .height(height.dp)
                     .background(
-                        MaterialTheme.colorScheme.surface,
+                        Color(0xFF000000),
                         RoundedCornerShape(10.dp)
                     )
                     .padding(8.dp)
@@ -136,7 +136,7 @@ fun EmojiPicker(
                                 containerColor = if (isSelected) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
-                                    MaterialTheme.colorScheme.surfaceVariant
+                                    Color(0xFF000000)
                                 }
                             )
                         ) {
@@ -158,7 +158,7 @@ fun EmojiPicker(
                                 color = if (isSelected) {
                                     MaterialTheme.colorScheme.onPrimary
                                 } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                    Color.White.copy(alpha = 0.65f)
                                 },
                                 style = MaterialTheme.typography.bodyLarge,
                             )
@@ -247,7 +247,7 @@ private fun EmojiItem(
             )
             .clip(RoundedCornerShape(8.dp))
             .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(
+                Color(0xFF000000).copy(
                     alpha = if (hasVariants) 0.5f else 0.3f
                 )
             ),
@@ -280,7 +280,7 @@ private fun EmojiModifierPicker(
                 .wrapContentSize()
                 .padding(16.dp),
             shape = RoundedCornerShape(10.dp),
-            color = MaterialTheme.colorScheme.surface,
+            color = Color(0xFF000000),
             shadowElevation = 8.dp,
             tonalElevation = 8.dp
         ) {
@@ -302,7 +302,7 @@ private fun EmojiModifierPicker(
                                 .size(48.dp)
                                 .clickable { onEmojiSelected(variant) }
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                                .background(Color(0xFF000000)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(

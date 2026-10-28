@@ -84,6 +84,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.BottomSheetDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import androidx.compose.foundation.BorderStroke
@@ -528,8 +529,8 @@ fun SettingProviderPage(
                             }
                         },
                         shape = AppShapes.CardLarge,
-                        containerColor = androidx.compose.ui.graphics.Color(0xFF141520),
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
+                        contentColor = Color.White
                     ) {
                         Icon(
                             Icons.Rounded.Settings,
@@ -689,7 +690,7 @@ private fun ProviderListView(
                                 imageVector = Icons.Rounded.Cloud,
                                 contentDescription = null,
                                 modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                             )
                             Text(
                                 text = stringResource(R.string.setting_provider_page_empty_title),
@@ -698,7 +699,7 @@ private fun ProviderListView(
                             Text(
                                 text = stringResource(R.string.setting_provider_page_empty_desc),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = Color.White.copy(alpha = 0.65f),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -719,12 +720,12 @@ private fun ProviderListView(
                     Text(
                         text = stringResource(R.string.setting_provider_page_no_providers_but_preset),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 32.dp)
                     )
                     
-                    val presetBg = if (isDark) Color.White.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                    val presetBg = Color(0xFF000000)est
                     val presetBorder = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent
                     Surface(
                         onClick = {
@@ -747,26 +748,26 @@ private fun ProviderListView(
                                     imageVector = Icons.Rounded.PhoneAndroid,
                                     contentDescription = null,
                                     modifier = Modifier.size(40.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    tint = Color.White,
                                 )
                             } else {
                                 AutoAIIconWithUrl(
                                     name = matchingPreset.name,
                                     customIconUri = matchingPreset.customIconUri,
                                     modifier = Modifier.size(40.dp),
-                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                    contentColor = Color.White,
                                 )
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = matchingPreset.name,
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = Color.White,
                                 )
                                 Text(
                                     text = matchingPreset.description,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = Color.White.copy(alpha = 0.65f),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -953,8 +954,12 @@ private fun ImportProviderButton(
         ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { showImportDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier
+                .widthIn(max = 360.dp)
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.Dialog),
+            shape = AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-            modifier = Modifier.border(1.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f), AppShapes.CardLarge),
             title = {
                 Text(
                     text = stringResource(R.string.setting_provider_page_import_dialog_title),
@@ -968,7 +973,7 @@ private fun ImportProviderButton(
                     Text(
                         text = stringResource(R.string.setting_provider_page_import_dialog_message),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
 
                     Column(
@@ -1058,9 +1063,12 @@ private fun ImportProviderButton(
     }
 
     importSession?.let { session ->
+        ApplyDialogWindowBlur()
         AlertDialog(
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = {},
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
                 Text(
                     text = stringResource(R.string.setting_provider_page_multi_qr_title),
@@ -1076,7 +1084,7 @@ private fun ImportProviderButton(
                             session.total
                         ),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     Text(
                         text = stringResource(
@@ -1084,7 +1092,7 @@ private fun ImportProviderButton(
                             session.scannedIndexes
                         ),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color.White
                     )
                 }
             },
@@ -1473,7 +1481,7 @@ private fun AddButton(
                                     .fillMaxWidth()
                                     .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(24.dp)),
                                 shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                                color = if (isDark) Color.White.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                color = Color(0xFF000000)est,
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1486,14 +1494,14 @@ private fun AddButton(
                                         imageVector = Icons.Rounded.PhoneAndroid,
                                         contentDescription = null,
                                         modifier = Modifier.size(40.dp),
-                                        tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                                        tint = if (isDark) Color.White else Color.White,
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = preset.name, style = MaterialTheme.typography.titleMedium, color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface)
+                                        Text(text = preset.name, style = MaterialTheme.typography.titleMedium, color = if (isDark) Color.White else Color.White)
                                         Text(
                                             text = preset.description,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = Color.White.copy(alpha = 0.65f),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )
@@ -1515,7 +1523,7 @@ private fun AddButton(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .border(1.dp, if (isDark) Color.White.copy(alpha = 0.20f) else Color.Transparent, RoundedCornerShape(24.dp)),
-                            color = if (isDark) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primaryContainer,
+                            color = if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFF000000),
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                         ) {
                             Row(
@@ -1529,13 +1537,13 @@ private fun AddButton(
                                     imageVector = Icons.Rounded.Add,
                                     contentDescription = null,
                                     modifier = Modifier.size(40.dp),
-                                    tint = if (isDark) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+                                    tint = if (isDark) Color.White else Color(0xFFFFFFFF)
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = stringResource(R.string.setting_provider_page_add_custom_provider),
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if (isDark) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = if (isDark) Color.White else Color(0xFFFFFFFF)
                                     )
                                 }
                             }
@@ -1565,7 +1573,7 @@ private fun AddButton(
                                 .fillMaxWidth()
                                 .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Transparent, shape),
                             shape = shape,
-                            color = if (isDark) Color.White.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                            color = Color(0xFF000000)est
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1578,18 +1586,18 @@ private fun AddButton(
                                     name = preset.name,
                                     customIconUri = preset.customIconUri,
                                     modifier = Modifier.size(40.dp),
-                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                    contentColor = Color.White,
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = preset.name,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = Color.White,
                                     )
                                     Text(
                                         text = preset.description,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.65f),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )

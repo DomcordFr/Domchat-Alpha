@@ -93,7 +93,7 @@ fun MaterialIconPickerDialog(
                             onClick = { onIconSelected(name) },
                             modifier = Modifier.size(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            color = Color(0xFF000000)
                         ) {
                             androidx.compose.foundation.layout.Box(
                                 contentAlignment = Alignment.Center
@@ -102,7 +102,7 @@ fun MaterialIconPickerDialog(
                                     imageVector = icon,
                                     contentDescription = name,
                                     modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface
+                                    tint = Color.White
                                 )
                             }
                         }

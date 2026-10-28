@@ -158,7 +158,7 @@ fun ProviderConfigure(
                         Text(
                             text = supportingText,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.65f),
                         )
                     }
                 }
@@ -281,16 +281,16 @@ private fun ProviderTypeSelector(
             )
             val containerColor by animateColorAsState(
                 targetValue = if (selected) {
-                    Color(0xFFA78BFA).copy(alpha = 0.22f)
+                    Color.White.copy(alpha = 0.18f)
                 } else {
-                    Color(0xFF141520)
+                    Color(0xFF000000)
                 },
                 animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
                 label = "provider_type_container"
             )
             val contentColor by animateColorAsState(
                 targetValue = if (selected) {
-                    Color(0xFFC9B4FF)
+                    Color.White
                 } else {
                     Color(0xFFF2F2F7).copy(alpha = 0.70f)
                 },
@@ -322,7 +322,7 @@ private fun ProviderTypeSelector(
                 contentColor = contentColor,
                 border = BorderStroke(
                     0.5.dp,
-                    if (selected) Color(0xFFA78BFA).copy(alpha = 0.5f)
+                    if (selected) Color.White.copy(alpha = 0.38f)
                     else Color.White.copy(alpha = 0.12f)
                 ),
             ) {
@@ -569,7 +569,7 @@ private fun ColumnScope.ProviderConfigureComfyUI(
             .fillMaxWidth()
             .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardMedium),
         shape = AppShapes.CardMedium,
-        color = Color(0xFF141520),
+        color = Color(0xFF000000),
         contentColor = Color(0xFFF2F2F7),
     ) {
         Column(
@@ -615,7 +615,7 @@ private fun ColumnScope.ProviderConfigureComfyUI(
                 AppShapes.CardMedium
             ),
         shape = AppShapes.CardMedium,
-        color = Color(0xFF141520),
+        color = Color(0xFF000000),
         contentColor = Color(0xFFF2F2F7),
     ) {
         Text(
@@ -642,7 +642,7 @@ private fun ColumnScope.ProviderConfigureComfyUI(
             Text(
                 text = stringResource(R.string.setting_provider_page_comfyui_advanced_mapping_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.65f),
             )
         }
         HapticSwitch(
@@ -793,11 +793,11 @@ private fun OpenAICompatibilityModeSetting(
                     },
                     modifier = Modifier.weight(1f),
                     shape = AppShapes.ButtonPill,
-                    color = if (isSel) Color(0xFFA78BFA).copy(alpha = 0.22f) else Color(0xFF141520),
-                    contentColor = if (isSel) Color(0xFFC9B4FF) else Color(0xFFF2F2F7).copy(alpha = 0.70f),
+                    color = if (isSel) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
+                    contentColor = if (isSel) Color.White else Color(0xFFF2F2F7).copy(alpha = 0.70f),
                     border = BorderStroke(
                         0.5.dp,
-                        if (isSel) Color(0xFFA78BFA).copy(alpha = 0.5f)
+                        if (isSel) Color.White.copy(alpha = 0.38f)
                         else Color.White.copy(alpha = 0.12f)
                     ),
                 ) {
@@ -864,7 +864,7 @@ private fun ReasoningBodiesSection(
         Text(
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.White,
         )
         CustomBodies(customBodies = bodies, onUpdate = onUpdate)
     }
@@ -929,7 +929,7 @@ private fun ColumnScope.ProviderConfigureGoogle(
                     Text(
                         text = stringResource(R.string.setting_provider_page_vertex_ai_base_url_hint),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error,
+                        color = Color(0xFFFF453A),
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }

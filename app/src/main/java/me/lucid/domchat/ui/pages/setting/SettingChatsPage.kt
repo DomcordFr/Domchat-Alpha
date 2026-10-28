@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -157,7 +158,7 @@ fun SettingChatsPage(
         }
     }
 
-    val cardBg = domChatCardContainerColor()
+    val cardBg = Color(0xFF000000)
     val cardBorder = BorderStroke(
         0.5.dp,
         if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
@@ -192,7 +193,7 @@ fun SettingChatsPage(
                             expanded = showSortMenu,
                             onDismissRequest = { showSortMenu = false },
                             shape = RoundedCornerShape(18.dp),
-                            containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = Color(0xFF000000),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {
                             DropdownMenuItem(
@@ -248,7 +249,7 @@ fun SettingChatsPage(
                         Text(
                             "Search all chats...",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.6f)
                         )
                     },
                     leadingIcon = {
@@ -256,7 +257,7 @@ fun SettingChatsPage(
                             Icons.Rounded.Search,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White.copy(alpha = 0.65f)
                         )
                     },
                     trailingIcon = {
@@ -275,7 +276,7 @@ fun SettingChatsPage(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = cardBg,
                         unfocusedContainerColor = cardBg,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        focusedBorderColor = Color.White.copy(alpha = 0.6f),
                         unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f),
                     ),
                     modifier = Modifier.fillMaxWidth()
@@ -318,11 +319,11 @@ fun SettingChatsPage(
                 exit = fadeOut()
             ) {
                 Surface(
-                    color = if (isDark) Color(0xFF141522).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.9f),
+                    color = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.9f),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .domChatBlurEffect(if (isDark) Color(0xFF141522) else Color.White, RoundedCornerShape(18.dp)),
+                        .domChatBlurEffect(if (isDark) Color(0xFF000000) else Color.White, RoundedCornerShape(18.dp)),
                     shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f))
                 ) {
@@ -356,7 +357,7 @@ fun SettingChatsPage(
                             ) {
                                 Text(
                                     if (selectedChatIds.size == filteredConversations.size) "Deselect" else "Select All",
-                                    color = if (isDark) Color(0xFF93C5FD) else MaterialTheme.colorScheme.primary,
+                                    color = if (isDark) Color(0xFF93C5FD) else Color.White,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -400,12 +401,12 @@ fun SettingChatsPage(
                             Icons.Rounded.Forum,
                             contentDescription = null,
                             modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.4f)
                         )
                         Text(
                             text = if (searchQuery.isNotBlank()) "No matching conversations found" else "No conversations yet",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -450,7 +451,7 @@ fun SettingChatsPage(
                                 ),
                             shape = cardShape,
                             color = cardBg,
-                            border = if (isSelected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else cardBorder
+                            border = if (isSelected) BorderStroke(1.5.dp, Color.White) else cardBorder
                         ) {
                             Row(
                                 modifier = Modifier
@@ -493,7 +494,7 @@ fun SettingChatsPage(
                                                 Icons.Rounded.PushPin,
                                                 contentDescription = "Pinned",
                                                 modifier = Modifier.size(14.dp),
-                                                tint = MaterialTheme.colorScheme.primary
+                                                tint = Color.White
                                             )
                                         }
                                         Text(
@@ -501,7 +502,7 @@ fun SettingChatsPage(
                                             style = MaterialTheme.typography.titleMedium.copy(
                                                 fontWeight = FontWeight.SemiBold
                                             ),
-                                            color = MaterialTheme.colorScheme.onSurface,
+                                            color = Color.White,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -513,7 +514,7 @@ fun SettingChatsPage(
                                     ) {
                                         if (assistant != null) {
                                             Surface(
-                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                                color = Color.White.copy(alpha = 0.12f),
                                                 shape = RoundedCornerShape(6.dp)
                                             ) {
                                                 Text(
@@ -522,7 +523,7 @@ fun SettingChatsPage(
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Medium
                                                     ),
-                                                    color = MaterialTheme.colorScheme.primary,
+                                                    color = Color.White,
                                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                 )
                                             }
@@ -533,7 +534,7 @@ fun SettingChatsPage(
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 fontSize = 11.sp
                                             ),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+                                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.65f)
                                         )
                                     }
                                 }
@@ -551,6 +552,8 @@ fun SettingChatsPage(
         ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },

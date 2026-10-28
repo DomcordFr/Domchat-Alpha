@@ -41,7 +41,7 @@ fun EmptyStateCard(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f)
                 )
                 Text(
                     text = title,
@@ -52,7 +52,7 @@ fun EmptyStateCard(
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         textAlign = TextAlign.Center
                     )
                 }

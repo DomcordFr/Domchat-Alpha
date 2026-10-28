@@ -56,7 +56,7 @@ fun ShareSheet(
         var currentQrIndex by remember(qrValues) { mutableStateOf(0) }
 
         ModalBottomSheet(
-            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = androidx.compose.material3.Color(0xFF000000),
             onDismissRequest = {
                 state.dismiss()
             },
@@ -111,7 +111,7 @@ fun ShareSheet(
                             qrValues.size
                         ),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),

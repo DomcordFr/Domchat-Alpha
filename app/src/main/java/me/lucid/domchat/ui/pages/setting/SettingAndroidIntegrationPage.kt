@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Summarize
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -176,13 +177,13 @@ fun SettingAndroidIntegrationPage(
                             Text(
                                 text = stringResource(R.string.text_selection_setup_instructions),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.65f)
                             )
                             
                             // Demo text box
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
-                                color = if (LocalDarkMode.current) Color(0xFF141520).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.05f),
+                                color = if (LocalDarkMode.current) Color(0xFF000000) else Color.White.copy(alpha = 0.05f),
                                 border = BorderStroke(1.dp, if (LocalDarkMode.current) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -191,7 +192,7 @@ fun SettingAndroidIntegrationPage(
                                         text = stringResource(R.string.text_selection_demo_text),
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.padding(16.dp),
-                                        color = if (LocalDarkMode.current) Color(0xFFE2E8F0) else MaterialTheme.colorScheme.onSurface
+                                        color = if (LocalDarkMode.current) Color(0xFFE2E8F0) else Color.White
                                     )
                                 }
                             }
@@ -199,7 +200,7 @@ fun SettingAndroidIntegrationPage(
                             Text(
                                 text = stringResource(R.string.text_selection_demo_hint),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.White
                             )
                         }
                     }
@@ -448,9 +449,12 @@ fun SettingAndroidIntegrationPage(
 
     // Reset Confirmation Dialog
     if (showResetDialog) {
+        ApplyDialogWindowBlur()
         AlertDialog(
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             onDismissRequest = { showResetDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.widthIn(max = 360.dp),
+            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = { Text(stringResource(R.string.reset)) },
             text = { Text(stringResource(R.string.setting_android_integration_reset_actions_confirm)) },
             confirmButton = {
@@ -510,7 +514,7 @@ private fun PreviewCard(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp), // No horizontal padding - edge to edge
             shape = QuickAskOuterShape,
-            color = androidx.compose.ui.graphics.Color(0xFF141520),
+            color = androidx.compose.ui.graphics.Color(0xFF000000),
             tonalElevation = 8.dp
         ) {
             Column(
@@ -535,7 +539,7 @@ private fun PreviewCard(
                         Text(
                             text = stringResource(R.string.text_selection_menu_label),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color.White
                         )
                     }
                 }
@@ -544,12 +548,12 @@ private fun PreviewCard(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = QuickAskInnerShape,
-                    color = androidx.compose.ui.graphics.Color(0xFF141520) // Same as popup
+                    color = androidx.compose.ui.graphics.Color(0xFF000000) // Same as popup
                 ) {
                     Text(
                         text = "Selected text preview...",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.65f),
                         modifier = Modifier.padding(12.dp)
                     )
                 }
@@ -604,7 +608,7 @@ private fun PreviewActionButton(
                 scaleY = scale
             },
         shape = shape,
-        color = androidx.compose.ui.graphics.Color(0xFF141520),
+        color = androidx.compose.ui.graphics.Color(0xFF000000),
         tonalElevation = if (isBlack) 0.dp else 6.dp,
         onClick = onClick
     ) {
@@ -616,13 +620,13 @@ private fun PreviewActionButton(
             Icon(
                 imageVector = getIconForName(action.icon),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = Color.White,
                 modifier = Modifier.size(20.dp)
             )
             Text(
                 text = action.name,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
@@ -630,7 +634,7 @@ private fun PreviewActionButton(
             Icon(
                 imageVector = Icons.Rounded.Edit,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f),
                 modifier = Modifier.size(14.dp)
             )
         }
@@ -675,7 +679,7 @@ private fun ActionCard(
                 Icon(
                     imageVector = getIconForName(action.icon),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -692,7 +696,7 @@ private fun ActionCard(
                 Text(
                     text = promptPreview,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -701,13 +705,13 @@ private fun ActionCard(
             if (action.isCustomPrompt) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else MaterialTheme.colorScheme.tertiaryContainer,
+                    color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Text(
                         text = "Input",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isDark) Color(0xFF93C5FD) else MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = if (isDark) Color(0xFF93C5FD) else Color(0xFFFFFFFF),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -715,7 +719,7 @@ private fun ActionCard(
                 Icon(
                     imageVector = Icons.Rounded.Edit,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    tint = Color.White.copy(alpha = 0.65f).copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -731,7 +735,7 @@ private fun ActionCard(
             Text(
                 text = "Model: ${configuredModel?.displayName ?: "Default"}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.65f)
             )
             ModelSelector(
                 modelId = configuredModel?.id,
@@ -759,6 +763,8 @@ private fun EditActionDialog(
     ApplyDialogWindowBlur()
     AlertDialog(
         onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.widthIn(max = 360.dp),
         shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
         containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
         title = {
@@ -793,7 +799,7 @@ private fun EditActionDialog(
                     Text(
                         text = variableHint,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                 }
             }

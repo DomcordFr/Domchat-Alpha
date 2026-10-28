@@ -260,7 +260,7 @@ private fun OpenAITTSConfiguration(
                     expanded = modelExpanded,
                     onDismissRequest = { modelExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     availableModels?.forEach { modelId ->
@@ -307,7 +307,7 @@ private fun OpenAITTSConfiguration(
                     expanded = voiceExpanded,
                     onDismissRequest = { voiceExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     voices.forEach { voice ->
@@ -433,7 +433,7 @@ private fun MiniMaxTTSConfiguration(
                     expanded = voiceIdExpanded,
                     onDismissRequest = { voiceIdExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     voiceIds.forEach { voiceId ->
@@ -478,7 +478,7 @@ private fun MiniMaxTTSConfiguration(
                     expanded = emotionExpanded,
                     onDismissRequest = { emotionExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     emotions.forEach { emotion ->
@@ -669,7 +669,7 @@ private fun SystemTTSConfiguration(
                     expanded = voiceExpanded,
                     onDismissRequest = { voiceExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     DropdownMenuItem(
@@ -828,7 +828,7 @@ private fun QwenTTSConfiguration(
                     expanded = voiceExpanded,
                     onDismissRequest = { voiceExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     voices.forEach { voice ->
@@ -872,7 +872,7 @@ private fun QwenTTSConfiguration(
                     expanded = languageExpanded,
                     onDismissRequest = { languageExpanded = false },
                     shape = RoundedCornerShape(18.dp),
-                    containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
                     languageTypes.forEach { languageType ->
@@ -977,7 +977,7 @@ private fun ElevenLabsTTSConfiguration(
                 expanded = modelExpanded,
                 onDismissRequest = { modelExpanded = false },
                 shape = RoundedCornerShape(18.dp),
-                containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = Color(0xFF000000),
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             ) {
                 models.forEach { model ->
@@ -1073,7 +1073,7 @@ private fun FishAudioTTSConfiguration(
                 expanded = modelExpanded,
                 onDismissRequest = { modelExpanded = false },
                 shape = RoundedCornerShape(18.dp),
-                containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = Color(0xFF000000),
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             ) {
                 models.forEach { model ->
