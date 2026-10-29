@@ -14,7 +14,6 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.components.ui.DomChatSlider
@@ -576,18 +575,7 @@ private fun RpStyleRuleDialog(
                         }
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White.copy(alpha = 0.9f),
-                        focusedLabelColor = Color.White.copy(alpha = 0.8f),
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-                    ),
-                )
+                    colors = me.lucid.domchat.ui.theme.appFieldColors(),                )
                 
                 OutlinedTextField(
                     value = colorHex,
@@ -619,18 +607,7 @@ private fun RpStyleRuleDialog(
                         )
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White.copy(alpha = 0.9f),
-                        focusedLabelColor = Color.White.copy(alpha = 0.8f),
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-                    ),
-                )
+                    colors = me.lucid.domchat.ui.theme.appFieldColors(),                )
                 
                 // Color presets row
                 Text(

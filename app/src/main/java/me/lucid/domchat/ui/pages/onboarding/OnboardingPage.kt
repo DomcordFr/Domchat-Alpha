@@ -20,9 +20,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.motion.pressScale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -1246,12 +1246,6 @@ private fun SetupButton(
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-        label = "setup_button_scale",
-    )
     val shape = AppShapes.ButtonPill
     val content: @Composable () -> Unit = {
         Row(
@@ -1294,10 +1288,7 @@ private fun SetupButton(
             ),
             modifier = modifier
                 .height(52.dp)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                },
+                .pressScale(interactionSource, pressedScale = 0.85f)
         ) {
             content()
         }
@@ -1318,10 +1309,7 @@ private fun SetupButton(
             ),
             modifier = modifier
                 .height(52.dp)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                },
+                .pressScale(interactionSource, pressedScale = 0.85f)
         ) {
             content()
         }
@@ -1421,20 +1409,11 @@ private fun GuidedProviderCard(
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
-        label = "guided_card_scale",
-    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .height(134.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .pressScale(interactionSource)
             .clip(AppShapes.CardLarge)
             .background(setupCardColor())
             .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge)
@@ -1506,20 +1485,11 @@ private fun SetupListCard(
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
-        label = "setup_card_scale",
-    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(minHeight)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .pressScale(interactionSource)
             .clip(shape)
             .background(color)
             .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, shape)

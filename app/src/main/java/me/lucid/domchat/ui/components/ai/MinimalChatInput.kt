@@ -2446,12 +2446,6 @@ private fun CharacterQuestionOptionRow(
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-        label = "question_option_scale"
-    )
 
     Surface(
         onClick = {
@@ -2472,10 +2466,7 @@ private fun CharacterQuestionOptionRow(
         interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .pressScale(interactionSource)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -2633,12 +2624,6 @@ private fun ToolApprovalActionRow(
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-        label = "tool_approval_action_scale"
-    )
 
     Surface(
         onClick = {
@@ -2659,10 +2644,7 @@ private fun ToolApprovalActionRow(
         interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .pressScale(interactionSource)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -3785,12 +3767,6 @@ private fun ChatScrollToBottomButton(
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-        label = "scroll_to_bottom_scale"
-    )
 
     Surface(
         shape = CircleShape,
@@ -3798,10 +3774,7 @@ private fun ChatScrollToBottomButton(
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         modifier = modifier
             .size(36.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .pressScale(interactionSource)
             .domChatBlurEffect(Color(0xFF000000), CircleShape)
             .clip(CircleShape)
             .clickable(

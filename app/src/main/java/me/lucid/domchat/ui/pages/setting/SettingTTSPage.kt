@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.motion.pressScale
+import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.theme.appFilterChipColors
 import me.lucid.domchat.ui.theme.appFilterChipBorder
 import me.lucid.domchat.ui.theme.appFieldColors
@@ -318,9 +319,10 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                     key = provider.id,
                     animateItemModifier = Modifier.animateItem()
                 ) { isDragging ->
+                    val motionPolicy = LocalMotionPolicy.current
                     val dragScale by animateFloatAsState(
                         targetValue = if (isDragging) 0.95f else 1f,
-                        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                        animationSpec = spring(dampingRatio = 0.6f, stiffness = motionPolicy.pressStiffness(300f)),
                         label = "tts_provider_drag_scale"
                     )
                     key(provider.id) {
@@ -680,9 +682,10 @@ internal fun TtsProvidersContent(
                     key = provider.id,
                     animateItemModifier = Modifier.animateItem()
                 ) { isDragging ->
+                    val motionPolicy = LocalMotionPolicy.current
                     val dragScale by animateFloatAsState(
                         targetValue = if (isDragging) 0.95f else 1f,
-                        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                        animationSpec = spring(dampingRatio = 0.6f, stiffness = motionPolicy.pressStiffness(300f)),
                         label = "tts_provider_drag_scale"
                     )
                     key(provider.id) {
@@ -1488,14 +1491,15 @@ private fun TTSProviderItemContent(
     dragHandle: @Composable () -> Unit
 ) {
     val interactions = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val motionPolicy = LocalMotionPolicy.current
     val backgroundColor by androidx.compose.animation.animateColorAsState(
         targetValue = Color(0xFF000000),
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = motionPolicy.pressStiffness(400f)),
         label = "ttsProviderBackground"
     )
     val textColor by androidx.compose.animation.animateColorAsState(
         targetValue = Color.White,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = motionPolicy.pressStiffness(400f)),
         label = "ttsProviderTextColor"
     )
     

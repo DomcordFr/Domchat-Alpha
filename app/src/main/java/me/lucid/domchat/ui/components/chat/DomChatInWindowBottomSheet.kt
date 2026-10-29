@@ -94,6 +94,7 @@ fun DomChatInWindowBottomSheet(
     ApplyDialogWindowBlur()
 
     val scope = rememberCoroutineScope()
+    val motionPolicy = me.lucid.domchat.ui.motion.LocalMotionPolicy.current
     val isDark = LocalDarkMode.current
     val sheetBg = Color(0xFF000000)
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
@@ -148,7 +149,7 @@ fun DomChatInWindowBottomSheet(
                     } else {
                         offsetY.animateTo(
                             0f,
-                            animationSpec = spring(dampingRatio = 0.78f, stiffness = 480f)
+                            animationSpec = spring(dampingRatio = 0.78f, stiffness = motionPolicy.pressStiffness(480f))
                         )
                     }
                 }
@@ -157,7 +158,7 @@ fun DomChatInWindowBottomSheet(
                 scope.launch {
                     offsetY.animateTo(
                         0f,
-                        animationSpec = spring(dampingRatio = 0.78f, stiffness = 480f)
+                        animationSpec = spring(dampingRatio = 0.78f, stiffness = motionPolicy.pressStiffness(480f))
                     )
                 }
             },
