@@ -58,7 +58,8 @@ fun ApiKeyPoolSettingsDialog(
     AlertDialog(
                 containerColor = Color(0xFF000000),
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        contentColor = Color(0xFFF2F2F7),
+        titleContentColor = Color(0xFFF2F2F7),
+        textContentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         shape = AppShapes.SettingDialog,
         icon = {

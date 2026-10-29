@@ -489,7 +489,8 @@ fun SettingLocalLlmPage(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        contentColor = Color(0xFFF2F2F7),
+        titleContentColor = Color(0xFFF2F2F7),
+        textContentColor = Color(0xFFF2F2F7),
             onDismissRequest = { modelPendingDelete = null },
 
 
@@ -529,7 +530,8 @@ fun SettingLocalLlmPage(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        contentColor = Color(0xFFF2F2F7),
+        titleContentColor = Color(0xFFF2F2F7),
+        textContentColor = Color(0xFFF2F2F7),
             onDismissRequest = { sherpaModelPendingDelete = null },
 
 
@@ -1014,7 +1016,8 @@ private fun ModelSettingsSheet(
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-            contentColor = Color(0xFFF2F2F7),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
 
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text(stringResource(R.string.local_llm_delete_confirm_title)) },

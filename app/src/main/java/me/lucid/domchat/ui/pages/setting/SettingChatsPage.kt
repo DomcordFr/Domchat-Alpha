@@ -568,7 +568,8 @@ fun SettingChatsPage(
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
             containerColor = Color(0xFF000000),
             modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-            contentColor = Color(0xFFF2F2F7),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
             title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },
             text = { Text("This will permanently remove the selected conversations from your database.") },
             confirmButton = {
