@@ -685,8 +685,8 @@ internal fun LorebookCreatorSheet(
                         singleLine = true,
                         placeholder = { Text(stringResource(R.string.lorebooks_page_name_placeholder)) },
                         shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    
-                    colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                 }
             }
 
@@ -701,8 +701,8 @@ internal fun LorebookCreatorSheet(
                         .height(100.dp),
                     placeholder = { Text(stringResource(R.string.lorebooks_page_description_placeholder)) },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
 
             Row(

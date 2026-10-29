@@ -1,10 +1,10 @@
 package me.lucid.domchat.ui.pages.setting
 
+import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -278,21 +278,7 @@ fun SettingChatsPage(
                     },
                     singleLine = true,
                     shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
-                    colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF000000),
-                    unfocusedContainerColor = Color(0xFF000000),
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    focusedPlaceholderColor = Color(0xFF8A8A96),
-                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                    focusedLeadingIconColor = Color(0xFF8A8A96),
-                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                    focusedTrailingIconColor = Color(0xFF8A8A96),
-                    unfocusedTrailingIconColor = Color(0xFF8A8A96)
-                )
+                    colors = appFieldColors(),
                     ,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -342,7 +328,7 @@ fun SettingChatsPage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .background(Color(0xFF000000), RoundedCornerShape(18.dp)),
+                        .domChatBlurEffect(Color(0xFF000000), RoundedCornerShape(18.dp)),
                     shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
@@ -444,9 +430,7 @@ fun SettingChatsPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(cardShape)
-                                // Solid black plate: blur behind black is invisible, so skip
-                                // the per-row hazeEffect and its RenderEffect churn entirely.
-                                .background(cardBg, cardShape)
+                                .domChatBlurEffect(containerColor = cardBg, shape = cardShape)
                                 .combinedClickable(
                                     onClick = {
                                         if (isSelectionMode) {

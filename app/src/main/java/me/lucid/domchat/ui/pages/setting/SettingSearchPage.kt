@@ -527,6 +527,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                         SearchServiceItemContent(
                             service = service,
                             catalogSnapshot = catalogSnapshot,
+                            itemShape = RoundedCornerShape(0.dp),
                             haptics = haptics,
                             onClick = {
                                 editingService = service
@@ -1198,21 +1199,7 @@ contentColor = Color(0xFFF2F2F7),
                     modifier = Modifier.fillMaxWidth(),
                     shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     singleLine = true,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF000000),
-                        unfocusedContainerColor = Color(0xFF000000),
-                        focusedTextColor = Color(0xFFF2F2F7),
-                        unfocusedTextColor = Color(0xFFF2F2F7),
-                        cursorColor = Color.White,
-                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedPlaceholderColor = Color(0xFF8A8A96),
-                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                        focusedLeadingIconColor = Color(0xFF8A8A96),
-                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                        focusedTrailingIconColor = Color(0xFF8A8A96),
-                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
-                    ),
+                    colors = appFieldColors(),
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
                         {
@@ -1502,8 +1489,8 @@ private fun TavilyOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1556,8 +1543,8 @@ private fun ExaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1583,8 +1570,8 @@ fun ZhipuOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1627,6 +1614,7 @@ internal fun CommonOptionsDialog(
                             onUpdate(commonOptions)
                         },
                         modifier = Modifier.fillMaxWidth()
+                        colors = appFieldColors(),
                     )
                 }
             }
@@ -1662,8 +1650,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1682,8 +1670,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1702,8 +1690,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1722,8 +1710,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1742,8 +1730,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1768,8 +1756,8 @@ private fun SearchLinkUpOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1822,8 +1810,8 @@ private fun BraveOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1849,8 +1837,8 @@ private fun MetasoOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1875,8 +1863,8 @@ private fun OllamaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1901,8 +1889,8 @@ private fun PerplexityOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1922,8 +1910,8 @@ private fun PerplexityOptions(
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1948,8 +1936,8 @@ private fun GrokOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -1971,8 +1959,8 @@ private fun GrokOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -1997,8 +1985,8 @@ private fun FirecrawlOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -2023,8 +2011,8 @@ private fun JinaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }
 
@@ -2049,8 +2037,8 @@ private fun BochaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(
@@ -2096,8 +2084,8 @@ private fun NanoGPTOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 
     FormItem(

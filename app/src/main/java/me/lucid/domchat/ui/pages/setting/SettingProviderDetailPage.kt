@@ -1031,21 +1031,7 @@ private fun ModelList(
                             }
                         },
                         singleLine = true,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF000000),
-                        unfocusedContainerColor = Color(0xFF000000),
-                        focusedTextColor = Color(0xFFF2F2F7),
-                        unfocusedTextColor = Color(0xFFF2F2F7),
-                        cursorColor = Color.White,
-                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedPlaceholderColor = Color(0xFF8A8A96),
-                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                        focusedLeadingIconColor = Color(0xFF8A8A96),
-                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                        focusedTrailingIconColor = Color(0xFF8A8A96),
-                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
-                    ),
+                    colors = appFieldColors(),
                         shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1292,8 +1278,8 @@ private fun LocalHuggingFaceInstallFab(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
@@ -1408,8 +1394,8 @@ private fun ModelSettingsForm(
                             },
                             enabled = true,
                             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                        
-                        colors = appFieldColors(),)
+                            colors = appFieldColors(),
+                        )
 
                         // Display name with catalog icon preview
                         Row(
@@ -1448,8 +1434,8 @@ private fun ModelSettingsForm(
                                     }
                                 },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            
-                            colors = appFieldColors(),)
+                                colors = appFieldColors(),
+                            )
                         }
 
                         ModelTypeSelector(
@@ -1765,21 +1751,7 @@ private fun ModelPickerFab(
                         }
                     },
                     singleLine = true,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF000000),
-                        unfocusedContainerColor = Color(0xFF000000),
-                        focusedTextColor = Color(0xFFF2F2F7),
-                        unfocusedTextColor = Color(0xFFF2F2F7),
-                        cursorColor = Color.White,
-                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedPlaceholderColor = Color(0xFF8A8A96),
-                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                        focusedLeadingIconColor = Color(0xFF8A8A96),
-                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                        focusedTrailingIconColor = Color(0xFF8A8A96),
-                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
-                    ),
+                    colors = appFieldColors(),
                     shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -2317,8 +2289,8 @@ private fun ModelPicker(
                     },
                     singleLine = true,
                     shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
         }
     }
@@ -3081,8 +3053,8 @@ private fun LocalLiteRtModelIdentitySheet(
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
 
             Row(
@@ -3524,8 +3496,8 @@ private fun ModelSttOptionsForm(
             supportingText = { Text(stringResource(R.string.setting_provider_page_stt_language_desc)) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
         OutlinedTextField(
             value = options.prompt,
             onValueChange = { onUpdate(options.copy(prompt = it)) },
@@ -3533,8 +3505,8 @@ private fun ModelSttOptionsForm(
             supportingText = { Text(stringResource(R.string.setting_provider_page_stt_prompt_desc)) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
         OutlinedTextField(
             value = options.responseFormat,
             onValueChange = { onUpdate(options.copy(responseFormat = it)) },
@@ -3542,7 +3514,7 @@ private fun ModelSttOptionsForm(
             supportingText = { Text(stringResource(R.string.setting_provider_page_stt_response_format_desc)) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        
-        colors = appFieldColors(),)
+            colors = appFieldColors(),
+        )
     }
 }

@@ -433,23 +433,9 @@ fun SettingProviderPage(
                         }
                     }
                 } else null,
-                colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF000000),
-                unfocusedContainerColor = Color(0xFF000000),
-                focusedTextColor = Color(0xFFF2F2F7),
-                unfocusedTextColor = Color(0xFFF2F2F7),
-                cursorColor = Color.White,
-                focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                focusedPlaceholderColor = Color(0xFF8A8A96),
-                unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                focusedLeadingIconColor = Color(0xFF8A8A96),
-                unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                focusedTrailingIconColor = Color(0xFF8A8A96),
-                unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                colors = appFieldColors(),
+            colors = appFieldColors(),
             )
-            
-                colors = appFieldColors(),)
             
             // Tag filter row - only show when there are tags
             if (settings.providerTags.isNotEmpty()) {
@@ -629,23 +615,9 @@ private fun SearchBarWithToggle(
                     }
                 }
             } else null,
-            colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF000000),
-            unfocusedContainerColor = Color(0xFF000000),
-            focusedTextColor = Color(0xFFF2F2F7),
-            unfocusedTextColor = Color(0xFFF2F2F7),
-            cursorColor = Color.White,
-            focusedBorderColor = Color.White.copy(alpha = 0.38f),
-            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-            focusedPlaceholderColor = Color(0xFF8A8A96),
-            unfocusedPlaceholderColor = Color(0xFF8A8A96),
-            focusedLeadingIconColor = Color(0xFF8A8A96),
-            unfocusedLeadingIconColor = Color(0xFF8A8A96),
-            focusedTrailingIconColor = Color(0xFF8A8A96),
-            unfocusedTrailingIconColor = Color(0xFF8A8A96)
+            colors = appFieldColors(),
+        colors = appFieldColors(),
         )
-        
-            colors = appFieldColors(),)
         IconButton(onClick = onToggleViewMode) {
             Icon(
                 imageVector = if (viewMode == ProviderViewMode.LIST) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
@@ -1478,23 +1450,9 @@ private fun AddButton(
                             }
                         }
                     } else null,
-                    colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF000000),
-                    unfocusedContainerColor = Color(0xFF000000),
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    focusedPlaceholderColor = Color(0xFF8A8A96),
-                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                    focusedLeadingIconColor = Color(0xFF8A8A96),
-                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                    focusedTrailingIconColor = Color(0xFF8A8A96),
-                    unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                    colors = appFieldColors(),
+                colors = appFieldColors(),
                 )
-                
-                    colors = appFieldColors(),)
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 

@@ -641,8 +641,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
             item {
                 OutlinedTextField(
@@ -651,8 +651,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Provider voice id") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
             item {
                 OutlinedTextField(
@@ -661,8 +661,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Locale") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
             if (provider is TTSProviderSetting.SystemTTS) {
                 item {
@@ -672,8 +672,8 @@ private fun VoiceEditorSheet(
                         label = { Text("Engine package") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField,
-                    
-                    colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                 }
             }
             item {
@@ -682,6 +682,7 @@ private fun VoiceEditorSheet(
                     onValueChange = { if (it in 0.1f..4.0f) current = current.copy(speed = it) },
                     label = "Speed",
                     modifier = Modifier.fillMaxWidth(),
+                    colors = appFieldColors(),
                 )
             }
             item {
@@ -690,6 +691,7 @@ private fun VoiceEditorSheet(
                     onValueChange = { if (it in 0.1f..2.0f) current = current.copy(pitch = it) },
                     label = "Pitch",
                     modifier = Modifier.fillMaxWidth(),
+                    colors = appFieldColors(),
                 )
             }
             item {
@@ -699,8 +701,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Model override") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
             if (provider is TTSProviderSetting.MiniMax) {
                 item {
@@ -710,8 +712,8 @@ private fun VoiceEditorSheet(
                         label = { Text("Emotion") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField,
-                    
-                    colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                 }
             }
             if (provider is TTSProviderSetting.Qwen) {
@@ -722,8 +724,8 @@ private fun VoiceEditorSheet(
                         label = { Text("Language type") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField,
-                    
-                    colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                 }
             }
             item {
@@ -962,8 +964,8 @@ private fun ProviderVoicesFab(
                 placeholder = { Text("Try name, id, locale, or engine") },
                 singleLine = true,
                 shape = AppShapes.SearchField,
-            
-            colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
         }
     }
 }
@@ -1038,8 +1040,8 @@ private fun ManualVoiceSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = AppShapes.InputField,
                 singleLine = true,
-            
-            colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
             OutlinedTextField(
                 value = voiceId,
                 onValueChange = { voiceId = it },
@@ -1047,8 +1049,8 @@ private fun ManualVoiceSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = AppShapes.InputField,
                 singleLine = true,
-            
-            colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
                 TextButton(

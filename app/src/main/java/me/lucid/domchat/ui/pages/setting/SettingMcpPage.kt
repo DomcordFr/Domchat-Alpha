@@ -577,23 +577,9 @@ private fun McpConnectionsSheet(
                     { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = iconColor) } }
                 } else null,
                 placeholder = { Text("Search connections", color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.65f)) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF000000),
-                    unfocusedContainerColor = Color(0xFF000000),
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    focusedPlaceholderColor = Color(0xFF8A8A96),
-                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                    focusedLeadingIconColor = Color(0xFF8A8A96),
-                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                    focusedTrailingIconColor = Color(0xFF8A8A96),
-                    unfocusedTrailingIconColor = Color(0xFF8A8A96)
-                )
             
-                colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
             Spacer(Modifier.height(16.dp))
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -1066,7 +1052,8 @@ private fun McpCommonOptionsConfigure(
                 placeholder = { Text(stringResource(R.string.setting_mcp_page_name_placeholder)) },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
             
-            colors = appFieldColors(),)
+            colors = appFieldColors(),
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1171,7 +1158,8 @@ private fun McpCommonOptionsConfigure(
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
             
-            colors = appFieldColors(),)
+            colors = appFieldColors(),
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1222,7 +1210,8 @@ private fun McpCommonOptionsConfigure(
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_name_placeholder)) },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
                             
-                            colors = appFieldColors(),)
+                            colors = appFieldColors(),
+                            )
                             Spacer(Modifier.height(8.dp))
                             OutlinedTextField(
                                 value = headerValue,
@@ -1248,7 +1237,8 @@ private fun McpCommonOptionsConfigure(
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_value_placeholder)) },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
                             
-                            colors = appFieldColors(),)
+                            colors = appFieldColors(),
+                            )
                         }
                         IconButton(onClick = {
                             val updatedHeaders = config.commonOptions.headers.toMutableList()
@@ -1470,7 +1460,8 @@ private fun McpImportModal(
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
             
-            colors = appFieldColors(),)
+            colors = appFieldColors(),
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)

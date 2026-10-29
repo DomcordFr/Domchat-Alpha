@@ -838,8 +838,8 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
                 Surface(
                     shape = AppShapes.CardSmall,
                     color = androidx.compose.ui.graphics.Color(0xFF000000),
@@ -939,8 +939,8 @@ private fun ModelSettingsSheet(
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     shape = AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
 
             // Generation sampling controls are meaningless for an embedding model.

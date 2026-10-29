@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.pages.setting.components
 
+import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -203,6 +204,7 @@ fun ModelReasoningConfigEditor(
                         onModelChange(model.copy(reasoningConfig = config.copy(minTokens = it.coerceAtLeast(0))))
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = appFieldColors(),
                 )
             }
             FormItem(label = { Text(stringResource(R.string.setting_provider_page_reasoning_max_tokens)) }) {
@@ -212,6 +214,7 @@ fun ModelReasoningConfigEditor(
                         onModelChange(model.copy(reasoningConfig = config.copy(maxTokens = it.coerceAtLeast(config.minTokens))))
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = appFieldColors(),
                 )
             }
         }

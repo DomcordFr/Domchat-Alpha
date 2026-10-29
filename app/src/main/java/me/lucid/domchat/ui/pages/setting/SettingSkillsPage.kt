@@ -1098,8 +1098,8 @@ fun SkillEditorSheet(
                             onValueChange = { depth = it.filter(Char::isDigit) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
-                        
-                            colors = appFieldColors(),)
+                            colors = appFieldColors(),
+                        )
                     }
                 }
             }
@@ -1482,8 +1482,8 @@ private fun SkillPackageTextEditorDialog(
                     fontFamily = FontFamily.Monospace,
                     lineHeight = 19.sp,
                 ),
-            
-            colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
         },
         confirmButton = {
             TextButton(onClick = { onSave(content) }) {
@@ -1537,8 +1537,8 @@ private fun AddSkillPackageFileDialog(
                     isError = pathInvalid,
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
@@ -1547,8 +1547,8 @@ private fun AddSkillPackageFileDialog(
                         .height(240.dp),
                     label = { Text("Content") },
                     textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
         },
         confirmButton = {

@@ -91,8 +91,8 @@ fun SettingProviderBalanceOption(
                     isError = !balanceOption.apiPath.matches(ApiPathRegex),
                     modifier = Modifier.fillMaxWidth(),
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
                 OutlinedTextField(
                     value = balanceOption.resultPath,
                     onValueChange = { onEdit(balanceOption.copy(resultPath = it)) },
@@ -101,8 +101,8 @@ fun SettingProviderBalanceOption(
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
                 IconButton(
                     onClick = {
                         val defaultProvider = DEFAULT_PROVIDERS.find { it.id == provider.id }

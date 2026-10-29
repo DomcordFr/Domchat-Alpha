@@ -797,8 +797,8 @@ private fun EditActionDialog(
                         .heightIn(min = 150.dp),
                     minLines = 5,
                     shape = RoundedCornerShape(16.dp),
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
                 // Show variable hint only for relevant actions
                 val variableHint = when (action.id) {
                     "translate" -> "Variable: {{language}}"

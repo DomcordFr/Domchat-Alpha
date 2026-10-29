@@ -526,7 +526,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField
                     
-                        colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                     OutlinedTextField(
                         value = draftDescription,
                         onValueChange = { draftDescription = it },
@@ -535,7 +536,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField
                     
-                        colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                     OutlinedTextField(
                         value = draftContent,
                         onValueChange = { draftContent = it },
@@ -545,7 +547,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField
                     
-                        colors = appFieldColors(),)
+                        colors = appFieldColors(),
+                    )
                     val estTokens = (draftContent.length / 3.8).roundToInt()
                     Text(
                         text = "Estimated tokens: ~$estTokens · ${draftContent.length} chars",

@@ -585,8 +585,8 @@ private fun ApiKeyEditDialog(
                     singleLine = true,
                     shape = AppShapes.InputField,
                     modifier = Modifier.fillMaxWidth(),
-                
-                colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
 
                 OutlinedTextField(
                     value = key,
@@ -606,8 +606,8 @@ private fun ApiKeyEditDialog(
                             )
                         }
                     }
-                
-                    colors = appFieldColors(),)
+                    colors = appFieldColors(),
+                )
             }
         },
         confirmButton = {

@@ -285,8 +285,8 @@ fun SherpaModelSettingsSheet(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Model name") },
                 singleLine = true,
-            
-            colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
             OutlinedTextField(
                 value = config.language,
                 onValueChange = {
@@ -297,8 +297,8 @@ fun SherpaModelSettingsSheet(
                 label = { Text("Language") },
                 supportingText = { Text("Use auto for language detection when the model supports it.") },
                 singleLine = true,
-            
-            colors = appFieldColors(),)
+                colors = appFieldColors(),
+            )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("CPU threads: ${config.numThreads}", style = MaterialTheme.typography.titleSmall)
                 DomChatSlider(

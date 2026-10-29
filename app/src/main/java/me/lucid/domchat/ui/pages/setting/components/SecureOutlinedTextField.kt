@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.pages.setting.components
 
+import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -46,17 +47,7 @@ fun SecureOutlinedTextField(
             PasswordVisualTransformation()
         },
         shape = AppShapes.InputField,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF000000),
-            unfocusedContainerColor = Color(0xFF000000),
-            focusedTextColor = Color(0xFFF2F2F7),
-            unfocusedTextColor = Color(0xFFF2F2F7),
-            cursorColor = Color.White,
-            focusedBorderColor = Color.White.copy(alpha = 0.30f),
-            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-            focusedLabelColor = Color.White,
-            unfocusedLabelColor = Color(0xFF8A8A96),
-        ),
+        colors = appFieldColors(),
         trailingIcon = {
             IconButton(onClick = { visible = !visible }) {
                 Icon(

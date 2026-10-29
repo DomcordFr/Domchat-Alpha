@@ -331,7 +331,7 @@ private fun ActionPill(
     modifier: Modifier = Modifier
 ) {
     val pillShape = RoundedCornerShape(24.dp)
-    val cardColor = domChatCardContainerColor()
+    val cardColor = domChatCardContainerColor().copy(alpha = 0.80f)
     val isDark = LocalDarkMode.current
     val borderBrush = Brush.verticalGradient(
         listOf(

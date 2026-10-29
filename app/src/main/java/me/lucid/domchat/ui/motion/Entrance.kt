@@ -18,9 +18,14 @@ import androidx.compose.ui.unit.dp
  * scrolling back and forth never replays, recompositions don't replay.
  */
 object EntrancePlayed {
+    // Bounded: a long chat stream could otherwise grow this without limit.
+    private const val MAX = 4096
     private val played = mutableSetOf<String>()
 
-    fun markIfNew(key: String): Boolean = played.add(key)
+    fun markIfNew(key: String): Boolean {
+        if (played.size >= MAX) played.clear()
+        return played.add(key)
+    }
 }
 
 /** Screen-space entrance direction, chosen by the caller from element position. */
