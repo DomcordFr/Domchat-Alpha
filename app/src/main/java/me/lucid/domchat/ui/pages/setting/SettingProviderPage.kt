@@ -995,7 +995,8 @@ private fun ImportProviderButton(
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.SettingDialog),
             shape = AppShapes.SettingDialog,
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
             title = {
                 Text(
                     text = stringResource(R.string.setting_provider_page_import_dialog_title),
@@ -1117,7 +1118,8 @@ private fun ImportProviderButton(
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
             modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-            contentColor = Color(0xFFF2F2F7),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
             title = {
                 Text(
                     text = stringResource(R.string.setting_provider_page_multi_qr_title),

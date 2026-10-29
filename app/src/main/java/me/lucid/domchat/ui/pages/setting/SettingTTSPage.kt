@@ -3,6 +3,7 @@ package me.lucid.domchat.ui.pages.setting
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues

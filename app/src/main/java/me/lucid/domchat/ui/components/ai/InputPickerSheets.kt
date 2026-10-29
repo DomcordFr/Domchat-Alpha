@@ -118,7 +118,7 @@ internal fun SkillsPickerSheet(
         sheetGesturesEnabled = true,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
-        }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -260,7 +260,7 @@ internal fun LorebooksPickerSheet(
         sheetGesturesEnabled = true,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
-        }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -445,7 +445,7 @@ internal fun PluginsPickerSheet(
         sheetGesturesEnabled = true,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
-        }
+        },
     ) {
         Column(
             modifier = Modifier

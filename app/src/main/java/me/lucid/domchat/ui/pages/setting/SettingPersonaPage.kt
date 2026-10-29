@@ -466,7 +466,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
             title = {
                 Text(
                     text = if (editingTargetId == null) "Create Persona" else "Edit Persona",

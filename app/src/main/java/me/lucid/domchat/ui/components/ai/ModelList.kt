@@ -237,7 +237,7 @@ fun ModelSelector(
             sheetGesturesEnabled = true,
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
-            }
+            },
         ) {
             Column(
                 modifier = Modifier
@@ -638,7 +638,7 @@ internal fun ColumnScope.ModelList(
                                             }
                                         )
                                     )
-                                }
+                                },
                             )
                         }
                     }

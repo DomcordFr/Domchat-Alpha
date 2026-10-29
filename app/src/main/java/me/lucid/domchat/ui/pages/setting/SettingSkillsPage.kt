@@ -1267,7 +1267,8 @@ fun SkillEditorSheet(
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-            contentColor = Color(0xFFF2F2F7),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
 
             onDismissRequest = { deletePackagePath = null },
             title = { Text("Delete skill file?") },
@@ -1425,7 +1426,8 @@ private fun SkillPackageTextEditorDialog(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        contentColor = Color(0xFFF2F2F7),
+        titleContentColor = Color(0xFFF2F2F7),
+        textContentColor = Color(0xFFF2F2F7),
 
         onDismissRequest = onDismiss,
         title = {
@@ -1487,7 +1489,8 @@ private fun AddSkillPackageFileDialog(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        contentColor = Color(0xFFF2F2F7),
+        titleContentColor = Color(0xFFF2F2F7),
+        textContentColor = Color(0xFFF2F2F7),
 
         onDismissRequest = onDismiss,
         title = { Text("New package file") },
@@ -1590,8 +1593,8 @@ private fun SkillExportDialog(
 
         shape = sheetShape,
         onDismissRequest = onDismiss,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() }
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape),
+        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
     ) {
         Column(
             modifier = Modifier
