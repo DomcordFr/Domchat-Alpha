@@ -255,7 +255,11 @@ fun SherpaModelSettingsSheet(
     ModalBottomSheet(
         onDismissRequest = ::saveAndDismiss,
         sheetState = sheetState,
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+                containerColor = Color(0xFF000000),
+                dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        contentColor = Color(0xFFF2F2F7),
     ) {
         Column(
             modifier = Modifier
@@ -333,7 +337,10 @@ fun SherpaModelSettingsSheet(
 
     if (showDeleteConfirmation) {
         AlertDialog(
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+                        containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             onDismissRequest = { showDeleteConfirmation = false },
             title = {
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()

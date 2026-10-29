@@ -139,7 +139,12 @@ fun CustomIconSelector(
     }
 
     if (showPickOption) {
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { showPickOption = false },
+        AlertDialog(
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
+            onDismissRequest = { showPickOption = false },
             title = {
                 me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(text = stringResource(R.string.setting_provider_page_select_icon))
@@ -238,7 +243,10 @@ private fun LobeHubIconPickerSheet(
     }
 
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        contentColor = Color(0xFFF2F2F7),
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {
@@ -260,8 +268,23 @@ private fun LobeHubIconPickerSheet(
                 onValueChange = { searchQuery = it },
                 placeholder = { Text(stringResource(R.string.icon_picker_search_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = AppShapes.SearchField,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                 singleLine = true,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                        focusedTrailingIconColor = Color(0xFF8A8A96),
+                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                    ),
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 trailingIcon = if (searchQuery.isNotEmpty()) {
                     {

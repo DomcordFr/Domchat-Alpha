@@ -267,8 +267,8 @@ fun AssistantPickerSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = itemCardBg,
                     unfocusedContainerColor = itemCardBg,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                    unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f),
+                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                 ),
                 modifier = Modifier
                     .fillMaxWidth()

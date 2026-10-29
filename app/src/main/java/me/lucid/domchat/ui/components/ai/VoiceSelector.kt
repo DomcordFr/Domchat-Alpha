@@ -121,13 +121,18 @@ fun VoiceSelector(
 
     if (showSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        val isDark = LocalDarkMode.current
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             sheetGesturesEnabled = true,
-            containerColor = if (isDark) Color(0xFF14151C).copy(alpha = 0.92f) else me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
+            modifier = Modifier.border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
+            ),
             dragHandle = {
                 ApplyDialogWindowBlur()
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
@@ -310,7 +315,7 @@ fun ColumnScope.VoiceList(
 
         if (topFadeAlpha > 0f) {
             val isDark = LocalDarkMode.current
-            val fadeBg = if (isDark) Color(0xFF14151C) else MaterialTheme.colorScheme.surfaceContainerLow
+            val fadeBg = Color(0xFF000000)
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -346,9 +351,9 @@ fun ColumnScope.VoiceList(
                 .height(84.dp)
         ) {
             val isDark = LocalDarkMode.current
-            val borderOutlineColor = if (isDark) Color.White.copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+            val borderOutlineColor = Color.White.copy(alpha = 0.15f)
             val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-            val searchBg = if (isDark) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceContainerLow
+            val searchBg = Color(0xFF000000)
             OutlinedTextField(
                 value = searchKeywords,
                 onValueChange = { searchKeywords = it },
@@ -361,18 +366,18 @@ fun ColumnScope.VoiceList(
                         shape = searchFieldShape,
                     ),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = searchBg,
-                    unfocusedContainerColor = searchBg,
+                    focusedContainerColor = Color(0xFF000000),
+                    unfocusedContainerColor = Color(0xFF000000),
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
                     disabledBorderColor = Color.Transparent,
                     errorBorderColor = Color.Transparent,
-                    focusedTextColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = if (isDark) Color.White.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    unfocusedPlaceholderColor = if (isDark) Color.White.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    focusedLeadingIconColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
-                    unfocusedLeadingIconColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    focusedPlaceholderColor = Color(0xFF8A8A96),
+                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                    focusedLeadingIconColor = Color(0xFF8A8A96),
+                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
                 ),
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 placeholder = { Text("Search voices") },
@@ -397,7 +402,7 @@ fun ColumnScope.VoiceList(
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                Color(0xFF000000),
                             )
                         )
                     )
@@ -406,7 +411,7 @@ fun ColumnScope.VoiceList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(36.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .background(Color(0xFF000000))
             )
         }
 
@@ -442,24 +447,23 @@ fun ColumnScope.VoiceList(
                                 }
                             },
                             border = androidx.compose.foundation.BorderStroke(
-                                width = 1.dp,
-                                color = (if (isActive) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                }).copy(alpha = 0.2f),
+                                width = 0.5.dp,
+                                brush = if (isActive)
+                                    androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.5f))
+                                else
+                                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                             ),
                             interactionSource = interactionSource,
                             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                             color = if (isActive) {
-                                MaterialTheme.colorScheme.primaryContainer
+                                Color.White.copy(alpha = 0.18f)
                             } else {
-                                MaterialTheme.colorScheme.surfaceContainerLow
+                                Color(0xFF000000)
                             },
                             contentColor = if (isActive) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
+                                Color.White
                             } else {
-                                MaterialTheme.colorScheme.onSurface
+                                Color(0xFFEDEDF2)
                             },
                             modifier = Modifier.graphicsLayer {
                                 scaleX = scale
@@ -555,7 +559,7 @@ private fun VoiceSectionHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.White.copy(alpha = 0.55f),
         )
         Spacer(modifier = Modifier.weight(1f))
         trailingContent()
@@ -574,14 +578,14 @@ private fun VoiceItem(
     val interactionSource = remember { MutableInteractionSource() }
     val shape = rememberAnimatedGroupedVoiceItemShape(selected = selected, position = position)
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
+        Color.White.copy(alpha = 0.18f)
     } else {
-        MaterialTheme.colorScheme.surfaceContainerHighest
+        Color(0xFF000000)
     }
     val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        Color(0xFFFFFFFF)
     } else {
-        MaterialTheme.colorScheme.onSurface
+        Color(0xFFEDEDF2)
     }
 
     Row(

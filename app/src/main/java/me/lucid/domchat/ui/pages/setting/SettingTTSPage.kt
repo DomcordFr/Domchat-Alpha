@@ -241,13 +241,10 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                     item(key = "empty") {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = if (LocalDarkMode.current) {
-                                    Color(0xFF000000)
-                                } else {
-                                    Color(0xFF000000)
-                                }
+                                containerColor = Color(0xFF000000)
                             ),
-                            shape = AppShapes.CardLarge
+                            shape = AppShapes.CardLarge,
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -441,24 +438,25 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
         val scope = rememberCoroutineScope()
 
         ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+containerColor = Color(0xFF000000),
+shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+contentColor = Color(0xFFF2F2F7),
             onDismissRequest = {
                 editingProvider = null
             },
             sheetState = bottomSheetState,
             sheetGesturesEnabled = false,
             dragHandle = {
-                IconButton(
-                    onClick = {
-                        scope.launch {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
+                    scope.launch {
                             bottomSheetState.hide()
                             editingProvider = null
                         }
-                    }
-                ) {
-                    Icon(Icons.Rounded.KeyboardArrowDown, null)
                 }
-            }
+            )
+        }
         ) {
             me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
@@ -608,13 +606,10 @@ internal fun TtsProvidersContent(
                 item(key = "empty") {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = if (LocalDarkMode.current) {
-                                Color(0xFF000000)
-                            } else {
-                                Color(0xFF000000)
-                            }
+                            containerColor = Color(0xFF000000)
                         ),
-                        shape = AppShapes.CardLarge
+                        shape = AppShapes.CardLarge,
+                        border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                     ) {
                         Box(
                             modifier = Modifier
@@ -821,21 +816,22 @@ private fun TtsProviderEditorSheet(
     val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
         sheetGesturesEnabled = false,
         dragHandle = {
-            IconButton(
-                onClick = {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
                     scope.launch {
                         bottomSheetState.hide()
                         onDismiss()
                     }
                 }
-            ) {
-                Icon(Icons.Rounded.KeyboardArrowDown, null)
-            }
+            )
         }
     ) {
         Column(
@@ -910,7 +906,10 @@ internal fun TtsTextFilterSettingsDialog(
 
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         title = {
             Row(
@@ -936,7 +935,8 @@ internal fun TtsTextFilterSettingsDialog(
                     colors = androidx.compose.material3.CardDefaults.cardColors(
                         containerColor = Color(0xFF000000)
                     ),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Text(
                         text = stringResource(R.string.setting_tts_filter_desc),
@@ -1102,7 +1102,10 @@ private fun TtsFilterRuleEditDialog(
     
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -1249,24 +1252,25 @@ internal fun AddTTSProviderButton(
         val scope = rememberCoroutineScope()
         
         ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+containerColor = Color(0xFF000000),
+shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+contentColor = Color(0xFFF2F2F7),
             onDismissRequest = {
                 showBottomSheet = false
             },
             sheetState = bottomSheetState,
             sheetGesturesEnabled = false,
             dragHandle = {
-                IconButton(
-                    onClick = {
-                        scope.launch {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
+                    scope.launch {
                             bottomSheetState.hide()
                             showBottomSheet = false
                         }
-                    }
-                ) {
-                    Icon(Icons.Rounded.KeyboardArrowDown, null)
                 }
-            }
+            )
+        }
         ) {
             Column(
                 modifier = Modifier
@@ -1291,8 +1295,23 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                     onValueChange = { searchQuery = it },
                     placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = AppShapes.SearchField,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     singleLine = true,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                        focusedTrailingIconColor = Color(0xFF8A8A96),
+                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                    ),
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
                         {
@@ -1469,6 +1488,7 @@ private fun TTSProviderItemContent(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(0.dp))
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(0.dp))
             .background(backgroundColor)
             .clickable {
                 haptics.perform(HapticPattern.Pop)

@@ -347,8 +347,8 @@ private fun ToastContent(
         contentColor = contentColor,
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = Color.White.copy(alpha = 0.20f)
+            width = 0.5.dp,
+            brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
         ),
         modifier = Modifier
             .fillMaxWidth()

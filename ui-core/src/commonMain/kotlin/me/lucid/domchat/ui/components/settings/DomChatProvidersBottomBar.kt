@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -52,7 +53,14 @@ fun AetherProvidersBottomBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 shape = RoundedCornerShape(28.dp),
                 color = Color(0xFF000000),
-                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f)),
+                border = BorderStroke(
+                    0.5.dp,
+                    Brush.verticalGradient(listOf(
+                        Color.White.copy(alpha = 0.22f),
+                        Color.White.copy(alpha = 0.06f),
+                        Color.Transparent,
+                    ))
+                ),
                 shadowElevation = 8.dp,
             ) {
                 Row(

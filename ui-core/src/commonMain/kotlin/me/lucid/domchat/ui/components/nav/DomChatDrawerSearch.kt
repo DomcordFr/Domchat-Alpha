@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.nav
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.graphics.luminance
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -96,7 +98,15 @@ fun AetherDrawerSearch(
                 val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
                 val defaultContainerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else Color.White.copy(alpha = 0.70f)
                 val searchContainerColor = if (containerColor != Color.Unspecified) containerColor else defaultContainerColor
-                val searchBorderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
+                val searchBoardBrush = Brush.verticalGradient(
+                    // Mirrors LiquidGlassTokens.SpecularBorderSubtle (ui-core cannot import app tokens)
+                    listOf(
+                        Color.White.copy(alpha = 0.22f),
+                        Color.White.copy(alpha = 0.06f),
+                        Color.Transparent,
+                    )
+                )
+                val searchBorderStroke: BorderStroke = BorderStroke(0.5.dp, searchBoardBrush)
 
                 TextField(
                     value = query,
@@ -107,7 +117,7 @@ fun AetherDrawerSearch(
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused && !expanded) onExpandedChange(true)
                         }
-                        .border(0.5.dp, searchBorderColor, AppShapes.SearchField),
+                        .border(searchBorderStroke, AppShapes.SearchField),
                     shape = AppShapes.SearchField,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = searchContainerColor,

@@ -810,8 +810,10 @@ private fun ConnectionTesterButton(
         AlertDialog(
             onDismissRequest = { showTestDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             title = {
                 Text(stringResource(R.string.setting_provider_page_test_connection))
             },
@@ -1026,7 +1028,22 @@ private fun ModelList(
                             }
                         },
                         singleLine = true,
-                        shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                        focusedTrailingIconColor = Color(0xFF8A8A96),
+                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                    ),
+                        shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 6.dp)
@@ -1742,7 +1759,22 @@ private fun ModelPickerFab(
                         }
                     },
                     singleLine = true,
-                    shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                        focusedTrailingIconColor = Color(0xFF8A8A96),
+                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                    ),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -2090,7 +2122,10 @@ private fun ModelPicker(
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
     if (showModal) {
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
+            dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
             contentColor = domChatSheetContentColor(),
             onDismissRequest = { showModal = false },
             sheetState = rememberModalBottomSheetState(
@@ -3175,6 +3210,7 @@ private fun ModelCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(0.dp))
+                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(0.dp))
                 .background(
                     color = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) 
                         Color(0xFF000000) 

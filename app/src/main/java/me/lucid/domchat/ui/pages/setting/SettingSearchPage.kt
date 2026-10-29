@@ -609,24 +609,25 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         var currentService by remember(service) { mutableStateOf(service) }
 
         ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+containerColor = Color(0xFF000000),
+shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+contentColor = Color(0xFFF2F2F7),
             onDismissRequest = {
                 editingService = null
             },
             sheetState = bottomSheetState,
             sheetGesturesEnabled = false,
             dragHandle = {
-                IconButton(
-                    onClick = {
-                        scope.launch {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
+                    scope.launch {
                             bottomSheetState.hide()
                             editingService = null
                         }
-                    }
-                ) {
-                    Icon(Icons.Rounded.KeyboardArrowDown, null)
                 }
-            }
+            )
+        }
         ) {
             me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
@@ -1011,21 +1012,22 @@ private fun SearchServiceEditorSheet(
 
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
         sheetGesturesEnabled = false,
         dragHandle = {
-            IconButton(
-                onClick = {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
                     scope.launch {
                         bottomSheetState.hide()
                         onDismiss()
                     }
                 }
-            ) {
-                Icon(Icons.Rounded.KeyboardArrowDown, null)
-            }
+            )
         }
     ) {
         Column(
@@ -1142,24 +1144,25 @@ internal fun AddSearchServiceButton(
         val scope = androidx.compose.runtime.rememberCoroutineScope()
         
         ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+containerColor = Color(0xFF000000),
+shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+contentColor = Color(0xFFF2F2F7),
             onDismissRequest = {
                 showBottomSheet = false
             },
             sheetState = bottomSheetState,
             sheetGesturesEnabled = false,
             dragHandle = {
-                IconButton(
-                    onClick = {
-                        scope.launch {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
+                    scope.launch {
                             bottomSheetState.hide()
                             showBottomSheet = false
                         }
-                    }
-                ) {
-                    Icon(Icons.Rounded.KeyboardArrowDown, null)
                 }
-            }
+            )
+        }
         ) {
             Column(
                 modifier = Modifier
@@ -1184,8 +1187,23 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                     onValueChange = { searchQuery = it },
                     placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = AppShapes.SearchField,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     singleLine = true,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color(0xFFF2F2F7),
+                        unfocusedTextColor = Color(0xFFF2F2F7),
+                        cursorColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedPlaceholderColor = Color(0xFF8A8A96),
+                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                        focusedLeadingIconColor = Color(0xFF8A8A96),
+                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                        focusedTrailingIconColor = Color(0xFF8A8A96),
+                        unfocusedTrailingIconColor = Color(0xFF8A8A96)
+                    ),
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
                         {
@@ -1253,7 +1271,8 @@ containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF000000)
+                                color = androidx.compose.ui.graphics.Color(0xFF000000),
+                                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1561,7 +1580,10 @@ internal fun CommonOptionsDialog(
     
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismissRequest,
         title = {
             Text(stringResource(R.string.setting_page_search_common_options))

@@ -4,6 +4,7 @@ package me.lucid.domchat.ui.pages.setting
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
@@ -607,8 +608,10 @@ fun SettingChatStoragePage(
         AlertDialog(
             onDismissRequest = { pendingDeletion = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             title = {
                 Text(stringResource(R.string.setting_chat_storage_delete_stored_file_title))
             },
@@ -653,8 +656,10 @@ fun SettingChatStoragePage(
         AlertDialog(
             onDismissRequest = { pendingOtherUploadDeletion = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_untracked_file_title)) },
             text = {
                 Text(
@@ -703,8 +708,10 @@ fun SettingChatStoragePage(
         AlertDialog(
             onDismissRequest = { pendingDeleteAllOtherUploads = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_orphaned_title)) },
             text = {
                 Text(stringResource(R.string.setting_chat_storage_delete_orphaned_message))
@@ -747,7 +754,11 @@ fun SettingChatStoragePage(
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { showOtherUploadsInspector = false },
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
+            dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+            contentColor = Color(0xFFF2F2F7),
             sheetState = sheetState,
         ) {
             me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -781,12 +792,17 @@ fun SettingChatStoragePage(
         ModalBottomSheet(
             onDismissRequest = { showEmbeddingCacheInspector = false },
             sheetGesturesEnabled = false,
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+            contentColor = Color(0xFFF2F2F7),
             dragHandle = {
-                IconButton(onClick = { showEmbeddingCacheInspector = false }) {
-                    Icon(Icons.Rounded.KeyboardArrowDown, null)
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
+                    showEmbeddingCacheInspector = false
                 }
-            }
+            )
+        }
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp),
@@ -805,7 +821,7 @@ fun SettingChatStoragePage(
                         val isSelected = stat.modelId in activeEmbeddingModelIds
                         Surface(
                             color = Color(0xFF000000),
-                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f)),
+                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -1170,7 +1186,7 @@ private fun EmptyFilesCard(
     Surface(
         shape = AppShapes.CardMedium,
         color = Color(0xFF000000),
-        border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -1233,7 +1249,7 @@ private fun StorageImageTile(
     Surface(
         shape = AppShapes.CardMedium,
         color = Color(0xFF000000),
-        border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
@@ -1304,7 +1320,7 @@ private fun StorageFileTile(
         },
         shape = AppShapes.CardMedium,
         color = Color(0xFF000000),
-        border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
@@ -1593,7 +1609,7 @@ private fun OtherUploadTile(
             onClick = onOpen,
             shape = AppShapes.CardMedium,
             color = Color(0xFF000000),
-            border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column {
@@ -1645,7 +1661,7 @@ private fun OtherUploadTile(
             onClick = onOpen,
             shape = AppShapes.CardMedium,
             color = Color(0xFF000000),
-            border = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f)),
+            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column {

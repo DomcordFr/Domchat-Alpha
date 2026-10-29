@@ -352,8 +352,17 @@ private fun WebDavPage(
                             modifier = Modifier.fillMaxWidth(),
                             value = webDavConfig.url,
                             onValueChange = { updateWebDavConfig(webDavConfig.copy(url = it.trim())) },
-                            singleLine = true,
-                            shape = AppShapes.InputField
+singleLine = true,
+                            shape = AppShapes.InputField,
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF000000),
+                                unfocusedContainerColor = Color(0xFF000000),
+                                focusedTextColor = Color(0xFFF2F2F7),
+                                unfocusedTextColor = Color(0xFFF2F2F7),
+                                cursorColor = Color.White,
+                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
+                            )
                         )
                     }
                     FormItem(
@@ -369,8 +378,17 @@ private fun WebDavPage(
                                     )
                                 )
                             },
-                            singleLine = true,
-                            shape = AppShapes.InputField
+singleLine = true,
+                            shape = AppShapes.InputField,
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF000000),
+                                unfocusedContainerColor = Color(0xFF000000),
+                                focusedTextColor = Color(0xFFF2F2F7),
+                                unfocusedTextColor = Color(0xFFF2F2F7),
+                                cursorColor = Color.White,
+                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
+                            )
                         )
                     }
                     FormItem(
@@ -392,8 +410,17 @@ private fun WebDavPage(
                                     Icon(imageVector = image, null)
                                 }
                             },
-                            singleLine = true,
-                            shape = AppShapes.InputField
+singleLine = true,
+                            shape = AppShapes.InputField,
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF000000),
+                                unfocusedContainerColor = Color(0xFF000000),
+                                focusedTextColor = Color(0xFFF2F2F7),
+                                unfocusedTextColor = Color(0xFFF2F2F7),
+                                cursorColor = Color.White,
+                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
+                            )
                         )
                     }
                     FormItem(
@@ -403,8 +430,17 @@ private fun WebDavPage(
                             modifier = Modifier.fillMaxWidth(),
                             value = webDavConfig.path,
                             onValueChange = { updateWebDavConfig(webDavConfig.copy(path = it.trim())) },
-                            singleLine = true,
-                            shape = AppShapes.InputField
+singleLine = true,
+                            shape = AppShapes.InputField,
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF000000),
+                                unfocusedContainerColor = Color(0xFF000000),
+                                focusedTextColor = Color(0xFFF2F2F7),
+                                unfocusedTextColor = Color(0xFFF2F2F7),
+                                cursorColor = Color.White,
+                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
+                            )
                         )
                     }
                     FormItem(
@@ -567,7 +603,7 @@ private fun WebDavPage(
     if (showBackupFiles) {
         ApplyDialogWindowBlur()
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             tonalElevation = 0.dp,
             dragHandle = {
@@ -708,7 +744,12 @@ private fun WebDavPage(
 
     // Permission explanation dialog
     if (showPermissionDialog) {
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
+        AlertDialog(
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+        onDismissRequest = {
                 // User dismissed - proceed without permissions
                 showPermissionDialog = false
                 showRestartDialog = true
@@ -1238,7 +1279,12 @@ private fun ImportExportPage(
 
     // Permission explanation dialog
     if (showPermissionDialog) {
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = {
+        AlertDialog(
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+        onDismissRequest = {
                 // User dismissed - proceed without permissions
                 showPermissionDialog = false
                 showRestartDialog = true
@@ -1327,7 +1373,9 @@ private fun BackupDialog(
 ) {
     AlertDialog(
         onDismissRequest = {}, // Disallow dismissing by clicking outside
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
         title = { Text(stringResource(R.string.backup_page_restart_app)) },
         text = { 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

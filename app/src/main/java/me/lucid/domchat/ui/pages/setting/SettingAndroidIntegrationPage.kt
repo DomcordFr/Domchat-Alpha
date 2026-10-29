@@ -454,8 +454,11 @@ fun SettingAndroidIntegrationPage(
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
+
             title = { Text(stringResource(R.string.reset)) },
             text = { Text(stringResource(R.string.setting_android_integration_reset_actions_confirm)) },
             confirmButton = {
@@ -765,9 +768,11 @@ private fun EditActionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier.widthIn(max = 360.dp),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+
         title = {
             Text(
                 if (isNew) stringResource(R.string.text_selection_add_action)

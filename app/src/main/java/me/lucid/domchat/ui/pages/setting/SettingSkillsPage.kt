@@ -775,23 +775,23 @@ fun SkillEditorSheet(
     val isDark = LocalDarkMode.current
     val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        contentColor = Color(0xFFF2F2F7),
+
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape),
         dragHandle = {
-            IconButton(
-                onClick = {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
                     scope.launch {
                         sheetState.hide()
                         onDismiss()
                     }
                 }
-            ) {
-                Icon(Icons.Rounded.KeyboardArrowDown, null)
-            }
+            )
         }
     ) {
         Column(
@@ -1264,7 +1264,11 @@ fun SkillEditorSheet(
     deletePackagePath?.let { relativePath ->
         AlertDialog(
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
+
             onDismissRequest = { deletePackagePath = null },
             title = { Text("Delete skill file?") },
             text = { Text(relativePath, fontFamily = FontFamily.Monospace) },
@@ -1418,7 +1422,11 @@ private fun SkillPackageTextEditorDialog(
 
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+
         onDismissRequest = onDismiss,
         title = {
             Column {
@@ -1476,7 +1484,11 @@ private fun AddSkillPackageFileDialog(
 
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+
         onDismissRequest = onDismiss,
         title = { Text("New package file") },
         text = {
@@ -1573,10 +1585,13 @@ private fun SkillExportDialog(
     val isDark = LocalDarkMode.current
     val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        contentColor = Color(0xFFF2F2F7),
+
         shape = sheetShape,
         onDismissRequest = onDismiss,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
+        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() }
     ) {
         Column(
             modifier = Modifier

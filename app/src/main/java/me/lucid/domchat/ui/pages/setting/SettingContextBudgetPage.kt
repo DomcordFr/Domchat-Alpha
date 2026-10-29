@@ -443,7 +443,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     Spacer(Modifier.width(6.dp))
                                     Text("Memory & Lorebooks", style = MaterialTheme.typography.bodyMedium)
                                 }
-                                Text("$memoryPercent% ($memoryTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                                Text("$memoryPercent% ($memoryTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFFF59E0B))
                             }
                             DomChatSlider(
                                 value = memoryPercent.toFloat(),
@@ -473,7 +473,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     Spacer(Modifier.width(6.dp))
                                     Text("System Prompt & Persona", style = MaterialTheme.typography.bodyMedium)
                                 }
-                                Text("$systemPercent% ($systemTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFFF2F2F7))
+                                Text("$systemPercent% ($systemTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3B82F6))
                             }
                             Text(
                                 text = "Automatically takes the remaining context allocation ($systemPercent%)",

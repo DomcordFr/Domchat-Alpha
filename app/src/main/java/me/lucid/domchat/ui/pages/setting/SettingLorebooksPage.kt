@@ -610,11 +610,12 @@ internal fun LorebookCreatorSheet(
     val isDark = LocalDarkMode.current
     val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
+        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() }
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(

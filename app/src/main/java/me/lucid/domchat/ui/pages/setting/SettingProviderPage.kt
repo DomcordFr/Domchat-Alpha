@@ -146,6 +146,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
@@ -181,6 +182,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.useEditState
 import me.lucid.domchat.ui.pages.setting.components.FALLBACK_PROVIDER_PRESETS
+import me.lucid.domchat.ui.pages.setting.components.NANO_GPT_PRESET
 import me.lucid.domchat.ui.pages.setting.components.ProviderConfigure
 import me.lucid.domchat.ui.pages.setting.components.toProviderSetting
 import me.lucid.domchat.ui.pages.setting.components.toProviderPresets
@@ -990,9 +992,10 @@ private fun ImportProviderButton(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
                 .widthIn(max = 360.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
+                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.SettingDialog),
             shape = AppShapes.SettingDialog,
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            contentColor = Color(0xFFF2F2F7),
             title = {
                 Text(
                     text = stringResource(R.string.setting_provider_page_import_dialog_title),
@@ -1111,9 +1114,10 @@ private fun ImportProviderButton(
         ApplyDialogWindowBlur()
         AlertDialog(
             onDismissRequest = {},
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             title = {
                 Text(
                     text = stringResource(R.string.setting_provider_page_multi_qr_title),
@@ -1610,9 +1614,53 @@ private fun AddButton(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    
+
+                    // NanoGPT — default supported provider, first below the custom option
+                    item(key = "preset_nanogpt") {
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onAdd(NANO_GPT_PRESET.toProviderSetting())
+                                showBottomSheet = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(24.dp)),
+                            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
+                            color = Color(0xFF000000),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "🌐",
+                                    fontSize = 24.sp,
+                                    modifier = Modifier.size(40.dp),
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "NanoGPT",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Privacy-first nano billing for many hosted models",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.65f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Provider presets
-                    itemsIndexed(remotePresets, key = { _, preset -> preset.name }) { index, preset ->
+                    itemsIndexed(remotePresets.filter { it.name != "NanoGPT" }, key = { _, preset -> preset.name }) { index, preset ->
                         val position = when {
                             remotePresets.size == 1 -> ItemPosition.ONLY
                             index == 0 -> ItemPosition.FIRST
@@ -1766,8 +1814,8 @@ private fun ProviderItemContent(
     // Define the normal card color (glassy styling)
     val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val normalCardColor = Color(0xFF000000)
-    val cardBorderColor = Color.White.copy(alpha = 0.08f)
-    val disabledBackground = Color.White.copy(alpha = 0.02f)
+    val cardBorderSpecular = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+    val disabledBackground = Color(0xFF000000)
     
     Row(
         modifier = Modifier
@@ -1777,11 +1825,11 @@ private fun ProviderItemContent(
                 if (!provider.enabled) {
                     Modifier
                         .background(disabledBackground, animatedShape)
-                        .border(1.dp, cardBorderColor.copy(alpha = 0.4f), animatedShape)
+                        .border(0.5.dp, cardBorderSpecular, animatedShape)
                 } else {
                     Modifier
                         .background(normalCardColor, animatedShape)
-                        .border(1.dp, cardBorderColor, animatedShape)
+                        .border(0.5.dp, cardBorderSpecular, animatedShape)
                 }
             )
             .clickable {

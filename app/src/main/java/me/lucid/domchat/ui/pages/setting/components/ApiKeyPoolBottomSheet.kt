@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.pages.setting.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,18 +116,16 @@ fun ApiKeyPoolBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = {
-            IconButton(
-                onClick = {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
                     scope.launch {
                         sheetState.hide()
                         onDismiss()
                     }
                 }
-            ) {
-                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null)
-            }
+            )
         },
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
@@ -559,7 +558,9 @@ private fun ApiKeyEditDialog(
     val haptics = rememberPremiumHaptics()
 
     AlertDialog(
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+                containerColor = Color(0xFF000000),
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         title = {
             Text(

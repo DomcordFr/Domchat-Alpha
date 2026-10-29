@@ -79,7 +79,7 @@ fun CustomHeaders(headers: List<CustomHeader>, onUpdate: (List<CustomHeader>) ->
 
             Card(
                 shape = cardShape,
-                colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                 border = BorderStroke(0.5.dp, borderBrush)
             ) {
                 Row(
@@ -190,7 +190,7 @@ fun CustomBodies(customBodies: List<CustomBody>, onUpdate: (List<CustomBody>) ->
 
             Card(
                 shape = cardShape,
-                colors = CardDefaults.cardColors(containerColor = domChatCardContainerColor()),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                 border = BorderStroke(0.5.dp, borderBrush)
             ) {
                 Row(

@@ -501,7 +501,8 @@ private fun RpStyleRuleDialog(
             .widthIn(max = 360.dp)
             .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
         shape = AppShapes.SettingDialog,
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        containerColor = Color(0xFF000000),
+        contentColor = Color(0xFFF2F2F7),
         title = {
             Text(
                 if (rule != null) {

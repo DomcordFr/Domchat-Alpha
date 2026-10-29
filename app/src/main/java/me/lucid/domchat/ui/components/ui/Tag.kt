@@ -3,6 +3,7 @@ package me.lucid.domchat.ui.components.ui
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -58,18 +59,12 @@ fun Tag(
         label = "tag_scale"
     )
 
-    val background = when (type) {
+    val background = Color(0xFF000000)
+    val textColor = when (type) {
         TagType.SUCCESS -> MaterialTheme.extendColors.green2
         TagType.ERROR -> MaterialTheme.extendColors.red2
         TagType.WARNING -> MaterialTheme.extendColors.orange2
         TagType.INFO -> MaterialTheme.extendColors.blue2
-        else -> Color(0xFF000000)
-    }
-    val textColor = when (type) {
-        TagType.SUCCESS -> MaterialTheme.extendColors.gray8
-        TagType.ERROR -> MaterialTheme.extendColors.red8
-        TagType.WARNING -> MaterialTheme.extendColors.orange8
-        TagType.INFO -> MaterialTheme.extendColors.blue8
         else -> Color(0xFFFFFFFF)
     }
     ProvideTextStyle(MaterialTheme.typography.labelSmall.copy(color = textColor)) {
@@ -81,6 +76,7 @@ fun Tag(
                 }
                 .clip(me.lucid.domchat.ui.theme.AppShapes.Tag)
                 .background(background)
+                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Tag)
                 .let {
                     if (onClick != null) {
                         it.clickable(

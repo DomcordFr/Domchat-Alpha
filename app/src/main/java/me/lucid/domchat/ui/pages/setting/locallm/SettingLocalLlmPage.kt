@@ -484,7 +484,14 @@ fun SettingLocalLlmPage(
     }
 
     modelPendingDelete?.let { model ->
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { modelPendingDelete = null },
+        AlertDialog(
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+            onDismissRequest = { modelPendingDelete = null },
+
+
             title = {
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     Text(stringResource(R.string.local_llm_delete_confirm_title)) },
@@ -517,7 +524,14 @@ fun SettingLocalLlmPage(
     }
 
     sherpaModelPendingDelete?.let { model ->
-        AlertDialog(            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),            onDismissRequest = { sherpaModelPendingDelete = null },
+        AlertDialog(
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        contentColor = Color(0xFFF2F2F7),
+            onDismissRequest = { sherpaModelPendingDelete = null },
+
+
             title = {
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     Text("Delete ${model.displayName}?") },
@@ -795,7 +809,12 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
 
     if (showSheet) {
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
+            dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+            contentColor = Color(0xFFF2F2F7),
+
             onDismissRequest = { showSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
@@ -884,7 +903,12 @@ private fun ModelSettingsSheet(
     }
 
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        contentColor = Color(0xFFF2F2F7),
+
         onDismissRequest = {
             if (name.trim() != model.displayName) onRename(name)
             onDismiss()
@@ -986,7 +1010,11 @@ private fun ModelSettingsSheet(
 
     if (showDeleteConfirm) {
         AlertDialog(
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
+
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text(stringResource(R.string.local_llm_delete_confirm_title)) },
             text = { Text(stringResource(R.string.local_llm_delete_confirm_message, model.displayName)) },

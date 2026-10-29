@@ -41,6 +41,13 @@ data class ProviderPreset(
     val setupSearchService: String? = null,
 )
 
+val NANO_GPT_PRESET = ProviderPreset(
+    name = "NanoGPT",
+    description = "Privacy-first nano billing for many hosted models",
+    type = ProviderSetting.OpenAI::class,
+    baseUrl = "https://nano-gpt.com/api/v1",
+)
+
 val FALLBACK_PROVIDER_PRESETS = listOf(
     ProviderPreset(
         name = "OpenRouter",

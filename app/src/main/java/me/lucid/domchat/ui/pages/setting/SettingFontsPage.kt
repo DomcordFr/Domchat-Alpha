@@ -150,8 +150,11 @@ fun SettingFontsPage(vm: SettingVM = koinViewModel()) {
         AlertDialog(
             onDismissRequest = { showResetAllDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
+
             title = {
                 Text(stringResource(R.string.setting_fonts_reset_all_title))
             },
@@ -657,8 +660,11 @@ private fun FontConfigSection(
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
+
             title = { Text(stringResource(R.string.setting_fonts_reset_title, title)) },
             text = { Text(stringResource(R.string.setting_fonts_reset_desc, title)) },
             confirmButton = {

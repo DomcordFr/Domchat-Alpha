@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -147,12 +148,28 @@ fun AetherAboutContent(
             )
         }
         Spacer(Modifier.height(32.dp))
-        Text(
-            text = "Domchat v1.0",
-            style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
-            color = Color.White,
-            textAlign = TextAlign.Center,
-        )
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = Color(0xFF000000),
+            border = androidx.compose.foundation.BorderStroke(
+                0.5.dp,
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.22f),
+                        Color.White.copy(alpha = 0.06f),
+                        Color.Transparent,
+                    )
+                )
+            ),
+        ) {
+            Text(
+                text = "Domchat v1.0",
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            )
+        }
         Spacer(Modifier.height(24.dp))
     }
 }

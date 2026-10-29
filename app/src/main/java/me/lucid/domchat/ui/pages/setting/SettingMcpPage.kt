@@ -302,14 +302,14 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     if (mcpConfigs.isEmpty()) {
                         item(key = "empty") {
-                            val emptyCardBg = if (LocalDarkMode.current) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.03f)
-                            val emptyBorderColor = if (LocalDarkMode.current) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                            val emptyCardBg = Color(0xFF000000)
+                            val emptyBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(AppShapes.CardLarge)
                                     .background(emptyCardBg)
-                                    .border(1.dp, emptyBorderColor, AppShapes.CardLarge)
+                                    .border(0.5.dp, emptyBorderColor, AppShapes.CardLarge)
                                     .padding(32.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -482,8 +482,10 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
         AlertDialog(
             onDismissRequest = { setupRequiredPreset = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier.widthIn(max = 360.dp),
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+                        containerColor = Color(0xFF000000),
+            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             icon = { Icon(Icons.Rounded.Info, null) },
             title = { Text("${preset.name} needs app setup") },
             text = {
@@ -728,7 +730,7 @@ private fun McpServerItem(
         // Define the normal card color (glassy styling)
         val isDark = LocalDarkMode.current
         val normalCardColor = Color(0xFF000000)
-        val cardBorderColor = Color.White.copy(alpha = 0.08f)
+        val cardBorderSpecular = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
         val disabledBackground = Color.White.copy(alpha = 0.02f)
         
         // Grayscale modifier for disabled items
@@ -766,11 +768,11 @@ private fun McpServerItem(
                     if (!item.commonOptions.enable) {
                         Modifier
                             .background(disabledBackground, animatedShape)
-                            .border(1.dp, cardBorderColor.copy(alpha = 0.4f), animatedShape)
+                            .border(0.5.dp, cardBorderSpecular, animatedShape)
                     } else {
                         Modifier
                             .background(normalCardColor, animatedShape)
-                            .border(1.dp, cardBorderColor, animatedShape)
+                            .border(0.5.dp, cardBorderSpecular, animatedShape)
                     }
                 )
                 .clickable {
@@ -889,24 +891,22 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
         val scope = rememberCoroutineScope()
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+            containerColor = Color(0xFF000000),
             onDismissRequest = {
                 state.dismiss()
             },
             sheetState = sheetState,
             sheetGesturesEnabled = false,
             dragHandle = {
-                IconButton(
-                    onClick = {
-                        scope.launch {
+            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+                modifier = Modifier.clickable {
+                    scope.launch {
                             sheetState.hide()
                             state.dismiss()
                         }
-                    }
-                ) {
-                    Icon(Icons.Rounded.KeyboardArrowDown, null)
                 }
-            }
+            )
+        }
         ) {
             Column(
                 modifier = Modifier
@@ -1413,7 +1413,11 @@ private fun McpImportModal(
     val parseErrorMessage = stringResource(R.string.setting_mcp_page_import_parse_error)
 
     ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
+        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {

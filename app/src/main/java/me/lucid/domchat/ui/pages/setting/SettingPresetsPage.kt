@@ -510,7 +510,9 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                 .widthIn(max = 360.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
             shape = AppShapes.SettingDialog,
-            containerColor = domChatDialogContainerColor(),
+                        containerColor = Color(0xFF000000),
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            contentColor = Color(0xFFF2F2F7),
             title = { Text(if (editingPreset == null) "Create Prompt Preset" else "Edit Prompt Preset") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

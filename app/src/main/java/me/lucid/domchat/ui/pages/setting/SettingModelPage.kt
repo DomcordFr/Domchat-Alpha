@@ -164,7 +164,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
 }
 
 @Composable
-private fun modelSheetContainerColor(): Color = domChatSheetContainerColor()
+private fun modelSheetContainerColor(): Color = Color(0xFF000000)
 
 @Composable
 private fun DefaultTtsVoiceSetting(
