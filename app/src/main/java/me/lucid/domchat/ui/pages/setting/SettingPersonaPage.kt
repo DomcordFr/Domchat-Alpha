@@ -84,6 +84,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
@@ -527,7 +528,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = inputShape,
                         colors = inputColors
-                    )
+                    
+                        colors = appFieldColors(),)
 
                     OutlinedTextField(
                         value = formPronouns,
@@ -537,7 +539,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = inputShape,
                         colors = inputColors
-                    )
+                    
+                        colors = appFieldColors(),)
 
                     OutlinedTextField(
                         value = formDescription,
@@ -548,7 +551,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = inputShape,
                         colors = inputColors
-                    )
+                    
+                        colors = appFieldColors(),)
                 }
             },
             confirmButton = {

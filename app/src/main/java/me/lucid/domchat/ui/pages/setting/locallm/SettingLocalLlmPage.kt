@@ -98,6 +98,7 @@ import me.lucid.domchat.ui.pages.setting.localstt.SherpaInstalledModelCard
 import me.lucid.domchat.ui.pages.setting.localstt.SherpaModelDragHandle
 import me.lucid.domchat.ui.pages.setting.localstt.SherpaModelSettingsSheet
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -837,7 +838,8 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 Surface(
                     shape = AppShapes.CardSmall,
                     color = androidx.compose.ui.graphics.Color(0xFF000000),
@@ -937,7 +939,8 @@ private fun ModelSettingsSheet(
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     shape = AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
 
             // Generation sampling controls are meaningless for an embedding model.

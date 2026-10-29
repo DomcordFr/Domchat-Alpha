@@ -222,6 +222,8 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
+import me.lucid.domchat.ui.motion.EntranceDirection
+import me.lucid.domchat.ui.motion.entrance
 import androidx.compose.ui.draw.clip
 
 internal fun hasConversationMessages(conversation: Conversation): Boolean {
@@ -1286,6 +1288,7 @@ private fun ChatPageContent(
     var chatSearchQuery by rememberSaveable(conversation.id) { mutableStateOf(initialSearchQuery.orEmpty()) }
     var consumedInitialSearchQuery by remember(conversation.id) { mutableStateOf<String?>(null) }
     val toolbarPlacement = chatTopBarPlacement(setting)
+    val motionPolicy = LocalMotionPolicy.current
     val reduceMotion = LocalMotionPolicy.current.reduceMotion
     val isGenerating = loadingJob != null
     val density = LocalDensity.current
@@ -1434,6 +1437,15 @@ private fun ChatPageContent(
                     Scaffold(
                 topBar = if (toolbarPlacement == ChatToolbarPlacement.Top) {
                     {
+                        // Top chrome drops in from above, position-respectful.
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier.entrance(
+                                key = "${conversation.id}:topbar",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.DOWN,
+                                delayMs = 40,
+                            )
+                        ) {
                         ChatToolbar(
                             placement = ChatToolbarPlacement.Top,
                             settings = setting,
@@ -1480,6 +1492,7 @@ private fun ChatPageContent(
                                 onManualTemporaryChatChange(!manualTemporaryChat)
                             }
                         )
+                        }
                     }
                 } else {
                     {
@@ -1900,6 +1913,12 @@ private fun ChatPageContent(
                                 } else {
                                     Modifier
                                 }
+                            )
+                            .entrance(
+                                key = "${conversation.id}:input",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 120,
                             ),
                         showSearch = previewMode,
                         searchQuery = chatSearchQuery,
@@ -1930,6 +1949,12 @@ private fun ChatPageContent(
                             } else {
                                 Modifier
                             }
+                        )
+                        .entrance(
+                            key = "${conversation.id}:input",
+                            motionPolicy = motionPolicy,
+                            from = EntranceDirection.UP,
+                            delayMs = 120,
                         ),
                     state = inputState,
                     settings = setting,

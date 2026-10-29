@@ -1,6 +1,10 @@
 package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.motion.pressScale
+import me.lucid.domchat.ui.theme.appFilterChipColors
+import me.lucid.domchat.ui.theme.appFilterChipBorder
+import me.lucid.domchat.ui.theme.appFieldColors
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
@@ -709,6 +713,7 @@ internal fun TtsProvidersContent(
                             TTSProviderItemContent(
                                 provider = provider,
                                 catalogSnapshot = catalogSnapshot,
+                                itemShape = position.listItemShape(),
                                 haptics = haptics,
                                 onClick = {
                                     navController.navigate(Screen.SettingTTSProviderDetail(provider.id.toString()))
@@ -1134,7 +1139,8 @@ private fun TtsFilterRuleEditDialog(
                         Text(stringResource(R.string.setting_tts_filter_pattern_desc, pattern))
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 
                 // Mode selector
                 Text(
@@ -1150,12 +1156,16 @@ private fun TtsFilterRuleEditDialog(
                         selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.SKIP,
                         onClick = { mode = me.lucid.domchat.data.datastore.TtsFilterMode.SKIP },
                         label = { Text(stringResource(R.string.setting_tts_filter_skip)) },
+                        colors = appFilterChipColors(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.SKIP),
+                        border = appFilterChipBorder(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.SKIP),
                         modifier = Modifier.weight(1f)
                     )
                     androidx.compose.material3.FilterChip(
                         selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ,
                         onClick = { mode = me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ },
                         label = { Text(stringResource(R.string.setting_tts_filter_only_read)) },
+                        colors = appFilterChipColors(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ),
+                        border = appFilterChipBorder(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -1472,10 +1482,12 @@ contentColor = Color(0xFFF2F2F7),
 private fun TTSProviderItemContent(
     provider: TTSProviderSetting,
     catalogSnapshot: ModelCatalogSnapshot?,
+    itemShape: androidx.compose.ui.graphics.Shape,
     haptics: me.lucid.domchat.ui.hooks.PremiumHaptics,
     onClick: () -> Unit,
     dragHandle: @Composable () -> Unit
 ) {
+    val interactions = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     val backgroundColor by androidx.compose.animation.animateColorAsState(
         targetValue = Color(0xFF000000),
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
@@ -1490,10 +1502,14 @@ private fun TTSProviderItemContent(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(0.dp))
-            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(0.dp))
+            .clip(itemShape)
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, itemShape)
             .background(backgroundColor)
-            .clickable {
+            .pressScale(interactions)
+            .clickable(
+                interactionSource = interactions,
+                indication = null
+            ) {
                 haptics.perform(HapticPattern.Pop)
                 onClick()
             }

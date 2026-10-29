@@ -337,7 +337,7 @@ private fun WebDavPage(
         ) {
             Surface(
                 color = Color(0xFF000000),
-                shape = AppShapes.CardLarge,
+                shape = RoundedCornerShape(14.dp),
                 border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -353,7 +353,7 @@ private fun WebDavPage(
                             value = webDavConfig.url,
                             onValueChange = { updateWebDavConfig(webDavConfig.copy(url = it.trim())) },
 singleLine = true,
-                            shape = AppShapes.InputField,
+                            shape = RoundedCornerShape(12.dp),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color(0xFF000000),
                                 unfocusedContainerColor = Color(0xFF000000),
@@ -379,7 +379,7 @@ singleLine = true,
                                 )
                             },
 singleLine = true,
-                            shape = AppShapes.InputField,
+                            shape = RoundedCornerShape(12.dp),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color(0xFF000000),
                                 unfocusedContainerColor = Color(0xFF000000),
@@ -411,7 +411,7 @@ singleLine = true,
                                 }
                             },
 singleLine = true,
-                            shape = AppShapes.InputField,
+                            shape = RoundedCornerShape(12.dp),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color(0xFF000000),
                                 unfocusedContainerColor = Color(0xFF000000),
@@ -431,7 +431,7 @@ singleLine = true,
                             value = webDavConfig.path,
                             onValueChange = { updateWebDavConfig(webDavConfig.copy(path = it.trim())) },
 singleLine = true,
-                            shape = AppShapes.InputField,
+                            shape = RoundedCornerShape(12.dp),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color(0xFF000000),
                                 unfocusedContainerColor = Color(0xFF000000),

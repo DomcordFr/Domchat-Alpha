@@ -54,6 +54,7 @@ import me.lucid.asr.local.SherpaModelFamily
 import me.lucid.asr.local.SherpaModelMetadata
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.Color
@@ -284,7 +285,8 @@ fun SherpaModelSettingsSheet(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Model name") },
                 singleLine = true,
-            )
+            
+            colors = appFieldColors(),)
             OutlinedTextField(
                 value = config.language,
                 onValueChange = {
@@ -295,7 +297,8 @@ fun SherpaModelSettingsSheet(
                 label = { Text("Language") },
                 supportingText = { Text("Use auto for language detection when the model supports it.") },
                 singleLine = true,
-            )
+            
+            colors = appFieldColors(),)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("CPU threads: ${config.numThreads}", style = MaterialTheme.typography.titleSmall)
                 DomChatSlider(

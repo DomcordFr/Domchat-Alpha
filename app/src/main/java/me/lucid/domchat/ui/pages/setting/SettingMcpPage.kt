@@ -1,6 +1,8 @@
 package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.appSegmentedButtonColors
+import me.lucid.domchat.ui.theme.appFieldColors
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -590,7 +592,8 @@ private fun McpConnectionsSheet(
                     focusedTrailingIconColor = Color(0xFF8A8A96),
                     unfocusedTrailingIconColor = Color(0xFF8A8A96)
                 )
-            )
+            
+                colors = appFieldColors(),)
             Spacer(Modifier.height(16.dp))
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -1062,7 +1065,8 @@ private fun McpCommonOptionsConfigure(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.setting_mcp_page_name_placeholder)) },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1091,6 +1095,7 @@ private fun McpCommonOptionsConfigure(
                 transportTypes.forEachIndexed { index, type ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(index, transportTypes.size),
+                        colors = appSegmentedButtonColors(),
                         onClick = {
                             if (index != currentTypeIndex) {
                                 val newConfig = when (index) {
@@ -1165,7 +1170,8 @@ private fun McpCommonOptionsConfigure(
                     )
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1215,7 +1221,8 @@ private fun McpCommonOptionsConfigure(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_name_placeholder)) },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            )
+                            
+                            colors = appFieldColors(),)
                             Spacer(Modifier.height(8.dp))
                             OutlinedTextField(
                                 value = headerValue,
@@ -1240,7 +1247,8 @@ private fun McpCommonOptionsConfigure(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_value_placeholder)) },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            )
+                            
+                            colors = appFieldColors(),)
                         }
                         IconButton(onClick = {
                             val updatedHeaders = config.commonOptions.headers.toMutableList()
@@ -1461,7 +1469,8 @@ private fun McpImportModal(
                     }
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)

@@ -102,6 +102,7 @@ import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.plus
 import org.koin.compose.koinInject
@@ -796,7 +797,8 @@ private fun EditActionDialog(
                         .heightIn(min = 150.dp),
                     minLines = 5,
                     shape = RoundedCornerShape(16.dp),
-                )
+                
+                colors = appFieldColors(),)
                 // Show variable hint only for relevant actions
                 val variableHint = when (action.id) {
                     "translate" -> "Variable: {{language}}"

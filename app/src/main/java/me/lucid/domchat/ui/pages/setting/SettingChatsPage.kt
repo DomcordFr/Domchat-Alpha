@@ -76,6 +76,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import me.lucid.domchat.ui.theme.appFilterChipBorder
+import me.lucid.domchat.ui.theme.appFilterChipColors
 import me.lucid.domchat.R
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.repository.ConversationRepository
@@ -305,7 +307,9 @@ fun SettingChatsPage(
                                 selected = selectedAssistantFilter == null,
                                 onClick = { selectedAssistantFilter = null },
                                 label = { Text("All Characters (${rawConversations.size})") },
-                                shape = RoundedCornerShape(50)
+                                shape = RoundedCornerShape(50),
+                                colors = appFilterChipColors(selected = selectedAssistantFilter == null),
+                                border = appFilterChipBorder(selected = selectedAssistantFilter == null)
                             )
                         }
                         items(allAssistants, key = { it.id.toString() }) { assistant ->
@@ -317,7 +321,9 @@ fun SettingChatsPage(
                                     selectedAssistantFilter = if (selectedAssistantFilter == assistantIdStr) null else assistantIdStr
                                 },
                                 label = { Text("${assistant.name} ($count)") },
-                                shape = RoundedCornerShape(50)
+                                shape = RoundedCornerShape(50),
+                                colors = appFilterChipColors(selected = selectedAssistantFilter == assistantIdStr),
+                                border = appFilterChipBorder(selected = selectedAssistantFilter == assistantIdStr)
                             )
                         }
                     }

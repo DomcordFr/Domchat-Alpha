@@ -2,6 +2,9 @@ package me.lucid.domchat.ui.pages.setting
 
 import androidx.annotation.StringRes
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.motion.pressScale
+import me.lucid.domchat.ui.theme.appSegmentedButtonColors
+import me.lucid.domchat.ui.theme.appFieldColors
 
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -426,7 +429,11 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                                     Color(0xFF000000)
                                 }
                             ),
-                            shape = AppShapes.CardLarge
+                            shape = AppShapes.CardLarge,
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp,
+                                me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                            )
                         ) {
                             Box(
                                 modifier = Modifier
@@ -917,6 +924,7 @@ internal fun SearchProvidersContent(
                         SearchServiceItemContent(
                             service = service,
                             catalogSnapshot = catalogSnapshot,
+                            itemShape = position.listItemShape(),
                             haptics = haptics,
                             onClick = { editingService = service },
                             dragHandle = {
@@ -1361,19 +1369,26 @@ private fun SearchServiceEditHeader(
 private fun SearchServiceItemContent(
     service: SearchServiceOptions,
     catalogSnapshot: ModelCatalogSnapshot?,
+    itemShape: androidx.compose.ui.graphics.Shape,
     haptics: me.lucid.domchat.ui.hooks.PremiumHaptics,
     onClick: () -> Unit,
     dragHandle: @Composable () -> Unit
 ) {
     val serviceName = SearchServiceOptions.TYPES[service::class] ?: stringResource(R.string.setting_search_unknown_provider)
     val hasScraping = SearchService.getService(service).scrapingParameters != null
+    val interactions = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(0.dp))
+            .clip(itemShape)
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, itemShape)
             .background(Color(0xFF000000))
-            .clickable {
+            .pressScale(interactions)
+            .clickable(
+                interactionSource = interactions,
+                indication = null
+            ) {
                 haptics.perform(HapticPattern.Pop)
                 onClick()
             }
@@ -1487,7 +1502,8 @@ private fun TavilyOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1502,6 +1518,7 @@ private fun TavilyOptions(
             depthOptions.forEachIndexed { index, depth ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = depthOptions.size),
+                    colors = appSegmentedButtonColors(),
                     onClick = {
                         onUpdateOptions(
                             options.copy(
@@ -1539,7 +1556,8 @@ private fun ExaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1565,7 +1583,8 @@ fun ZhipuOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1643,7 +1662,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1662,7 +1682,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1681,7 +1702,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1700,7 +1722,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1719,7 +1742,8 @@ private fun SearXNGOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1744,7 +1768,8 @@ private fun SearchLinkUpOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1759,6 +1784,7 @@ private fun SearchLinkUpOptions(
             depthOptions.forEachIndexed { index, depth ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = depthOptions.size),
+                    colors = appSegmentedButtonColors(),
                     onClick = {
                         onUpdateOptions(
                             options.copy(
@@ -1796,7 +1822,8 @@ private fun BraveOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1822,7 +1849,8 @@ private fun MetasoOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1847,7 +1875,8 @@ private fun OllamaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1872,7 +1901,8 @@ private fun PerplexityOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1892,7 +1922,8 @@ private fun PerplexityOptions(
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1917,7 +1948,8 @@ private fun GrokOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1939,7 +1971,8 @@ private fun GrokOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1964,7 +1997,8 @@ private fun FirecrawlOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1989,7 +2023,8 @@ private fun JinaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -2014,7 +2049,8 @@ private fun BochaOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -2060,7 +2096,8 @@ private fun NanoGPTOptions(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -2078,6 +2115,7 @@ private fun NanoGPTOptions(
             depthOptions.forEachIndexed { index, depth ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = depthOptions.size),
+                    colors = appSegmentedButtonColors(),
                     onClick = {
                         onUpdateOptions(
                             options.copy(
@@ -2108,6 +2146,7 @@ private fun NanoGPTOptions(
             outputOptions.forEachIndexed { index, output ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = outputOptions.size),
+                    colors = appSegmentedButtonColors(),
                     onClick = {
                         onUpdateOptions(
                             options.copy(

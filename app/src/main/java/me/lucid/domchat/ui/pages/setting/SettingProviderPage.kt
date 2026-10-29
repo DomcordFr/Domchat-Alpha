@@ -59,6 +59,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -111,6 +112,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.isSystemInDarkTheme
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.appFilterChipColors
+import me.lucid.domchat.ui.theme.appFilterChipBorder
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContentColor
 import androidx.compose.foundation.LocalOverscrollFactory
@@ -444,7 +448,8 @@ fun SettingProviderPage(
                 focusedTrailingIconColor = Color(0xFF8A8A96),
                 unfocusedTrailingIconColor = Color(0xFF8A8A96)
             )
-            )
+            
+                colors = appFieldColors(),)
             
             // Tag filter row - only show when there are tags
             if (settings.providerTags.isNotEmpty()) {
@@ -639,7 +644,8 @@ private fun SearchBarWithToggle(
             focusedTrailingIconColor = Color(0xFF8A8A96),
             unfocusedTrailingIconColor = Color(0xFF8A8A96)
         )
-        )
+        
+            colors = appFieldColors(),)
         IconButton(onClick = onToggleViewMode) {
             Icon(
                 imageVector = if (viewMode == ProviderViewMode.LIST) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
@@ -1487,7 +1493,8 @@ private fun AddButton(
                     focusedTrailingIconColor = Color(0xFF8A8A96),
                     unfocusedTrailingIconColor = Color(0xFF8A8A96)
                 )
-                )
+                
+                    colors = appFieldColors(),)
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -1638,11 +1645,22 @@ private fun AddButton(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "🌐",
-                                    fontSize = 24.sp,
-                                    modifier = Modifier.size(40.dp),
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFF000000))
+                                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
+                                        .padding(7.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(R.drawable.nanogpt_logo),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "NanoGPT",
@@ -2003,7 +2021,9 @@ private fun ProviderTagsFilterRow(
                     }
                     onUpdateSelectedTagIds(newSelection)
                 },
-                label = { Text(tag.name) }
+                label = { Text(tag.name) },
+                colors = appFilterChipColors(selected = tag.id in selectedTagIds),
+                border = appFilterChipBorder(selected = tag.id in selectedTagIds)
             )
         }
     }

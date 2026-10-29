@@ -9,6 +9,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
+import me.lucid.domchat.ui.theme.appFilterChipBorder
+import me.lucid.domchat.ui.theme.appFilterChipColors
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
@@ -546,12 +548,8 @@ fun SettingChatStoragePage(
                                         filter = option
                                     },
                                     label = { Text(stringResource(option.labelRes)) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color.White.copy(alpha = 0.14f),
-                                        selectedLabelColor = Color.White,
-                                        containerColor = Color(0xFF000000),
-                                        labelColor = Color.White.copy(alpha = 0.7f)
-                                    )
+                                    colors = appFilterChipColors(selected = filter == option),
+                                    border = appFilterChipBorder(selected = filter == option)
                                 )
                             }
                         }
@@ -568,12 +566,8 @@ fun SettingChatStoragePage(
                                         sort = option
                                     },
                                     label = { Text(stringResource(option.labelRes)) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color.White.copy(alpha = 0.14f),
-                                        selectedLabelColor = Color.White,
-                                        containerColor = Color(0xFF000000),
-                                        labelColor = Color.White.copy(alpha = 0.7f)
-                                    )
+                                    colors = appFilterChipColors(selected = sort == option),
+                                    border = appFilterChipBorder(selected = sort == option)
                                 )
                             }
                         }

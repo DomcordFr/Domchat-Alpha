@@ -20,6 +20,9 @@ import me.lucid.ai.provider.ModelAbility
 import me.lucid.ai.provider.ReasoningConfig
 import me.lucid.ai.provider.ReasoningModeType
 import me.lucid.domchat.R
+import me.lucid.domchat.ui.theme.appSegmentedButtonColors
+import me.lucid.domchat.ui.theme.appFilterChipColors
+import me.lucid.domchat.ui.theme.appFilterChipBorder
 import me.lucid.domchat.ui.components.ai.resolveReasoningConfig
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.components.ui.OutlinedNumberInput
@@ -131,6 +134,7 @@ fun ModelReasoningConfigEditor(
                         )
                     },
                     shape = SegmentedButtonDefaults.itemShape(index, types.size),
+                    colors = appSegmentedButtonColors(),
                     label = {
                         Text(
                             text = stringResource(
@@ -156,6 +160,8 @@ fun ModelReasoningConfigEditor(
                     selected = config == preset.config,
                     onClick = { onModelChange(model.copy(reasoningConfig = preset.config)) },
                     label = { Text(stringResource(preset.labelRes)) },
+                    colors = appFilterChipColors(selected = config == preset.config),
+                    border = appFilterChipBorder(selected = config == preset.config),
                 )
             }
         }
@@ -184,6 +190,7 @@ fun ModelReasoningConfigEditor(
                             onModelChange(model.copy(reasoningConfig = config.copy(supportedLevels = next)))
                         },
                         shape = SegmentedButtonDefaults.itemShape(index, available.size),
+                        colors = appSegmentedButtonColors(),
                         label = { Text(level) },
                     )
                 }

@@ -3,6 +3,7 @@ package me.lucid.domchat.ui.pages.setting
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -258,7 +259,8 @@ private fun DefaultSTTModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -399,7 +401,8 @@ private fun DefaultTranslationModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -520,7 +523,8 @@ private fun DefaultSuggestionModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -640,7 +644,8 @@ private fun DefaultTitleModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -767,7 +772,8 @@ private fun DefaultSummarizerModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -859,7 +865,8 @@ private fun DefaultSubagentModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },
@@ -983,7 +990,8 @@ private fun DefaultOcrModelSetting(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
+            )
+                .imePadding(),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
             },

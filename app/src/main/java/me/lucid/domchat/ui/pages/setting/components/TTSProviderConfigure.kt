@@ -39,6 +39,7 @@ import me.lucid.domchat.ui.components.ui.OutlinedNumberInput
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.tts.provider.android.LocalTtsVoice
@@ -135,7 +136,8 @@ fun TTSProviderConfigure(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text(stringResource(R.string.setting_tts_page_name_placeholder)) },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
         }
         // Provider-specific fields
@@ -186,7 +188,8 @@ private fun OpenAITTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Base URL
@@ -202,7 +205,8 @@ private fun OpenAITTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(stringResource(R.string.setting_tts_page_base_url_placeholder)) },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Model
@@ -253,7 +257,8 @@ private fun OpenAITTSConfiguration(
                         }
                     }
                 }
-            )
+            
+                colors = appFieldColors(),)
             
             if (availableModels != null) {
                 ExposedDropdownMenu(
@@ -302,7 +307,8 @@ private fun OpenAITTSConfiguration(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = voiceExpanded)
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 ExposedDropdownMenu(
                     expanded = voiceExpanded,
                     onDismissRequest = { voiceExpanded = false },
@@ -356,7 +362,8 @@ private fun MiniMaxTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Base URL
@@ -372,7 +379,8 @@ private fun MiniMaxTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(stringResource(R.string.setting_tts_page_base_url_placeholder)) },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Model
@@ -388,7 +396,8 @@ private fun MiniMaxTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("speech-2.5-hd-preview") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     if (showVoiceFields) {
@@ -428,7 +437,8 @@ private fun MiniMaxTTSConfiguration(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = voiceIdExpanded)
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 ExposedDropdownMenu(
                     expanded = voiceIdExpanded,
                     onDismissRequest = { voiceIdExpanded = false },
@@ -473,7 +483,8 @@ private fun MiniMaxTTSConfiguration(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = emotionExpanded)
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 ExposedDropdownMenu(
                     expanded = emotionExpanded,
                     onDismissRequest = { emotionExpanded = false },
@@ -544,7 +555,8 @@ private fun GeminiTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Base URL
@@ -560,7 +572,8 @@ private fun GeminiTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(stringResource(R.string.setting_tts_page_base_url_placeholder)) },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Model
@@ -576,7 +589,8 @@ private fun GeminiTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(stringResource(R.string.setting_tts_page_model_placeholder_gemini)) },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     if (showVoiceFields) {
@@ -593,7 +607,8 @@ private fun GeminiTTSConfiguration(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.setting_tts_page_voice_name_placeholder)) },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
         }
     }
 }
@@ -635,7 +650,8 @@ private fun SystemTTSConfiguration(
             onValueChange = { onValueChange(setting.copy(enginePackageName = it.takeIf(String::isNotBlank))) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     if (localVoices.isNotEmpty()) {
@@ -664,7 +680,8 @@ private fun SystemTTSConfiguration(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = voiceExpanded)
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 ExposedDropdownMenu(
                     expanded = voiceExpanded,
                     onDismissRequest = { voiceExpanded = false },
@@ -759,7 +776,8 @@ private fun QwenTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -774,7 +792,8 @@ private fun QwenTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("https://dashscope.aliyuncs.com/api/v1") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -789,7 +808,8 @@ private fun QwenTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("qwen3-tts-flash") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     if (showVoiceFields) {
@@ -823,7 +843,8 @@ private fun QwenTTSConfiguration(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = voiceExpanded)
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 ExposedDropdownMenu(
                     expanded = voiceExpanded,
                     onDismissRequest = { voiceExpanded = false },
@@ -867,7 +888,8 @@ private fun QwenTTSConfiguration(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageExpanded)
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 ExposedDropdownMenu(
                     expanded = languageExpanded,
                     onDismissRequest = { languageExpanded = false },
@@ -922,7 +944,8 @@ private fun ElevenLabsTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     if (showVoiceFields) {
@@ -939,7 +962,8 @@ private fun ElevenLabsTTSConfiguration(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("21m00Tcm4TlvDq8ikWAM") },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
         }
     }
 
@@ -972,7 +996,8 @@ private fun ElevenLabsTTSConfiguration(
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded)
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
             ExposedDropdownMenu(
                 expanded = modelExpanded,
                 onDismissRequest = { modelExpanded = false },
@@ -1026,7 +1051,8 @@ private fun FishAudioTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Base URL
@@ -1042,7 +1068,8 @@ private fun FishAudioTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("https://api.fish.audio") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Model
@@ -1068,7 +1095,8 @@ private fun FishAudioTTSConfiguration(
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded)
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            )
+            
+            colors = appFieldColors(),)
             ExposedDropdownMenu(
                 expanded = modelExpanded,
                 onDismissRequest = { modelExpanded = false },
@@ -1102,7 +1130,8 @@ private fun FishAudioTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("e.g. 7f92f8af330e43869528fa1c360e87d5 (or leave empty)") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     // Speed
@@ -1150,7 +1179,8 @@ private fun CartesiaTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1163,7 +1193,8 @@ private fun CartesiaTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("https://api.cartesia.ai") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1176,7 +1207,8 @@ private fun CartesiaTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("sonic-3.5") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1189,7 +1221,8 @@ private fun CartesiaTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("e.g. 694f9389-aac1-45b6-b726-9d9369183238") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 
@@ -1221,7 +1254,8 @@ private fun PlayHTTTSConfiguration(
                 }
             },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1234,7 +1268,8 @@ private fun PlayHTTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Enter User ID") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 
     FormItem(
@@ -1247,7 +1282,8 @@ private fun PlayHTTTSConfiguration(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Voice URI or name") },
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }
 

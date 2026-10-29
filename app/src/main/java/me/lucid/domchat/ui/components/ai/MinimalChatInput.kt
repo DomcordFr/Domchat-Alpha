@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.ai
 
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.motion.pressScale
 import androidx.compose.foundation.border
 import android.net.Uri
 import android.util.Log
@@ -2815,10 +2816,6 @@ private fun MinimalPickerContent(
         lastValidProviderIndex.coerceIn(0, (settings.searchServices.size - 1).coerceAtLeast(0))
     }
     
-    // Button shapes for grouped appearance (24dp outer corners, 10dp inner, matches floating toolbar)
-    val leftButtonShape = RoundedCornerShape(12.dp)
-    val middleButtonShape = RoundedCornerShape(12.dp)
-    val rightButtonShape = RoundedCornerShape(12.dp)
 
     fun importImages(
         uris: List<Uri>,
@@ -2989,10 +2986,16 @@ private fun MinimalPickerContent(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Photos button - full width row
-                        MinimalFileButtonGroupedIconOnly(
-                            icon = Icons.Rounded.Image,
-                            shape = leftButtonShape,
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                        MinimalPickerItem(
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            title = stringResource(R.string.minimal_input_photos),
+                            subtitle = "Import images into the chat",
                             onClick = {
                                 imagePickerLauncher.launch(
                                     PickVisualMediaRequest(
@@ -3003,10 +3006,16 @@ private fun MinimalPickerContent(
                         )
 
                         // Files button - full width row
-                        MinimalFileButtonGroupedIconOnly(
-                            icon = Icons.Rounded.FolderOpen,
-                            shape = middleButtonShape,
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                        MinimalPickerItem(
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.FolderOpen,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            title = stringResource(R.string.minimal_input_files),
+                            subtitle = "Attach documents and files",
                             onClick = {
                                 filePickerLauncher.launch("*/*")
                             }
@@ -3015,10 +3024,16 @@ private fun MinimalPickerContent(
                         // Camera button - full width row
                         Box(modifier = Modifier.fillMaxWidth().height(56.dp)) {
                             PermissionManager(permissionState = cameraPermission) {
-                                MinimalFileButtonGroupedIconOnly(
-                                    icon = Icons.Rounded.CameraAlt,
-                                    shape = rightButtonShape,
-                                    modifier = Modifier.fillMaxSize(),
+                                MinimalPickerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.CameraAlt,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    },
+                                    title = stringResource(R.string.minimal_input_camera),
+                                    subtitle = "Capture a photo for the chat",
                                     onClick = {
                                         if (cameraPermission.allRequiredPermissionsGranted) {
                                             cameraOutputFile = context.cacheDir.resolve("camera_${Uuid.random()}.jpg")
@@ -3588,40 +3603,6 @@ private fun MinimalFileButtonGrouped(
 
 // Grouped file button icon-only variant (no text label) for compact picker display
 @Composable
-private fun MinimalFileButtonGroupedIconOnly(
-    icon: ImageVector,
-    shape: androidx.compose.ui.graphics.Shape,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val isDarkMode = me.lucid.domchat.ui.theme.LocalDarkMode.current
-    val buttonColor = domChatCardContainerColor()
-    
-    Surface(
-        onClick = onClick,
-        shape = shape,
-        color = buttonColor,
-        border = androidx.compose.foundation.BorderStroke(
-            0.5.dp,
-            if (isDarkMode) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
-        ),
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                tint = Color.White.copy(alpha = 0.65f)
-            )
-        }
-    }
-}
-
-@Composable
 private fun MinimalPickerItem(
     icon: @Composable () -> Unit,
     title: String,
@@ -3630,8 +3611,10 @@ private fun MinimalPickerItem(
 ) {
     val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val cardBg = domChatCardContainerColor()
+    val interactionSource = remember { MutableInteractionSource() }
     Surface(
         onClick = onClick,
+        interactionSource = interactionSource,
         color = cardBg,
         contentColor = if (isDark) Color(0xFFF2F2F7) else Color.White,
         shape = RoundedCornerShape(14.dp),
@@ -3641,34 +3624,34 @@ private fun MinimalPickerItem(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .height(64.dp)
+            .pressScale(interactionSource)
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .fillMaxSize()
+                .padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Box(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(26.dp),
                 contentAlignment = Alignment.Center
             ) {
                 icon()
             }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (isDark) Color(0xFFF2F2F7) else Color.White
+                    color = if (isDark) Color(0xFFF2F2F7) else Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isDark) Color.White.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.65f),
+                    color = Color.White.copy(alpha = 0.55f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

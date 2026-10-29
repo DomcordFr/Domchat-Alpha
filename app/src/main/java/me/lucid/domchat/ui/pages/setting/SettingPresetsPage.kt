@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -524,7 +525,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField
-                    )
+                    
+                        colors = appFieldColors(),)
                     OutlinedTextField(
                         value = draftDescription,
                         onValueChange = { draftDescription = it },
@@ -532,7 +534,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField
-                    )
+                    
+                        colors = appFieldColors(),)
                     OutlinedTextField(
                         value = draftContent,
                         onValueChange = { draftContent = it },
@@ -541,7 +544,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         maxLines = 8,
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField
-                    )
+                    
+                        colors = appFieldColors(),)
                     val estTokens = (draftContent.length / 3.8).roundToInt()
                     Text(
                         text = "Estimated tokens: ~$estTokens · ${draftContent.length} chars",

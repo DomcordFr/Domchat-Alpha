@@ -47,6 +47,9 @@ import me.lucid.domchat.data.datastore.NewChatContentStyle
 import me.lucid.domchat.data.datastore.NewChatHeaderStyle
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.ui.Greeting
+import me.lucid.domchat.ui.motion.EntranceDirection
+import me.lucid.domchat.ui.motion.LocalMotionPolicy
+import me.lucid.domchat.ui.motion.entrance
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.modifier.blurredContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
@@ -65,6 +68,7 @@ fun NewChatContent(
     onAvatarClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val motionPolicy = LocalMotionPolicy.current
     val continuePrompt = "*takes a breath and continues from the moment we paused...* "
     val describePrompt = "*looks around and describes the surrounding atmosphere and sensory details...* "
     val actionPrompt = "*steps forward with resolve and takes a decisive action...* "
@@ -141,25 +145,53 @@ fun NewChatContent(
                         icon = Icons.AutoMirrored.Rounded.MenuBook,
                         title = "Continue Story",
                         onClick = { onTemplateClick(continuePrompt) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .entrance(
+                                key = "newchat:tpl:0:Continue Story",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 0,
+                            )
                     )
                     TemplateCard(
                         icon = Icons.Rounded.AutoAwesome,
                         title = "Describe Scene",
                         onClick = { onTemplateClick(describePrompt) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .entrance(
+                                key = "newchat:tpl:1:Describe Scene",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 60,
+                            )
                     )
                     TemplateCard(
                         icon = Icons.Rounded.PlayArrow,
                         title = "Take Action",
                         onClick = { onTemplateClick(actionPrompt) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .entrance(
+                                key = "newchat:tpl:2:Take Action",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 120,
+                            )
                     )
                     TemplateCard(
                         icon = Icons.Rounded.Lightbulb,
                         title = "Inner Thoughts",
                         onClick = { onTemplateClick(thoughtsPrompt) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .entrance(
+                                key = "newchat:tpl:3:Inner Thoughts",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 180,
+                            )
                     )
                 }
             }
@@ -183,14 +215,26 @@ fun NewChatContent(
                             text = "Continue Story",
                             iconColor = primaryColor,
                             hasBackgroundImage = hasBackgroundImage,
-                            onClick = { onTemplateClick(continuePrompt) }
+                            onClick = { onTemplateClick(continuePrompt) },
+                            modifier = Modifier.entrance(
+                                key = "newchat:pill:0:Continue Story",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 0,
+                            )
                         )
                         ActionPill(
                             icon = Icons.Rounded.AutoAwesome,
                             text = "Describe Scene",
                             iconColor = brainstormColor,
                             hasBackgroundImage = hasBackgroundImage,
-                            onClick = { onTemplateClick(describePrompt) }
+                            onClick = { onTemplateClick(describePrompt) },
+                            modifier = Modifier.entrance(
+                                key = "newchat:pill:1:Describe Scene",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 60,
+                            )
                         )
                     }
 
@@ -203,14 +247,26 @@ fun NewChatContent(
                             text = "Take Action",
                             iconColor = secondaryColor,
                             hasBackgroundImage = hasBackgroundImage,
-                            onClick = { onTemplateClick(actionPrompt) }
+                            onClick = { onTemplateClick(actionPrompt) },
+                            modifier = Modifier.entrance(
+                                key = "newchat:pill:2:Take Action",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 120,
+                            )
                         )
                         ActionPill(
                             icon = Icons.Rounded.Lightbulb,
                             text = "Inner Thoughts",
                             iconColor = writeColor,
                             hasBackgroundImage = hasBackgroundImage,
-                            onClick = { onTemplateClick(thoughtsPrompt) }
+                            onClick = { onTemplateClick(thoughtsPrompt) },
+                            modifier = Modifier.entrance(
+                                key = "newchat:pill:3:Inner Thoughts",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = 180,
+                            )
                         )
                     }
                 }
@@ -228,7 +284,7 @@ private fun TemplateCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = MaterialTheme.colorScheme.surfaceContainer
+    val cardColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.78f)
 
     Card(
         onClick = onClick,

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -917,7 +918,7 @@ private fun EntryEditorSheet(
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState,
@@ -1609,7 +1610,7 @@ private fun AssistantLorebookToggleSheet(
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         sheetState = sheetState,

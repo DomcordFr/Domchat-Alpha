@@ -100,6 +100,7 @@ import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.OutlinedNumberInput
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import me.lucid.domchat.ui.components.ui.Tag
+import me.lucid.domchat.ui.components.ui.listItemShape
 import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.data.ai.models.ttsProviderIconUri
 import me.lucid.domchat.ui.context.LocalTTSState
@@ -107,6 +108,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.pages.setting.components.TTSProviderConfigure
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.domchat.ui.pages.setting.components.TTSProviderIcon
@@ -237,6 +239,7 @@ private fun DetailTabButton(
     Box(
         modifier = Modifier
             .clip(CircleShape)
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             .then(
                 if (selected) {
                     Modifier.background(Color(0xFF000000))
@@ -278,6 +281,10 @@ private fun TtsProviderConfigTab(
                     } else {
                         Color(0xFF000000)
                     }
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    0.5.dp,
+                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 )
             ) {
                 TTSProviderConfigure(
@@ -580,7 +587,8 @@ private fun TtsVoiceRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(0.dp))
+                .clip(position.listItemShape())
+                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, position.listItemShape())
                 .background(Color(0xFF000000))
                 .clickable(onClick = onEdit)
                 .padding(12.dp),
@@ -633,7 +641,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
             item {
                 OutlinedTextField(
@@ -642,7 +651,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Provider voice id") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
             item {
                 OutlinedTextField(
@@ -651,7 +661,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Locale") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
             if (provider is TTSProviderSetting.SystemTTS) {
                 item {
@@ -661,7 +672,8 @@ private fun VoiceEditorSheet(
                         label = { Text("Engine package") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField,
-                    )
+                    
+                    colors = appFieldColors(),)
                 }
             }
             item {
@@ -687,7 +699,8 @@ private fun VoiceEditorSheet(
                     label = { Text("Model override") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
             if (provider is TTSProviderSetting.MiniMax) {
                 item {
@@ -697,7 +710,8 @@ private fun VoiceEditorSheet(
                         label = { Text("Emotion") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField,
-                    )
+                    
+                    colors = appFieldColors(),)
                 }
             }
             if (provider is TTSProviderSetting.Qwen) {
@@ -708,7 +722,8 @@ private fun VoiceEditorSheet(
                         label = { Text("Language type") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.InputField,
-                    )
+                    
+                    colors = appFieldColors(),)
                 }
             }
             item {
@@ -947,7 +962,8 @@ private fun ProviderVoicesFab(
                 placeholder = { Text("Try name, id, locale, or engine") },
                 singleLine = true,
                 shape = AppShapes.SearchField,
-            )
+            
+            colors = appFieldColors(),)
         }
     }
 }
@@ -1022,7 +1038,8 @@ private fun ManualVoiceSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = AppShapes.InputField,
                 singleLine = true,
-            )
+            
+            colors = appFieldColors(),)
             OutlinedTextField(
                 value = voiceId,
                 onValueChange = { voiceId = it },
@@ -1030,7 +1047,8 @@ private fun ManualVoiceSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = AppShapes.InputField,
                 singleLine = true,
-            )
+            
+            colors = appFieldColors(),)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
                 TextButton(

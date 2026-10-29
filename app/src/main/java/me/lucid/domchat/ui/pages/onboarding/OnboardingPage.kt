@@ -118,6 +118,7 @@ import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.pages.setting.components.ProviderPreset
+import me.lucid.domchat.ui.pages.setting.components.NANO_GPT_PRESET
 import me.lucid.domchat.ui.pages.setting.components.SecureOutlinedTextField
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.toProviderSetting
@@ -135,9 +136,19 @@ fun OnboardingPage(vm: OnboardingVM = koinViewModel()) {
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val providerPresets = remember(snapshot) { vm.providerPresets(snapshot) }
     val guidedProviderPresets = remember(providerPresets) {
-        providerPresets
+        val recommended = providerPresets
             .filter { it.setupRecommended }
             .sortedBy { it.setupOrder }
+        val hasNano = recommended.any { it.baseUrl.contains("nano-gpt.com") }
+        if (hasNano || recommended.any { it.name.equals("NanoGPT", ignoreCase = true) }) {
+            recommended
+        } else {
+            recommended + NANO_GPT_PRESET.copy(
+                setupRecommended = true,
+                setupOrder = 3,
+                setupDescription = "Privacy-first nano billing for many hosted models",
+            )
+        }
     }
     val pageHistory = remember { mutableStateListOf(SetupPage.Intro) }
     val page = pageHistory.last()
@@ -1441,11 +1452,30 @@ private fun GuidedProviderCard(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AutoAIIconWithUrl(
-                name = provider.name,
-                customIconUri = provider.customIconUri,
-                modifier = Modifier.size(46.dp),
-            )
+            if (provider.name.equals("NanoGPT", ignoreCase = true) || provider.baseUrl.contains("nano-gpt.com")) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(AppShapes.CardMedium)
+                        .background(Color(0xFF000000))
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardMedium)
+                        .padding(9.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.nanogpt_logo),
+                        contentDescription = null,
+                        tint = Color(0xFFFFFFFF),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            } else {
+                AutoAIIconWithUrl(
+                    name = provider.name,
+                    customIconUri = provider.customIconUri,
+                    modifier = Modifier.size(46.dp),
+                )
+            }
             Text(
                 text = provider.name,
                 style = MaterialTheme.typography.titleLarge,

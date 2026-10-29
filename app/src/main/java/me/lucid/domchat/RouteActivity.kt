@@ -34,6 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 
 import me.lucid.domchat.ui.components.ui.AppToasterHost
+import me.lucid.domchat.ui.components.ui.SplashRevealOverlay
 import me.lucid.domchat.ui.components.ui.ToastAction
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.rememberAppToasterState
@@ -1379,6 +1380,8 @@ class RouteActivity : ComponentActivity() {
                 }
                 // Toast host must be last so it renders on top of all content
                 AppToasterHost(state = toastState)
+                // Brand splash sits above everything and fades itself out on start.
+                SplashRevealOverlay()
                 }
             }
         }

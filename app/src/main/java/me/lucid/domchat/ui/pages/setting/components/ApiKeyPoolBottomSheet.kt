@@ -75,6 +75,7 @@ import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -584,7 +585,8 @@ private fun ApiKeyEditDialog(
                     singleLine = true,
                     shape = AppShapes.InputField,
                     modifier = Modifier.fillMaxWidth(),
-                )
+                
+                colors = appFieldColors(),)
 
                 OutlinedTextField(
                     value = key,
@@ -604,7 +606,8 @@ private fun ApiKeyEditDialog(
                             )
                         }
                     }
-                )
+                
+                    colors = appFieldColors(),)
             }
         },
         confirmButton = {

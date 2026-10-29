@@ -361,8 +361,8 @@ fun ColumnScope.VoiceList(
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                     .border(
-                        width = 1.dp,
-                        color = borderOutlineColor,
+                        width = 0.5.dp,
+                        brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                         shape = searchFieldShape,
                     ),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -595,6 +595,11 @@ private fun VoiceItem(
             .fillMaxWidth()
             .clip(shape)
             .background(containerColor)
+            .border(
+                width = 0.5.dp,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                shape = shape,
+            )
             .combinedClickable(
                 enabled = true,
                 onClick = { onSelect(voice) },

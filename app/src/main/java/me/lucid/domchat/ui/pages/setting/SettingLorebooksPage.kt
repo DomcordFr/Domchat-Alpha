@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -97,6 +98,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.PremiumHaptics
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
@@ -614,7 +616,7 @@ internal fun LorebookCreatorSheet(
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape),
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
         dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -683,7 +685,8 @@ internal fun LorebookCreatorSheet(
                         singleLine = true,
                         placeholder = { Text(stringResource(R.string.lorebooks_page_name_placeholder)) },
                         shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    )
+                    
+                    colors = appFieldColors(),)
                 }
             }
 
@@ -698,7 +701,8 @@ internal fun LorebookCreatorSheet(
                         .height(100.dp),
                     placeholder = { Text(stringResource(R.string.lorebooks_page_description_placeholder)) },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
 
             Row(

@@ -53,6 +53,9 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import me.lucid.domchat.ui.motion.EntranceDirection
+import me.lucid.domchat.ui.motion.LocalMotionPolicy
+import me.lucid.domchat.ui.motion.entrance
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -336,6 +339,15 @@ private fun SharedTransitionScope.ChatListNormal(
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val scope = rememberCoroutineScope()
+    val motionPolicy = LocalMotionPolicy.current
+    // Entrance window: only the first paint after opening this chat animates
+    // the visible turns; afterwards only brand-new last turns animate, so
+    // scrolling through history never pops items.
+    val entranceOpen = remember(conversation.id) { mutableStateOf(true) }
+    LaunchedEffect(conversation.id) {
+        kotlinx.coroutines.delay(600)
+        entranceOpen.value = false
+    }
     val loadingState by rememberUpdatedState(loading)
     var isRecentScroll by remember { mutableStateOf(false) }
     var followStreamingBottom by remember { mutableStateOf(true) }
@@ -663,7 +675,15 @@ private fun SharedTransitionScope.ChatListNormal(
                         }
                     },
                 ) { index, group ->
-                    Column {
+                    Column(
+                        modifier = Modifier.entrance(
+                            key = "${conversation.id}:turn:${group.firstNode.id}",
+                            motionPolicy = motionPolicy,
+                            from = EntranceDirection.UP,
+                            delayMs = (displayGroups.lastIndex - index).coerceAtLeast(0) * 40,
+                            allow = entranceOpen.value || index == displayGroups.lastIndex,
+                        )
+                    ) {
                         // Check if any node in group is selected
                         val isSelected = remember(group, selectedItems, selecting) {
                             selecting && group.nodes.any { selectedItems.contains(it.id) }

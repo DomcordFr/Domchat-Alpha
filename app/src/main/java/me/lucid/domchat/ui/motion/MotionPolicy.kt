@@ -10,11 +10,15 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
@@ -23,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavBackStackEntry
 import me.lucid.domchat.Screen
@@ -44,6 +50,37 @@ data class MotionPolicy(
     val speedFactor: Float = 1.0f
 ) {
     fun duration(baseMs: Int): Int = (baseMs * speedFactor).toInt().coerceAtLeast(1)
+
+    /** Spring stiffness for press feedback, slowed down for slower system animation scale. */
+    fun pressStiffness(base: Float): Float = (base / speedFactor).coerceAtLeast(50f)
+}
+
+/**
+ * Shared press feedback for tappable cards, rows and actions: one spring
+ * across the app so touch-down reads as a single consistent motion.
+ * Transform-only (graphicsLayer scale → no layout/draw work), skipped
+ * entirely under reduce motion.
+ */
+@Composable
+fun Modifier.pressScale(
+    interactionSource: InteractionSource,
+    pressedScale: Float = 0.97f,
+): Modifier {
+    val motionPolicy = LocalMotionPolicy.current
+    if (motionPolicy.reduceMotion) return this
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) pressedScale else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.55f,
+            stiffness = motionPolicy.pressStiffness(400f)
+        ),
+        label = "pressScale",
+    )
+    return this.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
 }
 
 val LocalMotionPolicy = compositionLocalOf { MotionPolicy(reduceMotion = false) }

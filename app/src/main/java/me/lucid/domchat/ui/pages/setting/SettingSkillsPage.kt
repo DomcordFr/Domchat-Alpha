@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.Input
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Archive
@@ -53,6 +55,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -111,6 +114,7 @@ import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
@@ -782,7 +786,7 @@ fun SkillEditorSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = false,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape),
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {
@@ -1094,50 +1098,74 @@ fun SkillEditorSheet(
                             onValueChange = { depth = it.filter(Char::isDigit) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
-                        )
+                        
+                            colors = appFieldColors(),)
                     }
                 }
             }
 
+            HorizontalDivider(color = Color.White.copy(alpha = 0.12f))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (isEditing) {
-                        TextButton(onClick = { showExportDialog = true }) {
-                            Text(stringResource(R.string.export_label))
-                        }
+                if (isEditing) {
+                    TextButton(onClick = { showExportDialog = true }) {
+                        Text(stringResource(R.string.export_label))
                     }
-                    TextButton(
-                        onClick = {
-                            val base = packageSkillMetadata ?: skill ?: Skill()
-                            val availableIds = if (availableForAllAssistants) emptySet() else availableAssistantIds
-                            val savedSkill = base.copy(
-                                name = name.trim(),
-                                description = description.trim(),
-                                icon = icon,
-                                instructions = instructions,
-                                enabled = true,
-                                alwaysEnabled = alwaysEnabled,
-                                disableModelInvocation = disableModelInvocation,
-                                userInvocable = userInvocable,
-                                injectionPosition = injectionPosition,
-                                depth = depth.toIntOrNull()?.coerceAtLeast(0) ?: 0,
-                                availableForAllAssistants = availableForAllAssistants,
-                                availableAssistantIds = availableIds,
-                                updatedAt = System.currentTimeMillis()
-                            )
-                            if (skillMdEditedDirectly && onSavePreservingPackage != null) {
-                                onSavePreservingPackage(savedSkill)
-                            } else {
-                                onSave(savedSkill)
-                            }
+                }
+                Surface(
+                    onClick = {
+                        val base = packageSkillMetadata ?: skill ?: Skill()
+                        val availableIds = if (availableForAllAssistants) emptySet() else availableAssistantIds
+                        val savedSkill = base.copy(
+                            name = name.trim(),
+                            description = description.trim(),
+                            icon = icon,
+                            instructions = instructions,
+                            enabled = true,
+                            alwaysEnabled = alwaysEnabled,
+                            disableModelInvocation = disableModelInvocation,
+                            userInvocable = userInvocable,
+                            injectionPosition = injectionPosition,
+                            depth = depth.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+                            availableForAllAssistants = availableForAllAssistants,
+                            availableAssistantIds = availableIds,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        haptics.perform(HapticPattern.Success)
+                        if (skillMdEditedDirectly && onSavePreservingPackage != null) {
+                            onSavePreservingPackage(savedSkill)
+                        } else {
+                            onSave(savedSkill)
                         }
+                    },
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                    color = Color(0xFF000000),
+                    contentColor = Color(0xFFF2F2F7),
+                    border = androidx.compose.foundation.BorderStroke(
+                        0.5.dp,
+                        LiquidGlassTokens.SpecularBorderBrush
+                    ),
+                    modifier = Modifier.height(48.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 22.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = stringResource(if (isEditing) R.string.save else R.string.create),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -1454,7 +1482,8 @@ private fun SkillPackageTextEditorDialog(
                     fontFamily = FontFamily.Monospace,
                     lineHeight = 19.sp,
                 ),
-            )
+            
+            colors = appFieldColors(),)
         },
         confirmButton = {
             TextButton(onClick = { onSave(content) }) {
@@ -1508,7 +1537,8 @@ private fun AddSkillPackageFileDialog(
                     isError = pathInvalid,
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                )
+                
+                colors = appFieldColors(),)
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
@@ -1517,7 +1547,8 @@ private fun AddSkillPackageFileDialog(
                         .height(240.dp),
                     label = { Text("Content") },
                     textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                )
+                
+                colors = appFieldColors(),)
             }
         },
         confirmButton = {
@@ -1593,7 +1624,7 @@ private fun SkillExportDialog(
 
         shape = sheetShape,
         onDismissRequest = onDismiss,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape),
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
         dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
     ) {
         Column(

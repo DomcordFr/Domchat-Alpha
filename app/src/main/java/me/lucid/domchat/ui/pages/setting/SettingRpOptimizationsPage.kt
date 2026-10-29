@@ -1,6 +1,8 @@
 package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.appFilterChipColors
+import me.lucid.domchat.ui.theme.appFilterChipBorder
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -263,10 +265,8 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color.White.copy(alpha = 0.18f),
-                                        selectedLabelColor = if (isDark) Color.White else Color(0xFFFFFFFF)
-                                    )
+                                    colors = appFilterChipColors(selected = existing != null && existing.enabled),
+                                    border = appFilterChipBorder(selected = existing != null && existing.enabled)
                                 )
                             }
                         }
@@ -545,7 +545,9 @@ private fun RpStyleRuleDialog(
                                 green = (c.green * 255).toInt()
                                 blue = (c.blue * 255).toInt()
                             },
-                            label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+                            label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                            colors = appFilterChipColors(selected = pattern == presetPat),
+                            border = appFilterChipBorder(selected = pattern == presetPat)
                         )
                     }
                 }

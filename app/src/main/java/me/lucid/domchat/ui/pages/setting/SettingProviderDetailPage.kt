@@ -1,6 +1,8 @@
 package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.appSegmentedButtonColors
+import me.lucid.domchat.ui.theme.appFieldColors
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -1290,7 +1292,8 @@ private fun LocalHuggingFaceInstallFab(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
@@ -1405,7 +1408,8 @@ private fun ModelSettingsForm(
                             },
                             enabled = true,
                             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                        )
+                        
+                        colors = appFieldColors(),)
 
                         // Display name with catalog icon preview
                         Row(
@@ -1444,7 +1448,8 @@ private fun ModelSettingsForm(
                                     }
                                 },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            )
+                            
+                            colors = appFieldColors(),)
                         }
 
                         ModelTypeSelector(
@@ -2312,7 +2317,8 @@ private fun ModelPicker(
                     },
                     singleLine = true,
                     shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                )
+                
+                colors = appFieldColors(),)
             }
         }
     }
@@ -2784,6 +2790,7 @@ private fun ModelTypeSelector(
         ModelType.entries.forEachIndexed { index, type ->
             SegmentedButton(
                 shape = SegmentedButtonDefaults.itemShape(index, ModelType.entries.size),
+                colors = appSegmentedButtonColors(),
                 label = {
                     Text(
                         text = stringResource(
@@ -2828,6 +2835,7 @@ private fun ImageGenerationMethodSelector(
         ImageGenerationMethod.entries.forEachIndexed { index, method ->
             SegmentedButton(
                 shape = SegmentedButtonDefaults.itemShape(index, ImageGenerationMethod.entries.size),
+                colors = appSegmentedButtonColors(),
                 label = {
                     Text(
                         text = stringResource(
@@ -2885,6 +2893,7 @@ private fun ModelModalitySelector(
                 SegmentedButton(
                     checked = modality in inputModalities,
                     shape = SegmentedButtonDefaults.itemShape(index, selectableInputModalities.size),
+                    colors = appSegmentedButtonColors(),
                     onCheckedChange = {
                         if (it) {
                             onUpdateInputModalities(inputModalities + modality)
@@ -2917,6 +2926,7 @@ private fun ModelModalitySelector(
                 SegmentedButton(
                     checked = modality in outputModalities,
                     shape = SegmentedButtonDefaults.itemShape(index, selectableOutputModalities.size),
+                    colors = appSegmentedButtonColors(),
                     onCheckedChange = {
                         if (it) {
                             onUpdateOutputModalities(outputModalities + modality)
@@ -2956,6 +2966,7 @@ fun ModalAbilitySelector(
             SegmentedButton(
                 checked = ability in abilities,
                 shape = SegmentedButtonDefaults.itemShape(index, ModelAbility.entries.size),
+                colors = appSegmentedButtonColors(),
                 onCheckedChange = {
                     if (it) {
                         onUpdateAbilities(abilities + ability)
@@ -3070,7 +3081,8 @@ private fun LocalLiteRtModelIdentitySheet(
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                )
+                
+                colors = appFieldColors(),)
             }
 
             Row(
@@ -3512,7 +3524,8 @@ private fun ModelSttOptionsForm(
             supportingText = { Text(stringResource(R.string.setting_provider_page_stt_language_desc)) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
         OutlinedTextField(
             value = options.prompt,
             onValueChange = { onUpdate(options.copy(prompt = it)) },
@@ -3520,7 +3533,8 @@ private fun ModelSttOptionsForm(
             supportingText = { Text(stringResource(R.string.setting_provider_page_stt_prompt_desc)) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
         OutlinedTextField(
             value = options.responseFormat,
             onValueChange = { onUpdate(options.copy(responseFormat = it)) },
@@ -3528,6 +3542,7 @@ private fun ModelSttOptionsForm(
             supportingText = { Text(stringResource(R.string.setting_provider_page_stt_response_format_desc)) },
             modifier = Modifier.fillMaxWidth(),
             shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-        )
+        
+        colors = appFieldColors(),)
     }
 }

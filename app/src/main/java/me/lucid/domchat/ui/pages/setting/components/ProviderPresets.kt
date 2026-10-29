@@ -46,6 +46,8 @@ val NANO_GPT_PRESET = ProviderPreset(
     description = "Privacy-first nano billing for many hosted models",
     type = ProviderSetting.OpenAI::class,
     baseUrl = "https://nano-gpt.com/api/v1",
+    signupUrl = "https://nano-gpt.com/signup",
+    apiKeyUrl = "https://nano-gpt.com/api-keys",
 )
 
 val FALLBACK_PROVIDER_PRESETS = listOf(
