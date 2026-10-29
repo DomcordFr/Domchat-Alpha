@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -341,7 +342,7 @@ fun SettingChatsPage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .domChatBlurEffect(Color(0xFF000000), RoundedCornerShape(18.dp)),
+                        .background(Color(0xFF000000), RoundedCornerShape(18.dp)),
                     shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
@@ -443,7 +444,9 @@ fun SettingChatsPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(cardShape)
-                                .domChatBlurEffect(containerColor = cardBg, shape = cardShape)
+                                // Solid black plate: blur behind black is invisible, so skip
+                                // the per-row hazeEffect and its RenderEffect churn entirely.
+                                .background(cardBg, cardShape)
                                 .combinedClickable(
                                     onClick = {
                                         if (isSelectionMode) {
