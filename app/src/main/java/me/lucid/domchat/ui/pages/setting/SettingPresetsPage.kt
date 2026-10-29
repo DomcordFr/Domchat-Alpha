@@ -524,8 +524,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         label = { Text("Name") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = AppShapes.InputField
-                    
+                        shape = AppShapes.InputField,
                         colors = appFieldColors(),
                     )
                     OutlinedTextField(
@@ -534,8 +533,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         label = { Text("Description (Optional)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = AppShapes.InputField
-                    
+                        shape = AppShapes.InputField,
                         colors = appFieldColors(),
                     )
                     OutlinedTextField(
@@ -545,8 +543,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         minLines = 4,
                         maxLines = 8,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = AppShapes.InputField
-                    
+                        shape = AppShapes.InputField,
                         colors = appFieldColors(),
                     )
                     val estTokens = (draftContent.length / 3.8).roundToInt()

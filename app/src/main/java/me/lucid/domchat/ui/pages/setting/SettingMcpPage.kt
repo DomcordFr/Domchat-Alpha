@@ -577,7 +577,6 @@ private fun McpConnectionsSheet(
                     { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = iconColor) } }
                 } else null,
                 placeholder = { Text("Search connections", color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.65f)) },
-            
                 colors = appFieldColors(),
             )
             Spacer(Modifier.height(16.dp))
@@ -1051,7 +1050,6 @@ private fun McpCommonOptionsConfigure(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.setting_mcp_page_name_placeholder)) },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            
             colors = appFieldColors(),
             )
         }
@@ -1157,7 +1155,6 @@ private fun McpCommonOptionsConfigure(
                     )
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            
             colors = appFieldColors(),
             )
         }
@@ -1209,7 +1206,6 @@ private fun McpCommonOptionsConfigure(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_name_placeholder)) },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            
                             colors = appFieldColors(),
                             )
                             Spacer(Modifier.height(8.dp))
@@ -1236,7 +1232,6 @@ private fun McpCommonOptionsConfigure(
                                 modifier = Modifier.fillMaxWidth(),
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_value_placeholder)) },
                                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            
                             colors = appFieldColors(),
                             )
                         }
@@ -1459,7 +1454,6 @@ private fun McpImportModal(
                     }
                 },
                 shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-            
             colors = appFieldColors(),
             )
             Row(

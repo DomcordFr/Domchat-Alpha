@@ -605,7 +605,7 @@ private fun ApiKeyEditDialog(
                                 tint = Color.White.copy(alpha = 0.65f)
                             )
                         }
-                    }
+                    },
                     colors = appFieldColors(),
                 )
             }

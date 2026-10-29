@@ -279,7 +279,6 @@ fun SettingChatsPage(
                     singleLine = true,
                     shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
                     colors = appFieldColors(),
-                    ,
                     modifier = Modifier.fillMaxWidth()
                 )
 

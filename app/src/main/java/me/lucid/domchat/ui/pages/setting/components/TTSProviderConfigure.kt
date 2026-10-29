@@ -256,7 +256,7 @@ private fun OpenAITTSConfiguration(
                             }
                         }
                     }
-                }
+                },
                 colors = appFieldColors(),
             )
             
@@ -518,7 +518,7 @@ private fun MiniMaxTTSConfiguration(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                label = stringResource(R.string.setting_tts_page_speed)
+                label = stringResource(R.string.setting_tts_page_speed),
                 colors = appFieldColors(),
             )
         }
@@ -724,7 +724,7 @@ private fun SystemTTSConfiguration(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            label = stringResource(R.string.setting_tts_page_speech_rate)
+            label = stringResource(R.string.setting_tts_page_speech_rate),
             colors = appFieldColors(),
         )
     }
@@ -742,7 +742,7 @@ private fun SystemTTSConfiguration(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            label = stringResource(R.string.setting_tts_page_pitch)
+            label = stringResource(R.string.setting_tts_page_pitch),
             colors = appFieldColors(),
         )
     }
@@ -1149,7 +1149,7 @@ private fun FishAudioTTSConfiguration(
                     onValueChange(setting.copy(speed = newSpeed))
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
             colors = appFieldColors(),
         )
     }

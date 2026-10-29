@@ -1097,7 +1097,7 @@ fun SkillEditorSheet(
                             value = depth,
                             onValueChange = { depth = it.filter(Char::isDigit) },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                             colors = appFieldColors(),
                         )
                     }

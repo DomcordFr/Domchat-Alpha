@@ -1613,7 +1613,7 @@ internal fun CommonOptionsDialog(
                             )
                             onUpdate(commonOptions)
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                         colors = appFieldColors(),
                     )
                 }

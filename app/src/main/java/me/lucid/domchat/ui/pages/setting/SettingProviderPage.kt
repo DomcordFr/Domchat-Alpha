@@ -434,7 +434,6 @@ fun SettingProviderPage(
                     }
                 } else null,
                 colors = appFieldColors(),
-            colors = appFieldColors(),
             )
             
             // Tag filter row - only show when there are tags
@@ -616,7 +615,6 @@ private fun SearchBarWithToggle(
                 }
             } else null,
             colors = appFieldColors(),
-        colors = appFieldColors(),
         )
         IconButton(onClick = onToggleViewMode) {
             Icon(
@@ -1451,7 +1449,6 @@ private fun AddButton(
                         }
                     } else null,
                     colors = appFieldColors(),
-                colors = appFieldColors(),
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
