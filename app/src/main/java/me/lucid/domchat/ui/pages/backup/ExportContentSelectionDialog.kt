@@ -430,6 +430,5 @@ onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
         },
-        shape = AppShapes.SettingDialog,
     )
 }
