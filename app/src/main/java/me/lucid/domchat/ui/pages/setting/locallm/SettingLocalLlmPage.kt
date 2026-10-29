@@ -99,6 +99,7 @@ import me.lucid.domchat.ui.pages.setting.localstt.SherpaModelDragHandle
 import me.lucid.domchat.ui.pages.setting.localstt.SherpaModelSettingsSheet
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.appFieldColors
+import me.lucid.domchat.ui.theme.appSegmentedButtonColors
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -992,6 +993,7 @@ private fun ModelSettingsSheet(
                         selected = config.accelerator == acc,
                         onClick = { push(config.copy(accelerator = acc)) },
                         shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                        colors = appSegmentedButtonColors(),
                     ) {
                         Text(acc.name.lowercase().replaceFirstChar { it.uppercase() })
                     }

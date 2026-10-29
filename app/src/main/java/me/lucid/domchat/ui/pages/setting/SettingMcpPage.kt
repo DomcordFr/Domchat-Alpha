@@ -539,7 +539,6 @@ private fun McpConnectionsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        sheetGesturesEnabled = false,
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
         modifier = Modifier.border(
@@ -885,7 +884,6 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
                 state.dismiss()
             },
             sheetState = sheetState,
-            sheetGesturesEnabled = false,
             dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {

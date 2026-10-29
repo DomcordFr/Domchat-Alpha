@@ -626,7 +626,6 @@ contentColor = Color(0xFFF2F2F7),
                 editingService = null
             },
             sheetState = bottomSheetState,
-            sheetGesturesEnabled = false,
             dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {
@@ -1028,7 +1027,6 @@ private fun SearchServiceEditorSheet(
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
-        sheetGesturesEnabled = false,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {
@@ -1162,7 +1160,6 @@ contentColor = Color(0xFFF2F2F7),
                 showBottomSheet = false
             },
             sheetState = bottomSheetState,
-            sheetGesturesEnabled = false,
             dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {

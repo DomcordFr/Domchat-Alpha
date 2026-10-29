@@ -785,7 +785,6 @@ fun SkillEditorSheet(
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        sheetGesturesEnabled = false,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(

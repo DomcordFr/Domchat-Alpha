@@ -3108,7 +3108,6 @@ private fun ModelCard(
                     dialogState.dismiss()
                 },
                 sheetState = sheetState,
-                sheetGesturesEnabled = false,
                 dragHandle = null,
             ) {
                 Column(

@@ -909,7 +909,6 @@ private fun EntryEditorSheet(
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState,
-        sheetGesturesEnabled = false,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {
@@ -1601,7 +1600,6 @@ private fun AssistantLorebookToggleSheet(
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        sheetGesturesEnabled = false,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
                 modifier = Modifier.clickable {

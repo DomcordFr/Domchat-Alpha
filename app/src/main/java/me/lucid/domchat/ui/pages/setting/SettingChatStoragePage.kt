@@ -789,7 +789,6 @@ fun SettingChatStoragePage(
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         ModalBottomSheet(
             onDismissRequest = { showEmbeddingCacheInspector = false },
-            sheetGesturesEnabled = false,
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
