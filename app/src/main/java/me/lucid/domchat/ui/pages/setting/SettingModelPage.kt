@@ -199,8 +199,7 @@ private fun DefaultTtsVoiceSetting(
                             )
                         )
                     }
-                )
-                )
+                }
             }
         }
     )
