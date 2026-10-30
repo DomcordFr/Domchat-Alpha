@@ -226,7 +226,7 @@ fun ChatDrawerContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    val headerActionColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    val headerActionColor = Color(0xFF000000).copy(alpha = 0.15f)
                     UIAvatar(
                         name = displayName,
                         value = activePersona.avatar,
@@ -607,7 +607,7 @@ fun CollapsedChatSideRail(
             .statusBarsPadding()
             .padding(start = 8.dp, top = 8.dp, bottom = 8.dp),
         shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = Color(0xFF000000).copy(alpha = 0.15f),
         tonalElevation = 1.dp,
     ) {
         Column(
@@ -621,7 +621,7 @@ fun CollapsedChatSideRail(
                 icon = { Icon(Icons.Rounded.ChevronRight, null) },
                 label = { Text(stringResource(R.string.activity_timeline_expand)) },
                 onClick = onExpand,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                containerColor = Color(0xFF000000).copy(alpha = 0.15f),
                 size = 48.dp
             )
             Column(
@@ -632,7 +632,7 @@ fun CollapsedChatSideRail(
                     icon = { Icon(Icons.Rounded.Image, null) },
                     label = { Text(stringResource(R.string.chat_drawer_imagine)) },
                     onClick = onOpenImageGen,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor = Color(0xFF000000).copy(alpha = 0.15f),
                     shape = RoundedCornerShape(10.dp),
                     size = 48.dp
                 )
@@ -640,7 +640,7 @@ fun CollapsedChatSideRail(
                     icon = { DomChatBarChartIcon(contentDescription = null) },
                     label = { Text(stringResource(R.string.menu_statistics_title)) },
                     onClick = onOpenStatistics,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor = Color(0xFF000000).copy(alpha = 0.15f),
                     shape = RoundedCornerShape(10.dp),
                     size = 48.dp
                 )
@@ -671,7 +671,7 @@ fun CollapsedChatSideRail(
                 icon = { DomChatSettingsIcon(contentDescription = null) },
                 label = { Text(stringResource(R.string.settings)) },
                 onClick = onOpenSettings,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                containerColor = Color(0xFF000000).copy(alpha = 0.15f),
                 size = 48.dp
             )
         }
@@ -684,7 +684,7 @@ private fun DrawerAction(
     icon: @Composable () -> Unit,
     label: @Composable () -> Unit,
     onClick: () -> Unit,
-    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    containerColor: Color = Color(0xFF000000).copy(alpha = 0.15f),
     border: androidx.compose.foundation.BorderStroke? = null,
     shape: Shape = CircleShape,
     size: Dp = 42.dp,

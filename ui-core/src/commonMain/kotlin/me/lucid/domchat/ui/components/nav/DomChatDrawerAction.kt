@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 
 /** The production drawer action Surface and press motion shared by Android and iOS. */
 @Composable
@@ -32,7 +33,7 @@ fun DomChatDrawerAction(
     onClick: () -> Unit,
     onHaptic: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    containerColor: Color = Color(0xFF000000).copy(alpha = 0.12f),
     border: androidx.compose.foundation.BorderStroke? = null,
     shape: Shape = CircleShape,
     size: Dp = 42.dp,
@@ -55,7 +56,12 @@ fun DomChatDrawerAction(
             onHaptic()
             onClick()
         },
-        modifier = modifier.graphicsLayer {
+        modifier = modifier
+            .domChatBlurEffect(
+                containerColor = Color(0xFF000000).copy(alpha = 0.08f),
+                shape = shape
+            )
+            .graphicsLayer {
             scaleX = scale
             scaleY = scale
             this.alpha = alpha
