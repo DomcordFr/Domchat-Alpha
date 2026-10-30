@@ -680,7 +680,7 @@ private fun SharedTransitionScope.ChatListNormal(
                             key = "${conversation.id}:turn:${group.firstNode.id}",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = (displayGroups.lastIndex - index).coerceAtLeast(0) * 40,
+                            delayMs = (displayGroups.lastIndex - index).coerceAtLeast(0) * 70,
                             allow = entranceOpen.value || index == displayGroups.lastIndex,
                         )
                     ) {

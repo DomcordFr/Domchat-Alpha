@@ -2539,8 +2539,13 @@ private fun ToolApprovalCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = Color(0xFF000000),
-                    modifier = Modifier.size(34.dp)
+                    color = Color(0xFF000000).copy(alpha = 0.15f),
+                    modifier = Modifier
+                        .size(34.dp)
+                        .domChatBlurEffect(
+                            containerColor = Color(0xFF000000).copy(alpha = 0.10f),
+                            shape = CircleShape
+                        )
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -2571,9 +2576,14 @@ private fun ToolApprovalCard(
             if (summary.isNotBlank()) {
                 Surface(
                     shape = RoundedCornerShape(18.dp),
-                    color = Color(0xFF000000),
+                    color = Color(0xFF000000).copy(alpha = 0.15f),
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .domChatBlurEffect(
+                            containerColor = Color(0xFF000000).copy(alpha = 0.10f),
+                            shape = RoundedCornerShape(18.dp)
+                        )
                 ) {
                     Text(
                         text = summary,
@@ -2913,9 +2923,15 @@ private fun MinimalPickerContent(
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF000000),
+            color = Color(0xFF000000).copy(alpha = 0.12f),
             border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 2.dp)
+                .domChatBlurEffect(
+                    containerColor = Color(0xFF000000).copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(16.dp)
+                )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(4.dp),

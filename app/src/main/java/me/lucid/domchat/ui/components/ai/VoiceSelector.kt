@@ -363,8 +363,37 @@ fun ColumnScope.VoiceList(
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                     .clip(searchFieldShape)
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, searchFieldShape),
-                colors = me.lucid.domchat.ui.theme.appFieldColors(),
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, searchFieldShape)
+                    .domChatBlurEffect(
+                        containerColor = Color(0xFF000000).copy(alpha = 0.12f),
+                        shape = searchFieldShape
+                    ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    disabledTextColor = Color(0xFF8A8A96),
+                    cursorColor = Color(0xFFF2F2F7),
+                    errorCursorColor = Color(0xFFEF4444),
+                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    disabledBorderColor = Color.White.copy(alpha = 0.06f),
+                    errorBorderColor = Color(0xFFEF4444),
+                    focusedLabelColor = Color(0xFFF2F2F7),
+                    unfocusedLabelColor = Color(0xFF8A8A96),
+                    focusedPlaceholderColor = Color(0xFF8A8A96),
+                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                    disabledPlaceholderColor = Color(0xFF8A8A96),
+                    focusedLeadingIconColor = Color(0xFF8A8A96),
+                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                    focusedTrailingIconColor = Color(0xFF8A8A96),
+                    unfocusedTrailingIconColor = Color(0xFF8A8A96),
+                    focusedSupportingTextColor = Color(0xFF8A8A96),
+                    unfocusedSupportingTextColor = Color(0xFF8A8A96),
+                    errorSupportingTextColor = Color(0xFFEF4444),
+                ),
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 placeholder = { Text("Search voices") },
                 maxLines = 1,
@@ -441,13 +470,18 @@ fun ColumnScope.VoiceList(
                             color = if (isActive) {
                                 Color.White.copy(alpha = 0.18f)
                             } else {
-                                Color(0xFF000000)
+                                Color(0xFF000000).copy(alpha = 0.12f)
                             },
                             contentColor = Color.White,
-                            modifier = Modifier.graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                            },
+                            modifier = Modifier
+                                .domChatBlurEffect(
+                                    containerColor = Color(0xFF000000).copy(alpha = 0.08f),
+                                    shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                                )
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                },
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),

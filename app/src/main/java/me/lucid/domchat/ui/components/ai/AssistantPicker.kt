@@ -263,12 +263,41 @@ fun AssistantPickerSheet(
                 },
                 singleLine = true,
                 shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                colors = me.lucid.domchat.ui.theme.appFieldColors(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    disabledTextColor = Color(0xFF8A8A96),
+                    cursorColor = Color(0xFFF2F2F7),
+                    errorCursorColor = Color(0xFFEF4444),
+                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    disabledBorderColor = Color.White.copy(alpha = 0.06f),
+                    errorBorderColor = Color(0xFFEF4444),
+                    focusedLabelColor = Color(0xFFF2F2F7),
+                    unfocusedLabelColor = Color(0xFF8A8A96),
+                    focusedPlaceholderColor = Color(0xFF8A8A96),
+                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
+                    disabledPlaceholderColor = Color(0xFF8A8A96),
+                    focusedLeadingIconColor = Color(0xFF8A8A96),
+                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
+                    focusedTrailingIconColor = Color(0xFF8A8A96),
+                    unfocusedTrailingIconColor = Color(0xFF8A8A96),
+                    focusedSupportingTextColor = Color(0xFF8A8A96),
+                    unfocusedSupportingTextColor = Color(0xFF8A8A96),
+                    errorSupportingTextColor = Color(0xFFEF4444),
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
                     .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                     .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .domChatBlurEffect(
+                        containerColor = Color(0xFF000000).copy(alpha = 0.12f),
+                        shape = me.lucid.domchat.ui.theme.AppShapes.SearchField
+                    )
             )
 
             if (distinctTags.isNotEmpty()) {

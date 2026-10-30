@@ -1443,7 +1443,7 @@ private fun ChatPageContent(
                                 key = "${conversation.id}:topbar",
                                 motionPolicy = motionPolicy,
                                 from = EntranceDirection.DOWN,
-                                delayMs = 40,
+                                delayMs = 250,
                             )
                         ) {
                         ChatToolbar(
@@ -1700,7 +1700,7 @@ private fun ChatPageContent(
                             key = "${conversation.id}:tempchat",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = 160,
+                            delayMs = 350,
                         ),
                 ) {
                     Column(
@@ -1756,7 +1756,7 @@ private fun ChatPageContent(
                             key = "${conversation.id}:newchat",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = 80,
+                            delayMs = 300,
                         ),
                 ) {
                     NewChatContent(
@@ -1931,7 +1931,7 @@ private fun ChatPageContent(
                                 key = "${conversation.id}:input",
                                 motionPolicy = motionPolicy,
                                 from = EntranceDirection.UP,
-                                delayMs = 120,
+                                delayMs = 400,
                             ),
                         showSearch = previewMode,
                         searchQuery = chatSearchQuery,
@@ -1967,7 +1967,7 @@ private fun ChatPageContent(
                             key = "${conversation.id}:input",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = 120,
+                            delayMs = 400,
                         ),
                     state = inputState,
                     settings = setting,
