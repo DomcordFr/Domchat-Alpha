@@ -223,6 +223,7 @@ import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.EntranceDirection
+import me.lucid.domchat.ui.motion.EntrancePlayed
 import me.lucid.domchat.ui.motion.entrance
 import androidx.compose.ui.draw.clip
 
@@ -1323,6 +1324,7 @@ private fun ChatPageContent(
     }
 
     LaunchedEffect(conversation.id) {
+        EntrancePlayed.reset()
         previewMode = false
         showToolbarOverflowMenu = false
         showUserRegenerateConfirmDialog = false

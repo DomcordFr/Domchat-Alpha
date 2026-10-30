@@ -307,6 +307,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
         ) {
             // Search Bar
             OutlinedTextField(

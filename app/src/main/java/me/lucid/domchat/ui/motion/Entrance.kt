@@ -26,6 +26,11 @@ object EntrancePlayed {
         if (played.size >= MAX) played.clear()
         return played.add(key)
     }
+
+    /** Clear the registry so entrances replay on the next conversation open. */
+    fun reset() {
+        played.clear()
+    }
 }
 
 /** Screen-space entrance direction, chosen by the caller from element position. */
@@ -44,7 +49,7 @@ fun Modifier.entrance(
     motionPolicy: MotionPolicy,
     from: EntranceDirection = EntranceDirection.UP,
     delayMs: Int = 0,
-    distance: Dp = 22.dp,
+    distance: Dp = 30.dp,
     allow: Boolean = true,
 ): Modifier {
     if (

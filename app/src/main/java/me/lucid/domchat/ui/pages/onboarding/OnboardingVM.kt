@@ -21,6 +21,7 @@ import me.lucid.domchat.data.ai.models.ModelCatalogService
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.ui.pages.setting.components.ProviderPreset
+import me.lucid.domchat.ui.pages.setting.components.NANO_GPT_PRESET
 import me.lucid.domchat.ui.pages.setting.components.toProviderPresets
 import me.lucid.domchat.ui.pages.setting.components.toProviderSetting
 import me.lucid.domchat.ui.pages.setting.components.withSpecialProviderPresets
@@ -41,9 +42,14 @@ class OnboardingVM(
     val modelCatalogSnapshot: StateFlow<ModelCatalogSnapshot?> = modelCatalogService.snapshotFlow
 
     fun providerPresets(snapshot: ModelCatalogSnapshot?): List<ProviderPreset> {
-        return (snapshot?.toProviderPresets() ?: emptyList())
+        val presets = (snapshot?.toProviderPresets() ?: emptyList())
             .withSpecialProviderPresets()
             .filterNot { it.type == ProviderSetting.ComfyUI::class }
+        return if (presets.any { it.baseUrl.contains("nano-gpt.com") || it.name.equals("NanoGPT", ignoreCase = true) }) {
+            presets
+        } else {
+            presets + NANO_GPT_PRESET.copy(setupRecommended = true, setupOrder = 3)
+        }
     }
 
     fun skipSetup(onDone: () -> Unit) {

@@ -345,7 +345,7 @@ private fun SharedTransitionScope.ChatListNormal(
     // scrolling through history never pops items.
     val entranceOpen = remember(conversation.id) { mutableStateOf(true) }
     LaunchedEffect(conversation.id) {
-        kotlinx.coroutines.delay(600)
+        kotlinx.coroutines.delay(1500)
         entranceOpen.value = false
     }
     val loadingState by rememberUpdatedState(loading)

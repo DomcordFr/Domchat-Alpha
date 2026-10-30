@@ -605,7 +605,7 @@ private fun VoiceItem(
     val containerColor = if (selected) {
         Color.White.copy(alpha = 0.18f)
     } else {
-        Color(0xFF000000)
+        Color(0xFF000000).copy(alpha = 0.12f)
     }
     val contentColor = if (selected) {
         Color(0xFFFFFFFF)
@@ -620,6 +620,10 @@ private fun VoiceItem(
             .fillMaxWidth()
             .clip(shape)
             .background(containerColor)
+            .domChatBlurEffect(
+                containerColor = Color(0xFF000000).copy(alpha = 0.08f),
+                shape = shape
+            )
             .border(
                 width = 0.5.dp,
                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,

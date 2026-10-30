@@ -191,7 +191,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier
                                         .weight(systemPercent.toFloat())
                                         .fillMaxHeight()
-                                        .background(Color(0xFFF2F2F7))
+                                        .background(Color(0xFF8B5CF6))
                                 )
                                 Box(
                                     modifier = Modifier
@@ -203,7 +203,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier
                                         .weight(memoryPercent.toFloat())
                                         .fillMaxHeight()
-                                        .background(Color.White)
+                                        .background(Color(0xFFF59E0B))
                                 )
                             }
                         }
@@ -214,7 +214,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFF2F2F7)))
+                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF8B5CF6)))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Column {
                                     Text("System Prompt", fontSize = 11.sp, color = Color(0xFFAAAAAA))
@@ -232,7 +232,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             }
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color.White))
+                                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFF59E0B)))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Column {
                                     Text("Memory & Lore", fontSize = 11.sp, color = Color(0xFFAAAAAA))
@@ -439,7 +439,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.AutoStories, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Rounded.AutoStories, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
                                     Text("Memory & Lorebooks", style = MaterialTheme.typography.bodyMedium)
                                 }
@@ -469,11 +469,11 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.Psychology, null, tint = Color(0xFFF2F2F7), modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Rounded.Psychology, null, tint = Color(0xFF8B5CF6), modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
                                     Text("System Prompt & Persona", style = MaterialTheme.typography.bodyMedium)
                                 }
-                                Text("$systemPercent% ($systemTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3B82F6))
+                                Text("$systemPercent% ($systemTokens tk)", style = MaterialTheme.typography.labelLarge, color = Color(0xFF8B5CF6))
                             }
                             Text(
                                 text = "Automatically takes the remaining context allocation ($systemPercent%)",
