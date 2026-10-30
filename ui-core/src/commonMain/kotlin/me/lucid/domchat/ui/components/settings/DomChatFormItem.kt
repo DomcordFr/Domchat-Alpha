@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 
 /** Production DomChat form label/description/content row shared by Android and iOS. */
 @Composable
-fun AetherFormItem(
+fun DomChatFormItem(
     modifier: Modifier = Modifier,
     label: @Composable () -> Unit,
     description: @Composable (() -> Unit)? = null,

@@ -51,7 +51,7 @@ import me.lucid.domchat.ui.components.nav.LocalBackButtonVisible
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import me.lucid.domchat.ui.components.settings.AetherSettingsNavigationPane
+import me.lucid.domchat.ui.components.settings.DomChatSettingsNavigationPane
 import me.lucid.domchat.ui.components.settings.DomChatSettingsPaneEntry
 import me.lucid.domchat.ui.components.settings.DomChatSettingsPaneGroup
 
@@ -165,7 +165,7 @@ private fun SettingsNavigationPane(
     }
 
     val haptics = rememberPremiumHaptics()
-    AetherSettingsNavigationPane(
+    DomChatSettingsNavigationPane(
         groups = settingsPaneGroupsForRenderer(groups),
         selectedId = displayedSelected.name,
         selectedMainId = selectedMain.name,

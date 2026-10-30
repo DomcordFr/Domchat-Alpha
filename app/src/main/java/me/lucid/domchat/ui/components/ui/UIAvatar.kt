@@ -250,7 +250,10 @@ fun UIAvatar(
             onDismissRequest = {
                 showEmojiPicker = false
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = {
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+            }
         ) {
             EmojiPicker(
                 onEmojiSelected = { emoji ->

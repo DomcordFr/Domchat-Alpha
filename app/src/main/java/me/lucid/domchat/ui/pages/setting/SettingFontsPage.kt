@@ -75,7 +75,7 @@ import me.lucid.domchat.data.datastore.normalize
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.HapticSwitch
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.theme.AppShapes
@@ -634,7 +634,7 @@ private fun FontConfigSection(
     }
     
     if (showDeleteFontDialog) {
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.setting_fonts_delete_title),
             consequence = stringResource(R.string.setting_fonts_delete_consequence),
             onDismiss = { showDeleteFontDialog = false },

@@ -134,7 +134,7 @@ import androidx.compose.material.icons.rounded.HistoryToggleOff
 
 import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
 import me.lucid.domchat.ui.components.chat.NewChatContent
-import me.lucid.domchat.ui.components.nav.AetherMenuButton
+import me.lucid.domchat.ui.components.nav.DomChatMenuButton
 
 import me.lucid.domchat.ui.components.ui.UpdateDialog
 import me.lucid.domchat.ui.components.ui.ToastType
@@ -1694,7 +1694,14 @@ private fun ChatPageContent(
                     visible = isTemporaryChat && !hasConversationContent && !hasAnyPresetMessages,
                     enter = androidx.compose.animation.fadeIn(),
                     exit = androidx.compose.animation.fadeOut(),
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .entrance(
+                            key = "${conversation.id}:tempchat",
+                            motionPolicy = motionPolicy,
+                            from = EntranceDirection.UP,
+                            delayMs = 160,
+                        ),
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1745,6 +1752,12 @@ private fun ChatPageContent(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .offset(y = 28.dp)
+                        .entrance(
+                            key = "${conversation.id}:newchat",
+                            motionPolicy = motionPolicy,
+                            from = EntranceDirection.UP,
+                            delayMs = 80,
+                        ),
                 ) {
                     NewChatContent(
                         assistant = currentAssistant,
@@ -3071,7 +3084,7 @@ private fun ChatToolbar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!bigScreen) {
-                AetherMenuButton(
+                DomChatMenuButton(
                     onClick = {
                         scope.launch { drawerState.open() }
                     },

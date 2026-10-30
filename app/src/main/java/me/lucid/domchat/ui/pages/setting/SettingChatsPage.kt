@@ -277,9 +277,12 @@ fun SettingChatsPage(
                         }
                     },
                     singleLine = true,
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                     colors = appFieldColors(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                 )
 
                 // Assistant Filter Chips

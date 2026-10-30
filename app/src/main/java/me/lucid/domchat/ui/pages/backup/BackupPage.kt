@@ -91,7 +91,7 @@ import me.lucid.domchat.data.sync.BackupContentOption
 import me.lucid.domchat.data.sync.WebDavBackupItem
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.ui.FormItem
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -458,6 +458,7 @@ singleLine = true,
                                     .height(48.dp),
                             ) {
                                 WebDavConfig.BackupItem.entries.forEachIndexed { index, item ->
+                                    val isChecked = item in webDavConfig.items
                                     SegmentedButton(
                                         shape = SegmentedButtonDefaults.itemShape(
                                             index = index,
@@ -471,7 +472,8 @@ singleLine = true,
                                             }
                                             updateWebDavConfig(webDavConfig.copy(items = newItems))
                                         },
-                                        checked = item in webDavConfig.items
+                                        checked = isChecked,
+                                        colors = me.lucid.domchat.ui.theme.appSegmentedButtonColors(),
                                     ) {
                                         Text(
                                             when (item) {
@@ -607,7 +609,7 @@ singleLine = true,
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             tonalElevation = 0.dp,
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showBackupFiles = false
@@ -668,7 +670,7 @@ singleLine = true,
     }
 
     pendingDeleteItem?.let { item ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.backup_page_delete_title),
             consequence = stringResource(R.string.backup_page_delete_consequence),
             onDismiss = { pendingDeleteItem = null },
@@ -698,7 +700,7 @@ singleLine = true,
     }
 
     pendingRestoreItem?.let { item ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.backup_page_restore_overwrite_title),
             consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
             confirmLabel = stringResource(R.string.backup_page_restore_now),
@@ -1084,7 +1086,7 @@ private fun ImportExportPage(
     }
 
     pendingLocalRestoreUri?.let { sourceUri ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.backup_page_restore_overwrite_title),
             consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
             confirmLabel = stringResource(R.string.backup_page_restore_now),

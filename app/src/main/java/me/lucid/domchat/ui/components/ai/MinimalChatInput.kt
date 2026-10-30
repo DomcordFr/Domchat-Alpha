@@ -200,7 +200,7 @@ import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.domchat.data.datastore.resolveConversationContext
 import me.lucid.domchat.ui.components.chat.PersonaPickerBottomSheet
 import me.lucid.domchat.ui.components.chat.PromptPresetsBottomSheet
-import me.lucid.domchat.ui.components.chat.AetherInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.canManuallySummarizeConversation
 import me.lucid.domchat.data.model.Conversation
@@ -1523,7 +1523,7 @@ fun MinimalChatInput(
 
     // In-window bottom sheet picker with custom MinimalPickerContent
     if (showPicker) {
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showPicker = false },
         ) {
@@ -1610,7 +1610,7 @@ fun MinimalChatInput(
         val filteredProviders = remember(settings.providers) {
             settings.providers.filter { it.enabled }
         }
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showModelPickerSheet = false },
         ) {
@@ -1685,7 +1685,7 @@ fun MinimalChatInput(
             mutableFloatStateOf(currentUi.streamingFadeStartAlpha ?: settings.displaySetting.streamingFadeStartAlpha)
         }
 
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showStreamingAnimationSheet = false },
         ) {
@@ -1796,7 +1796,7 @@ fun MinimalChatInput(
     if (showAuthorsNoteSheet) {
         var noteDraft by remember { mutableStateOf(assistant.authorsNote.orEmpty()) }
         var depthDraft by remember { mutableFloatStateOf(assistant.authorsNoteDepth.toFloat()) }
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showAuthorsNoteSheet = false },
         ) {
@@ -1882,7 +1882,7 @@ fun MinimalChatInput(
         var presDraft by remember { mutableFloatStateOf(assistant.presencePenalty ?: 0.0f) }
         var repDraft by remember { mutableFloatStateOf(assistant.repetitionPenalty ?: 1.0f) }
 
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showSamplersSheet = false },
         ) {
@@ -2007,7 +2007,7 @@ fun MinimalChatInput(
         var blurModeDraft by remember(existingConfig) { mutableStateOf(existingConfig?.blurMode ?: settings.displaySetting.backgroundBlurMode) }
         var blurHeightFractionDraft by remember(existingConfig) { mutableFloatStateOf(existingConfig?.blurHeightFraction ?: 0.75f) }
 
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showWallpaperSheet = false },
         ) {
@@ -2228,7 +2228,7 @@ fun MinimalChatInput(
     }
 
     if (showSearchPicker) {
-        AetherInWindowBottomSheet(
+        DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showSearchPicker = false },
         ) {

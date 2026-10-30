@@ -95,9 +95,12 @@ fun LanguageSelectionDialog(
     }
 
     ModalBottomSheet(
-containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
         onDismissRequest = onDismissRequest,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        dragHandle = {
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+        },
     ) {
         Column(
             modifier = Modifier

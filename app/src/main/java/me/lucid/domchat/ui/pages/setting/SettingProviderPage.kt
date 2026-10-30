@@ -90,7 +90,7 @@ import androidx.compose.material3.BottomSheetDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import me.lucid.domchat.ui.components.chat.AetherGlassBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatGlassBottomSheet
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -153,7 +153,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.ui.ToastType
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.ui.AppToasterState
 import io.github.g00fy2.quickie.QRResult
 import io.github.g00fy2.quickie.ScanQRCode
@@ -422,8 +422,10 @@ fun SettingProviderPage(
                 placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -481,7 +483,7 @@ fun SettingProviderPage(
             
             // Delete confirmation dialog
             if (showDeleteDialog && providerToDelete != null) {
-                AetherDestructiveConfirmDialog(
+                DomChatDestructiveConfirmDialog(
                     title = stringResource(R.string.confirm_delete),
                     consequence = stringResource(
                         if (providerToDelete is ProviderSetting.LiteRtLocal) {
@@ -604,7 +606,7 @@ private fun SearchBarWithToggle(
             onValueChange = onSearchQueryChange,
             placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
             modifier = Modifier.weight(1f),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+            shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
             trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -1409,7 +1411,7 @@ private fun AddButton(
 
     // Provider selection bottom sheet
     if (showBottomSheet) {
-        AetherGlassBottomSheet(
+        DomChatGlassBottomSheet(
             visible = true,
             onDismissRequest = {
                 showBottomSheet = false
@@ -1437,8 +1439,11 @@ private fun AddButton(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -1700,7 +1705,7 @@ private fun AddButton(
     
     // Custom provider dialog with full glassy backdrop
     if (customDialogState.isEditing) {
-        AetherGlassBottomSheet(
+        DomChatGlassBottomSheet(
             visible = true,
             onDismissRequest = {
                 customDialogState.dismiss()
@@ -1966,10 +1971,11 @@ private fun ProviderTagsFilterRow(
             }
     ) {
         items(providerTags) { tag ->
+            val isSelected = tag.id in selectedTagIds
             FilterChip(
-                selected = tag.id in selectedTagIds,
+                selected = isSelected,
                 onClick = {
-                    val newSelection = if (tag.id in selectedTagIds) {
+                    val newSelection = if (isSelected) {
                         selectedTagIds - tag.id
                     } else {
                         selectedTagIds + tag.id
@@ -1977,8 +1983,9 @@ private fun ProviderTagsFilterRow(
                     onUpdateSelectedTagIds(newSelection)
                 },
                 label = { Text(tag.name) },
-                colors = appFilterChipColors(selected = tag.id in selectedTagIds),
-                border = appFilterChipBorder(selected = tag.id in selectedTagIds)
+                shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                colors = appFilterChipColors(selected = isSelected),
+                border = appFilterChipBorder(selected = isSelected)
             )
         }
     }

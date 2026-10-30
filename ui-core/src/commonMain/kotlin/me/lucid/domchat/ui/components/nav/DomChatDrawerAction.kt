@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 
 /** The production drawer action Surface and press motion shared by Android and iOS. */
 @Composable
-fun AetherDrawerAction(
+fun DomChatDrawerAction(
     onClick: () -> Unit,
     onHaptic: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,7 +85,7 @@ fun DomChatSettingsIcon(
 
 /** Default centered icon content for platforms that do not add a tooltip wrapper. */
 @Composable
-fun AetherDrawerActionIcon(
+fun DomChatDrawerActionIcon(
     containerSize: Dp,
     iconSize: Dp,
     contentDescription: String?,

@@ -44,8 +44,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.nav.BackButton
-import me.lucid.domchat.ui.components.stats.AetherStatCard
-import me.lucid.domchat.ui.components.stats.AetherActivityHeatmapCard
+import me.lucid.domchat.ui.components.stats.DomChatStatCard
+import me.lucid.domchat.ui.components.stats.DomChatActivityHeatmapCard
 import me.lucid.domchat.ui.components.stats.DomChatStatIcon
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.utils.currentAppLocale
@@ -609,7 +609,7 @@ private fun ChatHeatmapCard(
     val haptics = rememberPremiumHaptics()
     val today = LocalDate.now()
     val activeLocale = currentAppLocale()
-    AetherActivityHeatmapCard(
+    DomChatActivityHeatmapCard(
         heatmapData = heatmapData.map { day ->
             CalendarHeatmapDay(
                 date = kotlinx.datetime.LocalDate(day.date.year, day.date.monthValue, day.date.dayOfMonth),
@@ -670,7 +670,7 @@ private fun StatCard(
     modifier: Modifier = Modifier,
     subtitle: String? = null
 ) {
-    AetherStatCard(
+    DomChatStatCard(
         title = title,
         value = value,
         containerColor = containerColor,

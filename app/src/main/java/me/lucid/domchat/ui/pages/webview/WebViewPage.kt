@@ -151,10 +151,13 @@ fun WebViewPage(url: String, content: String) {
 
     if (showConsoleSheet) {
         ModalBottomSheet(
-containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            onDismissRequest = { showConsoleSheet = false },
-            sheetState = sheetState
-        ) {
+        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        onDismissRequest = { showConsoleSheet = false },
+        sheetState = sheetState,
+        dragHandle = {
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+        }
+    ) {
             me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier

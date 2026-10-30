@@ -73,6 +73,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -103,7 +104,6 @@ import me.lucid.ai.provider.Model
 import me.lucid.ai.provider.ModelAbility
 import me.lucid.ai.provider.ModelType
 import me.lucid.ai.provider.ProviderSetting
-import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.findModelById
@@ -236,7 +236,7 @@ fun ModelSelector(
             ),
             sheetGesturesEnabled = true,
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
         ) {
             Column(
@@ -685,7 +685,7 @@ internal fun ColumnScope.ModelList(
                     when (item) {
                         is ProviderListItem.Header -> {
                             ModelSectionHeader(
-                                title = item.provider.name
+                                provider = item.provider
                             ) {
                                 ProviderBalanceText(
                                     providerSetting = item.provider,
@@ -801,14 +801,9 @@ internal fun ColumnScope.ModelList(
                     .height(84.dp)
             ) {
                 val isDark = LocalDarkMode.current
-                val searchFieldShape = RoundedCornerShape(16.dp)
+                val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
                 val searchBg = Color(0xFF000000)
-                val searchBorder = Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = if (isDark) 0.25f else 0.15f),
-                        Color.White.copy(alpha = if (isDark) 0.08f else 0.04f)
-                    )
-                )
+                val searchBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 OutlinedTextField(
                     value = searchKeywords,
                     onValueChange = { searchKeywords = it },
@@ -816,25 +811,8 @@ internal fun ColumnScope.ModelList(
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                         .clip(searchFieldShape)
-                        .border(
-                            width = 0.75.dp,
-                            brush = searchBorder,
-                            shape = searchFieldShape
-                        ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = searchBg,
-                        unfocusedContainerColor = searchBg,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        disabledBorderColor = Color.Transparent,
-                        errorBorderColor = Color.Transparent,
-                        focusedTextColor = Color(0xFFF2F2F7),
-                        unfocusedTextColor = Color(0xFFF2F2F7),
-                        focusedPlaceholderColor = Color.White.copy(alpha = 0.45f),
-                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.45f),
-                        focusedLeadingIconColor = Color.White.copy(alpha = 0.65f),
-                        unfocusedLeadingIconColor = Color.White.copy(alpha = 0.65f)
-                    ),
+                        .border(0.5.dp, searchBorder, searchFieldShape),
+                    colors = me.lucid.domchat.ui.theme.appFieldColors(),
                     leadingIcon = {
                         Icon(Icons.Rounded.Search, null)
                     },
@@ -1032,19 +1010,40 @@ private fun ModelItemPosition.toSharedPosition(): DomChatModelGroupPosition = wh
 
 @Composable
 private fun ModelSectionHeader(
-    title: String,
+    provider: ProviderSetting,
     modifier: Modifier = Modifier,
     topPadding: Dp = 12.dp,
     trailingContent: @Composable RowScope.() -> Unit = {}
 ) {
+    val isNanoGPT = provider.name.equals("NanoGPT", ignoreCase = true) ||
+        provider.baseUrl?.contains("nano-gpt.com") == true
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = topPadding, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        if (isNanoGPT) {
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF000000))
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
+                    .padding(3.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.nanogpt_logo),
+                    contentDescription = null,
+                    tint = Color(0xFFFFFFFF),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
         Text(
-            text = title,
+            text = provider.name,
             style = MaterialTheme.typography.labelMedium,
             color = Color.White.copy(alpha = 0.65f),
         )

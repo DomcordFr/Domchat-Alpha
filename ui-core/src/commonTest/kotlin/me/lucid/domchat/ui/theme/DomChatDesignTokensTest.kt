@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
-class AetherDesignTokensTest {
+class DomChatDesignTokensTest {
     @Test
     fun typographyMatchesProductionMetrics() {
         val typography = buildDomChatTypography(FontFamily.Default)

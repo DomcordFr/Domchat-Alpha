@@ -74,7 +74,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.components.ui.Favicon
 import me.lucid.domchat.ui.components.ui.FaviconRow
 import me.lucid.domchat.ui.components.ui.FormItem
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.shimmer
@@ -351,6 +351,9 @@ private fun ToolCallPreviewSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         onDismissRequest = {
             onDismissRequest()
+        },
+        dragHandle = {
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
         content = {
             Column(
@@ -862,7 +865,7 @@ private fun ToolCallPreviewSheet(
     )
 
     pendingMemoryDeleteId?.let { id ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.chat_message_delete_memory_title),
             consequence = stringResource(R.string.chat_message_delete_memory_consequence),
             onDismiss = { pendingMemoryDeleteId = null },

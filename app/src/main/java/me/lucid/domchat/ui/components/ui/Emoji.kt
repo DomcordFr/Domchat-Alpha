@@ -101,7 +101,9 @@ fun EmojiPicker(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp),
+                            .padding(bottom = 8.dp)
+                            .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                         keyboardOptions = KeyboardOptions(
                             imeAction = ImeAction.Search
                         ),
@@ -109,7 +111,8 @@ fun EmojiPicker(
                             onSearch = { /* Handle search */ }
                         ),
                         singleLine = true,
-                        shape = me.lucid.domchat.ui.theme.AppShapes.SearchField
+                        shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                        colors = me.lucid.domchat.ui.theme.appFieldColors()
                     )
                 }
 

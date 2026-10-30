@@ -174,8 +174,8 @@ import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.TagsInput
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
-import me.lucid.domchat.ui.components.chat.AetherGlassBottomSheet
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.chat.DomChatGlassBottomSheet
 import me.lucid.domchat.ui.components.ui.rememberShareSheetState
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalToaster
@@ -1031,11 +1031,13 @@ private fun ModelList(
                             }
                         },
                         singleLine = true,
-                    colors = appFieldColors(),
-                        shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                        colors = appFieldColors(),
+                        shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 6.dp)
+                            .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                     )
                 }
             }
@@ -1219,7 +1221,7 @@ private fun ModelList(
     }
 
     pendingDeleteModel?.let { model ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.setting_provider_delete_model_title),
             consequence = stringResource(R.string.setting_provider_delete_model_consequence),
             onDismiss = { pendingDeleteModel = null },
@@ -1255,7 +1257,7 @@ private fun LocalHuggingFaceInstallFab(
     }
 
     if (showSheet) {
-        AetherGlassBottomSheet(
+        DomChatGlassBottomSheet(
             visible = true,
             onDismissRequest = { showSheet = false },
         ) {
@@ -1655,7 +1657,7 @@ private fun ModelPickerFab(
     }
     
     if (showPicker) {
-        AetherGlassBottomSheet(
+        DomChatGlassBottomSheet(
             visible = true,
             onDismissRequest = { showPicker = false }
         ) {
@@ -1960,7 +1962,7 @@ private fun AddNewModelFab(
     
     if (dialogState.isEditing) {
         dialogState.currentState?.let { modelState ->
-            AetherGlassBottomSheet(
+            DomChatGlassBottomSheet(
                 visible = true,
                 onDismissRequest = {
                     dialogState.dismiss()
@@ -2101,7 +2103,7 @@ private fun ModelPicker(
     if (showModal) {
         ModalBottomSheet(
             containerColor = Color(0xFF000000),
-            dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+            dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
             contentColor = domChatSheetContentColor(),
@@ -2991,7 +2993,7 @@ private fun LocalLiteRtModelIdentitySheet(
         }
     }
 
-    AetherGlassBottomSheet(
+    DomChatGlassBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -3102,7 +3104,7 @@ private fun ModelCard(
     if (dialogState.isEditing) {
         dialogState.currentState?.let { editingModel ->
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            AetherGlassBottomSheet(
+            DomChatGlassBottomSheet(
                 visible = true,
                 onDismissRequest = {
                     dialogState.dismiss()
@@ -3416,7 +3418,7 @@ private fun ProviderOverrideSettings(
 
         // Provider configuration modal
         if (showProviderConfig && editingProvider != null) {
-            AetherGlassBottomSheet(
+            DomChatGlassBottomSheet(
                 visible = true,
                 onDismissRequest = {
                     showProviderConfig = false

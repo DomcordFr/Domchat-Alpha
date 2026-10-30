@@ -56,7 +56,7 @@ private val HeatmapCardMinHeight = 264.dp
  * resource localization while iOS can use its native locale layer without forking the visual tree.
  */
 @Composable
-fun AetherActivityHeatmapCard(
+fun DomChatActivityHeatmapCard(
     heatmapData: List<CalendarHeatmapDay>,
     today: LocalDate,
     activityTitle: String,

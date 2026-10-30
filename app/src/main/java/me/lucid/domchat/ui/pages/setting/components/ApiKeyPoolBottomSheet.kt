@@ -118,7 +118,7 @@ fun ApiKeyPoolBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                         sheetState.hide()

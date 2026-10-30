@@ -121,7 +121,7 @@ import me.lucid.domchat.ui.components.ai.ModelSelector
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.components.ui.ImagePreviewDialog
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.ui.OutlinedNumberInput
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalToaster
@@ -905,7 +905,7 @@ private fun ImageGalleryScreen(
     }
 
     pendingDeleteImage?.let { image ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.imggen_page_delete_title),
             consequence = stringResource(R.string.imggen_page_delete_consequence),
             onDismiss = { pendingDeleteImage = null },
@@ -975,8 +975,9 @@ private fun SettingsBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     ImageAspectRatio.entries.forEach { ratio ->
+                        val isSelected = aspectRatio == ratio
                         FilterChip(
-                            selected = aspectRatio == ratio,
+                            selected = isSelected,
                             onClick = { vm.updateAspectRatio(ratio) },
                             label = {
                                 Text(
@@ -988,7 +989,10 @@ private fun SettingsBottomSheet(
                                         }
                                     )
                                 )
-                            }
+                            },
+                            shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                            colors = me.lucid.domchat.ui.theme.appFilterChipColors(isSelected),
+                            border = me.lucid.domchat.ui.theme.appFilterChipBorder(isSelected),
                         )
                     }
                 }

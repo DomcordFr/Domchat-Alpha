@@ -93,7 +93,7 @@ private fun materialIcon(name: String, pathData: String, autoMirror: Boolean): I
     }.build()
 
 @Composable
-fun AetherStatCard(
+fun DomChatStatCard(
     title: String,
     value: String,
     containerColor: Color,

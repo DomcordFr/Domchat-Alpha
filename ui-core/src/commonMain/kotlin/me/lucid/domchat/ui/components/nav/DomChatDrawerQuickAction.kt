@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 
 /** Exact grouped container used by the production drawer quick actions. */
 @Composable
-fun AetherDrawerQuickActionGroup(
+fun DomChatDrawerQuickActionGroup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -42,7 +42,7 @@ fun AetherDrawerQuickActionGroup(
 
 /** Exact production drawer quick-action row; navigation and haptics stay platform-owned. */
 @Composable
-fun AetherDrawerQuickAction(
+fun DomChatDrawerQuickAction(
     label: String,
     onClick: () -> Unit,
     onHaptic: () -> Unit,

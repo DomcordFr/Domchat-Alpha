@@ -89,7 +89,7 @@ fun ContextSourcesSheet(
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         sheetGesturesEnabled = true,
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         }
     ) {
         Column(

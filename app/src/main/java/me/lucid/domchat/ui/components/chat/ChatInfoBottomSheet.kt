@@ -124,7 +124,7 @@ fun ChatInfoBottomSheet(
     val numberFormatter = remember { NumberFormat.getNumberInstance(Locale.US) }
     val cardBg = domChatCardContainerColor()
 
-    AetherInWindowBottomSheet(
+    DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
         modifier = modifier

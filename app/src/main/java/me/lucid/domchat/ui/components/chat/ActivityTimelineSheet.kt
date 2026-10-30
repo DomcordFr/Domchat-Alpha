@@ -266,6 +266,9 @@ internal fun ActivityTimelineSheet(
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         modifier = modifier,
+        dragHandle = {
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+        },
     ) {
         ActivityTimelinePanel(
             entries = entries,

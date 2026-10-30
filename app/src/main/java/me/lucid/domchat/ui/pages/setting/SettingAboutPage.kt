@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import me.lucid.domchat.BuildConfig
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.components.nav.BackButton
-import me.lucid.domchat.ui.components.settings.AetherAboutContent
+import me.lucid.domchat.ui.components.settings.DomChatAboutContent
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -53,7 +53,7 @@ fun SettingAboutPage() {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
-            AetherAboutContent(
+            DomChatAboutContent(
                 appName = stringResource(R.string.app_name),
                 versionName = BuildConfig.VERSION_NAME,
                 darkTheme = LocalDarkMode.current,

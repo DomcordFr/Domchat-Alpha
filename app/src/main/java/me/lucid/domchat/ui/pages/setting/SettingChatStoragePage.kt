@@ -128,7 +128,7 @@ import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.richtext.ZoomableAsyncImage
 import me.lucid.domchat.ui.components.ui.AppToasterState
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.context.LocalToaster
@@ -541,15 +541,17 @@ fun SettingChatStoragePage(
                             icon = Icons.Rounded.FilterAlt,
                         ) {
                             StorageFilter.entries.forEach { option ->
+                                val isSelected = filter == option
                                 FilterChip(
-                                    selected = filter == option,
+                                    selected = isSelected,
                                     onClick = {
                                         haptics.perform(HapticPattern.Pop)
                                         filter = option
                                     },
                                     label = { Text(stringResource(option.labelRes)) },
-                                    colors = appFilterChipColors(selected = filter == option),
-                                    border = appFilterChipBorder(selected = filter == option)
+                                    shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                                    colors = appFilterChipColors(selected = isSelected),
+                                    border = appFilterChipBorder(selected = isSelected)
                                 )
                             }
                         }
@@ -559,15 +561,17 @@ fun SettingChatStoragePage(
                             icon = Icons.AutoMirrored.Rounded.Sort,
                         ) {
                             StorageSort.entries.forEach { option ->
+                                val isSelected = sort == option
                                 FilterChip(
-                                    selected = sort == option,
+                                    selected = isSelected,
                                     onClick = {
                                         haptics.perform(HapticPattern.Pop)
                                         sort = option
                                     },
                                     label = { Text(stringResource(option.labelRes)) },
-                                    colors = appFilterChipColors(selected = sort == option),
-                                    border = appFilterChipBorder(selected = sort == option)
+                                    shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                                    colors = appFilterChipColors(selected = isSelected),
+                                    border = appFilterChipBorder(selected = isSelected)
                                 )
                             }
                         }
@@ -753,7 +757,7 @@ fun SettingChatStoragePage(
         ModalBottomSheet(
             onDismissRequest = { showOtherUploadsInspector = false },
             containerColor = Color(0xFF000000),
-            dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+            dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
             contentColor = Color(0xFFF2F2F7),
@@ -794,7 +798,7 @@ fun SettingChatStoragePage(
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
             contentColor = Color(0xFFF2F2F7),
             dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     showEmbeddingCacheInspector = false
                 }
@@ -863,7 +867,7 @@ fun SettingChatStoragePage(
     }
 
     if (pendingUnusedEmbeddingsDeletion) {
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.setting_chat_storage_delete_unused_embeddings_title),
             consequence = stringResource(R.string.setting_chat_storage_delete_unused_embeddings_consequence),
             onDismiss = { pendingUnusedEmbeddingsDeletion = false },
@@ -890,7 +894,7 @@ fun SettingChatStoragePage(
     }
 
     pendingModelCacheDeletion?.let { modelId ->
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.setting_chat_storage_delete_model_cache_title),
             consequence = stringResource(
                 R.string.setting_chat_storage_delete_model_cache_consequence,

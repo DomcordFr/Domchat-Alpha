@@ -35,7 +35,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.pages.setting.LocalSettingsWideLayout
 import me.lucid.domchat.ui.components.settings.DomChatProviderTab
-import me.lucid.domchat.ui.components.settings.AetherProvidersBottomBar
+import me.lucid.domchat.ui.components.settings.DomChatProvidersBottomBar
 
 enum class ProvidersTab(
     val screen: Screen,
@@ -57,7 +57,7 @@ fun ProvidersBottomBar(
 ) {
     val haptics = rememberPremiumHaptics()
     val useWideLayout = LocalSettingsWideLayout.current
-    AetherProvidersBottomBar(
+    DomChatProvidersBottomBar(
         tabs = ProvidersTab.entries.map { DomChatProviderTab(it.name, it.icon) },
         selectedId = selectedTab.name,
         useWideLayout = useWideLayout,

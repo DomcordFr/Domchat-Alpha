@@ -248,7 +248,7 @@ private fun LobeHubIconPickerSheet(
 
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
         contentColor = Color(0xFFF2F2F7),
         sheetState = sheetState,

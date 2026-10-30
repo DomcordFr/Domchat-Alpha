@@ -53,7 +53,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import me.lucid.domchat.ui.components.chat.AetherGlassBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatGlassBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -620,7 +620,7 @@ private fun VoiceEditorSheet(
     voice ?: return
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var current by remember(voice.id) { mutableStateOf(voice) }
-    AetherGlassBottomSheet(
+    DomChatGlassBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
         sheetState = state,
@@ -802,7 +802,7 @@ private fun ProviderVoicesFab(
 
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    AetherGlassBottomSheet(
+    DomChatGlassBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
         sheetState = state,
@@ -1020,7 +1020,7 @@ private fun ManualVoiceSheet(
     var voiceName by remember(provider.id) { mutableStateOf("") }
     var voiceId by remember(provider.id) { mutableStateOf("") }
 
-    AetherGlassBottomSheet(
+    DomChatGlassBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
         sheetState = state,

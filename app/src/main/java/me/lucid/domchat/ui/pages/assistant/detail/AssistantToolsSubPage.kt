@@ -355,7 +355,10 @@ fun AssistantToolsSubPage(
                 ModalBottomSheet(
                     containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
                     onDismissRequest = { showMcpPicker = false },
-                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    dragHandle = {
+                        me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+                    }
                 ) {
                     Column(
                         modifier = Modifier
@@ -464,6 +467,9 @@ private fun WorkspaceBindingDialog(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
+        dragHandle = {
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+        },
     ) {
         Column(
             modifier = Modifier

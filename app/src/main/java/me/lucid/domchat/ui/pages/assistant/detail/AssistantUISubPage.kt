@@ -279,15 +279,22 @@ private fun FontSizeSettingItem(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val isGlobal = value == null
             FilterChip(
-                selected = value == null,
+                selected = isGlobal,
                 onClick = { onValueChange(null) },
-                label = { Text(stringResource(R.string.setting_ui_state_global)) }
+                label = { Text(stringResource(R.string.setting_ui_state_global)) },
+                shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                colors = me.lucid.domchat.ui.theme.appFilterChipColors(isGlobal),
+                border = me.lucid.domchat.ui.theme.appFilterChipBorder(isGlobal),
             )
             FilterChip(
-                selected = value != null,
+                selected = !isGlobal,
                 onClick = { if (value == null) onValueChange(1.0f) },
-                label = { Text(stringResource(R.string.setting_ui_state_custom)) }
+                label = { Text(stringResource(R.string.setting_ui_state_custom)) },
+                shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                colors = me.lucid.domchat.ui.theme.appFilterChipColors(!isGlobal),
+                border = me.lucid.domchat.ui.theme.appFilterChipBorder(!isGlobal),
             )
         }
 

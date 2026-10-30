@@ -35,7 +35,7 @@ data class DomChatProviderTab(
 
 /** Android's production compact Models/Search/TTS bottom navigation. */
 @Composable
-fun AetherProvidersBottomBar(
+fun DomChatProvidersBottomBar(
     tabs: List<DomChatProviderTab>,
     selectedId: String,
     useWideLayout: Boolean,

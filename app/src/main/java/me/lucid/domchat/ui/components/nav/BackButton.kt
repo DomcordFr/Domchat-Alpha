@@ -24,7 +24,7 @@ fun BackButton(modifier: Modifier = Modifier) {
     val navController = LocalNavController.current
     val haptics = rememberPremiumHaptics()
 
-    AetherBackButton(
+    DomChatBackButton(
         onClick = { navController.popBackStack() },
         contentDescription = stringResource(R.string.back),
         modifier = modifier,

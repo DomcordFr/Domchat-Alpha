@@ -1748,9 +1748,10 @@ private fun CustomProviderKeyPage(
             Spacer(modifier = Modifier.height(26.dp))
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 apiTypes.forEachIndexed { index, type ->
+                    val isSelected = selectedType == type
                     SegmentedButton(
-        modifier = Modifier.weight(1f),
-                        selected = selectedType == type,
+                        modifier = Modifier.weight(1f),
+                        selected = isSelected,
                         onClick = {
                             val newProvider = when (type) {
                                 "Google" -> ProviderSetting.Google(name = "Custom provider", baseUrl = "")
@@ -1760,6 +1761,7 @@ private fun CustomProviderKeyPage(
                             onProviderChange(newProvider)
                         },
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = apiTypes.size),
+                        colors = me.lucid.domchat.ui.theme.appSegmentedButtonColors(),
                     ) {
                         Text(type)
                     }

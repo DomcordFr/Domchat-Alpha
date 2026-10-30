@@ -105,6 +105,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val modelCatalogService: ModelCatalogService = koinInject()
+    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
     
@@ -192,7 +194,9 @@ private fun DefaultTtsVoiceSetting(
                                 selectedTTSProviderId = provider?.id ?: settings.selectedTTSProviderId,
                             )
                         )
-                    }
+                    },
+                    catalogSnapshot = catalogSnapshot
+                )
                 )
             }
         }
@@ -262,7 +266,7 @@ private fun DefaultSTTModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false
@@ -404,7 +408,7 @@ private fun DefaultTranslationModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false
@@ -526,7 +530,7 @@ private fun DefaultSuggestionModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false
@@ -647,7 +651,7 @@ private fun DefaultTitleModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false
@@ -775,7 +779,7 @@ private fun DefaultSummarizerModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false
@@ -868,7 +872,7 @@ private fun DefaultSubagentModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false
@@ -993,7 +997,7 @@ private fun DefaultOcrModelSetting(
             )
                 .imePadding(),
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = {
                 showModal = false

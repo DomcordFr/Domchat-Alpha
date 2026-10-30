@@ -328,11 +328,13 @@ fun SettingPage(
                         }
                     },
                     singleLine = true,
-                    shape = AppShapes.InputField,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                     colors = appFieldColors(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                 )
             }
 

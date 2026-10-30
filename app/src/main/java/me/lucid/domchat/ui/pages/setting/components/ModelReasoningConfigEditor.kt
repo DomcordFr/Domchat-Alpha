@@ -157,12 +157,14 @@ fun ModelReasoningConfigEditor(
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             reasoningPresets.forEach { preset ->
+                val isSelected = config == preset.config
                 FilterChip(
-                    selected = config == preset.config,
+                    selected = isSelected,
                     onClick = { onModelChange(model.copy(reasoningConfig = preset.config)) },
                     label = { Text(stringResource(preset.labelRes)) },
-                    colors = appFilterChipColors(selected = config == preset.config),
-                    border = appFilterChipBorder(selected = config == preset.config),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                    colors = appFilterChipColors(selected = isSelected),
+                    border = appFilterChipBorder(selected = isSelected),
                 )
             }
         }

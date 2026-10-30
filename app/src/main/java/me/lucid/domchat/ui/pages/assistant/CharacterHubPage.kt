@@ -143,6 +143,8 @@ enum class CharacterSortOption {
 @Composable
 fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val modelCatalogService: ModelCatalogService = koinInject()
+    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     val isDark = LocalDarkMode.current
 
@@ -309,7 +311,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                 placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
                 trailingIcon = {
@@ -320,16 +324,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     }
                 },
                 singleLine = true,
-                shape = AppShapes.InputField,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF000000),
-                    unfocusedContainerColor = Color(0xFF000000),
-                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    cursorColor = Color.White
-                )
+                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                colors = me.lucid.domchat.ui.theme.appFieldColors()
             )
 
             // Count on the left, sorting options on the right
@@ -471,6 +467,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             assistant = char,
             isDark = isDark,
             ttsProviders = settings.ttsProviders,
+            catalogSnapshot = catalogSnapshot,
             onUpdateVoice = { newVoiceId ->
                 val updated = char.copy(ttsVoiceId = newVoiceId)
                 vm.updateAssistant(updated)
@@ -865,6 +862,7 @@ fun CharacterInspectorSheet(
     assistant: Assistant,
     isDark: Boolean,
     ttsProviders: List<TTSProviderSetting> = emptyList(),
+    catalogSnapshot: ModelCatalogSnapshot? = null,
     onUpdateVoice: ((Uuid?) -> Unit)? = null,
     onDismiss: () -> Unit,
     onStartChat: () -> Unit,
@@ -1140,7 +1138,8 @@ fun CharacterInspectorSheet(
                                     providers = ttsProviders,
                                     allowClear = true,
                                     onClear = { onUpdateVoice?.invoke(null) },
-                                    onSelect = { onUpdateVoice?.invoke(it.id) }
+                                    onSelect = { onUpdateVoice?.invoke(it.id) },
+                                    catalogSnapshot = catalogSnapshot
                                 )
                             }
                         }

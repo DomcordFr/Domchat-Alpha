@@ -68,11 +68,6 @@ fun DomChatSheetDragHandle(
     )
 }
 
-@Composable
-fun AetherSheetDragHandle(
-    modifier: Modifier = Modifier,
-) = DomChatSheetDragHandle(modifier = modifier)
-
 /**
  * An in-window bottom sheet that shares the main Activity Compose canvas.
  * Inherits full hardware Haze blur over chat messages and wallpaper.
@@ -253,14 +248,14 @@ fun DomChatInWindowBottomSheet(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AetherGlassBottomSheet(
+fun DomChatGlassBottomSheet(
     visible: Boolean = true,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     shape: Shape = AppShapes.BottomSheet,
     dragHandle: @Composable (() -> Unit)? = {
-        AetherSheetDragHandle()
+        DomChatSheetDragHandle()
     },
     sheetGesturesEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
@@ -286,18 +281,6 @@ fun AetherGlassBottomSheet(
     }
 }
 
-@Composable
-fun AetherInWindowBottomSheet(
-    visible: Boolean = true,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    shape: Shape = AppShapes.BottomSheet,
-    dragHandle: @Composable (() -> Unit)? = {
-        DomChatSheetDragHandle()
-    },
-    content: @Composable ColumnScope.() -> Unit
-) = DomChatInWindowBottomSheet(
-    visible = visible,
     onDismissRequest = onDismissRequest,
     modifier = modifier,
     shape = shape,

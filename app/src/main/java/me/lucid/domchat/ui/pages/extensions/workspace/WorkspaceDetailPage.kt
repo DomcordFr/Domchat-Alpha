@@ -958,10 +958,12 @@ private fun WorkspaceAreaSelector(
             .padding(12.dp),
     ) {
         areas.forEachIndexed { index, (area, label) ->
+            val isSelected = selected == area
             SegmentedButton(
-                selected = selected == area,
+                selected = isSelected,
                 onClick = { onSelected(area) },
                 shape = SegmentedButtonDefaults.itemShape(index, areas.size),
+                colors = me.lucid.domchat.ui.theme.appSegmentedButtonColors(),
             ) {
                 Text(label)
             }

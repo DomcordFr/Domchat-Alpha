@@ -284,7 +284,7 @@ private fun TemplateCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.78f)
+    val cardColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.50f)
 
     Card(
         onClick = onClick,
@@ -331,7 +331,7 @@ private fun ActionPill(
     modifier: Modifier = Modifier
 ) {
     val pillShape = RoundedCornerShape(24.dp)
-    val cardColor = domChatCardContainerColor().copy(alpha = 0.80f)
+    val cardColor = domChatCardContainerColor().copy(alpha = 0.55f)
     val isDark = LocalDarkMode.current
     val borderBrush = Brush.verticalGradient(
         listOf(

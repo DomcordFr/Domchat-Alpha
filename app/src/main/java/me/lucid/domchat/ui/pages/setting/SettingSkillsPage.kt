@@ -787,7 +787,7 @@ fun SkillEditorSheet(
         sheetState = sheetState,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                         sheetState.hide()
@@ -1624,7 +1624,7 @@ private fun SkillExportDialog(
         shape = sheetShape,
         onDismissRequest = onDismiss,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
     ) {
         Column(
             modifier = Modifier

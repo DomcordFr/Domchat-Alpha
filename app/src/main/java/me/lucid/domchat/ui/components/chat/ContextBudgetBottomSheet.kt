@@ -122,7 +122,7 @@ fun ContextBudgetBottomSheet(
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     val cardBg = domChatCardContainerColor()
 
-    AetherInWindowBottomSheet(
+    DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = {
             commitChanges()

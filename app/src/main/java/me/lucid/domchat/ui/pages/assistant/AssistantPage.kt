@@ -247,7 +247,9 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                 placeholder = { Text(stringResource(R.string.assistant_page_search_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                 shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -257,7 +259,8 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                             Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
                         }
                     }
-                } else null
+                } else null,
+                colors = me.lucid.domchat.ui.theme.appFieldColors()
             )
             
             // Tag filter row - only show when there are tags
@@ -794,17 +797,21 @@ fun AssistantTagsFilterRow(
             }
     ) {
         lazyItems(tags) { tag ->
+            val isSelected = tag.id in selectedTagIds
             FilterChip(
-                selected = tag.id in selectedTagIds,
+                selected = isSelected,
                 onClick = {
-                    val newSelection = if (tag.id in selectedTagIds) {
+                    val newSelection = if (isSelected) {
                         selectedTagIds - tag.id
                     } else {
                         selectedTagIds + tag.id
                     }
                     onUpdateSelectedTagIds(newSelection)
                 },
-                label = { Text(tag.name) }
+                label = { Text(tag.name) },
+                shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                colors = me.lucid.domchat.ui.theme.appFilterChipColors(isSelected),
+                border = me.lucid.domchat.ui.theme.appFilterChipBorder(isSelected),
             )
         }
     }

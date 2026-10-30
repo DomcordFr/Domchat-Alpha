@@ -102,7 +102,7 @@ fun CharacterNotesBottomSheet(
     }
 
     val sheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    AetherInWindowBottomSheet(
+    DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
         shape = sheetShape,

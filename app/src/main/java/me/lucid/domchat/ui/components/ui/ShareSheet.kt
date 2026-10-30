@@ -61,7 +61,10 @@ fun ShareSheet(
             onDismissRequest = {
                 state.dismiss()
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = {
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+            }
         ) {
             Column(
                 modifier = Modifier

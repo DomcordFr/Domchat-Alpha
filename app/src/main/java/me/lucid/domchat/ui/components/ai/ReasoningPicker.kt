@@ -186,7 +186,7 @@ fun ReasoningPicker(
         },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
     ) {

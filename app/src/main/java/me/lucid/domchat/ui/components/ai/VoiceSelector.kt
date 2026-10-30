@@ -87,6 +87,8 @@ import me.lucid.domchat.ui.theme.extendColors
 import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.tts.provider.TTSVoice
 import me.lucid.tts.provider.findTtsVoice
+import me.lucid.domchat.ui.pages.setting.components.TTSProviderIcon
+import me.lucid.domchat.data.ai.models.ModelCatalogSnapshot
 import kotlin.uuid.Uuid
 
 @Composable
@@ -97,6 +99,7 @@ fun VoiceSelector(
     allowClear: Boolean = false,
     onClear: (() -> Unit)? = null,
     onSelect: (TTSVoice) -> Unit,
+    catalogSnapshot: ModelCatalogSnapshot? = null,
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val selected = providers.findTtsVoice(voiceId)
@@ -135,7 +138,7 @@ fun VoiceSelector(
             ),
             dragHandle = {
                 ApplyDialogWindowBlur()
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             }
         ) {
             Column(
@@ -154,6 +157,7 @@ fun VoiceSelector(
                             showSheet = false
                         }
                     },
+                    catalogSnapshot = catalogSnapshot,
                 )
             }
         }
@@ -166,6 +170,7 @@ fun ColumnScope.VoiceList(
     currentVoice: Uuid?,
     providers: List<TTSProviderSetting>,
     onSelect: (TTSVoice) -> Unit,
+    catalogSnapshot: ModelCatalogSnapshot? = null,
 ) {
     var activeProviderId by remember { mutableStateOf<Uuid?>(null) }
     var searchKeywords by remember { mutableStateOf("") }
@@ -350,35 +355,16 @@ fun ColumnScope.VoiceList(
                 .fillMaxWidth()
                 .height(84.dp)
         ) {
-            val isDark = LocalDarkMode.current
-            val borderOutlineColor = Color.White.copy(alpha = 0.15f)
             val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-            val searchBg = Color(0xFF000000)
             OutlinedTextField(
                 value = searchKeywords,
                 onValueChange = { searchKeywords = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
-                    .border(
-                        width = 0.5.dp,
-                        brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                        shape = searchFieldShape,
-                    ),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF000000),
-                    unfocusedContainerColor = Color(0xFF000000),
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    disabledBorderColor = Color.Transparent,
-                    errorBorderColor = Color.Transparent,
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    focusedPlaceholderColor = Color(0xFF8A8A96),
-                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                    focusedLeadingIconColor = Color(0xFF8A8A96),
-                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                ),
+                    .clip(searchFieldShape)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, searchFieldShape),
+                colors = me.lucid.domchat.ui.theme.appFieldColors(),
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 placeholder = { Text("Search voices") },
                 maxLines = 1,
@@ -448,10 +434,7 @@ fun ColumnScope.VoiceList(
                             },
                             border = androidx.compose.foundation.BorderStroke(
                                 width = 0.5.dp,
-                                brush = if (isActive)
-                                    androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.5f))
-                                else
-                                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                                color = if (isActive) Color.White.copy(alpha = 0.40f) else Color.White.copy(alpha = 0.12f)
                             ),
                             interactionSource = interactionSource,
                             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
@@ -460,21 +443,28 @@ fun ColumnScope.VoiceList(
                             } else {
                                 Color(0xFF000000)
                             },
-                            contentColor = if (isActive) {
-                                Color.White
-                            } else {
-                                Color(0xFFEDEDF2)
-                            },
+                            contentColor = Color.White,
                             modifier = Modifier.graphicsLayer {
                                 scaleX = scale
                                 scaleY = scale
                             },
                         ) {
-                            Text(
-                                text = provider.name.ifBlank { "TTS" },
-                                style = MaterialTheme.typography.labelMedium,
+                            Row(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                TTSProviderIcon(
+                                    provider = provider,
+                                    catalogSnapshot = catalogSnapshot,
+                                    modifier = Modifier.size(22.dp),
+                                    tint = Color.White
+                                )
+                                Text(
+                                    text = provider.name.ifBlank { "TTS" },
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         }
                     }
                 }

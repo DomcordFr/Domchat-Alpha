@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.components.settings.DomChatSettingGroupItem
-import me.lucid.domchat.ui.components.settings.AetherSettingsGroup
+import me.lucid.domchat.ui.components.settings.DomChatSettingsGroup
 import me.lucid.domchat.ui.components.settings.DomChatSettingGroupInputItem
 
 @Composable
@@ -42,7 +42,7 @@ fun SettingsGroup(
     titleStartPadding: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    AetherSettingsGroup(
+    DomChatSettingsGroup(
         title = title,
         horizontalPadding = horizontalPadding,
         titleStartPadding = titleStartPadding,

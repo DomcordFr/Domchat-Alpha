@@ -87,7 +87,7 @@ import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.components.chat.ConversationRowSurface
-import me.lucid.domchat.ui.components.nav.AetherDrawerSearch
+import me.lucid.domchat.ui.components.nav.DomChatDrawerSearch
 import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.ui.text.style.TextAlign
 import me.lucid.domchat.ui.modifier.domChatSoftEdgeBorder
@@ -332,7 +332,7 @@ fun ColumnScope.ConversationList(
             )
         }
 
-        AetherDrawerSearch(
+        DomChatDrawerSearch(
             query = searchQuery,
             onQueryChange = onSearchQueryChange,
             expanded = isSearchExpanded,

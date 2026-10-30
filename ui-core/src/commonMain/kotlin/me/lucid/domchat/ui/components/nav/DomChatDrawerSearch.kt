@@ -40,7 +40,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 
 /** Android's production expandable drawer search, shared without platform resources. */
 @Composable
-fun AetherDrawerSearch(
+fun DomChatDrawerSearch(
     query: String,
     onQueryChange: (String) -> Unit,
     expanded: Boolean,

@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Shape
 /** The production modal drawer surface shared by Android and iOS. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AetherModalDrawerSheet(
+fun DomChatModalDrawerSheet(
     modifier: Modifier = Modifier,
     drawerShape: Shape = RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp),
     drawerContainerColor: Color = Color(0xFF14151C).copy(alpha = 0.94f),

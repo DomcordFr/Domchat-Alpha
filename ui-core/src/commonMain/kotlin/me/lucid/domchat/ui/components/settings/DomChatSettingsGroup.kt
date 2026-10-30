@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 
 /** Production unified glassy settings card container shared by Android and iOS. */
 @Composable
-fun AetherSettingsGroup(
+fun DomChatSettingsGroup(
     title: String,
     horizontalPadding: Dp = 16.dp,
     titleStartPadding: Dp = 16.dp,

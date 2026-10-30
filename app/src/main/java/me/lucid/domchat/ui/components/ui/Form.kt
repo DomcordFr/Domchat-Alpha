@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.theme.AppShapes
-import me.lucid.domchat.ui.components.settings.AetherFormItem
+import me.lucid.domchat.ui.components.settings.DomChatFormItem
 
 @Composable
 fun FormItem(
@@ -29,7 +29,7 @@ fun FormItem(
     tail: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
-    AetherFormItem(
+    DomChatFormItem(
         modifier = modifier,
         label = label,
         description = description,

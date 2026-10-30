@@ -58,7 +58,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import me.lucid.domchat.ui.components.ui.HapticSwitch
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -423,7 +423,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
     
     // Delete confirmation dialog
     if (showDeleteDialog && mcpToDelete != null) {
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.setting_mcp_delete_title),
             consequence = stringResource(R.string.setting_mcp_delete_server),
             onDismiss = {
@@ -548,7 +548,7 @@ private fun McpConnectionsSheet(
         ),
         dragHandle = {
             ApplyDialogWindowBlur()
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -885,7 +885,7 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
             },
             sheetState = sheetState,
             dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                             sheetState.hide()
@@ -1406,7 +1406,7 @@ private fun McpImportModal(
 
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
         contentColor = Color(0xFFF2F2F7),

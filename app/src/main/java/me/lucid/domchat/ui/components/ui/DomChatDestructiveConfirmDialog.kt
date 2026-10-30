@@ -85,20 +85,3 @@ fun DomChatDestructiveConfirmDialog(
         },
     )
 }
-
-@Composable
-fun AetherDestructiveConfirmDialog(
-    title: String,
-    consequence: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    confirmLabel: String = stringResource(R.string.delete),
-    cancelLabel: String = stringResource(R.string.cancel),
-) = DomChatDestructiveConfirmDialog(
-    title = title,
-    consequence = consequence,
-    onConfirm = onConfirm,
-    onDismiss = onDismiss,
-    confirmLabel = confirmLabel,
-    cancelLabel = cancelLabel,
-)

@@ -112,6 +112,8 @@ fun AssistantDetailPage(
             parametersOf(id)
         }
     )
+    val modelCatalogService: ModelCatalogService = koinInject()
+    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
 
     val navController = rememberNavController()
     val rootNavController = LocalNavController.current
@@ -403,6 +405,7 @@ fun AssistantDetailPage(
                     assistant = assistant,
                     providers = providers,
                     ttsProviders = settings.ttsProviders,
+                    catalogSnapshot = catalogSnapshot,
                     onUpdate = { onUpdate(it) }
                 )
             }

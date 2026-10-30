@@ -182,6 +182,9 @@ fun ChatExportSheet(
             contentColor = sheetContentColor,
             onDismissRequest = onDismissRequest,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = {
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+            },
         ) {
             Column(
                 modifier = Modifier

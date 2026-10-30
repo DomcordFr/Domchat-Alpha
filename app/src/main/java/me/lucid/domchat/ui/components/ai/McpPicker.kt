@@ -135,7 +135,7 @@ fun McpPickerButton(
             containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             shape = sheetShape,
             dragHandle = {
-                me.lucid.domchat.ui.components.chat.AetherSheetDragHandle()
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             },
             onDismissRequest = { showMcpPicker = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),

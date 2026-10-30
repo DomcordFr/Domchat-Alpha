@@ -617,7 +617,7 @@ internal fun LorebookCreatorSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(

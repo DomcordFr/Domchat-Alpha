@@ -82,7 +82,7 @@ private val SettingsPaneChildInnerRadius = 8.dp
 
 /** Android's production 336 dp adaptive Settings pane, shared verbatim with iOS. */
 @Composable
-fun AetherSettingsNavigationPane(
+fun DomChatSettingsNavigationPane(
     groups: List<DomChatSettingsPaneGroup>,
     selectedId: String,
     selectedMainId: String,

@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import me.lucid.domchat.ui.theme.LiquidGlassCard
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Code
@@ -46,7 +48,7 @@ import org.jetbrains.compose.resources.painterResource
 
 /** Android's production About-page body, shared without platform runtime dependencies. */
 @Composable
-fun AetherAboutContent(
+fun DomChatAboutContent(
     appName: String,
     versionName: String,
     darkTheme: Boolean,
@@ -112,7 +114,7 @@ fun AetherAboutContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            AetherAboutItem(
+            DomChatAboutItem(
                 icon = Icons.Rounded.Code,
                 title = "Maintained by Domcord",
                 subtitle = "https://github.com/DomcordFr/Domchat",
@@ -128,19 +130,19 @@ fun AetherAboutContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            AetherAboutItem(
+            DomChatAboutItem(
                 icon = platformIcon,
                 title = platformTitle,
                 subtitle = platformSubtitle,
                 darkTheme = darkTheme,
             )
-            AetherAboutItem(
+            DomChatAboutItem(
                 icon = deviceIcon,
                 title = "Device",
                 subtitle = deviceSubtitle,
                 darkTheme = darkTheme,
             )
-            AetherAboutItem(
+            DomChatAboutItem(
                 icon = architectureIcon,
                 title = "Architecture",
                 subtitle = architectureSubtitle,
@@ -148,19 +150,11 @@ fun AetherAboutContent(
             )
         }
         Spacer(Modifier.height(32.dp))
-        Surface(
+        LiquidGlassCard(
             shape = RoundedCornerShape(50),
-            color = Color(0xFF000000),
-            border = androidx.compose.foundation.BorderStroke(
-                0.5.dp,
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.22f),
-                        Color.White.copy(alpha = 0.06f),
-                        Color.Transparent,
-                    )
-                )
-            ),
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = Color(0xFF000000),
         ) {
             Text(
                 text = "Domchat v1.0",
@@ -186,7 +180,7 @@ private fun AboutSectionTitle(title: String) {
 }
 
 @Composable
-private fun AetherAboutItem(
+private fun DomChatAboutItem(
     icon: ImageVector,
     title: String,
     darkTheme: Boolean,

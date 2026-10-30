@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 
 /** Android's production assistant-message TTS action, shared verbatim with iOS. */
 @Composable
-fun AetherTtsAction(
+fun DomChatTtsAction(
     isSpeaking: Boolean,
     isAvailable: Boolean,
     contentDescription: String,

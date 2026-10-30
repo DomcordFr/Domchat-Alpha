@@ -256,7 +256,7 @@ fun PersonaPickerBottomSheet(
         }
     }
 
-    AetherInWindowBottomSheet(
+    DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
         modifier = modifier

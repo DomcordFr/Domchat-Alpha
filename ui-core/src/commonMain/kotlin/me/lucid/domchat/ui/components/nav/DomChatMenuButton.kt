@@ -22,7 +22,7 @@ import me.lucid.domchat.ui.theme.AppSurface
 
 /** The production chat-toolbar drawer button shared by Android and iOS. */
 @Composable
-fun AetherMenuButton(
+fun DomChatMenuButton(
     onClick: () -> Unit,
     contentDescription: String,
     modifier: Modifier = Modifier.size(AppSize.ChromePill),

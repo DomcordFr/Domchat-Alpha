@@ -78,8 +78,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.components.ai.DomChatAssistantPickerItem
 import me.lucid.domchat.ui.components.ai.DomChatAssistantPickerTag
-import me.lucid.domchat.ui.components.ai.AetherAssistantPickerSheet
-import me.lucid.domchat.ui.components.chat.AetherInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
@@ -199,7 +198,7 @@ fun AssistantPickerSheet(
     val itemCardBg = domChatCardContainerColor()
     val itemBorder = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f))
 
-    AetherInWindowBottomSheet(
+    DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
     ) {
@@ -263,16 +262,13 @@ fun AssistantPickerSheet(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = itemCardBg,
-                    unfocusedContainerColor = itemCardBg,
-                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                ),
+                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                colors = me.lucid.domchat.ui.theme.appFieldColors(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
             )
 
             if (distinctTags.isNotEmpty()) {
@@ -281,17 +277,20 @@ fun AssistantPickerSheet(
                     contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
                 ) {
                     items(distinctTags, key = { it.id }) { tag ->
+                        val isSelected = tag.id in selectedTagIds
                         FilterChip(
                             onClick = {
-                                selectedTagIds = if (tag.id in selectedTagIds) {
+                                selectedTagIds = if (isSelected) {
                                     selectedTagIds - tag.id
                                 } else {
                                     selectedTagIds + tag.id
                                 }
                             },
                             label = { Text(tag.name) },
-                            selected = tag.id in selectedTagIds,
-                            shape = RoundedCornerShape(50),
+                            selected = isSelected,
+                            shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                            colors = me.lucid.domchat.ui.theme.appFilterChipColors(isSelected),
+                            border = me.lucid.domchat.ui.theme.appFilterChipBorder(isSelected),
                         )
                     }
                 }

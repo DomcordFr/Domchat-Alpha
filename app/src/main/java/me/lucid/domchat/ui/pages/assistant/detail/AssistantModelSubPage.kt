@@ -57,6 +57,7 @@ fun AssistantModelSubPage(
     assistant: Assistant,
     providers: List<ProviderSetting>,
     ttsProviders: List<TTSProviderSetting>,
+    catalogSnapshot: ModelCatalogSnapshot? = null,
     onUpdate: (Assistant) -> Unit
 ) {
     var maxTokensPending by remember { mutableStateOf(false) }
@@ -130,6 +131,7 @@ fun AssistantModelSubPage(
                         allowClear = true,
                         onClear = { onUpdate(assistant.copy(ttsVoiceId = null)) },
                         onSelect = { onUpdate(assistant.copy(ttsVoiceId = it.id)) },
+                        catalogSnapshot = catalogSnapshot
                     )
                 }
             }

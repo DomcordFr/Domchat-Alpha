@@ -104,7 +104,7 @@ import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.listItemShape
-import me.lucid.domchat.ui.components.ui.AetherDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.ui.OutlinedNumberInput
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import me.lucid.domchat.ui.components.ui.SearchProviderIcon
@@ -574,7 +574,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         }
         
         if (showDeleteDialog && serviceToDelete != null) {
-            AetherDestructiveConfirmDialog(
+            DomChatDestructiveConfirmDialog(
                 title = stringResource(R.string.setting_search_delete_title),
                 consequence = stringResource(R.string.setting_search_delete_consequence),
                 onDismiss = {
@@ -627,7 +627,7 @@ contentColor = Color(0xFFF2F2F7),
             },
             sheetState = bottomSheetState,
             dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                             bottomSheetState.hide()
@@ -969,7 +969,7 @@ internal fun SearchProvidersContent(
     }
 
     if (showDeleteDialog && serviceToDelete != null) {
-        AetherDestructiveConfirmDialog(
+        DomChatDestructiveConfirmDialog(
             title = stringResource(R.string.setting_search_delete_title),
             consequence = stringResource(R.string.setting_search_delete_consequence),
             onDismiss = {
@@ -1028,7 +1028,7 @@ private fun SearchServiceEditorSheet(
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                         bottomSheetState.hide()
@@ -1161,7 +1161,7 @@ contentColor = Color(0xFFF2F2F7),
             },
             sheetState = bottomSheetState,
             dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                             bottomSheetState.hide()
@@ -1193,8 +1193,11 @@ contentColor = Color(0xFFF2F2F7),
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                     singleLine = true,
                     colors = appFieldColors(),
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -1253,7 +1256,7 @@ contentColor = Color(0xFFF2F2F7),
                                 else -> ItemPosition.MIDDLE
                             }
                             
-                            val shape = position.listItemShape()
+                            val shape = AppShapes.CardMedium
                             
                             Surface(
                                 onClick = {

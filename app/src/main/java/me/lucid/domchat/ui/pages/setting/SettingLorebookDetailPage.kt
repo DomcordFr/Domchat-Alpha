@@ -401,10 +401,12 @@ fun SettingLorebookDetailPage(
                             placeholder = { Text(stringResource(R.string.lorebook_search_entries_placeholder)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                                .padding(vertical = 8.dp)
+                                .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                            shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                             singleLine = true,
-                    colors = appFieldColors(),
+                            colors = appFieldColors(),
                             leadingIcon = { Icon(Icons.Rounded.Search, null) },
                             trailingIcon = if (searchQuery.isNotEmpty()) {
                                 {
@@ -910,7 +912,7 @@ private fun EntryEditorSheet(
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState,
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                         sheetState.hide()
@@ -1297,7 +1299,7 @@ private fun LorebookEditorSheet(
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = { dismissEditor() },
@@ -1601,7 +1603,7 @@ private fun AssistantLorebookToggleSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.AetherSheetDragHandle(
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
                     scope.launch {
                         sheetState.hide()

@@ -815,7 +815,7 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
     if (showSheet) {
         ModalBottomSheet(
             containerColor = Color(0xFF000000),
-            dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+            dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
             contentColor = Color(0xFFF2F2F7),
@@ -910,7 +910,7 @@ private fun ModelSettingsSheet(
 
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
-        dragHandle = { me.lucid.domchat.ui.components.chat.AetherSheetDragHandle() },
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
         contentColor = Color(0xFFF2F2F7),

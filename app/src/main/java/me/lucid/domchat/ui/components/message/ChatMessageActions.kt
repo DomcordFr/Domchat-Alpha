@@ -43,7 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
-import me.lucid.domchat.ui.components.chat.AetherInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.CallSplit
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -179,7 +179,7 @@ fun ColumnScope.ChatMessageActionButtons(
             val tts = LocalTTSState.current
             val isSpeaking by tts.isSpeaking.collectAsState()
             val isAvailable by tts.isAvailable.collectAsState()
-            AetherTtsAction(
+            DomChatTtsAction(
                 isSpeaking = isSpeaking,
                 isAvailable = isAvailable,
                 contentDescription = stringResource(R.string.tts),
@@ -236,7 +236,7 @@ fun ChatMessageActionsSheet(
     val hasTextContent = message.parts.filterIsInstance<UIMessagePart.Text>()
         .any { it.text.isNotBlank() }
 
-    AetherInWindowBottomSheet(
+    DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
     ) {

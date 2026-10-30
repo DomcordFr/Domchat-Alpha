@@ -243,8 +243,9 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                             )
                             defaultRpPresets.forEach { (label, pat, hex) ->
                                 val existing = displaySetting.rpStyleRules.find { it.pattern == pat }
+                                val isSelected = existing != null && existing.enabled
                                 FilterChip(
-                                    selected = existing != null && existing.enabled,
+                                    selected = isSelected,
                                     onClick = {
                                         if (existing == null) {
                                             updateDisplaySetting(
@@ -264,8 +265,9 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                                    colors = appFilterChipColors(selected = existing != null && existing.enabled),
-                                    border = appFilterChipBorder(selected = existing != null && existing.enabled)
+                                    shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                                    colors = appFilterChipColors(selected = isSelected),
+                                    border = appFilterChipBorder(selected = isSelected)
                                 )
                             }
                         }
@@ -534,8 +536,9 @@ private fun RpStyleRuleDialog(
                         Triple("Emphasis (**bold**)", "**", "#FF6B6B"),
                         Triple("Quotes (> quote)", ">", "#90EE90")
                     ).forEach { (label, presetPat, presetHex) ->
+                        val isSelected = pattern == presetPat
                         FilterChip(
-                            selected = pattern == presetPat,
+                            selected = isSelected,
                             onClick = {
                                 pattern = presetPat
                                 colorHex = presetHex
@@ -545,8 +548,9 @@ private fun RpStyleRuleDialog(
                                 blue = (c.blue * 255).toInt()
                             },
                             label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                            colors = appFilterChipColors(selected = pattern == presetPat),
-                            border = appFilterChipBorder(selected = pattern == presetPat)
+                            shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
+                            colors = appFilterChipColors(selected = isSelected),
+                            border = appFilterChipBorder(selected = isSelected)
                         )
                     }
                 }

@@ -71,7 +71,7 @@ data class DomChatAssistantPickerTag(
 /** Android's production assistant switcher, parameterized only at platform boundaries. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AetherAssistantPickerSheet(
+fun DomChatAssistantPickerSheet(
     assistants: List<DomChatAssistantPickerItem>,
     currentAssistantId: String,
     title: String,

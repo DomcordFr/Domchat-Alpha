@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 
 /** The production DomChat top-app-bar back control shared by Android and iOS. */
 @Composable
-fun AetherBackButton(
+fun DomChatBackButton(
     onClick: () -> Unit,
     contentDescription: String,
     modifier: Modifier = Modifier,

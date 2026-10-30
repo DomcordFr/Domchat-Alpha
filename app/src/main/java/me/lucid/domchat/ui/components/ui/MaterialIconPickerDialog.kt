@@ -67,7 +67,10 @@ fun MaterialIconPickerDialog(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { Text(stringResource(R.string.icon_picker_search_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Rounded.Search, null) },
                     trailingIcon = if (searchQuery.isNotEmpty()) {
@@ -77,7 +80,8 @@ fun MaterialIconPickerDialog(
                             }
                         }
                     } else null,
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                    colors = me.lucid.domchat.ui.theme.appFieldColors()
                 )
 
                 LazyVerticalGrid(

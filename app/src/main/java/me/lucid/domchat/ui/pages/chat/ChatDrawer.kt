@@ -84,12 +84,12 @@ import me.lucid.domchat.ui.components.chat.PersonaPickerBottomSheet
 import me.lucid.domchat.ui.components.ui.Greeting
 import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.components.ui.UIAvatar
-import me.lucid.domchat.ui.components.nav.AetherModalDrawerSheet
-import me.lucid.domchat.ui.components.nav.AetherDrawerAction
+import me.lucid.domchat.ui.components.nav.DomChatModalDrawerSheet
+import me.lucid.domchat.ui.components.nav.DomChatDrawerAction
 import me.lucid.domchat.ui.components.nav.DomChatSettingsIcon
 import me.lucid.domchat.ui.components.nav.DomChatBarChartIcon
-import me.lucid.domchat.ui.components.nav.AetherDrawerQuickAction
-import me.lucid.domchat.ui.components.nav.AetherDrawerQuickActionGroup
+import me.lucid.domchat.ui.components.nav.DomChatDrawerQuickAction
+import me.lucid.domchat.ui.components.nav.DomChatDrawerQuickActionGroup
 
 import me.lucid.domchat.ui.hooks.rememberAvatarShape
 import me.lucid.domchat.ui.hooks.ChatInputState
@@ -381,8 +381,8 @@ fun ChatDrawerContent(
                 quickActions = {
                     val haptics = rememberPremiumHaptics()
                     val quickActionCardColor = domChatCardContainerColor()
-                    AetherDrawerQuickActionGroup {
-                        AetherDrawerQuickAction(
+                    DomChatDrawerQuickActionGroup {
+                        DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
                             containerColor = quickActionCardColor,
                             onClick = {
@@ -399,7 +399,7 @@ fun ChatDrawerContent(
                                 )
                             },
                         )
-                        AetherDrawerQuickAction(
+                        DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
                             containerColor = quickActionCardColor,
                             onClick = {
@@ -510,7 +510,7 @@ fun ChatDrawerContent(
 
     when (presentation) {
         ChatDrawerPresentation.Modal -> {
-            AetherModalDrawerSheet(
+            DomChatModalDrawerSheet(
                 drawerShape = drawerShape,
                 drawerContainerColor = Color.Transparent,
                 modifier = Modifier
@@ -690,7 +690,7 @@ private fun DrawerAction(
     size: Dp = 42.dp,
 ) {
     val haptics = rememberPremiumHaptics()
-    AetherDrawerAction(
+    DomChatDrawerAction(
         onClick = onClick,
         onHaptic = { haptics.perform(HapticPattern.Pop) },
         modifier = modifier,
