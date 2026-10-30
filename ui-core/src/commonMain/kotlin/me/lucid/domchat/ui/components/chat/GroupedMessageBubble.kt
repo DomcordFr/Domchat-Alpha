@@ -19,6 +19,9 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import me.lucid.domchat.ui.motion.EntranceDirection
+import me.lucid.domchat.ui.motion.LocalMotionPolicy
+import me.lucid.domchat.ui.motion.entrance
 
 enum class BubblePosition { SINGLE, FIRST, MIDDLE, LAST }
 
@@ -42,6 +45,9 @@ fun GroupedMessageBubble(
     tintAmount: Float = 0f,
     bubbleTone: Float = 0f,
     bubbleAlpha: Float = 0.55f,
+    entranceKey: String? = null,
+    entranceDirection: EntranceDirection = EntranceDirection.UP,
+    entranceDelayMs: Int = 0,
     onClick: (() -> Unit)? = null,
     bubbleModifier: @Composable (Modifier, Shape, Color) -> Modifier = { m, _, _ -> m },
     content: @Composable ColumnScope.() -> Unit,
@@ -56,6 +62,12 @@ fun GroupedMessageBubble(
         ) {
             Column(
                 modifier = modifier
+                    .entrance(
+                        key = entranceKey ?: "bubble",
+                        motionPolicy = LocalMotionPolicy.current,
+                        from = entranceDirection,
+                        delayMs = entranceDelayMs,
+                    )
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -157,6 +169,12 @@ fun GroupedMessageBubble(
     )
     val finalContainerColor = if (isTransparent) Color.Transparent else (containerColor ?: defaultContainerColor)
     val appliedModifier = bubbleModifier(modifier, shape, finalContainerColor)
+        .entrance(
+            key = entranceKey ?: "bubble",
+            motionPolicy = LocalMotionPolicy.current,
+            from = entranceDirection,
+            delayMs = entranceDelayMs,
+        )
     val surfaceColor = if (isGlassy) Color.Transparent else finalContainerColor
 
     if (onClick != null) {

@@ -293,7 +293,7 @@ private fun TemplateCard(
             .domChatBlurEffect(cardColor, AppShapes.CardMedium),
         shape = AppShapes.CardMedium,
         colors = CardDefaults.cardColors(containerColor = blurredContainerColor(cardColor)),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(

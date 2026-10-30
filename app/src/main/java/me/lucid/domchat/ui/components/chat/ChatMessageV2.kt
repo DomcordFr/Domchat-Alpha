@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.components.chat
 
+import me.lucid.domchat.ui.motion.EntranceDirection
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import androidx.compose.ui.unit.sp
@@ -1405,6 +1406,9 @@ private fun UserMessageTurn(
                     tintAmount = tintAmount,
                     bubbleTone = bubbleTone,
                     bubbleAlpha = glassAlpha,
+                    entranceKey = "bubble:${group.firstNode.id}:$nodeIndex:$partIndex",
+                    entranceDirection = EntranceDirection.UP,
+                    entranceDelayMs = (nodeIndex * 20 + partIndex * 10).coerceAtLeast(0),
                     containerColor = if (isMessengerStyle) {
                         Color(0xFF0A84FF).copy(alpha = if (bubbleBlur > 0f) 0.85f else 0.95f)
                     } else null,
@@ -1869,6 +1873,9 @@ private fun AssistantMessageTurn(
                     tintAmount = tintAmount,
                     bubbleTone = bubbleTone,
                     bubbleAlpha = glassAlpha,
+                    entranceKey = "bubble:${group.firstNode.id}:$nodeIndex:$partIndex",
+                    entranceDirection = EntranceDirection.UP,
+                    entranceDelayMs = (nodeIndex * 20 + partIndex * 10).coerceAtLeast(0),
                     largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
