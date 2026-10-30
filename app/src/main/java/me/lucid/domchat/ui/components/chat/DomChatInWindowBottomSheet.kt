@@ -280,10 +280,3 @@ fun DomChatGlassBottomSheet(
         content()
     }
 }
-
-    onDismissRequest = onDismissRequest,
-    modifier = modifier,
-    shape = shape,
-    dragHandle = dragHandle,
-    content = content
-)

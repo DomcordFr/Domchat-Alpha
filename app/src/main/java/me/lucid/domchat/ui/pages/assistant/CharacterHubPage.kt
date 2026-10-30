@@ -125,6 +125,9 @@ import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.data.ai.models.ModelCatalogService
+import me.lucid.domchat.data.ai.models.ModelCatalogSnapshot
+import org.koin.compose.koinInject
 import me.lucid.domchat.utils.AssistantExportImport
 import me.lucid.domchat.utils.navigateToChatPage
 import androidx.compose.material.icons.rounded.RecordVoiceOver

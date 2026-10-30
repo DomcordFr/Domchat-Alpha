@@ -45,6 +45,7 @@ import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.data.ai.models.ModelCatalogSnapshot
 import me.lucid.domchat.utils.toFixed
 import me.lucid.tts.provider.TTSProviderSetting
 

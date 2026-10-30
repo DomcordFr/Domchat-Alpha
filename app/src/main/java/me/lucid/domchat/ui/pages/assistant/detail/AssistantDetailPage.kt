@@ -58,6 +58,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.data.ai.models.ModelCatalogService
+import me.lucid.domchat.data.ai.models.ModelCatalogSnapshot
+import org.koin.compose.koinInject
 import androidx.navigation.compose.rememberNavController
 import me.lucid.domchat.R
 import me.lucid.domchat.Screen

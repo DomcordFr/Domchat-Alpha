@@ -79,6 +79,7 @@ import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import androidx.compose.foundation.BorderStroke
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor

@@ -75,6 +75,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -1043,13 +1044,14 @@ private fun ModelItemPosition.toSharedPosition(): DomChatModelGroupPosition = wh
 
 @Composable
 private fun ModelSectionHeader(
-    provider: ProviderSetting,
+    title: String,
+    provider: ProviderSetting? = null,
     modifier: Modifier = Modifier,
     topPadding: Dp = 12.dp,
     trailingContent: @Composable RowScope.() -> Unit = {}
 ) {
-    val isNanoGPT = provider.name.equals("NanoGPT", ignoreCase = true) ||
-        provider.baseUrl?.contains("nano-gpt.com") == true
+    val isNanoGPT = provider?.name.equals("NanoGPT", ignoreCase = true) == true ||
+        (provider is ProviderSetting.OpenAI && provider.baseUrl.contains("nano-gpt.com", ignoreCase = true))
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -1076,7 +1078,7 @@ private fun ModelSectionHeader(
             }
         }
         Text(
-            text = provider.name,
+            text = title,
             style = MaterialTheme.typography.labelMedium,
             color = Color.White.copy(alpha = 0.65f),
         )
