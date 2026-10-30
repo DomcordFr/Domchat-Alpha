@@ -20,8 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import me.lucid.domchat.ui.theme.LiquidGlassCard
-import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Code
@@ -150,11 +149,19 @@ fun DomChatAboutContent(
             )
         }
         Spacer(Modifier.height(32.dp))
-        LiquidGlassCard(
+        Surface(
             shape = RoundedCornerShape(50),
-            borderWidth = 0.5.dp,
-            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            fillColor = Color(0xFF000000),
+            color = Color(0xFF000000),
+            border = BorderStroke(
+                0.5.dp,
+                Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.22f),
+                        Color.White.copy(alpha = 0.06f),
+                        Color.Transparent,
+                    )
+                )
+            ),
         ) {
             Text(
                 text = "Domchat v1.0",
