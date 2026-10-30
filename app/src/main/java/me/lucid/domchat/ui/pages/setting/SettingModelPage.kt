@@ -110,7 +110,7 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val modelCatalogService: ModelCatalogService = koinInject()
-    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsState(null)
+    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
     
@@ -198,8 +198,7 @@ private fun DefaultTtsVoiceSetting(
                                 selectedTTSProviderId = provider?.id ?: settings.selectedTTSProviderId,
                             )
                         )
-                    },
-                    catalogSnapshot = catalogSnapshot
+                    }
                 )
                 )
             }
