@@ -686,7 +686,7 @@ internal fun ColumnScope.ModelList(
                     when (item) {
                         is ProviderListItem.Header -> {
                             ModelSectionHeader(
-                                provider = item.provider
+                                title = item.provider.name
                             ) {
                                 ProviderBalanceText(
                                     providerSetting = item.provider,
