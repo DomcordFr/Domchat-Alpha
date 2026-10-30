@@ -45,6 +45,7 @@ import me.lucid.domchat.ui.modifier.domChatSheetContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,7 +110,7 @@ import org.koin.androidx.compose.koinViewModel
 fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val modelCatalogService: ModelCatalogService = koinInject()
-    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
+    val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsState(null)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
     
