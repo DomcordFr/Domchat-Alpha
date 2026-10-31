@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.appFieldColors
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -83,6 +85,7 @@ private data class SettingNavItem(
     val subtitle: String,
     val category: String,
     val icon: ImageVector,
+    val iconDrawableRes: Int? = null,
     val target: Screen,
     val keywords: List<String> = emptyList()
 )
@@ -116,6 +119,7 @@ fun SettingPage(
                 subtitle = "Browse trending characters, search, and import into your character hub",
                 category = "Roleplay & Characters",
                 icon = Icons.Rounded.AutoStories,
+                iconDrawableRes = R.drawable.janitorai_logo,
                 target = Screen.SettingJanitor,
                 keywords = listOf("janitor", "character", "bot", "card", "hub", "trending", "search", "import")
             ),
@@ -373,11 +377,20 @@ fun SettingPage(
                                     title = item.title,
                                     subtitle = item.subtitle,
                                     icon = {
-                                        Icon(
-                                            item.icon,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                        if (item.iconDrawableRes != null) {
+                                            Image(
+                                                painter = painterResource(id = item.iconDrawableRes),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                contentScale = ContentScale.Fit,
+                                            )
+                                        } else {
+                                            Icon(
+                                                item.icon,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     },
                                     trailing = {
                                         Icon(
@@ -416,11 +429,20 @@ fun SettingPage(
                                     title = item.title,
                                     subtitle = item.subtitle,
                                     icon = {
-                                        Icon(
-                                            item.icon,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                        if (item.iconDrawableRes != null) {
+                                            Image(
+                                                painter = painterResource(id = item.iconDrawableRes),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                contentScale = ContentScale.Fit,
+                                            )
+                                        } else {
+                                            Icon(
+                                                item.icon,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     },
                                     trailing = {
                                         Icon(

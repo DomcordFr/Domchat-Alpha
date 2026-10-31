@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -32,6 +34,12 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,10 +51,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
@@ -128,6 +139,7 @@ sealed class JanitorLoadState {
 
 @Serializable
 private data class JanitorExtractRequest(
+    @SerialName("bot_id") val botId: String,
     @SerialName("character_id") val characterId: String,
 )
 
@@ -236,7 +248,7 @@ fun SettingJanitorPage() {
                         PlatformHttpRequest(
                             method = "POST",
                             url = "$JANITOR_BASE_URL/api/extract",
-                            body = JsonInstant.encodeToString(JanitorExtractRequest(characterId = character.id)).toByteArray(),
+                            body = JsonInstant.encodeToString(JanitorExtractRequest(botId = character.id, characterId = character.id)).toByteArray(),
                             mediaType = "application/json",
                         )
                     )
@@ -303,14 +315,6 @@ fun SettingJanitorPage() {
                 title = "JanitorAI Hub",
                 scrollBehavior = scrollBehavior,
                 navigationIcon = { BackButton() },
-                actions = {
-                    Image(
-                        painter = painterResource(id = R.drawable.janitorai_logo),
-                        contentDescription = "JanitorAI Hub",
-                        modifier = Modifier.size(32.dp),
-                        contentScale = ContentScale.Fit,
-                    )
-                },
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -323,6 +327,10 @@ fun SettingJanitorPage() {
             TabRow(
                 selectedTabIndex = selectedTab,
                 contentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF141520).copy(alpha = 0.92f))
+                    .zIndex(1f),
             ) {
                 tabs.forEachIndexed { index, tab ->
                     Tab(
@@ -380,7 +388,7 @@ fun SettingJanitorPage() {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
-                            CircularProgressIndicator()
+                            JanitorOrbitalLoader()
                         }
                     }
                 } else if (currentItems.isEmpty() && !isLoading) {
@@ -416,15 +424,20 @@ fun SettingJanitorPage() {
     }
 
     selectedCharacter?.let { character ->
+        val sheetBgColor = Color(0xFF141520)
+        val cardBorderColor = LiquidGlassTokens.SpecularBorderSubtle
+        val contentTextColor = Color(0xFFF2F2F7)
+        val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
+
         ModalBottomSheet(
-            containerColor = Color(0xFF141520),
+            containerColor = sheetBgColor,
             shape = AppShapes.Dialog,
             modifier = Modifier.border(
                 0.5.dp,
                 LiquidGlassTokens.SpecularBorderBrush,
                 AppShapes.Dialog,
             ),
-            contentColor = Color(0xFFF2F2F7),
+            contentColor = contentTextColor,
             onDismissRequest = {
                 selectedCharacter = null
             },
@@ -436,52 +449,200 @@ fun SettingJanitorPage() {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                // Hero Image with smooth vertical gradient fade into sheet background
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(340.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                ) {
+                    if (imageUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = character.name,
+                            modifier = Modifier.fillMaxSize(),
+                            alignment = Alignment.TopCenter,
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(id = R.drawable.default_generical_pfp),
+                            fallback = painterResource(id = R.drawable.default_generical_pfp),
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0xFF141520)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = Color.White.copy(alpha = 0.5f),
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Transparent,
+                                        sheetBgColor.copy(alpha = 0.15f),
+                                        sheetBgColor.copy(alpha = 0.50f),
+                                        sheetBgColor.copy(alpha = 0.85f),
+                                        sheetBgColor.copy(alpha = 1f),
+                                    )
+                                )
+                            )
+                    )
+                }
+
+                // Character Title and Creator
                 Text(
                     text = character.name,
                     style = MaterialTheme.typography.headlineSmall,
-                    color = Color(0xFFF2F2F7),
+                    color = contentTextColor,
                 )
                 val displayCreator = character.creator ?: character.creatorName
                 displayCreator?.let { creator ->
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "by $creator",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.65f),
                     )
                 }
-                character.tags.filter { it.isNotBlank() }.take(5).joinToString(separator = " • ").let { tagsText ->
-                    if (tagsText.isNotBlank()) {
+
+                Spacer(modifier = Modifier.height(10.dp))
+                val introsCount = 1
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(sheetBgColor)
+                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                    ) {
                         Text(
-                            text = tagsText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF93C5FD),
+                            text = "$introsCount scenario greeting${if (introsCount > 1) "s" else ""}",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = contentTextColor.copy(alpha = 0.9f),
                         )
                     }
+                    if (!character.characterVersion.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(sheetBgColor)
+                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                text = "v${character.characterVersion}",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFBBBBBB),
+                            )
+                        }
+                    }
                 }
+
+                // Top few lines of creator bio as a blurb
                 val displayBio = (character.bio ?: character.description).orEmpty().trim()
                 if (displayBio.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = displayBio,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.9f),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Primary Action: Import to Hub
                 Button(
                     onClick = {
+                        haptics.perform(HapticPattern.Pop)
                         importCharacter(character)
                     },
                     enabled = !isImporting,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black,
+                    ),
                 ) {
                     if (isImporting) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
                     } else {
-                        Text("Import to Hub")
+                        Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Custom pulsing dark-glass orbital loader. Replaces the stock circular progress spinner
+ * with a rotating ring that pulses alpha, matching the unified 0xFF141520 glass theme.
+ */
+@Composable
+private fun JanitorOrbitalLoader(modifier: Modifier = Modifier.size(28.dp)) {
+    val infiniteTransition = rememberInfiniteTransition(label = "janitorOrbital")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "orbitalRotation"
+    )
+    val pulse by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "orbitalPulse"
+    )
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(2.dp)
+                .clip(CircleShape)
+                .border(
+                    2.5.dp,
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF141520).copy(alpha = 0.95f),
+                            Color(0xFF141520).copy(alpha = 0.35f),
+                        )
+                    ),
+                    CircleShape
+                )
+                .graphicsLayer {
+                    rotationZ = rotation
+                    alpha = 0.6f + 0.4f * pulse
+                }
+        )
     }
 }
 
@@ -495,65 +656,104 @@ private fun CharacterCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
+            .aspectRatio(0.68f)
+            .clip(RoundedCornerShape(18.dp))
             .background(Color(0xFF141520))
-            .clip(RoundedCornerShape(16.dp))
+            .border(
+                0.5.dp,
+                LiquidGlassTokens.SpecularBorderSubtle,
+                RoundedCornerShape(18.dp)
+            )
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
             .clickable(onClick = onClick),
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        // Full-bleed avatar background
+        if (imageUrl.isNotBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = character.name,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.TopCenter,
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.default_generical_pfp),
+                fallback = painterResource(id = R.drawable.default_generical_pfp),
+            )
+        } else {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
-                contentAlignment = Alignment.Center,
+                    .fillMaxSize()
+                    .background(Color(0xFF141520)),
+                contentAlignment = Alignment.Center
             ) {
-                if (imageUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        placeholder = painterResource(id = R.drawable.default_generical_pfp),
-                        fallback = painterResource(id = R.drawable.default_generical_pfp),
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Rounded.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp),
-                        tint = Color.White.copy(alpha = 0.5f),
-                    )
-                }
-            }
-            Text(
-                text = character.name,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFFF2F2F7),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val creator = (character.creator ?: character.creatorName ?: "").takeIf { it.isNotBlank() }
-            if (creator != null) {
-                Text(
-                    text = "by $creator",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.65f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = Color.White.copy(alpha = 0.5f),
                 )
             }
-            character.tags.take(3).joinToString(separator = ", ").let { tags ->
-                if (tags.isNotBlank()) {
-                    Text(
-                        text = tags,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF93C5FD),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+        }
+
+        // Bottom vertical gradient scrim: transparent -> dark glass
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.42f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color(0xFF141520).copy(alpha = 0.85f),
+                        )
                     )
+                )
+        )
+
+        // Bottom content: display name + tag row
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            val displayName = character.name.takeIf { it.isNotBlank() } ?: "Character"
+            Text(
+                text = displayName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                color = Color.White,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                character.tags.forEach { tagId ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF141520))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                    ) {
+                        Text(
+                            text = tagId.take(8).uppercase(),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.92f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
