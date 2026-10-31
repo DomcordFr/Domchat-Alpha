@@ -327,7 +327,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 .fillMaxSize()
                 .nestedScroll(collapseBehavior.nestedScrollConnection)
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
         ) {
             // Search Bar
             OutlinedTextField(
@@ -460,7 +459,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             AnimatedContent(
                 targetState = isGridView,
                 transitionSpec = { fadeIn(spring()) togetherWith fadeOut(spring()) },
-                label = "CharacterGallery"
+                label = "CharacterGallery",
+                modifier = Modifier.weight(1f).fillMaxWidth()
             ) { gridMode ->
                 if (gridMode) {
                     LazyVerticalGrid(

@@ -76,12 +76,13 @@ fun DomChatComposerAddButton(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier.size(AppSize.ChromePill),
     containerColor: Color = Color(0xFF141520).copy(alpha = 0.60f),
+    border: BorderStroke? = null,
     content: @Composable () -> Unit,
 ) {
     Surface(
         shape = CircleShape,
         color = containerColor,
-        border = when {
+        border = border ?: when {
             containerColor == Color.Transparent -> BorderStroke(
                 AppSurface.SoftEdgeWidth,
                 Color.White.copy(alpha = 0.40f),
