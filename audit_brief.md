@@ -1,47 +1,84 @@
 # Audit Brief — SettingJanitorPage Fix
 
 ## Intent Verification
-Target: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`.
-Changes made:
-1. Added 4 missing imports:
-   - `androidx.compose.foundation.background`
-   - `androidx.compose.foundation.layout.aspectRatio`
-   - `androidx.compose.material3.Button`
-   - `androidx.compose.material.icons.rounded.Person`
-   These resolve previously unqualified usages already present in the file (`Modifier.background()` at line ~493, `.aspectRatio(1f)` at line ~492, `Button(` at line ~464, `Person` image vector at line ~518).
-2. Simplified creator display (lines ~536-544):
+
+Target: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`
+
+All three directive items applied:
+
+1. Imports added (line 36): `import androidx.compose.runtime.LaunchedEffect`
+   Imports added (line 45): `import androidx.compose.ui.input.nestedscroll.nestedScroll`
+   Both symbols were already referenced at lines 278+ (`LaunchedEffect`) and 314 (`Modifier.nestedScroll(...)`) without imports — the file would not compile cold. Now resolved.
+
+2. Explicit type parameters (lines 148–149):
+   `var browseState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }`
+   `var searchState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }`
+   Removes inference ambiguity across the `JanitorLoadState` sealed hierarchy (`Loading` / `Success` / `Error`).
+
+3. Line 459–466 bio block rewritten to strict null-safe form:
    ```kotlin
-   val creator = (character.creator ?: character.creatorName ?: "").takeIf { it.isNotBlank() }
-   if (creator != null) {
-       Text(text = "by $creator", style = MaterialTheme.typography.bodySmall,
-           color = Color.White.copy(alpha = 0.65f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+   val displayBio = (character.bio ?: character.description).orEmpty().trim()
+   if (displayBio.isNotBlank()) {
+       Text(
+           text = displayBio,
+           style = MaterialTheme.typography.bodyMedium,
+           color = Color.White.copy(alpha = 0.9f),
+       )
    }
    ```
-   Replaced nested `?.let` / `?: run {}` chain with a single Elvis-prefixed nullable + null check.
-3. Replaced `Icons.Rounded.Person` with bare `Person` to consume the new direct import.
-4. Glass card theme color `0xFF141520` already applied via `Modifier.background(Color(0xFF141520))` on the character card Box; no change needed.
-Constraints honored: strict null safety (zero `!!`), no local Gradle build run, single-file scope only.
+   Replaces the `?.orEmpty().takeIf { }.?.let { }` chain. No `!!`, no nullable leakage into `Text`.
+
+Invariants held: zero `!!` (grep confirmed no matches), glass card `0xFF141520` retained on ModalBottomSheet and CharacterCard backgrounds, existing code style preserved.
 
 ## Call Chain & Architecture
-- File is a Compose settings page (`me.lucid.domchat.ui.pages.setting`).
-- `CharacterCard(character, onClick)` is a private `@Composable` rendering a JanitorAI hub character entry.
-- Creator `Text` sits inside the card `Column`, below the name `Text` and above the tags `Text`. It is pure presentation; emits no intents, calls no ViewModel/Repository.
-- `Button("Import to Hub")` calls `importCharacter(character)` (page-local lambda) which routes to the page ViewModel (`JanitorVM` via `koinViewModel`) → Repository → network (JanitorAI API) → local DB. Out of scope for this edit; unchanged.
-- Glass card background `0xFF141520` matches `LiquidGlassTokens` / unified dark card theme used across setting pages.
+
+`SettingJanitorPage()` is a stateless `@Composable` rendered inside `RouteActivity`'s `NavHost` (`Screen` sealed interface) via `composable<Screen.X>` registration. UI layer only:
+
+- Injects `PlatformHttpClient` (Koin `koinInject`) and `AssistantVM` (`koinViewModel`).
+- Local UI state: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `selectedCharacter`, `isImporting`, `bottomSheetState`.
+- Network fetch functions `loadBrowse(tab)`, `loadSearch()`, `importCharacter(character)` launch coroutines via `rememberCoroutineScope()` and write to local `MutableState` (browseState/searchState) — no ViewModel involvement; this page is a UI-only widget per the local state pattern.
+- `LaunchedEffect(Unit)` triggers initial browse load ("24h"); `LaunchedEffect(selectedTab)` / `LaunchedEffect(searchQuery)` re-trigger loads on tab/query changes.
+- `selectedCharacter` opens `ModalBottomSheet` with `CharacterCard`-style detail row and `importCharacter` action, which POSTs to `.../api/extract` and hands the result to `assistantVM.addAssistant(assistant)`.
+
+Call chain: user tab tap → `selectedTab = index` → `LaunchedEffect(selectedTab)` → `loadBrowse` → `PlatformHttpClient.execute(...)` (IO) → JSON decode via `JsonInstant` → `browseState = Success(items)` → `LazyVerticalGrid` recomposes → `CharacterCard` click → `bottomSheetState.show()` → import → `assistantVM.addAssistant` → `Conversation` repository write.
 
 ## Recomposition & Memory Safety
-- Creator value is a local `val` derived from the immutable `character: JanitorCharacter` parameter; recomputes only when `character` changes (stable `@Serializable` data class).
-- `Text` is stateless; no `remember`, `mutableStateOf`, or `derivedStateOf` introduced. No snapshot writes.
-- `takeIf { it.isNotBlank() }` + null check allocates one transient `String?` per recomposition; negligible, no retained references.
-- No `LaunchedEffect`, `SideEffect`, or coroutine scopes added. No memory leaks introduced.
-- `Person` image vector is a stateless `ImageVector` constant; `Icon` recomposes only on tint/color change.
+
+- All mutable UI state held in `remember { mutableStateOf<...>() }` — survives recomposition, recreated only on composition disposal.
+- `rememberCoroutineScope()` bound to composition lifecycle; `scope.launch` jobs are not auto-cancelled on disposal but composition scope disposal ends the coroutine scope.
+- `rememberModalBottomSheetState(skipPartiallyExpanded = true)` — sheet state remembered.
+- `activeState` / `currentItems` / `isLoading` / `loadError` are derived val computed during composition from `browseState`/`searchState` — cheap, no allocations in hot paths beyond small `when` branches.
+- `LazyVerticalGrid` `items(currentItems)` — stable `List<JanitorCharacter>`; `@Serializable` data class is immutable.
+- `displayBio` is a local `String` val; `if (displayBio.isNotBlank())` guard prevents empty `Text` nodes.
+- No snapshot reads of mutable collections; `JanitorLoadState` instances are immutable sealed objects/data classes — safe for concurrent assignment from `withContext(Dispatchers.Main)` blocks.
+- `selectedCharacter?.let { ... }` at bottom-sheet call site — nullable access, no `!!`.
 
 ## Threading & Dispatchers
-- This edit is UI-thread only (Compose composition). No `Dispatchers.Main`/`Dispatchers.IO` usage added or removed.
-- No blocking calls, no `withContext`, no `launch`. Composer runs on Main; safe because work is O(1) string null-check + `Text` emission.
-- Downstream `importCharacter` (unchanged) handles network/disk on `Dispatchers.IO` via the ViewModel; not touched here.
+
+- All network/disk work confined to `withContext(Dispatchers.IO)` inside `scope.launch` coroutines (`CoroutineScope(SupervisorJob() + Dispatchers.Main + ...)` via `rememberCoroutineScope()` — Main dispatcher for UI launches).
+- State mutations (`browseState = ...`, `searchState = ...`, `isImporting = ...`, `selectedCharacter = ...`) performed inside `withContext(Dispatchers.Main) {}` after IO — Compose state touched only on Main thread.
+- `httpClient.execute(...)` is blocking Ktor/OkHttp call on IO — never on Main.
+- `assistantVM.addAssistant(assistant)` called on Main inside import success block (VM responsible for its own `viewModelScope` threading).
+- No `GlobalScope`, no `launch(Dispatchers.IO)` top-level, no `withContext(Dispatchers.Main)` around non-UI work.
 
 ## Offline & Error State Handling
-- Creator display is purely defensive rendering: null/blank `creator` and `creatorName` both collapse to empty string → `takeIf` returns null → `if` skipped → no `Text` emitted. No exception path.
-- No network, no file I/O, no parsing. Offline/exception states are N/A for this snippet.
-- Empty/blank creator renders nothing (graceful degradation), consistent with existing tags `if (tags.isNotBlank())` guard pattern elsewhere in the card.
+
+- `JanitorLoadState` sealed: `Loading`, `Success(items)`, `Error(message)` — all four phases represented.
+- Loading: initial state `Loading` for both `browseState` and `searchState`; `CircularProgressIndicator` shown while `isLoading`.
+- Success: `currentItems` populates `LazyVerticalGrid`; empty-state text when `currentItems.isEmpty() && !isLoading` ("No characters found" / "No characters available").
+- HTTP error: non-2xx status → `JanitorLoadState.Error("HTTP ${response.statusCode}")`, rendered as red `Text` (`Color(0xFFFF6B6B)`).
+- Exception: caught in `catch (e: Exception)` → `JanitorLoadState.Error(e.message ?: e.toString())` — Elvis chain, no `!!`.
+- Import failure: HTTP error and exception paths both show `ToastType.Error` via `LocalToaster.current` and reset `isImporting = false` on Main.
+- `importCharacter` sheet dismissal and `selectedCharacter = null` on success; bottom sheet hides on import completion.
+- Offline manifest: any `IOException`/timeout from `httpClient.execute` lands in the catch branch → Error state shown; UI never crashes on network failure.
+- Null safety across optional fields: `creator.bio ?: creator.description`, `creator.creator ?: creator.creatorName`, `extract.name ?: character.name`, `extract.bio ?: extract.description ?: ""`, `extract.avatarHash ?: extract.avatarHash2` — all Elvis operators, no `!!`.
+
+## Edit Receipt
+
+File: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`
+- Line 36: inserted `import androidx.compose.runtime.LaunchedEffect`
+- Line 45: inserted `import androidx.compose.ui.input.nestedscroll.nestedScroll`
+- Lines 148–149: explicit `mutableStateOf<JanitorLoadState>(...)` on `browseState` and `searchState`
+- Lines 459–466: replaced nullable chain with `val displayBio = (character.bio ?: character.description).orEmpty().trim()` + `if (displayBio.isNotBlank())` Text block
+
+No local Gradle build performed (constraint). File read-verified: imports present, explicit type params present, zero `!!` occurrences.
