@@ -1,5 +1,7 @@
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -28,6 +30,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
@@ -76,13 +79,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.lucid.domchat.ui.theme.appFilterChipBorder
 import me.lucid.domchat.ui.theme.appFilterChipColors
 import me.lucid.domchat.R
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.repository.ConversationRepository
 import me.lucid.domchat.data.repository.LightConversationEntity
+import me.lucid.domchat.data.sync.importer.SillyTavernImporter
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.ToastAction
@@ -125,6 +131,32 @@ fun SettingChatsPage(
     val isDark = LocalDarkMode.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { fileUri ->
+        fileUri?.let { uri ->
+            scope.launch {
+                val importedConv = runCatching {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { stream ->
+                            SillyTavernImporter.import(stream, allAssistants).conversation
+                        }
+                    }
+                }.onFailure { exception ->
+                    exception.printStackTrace()
+                }.getOrNull()
+
+                if (importedConv != null) {
+                    withContext(Dispatchers.IO) {
+                        conversationRepository.insertConversation(importedConv)
+                    }
+                    toaster.show("Imported chat: ${importedConv.title}", type = ToastType.Success)
+                } else {
+                    toaster.show("Import failed: could not read chat file", type = ToastType.Error)
+                }
+            }
+        }
+    }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
@@ -192,6 +224,11 @@ fun SettingChatsPage(
                 },
                 actions = {
                     if (!isSelectionMode) {
+                        IconButton(onClick = {
+                            importLauncher.launch(arrayOf("application/json", "application/jsonl", "text/plain", "*/*"))
+                        }) {
+                            Icon(Icons.Rounded.FileUpload, contentDescription = "Import chat")
+                        }
                         IconButton(onClick = { showSortMenu = true }) {
                             Icon(Icons.AutoMirrored.Rounded.Sort, contentDescription = "Sort")
                         }

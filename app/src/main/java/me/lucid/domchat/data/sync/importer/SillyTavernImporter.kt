@@ -18,6 +18,7 @@ import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.utils.JsonInstant
 import me.lucid.domchat.utils.jsonPrimitiveOrNull
 import java.io.File
+import java.io.InputStream
 import java.time.Instant
 import kotlin.time.Clock
 import kotlin.time.Instant as KotlinInstant
@@ -27,7 +28,7 @@ import kotlin.uuid.Uuid
 
 object SillyTavernImporter {
     data class Result(
-        val conversations: List<Conversation>,
+        val conversation: Conversation,
         val assistants: List<Assistant> = emptyList(),
     )
 
@@ -36,6 +37,17 @@ object SillyTavernImporter {
     }
 
     fun import(json: String): Result {
+        return import(json, emptyList())
+    }
+
+    fun import(stream: InputStream, assistants: List<Assistant>): Result {
+        return stream.use { input ->
+            val json = input.readBytes().decodeToString()
+            import(json, assistants)
+        }
+    }
+
+    private fun import(json: String, assistants: List<Assistant>): Result {
         val root = JsonInstant.parseToJsonElement(json)
         val elements = when (root) {
             is JsonArray -> root
@@ -70,8 +82,8 @@ object SillyTavernImporter {
         )
 
         return Result(
-            conversations = listOf(conversation),
-            assistants = listOf(assistant),
+            conversation = conversation,
+            assistants = assistants,
         )
     }
 
@@ -83,12 +95,11 @@ object SillyTavernImporter {
 
     private fun looksLikeHeader(element: JsonElement): Boolean {
         val obj = element.jsonObjectOrNull ?: return false
-        // A header carries identity fields (name / character_name) but must never
-        // carry message body (mes / content). Regular messages with a name field
-        // always carry mes or content, so they are never misclassified as a header.
-        return (obj["name"] != null || obj["character_name"] != null)
-            && obj["mes"] == null
-            && obj["content"] == null
+        // A header carries identity fields (title / character_name / user_name / chat_title)
+        // but must never carry message body (mes / content). Regular messages with a name
+        // field always carry mes or content, so they are never misclassified as a header.
+        return (obj["mes"] == null && obj["content"] == null)
+            && (obj["title"] != null || obj["character_name"] != null || obj["user_name"] != null || obj["chat_title"] != null)
     }
 
     private fun parseHeader(element: JsonElement): Header {
@@ -138,7 +149,9 @@ object SillyTavernImporter {
         if (swipes == null) return emptyList()
         return swipes.mapNotNull { swipe ->
             val swipeText = when (swipe) {
-                is JsonPrimitive -> swipe.jsonPrimitiveOrNull?.contentOrNull
+                // JSON string alternative: ["swipe 1 text", "swipe 2 text"]
+                is JsonPrimitive -> swipe.jsonPrimitiveOrNull?.contentOrNull as? String
+                // JSON object alternative: { "mes": "swipe text", ... }
                 is JsonObject -> swipe.string("mes")
                 else -> null
             }
@@ -148,14 +161,14 @@ object SillyTavernImporter {
 
     private fun JsonObject.string(vararg keys: String): String? {
         return keys.firstNotNullOfOrNull { key ->
-            this[key]?.jsonPrimitiveOrNull?.contentOrNull
+            (this[key]?.jsonPrimitiveOrNull?.contentOrNull as? String)
         }
     }
 
     private fun JsonObject.long(vararg keys: String): Long? {
         return keys.firstNotNullOfOrNull { key ->
             this[key]?.jsonPrimitiveOrNull?.longOrNull
-                ?: this[key]?.jsonPrimitiveOrNull?.contentOrNull?.toLongOrNull()
+                ?: ((this[key]?.jsonPrimitiveOrNull?.contentOrNull as? String)?.toLongOrNull())
         }
     }
 
