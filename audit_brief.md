@@ -1,52 +1,51 @@
-# Audit Brief — Decoupled Glass Engine, 3 Verified Presets & Advanced Mode (task-024)
+# Audit Brief — Character Hub Polish & Card Overflow Fix (task-025)
 
 ## Intent Verification
 
 All four directive requirements are implemented in the target files:
 
-1. **PreferencesModels.kt** — Added `@Serializable enum class GlassPreset { CLEAR, DARK, FROSTED, CUSTOM }` and two new fields on `DisplaySetting`: `glassPreset: GlassPreset = GlassPreset.CUSTOM` and `isAdvancedGlassEnabled: Boolean = false`. Both fields carry defaults, so existing serialized settings deserialize without migration (backward compatible).
+1. **OneUITopAppBar.kt** — Removed the `drawLine` bottom divider (lines 118-130) that appeared when `collapseProgress > 0.1f`. The `.then(Modifier.drawBehind { drawLine(...) })` block is deleted; the Column modifier chain is now just `.fillMaxWidth().height(currentHeight).background(barColor)` with zero separator line.
 
-2. **LiquidGlass.kt** — Replaced hardcoded static tokens with three dynamic `@Composable` functions reading `LocalSettings.current`:
-   - `liquidGlassSurfaceColor()` — CLEAR: `0xFF141520` at 12% alpha; DARK: `0xFF0F1018` at 82%; FROSTED: `0xFF222538` at 45%; CUSTOM: legacy `glassAlpha` + `glassBaseLuminance` derivation via `Color.lerp`.
-   - `liquidGlassBorderBrush()` — CLEAR uses 0.18f white specular rim; DARK/FROSTED use subtler rims; CUSTOM keeps `SpecularBorderBrush`.
-   - `liquidBubbleSurfaceColor()` — Mirrors panel presets scaled by `chatBubbleAlpha`; CUSTOM uses `chatBubbleTone`.
-   Legacy static tokens (`GlassSurfaceDark`, etc.) retained as fallbacks but no longer referenced by the new functions.
+2. **CharacterHubPage.kt** — Bottom boundary in `CharacterPortraitCard` changed from harsh `Color.Black.copy(alpha = 0.85f)` to a smooth `Brush.verticalGradient` fading from `Color.Transparent` to `Color(0xFF141520).copy(alpha = 0.85f)`. Search bar pinned to top: the Column is split into a non-scrollable header (search bar + count + sort + actions) and a scrollable gallery Column with `weight(1f)` + `nestedScroll(collapseBehavior.nestedScrollConnection)`.
 
-3. **Blur.kt** — `domChatCardContainerColor()` now returns `liquidGlassSurfaceColor()`. Chrome surfaces (`domChatChromeSurfaceColor`, `domChatIconPillContainerColor`, `domChatFloatingSurfaceColor`, `blurredContainerColor`, `domChatSheetContainerColor`) wire to `liquidGlassSurfaceColor()` when `linkChromeToGlass` is true, falling back to fixed charcoal when unlinked. `domChatSheetContainerColor` preserves its opacity floor.
+3. **CharacterHubPage.kt FAB** — `FloatingActionButton` restyled as circular glass: `containerColor = Color(0xFF141520).copy(alpha = 0.75f)`, 0.5dp white specular border via a vertical gradient brush (`Color.White.copy(alpha = 0.9f)` to `0.6f`), white `Icons.Rounded.Add` icon inside a 20.dp circle, `shape = CircleShape`.
 
-4. **SettingDisplayPage.kt** — Replaced string-based "Clear Glass / Dark Glass / Liquid Frost" picker with `GlassPreset` enum-based selector for both Global UI and Chat Bubbles. Added Advanced Mode toggle: when on, reveals opacity/tint/tone/blur sliders; when off, applies the selected preset's verified values. Sliders write back to `DisplaySetting` and set `glassPreset = CUSTOM`. Bubble presets are independent of the shared `glassPreset` field.
+4. **CharacterPortraitCard** — `graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }` added to the container Box before `drawWithContent` alpha fade, eliminating the black square glitch on text overflow. Display name rendered with fallback: `assistant.name.takeIf { it.isNotBlank() } ?: "Character"`. Tag pills restyled with dark glass `Color(0xFF141520)` background and `0.5dp` `SpecularBorderSubtle` border, replacing the `Tag` component.
 
-Strict null safety: no `!!` in any modified file. Unified glass card theme `0xFF141520` enforced as Clear Glass surface and `LiquidGlassCard` surface color. Existing code style (4-space kt, KDoc, const/enum placement) preserved.
+Strict null safety: no `!!` in either file. Unified glass theme `0xFF141520` enforced as FAB fill, card background, bottom scrim, and tag pill fill. Existing code style (4-space kt, KDoc, import ordering) preserved.
 
 ## Call Chain & Architecture
 
-**Settings persistence:** `SettingDisplayPage` → `updateDisplaySetting(...)` → `vm.updateSettings(settings.copy(displaySetting = ...))` → `SettingsStore.update { ... }` (Koin ViewModel, `PreferencesStore` DataStore). All `DisplaySetting` mutations flow through `updateDisplaySetting` which persists via `vm.updateSettings`. `LocalSettings` composition local provides `Settings` to UI.
+**OneUITopAppBar:** Used as the `topBar` in `Scaffold` within `CharacterHubPage`. Receives `scrollBehavior` from `TopAppBarDefaults.exitUntilCollapsedScrollBehavior()`. Reads `collapsedFraction` from scroll state to interpolate height, title alpha, and bar color. No divider is drawn on scroll. No ViewModel/Repository involvement — purely presentational.
 
-**Glass engine resolution:** UI/blur modifiers call `domChatCardContainerColor()` / `domChatChromeSurfaceColor()` etc. → `liquidGlassSurfaceColor()` → reads `LocalSettings.current.displaySetting.glassPreset` → returns preset-specific `Color`. `LiquidGlassCard` and `Modifier.liquidGlassSurface` consume `liquidGlassSurfaceColor()` / `liquidGlassBorderBrush()` as `fillColor`/`specularBrush`.
+**CharacterHubPage:** `AssistantVM` via `koinViewModel()` exposes `settings` (StateFlow) and assistant CRUD operations. `ModelCatalogService` snapshot collected for TTS/catalog data. Flow:
+- `settings.assistants` → debounced search (250ms) on `Dispatchers.Default` → filtered/sorted on `Dispatchers.Main` → `filteredAssistants` state
+- `CharacterPortraitCard(assistant, isDark, onClick)` → `inspectingAssistant = char` → `CharacterInspectorSheet` modal bottom sheet
+- FAB `onClick` → `vm.addAssistant(Assistant(name = "New Character"))` → `navController.navigate(Screen.AssistantDetail(...))`
+- Search bar text flows into `searchQuery` → debounced → `debouncedQuery` → filters assistants
 
-**Preset selection:** `GlassPresetSelector` (Compose) → `onSelect(preset)` → `applyUiPreset`/`applyBubblePreset` → `updateDisplaySetting` → persists. Advanced Mode toggle → `isAdvancedGlassEnabled` flag → gates slider visibility.
-
-**UI Layer:** `SettingDisplayPage` only renders state (`settings.displaySetting` via `collectAsStateWithLifecycle`) and emits intents (`updateDisplaySetting`). Zero business logic in composables.
+**CharacterPortraitCard:** Pure UI component. Reads `assistant.tags`, renders `FullCharacterCardImage`, bottom glass scrim, `displayName` text with `drawWithContent` alpha fade, and horizontal `LazyRow` of tag pills. `CompositingStrategy.Offscreen` on the container graphicsLayer isolates offscreen rendering for the alpha fade, preventing the black square glitch.
 
 ## Recomposition & Memory Safety
 
-- **No `!!`**: Verified zero force-unwraps across all four files. Nullable access uses `?.`, `?:`, `isNullOrBlank()`, `firstOrNull`, `takeIf`, `orEmpty()`.
-- **Remember scoping**: All slider state (`localGlassAlpha`, `localGlassBlur`, `localBaseLuminance`, `localBubble*`, `localGlassPreset`, `localBubblePreset`, `localIsAdvancedGlass`) uses `remember(key) { mutableStateOf(...) }` / `mutableFloatStateOf(...)`, keyed on the corresponding `DisplaySetting` field so values reset when settings change externally.
-- **State hoisting**: `displaySetting` is `remember(settings) { mutableStateOf(settings.displaySetting) }` — hoisted once per `Settings` instance, avoiding stale captures.
-- **Composition locals**: `LocalSettings.current` read inside composable functions (`liquidGlassSurfaceColor`, `domChatCardContainerColor`, etc.) — recomputes when `Settings` changes, no naked objects.
-- **No unstable object identity**: `GlassPreset` enum values are singletons; `selectedPreset` comparisons use reference equality (`==` on enum), stable across recompositions.
+- **No `!!`**: Verified zero force-unwraps across both files. Nullable access uses `?.`, `?:`, `takeIf`, `isNullOrBlank`, `orEmpty()`.
+- **Remember scoping**: `searchQuery`, `debouncedQuery`, `isGridView`, `sortOption`, `inspectingAssistant`, `loadError`, `tagListState`, `gridState`, `listState` all use `remember` / `rememberLazyListState` / `rememberLazyGridState`. `displayName` is a local `val` derived from `assistant.name` during composition — no state retention needed.
+- **Graphics layer isolation**: `CompositingStrategy.Offscreen` on `CharacterPortraitCard` container ensures the `drawWithContent` alpha fade renders to an offscreen buffer, preventing bleed/glitch when text overflows. No layout invalidation from the layer.
+- **Tag pill replacement**: Removed `Tag` component usage (potential external styling side-effects) in favor of inline `Box` with `Color(0xFF141520)` background + `SpecularBorderSubtle` border — fully self-contained, no external dependencies.
+- **FAB glass styling**: Inline `Box` with vertical gradient brush for the specular highlight, white icon — no black square artifact. `CircleShape` ensures circular clipping.
+- **Scroll pinning**: Header Column (search bar + controls) is outside the scrollable `nestedScroll` Column — it never scrolls, so its state (`searchQuery`, `sortOption`) is stable across gallery scrolls.
 
 ## Threading & Dispatchers
 
-- All animation/color resolution runs on `Dispatcher.Main` via Compose composition. No `withContext`, `Dispatchers.IO`, or `Dispatchers.Default` introduced or removed in these files.
-- `vm.updateSettings` (ViewModel) runs inside `viewModelScope` (Dispatchers.Main) and delegates to `SettingsStore.update` which persists to DataStore on the appropriate dispatcher internally.
-- No blocking calls, no `delay`, no launch/coroutine additions in UI layer.
-- `LocalSettings.current` is read during composition only — safe on Main thread.
+- All UI animation, color, and layout work runs on `Dispatcher.Main` via Compose composition — correct and unchanged.
+- Background work remains on proper dispatchers: import parsing on `Dispatchers.IO` (`AssistantExportImport.parseImport`), assistant search/filter on `Dispatchers.Default`, UI state updates marshalled back to `Dispatchers.Main`. No new dispatchers introduced or misused.
+- `withContext(Dispatchers.IO)` / `withContext(Dispatchers.Main)` pattern preserved for export/import and conversation creation.
+- No blocking calls on Main thread. The 250ms debouncer prevents keyboard freeze on large assistant lists.
 
 ## Offline & Error State Handling
 
-- **Fully local**: Glass engine reads only in-memory `DisplaySetting` via `LocalSettings`. No network, no disk I/O in the color/border functions.
-- **Offline-resilient**: Presets and sliders work entirely offline. `updateDisplaySetting` writes to DataStore asynchronously; if persistence fails, the in-memory `displaySetting` state is still updated, so UI remains consistent.
-- **Error states**: `vm.updateSettings` errors are surfaced through `SettingsStore` error handling (existing behavior, untouched). No new error surfaces introduced.
-- **Graceful degradation**: If `LocalSettings` is not provided (e.g., preview), `LocalSettings.current` throws — but this is only called within active compositions where `LocalSettings` is provided (RouteActivity sets it via `LocalSettings provides settings`). No fallback needed in production.
-- **Backward compatibility**: Old serialized `DisplaySetting` (without `glassPreset`/`isAdvancedGlassEnabled`) deserializes to defaults (`CUSTOM`, `false`), preserving existing slider-driven behavior. No data loss.
+- **Fully local UI**: Glass colors, FAB styling, card layout, and search filtering work entirely offline. No network dependency in the modified components.
+- **Error boundary**: `loadError` state captures exceptions from assistant search/filter (try/catch around `withContext(Dispatchers.Default)` block) and conversation creation (try/catch around `vm.createConversation`). Errors surface via `CharacterHubErrorCard` (pinned in header) or `LocalToaster.current` (`ToastType.Error`).
+- **Import/export errors**: Caught in `try/catch` blocks, surfaced via toaster. `pendingExportJson`/`pendingExportBytes` cleared after use.
+- **Null safety on Assistant fields**: `assistant.name` uses `takeIf { it.isNotBlank() } ?: "Character"` fallback. `assistant.creator` uses `isNullOrBlank()` checks. `assistant.tags` iterated safely (empty list default).
+- **Graceful degradation**: If `CompositingStrategy.Offscreen` is unsupported (unlikely on API 28+), Compose falls back to default strategy without crashing. If `assistant.tags` is empty, the LazyRow renders zero items — no crash.

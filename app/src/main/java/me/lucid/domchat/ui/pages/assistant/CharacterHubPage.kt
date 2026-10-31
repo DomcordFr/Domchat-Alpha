@@ -75,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -321,184 +322,214 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     vm.addAssistant(newChar)
                     navController.navigate(Screen.AssistantDetail(id = newChar.id.toString()))
                 },
-                containerColor = Color(0xFF000000).copy(alpha = 0.35f),
+                containerColor = Color(0xFF141520).copy(alpha = 0.75f),
                 contentColor = Color.White,
-                shape = CircleShape
+                shape = CircleShape,
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add Character")
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.9f),
+                                    Color.White.copy(alpha = 0.6f)
+                                )
+                            ),
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "Add Character",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .nestedScroll(collapseBehavior.nestedScrollConnection)
                 .padding(padding)
         ) {
-            // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp)
-                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
-                placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                colors = me.lucid.domchat.ui.theme.appFieldColors()
-            )
-
-            // Count on the left, sorting options on the right
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 22.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // Header section: search bar pinned to top (does not scroll)
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "${filteredAssistants.size} characters loaded",
-                    fontSize = 12.sp,
-                    color = Color(0xFF8A8A96)
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 4.dp)
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                    placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
+                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                    colors = me.lucid.domchat.ui.theme.appFieldColors()
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
-
+                // Count on the left, sorting options on the right
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 22.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CharacterSortOption.entries.forEach { option ->
-                        val selected = sortOption == option
-                        Surface(
-                            onClick = { sortOption = option },
-                            color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
-                            shape = RoundedCornerShape(10.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                0.5.dp,
-                                if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                            )
-                        ) {
-                            Text(
-                                text = when (option) {
-                                    CharacterSortOption.RECENT -> "Recent"
-                                    CharacterSortOption.NAME -> "Name"
-                                    CharacterSortOption.CREATOR -> "Creator"
-                                },
-                                fontSize = 11.sp,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (selected) Color.White else Color(0xFF888888),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                            )
-                        }
-                    }
-                }
-            }
+                    Text(
+                        text = "${filteredAssistants.size} characters loaded",
+                        fontSize = 12.sp,
+                        color = Color(0xFF8A8A96)
+                    )
 
-            // 5. Actions Row (BELOW sorting): Upload Character + Grid/List toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                DomChatGlassPillButton(
-                    text = "Upload Character",
-                    icon = Icons.Rounded.FileUpload,
-                    onClick = {
-                        importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
-                    }
-                )
+                    Spacer(modifier = Modifier.weight(1f))
 
-                Surface(
-                    onClick = { isGridView = !isGridView },
-                    shape = AppShapes.ButtonPill,
-                    color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-                ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(
-                            imageVector = if (isGridView) Icons.Rounded.ViewList else Icons.Rounded.GridView,
-                            contentDescription = "Toggle View",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = if (isGridView) "List View" else "Grid View",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White
-                        )
+                        CharacterSortOption.entries.forEach { option ->
+                            val selected = sortOption == option
+                            Surface(
+                                onClick = { sortOption = option },
+                                color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
+                                shape = RoundedCornerShape(10.dp),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    0.5.dp,
+                                    if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                                )
+                            ) {
+                                Text(
+                                    text = when (option) {
+                                        CharacterSortOption.RECENT -> "Recent"
+                                        CharacterSortOption.NAME -> "Name"
+                                        CharacterSortOption.CREATOR -> "Creator"
+                                    },
+                                    fontSize = 11.sp,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (selected) Color.White else Color(0xFF888888),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Load error boundary: surface Room/flow mapping failures without crashing the hub.
-            loadError?.let { error ->
-                Column(
+                // 5. Actions Row (BELOW sorting): Upload Character + Grid/List toggle
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                        .padding(horizontal = 20.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    CharacterHubErrorCard(
-                        assistant = Assistant(name = "Character Hub"),
-                        error = error
+                    DomChatGlassPillButton(
+                        text = "Upload Character",
+                        icon = Icons.Rounded.FileUpload,
+                        onClick = {
+                            importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
+                        }
                     )
-                }
-            }
 
-            // Character Gallery Content
-            AnimatedContent(
-                targetState = isGridView,
-                transitionSpec = { fadeIn(spring()) togetherWith fadeOut(spring()) },
-                label = "CharacterGallery",
-                modifier = Modifier.weight(1f).fillMaxWidth()
-            ) { gridMode ->
-                if (gridMode) {
-                    LazyVerticalGrid(
-                        state = gridState,
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize()
+                    Surface(
+                        onClick = { isGridView = !isGridView },
+                        shape = AppShapes.ButtonPill,
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                     ) {
-                        items(filteredAssistants, key = { it.id.toString() }) { char ->
-                            CharacterPortraitCard(
-                                assistant = char,
-                                isDark = isDark,
-                                onClick = { inspectingAssistant = char }
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isGridView) Icons.Rounded.ViewList else Icons.Rounded.GridView,
+                                contentDescription = "Toggle View",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = if (isGridView) "List View" else "Grid View",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White
                             )
                         }
                     }
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxSize()
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Load error boundary: surface Room/flow mapping failures without crashing the hub.
+                loadError?.let { error ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp)
                     ) {
-                        items(filteredAssistants, key = { it.id.toString() }) { char ->
-                            CharacterListRow(
-                                assistant = char,
-                                isDark = isDark,
-                                onClick = { inspectingAssistant = char }
-                            )
+                        CharacterHubErrorCard(
+                            assistant = Assistant(name = "Character Hub"),
+                            error = error
+                        )
+                    }
+                }
+            }
+
+            // Scrollable character gallery
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .nestedScroll(collapseBehavior.nestedScrollConnection)
+            ) {
+                AnimatedContent(
+                    targetState = isGridView,
+                    transitionSpec = { fadeIn(spring()) togetherWith fadeOut(spring()) },
+                    label = "CharacterGallery",
+                    modifier = Modifier.weight(1f).fillMaxWidth()
+                ) { gridMode ->
+                    if (gridMode) {
+                        LazyVerticalGrid(
+                            state = gridState,
+                            columns = GridCells.Fixed(2),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(filteredAssistants, key = { it.id.toString() }) { char ->
+                                CharacterPortraitCard(
+                                    assistant = char,
+                                    isDark = isDark,
+                                    onClick = { inspectingAssistant = char }
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(filteredAssistants, key = { it.id.toString() }) { char ->
+                                CharacterListRow(
+                                    assistant = char,
+                                    isDark = isDark,
+                                    onClick = { inspectingAssistant = char }
+                                )
+                            }
                         }
                     }
                 }
@@ -793,6 +824,9 @@ fun CharacterPortraitCard(
                 else Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.3f), Color.Transparent)),
                 RoundedCornerShape(18.dp)
             )
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
             .clickable(onClick = onClick)
     ) {
         // Full-bleed avatar background
@@ -802,7 +836,7 @@ fun CharacterPortraitCard(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Bottom vertical gradient scrim: transparent -> 85% alpha black
+        // Bottom vertical gradient scrim: transparent -> dark glass (0xFF141520) for smooth fade
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -812,7 +846,7 @@ fun CharacterPortraitCard(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color.Black.copy(alpha = 0.85f),
+                            Color(0xFF141520).copy(alpha = 0.85f),
                         )
                     )
                 )
@@ -827,8 +861,9 @@ fun CharacterPortraitCard(
             horizontalAlignment = Alignment.Start
         ) {
             // Character display name: bold white, max 2 lines, right-edge alpha fade mask.
+            val displayName = assistant.name.takeIf { it.isNotBlank() } ?: "Character"
             Text(
-                text = assistant.name,
+                text = displayName,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 maxLines = 2,
@@ -876,19 +911,23 @@ fun CharacterPortraitCard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(tagList, key = { it.toString() }) { tagId ->
-                    Tag(
-                        onClick = null,
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF141520))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
                     ) {
-                        Text(
-                            text = tagId.toString().take(8).uppercase(),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.92f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                    Text(
+                        text = tagId.toString().take(8).uppercase(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White.copy(alpha = 0.92f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
+            }
             }
 
 

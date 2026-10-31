@@ -115,19 +115,6 @@ fun OneUITopAppBar(
             .fillMaxWidth()
             .height(currentHeight)
             .background(barColor)
-            .then(
-                if (collapseProgress > 0.1f) {
-                    Modifier.drawBehind {
-                        val strokeWidth = 0.5.dp.toPx()
-                        drawLine(
-                            color = if (isDark) Color.White.copy(alpha = 0.12f * collapseProgress) else Color.Black.copy(alpha = 0.08f * collapseProgress),
-                            start = androidx.compose.ui.geometry.Offset(0f, size.height - strokeWidth / 2),
-                            end = androidx.compose.ui.geometry.Offset(size.width, size.height - strokeWidth / 2),
-                            strokeWidth = strokeWidth
-                        )
-                    }
-                } else Modifier
-            )
     ) {
         // Status bar spacer
         Spacer(modifier = Modifier.height(statusBarHeight))

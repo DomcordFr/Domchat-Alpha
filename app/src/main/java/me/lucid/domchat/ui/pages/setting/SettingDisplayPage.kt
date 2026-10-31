@@ -691,16 +691,15 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             color = if (isDark) Color.White.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.65f)
                         )
 
-                        // Chat Bubble Glass Presets
                         // Chat Bubble Glass Presets (3 verified presets + Custom)
                         GlassPresetSelector(
                             selectedPreset = localBubblePreset,
                             isAdvanced = localBubblePreset == GlassPreset.CUSTOM,
-                            onSelect = { preset ->
+                            onSelect = { preset: GlassPreset ->
                                 haptics.perform(HapticPattern.Pop)
                                 applyBubblePreset(preset)
                             },
-                            onAdvancedToggle = { enabled ->
+                            onAdvancedToggle = { enabled: Boolean ->
                                 localBubblePreset = if (enabled) GlassPreset.CUSTOM else localBubblePreset
                                 updateDisplaySetting(settings.displaySetting.copy(
                                     glassPreset = if (enabled) GlassPreset.CUSTOM else settings.displaySetting.glassPreset
@@ -712,8 +711,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         )
 
                         // Advanced bubble sliders (only visible when Custom)
-                        if (localBubblePreset == GlassPreset.CUSTOM) {
-                            // Advanced bubble sliders (only visible when Custom)
                         if (localBubblePreset == GlassPreset.CUSTOM) {
                             // Chat Bubble Opacity Slider (0% to 100%)
                             Row(
