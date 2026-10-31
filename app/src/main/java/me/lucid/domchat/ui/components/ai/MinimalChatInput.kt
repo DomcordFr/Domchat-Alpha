@@ -1685,12 +1685,6 @@ fun MinimalChatInput(
         var startAlphaDraft by remember {
             mutableFloatStateOf(currentUi.streamingFadeStartAlpha ?: settings.displaySetting.streamingFadeStartAlpha)
         }
-        var particleStyleDraft by remember {
-            mutableIntStateOf(currentUi.streamingParticleStyle ?: settings.displaySetting.streamingParticleStyle)
-        }
-        var particleDurDraft by remember {
-            mutableFloatStateOf((currentUi.streamingParticleDurationMs ?: settings.displaySetting.streamingParticleDurationMs).toFloat())
-        }
 
         DomChatInWindowBottomSheet(
             visible = true,
@@ -1777,60 +1771,8 @@ fun MinimalChatInput(
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Text Reveal Style", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            listOf(
-                                0 to "Off",
-                                1 to "Glass",
-                                2 to "Fireflies",
-                                3 to "Swarm",
-                            ).forEach { (styleId, label) ->
-                                Surface(
-                                    onClick = { particleStyleDraft = styleId },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = if (particleStyleDraft == styleId) {
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-                                    } else {
-                                        Color(0xFF000000).copy(alpha = 0.20f)
-                                    },
-                                    border = BorderStroke(
-                                        0.5.dp,
-                                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                                    ),
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    Text(
-                                        text = label,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (particleStyleDraft == styleId) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.75f),
-                                        maxLines = 1,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 10.dp)
-                                    )
-                                }
-                            }
-                        }
                     }
 
-                    if (particleStyleDraft >= 1) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Particle Assembly Speed", style = MaterialTheme.typography.bodyMedium)
-                                Text("${particleDurDraft.toInt()} ms", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            }
-                            DomChatSlider(
-                                value = particleDurDraft,
-                                onValueChange = { particleDurDraft = it },
-                                valueRange = 150f..2000f,
-                                steps = 36
-                            )
-                        }
-                    }
                 }
 
                 Row(
@@ -1844,8 +1786,6 @@ fun MinimalChatInput(
                                 streamingContinuousFlow = continuousDraft,
                                 streamingFadeDurationMs = durationDraft.toInt(),
                                 streamingFadeStartAlpha = kotlin.math.round(startAlphaDraft * 100f) / 100f,
-                                streamingParticleStyle = particleStyleDraft,
-                                streamingParticleDurationMs = particleDurDraft.toInt()
                             )
                             onUpdateAssistant(assistant.copy(uiSettings = newUi))
                             showStreamingAnimationSheet = false

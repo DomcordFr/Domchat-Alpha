@@ -1,8 +1,5 @@
 package me.lucid.domchat.ui.components.chat
 
-import me.lucid.domchat.ui.motion.EntranceDirection
-import me.lucid.domchat.ui.motion.LocalMotionPolicy
-import me.lucid.domchat.ui.motion.entrance
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import androidx.compose.ui.unit.sp
@@ -1418,18 +1415,6 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(
-                            if (isHistoryTurn) {
-                                Modifier
-                            } else {
-                                Modifier.entrance(
-                                    key = "bubble:${group.firstNode.id}:$nodeIndex:$partIndex",
-                                    motionPolicy = LocalMotionPolicy.current,
-                                    from = EntranceDirection.UP,
-                                    delayMs = (nodeIndex * 25 + partIndex * 10).coerceAtMost(250),
-                                )
-                            }
-                        )
                         .then(swipeModifier),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
@@ -1447,6 +1432,22 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
+                    val userEntrance by animateFloatAsState(
+                        initialValue = if (isHistoryTurn) 1f else 0f,
+                        targetValue = 1f,
+                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                        label = "user_message_glow_settle"
+                    )
+                    val userBlurRadius = (1f - userEntrance) * 6f
+                    val userEntranceStyle = LocalTextStyle.current.copy(
+                        shadow = if (userBlurRadius > 0.01f) {
+                            Shadow(
+                                color = Color(0xFF141520).copy(alpha = 0.6f * (1f - userEntrance)),
+                                offset = Offset.Zero,
+                                blurRadius = userBlurRadius,
+                            )
+                        } else null
+                    )
                     val userNickname = settings.displaySetting.getActivePersona().name
                     val displayContent = remember(part.text, assistant, userNickname) {
                         part.text
@@ -1464,6 +1465,12 @@ private fun UserMessageTurn(
                         workspaceId = assistant?.workspaceId?.toString(),
                         content = displayContent,
                         paragraphSpacing = 12.dp,
+                        style = userEntranceStyle,
+                        streamingTextReveal = !isHistoryTurn,
+                        freshReveal = !isHistoryTurn,
+                        modifier = Modifier
+                            .alpha(userEntrance)
+                            .graphicsLayer { translationY = (1f - userEntrance) * 8.dp },
                         onClickCitation = {}
                     )
                 }
@@ -1597,10 +1604,6 @@ private fun AssistantMessageTurn(
     val context = LocalContext.current
     // History turns never animate; only turns that arrived this session do.
     val isHistoryTurn = group.firstNode.id.toString() in me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes.current
-    val particleDisplay = settings.displaySetting
-    val chromeParticles = !isHistoryTurn &&
-        particleDisplay.streamingParticleStyle >= me.lucid.domchat.ui.motion.ParticleTextMode.FIREFLY.id
-    val particleDurationMs = particleDisplay.streamingParticleDurationMs.coerceIn(150, 2000)
     val defaultAssistantName = stringResource(R.string.assistant_page_default_assistant)
     val defaultVideoLabel = stringResource(R.string.chat_message_attachment_video)
     val defaultAudioLabel = stringResource(R.string.chat_message_attachment_audio)
@@ -1736,11 +1739,6 @@ private fun AssistantMessageTurn(
                 
                 // Name above pills (only if enabled)
                 if (showModelName) {
-                    me.lucid.domchat.ui.motion.ParticleRevealBox(
-                        key = "name:${group.firstNode.id}",
-                        enabled = chromeParticles,
-                        durationMs = particleDurationMs,
-                    ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1772,7 +1770,6 @@ private fun AssistantMessageTurn(
                             color = headerTimeColor,
                         )
                     }
-                    }
                 }
 
                 // Avatar + Pills row
@@ -1781,19 +1778,13 @@ private fun AssistantMessageTurn(
                     horizontalArrangement = Arrangement.spacedBy(elementSpacing)
                 ) {
                     if (showIcon) {
-                        me.lucid.domchat.ui.motion.ParticleRevealBox(
-                            key = "avatar:${group.firstNode.id}",
-                            enabled = chromeParticles,
-                            durationMs = particleDurationMs,
-                        ) {
-                            UIAvatar(
-                                name = avatarName,
-                                modifier = Modifier.size(36.dp),
-                                value = avatarValue,
-                                loading = loading,
-                                onClick = onBotAvatarClick,
-                            )
-                        }
+                        UIAvatar(
+                            name = avatarName,
+                            modifier = Modifier.size(36.dp),
+                            value = avatarValue,
+                            loading = loading,
+                            onClick = onBotAvatarClick,
+                        )
                     }
 
                     ActivityPillRow(
@@ -1804,20 +1795,7 @@ private fun AssistantMessageTurn(
                         },
                         connectsToBubbleBelow = false,  // Bubbles are separate - fully rounded
                         modifier = Modifier
-                            .widthIn(max = maxWidth)
-                            .then(
-                                if (isHistoryTurn) {
-                                    Modifier
-                                } else {
-                                    Modifier.entrance(
-                                        key = "pill:${group.firstNode.id}",
-                                        motionPolicy = LocalMotionPolicy.current,
-                                        from = EntranceDirection.DIAGONAL,
-                                        delayMs = 60,
-                                        blur = 10.dp,
-                                    )
-                                }
-                            ),
+                            .widthIn(max = maxWidth),
                         reasoningPreviewEnabled = effectiveDisplay.reasoningPreviewEnabled,
                         maxBubbleWidth = maxWidth,
                         timelineOpen = timelineOpen,
@@ -1838,11 +1816,6 @@ private fun AssistantMessageTurn(
                 // [Full-width bubble]
 
                 if (showIcon || showModelName) {
-                    me.lucid.domchat.ui.motion.ParticleRevealBox(
-                        key = "avatarname:${group.firstNode.id}",
-                        enabled = chromeParticles,
-                        durationMs = particleDurationMs,
-                    ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1884,7 +1857,6 @@ private fun AssistantMessageTurn(
                                 color = headerTimeColor,
                             )
                         }
-                    }
                     }
                 }
             }
@@ -1928,18 +1900,6 @@ private fun AssistantMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(
-                            if (isHistoryTurn) {
-                                Modifier
-                            } else {
-                                Modifier.entrance(
-                                    key = "bubble:${group.firstNode.id}:$index",
-                                    motionPolicy = LocalMotionPolicy.current,
-                                    from = EntranceDirection.UP,
-                                    delayMs = (index * 25).coerceAtMost(250),
-                                )
-                            }
-                        )
                         .then(assistantSwipeModifier),
                     onClick = handleBubbleClick,
                     bubbleModifier = { m, shape, color ->
@@ -2034,20 +1994,7 @@ private fun AssistantMessageTurn(
                     },
                     connectsToBubbleBelow = false,
                     modifier = Modifier
-                        .widthIn(max = maxWidth)
-                        .then(
-                            if (isHistoryTurn) {
-                                Modifier
-                            } else {
-                                Modifier.entrance(
-                                    key = "pill2:${group.firstNode.id}",
-                                    motionPolicy = LocalMotionPolicy.current,
-                                    from = EntranceDirection.DIAGONAL,
-                                    delayMs = 60,
-                                    blur = 10.dp,
-                                )
-                            }
-                        ),
+                        .widthIn(max = maxWidth),
                     reasoningPreviewEnabled = effectiveDisplay.reasoningPreviewEnabled,
                     maxBubbleWidth = maxWidth,
                     timelineOpen = timelineOpen,
@@ -2127,18 +2074,13 @@ private fun AssistantMessageTurn(
         }
         
         // Token statistics - combined for all messages in group
-        if (showTokenUsage && group.combinedUsage != null && !loading) {
-            me.lucid.domchat.ui.motion.ParticleRevealBox(
-                key = "stats:${group.firstNode.id}",
-                enabled = chromeParticles,
-                durationMs = particleDurationMs,
-            ) {
-                TokenStatisticsInline(
-                    usage = group.combinedUsage!!,
-                    generationDurationMs = group.combinedGenerationDurationMs,
-                    modifier = Modifier
-                )
-            }
+        val usage = group.combinedUsage
+        if (showTokenUsage && usage != null && !loading) {
+            TokenStatisticsInline(
+                usage = usage,
+                generationDurationMs = group.combinedGenerationDurationMs,
+                modifier = Modifier
+            )
         }
         
         // Action buttons
@@ -2153,25 +2095,19 @@ private fun AssistantMessageTurn(
                    slideOutVertically(spring(dampingRatio = 0.8f, stiffness = 500f)) { -it } +
                    fadeOut()
         ) {
-            me.lucid.domchat.ui.motion.ParticleRevealBox(
-                key = "actions:${group.firstNode.id}",
-                enabled = chromeParticles,
-                durationMs = particleDurationMs,
-            ) {
-                Column {
-                    ChatMessageActionButtons(
-                        message = group.lastNode.currentMessage,
-                        onRegenerate = onRegenerate,
-                        node = group.nodeWithMostVersions,
-                        onUpdate = onUpdate,
-                        showRegenerate = showRegenerate,
-                        onOpenActionSheet = onOpenActionSheet,
-                        onEditLorebookEntry = onEditLorebookEntry,
-                        onModeClick = onModeClick,
-                        onMemoryClick = onMemoryClick,
-                        ttsProviderOverride = ttsProviderOverride,
-                    )
-                }
+            Column {
+                ChatMessageActionButtons(
+                    message = group.lastNode.currentMessage,
+                    onRegenerate = onRegenerate,
+                    node = group.nodeWithMostVersions,
+                    onUpdate = onUpdate,
+                    showRegenerate = showRegenerate,
+                    onOpenActionSheet = onOpenActionSheet,
+                    onEditLorebookEntry = onEditLorebookEntry,
+                    onModeClick = onModeClick,
+                    onMemoryClick = onMemoryClick,
+                    ttsProviderOverride = ttsProviderOverride,
+                )
             }
         }
     }

@@ -46,8 +46,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
-import me.lucid.domchat.ui.motion.ParticleTextMode
-import me.lucid.domchat.ui.motion.toParticleTextMode
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +55,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -450,9 +447,6 @@ private data class StreamingTextReveal(
     val fadeInEnabled: Boolean = true,
     val fadeDurationMs: Int = 450,
     val startAlpha: Float = 0.0f,
-    // Particle assembly style for freshly revealed glyphs.
-    val particleMode: ParticleTextMode = ParticleTextMode.OFF,
-    val particleDurationMs: Int = 600,
 )
 
 internal data class StreamingRevealVisuals(
@@ -725,6 +719,7 @@ fun MarkdownBlock(
     style: TextStyle = LocalTextStyle.current,
     paragraphSpacing: Dp = 4.dp,
     streamingTextReveal: Boolean = false,
+    freshReveal: Boolean = false,
     workspaceId: String? = null,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)? = null,
     onClickCitation: (String) -> Unit = {}
@@ -737,16 +732,9 @@ fun MarkdownBlock(
     val fadeInEnabled = displaySetting.enableStreamingFadeIn
     val fadeDurationMs = displaySetting.streamingFadeDurationMs.coerceIn(100, 1500)
     val startAlpha = displaySetting.streamingFadeStartAlpha.coerceIn(0f, 0.9f)
-    val particleMode = displaySetting.streamingParticleStyle.toParticleTextMode()
-    val particleEnabled = particleMode != ParticleTextMode.OFF
-    val particleDurationMs = displaySetting.streamingParticleDurationMs.coerceIn(150, 2000)
     val continuousFlow = displaySetting.streamingContinuousFlow
     val maxSettleDurationMillis = if (fadeInEnabled) {
-        if (particleEnabled) {
-            (particleDurationMs * 2500L / 1000L).coerceAtLeast(STREAMING_SETTLE_MAX_MILLIS)
-        } else {
-            (fadeDurationMs * 2L).coerceAtLeast(STREAMING_SETTLE_MAX_MILLIS)
-        }
+        (fadeDurationMs * 2L).coerceAtLeast(STREAMING_SETTLE_MAX_MILLIS)
     } else STREAMING_SETTLE_MAX_MILLIS
 
     val streamingPresentation = remember {
@@ -814,7 +802,7 @@ fun MarkdownBlock(
 
     val (preprocessed, astTree) = data
     val blockDirection = rememberContentDirection(preprocessed)
-    LaunchedEffect(content, streamingTextReveal) {
+    LaunchedEffect(content, streamingTextReveal, freshReveal) {
         if (!streamingTextReveal) {
             streamingPresentation.snapTo(content)
             displayContent = streamingPresentation.displayContent
@@ -823,7 +811,11 @@ fun MarkdownBlock(
         }
 
         val now = withFrameMillis { it }
-        streamingPresentation.acceptRawContent(content, now)
+        if (freshReveal) {
+            streamingPresentation.resetForFreshReveal(content, now)
+        } else {
+            streamingPresentation.acceptRawContent(content, now)
+        }
         displayContent = streamingPresentation.displayContent
         settleRanges = streamingPresentation.settleRanges
         streamingFrameMillis = now
@@ -858,8 +850,6 @@ fun MarkdownBlock(
             fadeInEnabled = fadeInEnabled,
             fadeDurationMs = fadeDurationMs,
             startAlpha = startAlpha,
-            particleMode = particleMode,
-            particleDurationMs = particleDurationMs,
         )
     } else {
         null
@@ -962,6 +952,23 @@ internal class StreamingTextPresentationState(
         lastRawUpdateMillis = nowMillis
         settleRanges = settleRanges.pruneStreamingSettleRanges(nowMillis, maxSettleDurationMillis)
         return false
+    }
+
+    /**
+     * Resets the presentation state for a one-shot reveal from empty: [targetContent] becomes the
+     * target, [displayContent] starts at "", and [step] reveals characters letter-by-letter with
+     * glow/blur-settle. Used for user messages that appear all at once when sent.
+     */
+    fun resetForFreshReveal(targetContent: String, nowMillis: Long) {
+        rawContent = targetContent
+        displayContent = ""
+        settleRanges = emptyList()
+        smoothedCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+        lastRawUpdateMillis = nowMillis
+        firstPendingSinceMillis = nowMillis
+        revealCarry = 0f
+        lastRevealMillis = nowMillis
+        currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
     }
 
     fun step(nowMillis: Long, elapsedMillis: Long): Boolean {
@@ -1693,20 +1700,12 @@ private fun MarkdownNode(
                 }
             }
             CompositionLocalProvider(LocalLayoutDirection provides direction.toLayoutDirection()) {
-                var revealLayout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
                 androidx.compose.foundation.layout.Box(modifier = modifier) {
                     Text(
                         text = revealText,
-                        onTextLayout = { revealLayout = it },
                         style = LocalTextStyle.current.copy(
                             textDirection = direction.toComposeTextDirection()
                         ),
-                    )
-                    StreamingRevealSwarm(
-                        sourceStart = node.startOffset,
-                        sourceEnd = node.endOffset,
-                        reveal = streamingReveal,
-                        layout = revealLayout,
                     )
                 }
             }
@@ -1990,7 +1989,6 @@ private fun Paragraph(
     }
     CompositionLocalProvider(LocalLayoutDirection provides paragraphDirection.toLayoutDirection()) {
         val paragraphSpacing = LocalMarkdownParagraphSpacing.current
-        var revealLayout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
         androidx.compose.foundation.layout.Box(
             modifier = modifier.then(
                 if (node.nextRenderableSibling() != null && paragraphSpacing > 0.dp) {
@@ -2002,7 +2000,6 @@ private fun Paragraph(
         ) {
             Text(
                 text = annotatedString,
-                onTextLayout = { revealLayout = it },
                 inlineContent = inlineContents,
                 softWrap = true,
                 overflow = TextOverflow.Visible,
@@ -2010,12 +2007,6 @@ private fun Paragraph(
                     lineHeight = if (hasInlineMath) TextUnit.Unspecified else textStyle.lineHeight,
                     textDirection = paragraphDirection.toComposeTextDirection()
                 )
-            )
-            StreamingRevealSwarm(
-                sourceStart = node.startOffset,
-                sourceEnd = node.endOffset,
-                reveal = streamingReveal,
-                layout = revealLayout,
             )
         }
     }
@@ -2454,15 +2445,7 @@ private fun AnnotatedString.Builder.applyStreamingRevealStyle(
         val rangeEnd = outputStart + ((overlapEnd - sourceStart) * outputLength / sourceLength)
         if (rangeEnd <= rangeStart) return@fastForEach
 
-        if (reveal.particleMode != ParticleTextMode.OFF) {
-            applyParticleAssemblyStyle(
-                reveal = reveal,
-                ageMillis = ageMillis,
-                rangeStart = rangeStart,
-                rangeEnd = rangeEnd,
-            )
-        } else {
-            if (ageMillis >= settleDurationMillis) return@fastForEach
+        if (ageMillis >= settleDurationMillis) return@fastForEach
             val progress = (ageMillis / settleDurationMillis).coerceIn(0f, 1f)
             // Smooth-step curve: 3t^2 - 2t^3
             val easedProgress = progress * progress * (3f - 2f * progress)
@@ -2493,63 +2476,6 @@ private fun AnnotatedString.Builder.applyStreamingRevealStyle(
     }
 }
 
-/**
- * Particle text assembly: every glyph in a freshly revealed range materializes
- * from its own light mote — a bright, blurred speck drifting down into its
- * resting position while resolving into crisp type. Characters ignite in a
- * left-to-right wave so long ranges read as one continuous particle stream.
- *
- * Implemented purely with SpanStyle (alpha + shadow-blur + baseline shift) so
- * it composes with the existing markdown AnnotatedString pipeline without any
- * custom text layout.
- */
-private fun AnnotatedString.Builder.applyParticleAssemblyStyle(
-    reveal: StreamingTextReveal,
-    ageMillis: Long,
-    rangeStart: Int,
-    rangeEnd: Int,
-) {
-    val charCount = (rangeEnd - rangeStart).coerceAtLeast(1)
-    val charDurationMs = reveal.particleDurationMs.toFloat().coerceAtLeast(150f)
-    // Wave stagger: at most 28ms between glyphs, compressed so the whole wave
-    // sweeps the range within ~2x the per-glyph duration.
-    val staggerMs = (28f).coerceAtMost((charDurationMs * 1.2f) / charCount)
-    val maxAge = (staggerMs * (charCount - 1) + charDurationMs).toLong()
-    if (ageMillis >= maxAge) return
-
-    for (i in 0 until charCount) {
-        val localAge = ageMillis - (i * staggerMs).toLong()
-        if (localAge < 0) break
-        val rawProgress = (localAge / charDurationMs).coerceIn(0f, 1f)
-        if (rawProgress >= 1f) continue
-        // Smooth-step easing for a soft ignite and a gentle settle.
-        val progress = rawProgress * rawProgress * (3f - 2f * rawProgress)
-
-        val alpha = progress
-        val glow = 1f - progress
-        // Glyph starts as a bright mote (white-tinted, heavily blurred, lifted
-        // slightly above its resting baseline) and sinks into crisp type.
-        val charColor = lerp(reveal.color, Color.White, glow * 0.55f).copy(alpha = alpha)
-        addStyle(
-            style = SpanStyle(
-                color = charColor,
-                baselineShift = BaselineShift(0.18f * glow),
-                shadow = if (glow > 0.02f) {
-                    Shadow(
-                        color = Color.White.copy(alpha = 0.85f * glow),
-                        offset = Offset.Zero,
-                        blurRadius = STREAMING_SETTLE_MAX_BLUR_RADIUS * glow + 2f,
-                    )
-                } else {
-                    null
-                },
-            ),
-            start = (rangeStart + i).coerceIn(rangeStart, rangeEnd),
-            end = (rangeStart + i + 1).coerceIn(rangeStart, rangeEnd),
-        )
-    }
-}
-
 internal fun streamingRevealVisuals(
     progress: Float,
     startAlpha: Float,
@@ -2564,66 +2490,6 @@ internal fun streamingRevealVisuals(
         } else {
             0f
         },
-    )
-}
-
-/**
- * Swarm overlay for freshly revealed glyphs (FIREFLY / SWARM modes). Finds the
- * newest settled range overlapping this text node, converts it to per-glyph
- * positions from the real text layout, and plays one particle swarm converging
- * onto those glyphs. Plays once per settled chunk (EntrancePlayed), so already
- * revealed text never animates again.
- */
-@Composable
-private fun StreamingRevealSwarm(
-    sourceStart: Int,
-    sourceEnd: Int,
-    reveal: StreamingTextReveal?,
-    layout: androidx.compose.ui.text.TextLayoutResult?,
-    modifier: Modifier = Modifier,
-) {
-    if (reveal == null || layout == null) return
-    val mode = reveal.particleMode
-    if (mode == ParticleTextMode.OFF) return
-    val textLength = layout.layoutInput.text.length
-    if (textLength <= 0 || sourceEnd <= sourceStart) return
-
-    val range = reveal.ranges.lastOrNull { it.endOffset > sourceStart && it.startOffset < sourceEnd } ?: return
-    val windowMs = (reveal.particleDurationMs * 1.6f).toLong()
-    val age = reveal.nowMillis - range.revealedAtMillis
-    if (age < 0 || age > windowMs) return
-
-    val overlapStart = maxOf(sourceStart, range.startOffset)
-    val overlapEnd = minOf(sourceEnd, range.endOffset)
-    if (overlapEnd <= overlapStart) return
-
-    val outStart = ((overlapStart - sourceStart) * textLength / (sourceEnd - sourceStart)).coerceIn(0, textLength)
-    val outEnd = ((overlapEnd - sourceStart) * textLength / (sourceEnd - sourceStart)).coerceIn(outStart, textLength)
-    val glyphCount = (outEnd - outStart).coerceAtMost(48)
-    if (glyphCount <= 0) return
-
-    val targets = remember(range.revealedAtMillis, outStart, glyphCount) {
-        buildList {
-            for (i in 0 until glyphCount) {
-                val box = runCatching { layout.getBoundingBox(outStart + i) }.getOrNull() ?: continue
-                if (box.width <= 0f && box.height <= 0f) continue
-                add(Offset(box.center.x, box.center.y))
-            }
-        }
-    }
-    if (targets.isEmpty()) return
-
-    me.lucid.domchat.ui.motion.ParticleSwarmOverlay(
-        key = "text:${range.revealedAtMillis}:$sourceStart:$outStart",
-        active = true,
-        targets = targets,
-        spec = if (mode == ParticleTextMode.FIREFLY) {
-            me.lucid.domchat.ui.motion.FireflySwarmSpec
-        } else {
-            me.lucid.domchat.ui.motion.MicroSwarmSpec
-        },
-        durationMs = reveal.particleDurationMs,
-        modifier = modifier,
     )
 }
 

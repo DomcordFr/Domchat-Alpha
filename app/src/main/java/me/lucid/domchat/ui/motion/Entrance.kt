@@ -14,6 +14,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
+ * Message nodes present in the conversation at open time. Anything in this set
+ * is history — it never animates. Only nodes that arrive during the session
+ * (the user's new message and the bot's reply) play their one-shot entrance.
+ */
+val LocalPreexistingMessageNodes = androidx.compose.runtime.compositionLocalOf<Set<String>> { emptySet() }
+
+/**
  * Process-lifetime registry of entrances that already played, keyed by stable
  * element id. Guarantees: opening a chat animates its visible turns once,
  * scrolling back and forth never replays, recompositions don't replay.

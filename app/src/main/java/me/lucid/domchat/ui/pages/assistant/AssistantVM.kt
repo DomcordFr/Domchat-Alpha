@@ -112,9 +112,20 @@ class AssistantVM(
     private val deletionJobs = java.util.concurrent.ConcurrentHashMap<kotlin.uuid.Uuid, kotlinx.coroutines.Job>()
 
     suspend fun loadDeleteImpact(assistant: Assistant): AssistantDeleteImpact = withContext(Dispatchers.IO) {
+        // Room reads must never propagate a corrupt-db/query exception to the caller.
+        val conversationCount = try {
+            conversationRepo.getConversationCountOfAssistant(assistant.id)
+        } catch (_: Exception) {
+            0
+        }
+        val memoryCount = try {
+            memoryRepository.getMemoryCountOfAssistant(assistant.id.toString())
+        } catch (_: Exception) {
+            0
+        }
         AssistantDeleteImpact(
-            conversationCount = conversationRepo.getConversationCountOfAssistant(assistant.id),
-            memoryCount = memoryRepository.getMemoryCountOfAssistant(assistant.id.toString()),
+            conversationCount = conversationCount,
+            memoryCount = memoryCount,
         )
     }
 

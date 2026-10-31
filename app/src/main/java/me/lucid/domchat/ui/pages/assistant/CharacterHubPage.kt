@@ -539,7 +539,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
                             loadError = e
-                            toaster.show(
+                            toaster?.show(
                                 "Failed to start chat: ${e.message.takeIf { it.isNotBlank() } ?: e.toString()}",
                                 ToastType.Error
                             )
@@ -714,12 +714,18 @@ fun FullCharacterCardImage(
         when (avatar) {
             is Avatar.Image -> {
                 val context = LocalContext.current
-                val request = remember<coil3.request.ImageRequest>(avatar.url) {
-                    coil3.request.ImageRequest.Builder(context)
-                        .data(avatar.url)
-                        .size(360, 520)
-                        .crossfade(true)
-                        .build()
+                // ImageRequest.build() can throw on a malformed avatar URL; never let one bad
+                // avatar crash hub composition — fall back to a null model (AsyncImage is null-safe).
+                val request = remember(avatar.url) {
+                    try {
+                        coil3.request.ImageRequest.Builder(context)
+                            .data(avatar.url)
+                            .size(360, 520)
+                            .crossfade(true)
+                            .build()
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
                 AsyncImage(
                     model = request,
@@ -995,7 +1001,7 @@ fun CharacterInspectorSheet(
     // Charter: character popups are always a black glass plate, independent of glass/luminance settings.
     val sheetBgColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor()
     val contentTextColor = Color(0xFFF2F2F7)
-    val cardBgColor = Color(0xFF000000)
+    val cardBgColor = Color(0xFF141520)
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
 

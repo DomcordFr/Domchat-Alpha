@@ -225,7 +225,6 @@ import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.EntranceDirection
-import me.lucid.domchat.ui.motion.EntrancePlayed
 import me.lucid.domchat.ui.motion.entrance
 import androidx.compose.ui.draw.clip
 
@@ -1240,39 +1239,27 @@ fun ChatPage(
 }
 
 /**
- * Startup chrome reveal: when the particle toggle is on, chat chrome (topbar,
- * input, new-chat content) materializes from a micro-swarm instead of sliding
- * in. Plays once per conversation open, then never again.
+ * Startup chrome reveal: chat chrome (topbar, input, new-chat content)
+ * slides in once per conversation open, then never again.
  */
 @Composable
 private fun StartupChromeReveal(
     key: String,
     delayMs: Int,
-    settings: Settings,
     motionPolicy: me.lucid.domchat.ui.motion.MotionPolicy,
     from: EntranceDirection,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    if (settings.displaySetting.startupParticleEntrance) {
-        me.lucid.domchat.ui.motion.ParticleRevealBox(
+    androidx.compose.foundation.layout.Box(
+        modifier = modifier.entrance(
             key = key,
-            enabled = true,
-            durationMs = (settings.displaySetting.streamingParticleDurationMs * 2).coerceIn(300, 4000),
-            modifier = modifier,
-            content = { content() },
-        )
-    } else {
-        androidx.compose.foundation.layout.Box(
-            modifier = modifier.entrance(
-                key = key,
-                motionPolicy = motionPolicy,
-                from = from,
-                delayMs = delayMs,
-            ),
-        ) {
-            content()
-        }
+            motionPolicy = motionPolicy,
+            from = from,
+            delayMs = delayMs,
+        ),
+    ) {
+        content()
     }
 }
 
@@ -1308,13 +1295,6 @@ private fun ChatPageContent(
     // Nodes already in the conversation when it opens: they never animate.
     val preexistingNodeIds = remember(conversation.id) {
         conversation.messageNodes.map { it.id.toString() }.toSet()
-    }
-
-    // Reset the once-only entrance registry so particle/chrome entrances replay
-    // on each new conversation open. History turns are still gated by
-    // LocalPreexistingMessageNodes; only fresh turns animate.
-    LaunchedEffect(conversation.id) {
-        me.lucid.domchat.ui.motion.EntrancePlayed.reset()
     }
     val context = LocalContext.current
     val modelRequiredMessage = context.getString(R.string.chat_model_required)
@@ -1374,7 +1354,6 @@ private fun ChatPageContent(
     }
 
     LaunchedEffect(conversation.id) {
-        EntrancePlayed.reset()
         previewMode = false
         showToolbarOverflowMenu = false
         showUserRegenerateConfirmDialog = false
@@ -1493,7 +1472,6 @@ private fun ChatPageContent(
                         StartupChromeReveal(
                             key = "${conversation.id}:topbar",
                             delayMs = 250,
-                            settings = setting,
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.DOWN,
                         ) {
@@ -1763,9 +1741,9 @@ private fun ChatPageContent(
                         .entrance(
                             key = "${conversation.id}:tempchat",
                             motionPolicy = motionPolicy,
-                            from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
+                            from = EntranceDirection.UP,
                             delayMs = 350,
-                            distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
+                            distance = 30.dp,
                         ),
                 ) {
                     Column(
@@ -1820,9 +1798,9 @@ private fun ChatPageContent(
                         .entrance(
                             key = "${conversation.id}:newchat",
                             motionPolicy = motionPolicy,
-                            from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
+                            from = EntranceDirection.UP,
                             delayMs = 300,
-                            distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
+                            distance = 30.dp,
                         ),
                 ) {
                     NewChatContent(
@@ -1996,9 +1974,9 @@ private fun ChatPageContent(
                             .entrance(
                                 key = "${conversation.id}:input",
                                 motionPolicy = motionPolicy,
-                                from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
+                                from = EntranceDirection.UP,
                                 delayMs = 400,
-                                distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
+                                distance = 30.dp,
                             ),
                         showSearch = previewMode,
                         searchQuery = chatSearchQuery,
@@ -2033,9 +2011,9 @@ private fun ChatPageContent(
                         .entrance(
                             key = "${conversation.id}:input",
                             motionPolicy = motionPolicy,
-                            from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
+                            from = EntranceDirection.UP,
                             delayMs = 400,
-                            distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
+                            distance = 30.dp,
                         ),
                     state = inputState,
                     settings = setting,
