@@ -318,7 +318,20 @@ data class DisplaySetting(
     val globalBackgroundBlurHeightFraction: Float = 0.75f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
+    // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the
+    // legacy per-value sliders (glassAlpha, glassBlur, glassBaseLuminance, chatBubble*).
+    val glassPreset: GlassPreset = GlassPreset.CUSTOM,
+    // When true, reveals per-channel opacity/tint/tone/blur sliders in the display settings.
+    val isAdvancedGlassEnabled: Boolean = false,
 )
+
+@Serializable
+enum class GlassPreset {
+    CLEAR,
+    DARK,
+    FROSTED,
+    CUSTOM
+}
 
 @Serializable
 enum class AnimationSpeedLevel(val title: String, val subtitle: String, val scaleFactor: Float) {

@@ -63,6 +63,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import me.lucid.domchat.data.datastore.AnimationSpeedLevel
+import me.lucid.domchat.data.datastore.GlassPreset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -404,12 +405,121 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         val isDark = LocalDarkMode.current
-                        var localGlassAlpha by remember(settings.displaySetting.glassAlpha) { mutableFloatStateOf(settings.displaySetting.glassAlpha) }
-                        var localGlassBlur by remember(settings.displaySetting.glassBlur) { mutableFloatStateOf(settings.displaySetting.glassBlur) }
-                        var localBaseLuminance by remember(settings.displaySetting.glassBaseLuminance) { mutableFloatStateOf(settings.displaySetting.glassBaseLuminance) }
-                        var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) { mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha) }
-                        var localBubbleBlur by remember(settings.displaySetting.chatBubbleBlur) { mutableFloatStateOf(settings.displaySetting.chatBubbleBlur) }
-                        var localBubbleTone by remember(settings.displaySetting.chatBubbleTone) { mutableFloatStateOf(settings.displaySetting.chatBubbleTone) }
+                        var localGlassPreset by remember(settings.displaySetting.glassPreset) {
+                            mutableStateOf(settings.displaySetting.glassPreset)
+                        }
+                        var localIsAdvancedGlass by remember(settings.displaySetting.isAdvancedGlassEnabled) {
+                            mutableStateOf(settings.displaySetting.isAdvancedGlassEnabled)
+                        }
+                        var localGlassAlpha by remember(settings.displaySetting.glassAlpha) {
+                            mutableFloatStateOf(settings.displaySetting.glassAlpha)
+                        }
+                        var localGlassBlur by remember(settings.displaySetting.glassBlur) {
+                            mutableFloatStateOf(settings.displaySetting.glassBlur)
+                        }
+                        var localBaseLuminance by remember(settings.displaySetting.glassBaseLuminance) {
+                            mutableFloatStateOf(settings.displaySetting.glassBaseLuminance)
+                        }
+                        var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) {
+                            mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha)
+                        }
+                        var localBubbleBlur by remember(settings.displaySetting.chatBubbleBlur) {
+                            mutableFloatStateOf(settings.displaySetting.chatBubbleBlur)
+                        }
+                        var localBubbleTone by remember(settings.displaySetting.chatBubbleTone) {
+                            mutableFloatStateOf(settings.displaySetting.chatBubbleTone)
+                        }
+                        var localBubblePreset by remember(settings.displaySetting.glassPreset) {
+                            mutableStateOf(settings.displaySetting.glassPreset)
+                        }
+
+                        fun applyUiPreset(preset: GlassPreset) {
+                            localGlassPreset = preset
+                            localIsAdvancedGlass = false
+                            when (preset) {
+                                GlassPreset.CLEAR -> {
+                                    localGlassAlpha = 0.12f
+                                    localGlassBlur = 24f
+                                    localBaseLuminance = 0.85f
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CLEAR,
+                                        isAdvancedGlassEnabled = false,
+                                        glassAlpha = 0.12f,
+                                        glassBlur = 24f,
+                                        glassBaseLuminance = 0.85f
+                                    ))
+                                }
+                                GlassPreset.DARK -> {
+                                    localGlassAlpha = 0.82f
+                                    localGlassBlur = 18f
+                                    localBaseLuminance = 0.0f
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.DARK,
+                                        isAdvancedGlassEnabled = false,
+                                        glassAlpha = 0.82f,
+                                        glassBlur = 18f,
+                                        glassBaseLuminance = 0.0f
+                                    ))
+                                }
+                                GlassPreset.FROSTED -> {
+                                    localGlassAlpha = 0.45f
+                                    localGlassBlur = 22f
+                                    localBaseLuminance = 0.60f
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.FROSTED,
+                                        isAdvancedGlassEnabled = false,
+                                        glassAlpha = 0.45f,
+                                        glassBlur = 22f,
+                                        glassBaseLuminance = 0.60f
+                                    ))
+                                }
+                                GlassPreset.CUSTOM -> {
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        isAdvancedGlassEnabled = localIsAdvancedGlass
+                                    ))
+                                }
+                            }
+                        }
+
+                        fun applyBubblePreset(preset: GlassPreset) {
+                            localBubblePreset = preset
+                            when (preset) {
+                                GlassPreset.CLEAR -> {
+                                    localBubbleAlpha = 0.05f
+                                    localBubbleBlur = 24f
+                                    localBubbleTone = 0.85f
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        chatBubbleAlpha = 0.05f,
+                                        chatBubbleBlur = 24f,
+                                        chatBubbleTone = 0.85f
+                                    ))
+                                }
+                                GlassPreset.DARK -> {
+                                    localBubbleAlpha = 0.50f
+                                    localBubbleBlur = 18f
+                                    localBubbleTone = 0.05f
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        chatBubbleAlpha = 0.50f,
+                                        chatBubbleBlur = 18f,
+                                        chatBubbleTone = 0.05f
+                                    ))
+                                }
+                                GlassPreset.FROSTED -> {
+                                    localBubbleAlpha = 0.30f
+                                    localBubbleBlur = 20f
+                                    localBubbleTone = 0.90f
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        chatBubbleAlpha = 0.30f,
+                                        chatBubbleBlur = 20f,
+                                        chatBubbleTone = 0.90f
+                                    ))
+                                }
+                                GlassPreset.CUSTOM -> {
+                                    // Bubble custom values are driven by sliders; no glassPreset change.
+                                }
+                            }
+                        }
 
                         // --- SECTION 1: PANELS & SHEETS ---
                         Text(
@@ -425,130 +535,121 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         )
 
                         // UI Glass Presets
-                        val activeUiPreset = when {
-                            localGlassAlpha <= 0.10f && localBaseLuminance >= 0.65f -> "Clear Glass"
-                            localBaseLuminance <= 0.20f && localGlassAlpha in 0.30f..0.60f -> "Dark Glass"
-                            localBaseLuminance >= 0.60f && localGlassAlpha in 0.20f..0.45f -> "Liquid Frost"
-                            else -> null
-                        }
+                        // UI Glass Presets (3 verified presets + Custom) + Advanced Mode toggle
                         GlassPresetSelector(
-                            selectedPreset = activeUiPreset,
+                            selectedPreset = localGlassPreset,
+                            isAdvanced = localIsAdvancedGlass,
                             onSelect = { preset ->
                                 haptics.perform(HapticPattern.Pop)
-                                when (preset) {
-                                    "Clear Glass" -> {
-                                        localGlassAlpha = 0.05f
-                                        localBaseLuminance = 0.80f
-                                        localGlassBlur = 24f
-                                        updateDisplaySetting(settings.displaySetting.copy(
-                                            glassAlpha = 0.05f,
-                                            glassBaseLuminance = 0.80f,
-                                            glassBlur = 24f
-                                        ))
-                                    }
-                                    "Dark Glass" -> {
-                                        localGlassAlpha = 0.40f
-                                        localBaseLuminance = 0.0f
-                                        localGlassBlur = 18f
-                                        updateDisplaySetting(settings.displaySetting.copy(
-                                            glassAlpha = 0.40f,
-                                            glassBaseLuminance = 0.0f,
-                                            glassBlur = 18f
-                                        ))
-                                    }
-                                    "Liquid Frost" -> {
-                                        localGlassAlpha = 0.28f
-                                        localBaseLuminance = 0.75f
-                                        localGlassBlur = 22f
-                                        updateDisplaySetting(settings.displaySetting.copy(
-                                            glassAlpha = 0.28f,
-                                            glassBaseLuminance = 0.75f,
-                                            glassBlur = 22f
-                                        ))
-                                    }
+                                applyUiPreset(preset)
+                            },
+                            onAdvancedToggle = { enabled ->
+                                localIsAdvancedGlass = enabled
+                                val preset = if (enabled) GlassPreset.CUSTOM else localGlassPreset
+                                updateDisplaySetting(settings.displaySetting.copy(
+                                    glassPreset = preset,
+                                    isAdvancedGlassEnabled = enabled
+                                ))
+                                if (!enabled) {
+                                    applyUiPreset(localGlassPreset)
                                 }
                             }
                         )
 
-                        // Glass Opacity / Transparency Slider
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("UI Glass Opacity", style = MaterialTheme.typography.bodyMedium)
-                            Text("${(localGlassAlpha * 100).roundToInt()}% (${((1f - localGlassAlpha) * 100).roundToInt()}% transparent)", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                        }
-                        DomChatSlider(
-                            value = localGlassAlpha,
-                            onValueChange = {
-                                val rounded = (it * 100f).roundToInt() / 100f
-                                if (rounded != localGlassAlpha) {
-                                    haptics.perform(HapticPattern.Tick)
-                                    localGlassAlpha = rounded
-                                }
-                            },
-                            onValueChangeFinished = {
-                                updateDisplaySetting(settings.displaySetting.copy(glassAlpha = localGlassAlpha))
-                            },
-                            valueRange = 0f..1.0f
-                        )
-
-                        // Glass Blur Slider (0 to 100 dp)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("UI Glass Blur Radius", style = MaterialTheme.typography.bodyMedium)
-                            Text("${localGlassBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                        }
-                        DomChatSlider(
-                            value = localGlassBlur,
-                            onValueChange = {
-                                val rounded = it.roundToInt().toFloat()
-                                if (rounded != localGlassBlur) {
-                                    haptics.perform(HapticPattern.Tick)
-                                    localGlassBlur = rounded
-                                }
-                            },
-                            onValueChangeFinished = {
-                                updateDisplaySetting(settings.displaySetting.copy(glassBlur = localGlassBlur))
-                            },
-                            valueRange = 0f..100f
-                        )
-
-                        // Glass Foundation Tone Slider (0.0 = OLED Black, 1.0 = Pure White)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Glass Foundation Tone", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                when {
-                                    localBaseLuminance <= 0.05f -> "Pitch Black (0%)"
-                                    localBaseLuminance >= 0.95f -> "Pure White (100%)"
-                                    else -> "${(localBaseLuminance * 100).roundToInt()}% Tint"
+                        // Advanced sliders (only visible in Advanced Mode)
+                        if (localIsAdvancedGlass) {
+                            // Glass Opacity / Transparency Slider
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("UI Glass Opacity", style = MaterialTheme.typography.bodyMedium)
+                                Text("${(localGlassAlpha * 100).roundToInt()}% (${((1f - localGlassAlpha) * 100).roundToInt()}% transparent)", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            }
+                            DomChatSlider(
+                                value = localGlassAlpha,
+                                onValueChange = {
+                                    val rounded = (it * 100f).roundToInt() / 100f
+                                    if (rounded != localGlassAlpha) {
+                                        haptics.perform(HapticPattern.Tick)
+                                        localGlassAlpha = rounded
+                                    }
                                 },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White
+                                onValueChangeFinished = {
+                                    localGlassPreset = GlassPreset.CUSTOM
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        glassAlpha = localGlassAlpha
+                                    ))
+                                },
+                                valueRange = 0f..1.0f
+                            )
+
+                            // Glass Blur Slider (0 to 100 dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("UI Glass Blur Radius", style = MaterialTheme.typography.bodyMedium)
+                                Text("${localGlassBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            }
+                            DomChatSlider(
+                                value = localGlassBlur,
+                                onValueChange = {
+                                    val rounded = it.roundToInt().toFloat()
+                                    if (rounded != localGlassBlur) {
+                                        haptics.perform(HapticPattern.Tick)
+                                        localGlassBlur = rounded
+                                    }
+                                },
+                                onValueChangeFinished = {
+                                    localGlassPreset = GlassPreset.CUSTOM
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        glassBlur = localGlassBlur
+                                    ))
+                                },
+                                valueRange = 0f..100f
+                            )
+
+                            // Glass Foundation Tone Slider (0.0 = OLED Black, 1.0 = Pure White)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Glass Foundation Tone", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    when {
+                                        localBaseLuminance <= 0.05f -> "Pitch Black (0%)"
+                                        localBaseLuminance >= 0.95f -> "Pure White (100%)"
+                                        else -> "${(localBaseLuminance * 100).roundToInt()}% Tint"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White
+                                )
+                            }
+                            DomChatSlider(
+                                value = localBaseLuminance,
+                                onValueChange = {
+                                    val rounded = (it * 100f).roundToInt() / 100f
+                                    if (rounded != localBaseLuminance) {
+                                        haptics.perform(HapticPattern.Tick)
+                                        localBaseLuminance = rounded
+                                    }
+                                },
+                                onValueChangeFinished = {
+                                    localGlassPreset = GlassPreset.CUSTOM
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        glassBaseLuminance = localBaseLuminance
+                                    ))
+                                },
+                                valueRange = 0f..1.0f
                             )
                         }
-                        DomChatSlider(
-                            value = localBaseLuminance,
-                            onValueChange = {
-                                val rounded = (it * 100f).roundToInt() / 100f
-                                if (rounded != localBaseLuminance) {
-                                    haptics.perform(HapticPattern.Tick)
-                                    localBaseLuminance = rounded
-                                }
-                            },
-                            onValueChangeFinished = {
-                                updateDisplaySetting(settings.displaySetting.copy(glassBaseLuminance = localBaseLuminance))
-                            },
-                            valueRange = 0f..1.0f
-                        )
 
                         // Connect side menu + chat popovers to the glass sliders above
                         Row(
@@ -591,138 +692,126 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         )
 
                         // Chat Bubble Glass Presets
-                        val activeBubblePreset = when {
-                            localBubbleAlpha <= 0.08f && localBubbleTone >= 0.70f -> "Clear Glass"
-                            localBubbleTone <= 0.20f && localBubbleAlpha in 0.30f..0.65f -> "Dark Glass"
-                            localBubbleTone >= 0.80f && localBubbleAlpha >= 0.20f -> "Liquid Frost"
-                            else -> null
-                        }
+                        // Chat Bubble Glass Presets (3 verified presets + Custom)
                         GlassPresetSelector(
-                            selectedPreset = activeBubblePreset,
+                            selectedPreset = localBubblePreset,
+                            isAdvanced = localBubblePreset == GlassPreset.CUSTOM,
                             onSelect = { preset ->
                                 haptics.perform(HapticPattern.Pop)
-                                when (preset) {
-                                    "Clear Glass" -> {
-                                        localBubbleAlpha = 0.0f
-                                        localBubbleTone = 0.85f
-                                        localBubbleBlur = 24f
-                                        updateDisplaySetting(settings.displaySetting.copy(
-                                            chatBubbleAlpha = 0.0f,
-                                            chatBubbleTone = 0.85f,
-                                            chatBubbleBlur = 24f
-                                        ))
-                                    }
-                                    "Dark Glass" -> {
-                                        localBubbleAlpha = 0.50f
-                                        localBubbleTone = 0.05f
-                                        localBubbleBlur = 18f
-                                        updateDisplaySetting(settings.displaySetting.copy(
-                                            chatBubbleAlpha = 0.50f,
-                                            chatBubbleTone = 0.05f,
-                                            chatBubbleBlur = 18f
-                                        ))
-                                    }
-                                    "Liquid Frost" -> {
-                                        localBubbleAlpha = 0.30f
-                                        localBubbleTone = 0.90f
-                                        localBubbleBlur = 20f
-                                        updateDisplaySetting(settings.displaySetting.copy(
-                                            chatBubbleAlpha = 0.30f,
-                                            chatBubbleTone = 0.90f,
-                                            chatBubbleBlur = 20f
-                                        ))
-                                    }
+                                applyBubblePreset(preset)
+                            },
+                            onAdvancedToggle = { enabled ->
+                                localBubblePreset = if (enabled) GlassPreset.CUSTOM else localBubblePreset
+                                updateDisplaySetting(settings.displaySetting.copy(
+                                    glassPreset = if (enabled) GlassPreset.CUSTOM else settings.displaySetting.glassPreset
+                                ))
+                                if (!enabled) {
+                                    applyBubblePreset(localBubblePreset)
                                 }
                             }
                         )
 
-                        // Chat Bubble Opacity Slider (0% to 100%)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Bubble Opacity", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                when {
-                                    localBubbleAlpha <= 0.01f -> "Clear Glass (0%)"
-                                    localBubbleAlpha >= 0.98f -> "Solid (100%)"
-                                    else -> "${(localBubbleAlpha * 100).roundToInt()}%"
+                        // Advanced bubble sliders (only visible when Custom)
+                        if (localBubblePreset == GlassPreset.CUSTOM) {
+                            // Advanced bubble sliders (only visible when Custom)
+                        if (localBubblePreset == GlassPreset.CUSTOM) {
+                            // Chat Bubble Opacity Slider (0% to 100%)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Bubble Opacity", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    when {
+                                        localBubbleAlpha <= 0.01f -> "Clear Glass (0%)"
+                                        localBubbleAlpha >= 0.98f -> "Solid (100%)"
+                                        else -> "${(localBubbleAlpha * 100).roundToInt()}%"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White
+                                )
+                            }
+                            DomChatSlider(
+                                value = localBubbleAlpha,
+                                onValueChange = {
+                                    val rounded = (it * 100f).roundToInt() / 100f
+                                    if (rounded != localBubbleAlpha) {
+                                        haptics.perform(HapticPattern.Tick)
+                                        localBubbleAlpha = rounded
+                                    }
                                 },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White
+                                onValueChangeFinished = {
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        chatBubbleAlpha = localBubbleAlpha
+                                    ))
+                                },
+                                valueRange = 0f..1.0f
+                            )
+
+                            // Chat Bubble Blur Slider (0 to 100 dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Bubble Blur Radius", style = MaterialTheme.typography.bodyMedium)
+                                Text("${localBubbleBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            }
+                            DomChatSlider(
+                                value = localBubbleBlur,
+                                onValueChange = {
+                                    val rounded = it.roundToInt().toFloat()
+                                    if (rounded != localBubbleBlur) {
+                                        haptics.perform(HapticPattern.Tick)
+                                        localBubbleBlur = rounded
+                                    }
+                                },
+                                onValueChangeFinished = {
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        chatBubbleBlur = localBubbleBlur
+                                    ))
+                                },
+                                valueRange = 0f..100f
+                            )
+
+                            // Chat Bubble Base Tone Slider
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Bubble Base Tone", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    when {
+                                        localBubbleTone <= 0.05f -> "Pure Black (0%)"
+                                        localBubbleTone >= 0.95f -> "Pure White (100%)"
+                                        else -> "${(localBubbleTone * 100).roundToInt()}%"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White
+                                )
+                            }
+                            DomChatSlider(
+                                value = localBubbleTone,
+                                onValueChange = {
+                                    val rounded = (it * 100f).roundToInt() / 100f
+                                    if (rounded != localBubbleTone) {
+                                        haptics.perform(HapticPattern.Tick)
+                                        localBubbleTone = rounded
+                                    }
+                                },
+                                onValueChangeFinished = {
+                                    updateDisplaySetting(settings.displaySetting.copy(
+                                        glassPreset = GlassPreset.CUSTOM,
+                                        chatBubbleTone = localBubbleTone
+                                    ))
+                                },
+                                valueRange = 0f..1.0f
                             )
                         }
-                        DomChatSlider(
-                            value = localBubbleAlpha,
-                            onValueChange = {
-                                val rounded = (it * 100f).roundToInt() / 100f
-                                if (rounded != localBubbleAlpha) {
-                                    haptics.perform(HapticPattern.Tick)
-                                    localBubbleAlpha = rounded
-                                }
-                            },
-                            onValueChangeFinished = {
-                                updateDisplaySetting(settings.displaySetting.copy(chatBubbleAlpha = localBubbleAlpha))
-                            },
-                            valueRange = 0f..1.0f
-                        )
-
-                        // Chat Bubble Blur Slider (0 to 100 dp)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Bubble Blur Radius", style = MaterialTheme.typography.bodyMedium)
-                            Text("${localBubbleBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                        }
-                        DomChatSlider(
-                            value = localBubbleBlur,
-                            onValueChange = {
-                                val rounded = it.roundToInt().toFloat()
-                                if (rounded != localBubbleBlur) {
-                                    haptics.perform(HapticPattern.Tick)
-                                    localBubbleBlur = rounded
-                                }
-                            },
-                            onValueChangeFinished = {
-                                updateDisplaySetting(settings.displaySetting.copy(chatBubbleBlur = localBubbleBlur))
-                            },
-                            valueRange = 0f..100f
-                        )
-
-                        // Chat Bubble Base Tone Slider
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Bubble Base Tone", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                when {
-                                    localBubbleTone <= 0.05f -> "Pure Black (0%)"
-                                    localBubbleTone >= 0.95f -> "Pure White (100%)"
-                                    else -> "${(localBubbleTone * 100).roundToInt()}%"
-                                },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White
-                            )
-                        }
-                        DomChatSlider(
-                            value = localBubbleTone,
-                            onValueChange = {
-                                val rounded = (it * 100f).roundToInt() / 100f
-                                if (rounded != localBubbleTone) {
-                                    haptics.perform(HapticPattern.Tick)
-                                    localBubbleTone = rounded
-                                }
-                            },
-                            onValueChangeFinished = {
-                                updateDisplaySetting(settings.displaySetting.copy(chatBubbleTone = localBubbleTone))
-                            },
-                            valueRange = 0f..1.0f
-                        )
                     }
                 }
             }
@@ -833,46 +922,75 @@ private fun buildModelCatalogSubtitle(
 
 @Composable
 private fun GlassPresetSelector(
-    selectedPreset: String?,
-    onSelect: (String) -> Unit,
+    selectedPreset: GlassPreset,
+    isAdvanced: Boolean = false,
+    onSelect: (GlassPreset) -> Unit,
+    onAdvancedToggle: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val presets = listOf("Clear Glass", "Dark Glass", "Liquid Frost")
+    val presets = listOf(
+        GlassPreset.CLEAR to "Clear Glass",
+        GlassPreset.DARK to "Dark Glass",
+        GlassPreset.FROSTED to "Frosted Glass",
+        GlassPreset.CUSTOM to "Custom"
+    )
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF000000),
+        color = Color(0xFF141520).copy(alpha = 0.35f),
         border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            presets.forEach { name ->
-                val isSelected = selectedPreset == name
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            if (isSelected) Color(0xFF000000) else Color.Transparent
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                presets.forEach { (preset, name) ->
+                    val isSelected = selectedPreset == preset
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (isSelected) Color(0xFF141520).copy(alpha = 0.6f) else Color.Transparent
+                            )
+                            .clickable { onSelect(preset) }
+                            .padding(vertical = 8.dp, horizontal = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                fontSize = 12.sp
+                            ),
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
                         )
-                        .clickable { onSelect(name) }
-                        .padding(vertical = 8.dp, horizontal = 2.dp),
-                    contentAlignment = Alignment.Center
+                    }
+                }
+            }
+            if (onAdvancedToggle != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = name,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                            fontSize = 12.sp
+                        text = "Advanced Mode",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Medium
                         ),
-                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    HapticSwitch(
+                        checked = isAdvanced,
+                        onCheckedChange = onAdvancedToggle
                     )
                 }
             }

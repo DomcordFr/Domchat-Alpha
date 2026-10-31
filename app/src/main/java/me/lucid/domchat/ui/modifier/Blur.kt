@@ -30,6 +30,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import me.lucid.domchat.ui.theme.AppSurface
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.liquidGlassSurfaceColor
 import me.lucid.domchat.ui.context.LocalSettings
 
 data class DomChatBlur(
@@ -207,14 +208,13 @@ fun domChatBaseToneColor(): Color {
 fun domChatChromeSurfaceColor(): Color {
     val settings = LocalSettings.current
     val display = settings.displaySetting
-    val alpha = if (display.linkChromeToGlass) {
-        display.glassAlpha.coerceIn(0f, 1f)
-    } else {
-        0.55f
+    if (!display.linkChromeToGlass) {
+        val alpha = 0.55f
+        if (alpha <= 0.001f) return Color.Transparent
+        val base = Color(0xFF141520)
+        return base.copy(alpha = alpha)
     }
-    if (alpha <= 0.001f) return Color.Transparent
-    val base = Color(0xFF000000)
-    return base.copy(alpha = alpha)
+    return liquidGlassSurfaceColor()
 }
 
 /** Charcoal glass floor for chrome fills so chrome never outshines the content behind it. */
@@ -251,14 +251,13 @@ fun domChatChromeTextShadow(softText: Boolean = false): androidx.compose.ui.grap
 fun domChatIconPillContainerColor(): Color {
     val settings = LocalSettings.current
     val display = settings.displaySetting
-    val alpha = if (display.linkChromeToGlass) {
-        display.glassAlpha.coerceIn(0f, 1f)
-    } else {
-        0.35f
+    if (!display.linkChromeToGlass) {
+        val alpha = 0.35f
+        if (alpha <= 0.001f) return Color.Transparent
+        val base = Color(0xFF141520)
+        return base.copy(alpha = alpha)
     }
-    if (alpha <= 0.001f) return Color.Transparent
-    val base = Color(0xFF000000)
-    return base.copy(alpha = alpha)
+    return liquidGlassSurfaceColor()
 }
 
 /**
@@ -269,10 +268,14 @@ fun domChatFloatingSurfaceColor(
     charcoal: Color = AppSurface.fill(MaterialTheme.colorScheme),
 ): Color {
     val settings = LocalSettings.current
-    val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    if (alpha <= 0.001f) return Color.Transparent
-    val base = Color(0xFF000000)
-    return base.copy(alpha = alpha)
+    val display = settings.displaySetting
+    if (!display.linkChromeToGlass) {
+        val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+        if (alpha <= 0.001f) return Color.Transparent
+        val base = Color(0xFF141520)
+        return base.copy(alpha = alpha)
+    }
+    return liquidGlassSurfaceColor()
 }
 
 @Composable
@@ -282,8 +285,7 @@ fun blurredContainerColor(
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
-    val base = Color(0xFF000000)
-    return base.copy(alpha = alpha)
+    return liquidGlassSurfaceColor()
 }
 
 /** Sheets use dynamic base luminance tone layered with glass alpha. Directly follows glassAlpha setting. */
@@ -292,9 +294,8 @@ fun domChatSheetContainerColor(): Color {
     // Opacity floor: at 0% glass alpha the plate must stay solid, never transparent.
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    if (alpha <= 0.02f) return Color(0xFF000000)
-    val base = Color(0xFF000000)
-    return base.copy(alpha = alpha)
+    if (alpha <= 0.02f) return liquidGlassSurfaceColor().copy(alpha = 1f)
+    return liquidGlassSurfaceColor()
 }
 
 @Composable
@@ -311,13 +312,7 @@ fun domChatSheetContentColor(): Color {
 
 /** Glassy cards throughout the app follow user glass transparency and base luminance tone. */
 @Composable
-fun domChatCardContainerColor(): Color {
-    val settings = LocalSettings.current
-    val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    if (alpha <= 0.001f) return Color.Transparent
-    val base = Color(0xFF000000)
-    return base.copy(alpha = alpha)
-}
+fun domChatCardContainerColor(): Color = liquidGlassSurfaceColor()
 
 @Composable
 fun domChatCardContentColor(): Color {

@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 /**
  * Message nodes present in the conversation at open time. Anything in this set
@@ -71,13 +72,16 @@ fun Modifier.entrance(
     val distancePx = with(LocalDensity.current) { distance.toPx() }
     val blurPx = with(LocalDensity.current) { blur.toPx() }
     LaunchedEffect(key) {
+        val delayTime = motionPolicy.duration(delayMs.coerceIn(0, ENTRANCE_MAX_STAGGER_MS)).toLong()
+        if (delayTime > 0) {
+            delay(delayTime)
+        }
         progress.animateTo(
             1f,
             animationSpec = spring(
                 dampingRatio = 0.72f,
                 stiffness = 320f,
-            ),
-            delayMillis = motionPolicy.duration(delayMs.coerceIn(0, ENTRANCE_MAX_STAGGER_MS)),
+            )
         )
     }
     var result = this.graphicsLayer {

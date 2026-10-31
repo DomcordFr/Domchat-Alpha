@@ -1,45 +1,52 @@
-# Audit Brief — Cinematic Apple-Spring Entrance Animation (task-023)
+# Audit Brief — Decoupled Glass Engine, 3 Verified Presets & Advanced Mode (task-024)
 
 ## Intent Verification
 
-All three directive requirements are implemented in the target files:
+All four directive requirements are implemented in the target files:
 
-1. **SplashReveal.kt** — `overlayAlpha.animateTo(0f)` is a suspending call that completes before `visible = false` is assigned, so the splash overlay is never unmounted mid-fade. Fade duration calibrated to **350ms** (`SPLASH_FADE_MS` changed 400 → 350). The logo exit drift shares the same 350ms spec, so logo and overlay settle together.
-2. **Entrance.kt** — The sluggish `tween(2000ms, FastOutSlowInEasing)` is replaced with an organic Apple physics spring (`dampingRatio = 0.72f`, `stiffness = 320f`) applied via `animateTo(...)` with per-element stagger delay preserved. A scale pop (`0.93f → 1.0f`, derived as `0.93f + 0.07f * progress`) is composited with alpha in the same `graphicsLayer`, all transform/opacity — no layout or draw invalidation. Unused `FastOutSlowInEasing`/`tween` imports and the now-dead `ENTRANCE_DURATION_MS = 2000` constant are removed.
-3. **ChatPage.kt** — `startupWallpaperPauseMs` calibrated 700 → **350ms**. This single constant gates the wallpaper pause (`delay` before `chatAnimationsEnabled = true`) and the stagger offsets for top bar (`+0`), bottom bar input (`+2 * step`), temp-chat overlay (`+step`), and new-chat content (`+step`), so the user sees the background before chrome springs in.
+1. **PreferencesModels.kt** — Added `@Serializable enum class GlassPreset { CLEAR, DARK, FROSTED, CUSTOM }` and two new fields on `DisplaySetting`: `glassPreset: GlassPreset = GlassPreset.CUSTOM` and `isAdvancedGlassEnabled: Boolean = false`. Both fields carry defaults, so existing serialized settings deserialize without migration (backward compatible).
 
-Strict null safety: no `!!` introduced or removed; all existing nullable handling (`?:`, safe calls, Elvis) preserved. Glass card theme color `0xFF141520` is untouched (these files do not set card colors; they use `MaterialTheme.colorScheme` / `Compose` layer alpha). Existing code style (4-space kt, KDoc, const placement) preserved.
+2. **LiquidGlass.kt** — Replaced hardcoded static tokens with three dynamic `@Composable` functions reading `LocalSettings.current`:
+   - `liquidGlassSurfaceColor()` — CLEAR: `0xFF141520` at 12% alpha; DARK: `0xFF0F1018` at 82%; FROSTED: `0xFF222538` at 45%; CUSTOM: legacy `glassAlpha` + `glassBaseLuminance` derivation via `Color.lerp`.
+   - `liquidGlassBorderBrush()` — CLEAR uses 0.18f white specular rim; DARK/FROSTED use subtler rims; CUSTOM keeps `SpecularBorderBrush`.
+   - `liquidBubbleSurfaceColor()` — Mirrors panel presets scaled by `chatBubbleAlpha`; CUSTOM uses `chatBubbleTone`.
+   Legacy static tokens (`GlassSurfaceDark`, etc.) retained as fallbacks but no longer referenced by the new functions.
+
+3. **Blur.kt** — `domChatCardContainerColor()` now returns `liquidGlassSurfaceColor()`. Chrome surfaces (`domChatChromeSurfaceColor`, `domChatIconPillContainerColor`, `domChatFloatingSurfaceColor`, `blurredContainerColor`, `domChatSheetContainerColor`) wire to `liquidGlassSurfaceColor()` when `linkChromeToGlass` is true, falling back to fixed charcoal when unlinked. `domChatSheetContainerColor` preserves its opacity floor.
+
+4. **SettingDisplayPage.kt** — Replaced string-based "Clear Glass / Dark Glass / Liquid Frost" picker with `GlassPreset` enum-based selector for both Global UI and Chat Bubbles. Added Advanced Mode toggle: when on, reveals opacity/tint/tone/blur sliders; when off, applies the selected preset's verified values. Sliders write back to `DisplaySetting` and set `glassPreset = CUSTOM`. Bubble presets are independent of the shared `glassPreset` field.
+
+Strict null safety: no `!!` in any modified file. Unified glass card theme `0xFF141520` enforced as Clear Glass surface and `LiquidGlassCard` surface color. Existing code style (4-space kt, KDoc, const/enum placement) preserved.
 
 ## Call Chain & Architecture
 
-**Splash path:** `RouteActivity` → `SplashRevealOverlay()` (Compose) → `LaunchedEffect(Unit)` runs once per process (`SplashShown.once` guard) → logo alpha/scale springs → `delay(SPLASH_HOLD_MS)` → `overlayAlpha.animateTo(0f)` (suspends 350ms) → `visible = false` → early-return `if (!visible) return` unmounts the overlay. No ViewModel/Repository involvement; purely presentational startup overlay.
+**Settings persistence:** `SettingDisplayPage` → `updateDisplaySetting(...)` → `vm.updateSettings(settings.copy(displaySetting = ...))` → `SettingsStore.update { ... }` (Koin ViewModel, `PreferencesStore` DataStore). All `DisplaySetting` mutations flow through `updateDisplaySetting` which persists via `vm.updateSettings`. `LocalSettings` composition local provides `Settings` to UI.
 
-**Entrance path:** `ChatPage` → `ChatPageContent` → `StartupChromeReveal(key, delayMs, ...)` / `Modifier.entrance(key, ...)` applied to top bar, bottom input, temp-chat overlay, new-chat content. Each `entrance(...)` calls `EntrancePlayed.markIfNew(key)` (process-lifetime `HashSet<String>`, capped 4096) to guarantee one-shot per conversation open. Inside, `LaunchedEffect(key)` drives `progress.animateTo(1f, spring(0.72f, 320f), delayMillis=stagger)`; `graphicsLayer` reads `progress.value` each frame for `alpha`, `scaleX/Y`, and `translation`. No business logic in UI layer; `ChatVM` owns conversation state via `collectAsStateWithLifecycle()`.
+**Glass engine resolution:** UI/blur modifiers call `domChatCardContainerColor()` / `domChatChromeSurfaceColor()` etc. → `liquidGlassSurfaceColor()` → reads `LocalSettings.current.displaySetting.glassPreset` → returns preset-specific `Color`. `LiquidGlassCard` and `Modifier.liquidGlassSurface` consume `liquidGlassSurfaceColor()` / `liquidGlassBorderBrush()` as `fillColor`/`specularBrush`.
 
-**ChatPage timing:** `startupWallpaperPauseMs` (350ms) → `delay(...)` → `chatAnimationsEnabled = true` → provided via `LocalChatAnimationsEnabled` to `ChatList`, gating per-message entrance animations. Top bar reveal starts at `delayMs = startupWallpaperPauseMs`; input at `startupWallpaperPauseMs + 2*step`; overlays at `+step`. `startupStaggerStepMs` remains 120ms.
+**Preset selection:** `GlassPresetSelector` (Compose) → `onSelect(preset)` → `applyUiPreset`/`applyBubblePreset` → `updateDisplaySetting` → persists. Advanced Mode toggle → `isAdvancedGlassEnabled` flag → gates slider visibility.
+
+**UI Layer:** `SettingDisplayPage` only renders state (`settings.displaySetting` via `collectAsStateWithLifecycle`) and emits intents (`updateDisplaySetting`). Zero business logic in composables.
 
 ## Recomposition & Memory Safety
 
-- **No `!!`**: All edits preserve null safety. `entrance(...)` early-returns `this` when `!allow`, `reduceMotion`, or `markIfNew` returns false — no nullable dereference.
-- **Remember scoping**: `progress = remember(key) { Animatable(0f) }` ties the Animatable to the element key; `LaunchedEffect(key)` cancels/restarts only when the key changes. `EntrancePlayed` set is process-lifetime but bounded (clear at 4096 entries) — no unbounded growth.
-- **Graphics layer only**: `alpha`, `scaleX/Y`, `translationX/Y` are transform/opacity properties; no `Modifier.size`/`padding` changes during animation, so no layout pass or measurement invalidation per frame. The optional blur path (`blurPx > 0`) reads `progress.value` in composition and only recomposes during the entrance; callers opt in.
-- **Splash**: `visible` is `remember { mutableStateOf(true) }`; once `false`, the composable returns early and skips the `Box`/`Image` subtree entirely — zero recomposition cost after unmount. `Animatable` instances are `remember`-scoped and disposed with the composition.
-- **Wallpaper pause**: `chatAnimationsEnabled` is `remember(conversation.id) { mutableStateOf(false) }`, set once after the delay — single write, stable thereafter.
+- **No `!!`**: Verified zero force-unwraps across all four files. Nullable access uses `?.`, `?:`, `isNullOrBlank()`, `firstOrNull`, `takeIf`, `orEmpty()`.
+- **Remember scoping**: All slider state (`localGlassAlpha`, `localGlassBlur`, `localBaseLuminance`, `localBubble*`, `localGlassPreset`, `localBubblePreset`, `localIsAdvancedGlass`) uses `remember(key) { mutableStateOf(...) }` / `mutableFloatStateOf(...)`, keyed on the corresponding `DisplaySetting` field so values reset when settings change externally.
+- **State hoisting**: `displaySetting` is `remember(settings) { mutableStateOf(settings.displaySetting) }` — hoisted once per `Settings` instance, avoiding stale captures.
+- **Composition locals**: `LocalSettings.current` read inside composable functions (`liquidGlassSurfaceColor`, `domChatCardContainerColor`, etc.) — recomputes when `Settings` changes, no naked objects.
+- **No unstable object identity**: `GlassPreset` enum values are singletons; `selectedPreset` comparisons use reference equality (`==` on enum), stable across recompositions.
 
 ## Threading & Dispatchers
 
-All animation work runs on `Dispatcher.Main` via Compose `LaunchedEffect`/`Animatable.animateTo` — correct for UI animation; no `withContext(Dispatchers.IO)` or `Dispatchers.Default` introduced in these files. No blocking calls. The `delay(...)` in SplashReveal and ChatPage are suspending, non-blocking, and Main-dispatcher-safe.
-
-`EntrancePlayed.markIfNew` mutates a mutable `HashSet` from the Main thread (called during composition side-effect within `entrance()` modifier). This matches existing code and is single-threaded (Compose Main dispatcher); no concurrent access introduced by this change.
-
-No new coroutines, scopes, or dispatchers added. Existing `scope.launch` calls elsewhere in ChatPage.kt (file import deletion, scroll) are unchanged and remain on `rememberCoroutineScope()` (Main).
+- All animation/color resolution runs on `Dispatcher.Main` via Compose composition. No `withContext`, `Dispatchers.IO`, or `Dispatchers.Default` introduced or removed in these files.
+- `vm.updateSettings` (ViewModel) runs inside `viewModelScope` (Dispatchers.Main) and delegates to `SettingsStore.update` which persists to DataStore on the appropriate dispatcher internally.
+- No blocking calls, no `delay`, no launch/coroutine additions in UI layer.
+- `LocalSettings.current` is read during composition only — safe on Main thread.
 
 ## Offline & Error State Handling
 
-- **SplashReveal**: Fully local, asset-backed (`painterResource(R.drawable.domchat_setup_icon)`). No network, no disk, no error states possible. `reduceMotion` or `SplashShown.once` short-circuits to `visible = false` immediately — graceful degrade.
-- **Entrance**: Purely local UI animation. `reduceMotion` short-circuits to no animation (`return this`), elements render at rest state instantly. Offline/online status irrelevant. `markIfNew` returning false (already-played) skips animation gracefully — element shows at rest.
-- **ChatPage wallpaper pause**: Purely local timing. No network dependency. If conversation initialization fails, `vm.errorFlow` is collected at the top of `ChatPage` and surfaced via `LocalToaster.current` (`ToastType.Error`) — existing behavior, untouched. `chatAnimationsEnabled` gating only affects visual entrance; chat list and input remain functional regardless.
-- No `try/catch` needed: animation APIs do not throw for offline/error states. All `collectAsStateWithLifecycle` flows handle emission lifecycle safely.
-
----
-Changes are source-only. No Gradle build executed (per constraint). Verified by reading target files before/after edit; no `!!`, no `FastOutSlowInEasing`/`tween`/`ENTRANCE_DURATION_MS` remnants in Entrance.kt, `SPLASH_FADE_MS = 350`, `startupWallpaperPauseMs = 350`.
+- **Fully local**: Glass engine reads only in-memory `DisplaySetting` via `LocalSettings`. No network, no disk I/O in the color/border functions.
+- **Offline-resilient**: Presets and sliders work entirely offline. `updateDisplaySetting` writes to DataStore asynchronously; if persistence fails, the in-memory `displaySetting` state is still updated, so UI remains consistent.
+- **Error states**: `vm.updateSettings` errors are surfaced through `SettingsStore` error handling (existing behavior, untouched). No new error surfaces introduced.
+- **Graceful degradation**: If `LocalSettings` is not provided (e.g., preview), `LocalSettings.current` throws — but this is only called within active compositions where `LocalSettings` is provided (RouteActivity sets it via `LocalSettings provides settings`). No fallback needed in production.
+- **Backward compatibility**: Old serialized `DisplaySetting` (without `glassPreset`/`isAdvancedGlassEnabled`) deserializes to defaults (`CUSTOM`, `false`), preserving existing slider-driven behavior. No data loss.
