@@ -325,6 +325,22 @@ fun String.replacePersonaPlaceholders(
     )
 }
 
+private val DISPLAY_URL_REGEX = Regex("https?://[^\\s]+")
+private val DISPLAY_HANDLE_REGEX = Regex("@[a-zA-Z0-9_]+")
+
+/**
+ * Strips JanitorAI/platform URLs and @handles from user-facing text so imported
+ * character cards never render raw platform links in names, creators, or chat titles.
+ * Returns null when the result is blank.
+ */
+internal fun sanitizeDisplayText(text: String?): String? {
+    return text
+        ?.replace(DISPLAY_URL_REGEX, "")
+        ?.replace(DISPLAY_HANDLE_REGEX, "")
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+}
+
 @Serializable
 sealed class PromptInjection {
     @Serializable

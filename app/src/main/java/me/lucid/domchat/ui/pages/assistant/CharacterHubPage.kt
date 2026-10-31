@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.background
@@ -61,6 +63,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -968,6 +971,7 @@ fun CharacterHubErrorCard(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CharacterInspectorSheet(
     assistant: Assistant,
@@ -1008,10 +1012,12 @@ fun CharacterInspectorSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.92f)
         ) {
+            val scrollState = rememberScrollState()
+            CompositionLocalProvider(LocalOverscrollConfiguration provides null) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
             ) {
                 // Hero Image with smooth multi-stop cubic vertical gradient fade into sheet background
                 Box(
@@ -1486,6 +1492,7 @@ fun CharacterInspectorSheet(
 
                     Spacer(modifier = Modifier.height(36.dp))
                 }
+            }
             }
 
             // Close button floating at top-right with safe margin

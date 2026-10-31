@@ -15,6 +15,7 @@ import me.lucid.ai.ui.UIMessagePart
 import me.lucid.common.http.jsonArrayOrNull
 import me.lucid.common.http.jsonObjectOrNull
 import me.lucid.domchat.data.model.Assistant
+import me.lucid.domchat.data.model.sanitizeDisplayText
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.utils.JsonInstant
 import me.lucid.domchat.utils.jsonPrimitiveOrNull
@@ -26,6 +27,7 @@ import kotlin.time.Instant as KotlinInstant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.uuid.Uuid
+import java.util.UUID
 
 object SillyTavernImporter {
     data class Result(
@@ -70,13 +72,15 @@ object SillyTavernImporter {
 
         val resolvedHeader = header ?: Header("", "", "SillyTavern Import")
         val assistant = Assistant(
-            name = resolvedHeader.characterName.ifBlank { "Imported Character" },
+            name = sanitizeDisplayText(resolvedHeader.characterName) ?: "Imported Character",
+            creator = sanitizeDisplayText(resolvedHeader.userName),
             systemPrompt = "",
+            tags = resolvedHeader.tags.mapNotNull { tagToUuid(it) },
         )
         val conversation = Conversation(
             id = Uuid.random(),
             assistantId = assistant.id,
-            title = resolvedHeader.title,
+            title = sanitizeDisplayText(resolvedHeader.title) ?: "SillyTavern Import",
             messageNodes = uiMessages.map { MessageNode.of(it) },
             createAt = Instant.now(),
             updateAt = Instant.now(),
@@ -92,6 +96,7 @@ object SillyTavernImporter {
         val characterName: String,
         val userName: String,
         val title: String,
+        val tags: List<String> = emptyList(),
     )
 
     private fun looksLikeHeader(element: JsonElement): Boolean {
@@ -108,7 +113,8 @@ object SillyTavernImporter {
         val characterName = obj.string("character_name", "name")?.ifBlank { null } ?: ""
         val userName = obj.string("user_name")?.ifBlank { null } ?: ""
         val title = characterName.ifBlank { obj.string("title") ?: "SillyTavern Import" }
-        return Header(characterName, userName, title)
+        val tags = obj.tags()
+        return Header(characterName, userName, title, tags)
     }
 
     private fun parseMessage(element: JsonElement): UIMessage? {
@@ -173,7 +179,20 @@ object SillyTavernImporter {
         }
     }
 
+    private fun JsonObject.tags(): List<String> {
+        val tagsElement = this["data"]?.jsonObjectOrNull?.let { it["tags"] } ?: this["tags"]
+        return tagsElement?.jsonArrayOrNull
+            ?.mapNotNull { it.jsonPrimitiveOrNull?.contentOrNull as? String }
+            ?.filter { it.isNotBlank() }
+            ?: emptyList()
+    }
+
     private fun String?.toUuidOrNull(): Uuid? {
         return this?.let { runCatching { Uuid.parse(it) }.getOrNull() }
+    }
+
+    private fun tagToUuid(tag: String): Uuid? {
+        val javaUuid = UUID.nameUUIDFromBytes(tag.toByteArray())
+        return runCatching { Uuid.parse(javaUuid.toString()) }.getOrNull()
     }
 }
