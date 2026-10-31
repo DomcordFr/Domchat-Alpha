@@ -408,7 +408,6 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                             textAlign = TextAlign.Center,
                                             modifier = Modifier
                                                 .padding(horizontal = 4.dp, vertical = 10.dp)
-                                                .align(Alignment.Center)
                                         )
                                     }
                                 }
