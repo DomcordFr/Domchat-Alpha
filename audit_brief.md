@@ -1,60 +1,75 @@
-# Audit Brief — task-018: Cloud JanitorAI Backend Endpoint
+# Audit Brief — SettingJanitorPage Compiler Fix
 
 ## Intent Verification
+
 Target: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`.
-Change applied: `JANITOR_BASE_URL` reassigned from `http://127.0.0.1:8899` to `https://yuki.domcord.org` at line 73. The exact URL `https://yuki.domcord.org` is used verbatim, with no trailing slash. All downstream call sites (`/api/browse?tab=`, `/api/search?q=`, `/api/extract`) concatenate against the constant, so they now resolve against the cloud endpoint.
+All 6 directive items applied and verified by cold inspection (no local gradle build, per constraint):
 
-Verified references after edit:
-- Line 73: declaration.
-- Line 167: `loadBrowse` GET browse.
-- Line 199: `loadSearch` GET search.
-- Line 230: `importCharacter` POST extract.
+1. `foundation.lazy.GridCells`/`LazyVerticalGrid`/`items` → `foundation.lazy.grid.GridCells`/`LazyVerticalGrid`/`items` (imports lines 14–16).
+2. `import androidx.compose.material3.TabIndicator` removed; custom `TabIndicator` slot removed from `TabRow`.
+3. `import kotlin.io.encoding.Charsets` → `import kotlin.text.Charsets` (line 48).
+4. `import org.koin.androidx.compose.koinInject` → `import org.koin.compose.koinInject` (line 72).
+5. Added `import androidx.compose.runtime.getValue`, `import androidx.compose.runtime.setValue`, `import androidx.compose.material.icons.rounded.Search`.
+6. `TabRow` now uses `selectedTabIndex = selectedTab` (line 318), matching the `AssistantMemorySubPage.kt` convention; no custom indicator.
 
-No `!!` operators were introduced or remain in the touched region; nullable handling uses `?:`, `isNullOrBlank()`, `?.let`, and `takeIf { }?.let { }` guards only.
+Additional cleanup: `Icons.Rounded.Search` usage replaced with bare `Search` (line 338) so the new import is exercised, not unused.
+
+Null-safety scan: zero `!!` force-unwraps. All nullable access uses Elvis (`?:`), `?.let`, `isNullOrBlank`, or `takeIf`.
+
+Theme: existing unified glass card retained — card background `0xFF141520`, modal sheet `containerColor = Color(0xFF141520)`, border `LiquidGlassTokens.SpecularBorderBrush`, `AppShapes.Dialog`/`SearchField`. No style drift introduced.
 
 ## Call Chain & Architecture
-UI layer (`SettingJanitorPage`) is a `@Composable` function. It owns three `remember { mutableStateOf(...) }` load states (`browseState`, `searchState`) and one import flag (`isImporting`).
 
-Call chain per action:
-1. `LaunchedEffect(Unit)` → `loadBrowse("24h")` on page entry.
-2. `LaunchedEffect(selectedTab)` → `loadBrowse("24h" | "trending")` on tab switch (non-search tabs).
-3. `LaunchedEffect(searchQuery)` → `loadSearch()` when search tab active and query non-blank; otherwise resets to `Success(emptyList())`.
-4. Character card click → `selectedCharacter = character` → bottom sheet opens → `importCharacter(character)` → POST `/api/extract` → `extractToAssistant(...)` → `assistantVM.addAssistant(assistant)`.
+`SettingJanitorPage()` is a stateless `@Composable` entry point registered in `RouteActivity` `Screen` sealed set (settings page). It owns UI state only; zero business logic.
 
-Network transport: `koinInject<PlatformHttpClient>()` → `httpClient.execute(PlatformHttpRequest(...))` inside `withContext(Dispatchers.IO)`. JSON (de)serialization via `JsonInstant` (`ignoreUnknownKeys=true, encodeDefaults=true, coerceInputValues=true`; no snake_case strategy, field mapping manual via `@SerialName`).
+DI:
+- `koinInject<PlatformHttpClient>()` — HTTP client for JanitorAI Hub (`JANITOR_BASE_URL = https://yuki.domcord.org`).
+- `koinViewModel<AssistantVM>()` — ViewModel for `assistantVM.addAssistant(assistant)` on import success.
 
-ViewModel boundary: `AssistantVM` (injected via `koinViewModel`) receives only the final `Assistant` domain object on `Dispatchers.Main`; the page performs zero business logic beyond state transitions and intent emission.
+Flow:
+1. `LaunchedEffect(Unit)` → `loadBrowse("24h")` on composition.
+2. `LaunchedEffect(selectedTab)` → reloads browse when tab switches (unless search tab).
+3. `LaunchedEffect(searchQuery)` → triggers `loadSearch()` when query non-blank on search tab.
+4. `loadBrowse`/`loadSearch` → `httpClient.execute(...)` on `Dispatchers.IO` → decode `JanitorListResponse` via `JsonInstant` → set `browseState`/`searchState` on `Dispatchers.Main`.
+5. `importCharacter(character)` → POST `/api/extract` → `extractToAssistant(...)` → `assistantVM.addAssistant(...)` → toast + haptics + hide bottom sheet.
+6. `selectedCharacter` non-null → `ModalBottomSheet` with `CharacterCard` grid via `LazyVerticalGrid` + `items(currentItems)`.
 
-Glass card theme: `Color(0xFF141520)` used for `ModalBottomSheet.containerColor` (line 418) and `CharacterCard` background (line 497), matching the DomChat unified glass card theme. Border uses `LiquidGlassTokens.SpecularBorderBrush` / `SpecularBorderSubtle`.
+State derivation (snapshot-safe):
+- `activeState` = `searchState` when `selectedTab == 2` else `browseState`.
+- `currentItems`, `isLoading`, `loadError` derived from `activeState` in `when` branches. No simultaneous mutation of `browseState`/`searchState` within one transformation.
 
 ## Recomposition & Memory Safety
-All mutable UI state is scoped with `remember { mutableStateOf(...) }`:
-- `selectedTab`, `searchQuery`, `browseState`, `searchState`, `selectedCharacter`, `isImporting`.
-- `bottomSheetState` via `rememberModalBottomSheetState(skipPartiallyExpanded = true)`.
-- `scope` via `rememberCoroutineScope()`.
-- `haptics` via `rememberPremiumHaptics()`.
-- `scrollBehavior` via `TopAppBarDefaults.exitUntilCollapsedScrollBehavior()`.
 
-`LazyVerticalGrid` consumes `currentItems: List<JanitorCharacter>` (immutable `List`) derived from `activeState`; no `SnapshotStateList` is passed to `items(...)`, avoiding unstable collection recompositions. State writes (`browseState = ...`, `searchState = ...`) occur inside `withContext(Dispatchers.Main)` blocks, so recomposition is triggered on the main thread only after the IO coroutine suspends and resumes.
+State holders: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `selectedCharacter`, `isImporting` — all `var ... by remember { mutableStateOf(...) }`. `bottomSheetState = rememberModalBottomSheetState(...)`, `scope = rememberCoroutineScope()`, `scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()`, `haptics = rememberPremiumHaptics()`. All Compose state is `remember`ed; no naked objects recompute each frame.
 
-No naked objects in Compose: `httpClient`, `assistantVM`, `toaster`, `haptics`, `scope` are all obtained via `koinInject` / `koinViewModel` / `LocalToaster.current` / `rememberPremiumHaptics()` / `rememberCoroutineScope()`.
+Lazy grid: `LazyVerticalGrid` with `items(currentItems)` — stable, keyed implicitly by position; `CharacterCard` is a private inline composable, no key instability. `derivedStateOf` not needed because `currentItems`/`isLoading`/`loadError` are simple `Boolean`/`List` derivations read directly, not mutable collections passed to `items(...)`.
+
+Scope discipline: `scope.launch` used for event-driven imports/bottom-sheet show (tied to composition lifetime via `rememberCoroutineScope`). `LaunchedEffect` keys (`Unit`, `selectedTab`, `searchQuery`) prevent duplicate coroutines on recomposition.
+
+`selectedCharacter?.let { ... }` guards the bottom sheet; null-safe, no leaks.
 
 ## Threading & Dispatchers
-- Network I/O: `withContext(Dispatchers.IO)` wraps every `httpClient.execute(...)` call (lines 163-170, 195-202, 226-235).
-- State mutation: `withContext(Dispatchers.Main)` wraps all `browseState` / `searchState` / `isImporting` / `selectedCharacter` assignments and `toaster.show` / `haptics.perform` calls.
-- Coroutine launch: `scope.launch { ... }` (Composition-local scope from `rememberCoroutineScope()`) — lifecycle-aware, cancelled when composition leaves the composition.
-- No `Dispatchers.Main` used for disk/network; no `Dispatchers.IO` used for UI state writes.
-- `AssistantVM.addAssistant(assistant)` is invoked on `Dispatchers.Main`; the VM is responsible for its own internal dispatcher discipline.
+
+All network/disk off `Dispatchers.Main`:
+- `withContext(Dispatchers.IO) { httpClient.execute(...) }` in `loadBrowse`, `loadSearch`, `importCharacter`.
+- State mutations wrapped in `withContext(Dispatchers.Main) { ... }` after IO completes.
+
+No `Dispatchers.Main` blocking. `CoroutineUtils`/`AppScope` not used here; composition-local scope is `rememberCoroutineScope()` (Main), which only launches then immediately `withContext(Dispatchers.IO)` for the actual work. `PlatformHttpClient` is `:common` `OkHttpPlatformHttpClient` (portable; no OkHttp import in this file).
 
 ## Offline & Error State Handling
-Load states are explicit and exhaustive via sealed class `JanitorLoadState`:
-- `Loading` → `CircularProgressIndicator` shown in grid (lines 375-383).
-- `Success(items)` → grid renders `items`; empty non-loading state shows "No characters available" / "No characters found" (lines 384-398).
-- `Error(message)` → error text rendered in red `Color(0xFFFF6B6B)` (lines 358-365).
 
-HTTP non-2xx branches produce `JanitorLoadState.Error("HTTP ${response.statusCode}")` for browse/search, and a toast `Import failed: HTTP ${response.statusCode}` for import.
-Exception branches produce `JanitorLoadState.Error(e.message ?: e.toString())` (Elvis operator, no `!!`) for browse/search, and toast `Import failed: ${e.message ?: e.toString()}` for import.
-Import success shows `ToastType.Success`; import failure shows `ToastType.Error`; haptics `HapticPattern.Success` on success only.
+Complete state matrix via sealed `JanitorLoadState`:
 
-Import in-flight guard: `Button(enabled = !isImporting)` prevents duplicate submissions; `isImporting` reset to `false` in both success and failure branches on `Dispatchers.Main`.
-Offline (no network) surfaces as caught `Exception` → `Error` state / error toast, with no crash and no partial state leak.
+- `Loading`: initial + set before each request; renders `CircularProgressIndicator` in grid.
+- `Success(items)`: renders `items(currentItems)` character cards; empty → "No characters found"/"No characters available".
+- `Error(message)`: renders red error `Text` (`0xFFFF6B6B`) under tabs; state cleared on next successful load.
+
+HTTP non-2xx → `Error("HTTP ${statusCode}")`; exception → `Error(e.message ?: e.toString())` (Elvis, no `!!`). Import failure → `ToastType.Error` toast + haptics `Error` pattern; `isImporting` reset to `false` in both success and failure branches. Success → `ToastType.Success` + `HapticPattern.Success`.
+
+Network dependency: page is fully offline-unavailable by design (remote JanitorAI Hub only); no local-cache fallback exists in this slice. Offline manifests as `Exception` → error toast/message, never a crash.
+
+## Proof Receipt
+
+File edited: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`.
+Lines changed (approx post-edit): imports 14–16, 19, 27–28, 32, 36, 48, 72; TabRow 317–319; Icon 338.
+Verification method: cold-eye inspection + pattern grep for `!!`, `TabIndicator`, `kotlin.io.encoding`, `foundation.lazy` (non-grid), `selectedIndex` — all zero matches. No local gradle build performed (constraint).
