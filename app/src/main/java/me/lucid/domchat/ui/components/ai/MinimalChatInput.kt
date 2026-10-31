@@ -54,9 +54,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.core.net.toUri
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -276,8 +274,6 @@ fun MinimalChatInput(
     enableSearch: Boolean,
     onToggleSearch: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    chatSuggestions: List<String> = emptyList(),
-    onClickSuggestion: (String) -> Unit = {},
     onUpdateChatModel: (Model) -> Unit,
     onUpdateAssistant: (Assistant) -> Unit,
     onUpdateConversation: (Conversation) -> Unit,
@@ -702,12 +698,10 @@ fun MinimalChatInput(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val showSuggestions = settings.displaySetting.showChatSuggestions && !isQuestionnaireActive && !isToolApprovalActive && chatSuggestions.isNotEmpty()
             val showScrollToBottom = !isQuestionnaireActive && !isToolApprovalActive && showScrollToBottomButton
 
-            // Suggestions and scroll-to-bottom affordance share a row so they never overlap.
             androidx.compose.animation.AnimatedVisibility(
-                visible = showSuggestions || showScrollToBottom,
+                visible = showScrollToBottom,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
@@ -718,15 +712,7 @@ fun MinimalChatInput(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (showSuggestions) {
-                        ChatSuggestionsRow(
-                            modifier = Modifier.weight(1f),
-                            suggestions = chatSuggestions,
-                            onClickSuggestion = onClickSuggestion
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                    Spacer(modifier = Modifier.weight(1f))
                     androidx.compose.animation.AnimatedVisibility(
                         visible = showScrollToBottom,
                         enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
@@ -3813,151 +3799,6 @@ private fun ChatScrollToBottomButton(
                 modifier = Modifier.size(20.dp),
                 tint = Color.White.copy(alpha = 0.65f),
             )
-        }
-    }
-}
-
-@Composable
-private fun ChatSuggestionsRow(
-    modifier: Modifier = Modifier,
-    suggestions: List<String>,
-    onClickSuggestion: (String) -> Unit
-) {
-    val scrollState = rememberScrollState()
-    var pressedSuggestionIndex by remember { mutableStateOf<Int?>(null) }
-    var selectedSuggestionIndex by remember { mutableStateOf<Int?>(null) }
-
-    val canScrollLeft by remember { androidx.compose.runtime.derivedStateOf { scrollState.value > 0 } }
-    val canScrollRight by remember { androidx.compose.runtime.derivedStateOf { scrollState.value < scrollState.maxValue } }
-    val leftFadeAlpha by animateFloatAsState(
-        targetValue = if (canScrollLeft) 1f else 0f,
-        animationSpec = androidx.compose.animation.core.tween(150),
-        label = "left_fade"
-    )
-    val rightFadeAlpha by animateFloatAsState(
-        targetValue = if (canScrollRight) 1f else 0f,
-        animationSpec = androidx.compose.animation.core.tween(150),
-        label = "right_fade"
-    )
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
-            .drawWithContent {
-                drawContent()
-                if (leftFadeAlpha > 0f || rightFadeAlpha > 0f) {
-                    val fadeWidthPx = 24.dp.toPx()
-                    val leftEnd = (fadeWidthPx / size.width).coerceAtMost(0.4f)
-                    val rightStart = (1f - fadeWidthPx / size.width).coerceAtLeast(0.6f)
-                    val colorStops = arrayOf(
-                        0f to Color.Black.copy(alpha = 1f - leftFadeAlpha),
-                        leftEnd to Color.Black,
-                        rightStart to Color.Black,
-                        1f to Color.Black.copy(alpha = 1f - rightFadeAlpha)
-                    )
-                    drawRect(
-                        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(colorStops = colorStops),
-                        blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
-                    )
-                }
-            }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(scrollState),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-        suggestions.forEachIndexed { index, suggestion ->
-            var visible by remember { mutableStateOf(false) }
-            val interactionSource = remember { MutableInteractionSource() }
-            val isInteractionPressed by interactionSource.collectIsPressedAsState()
-
-            LaunchedEffect(isInteractionPressed) {
-                if (isInteractionPressed) {
-                    pressedSuggestionIndex = index
-                } else if (pressedSuggestionIndex == index) {
-                    pressedSuggestionIndex = null
-                }
-            }
-
-            LaunchedEffect(suggestion) {
-                kotlinx.coroutines.delay(index * 50L)
-                visible = true
-            }
-
-            val isSelected = selectedSuggestionIndex == index
-            val isPressed = pressedSuggestionIndex == index
-            val isAnythingSelected = selectedSuggestionIndex != null
-            val isAnythingPressed = pressedSuggestionIndex != null
-            
-            val targetScale = when {
-                isSelected -> 1.05f
-                isPressed -> 0.9f
-                else -> 1f
-            }
-            
-            val targetAlpha = when {
-                isSelected -> 0f
-                isAnythingSelected -> 0f
-                isAnythingPressed && !isPressed -> 0.5f 
-                visible -> 1f
-                else -> 0f
-            }
-
-            val scale by animateFloatAsState(
-                targetValue = targetScale,
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
-                label = "suggestion_scale"
-            )
-
-            val alpha by animateFloatAsState(
-                targetValue = targetAlpha,
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
-                label = "suggestion_alpha"
-            )
-            
-            LaunchedEffect(isSelected) {
-                if (isSelected) {
-                    kotlinx.coroutines.delay(200)
-                    onClickSuggestion(suggestion)
-                }
-            }
-
-            if (visible || targetAlpha > 0f) {
-                val suggestionShape = RoundedCornerShape(16.dp)
-                val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
-                val chipColor = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.85f)
-                val chipBorder = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
-                Surface(
-                    shape = suggestionShape,
-                    color = chipColor,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, chipBorder),
-                    modifier = Modifier
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            this.alpha = alpha
-                        }
-                        .domChatBlurEffect(chipColor, suggestionShape)
-                        .clickable(
-                            interactionSource = interactionSource,
-                            indication = null
-                        ) {
-                            selectedSuggestionIndex = index
-                        }
-                ) {
-                    Text(
-                        text = suggestion,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isDark) Color(0xFFF1F5F9) else Color.White
-                    )
-                }
-            }
-        }
         }
     }
 }

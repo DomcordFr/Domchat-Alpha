@@ -2026,17 +2026,6 @@ private fun ChatPageContent(
                     conversation = conversation,
                     mcpManager = vm.mcpManager,
                     onShowChatInfo = { showChatInfoSheet = true },
-                    chatSuggestions = conversation.chatSuggestions,
-                    onClickSuggestion = { suggestion ->
-                        if (currentChatModel != null) {
-                            vm.handleMessageSend(
-                                listOf(me.lucid.ai.ui.UIMessagePart.Text(suggestion)),
-                                persistenceMode = activePersistenceMode
-                            )
-                        } else {
-                            toaster.show(modelRequiredMessage, type = ToastType.Error)
-                        }
-                    },
                     onCancelClick = {
                         vm.stopGeneration()
                         loadingJob?.cancel()
