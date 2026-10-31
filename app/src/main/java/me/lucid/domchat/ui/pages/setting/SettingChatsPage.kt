@@ -123,6 +123,7 @@ fun SettingChatsPage(
     val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics()
     val isDark = LocalDarkMode.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -577,6 +578,7 @@ fun SettingChatsPage(
                         haptics.perform(HapticPattern.Thud)
 
                         scope.launch {
+                            val contentResolver = context.contentResolver
                             conversationRepository.deleteConversationsByIds(idsToDelete)
                             toaster.show(
                                 message = "Deleted $count ${if (count == 1) "conversation" else "conversations"}",
