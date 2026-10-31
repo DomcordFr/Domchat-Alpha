@@ -1,8 +1,10 @@
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +18,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -529,7 +533,8 @@ private fun CharacterCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            character.creator?.orEmpty().takeIf { it.isNotBlank() }?.let { creator ->
+            val creator = (character.creator ?: character.creatorName ?: "").takeIf { it.isNotBlank() }
+            if (creator != null) {
                 Text(
                     text = "by $creator",
                     style = MaterialTheme.typography.bodySmall,
@@ -537,16 +542,6 @@ private fun CharacterCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-            } ?: run {
-                character.creatorName?.orEmpty().takeIf { it.isNotBlank() }?.let { creatorName ->
-                    Text(
-                        text = "by $creatorName",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.65f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
             character.tags.take(3).joinToString(separator = ", ").let { tags ->
                 if (tags.isNotBlank()) {
