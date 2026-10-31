@@ -1,84 +1,45 @@
-# Audit Brief — SettingJanitorPage Fix
+# Audit Brief — Cinematic Apple-Spring Entrance Animation (task-023)
 
 ## Intent Verification
 
-Target: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`
+All three directive requirements are implemented in the target files:
 
-All three directive items applied:
+1. **SplashReveal.kt** — `overlayAlpha.animateTo(0f)` is a suspending call that completes before `visible = false` is assigned, so the splash overlay is never unmounted mid-fade. Fade duration calibrated to **350ms** (`SPLASH_FADE_MS` changed 400 → 350). The logo exit drift shares the same 350ms spec, so logo and overlay settle together.
+2. **Entrance.kt** — The sluggish `tween(2000ms, FastOutSlowInEasing)` is replaced with an organic Apple physics spring (`dampingRatio = 0.72f`, `stiffness = 320f`) applied via `animateTo(...)` with per-element stagger delay preserved. A scale pop (`0.93f → 1.0f`, derived as `0.93f + 0.07f * progress`) is composited with alpha in the same `graphicsLayer`, all transform/opacity — no layout or draw invalidation. Unused `FastOutSlowInEasing`/`tween` imports and the now-dead `ENTRANCE_DURATION_MS = 2000` constant are removed.
+3. **ChatPage.kt** — `startupWallpaperPauseMs` calibrated 700 → **350ms**. This single constant gates the wallpaper pause (`delay` before `chatAnimationsEnabled = true`) and the stagger offsets for top bar (`+0`), bottom bar input (`+2 * step`), temp-chat overlay (`+step`), and new-chat content (`+step`), so the user sees the background before chrome springs in.
 
-1. Imports added (line 36): `import androidx.compose.runtime.LaunchedEffect`
-   Imports added (line 45): `import androidx.compose.ui.input.nestedscroll.nestedScroll`
-   Both symbols were already referenced at lines 278+ (`LaunchedEffect`) and 314 (`Modifier.nestedScroll(...)`) without imports — the file would not compile cold. Now resolved.
-
-2. Explicit type parameters (lines 148–149):
-   `var browseState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }`
-   `var searchState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }`
-   Removes inference ambiguity across the `JanitorLoadState` sealed hierarchy (`Loading` / `Success` / `Error`).
-
-3. Line 459–466 bio block rewritten to strict null-safe form:
-   ```kotlin
-   val displayBio = (character.bio ?: character.description).orEmpty().trim()
-   if (displayBio.isNotBlank()) {
-       Text(
-           text = displayBio,
-           style = MaterialTheme.typography.bodyMedium,
-           color = Color.White.copy(alpha = 0.9f),
-       )
-   }
-   ```
-   Replaces the `?.orEmpty().takeIf { }.?.let { }` chain. No `!!`, no nullable leakage into `Text`.
-
-Invariants held: zero `!!` (grep confirmed no matches), glass card `0xFF141520` retained on ModalBottomSheet and CharacterCard backgrounds, existing code style preserved.
+Strict null safety: no `!!` introduced or removed; all existing nullable handling (`?:`, safe calls, Elvis) preserved. Glass card theme color `0xFF141520` is untouched (these files do not set card colors; they use `MaterialTheme.colorScheme` / `Compose` layer alpha). Existing code style (4-space kt, KDoc, const placement) preserved.
 
 ## Call Chain & Architecture
 
-`SettingJanitorPage()` is a stateless `@Composable` rendered inside `RouteActivity`'s `NavHost` (`Screen` sealed interface) via `composable<Screen.X>` registration. UI layer only:
+**Splash path:** `RouteActivity` → `SplashRevealOverlay()` (Compose) → `LaunchedEffect(Unit)` runs once per process (`SplashShown.once` guard) → logo alpha/scale springs → `delay(SPLASH_HOLD_MS)` → `overlayAlpha.animateTo(0f)` (suspends 350ms) → `visible = false` → early-return `if (!visible) return` unmounts the overlay. No ViewModel/Repository involvement; purely presentational startup overlay.
 
-- Injects `PlatformHttpClient` (Koin `koinInject`) and `AssistantVM` (`koinViewModel`).
-- Local UI state: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `selectedCharacter`, `isImporting`, `bottomSheetState`.
-- Network fetch functions `loadBrowse(tab)`, `loadSearch()`, `importCharacter(character)` launch coroutines via `rememberCoroutineScope()` and write to local `MutableState` (browseState/searchState) — no ViewModel involvement; this page is a UI-only widget per the local state pattern.
-- `LaunchedEffect(Unit)` triggers initial browse load ("24h"); `LaunchedEffect(selectedTab)` / `LaunchedEffect(searchQuery)` re-trigger loads on tab/query changes.
-- `selectedCharacter` opens `ModalBottomSheet` with `CharacterCard`-style detail row and `importCharacter` action, which POSTs to `.../api/extract` and hands the result to `assistantVM.addAssistant(assistant)`.
+**Entrance path:** `ChatPage` → `ChatPageContent` → `StartupChromeReveal(key, delayMs, ...)` / `Modifier.entrance(key, ...)` applied to top bar, bottom input, temp-chat overlay, new-chat content. Each `entrance(...)` calls `EntrancePlayed.markIfNew(key)` (process-lifetime `HashSet<String>`, capped 4096) to guarantee one-shot per conversation open. Inside, `LaunchedEffect(key)` drives `progress.animateTo(1f, spring(0.72f, 320f), delayMillis=stagger)`; `graphicsLayer` reads `progress.value` each frame for `alpha`, `scaleX/Y`, and `translation`. No business logic in UI layer; `ChatVM` owns conversation state via `collectAsStateWithLifecycle()`.
 
-Call chain: user tab tap → `selectedTab = index` → `LaunchedEffect(selectedTab)` → `loadBrowse` → `PlatformHttpClient.execute(...)` (IO) → JSON decode via `JsonInstant` → `browseState = Success(items)` → `LazyVerticalGrid` recomposes → `CharacterCard` click → `bottomSheetState.show()` → import → `assistantVM.addAssistant` → `Conversation` repository write.
+**ChatPage timing:** `startupWallpaperPauseMs` (350ms) → `delay(...)` → `chatAnimationsEnabled = true` → provided via `LocalChatAnimationsEnabled` to `ChatList`, gating per-message entrance animations. Top bar reveal starts at `delayMs = startupWallpaperPauseMs`; input at `startupWallpaperPauseMs + 2*step`; overlays at `+step`. `startupStaggerStepMs` remains 120ms.
 
 ## Recomposition & Memory Safety
 
-- All mutable UI state held in `remember { mutableStateOf<...>() }` — survives recomposition, recreated only on composition disposal.
-- `rememberCoroutineScope()` bound to composition lifecycle; `scope.launch` jobs are not auto-cancelled on disposal but composition scope disposal ends the coroutine scope.
-- `rememberModalBottomSheetState(skipPartiallyExpanded = true)` — sheet state remembered.
-- `activeState` / `currentItems` / `isLoading` / `loadError` are derived val computed during composition from `browseState`/`searchState` — cheap, no allocations in hot paths beyond small `when` branches.
-- `LazyVerticalGrid` `items(currentItems)` — stable `List<JanitorCharacter>`; `@Serializable` data class is immutable.
-- `displayBio` is a local `String` val; `if (displayBio.isNotBlank())` guard prevents empty `Text` nodes.
-- No snapshot reads of mutable collections; `JanitorLoadState` instances are immutable sealed objects/data classes — safe for concurrent assignment from `withContext(Dispatchers.Main)` blocks.
-- `selectedCharacter?.let { ... }` at bottom-sheet call site — nullable access, no `!!`.
+- **No `!!`**: All edits preserve null safety. `entrance(...)` early-returns `this` when `!allow`, `reduceMotion`, or `markIfNew` returns false — no nullable dereference.
+- **Remember scoping**: `progress = remember(key) { Animatable(0f) }` ties the Animatable to the element key; `LaunchedEffect(key)` cancels/restarts only when the key changes. `EntrancePlayed` set is process-lifetime but bounded (clear at 4096 entries) — no unbounded growth.
+- **Graphics layer only**: `alpha`, `scaleX/Y`, `translationX/Y` are transform/opacity properties; no `Modifier.size`/`padding` changes during animation, so no layout pass or measurement invalidation per frame. The optional blur path (`blurPx > 0`) reads `progress.value` in composition and only recomposes during the entrance; callers opt in.
+- **Splash**: `visible` is `remember { mutableStateOf(true) }`; once `false`, the composable returns early and skips the `Box`/`Image` subtree entirely — zero recomposition cost after unmount. `Animatable` instances are `remember`-scoped and disposed with the composition.
+- **Wallpaper pause**: `chatAnimationsEnabled` is `remember(conversation.id) { mutableStateOf(false) }`, set once after the delay — single write, stable thereafter.
 
 ## Threading & Dispatchers
 
-- All network/disk work confined to `withContext(Dispatchers.IO)` inside `scope.launch` coroutines (`CoroutineScope(SupervisorJob() + Dispatchers.Main + ...)` via `rememberCoroutineScope()` — Main dispatcher for UI launches).
-- State mutations (`browseState = ...`, `searchState = ...`, `isImporting = ...`, `selectedCharacter = ...`) performed inside `withContext(Dispatchers.Main) {}` after IO — Compose state touched only on Main thread.
-- `httpClient.execute(...)` is blocking Ktor/OkHttp call on IO — never on Main.
-- `assistantVM.addAssistant(assistant)` called on Main inside import success block (VM responsible for its own `viewModelScope` threading).
-- No `GlobalScope`, no `launch(Dispatchers.IO)` top-level, no `withContext(Dispatchers.Main)` around non-UI work.
+All animation work runs on `Dispatcher.Main` via Compose `LaunchedEffect`/`Animatable.animateTo` — correct for UI animation; no `withContext(Dispatchers.IO)` or `Dispatchers.Default` introduced in these files. No blocking calls. The `delay(...)` in SplashReveal and ChatPage are suspending, non-blocking, and Main-dispatcher-safe.
+
+`EntrancePlayed.markIfNew` mutates a mutable `HashSet` from the Main thread (called during composition side-effect within `entrance()` modifier). This matches existing code and is single-threaded (Compose Main dispatcher); no concurrent access introduced by this change.
+
+No new coroutines, scopes, or dispatchers added. Existing `scope.launch` calls elsewhere in ChatPage.kt (file import deletion, scroll) are unchanged and remain on `rememberCoroutineScope()` (Main).
 
 ## Offline & Error State Handling
 
-- `JanitorLoadState` sealed: `Loading`, `Success(items)`, `Error(message)` — all four phases represented.
-- Loading: initial state `Loading` for both `browseState` and `searchState`; `CircularProgressIndicator` shown while `isLoading`.
-- Success: `currentItems` populates `LazyVerticalGrid`; empty-state text when `currentItems.isEmpty() && !isLoading` ("No characters found" / "No characters available").
-- HTTP error: non-2xx status → `JanitorLoadState.Error("HTTP ${response.statusCode}")`, rendered as red `Text` (`Color(0xFFFF6B6B)`).
-- Exception: caught in `catch (e: Exception)` → `JanitorLoadState.Error(e.message ?: e.toString())` — Elvis chain, no `!!`.
-- Import failure: HTTP error and exception paths both show `ToastType.Error` via `LocalToaster.current` and reset `isImporting = false` on Main.
-- `importCharacter` sheet dismissal and `selectedCharacter = null` on success; bottom sheet hides on import completion.
-- Offline manifest: any `IOException`/timeout from `httpClient.execute` lands in the catch branch → Error state shown; UI never crashes on network failure.
-- Null safety across optional fields: `creator.bio ?: creator.description`, `creator.creator ?: creator.creatorName`, `extract.name ?: character.name`, `extract.bio ?: extract.description ?: ""`, `extract.avatarHash ?: extract.avatarHash2` — all Elvis operators, no `!!`.
+- **SplashReveal**: Fully local, asset-backed (`painterResource(R.drawable.domchat_setup_icon)`). No network, no disk, no error states possible. `reduceMotion` or `SplashShown.once` short-circuits to `visible = false` immediately — graceful degrade.
+- **Entrance**: Purely local UI animation. `reduceMotion` short-circuits to no animation (`return this`), elements render at rest state instantly. Offline/online status irrelevant. `markIfNew` returning false (already-played) skips animation gracefully — element shows at rest.
+- **ChatPage wallpaper pause**: Purely local timing. No network dependency. If conversation initialization fails, `vm.errorFlow` is collected at the top of `ChatPage` and surfaced via `LocalToaster.current` (`ToastType.Error`) — existing behavior, untouched. `chatAnimationsEnabled` gating only affects visual entrance; chat list and input remain functional regardless.
+- No `try/catch` needed: animation APIs do not throw for offline/error states. All `collectAsStateWithLifecycle` flows handle emission lifecycle safely.
 
-## Edit Receipt
-
-File: `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`
-- Line 36: inserted `import androidx.compose.runtime.LaunchedEffect`
-- Line 45: inserted `import androidx.compose.ui.input.nestedscroll.nestedScroll`
-- Lines 148–149: explicit `mutableStateOf<JanitorLoadState>(...)` on `browseState` and `searchState`
-- Lines 459–466: replaced nullable chain with `val displayBio = (character.bio ?: character.description).orEmpty().trim()` + `if (displayBio.isNotBlank())` Text block
-
-No local Gradle build performed (constraint). File read-verified: imports present, explicit type params present, zero `!!` occurrences.
+---
+Changes are source-only. No Gradle build executed (per constraint). Verified by reading target files before/after edit; no `!!`, no `FastOutSlowInEasing`/`tween`/`ENTRANCE_DURATION_MS` remnants in Entrance.kt, `SPLASH_FADE_MS = 350`, `startupWallpaperPauseMs = 350`.

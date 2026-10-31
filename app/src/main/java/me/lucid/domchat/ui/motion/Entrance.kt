@@ -1,8 +1,7 @@
 package me.lucid.domchat.ui.motion
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -74,16 +73,20 @@ fun Modifier.entrance(
     LaunchedEffect(key) {
         progress.animateTo(
             1f,
-            animationSpec = tween(
-                durationMillis = motionPolicy.duration(ENTRANCE_DURATION_MS),
-                delayMillis = motionPolicy.duration(delayMs.coerceIn(0, ENTRANCE_MAX_STAGGER_MS)),
-                easing = FastOutSlowInEasing
-            )
+            animationSpec = spring(
+                dampingRatio = 0.72f,
+                stiffness = 320f,
+            ),
+            delayMillis = motionPolicy.duration(delayMs.coerceIn(0, ENTRANCE_MAX_STAGGER_MS)),
         )
     }
     var result = this.graphicsLayer {
         val p = progress.value
         alpha = p
+        // Organic Apple-style scale pop: 0.93f -> 1.0f, settling with the spring.
+        val scale = 0.93f + 0.07f * p
+        scaleX = scale
+        scaleY = scale
         val d = distancePx * (1f - p)
         when (from) {
             EntranceDirection.UP -> translationY = d
@@ -109,5 +112,4 @@ fun Modifier.entrance(
     return result
 }
 
-private const val ENTRANCE_DURATION_MS = 2000
 private const val ENTRANCE_MAX_STAGGER_MS = 900

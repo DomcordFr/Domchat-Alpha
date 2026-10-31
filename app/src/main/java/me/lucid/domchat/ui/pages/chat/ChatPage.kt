@@ -536,7 +536,7 @@ private val chatBottomToolbarTopFadeHeight = 36.dp
 // Startup: pause after the splash clears so the user can view the wallpaper,
 // then the chrome reveals in staggered groups. Each group keeps its own
 // EntrancePlayed key so back navigation never re-triggers the enter animation.
-private val startupWallpaperPauseMs = 700
+private val startupWallpaperPauseMs = 350
 private val startupStaggerStepMs = 120
 
 private fun latestAssistantSpeechMessage(conversation: Conversation): UIMessage? {

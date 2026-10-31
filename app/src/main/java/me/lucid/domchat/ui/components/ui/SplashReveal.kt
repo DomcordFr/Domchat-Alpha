@@ -119,4 +119,4 @@ private const val LOGO_ENTER_SCALE_START = 0.94f
 private const val LOGO_EXIT_SCALE = 1.045f
 private const val LOGO_ENTER_MS = 190
 private const val SPLASH_HOLD_MS = 240
-private const val SPLASH_FADE_MS = 400
+private const val SPLASH_FADE_MS = 350
