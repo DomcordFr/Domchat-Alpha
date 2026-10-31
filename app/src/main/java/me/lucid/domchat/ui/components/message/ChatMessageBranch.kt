@@ -20,11 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.DeleteOutline
 import me.lucid.domchat.R
+import me.lucid.ai.core.MessageRole
 import me.lucid.ai.ui.MessageNode
 import me.lucid.ai.ui.versionSelectionIndices
 import me.lucid.ai.ui.versionSelectionPosition
@@ -43,14 +43,18 @@ fun ChatMessageBranchSelector(
         node.versionSelectionPosition()
     }
 
+    val canGenerateAlternate = onGenerateAlternate != null && node.role == MessageRole.ASSISTANT
+    val showControls = versionIndices.isNotEmpty() && (versionIndices.size > 1 || canGenerateAlternate)
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (versionIndices.size > 1 && currentVersionPosition >= 0) {
-            val canGoPrev = currentVersionPosition > 0
-            val canGoNext = currentVersionPosition < versionIndices.lastIndex
+        if (showControls) {
+            val position = currentVersionPosition.coerceAtLeast(0)
+            val canGoPrev = position > 0
+            val canGoNext = position < versionIndices.lastIndex
 
             Icon(
                 imageVector = Icons.Rounded.ChevronLeft,
@@ -63,7 +67,7 @@ fun ChatMessageBranchSelector(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = LocalIndication.current,
                         onClick = {
-                            val targetIndex = versionIndices.getOrNull(currentVersionPosition - 1)
+                            val targetIndex = versionIndices.getOrNull(position - 1)
                                 ?: return@clickable
                             onUpdate(node.copy(selectIndex = targetIndex))
                         }
@@ -73,7 +77,7 @@ fun ChatMessageBranchSelector(
             )
 
             Text(
-                text = "${currentVersionPosition + 1}/${versionIndices.size}",
+                text = "${position + 1}/${versionIndices.size}",
                 style = MaterialTheme.typography.bodySmall
             )
 
@@ -82,74 +86,48 @@ fun ChatMessageBranchSelector(
                 contentDescription = stringResource(R.string.next),
                 modifier = Modifier
                     .clip(CircleShape)
-                    .alpha(if (canGoNext) 1f else 0.5f)
+                    .alpha(if (canGenerateAlternate) 1f else (if (canGoNext) 1f else 0.5f))
                     .clickable(
-                        enabled = canGoNext,
+                        enabled = canGoNext || canGenerateAlternate,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = LocalIndication.current,
                         onClick = {
-                            val targetIndex = versionIndices.getOrNull(currentVersionPosition + 1)
-                                ?: return@clickable
-                            onUpdate(node.copy(selectIndex = targetIndex))
+                            if (canGoNext) {
+                                val targetIndex = versionIndices.getOrNull(position + 1)
+                                    ?: return@clickable
+                                onUpdate(node.copy(selectIndex = targetIndex))
+                            } else {
+                                onGenerateAlternate?.invoke()
+                            }
                         }
                     )
                     .padding(8.dp)
                     .size(16.dp),
             )
 
-            if (onGenerateAlternate != null && node.role == me.lucid.ai.core.MessageRole.ASSISTANT) {
+            if (versionIndices.size > 1) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                    contentDescription = "Generate alternate response",
-                    tint = MaterialTheme.colorScheme.primary,
+                    imageVector = Icons.Rounded.DeleteOutline,
+                    contentDescription = "Delete swipe",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = LocalIndication.current,
-                            onClick = onGenerateAlternate
+                            onClick = {
+                                val updatedMessages = node.messages.toMutableList()
+                                if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
+                                    updatedMessages.removeAt(node.selectIndex)
+                                    val newSelectIndex = (node.selectIndex - 1).coerceAtLeast(0)
+                                    onUpdate(node.copy(messages = updatedMessages, selectIndex = newSelectIndex))
+                                }
+                            }
                         )
                         .padding(6.dp)
                         .size(15.dp)
                 )
             }
-
-            Icon(
-                imageVector = Icons.Rounded.DeleteOutline,
-                contentDescription = "Delete swipe",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = LocalIndication.current,
-                        onClick = {
-                            val updatedMessages = node.messages.toMutableList()
-                            if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
-                                updatedMessages.removeAt(node.selectIndex)
-                                val newSelectIndex = (node.selectIndex - 1).coerceAtLeast(0)
-                                onUpdate(node.copy(messages = updatedMessages, selectIndex = newSelectIndex))
-                            }
-                        }
-                    )
-                    .padding(6.dp)
-                    .size(15.dp)
-            )
-        } else if (onGenerateAlternate != null && node.role == me.lucid.ai.core.MessageRole.ASSISTANT) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                contentDescription = "Generate alternate response",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = LocalIndication.current,
-                        onClick = onGenerateAlternate
-                    )
-                    .padding(6.dp)
-                    .size(16.dp)
-            )
         }
     }
 }
