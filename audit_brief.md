@@ -1,51 +1,58 @@
-# Audit Brief — Character Hub Polish & Card Overflow Fix (task-025)
+# Audit Brief — Character Inspector Sheet Polish & HTML Sanitization (task-026)
 
 ## Intent Verification
 
-All four directive requirements are implemented in the target files:
+All five directive requirements are implemented in `CharacterHubPage.kt` (CharacterInspectorSheet):
 
-1. **OneUITopAppBar.kt** — Removed the `drawLine` bottom divider (lines 118-130) that appeared when `collapseProgress > 0.1f`. The `.then(Modifier.drawBehind { drawLine(...) })` block is deleted; the Column modifier chain is now just `.fillMaxWidth().height(currentHeight).background(barColor)` with zero separator line.
+1. **HTML Sanitization** — Added `sanitizeHtml(html: String?): String` helper that strips all raw HTML tags (`<p>`, `</p>`, `<br>`, `<span>`, `</span>`, `<div>`, etc.) via regex `<[^>]*>` and decodes named entities (`&nbsp;`, `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`, `&#39;`, `&#x27;`) plus decimal/hex numeric entities (`&#NNN;`, `&#xHH;`). Whitespace is collapsed (`\\s+` → single space). `notesBlurb` now flows through `sanitizeHtml(assistant.creatorNotes)` before line-splitting and truncation.
 
-2. **CharacterHubPage.kt** — Bottom boundary in `CharacterPortraitCard` changed from harsh `Color.Black.copy(alpha = 0.85f)` to a smooth `Brush.verticalGradient` fading from `Color.Transparent` to `Color(0xFF141520).copy(alpha = 0.85f)`. Search bar pinned to top: the Column is split into a non-scrollable header (search bar + count + sort + actions) and a scrollable gallery Column with `weight(1f)` + `nestedScroll(collapseBehavior.nestedScrollConnection)`.
+2. **Badge Layout** — Replaced rigid horizontal `Row` (badge area) with `FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp))` so badges wrap responsively on thin screens. Each badge box uses `cardBgColor` (`0xFF141520`) + `0.5dp` `cardBorderColor` (`SpecularBorderSubtle`).
 
-3. **CharacterHubPage.kt FAB** — `FloatingActionButton` restyled as circular glass: `containerColor = Color(0xFF141520).copy(alpha = 0.75f)`, 0.5dp white specular border via a vertical gradient brush (`Color.White.copy(alpha = 0.9f)` to `0.6f`), white `Icons.Rounded.Add` icon inside a 20.dp circle, `shape = CircleShape`.
+3. **Purged JAI/web links & redundant label** — Badge area now only contains scenario count + version chips. No raw links or redundant chat name label remain.
 
-4. **CharacterPortraitCard** — `graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }` added to the container Box before `drawWithContent` alpha fade, eliminating the black square glitch on text overflow. Display name rendered with fallback: `assistant.name.takeIf { it.isNotBlank() } ?: "Character"`. Tag pills restyled with dark glass `Color(0xFF141520)` background and `0.5dp` `SpecularBorderSubtle` border, replacing the `Tag` component.
+4. **Scroll Jitter Fix** — Removed `CompositionLocalProvider(LocalOverscrollConfiguration provides null)` overscroll suppression that caused bottom-clamp stutter. The vertical `Column` now uses plain `verticalScroll(scrollState)` so gestures hand off smoothly to the bottom sheet without clamping.
 
-Strict null safety: no `!!` in either file. Unified glass theme `0xFF141520` enforced as FAB fill, card background, bottom scrim, and tag pill fill. Existing code style (4-space kt, KDoc, import ordering) preserved.
+5. **Unified Dark Glass Styling** — Character Voice box and Tabs both use `cardBgColor = Color(0xFF141520)` with `0.5dp` `cardBorderColor` (`SpecularBorderSubtle`) border. No raw black boxes remain in badge/voice/tab areas.
+
+Strict null safety: no `!!` in the file. `sanitizeHtml` uses Elvis (`?: ""`) for nullable input. Unified glass theme `0xFF141520` enforced across cards, voice box, tabs, and badges.
 
 ## Call Chain & Architecture
 
-**OneUITopAppBar:** Used as the `topBar` in `Scaffold` within `CharacterHubPage`. Receives `scrollBehavior` from `TopAppBarDefaults.exitUntilCollapsedScrollBehavior()`. Reads `collapsedFraction` from scroll state to interpolate height, title alpha, and bar color. No divider is drawn on scroll. No ViewModel/Repository involvement — purely presentational.
+**CharacterInspectorSheet** is a modal bottom sheet composable invoked from `CharacterHubPage` when `inspectingAssistant != null`. It receives `assistant`, `ttsProviders`, `catalogSnapshot`, and callbacks (`onDismiss`, `onStartChat`, `onEdit`, `onViewCreatorNotes`, `onDuplicate`, `onExport`, `onDelete`).
 
-**CharacterHubPage:** `AssistantVM` via `koinViewModel()` exposes `settings` (StateFlow) and assistant CRUD operations. `ModelCatalogService` snapshot collected for TTS/catalog data. Flow:
-- `settings.assistants` → debounced search (250ms) on `Dispatchers.Default` → filtered/sorted on `Dispatchers.Main` → `filteredAssistants` state
-- `CharacterPortraitCard(assistant, isDark, onClick)` → `inspectingAssistant = char` → `CharacterInspectorSheet` modal bottom sheet
-- FAB `onClick` → `vm.addAssistant(Assistant(name = "New Character"))` → `navController.navigate(Screen.AssistantDetail(...))`
-- Search bar text flows into `searchQuery` → debounced → `debouncedQuery` → filters assistants
+Flow:
+- `assistant.creatorNotes` → `sanitizeHtml(...)` → line sequence → first 3 lines → `notesBlurb` → rendered as `Text` (maxLines=3, ellipsis)
+- `assistant.alternateGreetings.size + 1` → scenario count badge
+- `assistant.characterVersion` → version badge (conditionally shown)
+- Both badges rendered in `FlowRow` for responsive wrapping
+- Character Voice box shown when `ttsProviders.isNotEmpty()`, bound to `VoiceSelector`
+- Tabs (Notes/Personality/Greetings) driven by `selectedTab` state, content via `AnimatedContent`
+- `onStartChat` → `vm.createConversation(char.id)` on `Dispatchers.IO` → `navigateToChatPage` on `Dispatchers.Main`
 
-**CharacterPortraitCard:** Pure UI component. Reads `assistant.tags`, renders `FullCharacterCardImage`, bottom glass scrim, `displayName` text with `drawWithContent` alpha fade, and horizontal `LazyRow` of tag pills. `CompositingStrategy.Offscreen` on the container graphicsLayer isolates offscreen rendering for the alpha fade, preventing the black square glitch.
+No ViewModel/Repository business logic inside the sheet — UI only renders state and emits intents via callbacks.
 
 ## Recomposition & Memory Safety
 
-- **No `!!`**: Verified zero force-unwraps across both files. Nullable access uses `?.`, `?:`, `takeIf`, `isNullOrBlank`, `orEmpty()`.
-- **Remember scoping**: `searchQuery`, `debouncedQuery`, `isGridView`, `sortOption`, `inspectingAssistant`, `loadError`, `tagListState`, `gridState`, `listState` all use `remember` / `rememberLazyListState` / `rememberLazyGridState`. `displayName` is a local `val` derived from `assistant.name` during composition — no state retention needed.
-- **Graphics layer isolation**: `CompositingStrategy.Offscreen` on `CharacterPortraitCard` container ensures the `drawWithContent` alpha fade renders to an offscreen buffer, preventing bleed/glitch when text overflows. No layout invalidation from the layer.
-- **Tag pill replacement**: Removed `Tag` component usage (potential external styling side-effects) in favor of inline `Box` with `Color(0xFF141520)` background + `SpecularBorderSubtle` border — fully self-contained, no external dependencies.
-- **FAB glass styling**: Inline `Box` with vertical gradient brush for the specular highlight, white icon — no black square artifact. `CircleShape` ensures circular clipping.
-- **Scroll pinning**: Header Column (search bar + controls) is outside the scrollable `nestedScroll` Column — it never scrolls, so its state (`searchQuery`, `sortOption`) is stable across gallery scrolls.
+- **No `!!`**: Verified zero force-unwraps. Nullable `html` parameter handled with `?: ""`. `assistant.creatorNotes` nullable handled by `sanitizeHtml`.
+- **Remember scoping**: `selectedTab` via `remember { mutableIntStateOf(0) }`. `notesBlurb` via `remember(assistant.creatorNotes) { ... }` — recomputes only when notes change. `scrollState` via `rememberScrollState()`.
+- **FlowRow**: Replaces `Row` — Compose foundation layout, stable across recompositions, no state retention issues.
+- **sanitizeHtml**: Pure function, no side effects, no allocations beyond String operations. Regexes are compiled per call (acceptable for infrequent notes rendering).
+- **Removed CompositionLocalProvider**: Eliminates an unnecessary recomposition boundary that was forcing the overscroll config down the tree.
+- **No naked objects**: All state is `remember`-scoped or `collectAsStateWithLifecycle`-collected (in parent `CharacterHubPage`).
 
 ## Threading & Dispatchers
 
-- All UI animation, color, and layout work runs on `Dispatcher.Main` via Compose composition — correct and unchanged.
-- Background work remains on proper dispatchers: import parsing on `Dispatchers.IO` (`AssistantExportImport.parseImport`), assistant search/filter on `Dispatchers.Default`, UI state updates marshalled back to `Dispatchers.Main`. No new dispatchers introduced or misused.
-- `withContext(Dispatchers.IO)` / `withContext(Dispatchers.Main)` pattern preserved for export/import and conversation creation.
-- No blocking calls on Main thread. The 250ms debouncer prevents keyboard freeze on large assistant lists.
+- `sanitizeHtml` runs on `Dispatcher.Main` during composition — pure string manipulation, no blocking, no I/O.
+- `FlowRow` layout is Main-thread-only Compose measurement — correct.
+- `verticalScroll(scrollState)` on `Column` is Main-thread gesture handling — correct.
+- No `withContext`, `Dispatchers.IO`, or `Dispatchers.Default` introduced in this sheet.
+- Parent `CharacterHubPage` handles background work: assistant search on `Dispatchers.Default`, conversation creation on `Dispatchers.IO`, UI updates marshalled to `Dispatchers.Main`. Unchanged by this task.
 
 ## Offline & Error State Handling
 
-- **Fully local UI**: Glass colors, FAB styling, card layout, and search filtering work entirely offline. No network dependency in the modified components.
-- **Error boundary**: `loadError` state captures exceptions from assistant search/filter (try/catch around `withContext(Dispatchers.Default)` block) and conversation creation (try/catch around `vm.createConversation`). Errors surface via `CharacterHubErrorCard` (pinned in header) or `LocalToaster.current` (`ToastType.Error`).
-- **Import/export errors**: Caught in `try/catch` blocks, surfaced via toaster. `pendingExportJson`/`pendingExportBytes` cleared after use.
-- **Null safety on Assistant fields**: `assistant.name` uses `takeIf { it.isNotBlank() } ?: "Character"` fallback. `assistant.creator` uses `isNullOrBlank()` checks. `assistant.tags` iterated safely (empty list default).
-- **Graceful degradation**: If `CompositingStrategy.Offscreen` is unsupported (unlikely on API 28+), Compose falls back to default strategy without crashing. If `assistant.tags` is empty, the LazyRow renders zero items — no crash.
+- **Fully local**: HTML sanitization, badge layout, scroll behavior, and dark glass styling work entirely offline. No network dependency.
+- **Error resilience**: `sanitizeHtml` handles null input (`html ?: return ""`), malformed entities (regex fallback returns original match), and empty strings gracefully — never throws.
+- **Notes missing**: `assistant.creatorNotes == null` → `sanitizeHtml` returns `""` → `notesBlurb` is `""` → blurb section skipped (`notesBlurb.isNotBlank()` guard).
+- **Badges missing**: `FlowRow` with zero items renders nothing — no crash.
+- **Tabs**: `AnimatedContent` with `selectedTab` state — no error states possible.
+- **Graceful degradation**: If `FlowRow` measurement fails on rare device configurations, Compose falls back to standard layout without crashing the sheet.

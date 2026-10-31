@@ -9,7 +9,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.background
@@ -76,6 +75,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -98,6 +98,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -1095,7 +1096,6 @@ fun CharacterInspectorSheet(
                 .fillMaxHeight(0.92f)
         ) {
             val scrollState = rememberScrollState()
-            CompositionLocalProvider(LocalOverscrollConfiguration provides null) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1154,15 +1154,16 @@ fun CharacterInspectorSheet(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     val introsCount = assistant.alternateGreetings.size + 1
-                    Row(
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color.White.copy(alpha = 0.10f))
-                                .border(0.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .background(cardBgColor)
+                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
@@ -1176,8 +1177,8 @@ fun CharacterInspectorSheet(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF000000))
-                                    .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                                    .background(cardBgColor)
+                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
@@ -1190,9 +1191,10 @@ fun CharacterInspectorSheet(
                         }
                     }
 
-                    // Top few lines of creator notes as a blurb
+                    // Top few lines of creator notes as a blurb (HTML-sanitized)
                     val notesBlurb = remember(assistant.creatorNotes) {
-                        assistant.creatorNotes?.lineSequence()
+                        sanitizeHtml(assistant.creatorNotes)
+                            .lineSequence()
                             ?.map { it.trim() }
                             ?.filter { it.isNotBlank() }
                             ?.take(3)
@@ -1575,7 +1577,6 @@ fun CharacterInspectorSheet(
                     Spacer(modifier = Modifier.height(36.dp))
                 }
             }
-            }
 
             // Close button floating at top-right with safe margin
             IconButton(
@@ -1597,4 +1598,36 @@ fun CharacterInspectorSheet(
             }
         }
     }
+}
+
+/**
+ * Strips raw HTML tags and decodes common HTML entities so creator notes display as clean text.
+ * Handles <p>, </p>, <br>, <span>, &nbsp; and numeric/named entities without external dependencies.
+ */
+private fun sanitizeHtml(html: String?): String {
+    val text = html ?: return ""
+    var result = text
+        // Remove opening/closing tags (<p>, </p>, <br>, <span>, </span>, <div>, etc.)
+        .replace(Regex("<[^>]*>"), "")
+        // Decode named entities
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        // Decode decimal numeric entities (&#NNN;)
+        .replace(Regex("&#(\\d+);")) { match ->
+            match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
+        }
+        // Decode hex numeric entities (&#xHH;)
+        .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
+        }
+        // Collapse multiple whitespace introduced by tag removal
+        .replace(Regex("\\s+"), " ")
+        .trim()
+    return result
 }
