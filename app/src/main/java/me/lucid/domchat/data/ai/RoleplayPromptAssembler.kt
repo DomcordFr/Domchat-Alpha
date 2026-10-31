@@ -16,7 +16,7 @@ import kotlin.random.Random
 object RoleplayPromptAssembler {
 
     private val MACRO_SINGLE_PASS_REGEX = Regex(
-        """\{\{(char|char_name|user|user_name|user_pronouns|user_pronoun|pronouns|bot|model|time|date|lastMessage|lastUserMessage|lastCharMessage|random::[^}]+)\}\}|<(?i:char|user|bot)>""",
+        """\{\{(char|char_name|user|user_name|user_pronouns|user_pronoun|pronouns|sub|obj|poss|poss_p|ref|bot|model|time|date|lastMessage|lastUserMessage|lastCharMessage|random::[^}]+)\}\}|<(?i:char|user|bot)>""",
         RegexOption.IGNORE_CASE
     )
 
@@ -55,6 +55,12 @@ object RoleplayPromptAssembler {
                 value.equals("{{user_pronoun}}", ignoreCase = true) ||
                 value.equals("{{pronouns}}", ignoreCase = true) -> userPronouns
 
+                value.equals("{{sub}}", ignoreCase = true) -> pronounParts(userPronouns).sub
+                value.equals("{{obj}}", ignoreCase = true) -> pronounParts(userPronouns).obj
+                value.equals("{{poss}}", ignoreCase = true) -> pronounParts(userPronouns).poss
+                value.equals("{{poss_p}}", ignoreCase = true) -> pronounParts(userPronouns).possP
+                value.equals("{{ref}}", ignoreCase = true) -> pronounParts(userPronouns).ref
+
                 value.equals("{{bot}}", ignoreCase = true) ||
                 value.equals("<bot>", ignoreCase = true) -> charName
 
@@ -76,6 +82,32 @@ object RoleplayPromptAssembler {
             }
         }
     }
+
+    /** Parses a slash-separated pronoun string (e.g. "he/him/his/himself") into its five grammatical cases. */
+    private fun pronounParts(pronouns: String): PronounParts {
+        val parts = pronouns.split("/").map { it.trim() }.filter { it.isNotEmpty() }
+        val sub = parts.getOrElse(0) { "" }
+        val obj = parts.getOrElse(1) { "" }
+        val poss = parts.getOrElse(2) { obj }
+        val possP = parts.getOrElse(3) { poss }
+        val ref = parts.getOrElse(4) { reflexiveFor(obj) }
+        return PronounParts(sub, obj, poss, possP, ref)
+    }
+
+    private fun reflexiveFor(obj: String): String {
+        return when (obj.lowercase()) {
+            "them" -> "themselves"
+            else -> if (obj.isNotBlank()) obj + "self" else ""
+        }
+    }
+
+    private data class PronounParts(
+        val sub: String,
+        val obj: String,
+        val poss: String,
+        val possP: String,
+        val ref: String,
+    )
 
     /**
      * Injects an Author's Note or directive at depth D from the end of the message list.

@@ -155,7 +155,7 @@ val dataSourceModule = module {
 
     single<MessageTemplateCache> { get<PebbleMessageTemplateRenderer>() }
 
-    single<MessageTemplateContextFactory> { AndroidMessageTemplateContextFactory() }
+    single<MessageTemplateContextFactory> { AndroidMessageTemplateContextFactory(settingsStore = get()) }
 
     single { TemplateTransformer(renderer = get(), contextFactory = get()) }
 
