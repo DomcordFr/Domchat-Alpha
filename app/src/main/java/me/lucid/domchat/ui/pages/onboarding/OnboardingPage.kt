@@ -145,7 +145,7 @@ fun OnboardingPage(vm: OnboardingVM = koinViewModel()) {
         } else {
             recommended + NANO_GPT_PRESET.copy(
                 setupRecommended = true,
-                setupOrder = 3,
+                setupOrder = 0,
                 setupDescription = "Privacy-first nano billing for many hosted models",
             )
         }

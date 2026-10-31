@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
+import me.lucid.domchat.ui.theme.LocalDarkMode
 
 /** The production DomChat top-app-bar back control shared by Android and iOS. */
 @Composable
@@ -32,6 +34,8 @@ fun DomChatBackButton(
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
         label = "back_button_scale",
     )
+    val isDark = LocalDarkMode.current
+    val iconColor = if (isDark) Color.White else Color.Black
 
     IconButton(
         onClick = {
@@ -47,6 +51,7 @@ fun DomChatBackButton(
         Icon(
             imageVector = RoundedArrowBackIcon,
             contentDescription = contentDescription,
+            tint = iconColor,
         )
     }
 }

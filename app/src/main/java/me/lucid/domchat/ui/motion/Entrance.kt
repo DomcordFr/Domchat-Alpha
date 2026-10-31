@@ -102,5 +102,5 @@ fun Modifier.entrance(
     return result
 }
 
-private const val ENTRANCE_DURATION_MS = 950
-private const val ENTRANCE_MAX_STAGGER_MS = 600
+private const val ENTRANCE_DURATION_MS = 2000
+private const val ENTRANCE_MAX_STAGGER_MS = 900

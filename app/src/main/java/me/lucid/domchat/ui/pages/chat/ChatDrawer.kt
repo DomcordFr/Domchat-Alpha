@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.chat
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
+import me.lucid.domchat.ui.modifier.domChatChromeSurfaceColor
 
 import androidx.core.net.toUri
 import androidx.compose.animation.core.spring
@@ -206,7 +207,7 @@ fun ChatDrawerContent(
 
             // Glassy User Profile Header (Static display, non-interactive)
             val profileCardShape = RoundedCornerShape(20.dp)
-            val profileCardBg = Color(0xFF000000).copy(alpha = 0.55f)
+            val profileCardBg = domChatChromeSurfaceColor()
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -226,7 +227,7 @@ fun ChatDrawerContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    val headerActionColor = Color(0xFF000000).copy(alpha = 0.15f)
+                    val headerActionColor = domChatChromeSurfaceColor()
                     UIAvatar(
                         name = displayName,
                         value = activePersona.avatar,
@@ -423,7 +424,7 @@ fun ChatDrawerContent(
                     ) {
                         val actionButtonSize = 42.dp
                         val assistantAvatarSize = 30.dp
-                        val itemColor = Color(0xFF000000).copy(alpha = 0.55f)
+                        val itemColor = domChatChromeSurfaceColor()
                         val pillBorder = androidx.compose.foundation.BorderStroke(
                             0.5.dp,
                             if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
@@ -607,7 +608,7 @@ fun CollapsedChatSideRail(
             .statusBarsPadding()
             .padding(start = 8.dp, top = 8.dp, bottom = 8.dp),
         shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-        color = Color(0xFF000000).copy(alpha = 0.15f),
+        color = domChatChromeSurfaceColor(),
         tonalElevation = 1.dp,
     ) {
         Column(
@@ -621,7 +622,7 @@ fun CollapsedChatSideRail(
                 icon = { Icon(Icons.Rounded.ChevronRight, null) },
                 label = { Text(stringResource(R.string.activity_timeline_expand)) },
                 onClick = onExpand,
-                containerColor = Color(0xFF000000).copy(alpha = 0.15f),
+                containerColor = domChatChromeSurfaceColor(),
                 size = 48.dp
             )
             Column(
@@ -632,7 +633,7 @@ fun CollapsedChatSideRail(
                     icon = { Icon(Icons.Rounded.Image, null) },
                     label = { Text(stringResource(R.string.chat_drawer_imagine)) },
                     onClick = onOpenImageGen,
-                    containerColor = Color(0xFF000000).copy(alpha = 0.15f),
+                    containerColor = domChatChromeSurfaceColor(),
                     shape = RoundedCornerShape(10.dp),
                     size = 48.dp
                 )
@@ -640,7 +641,7 @@ fun CollapsedChatSideRail(
                     icon = { DomChatBarChartIcon(contentDescription = null) },
                     label = { Text(stringResource(R.string.menu_statistics_title)) },
                     onClick = onOpenStatistics,
-                    containerColor = Color(0xFF000000).copy(alpha = 0.15f),
+                    containerColor = domChatChromeSurfaceColor(),
                     shape = RoundedCornerShape(10.dp),
                     size = 48.dp
                 )
@@ -671,7 +672,7 @@ fun CollapsedChatSideRail(
                 icon = { DomChatSettingsIcon(contentDescription = null) },
                 label = { Text(stringResource(R.string.settings)) },
                 onClick = onOpenSettings,
-                containerColor = Color(0xFF000000).copy(alpha = 0.15f),
+                containerColor = domChatChromeSurfaceColor(),
                 size = 48.dp
             )
         }

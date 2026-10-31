@@ -737,7 +737,7 @@ fun MarkdownBlock(
     val fadeInEnabled = displaySetting.enableStreamingFadeIn
     val fadeDurationMs = displaySetting.streamingFadeDurationMs.coerceIn(100, 1500)
     val startAlpha = displaySetting.streamingFadeStartAlpha.coerceIn(0f, 0.9f)
-    val particleMode = if (fadeInEnabled) displaySetting.streamingParticleStyle.toParticleTextMode() else ParticleTextMode.OFF
+    val particleMode = displaySetting.streamingParticleStyle.toParticleTextMode()
     val particleEnabled = particleMode != ParticleTextMode.OFF
     val particleDurationMs = displaySetting.streamingParticleDurationMs.coerceIn(150, 2000)
     val continuousFlow = displaySetting.streamingContinuousFlow

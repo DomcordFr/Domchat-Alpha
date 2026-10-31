@@ -358,7 +358,7 @@ private fun ActionPill(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
-                    tint = iconColor
+                    tint = if (isDark) Color.White.copy(alpha = 0.95f) else Color.Black.copy(alpha = 0.85f)
                 )
                 Text(
                     text = text,

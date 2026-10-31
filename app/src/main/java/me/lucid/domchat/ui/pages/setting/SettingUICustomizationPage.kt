@@ -1,5 +1,9 @@
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
@@ -400,7 +405,10 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                                 Color.White.copy(alpha = 0.75f)
                                             },
                                             maxLines = 1,
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 10.dp)
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .padding(horizontal = 4.dp, vertical = 10.dp)
+                                                .align(Alignment.Center)
                                         )
                                     }
                                 }
@@ -408,7 +416,17 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                         }
 
                         // Particle Assembly Speed Slider
-                        if (displaySetting.streamingParticleStyle >= 1) {
+                        AnimatedVisibility(
+                            visible = displaySetting.streamingParticleStyle >= 1,
+                            enter = fadeIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)) +
+                                    androidx.compose.animation.slideInVertically(
+                                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)
+                                    ) { -it },
+                            exit = fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)) +
+                                   androidx.compose.animation.slideOutVertically(
+                                       animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)
+                                   ) { -it },
+                        ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()

@@ -1307,6 +1307,13 @@ private fun ChatPageContent(
     val preexistingNodeIds = remember(conversation.id) {
         conversation.messageNodes.map { it.id.toString() }.toSet()
     }
+
+    // Reset the once-only entrance registry so particle/chrome entrances replay
+    // on each new conversation open. History turns are still gated by
+    // LocalPreexistingMessageNodes; only fresh turns animate.
+    LaunchedEffect(conversation.id) {
+        me.lucid.domchat.ui.motion.EntrancePlayed.reset()
+    }
     val context = LocalContext.current
     val modelRequiredMessage = context.getString(R.string.chat_model_required)
     var previewMode by rememberSaveable { mutableStateOf(false) }
@@ -2301,6 +2308,8 @@ private fun ChatToolbarIconButton(
         ),
         label = "chat_toolbar_icon_scale"
     )
+    val isDark = LocalDarkMode.current
+    val iconColor = if (isDark) Color.White else Color.Black
 
     Box(
         modifier = Modifier
@@ -2326,7 +2335,7 @@ private fun ChatToolbarIconButton(
             },
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = contentDescription)
+        Icon(icon, contentDescription = contentDescription, tint = iconColor)
     }
 }
 

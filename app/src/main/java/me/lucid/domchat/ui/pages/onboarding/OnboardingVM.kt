@@ -48,7 +48,7 @@ class OnboardingVM(
         return if (presets.any { it.baseUrl.contains("nano-gpt.com") || it.name.equals("NanoGPT", ignoreCase = true) }) {
             presets
         } else {
-            presets + NANO_GPT_PRESET.copy(setupRecommended = true, setupOrder = 3)
+            presets + NANO_GPT_PRESET.copy(setupRecommended = true, setupOrder = 0)
         }
     }
 
