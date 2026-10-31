@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,14 +33,13 @@ fun DomChatMenuButton(
         Color.White.copy(alpha = 0.15f),
     ),
 ) {
-    val iconColor = MaterialTheme.colorScheme.onSurface
     Surface(
         onClick = onClick,
         shape = shape,
         color = containerColor,
         border = border,
         modifier = modifier,
-        contentColor = iconColor.copy(alpha = containerColor.alpha),
+        contentColor = Color.White,
     ) {
         Box(
             modifier = Modifier.size(size),
@@ -50,7 +48,7 @@ fun DomChatMenuButton(
             Icon(
                 imageVector = RoundedMenuIcon,
                 contentDescription = contentDescription,
-                tint = Color.White.copy(alpha = 0.92f),
+                tint = Color.White,
             )
         }
     }

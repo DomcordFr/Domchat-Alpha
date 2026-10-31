@@ -122,7 +122,6 @@ import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Save
-import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Summarize
 import androidx.compose.material.icons.rounded.Terminal
 import androidx.compose.material.icons.rounded.Tune
@@ -221,6 +220,7 @@ import me.lucid.domchat.ui.components.chat.DomChatComposerImageAttachment
 import me.lucid.domchat.ui.components.chat.DomChatComposerInputShape
 import me.lucid.domchat.ui.components.chat.DomChatComposerMediaAttachment
 import me.lucid.domchat.ui.components.chat.DomChatComposerRow
+import me.lucid.domchat.ui.components.chat.RoundedStopIcon
 import me.lucid.domchat.ui.components.chat.DomChatComposerVideoIcon
 import me.lucid.domchat.ui.components.ui.icons.ModeIcons
 import me.lucid.domchat.ui.components.ui.permission.PermissionCamera
@@ -870,7 +870,7 @@ fun MinimalChatInput(
                                 keyboardController?.hide()
                             }
                         },
-                        containerColor = domChatFloatingSurfaceColor(),
+                        containerColor = Color.Transparent,
                         modifier = Modifier
                             .size(AppSize.ChromePill)
                             .liquidGlassSurface(
@@ -881,10 +881,10 @@ fun MinimalChatInput(
                             .domChatBlurEffect(domChatFloatingSurfaceColor(), CircleShape),
                     ) {
                         Icon(
-                            imageVector = if (sttRecording) Icons.Rounded.Stop else Icons.Rounded.Add,
+                            imageVector = if (sttRecording) RoundedStopIcon else Icons.Rounded.Add,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
-                            tint = if (isDarkMode) Color(0xFFF2F2F7) else Color.White.copy(alpha = 0.65f)
+                            tint = Color.White
                         )
                     }
                 }
@@ -1134,7 +1134,6 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFF141520))
                                             .border(
                                                 width = 1.2.dp,
                                                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
@@ -1191,7 +1190,7 @@ fun MinimalChatInput(
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
                                             Icon(
-                                                imageVector = Icons.Rounded.Stop,
+                                                imageVector = RoundedStopIcon,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(18.dp),
                                                 tint = Color(0xFFFF453A),
@@ -1472,7 +1471,7 @@ fun MinimalChatInput(
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
                                             Icon(
-                                                imageVector = Icons.Rounded.Stop,
+                                                imageVector = RoundedStopIcon,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(24.dp),
                                                 tint = Color(0xFFFF453A),

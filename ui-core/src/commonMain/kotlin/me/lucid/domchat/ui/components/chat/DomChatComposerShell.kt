@@ -81,12 +81,17 @@ fun DomChatComposerAddButton(
     Surface(
         shape = CircleShape,
         color = containerColor,
-        border = if (containerColor != Color.Transparent && containerColor.alpha > 0.02f) {
-            BorderStroke(
+        border = when {
+            containerColor == Color.Transparent -> BorderStroke(
+                AppSurface.SoftEdgeWidth,
+                Color.White.copy(alpha = 0.40f),
+            )
+            containerColor.alpha > 0.02f -> BorderStroke(
                 AppSurface.SoftEdgeWidth,
                 Color.White.copy(alpha = 0.15f),
             )
-        } else null,
+            else -> null
+        },
         modifier = modifier,
     ) {
         Box(
@@ -269,10 +274,10 @@ private val RoundedArrowUpwardIcon by lazy {
     )
 }
 
-private val RoundedStopIcon by lazy {
+val RoundedStopIcon by lazy {
     composerIcon(
         "Rounded.Stop",
-        "M8,6h8c1.1,0 2,0.9 2,2v8c0,1.1 -0.9,2 -2,2H8c-1.1,0 -2,-0.9 -2,-2V8c0,-1.1 0.9,-2 2,-2z",
+        "M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z",
     )
 }
 
