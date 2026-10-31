@@ -533,6 +533,12 @@ private fun chatToolbarPopupTransformOrigin(placement: ChatToolbarPlacement): Tr
 private val chatTopToolbarFadeHeight = 96.dp
 private val chatBottomToolbarTopFadeHeight = 36.dp
 
+// Startup: pause after the splash clears so the user can view the wallpaper,
+// then the chrome reveals in staggered groups. Each group keeps its own
+// EntrancePlayed key so back navigation never re-triggers the enter animation.
+private val startupWallpaperPauseMs = 700
+private val startupStaggerStepMs = 120
+
 private fun latestAssistantSpeechMessage(conversation: Conversation): UIMessage? {
     return conversation.messageNodes.asReversed().asSequence()
         .map { it.currentMessage }
@@ -856,7 +862,7 @@ fun ChatPage(
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
     var chatAnimationsEnabled by remember(conversation.id) { mutableStateOf(false) }
     LaunchedEffect(conversation.id) {
-        delay(500)
+        delay(startupWallpaperPauseMs)
         chatAnimationsEnabled = true
     }
     var consumedFocusLatestMessageKey by remember(conversation.id) { mutableStateOf<String?>(null) }
@@ -1471,7 +1477,7 @@ private fun ChatPageContent(
                         // Top chrome drops in from above, position-respectful.
                         StartupChromeReveal(
                             key = "${conversation.id}:topbar",
-                            delayMs = 250,
+                            delayMs = startupWallpaperPauseMs,
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.DOWN,
                         ) {
@@ -1742,7 +1748,7 @@ private fun ChatPageContent(
                             key = "${conversation.id}:tempchat",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = 350,
+                            delayMs = startupWallpaperPauseMs + startupStaggerStepMs,
                             distance = 30.dp,
                         ),
                 ) {
@@ -1799,7 +1805,7 @@ private fun ChatPageContent(
                             key = "${conversation.id}:newchat",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = 300,
+                            delayMs = startupWallpaperPauseMs + startupStaggerStepMs,
                             distance = 30.dp,
                         ),
                 ) {
@@ -1975,7 +1981,7 @@ private fun ChatPageContent(
                                 key = "${conversation.id}:input",
                                 motionPolicy = motionPolicy,
                                 from = EntranceDirection.UP,
-                                delayMs = 400,
+                                delayMs = startupWallpaperPauseMs + (2 * startupStaggerStepMs),
                                 distance = 30.dp,
                             ),
                         showSearch = previewMode,
@@ -2012,7 +2018,7 @@ private fun ChatPageContent(
                             key = "${conversation.id}:input",
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.UP,
-                            delayMs = 400,
+                            delayMs = startupWallpaperPauseMs + (2 * startupStaggerStepMs),
                             distance = 30.dp,
                         ),
                     state = inputState,
