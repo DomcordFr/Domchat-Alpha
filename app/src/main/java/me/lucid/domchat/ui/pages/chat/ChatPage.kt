@@ -119,6 +119,8 @@ import me.lucid.domchat.ui.components.message.ChatMessageActionsSheet
 import me.lucid.domchat.ui.components.message.LocalActiveChatMessageAction
 import androidx.navigation.NavHostController
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -1608,6 +1610,15 @@ private fun ChatPageContent(
                                 CompositionLocalProvider(
                                     me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes provides preexistingNodeIds
                                 ) {
+                                    // Compaction badge: shows when older turns have been summarized into contextSummary
+                                    conversation.contextSummary?.let { summary ->
+                                        if (summary.isNotBlank() && setting.displaySetting.contextBudgetConfig.enableCompaction) {
+                                            CompactionBadge(
+                                                summary = summary,
+                                                summarizedUpToIndex = conversation.contextSummaryUpToIndex,
+                                            )
+                                        }
+                                    }
                                     ChatList(
                                         innerPadding = PaddingValues(
                                             top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
@@ -4303,4 +4314,71 @@ private fun compactTokenCount(tokens: Int): String = when {
     tokens >= 1_000_000 -> "%.1fM".format(tokens / 1_000_000f)
     tokens >= 1_000 -> "%.1fK".format(tokens / 1_000f)
     else -> tokens.toString()
+}
+
+/**
+ * Compaction badge shown above the reasoning badge when older turns have been
+ * summarized into [contextSummary]. Expandable to reveal the summary text.
+ * Never leaks into roleplay — purely a UI affordance.
+ */
+@Composable
+private fun CompactionBadge(
+    summary: String,
+    summarizedUpToIndex: Int,
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val haptics = rememberPremiumHaptics()
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    haptics.perform(HapticPattern.Pop)
+                    isExpanded = !isExpanded
+                },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFF10B981))
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isExpanded) "Compacted — turn $summarizedUpToIndex summarized" else "Compacting…",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color.White.copy(alpha = 0.9f),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        
+        if (isExpanded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp)
+                    .background(Color(0xFF1C1D26))
+                    .clip(RoundedCornerShape(8.dp)),
+            ) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.8f),
+                    lineHeight = 20.sp,
+                )
+            }
+        }
+    }
 }

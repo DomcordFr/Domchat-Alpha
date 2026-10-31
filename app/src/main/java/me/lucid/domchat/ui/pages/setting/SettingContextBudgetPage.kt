@@ -1,5 +1,7 @@
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -92,6 +94,12 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
     var autoPrune by remember(currentConfig.autoPruneOverflow) {
         mutableStateOf(currentConfig.autoPruneOverflow)
     }
+    var enableCompaction by remember(currentConfig.enableCompaction) {
+        mutableStateOf(currentConfig.enableCompaction)
+    }
+    var compactionThreshold by remember(currentConfig.compactionThresholdPercent) {
+        mutableIntStateOf(currentConfig.compactionThresholdPercent)
+    }
 
     val systemPercent = (100 - historyPercent - memoryPercent).coerceAtLeast(10)
     val availableInputTokens = (maxContextTokens - maxResponseTokens).coerceAtLeast(1024)
@@ -104,7 +112,9 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
         newMaxResponse: Int = maxResponseTokens,
         newHistoryPercent: Int = historyPercent,
         newMemoryPercent: Int = memoryPercent,
-        newAutoPrune: Boolean = autoPrune
+        newAutoPrune: Boolean = autoPrune,
+        newEnableCompaction: Boolean = enableCompaction,
+        newCompactionThreshold: Int = compactionThreshold,
     ) {
         val newSystem = (100 - newHistoryPercent - newMemoryPercent).coerceAtLeast(10)
         val config = ContextBudgetConfig(
@@ -113,7 +123,9 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
             chatHistoryBudgetPercent = newHistoryPercent,
             memoryLorebookBudgetPercent = newMemoryPercent,
             characterSystemBudgetPercent = newSystem,
-            autoPruneOverflow = newAutoPrune
+            autoPruneOverflow = newAutoPrune,
+            enableCompaction = newEnableCompaction,
+            compactionThresholdPercent = newCompactionThreshold,
         )
         vm.updateSettings(
             settings.copy(
@@ -552,6 +564,92 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     persist(newAutoPrune = it)
                                 }
                             )
+                        }
+                    }
+                }
+            }
+
+            // Context Compaction Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Context Compaction",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            text = "Summarize older conversation turns into a rolling context summary when approaching the threshold, freeing room for new messages.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Enable Compaction",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                                )
+                                Text(
+                                    text = "Older turns are condensed into a summary that stays in context",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.65f)
+                                )
+                            }
+                            HapticSwitch(
+                                checked = enableCompaction,
+                                onCheckedChange = {
+                                    enableCompaction = it
+                                    persist(newEnableCompaction = it)
+                                }
+                            )
+                        }
+
+                        AnimatedVisibility(
+                            visible = enableCompaction,
+                            enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f)) +
+                                    androidx.compose.animation.slideInVertically(
+                                        animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f)
+                                    ) { -it },
+                            exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f)) +
+                                   androidx.compose.animation.slideOutVertically(
+                                       animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f)
+                                   ) { -it },
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Compaction Threshold", style = MaterialTheme.typography.bodyMedium)
+                                    Text("$compactionThreshold%", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                                }
+                                DomChatSlider(
+                                    value = compactionThreshold.toFloat(),
+                                    onValueChange = {
+                                        compactionThreshold = it.roundToInt().coerceIn(50, 95)
+                                    },
+                                    onValueChangeFinished = {
+                                        haptics.perform(HapticPattern.Tick)
+                                        persist(newCompactionThreshold = compactionThreshold)
+                                    },
+                                    valueRange = 50f..95f,
+                                    steps = 45,
+                                )
+                            }
                         }
                     }
                 }

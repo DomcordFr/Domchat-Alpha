@@ -15,6 +15,8 @@ data class ContextBudgetConfig(
     val chatHistoryBudgetPercent: Int = 60, // % allocated to recent chat message history
     val memoryLorebookBudgetPercent: Int = 15, // % allocated to lorebooks, memories, and RAG
     val autoPruneOverflow: Boolean = true, // Whether to dynamically prune oldest history turns on overflow
+    val enableCompaction: Boolean = false, // Whether to summarize older turns into a context summary when approaching the threshold
+    val compactionThresholdPercent: Int = 80, // % of context window at which compaction triggers
 ) {
     /**
      * Effective tokens available for input context (total context minus response reservation)
