@@ -956,7 +956,7 @@ fun CharacterHubErrorCard(
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = error.message.takeIf { it.isNotBlank() } ?: error.toString(),
+                text = error.message?.takeIf { it.isNotBlank() } ?: error.toString(),
                 fontSize = 10.sp,
                 color = Color(0xFFEF4444).copy(alpha = 0.7f),
                 maxLines = 2,

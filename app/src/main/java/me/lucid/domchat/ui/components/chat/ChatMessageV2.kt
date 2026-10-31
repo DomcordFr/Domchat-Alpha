@@ -1434,7 +1434,7 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
-                    val userEntranceTarget by remember { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
+                    var userEntranceTarget by remember { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
                     val userEntrance by animateFloatAsState(
                         targetValue = userEntranceTarget,
                         animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
