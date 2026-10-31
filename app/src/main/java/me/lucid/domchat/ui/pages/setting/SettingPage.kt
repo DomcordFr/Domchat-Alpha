@@ -112,6 +112,14 @@ fun SettingPage(
                 keywords = listOf("user", "persona", "profile", "identity", "avatar", "pronouns")
             ),
             SettingNavItem(
+                title = "JanitorAI Hub",
+                subtitle = "Browse trending characters, search, and import into your character hub",
+                category = "Roleplay & Characters",
+                icon = Icons.Rounded.AutoStories,
+                target = Screen.SettingJanitor,
+                keywords = listOf("janitor", "character", "bot", "card", "hub", "trending", "search", "import")
+            ),
+            SettingNavItem(
                 title = "Character Hub",
                 subtitle = "Browse, import, and manage roleplay character cards",
                 category = "Roleplay & Characters",

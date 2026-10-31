@@ -1014,8 +1014,7 @@ fun CharacterHubErrorCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CharacterInspectorSheet(
     assistant: Assistant,

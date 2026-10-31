@@ -103,6 +103,7 @@ import me.lucid.domchat.ui.pages.setting.SettingPromptInjectionsPage
 import me.lucid.domchat.ui.pages.setting.SettingPresetsPage
 import me.lucid.domchat.ui.pages.setting.SettingLorebooksPage
 import me.lucid.domchat.ui.pages.setting.SettingLorebookDetailPage
+import me.lucid.domchat.ui.pages.setting.SettingJanitorPage
 import me.lucid.domchat.ui.pages.setting.SettingSkillsPage
 import me.lucid.domchat.ui.pages.share.handler.ShareHandlerPage
 import me.lucid.domchat.ui.pages.webview.WebViewPage
@@ -1340,6 +1341,10 @@ class RouteActivity : ComponentActivity() {
                         }
                     }
 
+                    composable<Screen.SettingJanitor> {
+                        SettingJanitorPage()
+                    }
+
                     composable<Screen.Developer> {
                         DeveloperPage()
                     }
@@ -1506,6 +1511,9 @@ sealed interface Screen {
 
     @Serializable
     data class SettingSkills(val scrollToSkillId: String? = null) : Screen
+
+    @Serializable
+    data object SettingJanitor : Screen
 
     @Serializable
     data object SettingAndroidIntegration : Screen

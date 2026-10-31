@@ -857,7 +857,7 @@ fun MinimalChatInput(
                             }
                         },
                         containerColor = Color.Transparent,
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .size(AppSize.ChromePill)
                             .liquidGlassSurface(

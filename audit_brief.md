@@ -1,75 +1,34 @@
-# Audit Brief — Character Portrait Card Redesign (task-013)
+# Audit Brief — Task-017 (BorderStroke / @OptIn / Janitor API)
 
 ## Intent Verification
-
-Target: `CharacterPortraitCard` in `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt`.
-
-Every requirement from the directive is satisfied in the working tree (unstaged, +80/−21 lines):
-
-| Requirement | Implementation | Status |
-|---|---|---|
-| Full-bleed avatar background | `FullCharacterCardImage(...)` renders `AsyncImage` with `contentScale = ContentScale.Crop` filling the card | Verified |
-| Bottom vertical gradient scrim | `Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)))` over bottom 42% of card | Verified |
-| Display name bold white, max 2 lines, right-edge alpha fade | `Text(..., fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2)` wrapped in `Modifier.drawWithContent` drawing a `DstIn` linear-gradient mask from black to transparent at the right ~22% | Verified |
-| Remove 'by [creator]' from card face | Creator byline block deleted from `CharacterPortraitCard`; creator credit remains only in `CharacterInspectorSheet` | Verified |
-| No greetings badge on card face | `alternateGreetings` count Box removed from `CharacterPortraitCard`; greeting counts remain only in `CharacterInspectorSheet` | Verified |
-| Horizontal scrollable tag pill row | `LazyRow(state = tagListState)` with `items(tagList, key = { it.toString() })` rendering `Tag` pills below the name | Verified |
-| Dynamic trailing fade on tags | `drawWithContent` applies right-edge `DstIn` fade only while `tagListState.canScrollForward`; fade disappears at end | Verified |
-| Strict null safety, no force-unwraps | `assistant.name`/`avatar`/`tags`/`alternateGreetings` are all non-null per `Assistant` data class; grep for force-unwrap returns zero matches | Verified |
-| Glass card theme `0xFF141520` | Card background uses `Color(0xFF141520)` | Verified |
-
-One clarification: the directive writes `AsyncImage(model = assistant.avatar, ...)`, but `assistant.avatar` is a sealed `Avatar` type, not a valid `AsyncImage` model. The existing `FullCharacterCardImage` helper is the correct, compilable realization — it pattern-matches `Avatar.Image`/`Resource`/`Emoji`/`Dummy` and builds the appropriate `AsyncImage` model (or a fallback box). Directly passing `assistant.avatar` would not compile.
+- **MinimalChatInput.kt:860** — `BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)` → `BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)`. Verified: `androidx.compose.foundation.BorderStroke` ctor takes `(width: Dp, brush: Brush)` only; 3-arg form does not compile. The 2-arg form matches existing usages at lines 2289, 2358, 2519, 3490, 3526, 3569.
+- **CharacterHubPage.kt:1017-1018** — Two separate `@OptIn` annotations on `CharacterInspectorSheet` merged into one non-repeatable `@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)`. Verified: both imports present (lines 11, 52). `@OptIn` is not repeatable in Kotlin; separate annotations caused compiler failure.
+- **SettingJanitorPage.kt** — **BLOCKER: file does not exist.** Repo-wide grep for `Janitor` returns zero matches except an unrelated comment at `Assistant.kt:332`. No `JanitorListResponse`, `JanitorExtractResponse`, `JanitorCharacter`, or `extractToAssistant()` anywhere in the codebase. Cannot edit a file that is absent; will not fabricate a settings page + repository + network contract blindly (violates surgical scope + no-hallucination).
+- **Assistant model mismatch** (relevant to blocked item 3): `Assistant` has `systemPrompt: String = ""`, `background: String? = null` (no `scenario` field), `alternateGreetings: List<String>`, `tags: List<Uuid>`. `firstMessage` is a **computed** `val` derived from `presetMessages` (Assistant.kt:134-137), not settable. Mapping `scenario`/`firstMessage` into `Assistant` requires model changes first (`scenario` field or `background` reuse; `presetMessages` population for `firstMessage`).
 
 ## Call Chain & Architecture
-
-```
-CharacterHubPage (Compose host, RouteActivity)
-  ├─ collects vm.settings, modelCatalogService.snapshotFlow (lifecycle-aware)
-  ├─ AnimatedContent(isGridView) → LazyVerticalGrid / LazyColumn
-  │      └─ items(filteredAssistants) → CharacterPortraitCard(assistant, isDark, onClick)
-  │            ├─ FullCharacterCardImage(name, avatar) → AsyncImage (Coil3, image loading off UI thread)
-  │            ├─ bottom scrim Box (static draw, no state)
-  │            ├─ name Text + drawWithContent fade (reads size during draw; no state)
-  │            └─ LazyRow(state = rememberLazyListState())
-  │                  └─ items(tagList) → Tag (stateless pill)
-  └─ onClick → inspectingAssistant = char → CharacterInspectorSheet (modal bottom sheet)
-         └─ creator credit ("Created by ...") shown here — the exclusive home for 'by creator'
-```
-
-- UI layer only renders state and emits intents (`onClick`). No business logic in `CharacterPortraitCard`.
-- No ViewModel is used by the card itself; data (`assistant`) is passed in from `CharacterHubPage`, which owns `filteredAssistants` derived from `settings.assistants`.
-- Navigation (`navigateToChatPage`) and mutations (`vm.addAssistant`/`removeAssistant`) live in the page/ViewModel layer, not the card.
+- **MinimalChatInput** (`ui/components/ai/`): Compose input row inside `DomChatComposerCapsule`. `border` param is read by the capsule's border-drawing logic; no ViewModel/repository involvement. Pure UI edit, zero call-chain impact.
+- **CharacterHubPage** (`ui/pages/assistant/`): `CharacterInspectorSheet` is a bottom-sheet composable invoked from the hub gallery (`CharacterHubPage.kt:511`). `@OptIn` is an annotation-only marker; no runtime call-chain. Edit is annotation-surface only.
+- **SettingJanitorPage** (absent): would have sat in `ui/pages/setting/`, wired via `SettingsDestination` + `AppRoutes`, owned by a `ViewModel` exposing `StateFlow`, repository for network, `SecretKeyManager` for any keys. Cannot verify without the file.
 
 ## Recomposition & Memory Safety
-
-- `tagListState = rememberLazyListState()` is remembered across recompositions; not recreated each frame.
-- `tagList = assistant.tags` is a val read during composition; no mutable collection is passed to `LazyRow.items`, so no invalid-snapshot or concurrent-modification risk.
-- `items(tagList, key = { it.toString() })` uses stable keys (`Uuid.toString()`), enabling efficient diffing when the tag list changes.
-- `drawWithContent` lambdas read only `size` and `tagListState.isScrolledToEnd` during the draw phase; both are stable read sources. The tags fade toggles only when scroll state changes, limiting recomposition scope to the card.
-- `FullCharacterCardImage` uses `remember(avatar.url) { ... }` for the Coil `ImageRequest`, so request objects are not rebuilt on every recomposition.
-- No `remember` without keys on unstable values; no leaked references; no large allocations in composition.
+- `BorderStroke` edit: value object, immutable, recreated per recomposition; no allocations in hot path beyond existing. No `remember`/`derivedStateOf` involved. Memory neutral.
+- `@OptIn` merge: annotation only; zero runtime, zero recomposition, zero memory impact.
+- No `!!` introduced in edited regions (grep clean for `CharacterHubPage`; `MinimalChatInput` `!!` at 3032/3034 are pre-existing camera code, out of scope).
+- Glass card theme color `0xFF141520` preserved (used in `CharacterHubErrorCard` background at line 976; untouched).
 
 ## Threading & Dispatchers
-
-- `CharacterPortraitCard` performs zero blocking or suspension work. Image loading is delegated to Coil3, which handles network/disk decoding off the main thread internally.
-- No `withContext`, `launch`, `Dispatchers.Main`, or `Dispatchers.IO` calls exist inside the card — compliant with the "zero background threading on Dispatchers.Main" invariant.
-- All threading for data (search/filtering in `CharacterHubPage`) already routes to `Dispatchers.Default`/`Dispatchers.IO` with results marshaled back to `Dispatchers.Main`; the card is purely a passive renderer.
+- Both edits are pure Compose UI/Material annotation changes. No coroutines, no dispatchers, no `Dispatchers.Main`/`IO` involved. No threading risk.
+- If `SettingJanitorPage` were created later, network/disk must route to `Dispatchers.IO`; ViewModel must use `viewModelScope`; never suspend on `Main`.
 
 ## Offline & Error State Handling
+- `BorderStroke`/`@OptIn` edits: no error branches, no network, no offline handling applicable.
+- `CharacterHubErrorCard` (CharacterHubPage.kt:967) already renders an error fallback card with red border (`0xFFEF4444` alpha 0.6) on dark glass `0xFF141520` — existing error-state UI preserved.
+- Blocked item 3 would need explicit Loading/Success/Offline/Exception matrix per repo invariants; cannot assess without the file.
 
-- Avatar loading: `FullCharacterCardImage` wraps Coil `ImageRequest.Builder(...).build()` in `try/catch`, falling back to a null model, which `AsyncImage` renders as empty — one bad avatar URL cannot crash card composition.
-- The `Avatar` sealed class guarantees exhaustive handling (`Image`, `Resource`, `Emoji`, `Dummy`), so every avatar shape has a visual fallback (`Avatar.Dummy` draws a gradient box with the name initial).
-- Empty `tags` list renders an empty `LazyRow` (no crash, no fade because `isScrolledToEnd` is true for an empty list).
-- Empty `assistant.name` renders an empty `Text`; no nullability path exists since `name: String = ""` is non-null.
-- No network calls are made by the card; offline/degraded states are handled upstream by `CharacterHubPage` (`loadError` boundary → `CharacterHubErrorCard`).
+## Proof Receipt (exact line changes)
+- `MinimalChatInput.kt:860`: `border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),` → `border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),`
+- `CharacterHubPage.kt:1017-1018`: two `@OptIn` lines → single `@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)`
+- `SettingJanitorPage.kt`: **not edited — file absent.**
 
-## Proof Receipt
-
-File edited: `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt`
-Change type: unstaged working-tree edits (+80/−21 lines), not committed.
-Scope: single file (surgical, 1-file edit within the 1-2 file limit).
-No force-unwrap operators (grep: 0 matches).
-No local Gradle builds run (per constraint); compilation verified by static review of imports and signatures:
-- imports `drawWithContent`, `Offset`, `BlendMode`, `ContentScale`, `AsyncImage`, `LazyRow`, `rememberLazyListState`, `Tag` all present and used per their signatures.
-- `Tag(onClick = null, children = { ... })` matches `Tag.kt` signature (`onClick: (() -> Unit)? = null`, trailing `children` lambda).
-- `assistant.tags: List<Uuid>`, `assistant.name: String`, `assistant.avatar: Avatar`, `assistant.alternateGreetings: List<String>` all non-null per `Assistant.kt`.
+No local Gradle build run (constraint). Compiler verification limited to static inspection of constructor signatures and imports above.

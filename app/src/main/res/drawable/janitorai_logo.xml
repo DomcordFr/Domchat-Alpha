@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- JanitorAI Hub logo: white SVG glyph for the settings top app bar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Robot head outline -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M32,8 C24,8 17,14 17,22 L17,42 C17,48 22,52 28,52 L36,52 C42,52 47,48 47,42 L47,22 C47,14 40,8 32,8 Z" />
+    <!-- Face visor / screen -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,26 L42,26 L42,34 L22,34 Z" />
+    <!-- Antenna -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M32,8 L32,4 L34,4 L34,8 Z" />
+    <!-- Antenna base dot -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M31,4 A1,1 0 1,1 33,4 A1,1 0 1,1 31,4 Z" />
+    <!-- Side detail lines -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20,30 L26,30 L26,32 L20,32 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38,30 L44,30 L44,32 L38,32 Z" />
+</vector>
