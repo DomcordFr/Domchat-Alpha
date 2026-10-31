@@ -70,7 +70,7 @@ import me.lucid.domchat.utils.JsonInstant
 import org.koin.androidx.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 
-private const val JANITOR_BASE_URL = "http://127.0.0.1:8899"
+private const val JANITOR_BASE_URL = "https://yuki.domcord.org"
 private const val ELLA_CDN_BASE = "https://ella.janitorai.com/bot-avatars/"
 
 @Serializable
