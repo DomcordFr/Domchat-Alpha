@@ -20,11 +20,6 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.AppSurface
 
-import me.lucid.domchat.ui.theme.AppShapes
-import me.lucid.domchat.ui.theme.AppSize
-import me.lucid.domchat.ui.theme.AppSurface
-import me.lucid.domchat.ui.theme.LocalDarkMode
-
 /** The production chat-toolbar drawer button shared by Android and iOS. */
 @Composable
 fun DomChatMenuButton(
@@ -39,8 +34,7 @@ fun DomChatMenuButton(
         Color.White.copy(alpha = 0.15f),
     ),
 ) {
-    val isDark = LocalDarkMode.current
-    val iconColor = if (isDark) Color.White else Color.Black
+    val iconColor = MaterialTheme.colorScheme.onSurface
     Surface(
         onClick = onClick,
         shape = shape,

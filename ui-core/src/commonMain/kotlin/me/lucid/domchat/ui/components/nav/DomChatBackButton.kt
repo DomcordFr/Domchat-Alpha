@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
-import me.lucid.domchat.ui.theme.LocalDarkMode
 
 /** The production DomChat top-app-bar back control shared by Android and iOS. */
 @Composable
@@ -34,8 +33,7 @@ fun DomChatBackButton(
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
         label = "back_button_scale",
     )
-    val isDark = LocalDarkMode.current
-    val iconColor = if (isDark) Color.White else Color.Black
+    val iconColor = MaterialTheme.colorScheme.onSurface
 
     IconButton(
         onClick = {
