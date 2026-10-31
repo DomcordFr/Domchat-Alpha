@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.lucid.common.platform.PlatformLog
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS
@@ -45,10 +46,14 @@ class AssistantVM(
 
     fun updateAssistant(assistant: Assistant) {
         viewModelScope.launch {
-            settingsStore.update { current ->
-                current.copy(
-                    assistants = current.assistants.map { if (it.id == assistant.id) assistant else it }
-                )
+            try {
+                settingsStore.update { current ->
+                    current.copy(
+                        assistants = current.assistants.map { if (it.id == assistant.id) assistant else it }
+                    )
+                }
+            } catch (e: Exception) {
+                me.lucid.domchat.AppScope.log(e)
             }
         }
     }
@@ -88,11 +93,15 @@ class AssistantVM(
                 seededAssistant
             }
             val deduplicatedList = settings.assistants.plus(uniqueAssistant).distinctBy { it.id }
-            settingsStore.update(
-                settings.copy(
-                    assistants = deduplicatedList
+            try {
+                settingsStore.update(
+                    settings.copy(
+                        assistants = deduplicatedList
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                me.lucid.domchat.AppScope.log(e)
+            }
         }
     }
 
@@ -115,23 +124,34 @@ class AssistantVM(
 
         viewModelScope.launch {
             // Optimistic update: Remove from settings immediately
-            settingsStore.update { settings ->
-                settings.copy(
-                    assistants = settings.assistants.filter { it.id != assistant.id }
-                )
+            try {
+                settingsStore.update { settings ->
+                    settings.copy(
+                        assistants = settings.assistants.filter { it.id != assistant.id }
+                    )
+                }
+            } catch (e: Exception) {
+                me.lucid.domchat.AppScope.log(e)
             }
         }
 
-        // Start delayed deletion of data — same window as the undo toast.
+        // Start delayed deletion of data — same window as the undo tombstone window.
         val job = appScope.launch {
-            kotlinx.coroutines.delay(DESTRUCTIVE_UNDO_WINDOW_MS)
-            val conversations = conversationRepo.getConversationsOfAssistant(assistant.id).first()
-            conversations.forEach { conversation ->
-                chatService.tombstoneConversation(conversation.id)
+            try {
+                kotlinx.coroutines.delay(DESTRUCTIVE_UNDO_WINDOW_MS)
+                val conversations = conversationRepo.getConversationsOfAssistant(assistant.id).first()
+                conversations.forEach { conversation ->
+                    chatService.tombstoneConversation(conversation.id)
+                }
+                memoryRepository.deleteMemoriesOfAssistant(assistant.id.toString())
+                conversationRepo.deleteConversationOfAssistant(assistant.id)
+                appStorageRepository.deleteFilesIfUnreferenced(assistant.collectMediaFileRefs())
+            } catch (e: Exception) {
+                // Room/query failure during deferred deletion must not crash the host process;
+                // the assistant remains removed from settings (optimistic update above) and can be
+                // retried via undo or a subsequent hub open.
+                PlatformLog.e("AssistantVM", "Deferred deletion failed for ${assistant.id}: ${e.message ?: e.toString()}")
             }
-            memoryRepository.deleteMemoriesOfAssistant(assistant.id.toString())
-            conversationRepo.deleteConversationOfAssistant(assistant.id)
-            appStorageRepository.deleteFilesIfUnreferenced(assistant.collectMediaFileRefs())
             deletionJobs.remove(assistant.id)
         }
         deletionJobs[assistant.id] = job
@@ -143,14 +163,18 @@ class AssistantVM(
 
         viewModelScope.launch {
             // Restore to settings
-            settingsStore.update { settings ->
-                if (settings.assistants.none { it.id == assistant.id }) {
-                    settings.copy(
-                        assistants = settings.assistants.plus(assistant)
-                    )
-                } else {
-                    settings
+            try {
+                settingsStore.update { settings ->
+                    if (settings.assistants.none { it.id == assistant.id }) {
+                        settings.copy(
+                            assistants = settings.assistants.plus(assistant)
+                        )
+                    } else {
+                        settings
+                    }
                 }
+            } catch (e: Exception) {
+                me.lucid.domchat.AppScope.log(e)
             }
         }
         return true
@@ -164,11 +188,15 @@ class AssistantVM(
                 name = "${assistant.name} (Clone)",
                 avatar = if(assistant.avatar is Avatar.Image) Avatar.Dummy else assistant.avatar,
             )
-            settingsStore.update(
-                settings.copy(
-                    assistants = settings.assistants.plus(copiedAssistant)
+            try {
+                settingsStore.update(
+                    settings.copy(
+                        assistants = settings.assistants.plus(copiedAssistant)
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                me.lucid.domchat.AppScope.log(e)
+            }
         }
     }
 

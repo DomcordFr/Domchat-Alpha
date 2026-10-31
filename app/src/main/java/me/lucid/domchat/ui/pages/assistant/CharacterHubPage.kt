@@ -97,6 +97,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Share
@@ -115,6 +116,7 @@ import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
+import me.lucid.domchat.ui.components.ui.AppToasterState
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
@@ -163,10 +165,16 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val toaster = LocalToaster.current
+    // Defensive: LocalToaster throws "Not provided" when composed outside a provider.
+    val toaster: AppToasterState? = try {
+        LocalToaster.current
+    } catch (_: Exception) {
+        null
+    }
 
     var pendingExportJson by remember { mutableStateOf("") }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var loadError by remember { mutableStateOf<Throwable?>(null) }
 
     // Export file launcher (JSON)
     val exportJsonLauncher = rememberLauncherForActivityResult(
@@ -178,9 +186,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     context.contentResolver.openOutputStream(uri)?.use { 
                         it.write(pendingExportJson.toByteArray())
                     }
-                    toaster.show("Character Card exported successfully")
+                    toaster?.show("Character Card exported successfully")
                 } catch (e: Exception) {
-                    toaster.show("Export failed: ${e.message}", ToastType.Error)
+                    toaster?.show("Export failed: ${e.message}", ToastType.Error)
                 }
                 pendingExportJson = ""
             }
@@ -191,17 +199,22 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     val exportPngLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("image/png")
     ) { uri ->
-        if (uri != null && pendingExportBytes != null) {
-            scope.launch {
-                try {
-                    context.contentResolver.openOutputStream(uri)?.use { 
-                        it.write(pendingExportBytes!!)
+        if (uri != null) {
+            val bytes = pendingExportBytes
+            if (bytes == null) {
+                toaster?.show("Export failed: no image data", ToastType.Error)
+            } else {
+                scope.launch {
+                    try {
+                        context.contentResolver.openOutputStream(uri)?.use { 
+                            it.write(bytes)
+                        }
+                        toaster?.show("SillyTavern PNG Card exported successfully")
+                    } catch (e: Exception) {
+                        toaster?.show("Export failed: ${e.message}", ToastType.Error)
                     }
-                    toaster.show("SillyTavern PNG Card exported successfully")
-                } catch (e: Exception) {
-                    toaster.show("Export failed: ${e.message}", ToastType.Error)
+                    pendingExportBytes = null
                 }
-                pendingExportBytes = null
             }
         }
     }
@@ -219,7 +232,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     when (result) {
                         is AssistantExportImport.ImportResult.Success -> {
                             vm.addAssistant(result.assistant)
-                            toaster.show("Imported ${result.assistant.name}")
+                            toaster?.show("Imported ${result.assistant.name}")
                         }
                         is AssistantExportImport.ImportResult.Configurable -> {
                             val finalAssistant = result.exportV1?.let {
@@ -231,14 +244,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 )
                             } ?: result.assistant
                             vm.addAssistant(finalAssistant)
-                            toaster.show("Imported ${finalAssistant.name}")
+                            toaster?.show("Imported ${finalAssistant.name}")
                         }
                         is AssistantExportImport.ImportResult.Error -> {
-                            toaster.show(result.message, ToastType.Error)
+                            toaster?.show(result.message, ToastType.Error)
                         }
                     }
                 } catch (e: Exception) {
-                    toaster.show("Import failed: ${e.message}", ToastType.Error)
+                    toaster?.show("Import failed: ${e.message}", ToastType.Error)
                 }
             }
         }
@@ -259,23 +272,31 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     // Fast indexed background search: searches name, creator without scanning multi-KB prompt blobs
     LaunchedEffect(settings.assistants, debouncedQuery, sortOption) {
-        withContext(Dispatchers.Default) {
-            val base = if (debouncedQuery.isEmpty()) {
-                settings.assistants
-            } else {
-                settings.assistants.filter { char ->
-                    char.name.lowercase().contains(debouncedQuery) ||
-                    (char.creator?.lowercase()?.contains(debouncedQuery) == true)
+        try {
+            withContext(Dispatchers.Default) {
+                val base = if (debouncedQuery.isEmpty()) {
+                    settings.assistants
+                } else {
+                    settings.assistants.filter { char ->
+                        char.name.lowercase().contains(debouncedQuery) ||
+                            (char.creator?.lowercase()?.contains(debouncedQuery) == true)
+                    }
+                }
+                val sorted = when (sortOption) {
+                    CharacterSortOption.NAME -> base.sortedBy { it.name.lowercase() }
+                    CharacterSortOption.CREATOR -> base.sortedBy { it.creator?.lowercase() ?: "" }
+                    CharacterSortOption.RECENT -> base
+                }
+                val distinctSorted = sorted.distinctBy { it.id }
+                withContext(Dispatchers.Main) {
+                    loadError = null
+                    filteredAssistants = distinctSorted
                 }
             }
-            val sorted = when (sortOption) {
-                CharacterSortOption.NAME -> base.sortedBy { it.name.lowercase() }
-                CharacterSortOption.CREATOR -> base.sortedBy { it.creator?.lowercase() ?: "" }
-                CharacterSortOption.RECENT -> base
-            }
-            val distinctSorted = sorted.distinctBy { it.id }
+        } catch (e: Exception) {
             withContext(Dispatchers.Main) {
-                filteredAssistants = distinctSorted
+                loadError = e
+                filteredAssistants = emptyList()
             }
         }
     }
@@ -426,6 +447,20 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            // Load error boundary: surface Room/flow mapping failures without crashing the hub.
+            loadError?.let { error ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    CharacterHubErrorCard(
+                        assistant = Assistant(name = "Character Hub"),
+                        error = error
+                    )
+                }
+            }
+
             // Character Gallery Content
             AnimatedContent(
                 targetState = isGridView,
@@ -442,11 +477,15 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(filteredAssistants, key = { it.id.toString() }) { char ->
-                            CharacterPortraitCard(
-                                assistant = char,
-                                isDark = isDark,
-                                onClick = { inspectingAssistant = char }
-                            )
+                            try {
+                                CharacterPortraitCard(
+                                    assistant = char,
+                                    isDark = isDark,
+                                    onClick = { inspectingAssistant = char }
+                                )
+                            } catch (e: Exception) {
+                                CharacterHubErrorCard(assistant = char, error = e)
+                            }
                         }
                     }
                 } else {
@@ -457,11 +496,15 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(filteredAssistants, key = { it.id.toString() }) { char ->
-                            CharacterListRow(
-                                assistant = char,
-                                isDark = isDark,
-                                onClick = { inspectingAssistant = char }
-                            )
+                            try {
+                                CharacterListRow(
+                                    assistant = char,
+                                    isDark = isDark,
+                                    onClick = { inspectingAssistant = char }
+                                )
+                            } catch (e: Exception) {
+                                CharacterHubErrorCard(assistant = char, error = e)
+                            }
                         }
                     }
                 }
@@ -485,11 +528,23 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             onStartChat = {
                 inspectingAssistant = null
                 scope.launch {
-                    vm.updateSettings(settings.copy(assistantId = char.id))
-                    val conversation = withContext(Dispatchers.IO) {
-                        vm.createConversation(char.id)
+                    try {
+                        vm.updateSettings(settings.copy(assistantId = char.id))
+                        val conversation = withContext(Dispatchers.IO) {
+                            vm.createConversation(char.id)
+                        }
+                        withContext(Dispatchers.Main) {
+                            navigateToChatPage(navController, conversation.id)
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            loadError = e
+                            toaster.show(
+                                "Failed to start chat: ${e.message.takeIf { it.isNotBlank() } ?: e.toString()}",
+                                ToastType.Error
+                            )
+                        }
                     }
-                    navigateToChatPage(navController, conversation.id)
                 }
             },
             onEdit = {
@@ -506,7 +561,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 )
                 vm.addAssistant(cloned)
                 inspectingAssistant = null
-                toaster.show("Cloned ${char.name}")
+                toaster?.show("Cloned ${char.name}")
             },
             onExport = {
                 showExportDialogFor = char
@@ -549,7 +604,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             inspectingAssistant = null
                         }
                         vm.removeAssistant(toDelete)
-                        toaster.show(
+                        toaster?.show(
                             message = "Deleted ${toDelete.name}",
                             action = me.lucid.domchat.ui.components.ui.ToastAction(
                                 label = "Undo",
@@ -597,7 +652,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     pendingExportBytes = bytes
                                     exportPngLauncher.launch("${target.name.replace(" ", "_")}.png")
                                 } else {
-                                    toaster.show("Failed to create PNG card with avatar", ToastType.Error)
+                                    toaster?.show("Failed to create PNG card with avatar", ToastType.Error)
                                 }
                             }
                         },
@@ -727,7 +782,7 @@ fun CharacterPortraitCard(
             .fillMaxWidth()
             .aspectRatio(0.68f)
             .clip(RoundedCornerShape(18.dp))
-            .background(if (isDark) Color(0xFF0C0C0E) else Color(0xFF1A1A1E))
+            .background(Color(0xFF141520))
             .border(
                 0.5.dp,
                 if (isDark) LiquidGlassTokens.SpecularBorderSubtle
@@ -811,7 +866,7 @@ fun CharacterListRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isDark) Color(0xFF0C0C0E) else Color.White)
+            .background(Color(0xFF141520))
             .border(
                 width = 0.5.dp,
                 brush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else SolidColor(Color(0xFFE5E5E5)),
@@ -859,6 +914,61 @@ fun CharacterListRow(
                 text = "$introsCount greeting${if (introsCount > 1) "s" else ""}",
                 fontSize = 11.sp,
                 color = Color(0xFF8A8A96)
+            )
+        }
+    }
+}
+
+/**
+ * Crash-proof fallback card rendered when a single character fails to compose.
+ * Isolates per-card failures so one bad assistant never takes down the whole hub gallery.
+ */
+@Composable
+fun CharacterHubErrorCard(
+    assistant: Assistant,
+    error: Throwable
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(0.68f)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFF141520))
+            .border(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.6f), RoundedCornerShape(18.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Rounded.Error,
+                contentDescription = null,
+                tint = Color(0xFFEF4444).copy(alpha = 0.8f),
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = assistant.name.takeIf { it.isNotBlank() } ?: "Character",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Failed to load card",
+                fontSize = 10.sp,
+                color = Color(0xFF8A8A96),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = error.message.takeIf { it.isNotBlank() } ?: error.toString(),
+                fontSize = 10.sp,
+                color = Color(0xFFEF4444).copy(alpha = 0.7f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
             )
         }
     }
