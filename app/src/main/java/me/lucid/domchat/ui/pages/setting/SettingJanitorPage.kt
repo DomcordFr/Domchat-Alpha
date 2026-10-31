@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -54,12 +55,15 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
 import coil3.compose.AsyncImage
 import kotlin.text.Charsets
@@ -100,6 +104,7 @@ data class JanitorCharacter(
     @SerialName("creator_name") val creatorName: String? = null,
     @SerialName("bio") val bio: String? = null,
     @SerialName("description") val description: String? = null,
+    @SerialName("character_version") val characterVersion: String? = null,
     @SerialName("tags") val tags: List<String> = emptyList(),
     @SerialName("avatar") val avatarHash: String? = null,
     @SerialName("avatar_hash") val avatarHash2: String? = null,
@@ -121,6 +126,7 @@ data class JanitorExtractResponse(
     @SerialName("creator_name") val creatorName: String? = null,
     @SerialName("bio") val bio: String? = null,
     @SerialName("description") val description: String? = null,
+    @SerialName("character_version") val characterVersion: String? = null,
     @SerialName("tags") val tags: List<String> = emptyList(),
     @SerialName("systemPrompt") val systemPrompt: String? = null,
     @SerialName("alternateGreetings") val alternateGreetings: List<String> = emptyList(),
