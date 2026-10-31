@@ -272,6 +272,11 @@ data class DisplaySetting(
     val streamingFadeDurationMs: Int = 450,
     val streamingFadeStartAlpha: Float = 0.0f,
     val streamingContinuousFlow: Boolean = true,
+    // Particle text reveal style: 0=off, 1=glass (fade+sink), 2=fireflies, 3=swarm
+    val streamingParticleStyle: Int = 2,
+    val streamingParticleDurationMs: Int = 600,
+    // Experimental: swarm particle reveal for chrome on chat open (instead of slide-in)
+    val startupParticleEntrance: Boolean = false,
     // User Persona Management
     val personas: List<UserPersona> = emptyList(),
     val activePersonaId: String? = null,
@@ -641,6 +646,8 @@ fun Settings.getEffectiveDisplaySetting(assistant: Assistant? = null): DisplaySe
         streamingFadeDurationMs = ui.streamingFadeDurationMs ?: displaySetting.streamingFadeDurationMs,
         streamingFadeStartAlpha = ui.streamingFadeStartAlpha ?: displaySetting.streamingFadeStartAlpha,
         streamingContinuousFlow = ui.streamingContinuousFlow ?: displaySetting.streamingContinuousFlow,
+        streamingParticleStyle = ui.streamingParticleStyle ?: displaySetting.streamingParticleStyle,
+        streamingParticleDurationMs = ui.streamingParticleDurationMs ?: displaySetting.streamingParticleDurationMs,
     )
 }
 

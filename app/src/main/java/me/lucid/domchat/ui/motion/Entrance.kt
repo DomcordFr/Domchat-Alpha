@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -34,7 +35,7 @@ object EntrancePlayed {
 }
 
 /** Screen-space entrance direction, chosen by the caller from element position. */
-enum class EntranceDirection { UP, DOWN, LEFT, RIGHT, NONE }
+enum class EntranceDirection { UP, DOWN, LEFT, RIGHT, DIAGONAL, NONE }
 
 /**
  * One-shot entrance: slide-in from [from] toward rest + alpha fade, staggered
@@ -51,6 +52,7 @@ fun Modifier.entrance(
     delayMs: Int = 0,
     distance: Dp = 30.dp,
     allow: Boolean = true,
+    blur: Dp = 0.dp,
 ): Modifier {
     if (
         !allow ||
@@ -61,6 +63,7 @@ fun Modifier.entrance(
     }
     val progress = remember(key) { Animatable(0f) }
     val distancePx = with(LocalDensity.current) { distance.toPx() }
+    val blurPx = with(LocalDensity.current) { blur.toPx() }
     LaunchedEffect(key) {
         progress.animateTo(
             1f,
@@ -71,7 +74,7 @@ fun Modifier.entrance(
             )
         )
     }
-    return this.graphicsLayer {
+    var result = this.graphicsLayer {
         val p = progress.value
         alpha = p
         val d = distancePx * (1f - p)
@@ -80,10 +83,24 @@ fun Modifier.entrance(
             EntranceDirection.DOWN -> translationY = -d
             EntranceDirection.LEFT -> translationX = -d
             EntranceDirection.RIGHT -> translationX = d
+            // Enters from the top-left corner, drifting toward bottom-right rest.
+            EntranceDirection.DIAGONAL -> {
+                translationX = -d
+                translationY = -d
+            }
             EntranceDirection.NONE -> Unit
         }
     }
+    // Optional dissolve-in blur. Reads progress in composition (recomposes the
+    // caller per frame during the entrance only), so callers must opt in.
+    if (blurPx > 0f) {
+        val blurRadius = (blurPx * (1f - progress.value)).coerceAtLeast(0f)
+        if (blurRadius > 0.05f) {
+            result = result.blur(with(LocalDensity.current) { blurRadius.toDp() })
+        }
+    }
+    return result
 }
 
-private const val ENTRANCE_DURATION_MS = 700
-private const val ENTRANCE_MAX_STAGGER_MS = 400
+private const val ENTRANCE_DURATION_MS = 950
+private const val ENTRANCE_MAX_STAGGER_MS = 600

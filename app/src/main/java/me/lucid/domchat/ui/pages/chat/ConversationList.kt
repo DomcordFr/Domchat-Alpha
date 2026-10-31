@@ -570,7 +570,8 @@ private fun ConversationItem(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    val msgCount = conversation.messageNodes.size
+                    // Count only the bot's messages (assistant turns), per design.
+                    val msgCount = conversation.messageNodes.count { it.currentMessage.role == me.lucid.ai.core.MessageRole.ASSISTANT }
                     val zdt = conversation.updateAt.atZone(ZoneId.systemDefault())
                     val hour12 = if (zdt.hour % 12 == 0) 12 else zdt.hour % 12
                     val amPm = if (zdt.hour < 12) "AM" else "PM"

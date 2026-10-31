@@ -1,6 +1,11 @@
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -348,16 +353,122 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
+
+                        // Text Reveal Style: Off / Glass / Fireflies / Swarm
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "Text Reveal Style",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf(
+                                    0 to "Off",
+                                    1 to "Glass",
+                                    2 to "Fireflies",
+                                    3 to "Swarm",
+                                ).forEach { (styleId, label) ->
+                                    Surface(
+                                        onClick = {
+                                            updateDisplaySetting(displaySetting.copy(streamingParticleStyle = styleId))
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (displaySetting.streamingParticleStyle == styleId) {
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                                        } else {
+                                            Color(0xFF000000).copy(alpha = 0.20f)
+                                        },
+                                        border = BorderStroke(
+                                            0.5.dp,
+                                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                        ),
+                                        modifier = Modifier.weight(1f),
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = if (displaySetting.streamingParticleStyle == styleId) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                Color.White.copy(alpha = 0.75f)
+                                            },
+                                            maxLines = 1,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 10.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Particle Assembly Speed Slider
+                        if (displaySetting.streamingParticleStyle >= 1) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Particle Assembly Speed",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "${displaySetting.streamingParticleDurationMs} ms",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color.White
+                                    )
+                                }
+                                DomChatSlider(
+                                    value = displaySetting.streamingParticleDurationMs.toFloat(),
+                                    onValueChange = {
+                                        updateDisplaySetting(displaySetting.copy(streamingParticleDurationMs = it.toInt()))
+                                    },
+                                    valueRange = 150f..2000f,
+                                    steps = 36,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
                     }
                 }
             }
             
+            // Startup particle entrance (experimental)
+            item {
+                SettingsGroup(
+                    title = "Startup Animation"
+                ) {
+                    SettingGroupItem(
+                        title = "Particle Materialize",
+                        subtitle = "Chat bars and buttons form from a particle swarm when you open a chat",
+                        trailing = {
+                            HapticSwitch(
+                                checked = displaySetting.startupParticleEntrance,
+                                onCheckedChange = {
+                                    updateDisplaySetting(displaySetting.copy(startupParticleEntrance = it))
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+
             // Message Jumper Settings
             item {
                 SettingsGroup(
                     title = stringResource(R.string.setting_ui_message_jumper_group)
-                ) {
-                    SettingGroupItem(
+                ) {                    SettingGroupItem(
                         title = stringResource(R.string.setting_display_page_show_message_jumper_title),
                         subtitle = stringResource(R.string.setting_display_page_show_message_jumper_desc),
                         trailing = {

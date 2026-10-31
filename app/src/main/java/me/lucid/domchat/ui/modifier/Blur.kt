@@ -254,7 +254,7 @@ fun domChatIconPillContainerColor(): Color {
     val alpha = if (display.linkChromeToGlass) {
         display.glassAlpha.coerceIn(0f, 1f)
     } else {
-        0.55f
+        0.35f
     }
     if (alpha <= 0.001f) return Color.Transparent
     val base = Color(0xFF000000)

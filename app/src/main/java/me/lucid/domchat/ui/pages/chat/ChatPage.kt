@@ -1237,6 +1237,43 @@ fun ChatPage(
     }
 }
 
+/**
+ * Startup chrome reveal: when the particle toggle is on, chat chrome (topbar,
+ * input, new-chat content) materializes from a micro-swarm instead of sliding
+ * in. Plays once per conversation open, then never again.
+ */
+@Composable
+private fun StartupChromeReveal(
+    key: String,
+    delayMs: Int,
+    settings: Settings,
+    motionPolicy: me.lucid.domchat.ui.motion.MotionPolicy,
+    from: EntranceDirection,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    if (settings.displaySetting.startupParticleEntrance) {
+        me.lucid.domchat.ui.motion.ParticleRevealBox(
+            key = key,
+            enabled = true,
+            durationMs = (settings.displaySetting.streamingParticleDurationMs * 2).coerceIn(300, 4000),
+            modifier = modifier,
+            content = { content() },
+        )
+    } else {
+        androidx.compose.foundation.layout.Box(
+            modifier = modifier.entrance(
+                key = key,
+                motionPolicy = motionPolicy,
+                from = from,
+                delayMs = delayMs,
+            ),
+        ) {
+            content()
+        }
+    }
+}
+
 @Composable
 private fun ChatPageContent(
     inputState: ChatInputState,
@@ -1266,6 +1303,10 @@ private fun ChatPageContent(
 ) {
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
+    // Nodes already in the conversation when it opens: they never animate.
+    val preexistingNodeIds = remember(conversation.id) {
+        conversation.messageNodes.map { it.id.toString() }.toSet()
+    }
     val context = LocalContext.current
     val modelRequiredMessage = context.getString(R.string.chat_model_required)
     var previewMode by rememberSaveable { mutableStateOf(false) }
@@ -1440,13 +1481,12 @@ private fun ChatPageContent(
                 topBar = if (toolbarPlacement == ChatToolbarPlacement.Top) {
                     {
                         // Top chrome drops in from above, position-respectful.
-                        androidx.compose.foundation.layout.Box(
-                            modifier = Modifier.entrance(
-                                key = "${conversation.id}:topbar",
-                                motionPolicy = motionPolicy,
-                                from = EntranceDirection.DOWN,
-                                delayMs = 250,
-                            )
+                        StartupChromeReveal(
+                            key = "${conversation.id}:topbar",
+                            delayMs = 250,
+                            settings = setting,
+                            motionPolicy = motionPolicy,
+                            from = EntranceDirection.DOWN,
                         ) {
                         ChatToolbar(
                             placement = ChatToolbarPlacement.Top,
@@ -1558,11 +1598,14 @@ private fun ChatPageContent(
                                         alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
                                     }
                             ) {
-                                ChatList(
-                                    innerPadding = PaddingValues(
-                                        top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
-                                        bottom = chatListBottomPadding(toolbarPlacement)
-                                    ),
+                                CompositionLocalProvider(
+                                    me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes provides preexistingNodeIds
+                                ) {
+                                    ChatList(
+                                        innerPadding = PaddingValues(
+                                            top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
+                                            bottom = chatListBottomPadding(toolbarPlacement)
+                                        ),
                                     conversation = frameConversation,
                                     state = frameListState,
                                     loading = targetConversationId == conversation.id && loadingJob != null,
@@ -1643,7 +1686,8 @@ private fun ChatPageContent(
                                             }
                                         }
                                     },
-                                )
+                                    )
+                                }
                             }
                         }
                     }
@@ -1701,8 +1745,9 @@ private fun ChatPageContent(
                         .entrance(
                             key = "${conversation.id}:tempchat",
                             motionPolicy = motionPolicy,
-                            from = EntranceDirection.UP,
+                            from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
                             delayMs = 350,
+                            distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
                         ),
                 ) {
                     Column(
@@ -1757,8 +1802,9 @@ private fun ChatPageContent(
                         .entrance(
                             key = "${conversation.id}:newchat",
                             motionPolicy = motionPolicy,
-                            from = EntranceDirection.UP,
+                            from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
                             delayMs = 300,
+                            distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
                         ),
                 ) {
                     NewChatContent(
@@ -1932,8 +1978,9 @@ private fun ChatPageContent(
                             .entrance(
                                 key = "${conversation.id}:input",
                                 motionPolicy = motionPolicy,
-                                from = EntranceDirection.UP,
+                                from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
                                 delayMs = 400,
+                                distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
                             ),
                         showSearch = previewMode,
                         searchQuery = chatSearchQuery,
@@ -1968,8 +2015,9 @@ private fun ChatPageContent(
                         .entrance(
                             key = "${conversation.id}:input",
                             motionPolicy = motionPolicy,
-                            from = EntranceDirection.UP,
+                            from = if (setting.displaySetting.startupParticleEntrance) EntranceDirection.NONE else EntranceDirection.UP,
                             delayMs = 400,
+                            distance = if (setting.displaySetting.startupParticleEntrance) 0.dp else 30.dp,
                         ),
                     state = inputState,
                     settings = setting,
@@ -3014,7 +3062,7 @@ private fun ChatToolbar(
     val isDark = LocalDarkMode.current
     val topContainerColor = domChatIconPillContainerColor()
     val topContainerBorder = if (isDark) {
-        BorderStroke(1.dp, Color.White.copy(alpha = 0.14f))
+        BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     } else {
         domChatSoftEdgeBorder()
     }
@@ -3808,7 +3856,7 @@ private fun ContextMeterButton(
         animationSpec = tween(220),
         label = "context_meter_color",
     )
-    val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val containerColor = domChatIconPillContainerColor()
     val shape = AppShapes.ButtonPill
     Surface(
         modifier = Modifier

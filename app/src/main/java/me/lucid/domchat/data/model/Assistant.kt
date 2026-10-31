@@ -36,6 +36,8 @@ data class AssistantUISettings(
     val streamingFadeDurationMs: Int? = null,
     val streamingFadeStartAlpha: Float? = null,
     val streamingContinuousFlow: Boolean? = null,
+    val streamingParticleStyle: Int? = null,
+    val streamingParticleDurationMs: Int? = null,
 )
 
 @Serializable

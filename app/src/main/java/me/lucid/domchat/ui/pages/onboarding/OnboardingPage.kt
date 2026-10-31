@@ -784,7 +784,7 @@ private fun GuidedChoicePage(
                 .padding(top = 160.dp),
         ) {
             Text(
-                text = "Here are two beginner-\nfriendly options. We’ll guide\nyou through the setup!",
+                text = "Here are some beginner-\nfriendly options. We’ll guide\nyou through the setup!",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 lineHeight = MaterialTheme.typography.titleLarge.lineHeight,

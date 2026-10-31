@@ -93,6 +93,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Delete
@@ -279,12 +280,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         }
     }
 
+    val collapseBehavior = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
         containerColor = Color(0xFF000000),
         topBar = {
             me.lucid.domchat.ui.components.nav.OneUITopAppBar(
                 title = "Characters",
-                scrollBehavior = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+                scrollBehavior = collapseBehavior,
                 navigationIcon = { BackButton() }
             )
         },
@@ -295,8 +298,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     vm.addAssistant(newChar)
                     navController.navigate(Screen.AssistantDetail(id = newChar.id.toString()))
                 },
-                containerColor = Color.White,
-                contentColor = Color.Black,
+                containerColor = Color(0xFF000000).copy(alpha = 0.35f),
+                contentColor = Color.White,
                 shape = CircleShape
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add Character")
@@ -306,6 +309,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .nestedScroll(collapseBehavior.nestedScrollConnection)
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {

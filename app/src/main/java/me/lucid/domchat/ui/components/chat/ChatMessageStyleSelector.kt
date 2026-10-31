@@ -33,11 +33,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.data.model.ChatMessageStyle
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
@@ -68,12 +70,12 @@ fun ChatMessageStyleSelector(
                 modifier = Modifier
                     .width(270.dp)
                     .clip(RoundedCornerShape(20.dp))
+                    .domChatBlurEffect(
+                        containerColor = Color(0xFF000000).copy(alpha = if (isSelected) 0.45f else 0.30f),
+                        shape = RoundedCornerShape(20.dp),
+                    )
                     .background(
-                        if (isSelected) {
-                            if (isDark) Color(0xFF161726).copy(alpha = 0.85f) else Color(0xFFEFF6FF).copy(alpha = 0.90f)
-                        } else {
-                            if (isDark) Color(0xFF0F101A).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
-                        }
+                        Color(0xFF000000).copy(alpha = if (isSelected) 0.45f else 0.30f)
                     )
                     .border(
                         width = if (isSelected) 1.5.dp else 0.5.dp,
@@ -97,14 +99,17 @@ fun ChatMessageStyleSelector(
                                 text = style.displayName,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
+                                lineHeight = 19.sp,
                                 color = if (isDark) Color.White else Color.Black
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = style.description,
-                                fontSize = 11.5.sp,
+                                fontSize = 11.sp,
+                                lineHeight = 14.sp,
                                 color = if (isDark) Color(0xFFA0A0B0) else Color(0xFF666666),
-                                maxLines = 2
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 

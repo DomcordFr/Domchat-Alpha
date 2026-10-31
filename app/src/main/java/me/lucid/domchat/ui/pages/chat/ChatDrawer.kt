@@ -206,7 +206,7 @@ fun ChatDrawerContent(
 
             // Glassy User Profile Header (Static display, non-interactive)
             val profileCardShape = RoundedCornerShape(20.dp)
-            val profileCardBg = domChatCardContainerColor()
+            val profileCardBg = Color(0xFF000000).copy(alpha = 0.55f)
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -423,7 +423,7 @@ fun ChatDrawerContent(
                     ) {
                         val actionButtonSize = 42.dp
                         val assistantAvatarSize = 30.dp
-                        val itemColor = domChatCardContainerColor()
+                        val itemColor = Color(0xFF000000).copy(alpha = 0.55f)
                         val pillBorder = androidx.compose.foundation.BorderStroke(
                             0.5.dp,
                             if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
