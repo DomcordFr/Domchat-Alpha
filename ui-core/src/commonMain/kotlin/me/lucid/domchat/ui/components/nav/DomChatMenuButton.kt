@@ -50,7 +50,7 @@ fun DomChatMenuButton(
             Icon(
                 imageVector = RoundedMenuIcon,
                 contentDescription = contentDescription,
-                tint = iconColor.copy(alpha = containerColor.alpha),
+                tint = Color.White.copy(alpha = 0.92f),
             )
         }
     }

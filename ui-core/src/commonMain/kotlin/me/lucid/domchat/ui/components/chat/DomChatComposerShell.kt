@@ -201,7 +201,7 @@ fun DomChatComposerDefaultActionContent(
             RoundedStopIcon,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onErrorContainer,
+            tint = Color(0xFFFF453A),
         )
         else -> Unit
     }
@@ -210,7 +210,7 @@ fun DomChatComposerDefaultActionContent(
 @Composable
 private fun DomChatComposerAction.defaultContainerColor(): Color = when (this) {
     DomChatComposerAction.Loading,
-    DomChatComposerAction.ToolApprovalDeny -> MaterialTheme.colorScheme.errorContainer
+    DomChatComposerAction.ToolApprovalDeny -> Color(0xFF141520)
     DomChatComposerAction.Send,
     DomChatComposerAction.QuestionnaireNext,
     DomChatComposerAction.QuestionnaireSubmit,
@@ -238,7 +238,7 @@ fun DomChatComposerAddIcon(contentDescription: String? = null) {
         RoundedAddIcon,
         contentDescription = contentDescription,
         modifier = Modifier.size(24.dp),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = Color.White.copy(alpha = 0.90f),
     )
 }
 

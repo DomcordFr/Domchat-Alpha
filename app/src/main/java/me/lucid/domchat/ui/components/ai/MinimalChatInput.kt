@@ -1134,7 +1134,7 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFF000000))
+                                            .background(Color(0xFF141520))
                                             .border(
                                                 width = 1.2.dp,
                                                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
@@ -1421,7 +1421,7 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFF000000))
+                                            .background(Color(0xFF141520))
                                             .border(
                                                 width = 1.2.dp,
                                                 brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
