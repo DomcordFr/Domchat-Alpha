@@ -27,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import me.lucid.domchat.ui.theme.extendColors
 import androidx.compose.ui.graphics.Color
 
 enum class TagType {
@@ -61,11 +60,11 @@ fun Tag(
 
     val background = Color(0xFF000000)
     val textColor = when (type) {
-        TagType.SUCCESS -> MaterialTheme.extendColors.green2
-        TagType.ERROR -> MaterialTheme.extendColors.red2
-        TagType.WARNING -> MaterialTheme.extendColors.orange2
-        TagType.INFO -> MaterialTheme.extendColors.blue2
-        else -> Color(0xFFFFFFFF)
+        TagType.INFO -> Color(0xFF64D2FF)
+        TagType.SUCCESS -> Color(0xFF30D158)
+        TagType.WARNING -> Color(0xFFFF9F0A)
+        TagType.ERROR -> Color(0xFFFF453A)
+        else -> Color(0xFFF2F2F7)
     }
     ProvideTextStyle(MaterialTheme.typography.labelSmall.copy(color = textColor)) {
         Row(

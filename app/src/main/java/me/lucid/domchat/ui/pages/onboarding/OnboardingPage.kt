@@ -679,8 +679,14 @@ private fun ProviderOverviewPage(
     val localPreset = providerPresets.firstOrNull {
         it.type == ProviderSetting.LiteRtLocal::class
     }
-    val remotePresets = providerPresets.filterNot {
-        it.type == ProviderSetting.LiteRtLocal::class
+    val nanoGptPreset = providerPresets.firstOrNull { preset ->
+        preset.name.equals("NanoGPT", ignoreCase = true) ||
+            preset.baseUrl.contains("nano-gpt.com")
+    }
+    val remotePresets = providerPresets.filterNot { preset ->
+        preset.type == ProviderSetting.LiteRtLocal::class ||
+            preset.name.equals("NanoGPT", ignoreCase = true) ||
+            preset.baseUrl.contains("nano-gpt.com")
     }
     SetupScaffold(
         bottom = {
@@ -732,6 +738,15 @@ private fun ProviderOverviewPage(
                                 ),
                                 null,
                             )
+                        },
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                item {
+                    ProviderNanoGptCard(
+                        onClick = {
+                            val preset = nanoGptPreset ?: NANO_GPT_PRESET
+                            onSelectProvider(preset.toProviderSetting(), preset)
                         },
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -1392,6 +1407,54 @@ private fun ProviderCustomCard(onClick: () -> Unit) {
             )
             Text(
                 text = "Use your own OpenAI-compatible endpoint",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFF2F2F7).copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProviderNanoGptCard(onClick: () -> Unit) {
+    SetupListCard(
+        onClick = onClick,
+        minHeight = 82.dp,
+        shape = AppShapes.CardMedium,
+        color = Color(0xFF000000),
+        contentColor = Color(0xFFF2F2F7),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFF000000))
+                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
+                .padding(7.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.nanogpt_logo),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "NanoGPT",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFF2F2F7),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "Privacy-first nano billing for many hosted models",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFFF2F2F7).copy(alpha = 0.7f),
                 maxLines = 1,

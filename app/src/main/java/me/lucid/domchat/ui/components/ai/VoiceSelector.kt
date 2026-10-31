@@ -78,7 +78,6 @@ import me.lucid.domchat.ui.components.ui.Tag
 import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
-import androidx.compose.foundation.BorderStroke
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -462,19 +461,20 @@ fun ColumnScope.VoiceList(
                                     lazyListState.animateScrollToItem(position)
                                 }
                             },
-                            border = androidx.compose.foundation.BorderStroke(
-                                width = 0.5.dp,
-                                color = if (isActive) Color.White.copy(alpha = 0.40f) else Color.White.copy(alpha = 0.12f)
-                            ),
                             interactionSource = interactionSource,
                             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                            color = if (isActive) {
-                                Color.White.copy(alpha = 0.18f)
-                            } else {
-                                Color(0xFF000000).copy(alpha = 0.12f)
-                            },
+                            color = Color(0xFF000000),
                             contentColor = Color.White,
                             modifier = Modifier
+                                .border(
+                                    width = 0.5.dp,
+                                    brush = if (isActive) {
+                                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
+                                    } else {
+                                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                    },
+                                    shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                                )
                                 .domChatBlurEffect(
                                     containerColor = Color(0xFF000000).copy(alpha = 0.08f),
                                     shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
@@ -602,11 +602,7 @@ private fun VoiceItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val shape = rememberAnimatedGroupedVoiceItemShape(selected = selected, position = position)
-    val containerColor = if (selected) {
-        Color.White.copy(alpha = 0.18f)
-    } else {
-        Color(0xFF000000).copy(alpha = 0.12f)
-    }
+    val containerColor = Color(0xFF000000)
     val contentColor = if (selected) {
         Color(0xFFFFFFFF)
     } else {
@@ -626,7 +622,11 @@ private fun VoiceItem(
             )
             .border(
                 width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                brush = if (selected) {
+                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
+                } else {
+                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                },
                 shape = shape,
             )
             .combinedClickable(
