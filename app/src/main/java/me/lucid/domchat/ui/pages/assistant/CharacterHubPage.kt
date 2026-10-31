@@ -73,6 +73,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -120,8 +123,9 @@ import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.AppToasterState
-import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.components.ui.Tag
+import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
@@ -764,8 +768,9 @@ fun FullCharacterCardImage(
 }
 
 /**
- * Tall Vertical Portrait Card — full-card character image with bottom gradient overlay.
- * Centered character name (handles long names), creator byline, and greeting count badge.
+ * Tall Vertical Portrait Card — full-bleed avatar with bottom glass scrim,
+ * bold display name with right-edge alpha fade, and a horizontal scrollable
+ * tag row with a dynamic trailing fade.
  */
 @Composable
 fun CharacterPortraitCard(
@@ -773,6 +778,9 @@ fun CharacterPortraitCard(
     isDark: Boolean,
     onClick: () -> Unit
 ) {
+    val tagList = assistant.tags
+    val tagListState = rememberLazyListState()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -787,67 +795,103 @@ fun CharacterPortraitCard(
             )
             .clickable(onClick = onClick)
     ) {
-        // Full-card image
+        // Full-bleed avatar background
         FullCharacterCardImage(
             name = assistant.name,
             avatar = assistant.avatar,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Bottom gradient overlay with centered content
-        Column(
+        // Bottom vertical gradient scrim: transparent -> 85% alpha black
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.42f)
                 .align(Alignment.BottomCenter)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color.Black.copy(alpha = 0.35f),
                             Color.Black.copy(alpha = 0.85f),
-                            Color(0xFF000000)
                         )
                     )
                 )
+        )
+
+        // Bottom content: display name + tag row
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
                 .padding(horizontal = 10.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
+            // Character display name: bold white, max 2 lines, right-edge alpha fade mask.
             Text(
                 text = assistant.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                color = Color.White
-            )
-            if (!assistant.creator.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "by ${assistant.creator.truncateCreator(10)}",
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    color = Color(0xFFCCCCCC)
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            val introsCount = assistant.alternateGreetings.size + 1
-            Box(
+                color = Color.White,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color.White.copy(alpha = 0.16f))
-                    .border(0.5.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                    .fillMaxWidth()
+                    .drawWithContent {
+                        drawContent()
+                        val fadeStart = size.width * 0.78f
+                        drawRect(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color.Black, Color.Transparent),
+                                start = Offset(fadeStart, 0f),
+                                end = Offset(size.width, 0f),
+                            ),
+                            blendMode = BlendMode.DstIn,
+                            size = size,
+                        )
+                    }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Horizontal scrollable tag pill row with dynamic trailing fade
+            LazyRow(
+                state = tagListState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .drawWithContent {
+                        drawContent()
+                        if (tagListState.canScrollForward) {
+                            val fadeStart = size.width * 0.72f
+                            drawRect(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(Color.Black, Color.Transparent),
+                                    start = Offset(fadeStart, 0f),
+                                    end = Offset(size.width, 0f),
+                                ),
+                                blendMode = BlendMode.DstIn,
+                                size = size,
+                            )
+                        }
+                    },
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
-                    text = "$introsCount ${if (introsCount == 1) "greeting" else "greetings"}",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White.copy(alpha = 0.95f)
-                )
+                items(tagList, key = { it.toString() }) { tagId ->
+                    Tag(
+                        onClick = null,
+                    ) {
+                        Text(
+                            text = tagId.toString().take(8).uppercase(),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.92f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
+
+
         }
     }
 }
