@@ -2474,7 +2474,6 @@ private fun AnnotatedString.Builder.applyStreamingRevealStyle(
             )
         }
     }
-}
 
 internal fun streamingRevealVisuals(
     progress: Float,

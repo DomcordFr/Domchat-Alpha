@@ -862,7 +862,7 @@ fun ChatPage(
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
     var chatAnimationsEnabled by remember(conversation.id) { mutableStateOf(false) }
     LaunchedEffect(conversation.id) {
-        delay(startupWallpaperPauseMs)
+        delay(startupWallpaperPauseMs.toLong())
         chatAnimationsEnabled = true
     }
     var consumedFocusLatestMessageKey by remember(conversation.id) { mutableStateOf<String?>(null) }

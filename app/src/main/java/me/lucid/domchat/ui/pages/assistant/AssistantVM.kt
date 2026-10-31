@@ -53,7 +53,7 @@ class AssistantVM(
                     )
                 }
             } catch (e: Exception) {
-                me.lucid.domchat.AppScope.log(e)
+                PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
         }
     }
@@ -100,7 +100,7 @@ class AssistantVM(
                     )
                 )
             } catch (e: Exception) {
-                me.lucid.domchat.AppScope.log(e)
+                PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
         }
     }
@@ -142,7 +142,7 @@ class AssistantVM(
                     )
                 }
             } catch (e: Exception) {
-                me.lucid.domchat.AppScope.log(e)
+                PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
         }
 
@@ -185,7 +185,7 @@ class AssistantVM(
                     }
                 }
             } catch (e: Exception) {
-                me.lucid.domchat.AppScope.log(e)
+                PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
         }
         return true
@@ -206,7 +206,7 @@ class AssistantVM(
                     )
                 )
             } catch (e: Exception) {
-                me.lucid.domchat.AppScope.log(e)
+                PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
         }
     }

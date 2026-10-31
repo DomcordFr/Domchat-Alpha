@@ -165,12 +165,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    // Defensive: LocalToaster throws "Not provided" when composed outside a provider.
-    val toaster: AppToasterState? = try {
-        LocalToaster.current
-    } catch (_: Exception) {
-        null
-    }
+    val toaster: AppToasterState? = LocalToaster.current
 
     var pendingExportJson by remember { mutableStateOf("") }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -477,15 +472,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(filteredAssistants, key = { it.id.toString() }) { char ->
-                            try {
-                                CharacterPortraitCard(
-                                    assistant = char,
-                                    isDark = isDark,
-                                    onClick = { inspectingAssistant = char }
-                                )
-                            } catch (e: Exception) {
-                                CharacterHubErrorCard(assistant = char, error = e)
-                            }
+                            CharacterPortraitCard(
+                                assistant = char,
+                                isDark = isDark,
+                                onClick = { inspectingAssistant = char }
+                            )
                         }
                     }
                 } else {
@@ -496,15 +487,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(filteredAssistants, key = { it.id.toString() }) { char ->
-                            try {
-                                CharacterListRow(
-                                    assistant = char,
-                                    isDark = isDark,
-                                    onClick = { inspectingAssistant = char }
-                                )
-                            } catch (e: Exception) {
-                                CharacterHubErrorCard(assistant = char, error = e)
-                            }
+                            CharacterListRow(
+                                assistant = char,
+                                isDark = isDark,
+                                onClick = { inspectingAssistant = char }
+                            )
                         }
                     }
                 }
@@ -540,7 +527,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         withContext(Dispatchers.Main) {
                             loadError = e
                             toaster?.show(
-                                "Failed to start chat: ${e.message.takeIf { it.isNotBlank() } ?: e.toString()}",
+                                "Failed to start chat: ${e.message?.takeIf { it.isNotBlank() } ?: e.toString()}",
                                 ToastType.Error
                             )
                         }

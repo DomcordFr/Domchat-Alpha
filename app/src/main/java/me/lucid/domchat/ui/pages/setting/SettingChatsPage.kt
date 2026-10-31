@@ -131,6 +131,8 @@ fun SettingChatsPage(
     val isDark = LocalDarkMode.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
+    val allAssistants = remember(settings.assistants) { settings.assistants }
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { fileUri ->
@@ -159,8 +161,6 @@ fun SettingChatsPage(
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
-    val allAssistants = remember(settings.assistants) { settings.assistants }
     val assistantMap = remember(allAssistants) { allAssistants.associateBy { it.id.toString() } }
 
     val rawConversations by conversationRepository.getAllLight().collectAsStateWithLifecycle(initialValue = emptyList())

@@ -13,6 +13,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -66,6 +67,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
@@ -1432,12 +1434,15 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
+                    val userEntranceTarget by remember { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
                     val userEntrance by animateFloatAsState(
-                        initialValue = if (isHistoryTurn) 1f else 0f,
-                        targetValue = 1f,
+                        targetValue = userEntranceTarget,
                         animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
                         label = "user_message_glow_settle"
                     )
+                    LaunchedEffect(Unit) {
+                        userEntranceTarget = 1f
+                    }
                     val userBlurRadius = (1f - userEntrance) * 6f
                     val userEntranceStyle = LocalTextStyle.current.copy(
                         shadow = if (userBlurRadius > 0.01f) {
@@ -1470,7 +1475,7 @@ private fun UserMessageTurn(
                         freshReveal = !isHistoryTurn,
                         modifier = Modifier
                             .alpha(userEntrance)
-                            .graphicsLayer { translationY = (1f - userEntrance) * 8.dp },
+                            .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },
                         onClickCitation = {}
                     )
                 }
