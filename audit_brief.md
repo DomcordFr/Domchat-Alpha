@@ -1,60 +1,54 @@
-# Audit Brief — Settings Header Fade, JAI Tile Logo & Janitor Hub Complete Redesign (task-027)
+# Audit Brief — Character Hub Polish, Black Box Fix & Pure Black Popover (task-028)
 
 ## Intent Verification
 
-All six directive requirements are implemented across the three target files:
+All five directive requirements are implemented:
 
-1. **OneUITopAppBar.kt** — Added a smooth vertical gradient fade `Box` at the bottom of the sticky header (`48.dp` height, `Brush.verticalGradient` from `barColor` to `barColor.copy(alpha = 0f)`), so all 20+ setting subpages have seamless bottom transparency when scrolling.
+1. **CharacterPortraitCard** — Removed `drawWithContent` with `BlendMode.DstIn` on the display name `Text`. Now uses plain `maxLines = 2` + `TextOverflow.Ellipsis` with `Modifier.fillMaxWidth()`. The black rectangular box artifact next to the name is eliminated. The `graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }` on the card container remains.
 
-2. **SettingPage.kt** — JanitorAI Hub tile now uses `iconPainter = painterResource(id = R.drawable.janitorai_logo)` instead of `Icons.Rounded.AutoStories`. Added `iconPainter: Painter?` field to `SettingNavItem` and updated both icon-rendering lambdas (categorized layout + search results) to prefer `iconPainter` when non-null, falling back to `ImageVector` icon.
+2. **CharacterHubPage header** — Only the `OneUITopAppBar` (back arrow + "Characters" title) remains sticky via `Scaffold.topBar`. The search bar, sort chips ('Name', 'Recent', 'Creator'), and 'Upload Character'/'List View' buttons are now header `item`s inside both `LazyVerticalGrid` and `LazyColumn` branches of `AnimatedContent`, so they scroll away with content. The outer sticky `Column` wrapper around the header was removed; `nestedScroll` is now applied directly to each lazy container.
 
-3. **SettingJanitorPage.kt**:
-   - **(a)** Removed the 32dp logo `Image` from `topBar.actions` slot — actions block is now empty, eliminating the random circle in the top right.
-   - **(b)** Tab bar now has `Modifier.fillMaxWidth().background(Color(0xFF141520).copy(alpha = 0.92f)).zIndex(1f)` so cards scroll cleanly underneath with proper z-layering.
-   - **(c)** Bot cards unified to Character Hub design: `aspectRatio(0.68f)`, full-bleed portrait, `Color(0xFF141520)` background, `0.5dp` `SpecularBorderSubtle` border, `CompositingStrategy.Offscreen` graphicsLayer, bottom glass scrim (`Color(0xFF141520).copy(alpha = 0.85f)`), display name with `?: "Character"` fallback, dark glass tag pills (`0xFF141520` + `0.5dp` subtle border) in a `FlowRow`.
-   - **(d)** Popover sheet unified to CharacterInspectorSheet structure: hero image with multi-stop vertical gradient fade, title/creator, `FlowRow` badges (scenario count + version), bio blurb, primary "Import to Hub" action button (white glass, bold text).
-   - **(e)** Stock `CircularProgressIndicator` replaced with custom `JanitorOrbitalLoader` — pulsing dark-glass orbital ring (`Color(0xFF141520)` gradient border, rotating `rotationZ`, alpha pulse), used both for grid loading state and import button loading state.
-   - **(f)** `JanitorExtractRequest` now sends both `bot_id` and `character_id` (both set to `character.id`).
+3. **FAB** — Changed to pure white background (`containerColor = Color.White`) with black content (`contentColor = Color.Black`) and a plain black `Icons.Rounded.Add` icon (no gradient box, no glass tint).
 
-Strict null safety: no `!!` in any modified file. `sanitizeHtml`-style nullable handling uses `?:`, `takeIf`, `orEmpty()`. Unified glass theme `0xFF141520` enforced as card background, tab bar fill, tag pill fill, FAB-like import button, and orbital loader gradient.
+4. **CharacterInspectorSheet** — `cardBgColor` changed from `Color(0xFF141520)` to pure jet black `Color(0xFF000000)`. Applied to Character Voice card, tab bar, tab content cards (Notes/Personality/Greetings), and intro chips — all framed with `0.5.dp` `SpecularBorderSubtle` border. `sanitizeHtml` now also strips raw URLs (`https?://[^\s<>"]+`) to remove JAI links from the blurb.
+
+5. **AssistantVM.addAssistant** — Changed from read-then-write (`settings.value` → `settingsStore.update(settings.copy(--))`) to atomic `settingsStore.update { current -> -- }`, so concurrent `addAssistant` calls never overwrite each other's assistants.
+
+Strict null safety: no `!!` in either file. All nullable access uses `?:`, `takeIf`, `isNullOrBlank()`, `orEmpty()`. Unified glass theme `0xFF141520` preserved for cards where specified; pure black `0xFF000000` used for sheet cards per directive.
 
 ## Call Chain & Architecture
 
-**OneUITopAppBar:** Used as `topBar` in `Scaffold` across all setting subpages (`SettingPage`, `SettingJanitorPage`, `SettingDisplayPage`, etc.). Reads `collapsedFraction` from scroll behavior to interpolate height and bar color. New bottom gradient fade Box is purely presentational — no state, no ViewModel involvement.
+**CharacterHubPage:** Single composable owned by `RouteActivity`. State: `searchQuery`, `debouncedQuery`, `isGridView`, `sortOption`, `inspectingAssistant`, `filteredAssistants`, `loadError`. Flow:
+- `settings.assistants` → debounced search (250ms) on `Dispatchers.Default` → filtered/sorted on `Dispatchers.Main`
+- `CharacterPortraitCard` click → `inspectingAssistant = char` → `CharacterInspectorSheet` modal bottom sheet
+- FAB click → `vm.addAssistant(newChar)` → `navController.navigate(Screen.AssistantDetail(--))`
+- Header items (search, sort, upload) now scroll with grid/list content inside `AnimatedContent` switching between `LazyVerticalGrid` and `LazyColumn`.
 
-**SettingPage:** `SettingVM` via `koinViewModel()` exposes `settings` StateFlow. `allSettings` list built in `remember {}` includes `SettingNavItem` for JanitorAI Hub with `iconPainter`. Icon rendering lambda checks `item.iconPainter != null` → `Image(painter = ...)` else `Icon(imageVector = ...)`. Navigation via `navController.navigate(item.target)`.
+**CharacterInspectorSheet:** Modal bottom sheet showing character details. Uses `sheetBgColor` (pure black via `domChatDialogContainerColor()`), `cardBgColor` (now `Color(0xFF000000)`), `cardBorderColor` (`SpecularBorderSubtle`). Primary action "Import to Hub" / "Start Chat" buttons.
 
-**SettingJanitorPage:** `AssistantVM` via `koinViewModel()` for `addAssistant(...)`. `PlatformHttpClient` via `koinInject()` for JanitorAI API calls. Flow:
-- `loadBrowse(tab)` / `loadSearch()` → `withContext(Dispatchers.IO)` HTTP request → parse JSON on `Dispatchers.IO` → update `browseState`/`searchState` on `Dispatchers.Main`
-- `importCharacter(character)` → POST to `/api/extract` with `JanitorExtractRequest(botId, characterId)` → parse `JanitorExtractResponse` → `extractToAssistant()` → `assistantVM.addAssistant()` → toast + hide sheet
-- `CharacterCard` click → `selectedCharacter = character` → `bottomSheetState.show()` → `ModalBottomSheet` with unified design
-- Bottom sheet "Import to Hub" → `importCharacter(character)` → `assistantVM.addAssistant()` → navigate flow
-
-UI Layer: only renders state and emits intents. Zero business logic in composables.
+**AssistantVM:** ViewModel exposing `settings: StateFlow<Settings>`. `addAssistant` now uses `settingsStore.update { current -> -- }` for atomic read-modify-write. `updateAssistant`, `removeAssistant`, `undoRemoveAssistant`, `copyAssistant` all use `settingsStore.update { -- }` blocks.
 
 ## Recomposition & Memory Safety
 
-- **No `!!`**: Verified zero force-unwraps across all three files. Nullable access uses `?:`, `takeIf`, `orEmpty()`, `isNullOrBlank()`.
-- **Remember scoping**: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `selectedCharacter`, `bottomSheetState`, `isImporting` all use `remember` / `rememberModalBottomSheetState`. `JanitorOrbitalLoader` uses `animateFloatAsState` with `infiniteRepeatable` — tied to composition lifecycle, stops when composition leaves.
-- **FlowRow**: Replaces rigid `Row` — Compose foundation layout, stable across recompositions, responsive wrapping.
-- **graphicsLayer `{ compositingStrategy = Offscreen }`**: Isolates offscreen rendering for alpha fade, preventing black square glitch on text overflow. No layout invalidation from the layer.
-- **Tab bar zIndex**: `zIndex(1f)` on tab bar ensures it paints above scrolling cards — no z-fighting during scroll.
-- **No naked objects**: All state is `remember`-scoped or `collectAsStateWithLifecycle`-collected. `animateFloatAsState` is properly scoped within `JanitorOrbitalLoader`.
+- **No `!!`**: Verified zero force-unwraps across both files.
+- **Remember scoping**: `searchQuery`, `debouncedQuery`, `isGridView`, `sortOption`, `inspectingAssistant`, `loadError`, `bottomSheetState`, `gridState`, `listState` all use `remember`. `animateFloatAsState` in loaders is scoped to composition lifecycle.
+- **AnimatedContent**: Crossfades between `LazyVerticalGrid` and `LazyColumn` — header items duplicated in both branches but identical content, crossfade is visually seamless.
+- **Header items in lazy scope**: `item { OutlinedTextField }`, `item { Row }`, `item { Spacer }`, conditional `loadError?.let { item { -- } }` — all valid Compose lazy DSL. `loadError` is read in composition; when null, no item is emitted.
+- **No naked objects**: All state is `remember`-scoped or `collectAsStateWithLifecycle`-collected.
 
 ## Threading & Dispatchers
 
-- All UI animation, color, and layout work runs on `Dispatcher.Main` via Compose composition — correct and unchanged.
-- `animateFloatAsState` in `JanitorOrbitalLoader` runs on Main thread — standard Compose animation API, no blocking.
-- Network I/O strictly on `Dispatchers.IO` (`httpClient.execute` inside `withContext(Dispatchers.IO)`). JSON parsing on `Dispatchers.IO`. UI state updates marshalled to `Dispatchers.Main` via `withContext(Dispatchers.Main)`.
-- `scope.launch` (Main dispatcher via `rememberCoroutineScope`) orchestrates the import flow, hopping to IO for the request and back to Main for state updates.
-- No `Dispatchers.Default` misuse — CPU-light JSON parsing happens on IO which is acceptable for small payloads.
+- UI composition, animation, and layout on `Dispatcher.Main` — correct.
+- Assistant search/filter: `withContext(Dispatchers.Default)` for filtering, `withContext(Dispatchers.Main)` for state updates.
+- `addAssistant` runs inside `viewModelScope.launch` (Main) and calls `settingsStore.update` which persists to DataStore on the appropriate internal dispatcher.
+- No blocking calls on Main. `withContext(Dispatchers.IO)` used for conversation creation in `onStartChat`.
+- No `Dispatchers.Default` misuse.
 
 ## Offline & Error State Handling
 
-- **Fully local UI**: Header fade, tile logo, card design, orbital loader, and sheet styling work entirely offline. No network dependency in UI rendering.
-- **Network errors**: `loadBrowse`/`loadSearch` catch exceptions → `JanitorLoadState.Error(message)` → displayed as `Text` in hub grid. `importCharacter` catches exceptions → `LocalToaster.current` `ToastType.Error`.
-- **HTTP errors**: Non-2xx status codes → `JanitorLoadState.Error("HTTP ${response.statusCode}")` for browse/search; import shows `"Import failed: HTTP ${statusCode}"`.
-- **Malformed JSON**: `JsonInstant.decodeFromString` wrapped in try/catch → error state.
-- **Missing avatar**: `resolveAvatarUrl` returns `""` for blank/null → fallback to `default_generical_pfp` placeholder + fallback painter.
-- **Null character fields**: `character.name.takeIf { it.isNotBlank() } ?: "Character"` fallback for display name. `character.creator ?: character.creatorName` nullable chains. `character.tags.forEach` safe on empty list.
-- **Backward compatible**: `JanitorExtractRequest` still serializes both fields — server receives both `bot_id` and `character_id`. No breaking changes to existing API contract.
+- **Fully local UI**: Card layout, header restructuring, FAB styling, sheet styling all work offline.
+- **Error boundary**: `loadError` state captured from search/filter try/catch, displayed via `CharacterHubErrorCard` as a grid/list header item.
+- **Conversation creation errors**: Caught in `onStartChat` try/catch, surfaced via `LocalToaster.current` (`ToastType.Error`).
+- **Null safety**: `assistant.name.takeIf { it.isNotBlank() } ?: "Character"` fallback. `assistant.creator` nullable chains with `isNullOrBlank()`. `assistant.tags` iterated safely.
+- **URL stripping**: `sanitizeHtml` strips `https?://--` patterns, so raw JAI URLs in creator notes never render as clickable links or break layout.
+- **Atomic settings update**: `settingsStore.update { current -> -- }` prevents lost updates when multiple assistants are added in quick succession.
