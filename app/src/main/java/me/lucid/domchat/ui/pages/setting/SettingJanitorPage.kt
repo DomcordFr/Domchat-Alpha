@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
@@ -35,12 +34,19 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,6 +73,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
 import coil3.compose.AsyncImage
 import kotlin.text.Charsets
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -76,9 +83,14 @@ import kotlinx.serialization.decodeFromString
 import me.lucid.common.http.urlEncode
 import me.lucid.common.platform.PlatformHttpClient
 import me.lucid.common.platform.PlatformHttpRequest
+import me.lucid.ai.core.MessageRole
+import me.lucid.ai.ui.UIMessage
+import me.lucid.ai.ui.UIMessagePart
 import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.data.model.Tag
+import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.ToastType
@@ -126,6 +138,8 @@ data class JanitorExtractResponse(
     @SerialName("creator_name") val creatorName: String? = null,
     @SerialName("bio") val bio: String? = null,
     @SerialName("description") val description: String? = null,
+    @SerialName("scenario") val scenario: String? = null,
+    @SerialName("firstMessage") val firstMessage: String? = null,
     @SerialName("character_version") val characterVersion: String? = null,
     @SerialName("tags") val tags: List<String> = emptyList(),
     @SerialName("systemPrompt") val systemPrompt: String? = null,
@@ -153,6 +167,7 @@ private data class JanitorExtractRequest(
 fun SettingJanitorPage() {
     val httpClient: PlatformHttpClient = koinInject<PlatformHttpClient>()
     val assistantVM: AssistantVM = koinViewModel<AssistantVM>()
+    val settings by assistantVM.settings.collectAsStateWithLifecycle()
     val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics()
     val scope = rememberCoroutineScope()
@@ -165,11 +180,15 @@ fun SettingJanitorPage() {
 
     var browseState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var searchState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
+    var isTabSwitching by remember { mutableStateOf(false) }
 
     var selectedCharacter by remember { mutableStateOf<JanitorCharacter?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var isImporting by remember { mutableStateOf(false) }
+
+    val isLoading: Boolean
+        get() = isTabSwitching || activeState is JanitorLoadState.Loading
 
     val activeState: JanitorLoadState = if (selectedTab == 2) searchState else browseState
     val currentItems: List<JanitorCharacter> = when (activeState) {
@@ -262,8 +281,23 @@ fun SettingJanitorPage() {
                 if (response.statusCode in 200..299) {
                     val json = String(response.body, charset = Charsets.UTF_8)
                     val extract = JsonInstant.decodeFromString<JanitorExtractResponse>(json)
-                    val assistant = extractToAssistant(extract)
                     withContext(Dispatchers.Main) {
+                        // Register new tags into settings.assistantTags first, so UUIDs are stable
+                        val newTagNames = extract.tags.filter { tagName ->
+                            tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
+                        }
+                        val updatedSettings = if (newTagNames.isNotEmpty()) {
+                            val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
+                            assistantVM.updateSettings(
+                                settings.copy(
+                                    assistantTags = settings.assistantTags + newTags
+                                )
+                            )
+                            settings.copy(assistantTags = settings.assistantTags + newTags)
+                        } else {
+                            settings
+                        }
+                        val assistant = extractToAssistant(extract, updatedSettings)
                         assistantVM.addAssistant(assistant)
                         isImporting = false
                         selectedCharacter = null
@@ -300,10 +334,15 @@ fun SettingJanitorPage() {
     }
 
     LaunchedEffect(selectedTab) {
-        if (selectedTab != 2) {
-            loadBrowse(if (selectedTab == 0) "24h" else "trending")
-        } else if (searchQuery.isBlank()) {
-            searchState = JanitorLoadState.Success(emptyList())
+        isTabSwitching = true
+        try {
+            if (selectedTab != 2) {
+                loadBrowse(if (selectedTab == 0) "24h" else "trending")
+            } else if (searchQuery.isBlank()) {
+                searchState = JanitorLoadState.Success(emptyList())
+            }
+        } finally {
+            isTabSwitching = false
         }
     }
 
@@ -430,10 +469,13 @@ fun SettingJanitorPage() {
     }
 
     selectedCharacter?.let { character ->
-        val sheetBgColor = Color(0xFF141520)
+        val sheetBgColor = Color(0xFF000000)
         val cardBorderColor = LiquidGlassTokens.SpecularBorderSubtle
         val contentTextColor = Color(0xFFF2F2F7)
         val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
+
+        var sheetSelectedTab by remember { mutableIntStateOf(0) }
+        val sheetTabTitles = listOf("Notes", "Personality", "Greetings")
 
         ModalBottomSheet(
             containerColor = sheetBgColor,
@@ -476,7 +518,7 @@ fun SettingJanitorPage() {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color(0xFF141520)),
+                                .background(Color(0xFF000000)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -507,7 +549,7 @@ fun SettingJanitorPage() {
 
                 // Character Title and Creator
                 Text(
-                    text = character.name,
+                    text = character.name.takeIf { it.isNotBlank() } ?: "Character",
                     style = MaterialTheme.typography.headlineSmall,
                     color = contentTextColor,
                 )
@@ -521,61 +563,7 @@ fun SettingJanitorPage() {
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-                val introsCount = 1
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(sheetBgColor)
-                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = "$introsCount scenario greeting${if (introsCount > 1) "s" else ""}",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = contentTextColor.copy(alpha = 0.9f),
-                        )
-                    }
-                    if (!character.characterVersion.isNullOrBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(sheetBgColor)
-                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                        ) {
-                            Text(
-                                text = "v${character.characterVersion}",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFFBBBBBB),
-                            )
-                        }
-                    }
-                }
-
-                // Top few lines of creator bio as a blurb
-                val displayBio = (character.bio ?: character.description).orEmpty().trim()
-                if (displayBio.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = displayBio,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f),
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Primary Action: Import to Hub
+                // Primary Action: Import to Hub (positioned right below title)
                 Button(
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
@@ -593,6 +581,184 @@ fun SettingJanitorPage() {
                         JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
                     } else {
                         Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3 Inspection Tabs (Notes, Personality, Greetings)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(sheetBgColor)
+                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(14.dp))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    sheetTabTitles.forEachIndexed { index, title ->
+                        val isSelected = sheetSelectedTab == index
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (isSelected) {
+                                        Color.White.copy(alpha = 0.16f)
+                                    } else Color.Transparent
+                                )
+                                .clickable { sheetSelectedTab = index }
+                                .padding(horizontal = 4.dp, vertical = 9.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = title,
+                                fontSize = 13.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) contentTextColor else contentTextColor.copy(alpha = 0.6f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                AnimatedContent(
+                    targetState = sheetSelectedTab,
+                    transitionSpec = {
+                        val isForward = targetState > initialState
+                        (fadeIn(animationSpec = tween(220)) + slideInHorizontally(animationSpec = tween(220)) { width -> if (isForward) width / 4 else -width / 4 }) togetherWith
+                            (fadeOut(animationSpec = tween(180)) + slideOutHorizontally(animationSpec = tween(180)) { width -> if (isForward) -width / 4 else width / 4 })
+                    },
+                    label = "JanitorSheetTabsContent"
+                ) { tab ->
+                    when (tab) {
+                        0 -> {
+                            // Notes Tab — creator notes / bio
+                            val displayNotes = (character.bio ?: character.description).orEmpty().trim()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(sheetBgColor)
+                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                    .padding(16.dp),
+                            ) {
+                                if (displayNotes.isNotBlank()) {
+                                    Text(
+                                        text = displayNotes,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = contentTextColor.copy(alpha = 0.9f),
+                                        maxLines = 10,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                } else {
+                                    Text(
+                                        text = "No notes available.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.5f),
+                                    )
+                                }
+                            }
+                        }
+                        1 -> {
+                            // Personality Tab — system prompt / definition
+                            val systemPrompt = character.systemPrompt ?: ""
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(sheetBgColor)
+                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                    .padding(16.dp),
+                            ) {
+                                if (systemPrompt.isNotBlank()) {
+                                    Text(
+                                        text = systemPrompt,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = contentTextColor.copy(alpha = 0.9f),
+                                        maxLines = 10,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                } else {
+                                    Text(
+                                        text = "No system prompt defined.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.5f),
+                                    )
+                                }
+                            }
+                        }
+                        2 -> {
+                            // Greetings Tab — first message + alternate greetings
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                val firstMessage = character.firstMessage.orEmpty()
+                                if (firstMessage.isNotBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(sheetBgColor)
+                                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                            .padding(16.dp),
+                                    ) {
+                                        Text(
+                                            text = "First Message",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = contentTextColor.copy(alpha = 0.7f),
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = firstMessage,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = contentTextColor.copy(alpha = 0.9f),
+                                            maxLines = 8,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                }
+                                character.alternateGreetings.forEachIndexed { index, greeting ->
+                                    if (greeting.isNotBlank()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(sheetBgColor)
+                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                .padding(16.dp),
+                                        ) {
+                                            Text(
+                                                text = "Greeting #${index + 1}",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = contentTextColor.copy(alpha = 0.7f),
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = greeting,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = contentTextColor.copy(alpha = 0.9f),
+                                                maxLines = 6,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                }
+                                if (firstMessage.isBlank() && character.alternateGreetings.all { it.isBlank() }) {
+                                    Text(
+                                        text = "No greetings defined.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.5f),
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -738,12 +904,12 @@ private fun CharacterCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            FlowRow(
+            // Horizontally scrollable tag pills — never covers the portrait
+            LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                character.tags.forEach { tagId ->
+                items(character.tags, key = { it }) { tagId ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
@@ -766,18 +932,37 @@ private fun CharacterCard(
     }
 }
 
-private fun extractToAssistant(extract: JanitorExtractResponse): Assistant {
+private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settings): Assistant {
     val name = extract.name ?: "Imported Character"
-    val bio = extract.bio ?: extract.description ?: ""
     val creator = extract.creator ?: extract.creatorName
     val avatarUrl = resolveAvatarUrl(extract.avatarHash ?: extract.avatarHash2)
+    val systemPrompt = extract.systemPrompt ?: ""
+    val creatorNotes = extract.description ?: ""
+
+    // Map firstMessage to presetMessages as an assistant greeting
+    val presetMessages = extract.firstMessage.takeIf { it.isNotBlank() }?.let { message ->
+        listOf(
+            UIMessage(
+                role = MessageRole.ASSISTANT,
+                parts = listOf(UIMessagePart.Text(message)),
+            )
+        )
+    } ?: emptyList()
+
+    // Register string tags into settings.assistantTags, assigning tag UUIDs to assistant.tags
+    val registeredTagIds = extract.tags.filter { it.isNotBlank() }.map { tagName ->
+        settings.assistantTags.find { it.name == tagName }?.id ?: Uuid.random()
+    }
+
     return Assistant(
         name = name,
         avatar = if (avatarUrl.isBlank()) Avatar.Dummy else Avatar.Image(avatarUrl),
-        systemPrompt = extract.systemPrompt ?: bio,
+        systemPrompt = systemPrompt,
+        presetMessages = presetMessages,
         alternateGreetings = extract.alternateGreetings,
         creator = creator,
+        creatorNotes = creatorNotes,
         characterVersion = extract.id,
-        creatorNotes = "Imported from JanitorAI Hub",
+        tags = registeredTagIds,
     )
 }
