@@ -1986,16 +1986,16 @@ private fun parseContentWithImages(text: String): List<ContentSegment> {
 
     markdownRegex.findAll(text).forEach { m ->
         if (m.groupValues.size > 2) {
-            allMatches.add(m.range.first, m.range.last, m.groupValues[2])
+            allMatches.add(Triple(m.range.first, m.range.last, m.groupValues[2]))
         }
     }
     htmlImgRegex.findAll(text).forEach { m ->
         if (m.groupValues.size > 1) {
-            allMatches.add(m.range.first, m.range.last, m.groupValues[1])
+            allMatches.add(Triple(m.range.first, m.range.last, m.groupValues[1]))
         }
     }
     rawUrlRegex.findAll(text).forEach { m ->
-        allMatches.add(m.range.first, m.range.last, m.value)
+        allMatches.add(Triple(m.range.first, m.range.last, m.value))
     }
 
     allMatches.sortBy { it.first }

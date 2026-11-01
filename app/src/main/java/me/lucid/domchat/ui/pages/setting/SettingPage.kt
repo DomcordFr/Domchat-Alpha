@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -332,7 +333,6 @@ fun SettingPage(
                         Text(
                             "Search settings, models, personas...",
                             maxLines = 1,
-                            singleLine = true,
                             overflow = TextOverflow.Ellipsis,
                         )
                     },

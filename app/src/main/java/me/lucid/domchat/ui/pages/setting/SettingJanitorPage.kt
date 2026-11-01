@@ -754,7 +754,6 @@ fun SettingJanitorPage() {
                                     Text(
                                         "Search characters or paste Janitor bot URL...",
                                         maxLines = 1,
-                                        singleLine = true,
                                         overflow = TextOverflow.Ellipsis,
                                     )
                                 },
