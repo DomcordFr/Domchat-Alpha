@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -50,10 +53,12 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -120,6 +125,9 @@ data class JanitorCharacter(
     @SerialName("tags") val tags: List<String> = emptyList(),
     @SerialName("avatar") val avatarHash: String? = null,
     @SerialName("avatar_hash") val avatarHash2: String? = null,
+    @SerialName("systemPrompt") val systemPrompt: String? = null,
+    @SerialName("firstMessage") val firstMessage: String? = null,
+    @SerialName("alternateGreetings") val alternateGreetings: List<String> = emptyList(),
 )
 
 @Serializable
@@ -187,15 +195,12 @@ fun SettingJanitorPage() {
 
     var isImporting by remember { mutableStateOf(false) }
 
-    val isLoading: Boolean
-        get() = isTabSwitching || activeState is JanitorLoadState.Loading
-
     val activeState: JanitorLoadState = if (selectedTab == 2) searchState else browseState
     val currentItems: List<JanitorCharacter> = when (activeState) {
         is JanitorLoadState.Success -> activeState.items
         else -> emptyList()
     }
-    val isLoading: Boolean = activeState is JanitorLoadState.Loading
+    val isLoading: Boolean = isTabSwitching || activeState is JanitorLoadState.Loading
     val loadError: String? = when (activeState) {
         is JanitorLoadState.Error -> activeState.message
         else -> null
@@ -625,7 +630,7 @@ fun SettingJanitorPage() {
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                AnimatedContent(
+                AnimatedContent<Int>(
                     targetState = sheetSelectedTab,
                     transitionSpec = {
                         val isForward = targetState > initialState
@@ -940,7 +945,7 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
     val creatorNotes = extract.description ?: ""
 
     // Map firstMessage to presetMessages as an assistant greeting
-    val presetMessages = extract.firstMessage.takeIf { it.isNotBlank() }?.let { message ->
+    val presetMessages = extract.firstMessage?.takeIf { it.isNotBlank() }?.let { message ->
         listOf(
             UIMessage(
                 role = MessageRole.ASSISTANT,
