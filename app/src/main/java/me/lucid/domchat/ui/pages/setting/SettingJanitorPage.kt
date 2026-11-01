@@ -71,6 +71,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -246,13 +247,13 @@ fun SettingJanitorPage() {
     var browseState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var searchState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var isTabSwitching by remember { mutableStateOf(false) }
-    var feedMode by remember { mutableStateOf("Popular") }
-    var page by remember { mutableIntStateOf(1) }
+    var feedMode by rememberSaveable { mutableStateOf("Popular") }
+    var page by rememberSaveable { mutableIntStateOf(1) }
     var isLoadingMore by remember { mutableStateOf(false) }
     var feedMenuOpen by remember { mutableStateOf(false) }
     var sortMenuOpen by remember { mutableStateOf(false) }
     var filterMenuOpen by remember { mutableStateOf(false) }
-    var sortMode by remember { mutableStateOf("Trending 24h") }
+    var sortMode by rememberSaveable { mutableStateOf("Trending 24h") }
     var filterTags by remember { mutableStateOf(emptySet<String>()) }
 
     var selectedCharacter by remember { mutableStateOf<JanitorCharacter?>(null) }
@@ -1003,7 +1004,21 @@ fun SettingJanitorPage() {
         ModalBottomSheet(
             containerColor = sheetBgColor,
             shape = sheetShape,
-            dragHandle = null,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 36.dp, height = 4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.White.copy(alpha = 0.35f))
+                    )
+                }
+            },
             sheetGesturesEnabled = false,
             modifier = Modifier.border(
                 0.5.dp,
@@ -1012,7 +1027,11 @@ fun SettingJanitorPage() {
             ),
             contentColor = contentTextColor,
             onDismissRequest = {
-                selectedCharacter = null
+                scope.launch {
+                    bottomSheetState.hide()
+                }.invokeOnCompletion {
+                    selectedCharacter = null
+                }
             },
             sheetState = bottomSheetState,
         ) {
@@ -1077,7 +1096,13 @@ fun SettingJanitorPage() {
                         )
                         // Close/cross button top-end corner over hero image
                         IconButton(
-                            onClick = { selectedCharacter = null },
+                            onClick = {
+                                scope.launch {
+                                    bottomSheetState.hide()
+                                }.invokeOnCompletion {
+                                    selectedCharacter = null
+                                }
+                            },
                             modifier = Modifier
                                 .padding(top = 12.dp, end = 12.dp)
                                 .align(Alignment.TopEnd)
@@ -1126,14 +1151,14 @@ fun SettingJanitorPage() {
                                 items(character.tags, key = { it }) { tagId ->
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(Color(0xFF141520))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(Color(0xFF000000))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                                            .padding(horizontal = 10.dp, vertical = 4.dp),
                                     ) {
                                         Text(
                                             text = tagId.replace("_", " ").trim(),
-                                            fontSize = 11.sp,
+                                            fontSize = 11.5.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White.copy(alpha = 0.92f),
                                         )
@@ -1682,7 +1707,7 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         alternateGreetings = extract.alternateGreetings,
         creator = creator,
         creatorNotes = creatorNotes,
-        characterVersion = extract.id,
+        characterVersion = extract.characterVersion ?: "",
         tags = registeredTagIds,
     )
 }

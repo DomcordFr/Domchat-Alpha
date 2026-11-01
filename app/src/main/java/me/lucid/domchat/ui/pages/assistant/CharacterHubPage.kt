@@ -90,6 +90,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Assistant
+import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.utils.truncateCreator
 import android.net.Uri
@@ -481,6 +482,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     items(filteredAssistants, key = { it.id.toString() }) { char ->
                         CharacterPortraitCard(
                             assistant = char,
+                            settings = settings,
                             isDark = isDark,
                             onClick = { inspectingAssistant = char }
                         )
@@ -635,6 +637,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     inspectingAssistant?.let { char ->
         CharacterInspectorSheet(
             assistant = char,
+            settings = settings,
             isDark = isDark,
             ttsProviders = settings.ttsProviders,
             catalogSnapshot = catalogSnapshot,
@@ -900,11 +903,19 @@ fun FullCharacterCardImage(
 @Composable
 fun CharacterPortraitCard(
     assistant: Assistant,
+    settings: Settings,
     isDark: Boolean,
     onClick: () -> Unit
 ) {
     val tagList = assistant.tags
     val tagListState = rememberLazyListState()
+
+    // Resolve tag UUIDs to display names via settings.assistantTags; filter out raw UUIDs and missing names
+    val resolvedTagNames = tagList.mapNotNull { tagId ->
+        settings.assistantTags.find { it.id == tagId }?.name?.takeIf { name ->
+            name.isNotBlank() && name.length <= 20 && !name.contains("-")
+        }
+    }.distinct()
 
     Box(
         modifier = Modifier
@@ -974,17 +985,17 @@ fun CharacterPortraitCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                items(tagList, key = { it.toString() }) { tagId ->
+                items(resolvedTagNames, key = { it }) { tagName ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(Color(0xFF000000))
                             .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
                     ) {
                     Text(
-                        text = tagId.toString().replace("_", " "),
-                        fontSize = 10.sp,
+                        text = tagName.replace("_", " "),
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White.copy(alpha = 0.92f),
                         maxLines = 1,
@@ -1121,6 +1132,7 @@ fun CharacterHubErrorCard(
 @Composable
 fun CharacterInspectorSheet(
     assistant: Assistant,
+    settings: Settings,
     isDark: Boolean,
     ttsProviders: List<TTSProviderSetting> = emptyList(),
     catalogSnapshot: ModelCatalogSnapshot? = null,
@@ -1151,7 +1163,21 @@ fun CharacterInspectorSheet(
         sheetGesturesEnabled = false,
         containerColor = sheetBgColor,
         contentColor = contentTextColor,
-        dragHandle = null,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.White.copy(alpha = 0.35f))
+                )
+            }
+        },
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
@@ -1198,15 +1224,23 @@ fun CharacterInspectorSheet(
 
                 // Embedded images gallery (from bio/description or firstMessage markdown)
                 val embeddedImageUrls = remember(assistant) {
+                    val list = mutableListOf<String>()
                     val markdownText = listOf(
                         assistant.creatorNotes.orEmpty(),
                         assistant.systemPrompt,
                         assistant.firstMessage
                     ).joinToString("\n")
-                    Regex("!\\[[^\\]]*\\]\\(([^)]+)\\)").findAll(markdownText)
-                        .map { it.groupValues[1] }
-                        .filter { it.isNotBlank() }
-                        .toList()
+                    val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
+                    val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+                    val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+                    markdownRegex.findAll(markdownText).forEach { m ->
+                        if (m.groupValues.size > 2) list.add(m.groupValues[2])
+                    }
+                    htmlImgRegex.findAll(markdownText).forEach { m ->
+                        if (m.groupValues.size > 1) list.add(m.groupValues[1])
+                    }
+                    rawUrlRegex.findAll(markdownText).forEach { m -> list.add(m.value) }
+                    list.filter { it.isNotBlank() }.distinct()
                 }
                 if (embeddedImageUrls.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -1290,19 +1324,65 @@ fun CharacterInspectorSheet(
                             )
                         }
                         if (!assistant.characterVersion.isNullOrBlank()) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(cardBgColor)
-                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "v${assistant.characterVersion}",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFBBBBBB)
-                                )
+                            val version = assistant.characterVersion ?: ""
+                            val isUuidLike = version.length > 20 || version.contains("-")
+                            if (!isUuidLike) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(cardBgColor)
+                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "v${assistant.characterVersion}",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFFBBBBBB)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Horizontal scrollable tag pill row — resolves names from settings.assistantTags
+                    val resolvedSheetTags = assistant.tags.mapNotNull { tagId ->
+                        settings.assistantTags.find { it.id == tagId }?.name?.takeIf { name ->
+                            name.isNotBlank() && name.length <= 20 && !name.contains("-")
+                        }
+                    }.distinct()
+                    if (resolvedSheetTags.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Tags",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = contentTextColor.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val tagRowState = rememberLazyListState()
+                        LazyRow(
+                            state = tagRowState,
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            items(resolvedSheetTags, key = { it }) { tagName ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color(0xFF000000))
+                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        text = tagName.replace("_", " "),
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White.copy(alpha = 0.92f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
@@ -1528,9 +1608,42 @@ fun CharacterInspectorSheet(
                                 ) {
                                     val notes = assistant.creatorNotes?.trim().orEmpty()
                                     if (notes.isNotBlank()) {
-                                        MarkdownBlock(
-                                            content = formatRoleplayTextWithCdnImages(notes)
-                                        )
+                                        val notesSegments = parseContentWithImages(notes)
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            notesSegments.forEach { segment ->
+                                                when (segment) {
+                                                    is ContentSegment.Text -> {
+                                                        Text(
+                                                            text = segment.text,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = contentTextColor.copy(alpha = 0.9f),
+                                                        )
+                                                    }
+                                                    is ContentSegment.Image -> {
+                                                        val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(160.dp)
+                                                                .clip(RoundedCornerShape(12.dp))
+                                                                .background(Color(0xFF141520))
+                                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                                                .clickable {
+                                                                    viewerImageUrls = embeddedImageUrls.toList()
+                                                                    viewerCurrentPage = imageIndex
+                                                                    viewerOpen = true
+                                                                },
+                                                        ) {
+                                                            AsyncImage(
+                                                                model = segment.url,
+                                                                contentDescription = null,
+                                                                modifier = Modifier.fillMaxSize(),
+                                                                alignment = Alignment.Center,
+                                                                contentScale = ContentScale.Crop
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
                                     } else {
                                         Text(
                                             text = "No creator notes provided for this character.",
@@ -1679,9 +1792,43 @@ fun CharacterInspectorSheet(
                                                     .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                                     .padding(16.dp)
                                             ) {
-                                                MarkdownBlock(
-                                                    content = formatRoleplayTextWithCdnImages(greetingText)
-                                                )
+                                                val greetingSegments = parseContentWithImages(greetingText)
+                                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    greetingSegments.forEach { segment ->
+                                                        when (segment) {
+                                                            is ContentSegment.Text -> {
+                                                                Text(
+                                                                    text = segment.text,
+                                                                    style = MaterialTheme.typography.bodyMedium,
+                                                                    color = contentTextColor.copy(alpha = 0.9f),
+                                                                )
+                                                            }
+                                                            is ContentSegment.Image -> {
+                                                                val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .size(160.dp)
+                                                                        .clip(RoundedCornerShape(12.dp))
+                                                                        .background(Color(0xFF141520))
+                                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                                                        .clickable {
+                                                                            viewerImageUrls = embeddedImageUrls.toList()
+                                                                            viewerCurrentPage = imageIndex
+                                                                            viewerOpen = true
+                                                                        },
+                                                                ) {
+                                                                    AsyncImage(
+                                                                        model = segment.url,
+                                                                        contentDescription = null,
+                                                                        modifier = Modifier.fillMaxSize(),
+                                                                        alignment = Alignment.Center,
+                                                                        contentScale = ContentScale.Crop
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -1812,6 +1959,75 @@ private fun sanitizeHtml(html: String?): String {
         .replace(Regex("\\s+"), " ")
         .trim()
     return result
+}
+
+/**
+ * Represents a segment of content that can be either plain text or an embedded image URL.
+ * Used to render text with inline images at their exact positions in the flow.
+ */
+private sealed interface ContentSegment {
+    data class Text(val text: String) : ContentSegment
+    data class Image(val url: String) : ContentSegment
+}
+
+/**
+ * Parses a text string into a list of [ContentSegment]s, extracting markdown images
+ * (![alt](url)), HTML images (<img src='url'>), and raw image URLs. Text between images
+ * is preserved as [ContentSegment.Text], and each image URL becomes a [ContentSegment.Image].
+ */
+private fun parseContentWithImages(text: String): List<ContentSegment> {
+    val segments = mutableListOf<ContentSegment>()
+
+    val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
+    val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+    val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+
+    val allMatches = mutableListOf<Triple<Int, Int, String>>()
+
+    markdownRegex.findAll(text).forEach { m ->
+        if (m.groupValues.size > 2) {
+            allMatches.add(m.range.first, m.range.last, m.groupValues[2])
+        }
+    }
+    htmlImgRegex.findAll(text).forEach { m ->
+        if (m.groupValues.size > 1) {
+            allMatches.add(m.range.first, m.range.last, m.groupValues[1])
+        }
+    }
+    rawUrlRegex.findAll(text).forEach { m ->
+        allMatches.add(m.range.first, m.range.last, m.value)
+    }
+
+    allMatches.sortBy { it.first }
+
+    val filtered = mutableListOf<Triple<Int, Int, String>>()
+    var lastEnd = -1
+    for ((start, end, url) in allMatches) {
+        if (start > lastEnd) {
+            filtered.add(Triple(start, end, url))
+            lastEnd = end
+        }
+    }
+
+    var textPos = 0
+    for ((start, end, url) in filtered) {
+        if (start > textPos) {
+            segments.add(ContentSegment.Text(text.substring(textPos, start)))
+        }
+        segments.add(ContentSegment.Image(url))
+        textPos = end + 1
+    }
+
+    if (textPos < text.length) {
+        segments.add(ContentSegment.Text(text.substring(textPos)))
+    }
+
+    return segments.filter { segment ->
+        when (segment) {
+            is ContentSegment.Text -> segment.text.isNotBlank()
+            is ContentSegment.Image -> segment.url.isNotBlank()
+        }
+    }
 }
 
 /**
