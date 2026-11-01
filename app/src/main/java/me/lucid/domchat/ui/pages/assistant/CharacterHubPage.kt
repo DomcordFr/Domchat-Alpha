@@ -88,6 +88,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.debounce
@@ -185,6 +186,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val toaster: AppToasterState? = LocalToaster.current
+    val haptics = rememberPremiumHaptics()
 
     var pendingExportJson by remember { mutableStateOf("") }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -436,9 +438,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         onClick = { sortMenuOpen = true },
                                     ) {
                                         Row(
-                                            modifier = Modifier
-                                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                                                .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
@@ -490,12 +491,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.RECENT) {
-                                                Icon(
-                                                    imageVector = Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             } else null
                                         )
                                         DropdownMenuItem(
@@ -512,12 +515,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.NAME) {
-                                                Icon(
-                                                    imageVector = Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             } else null
                                         )
                                         DropdownMenuItem(
@@ -534,12 +539,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
-                                                Icon(
-                                                    imageVector = Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             } else null
                                         )
                                     }
@@ -558,9 +565,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     onClick = { filterMenuOpen = true }
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                                            .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
@@ -642,89 +648,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         )
                     }
 
-                    // Filter Dialog - glassy tag filter sheet
-                    if (filterMenuOpen) {
-                        Dialog(onDismissRequest = { filterMenuOpen = false }) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(28.dp))
-                                    .background(Color(0xFF000000))
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(28.dp))
-                                    .padding(20.dp)
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "Filter by Tags",
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                                                                                                            ),
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                        IconButton(onClick = { filterMenuOpen = false }) {
-                                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                                        }
-                                    }
-
-                                    val allTags = settings.assistantTags
-                                    FlowRow(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        allTags.forEach { tag ->
-                                            val isSelected = selectedTagIds.contains(tag.id.toString())
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(20.dp))
-                                                    .background(if (isSelected) Color.White.copy(alpha = 0.20f) else Color.Transparent)
-                                                    .border(
-                                                        0.5.dp,
-                                                        if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-                                                        RoundedCornerShape(20.dp)
-                                                    )
-                                                    .clickable {
-                                                        haptics.perform(HapticPattern.Pop)
-                                                        selectedTagIds = if (isSelected) {
-                                                            selectedTagIds - tag.id.toString()
-                                                        } else {
-                                                            selectedTagIds + tag.id.toString()
-                                                        }
-                                                    }
-                                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                                            ) {
-                                                Text(
-                                                    text = tag.name,
-                                                    fontSize = 12.sp,
-                                                    color = Color.White,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.End
-                                    ) {
-                                        TextButton(onClick = {
-                                            selectedTagIds = emptySet()
-                                            filterMenuOpen = false
-                                        }) {
-                                            Text("Reset", color = Color(0xFF8A8A96))
-                                        }
-                                        TextButton(onClick = { filterMenuOpen = false }) {
-                                            Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             } else {
                 LazyColumn(
@@ -803,9 +726,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         onClick = { sortMenuOpen = true },
                                     ) {
                                         Row(
-                                            modifier = Modifier
-                                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                                                .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
@@ -857,12 +779,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.RECENT) {
-                                                Icon(
-                                                    imageVector = Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             } else null
                                         )
                                         DropdownMenuItem(
@@ -879,12 +803,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.NAME) {
-                                                Icon(
-                                                    imageVector = Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             } else null
                                         )
                                         DropdownMenuItem(
@@ -901,12 +827,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
-                                                Icon(
-                                                    imageVector = Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             } else null
                                         )
                                     }
@@ -925,9 +853,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     onClick = { filterMenuOpen = true }
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                                            .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
@@ -1006,6 +933,89 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             isDark = isDark,
                             onClick = { inspectingAssistant = char }
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    // Filter Dialog - glassy tag filter sheet
+    if (filterMenuOpen) {
+        Dialog(onDismissRequest = { filterMenuOpen = false }) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color(0xFF000000))
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(28.dp))
+                    .padding(20.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Filter by Tags",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        IconButton(onClick = { filterMenuOpen = false }) {
+                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                        }
+                    }
+
+                    val allTags = settings.assistantTags
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        allTags.forEach { tag ->
+                            val isSelected = selectedTagIds.contains(tag.id.toString())
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(if (isSelected) Color.White.copy(alpha = 0.20f) else Color.Transparent)
+                                    .border(
+                                        0.5.dp,
+                                        if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                        RoundedCornerShape(20.dp)
+                                    )
+                                    .clickable {
+                                        haptics.perform(HapticPattern.Pop)
+                                        selectedTagIds = if (isSelected) {
+                                            selectedTagIds - tag.id.toString()
+                                        } else {
+                                            selectedTagIds + tag.id.toString()
+                                        }
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = tag.name,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = {
+                            selectedTagIds = emptySet()
+                            filterMenuOpen = false
+                        }) {
+                            Text("Reset", color = Color(0xFF8A8A96))
+                        }
+                        TextButton(onClick = { filterMenuOpen = false }) {
+                            Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
