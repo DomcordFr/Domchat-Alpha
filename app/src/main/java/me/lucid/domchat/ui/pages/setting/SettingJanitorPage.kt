@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.animateItem
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -1052,7 +1051,7 @@ fun SettingJanitorPage() {
             containerColor = sheetBgColor,
             shape = sheetShape,
             dragHandle = null,
-            windowInsets = WindowInsets(0, 0, 0, 0),
+            contentWindowInsets = WindowInsets(0.dp),
             sheetGesturesEnabled = false,
             modifier = Modifier.border(
                 0.5.dp,
@@ -1216,9 +1215,9 @@ fun SettingJanitorPage() {
                                 fullExtract?.firstMessage ?: character.firstMessage.orEmpty(),
                                 (fullExtract?.alternateGreetings ?: character.alternateGreetings).joinToString("\n")
                             )
-                            val markdownRegex = Regex("!\\[([^\]]*)\\]\\(([^)]+)\\)")
-                            val htmlImgRegex = Regex("<img[^>]+src=['"]([^'"]+)['"]", RegexOption.IGNORE_CASE)
-                            val rawUrlRegex = Regex("https?://[^\\s<>"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+                            val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
+                            val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+                            val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
                             for (text in textBlobs) {
                                 markdownRegex.findAll(text).forEach { m -> if (m.groupValues.size > 2) list.add(m.groupValues[2]) }
                                 htmlImgRegex.findAll(text).forEach { m -> if (m.groupValues.size > 1) list.add(m.groupValues[1]) }
@@ -1970,11 +1969,8 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         imgUrl.isNotBlank() && !rawNotes.contains(imgUrl) && !(extract.systemPrompt ?: "").contains(imgUrl) && !(extract.firstMessage ?: "").contains(imgUrl)
     }
     val creatorNotes = if (missingEmbedded.isNotEmpty()) {
-        val extraMarkdown = missingEmbedded.joinToString("
-") { "![Image]($it)" }
-        if (rawNotes.isNotBlank()) "$rawNotes
-
-$extraMarkdown" else extraMarkdown
+        val extraMarkdown = missingEmbedded.joinToString("\n") { "![Image]($it)" }
+        if (rawNotes.isNotBlank()) "$rawNotes\n\n$extraMarkdown" else extraMarkdown
     } else {
         rawNotes
     }

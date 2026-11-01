@@ -1575,7 +1575,7 @@ fun CharacterInspectorSheet(
         containerColor = sheetBgColor,
         contentColor = contentTextColor,
         dragHandle = null,
-        windowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets(0.dp),
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
