@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.animateItem
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -53,6 +54,10 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -218,6 +223,59 @@ private fun sanitizeHtml(html: String?): String {
     return result
 }
 
+private sealed interface ContentSegment {
+    data class Text(val text: String) : ContentSegment
+    data class Image(val url: String) : ContentSegment
+}
+
+private fun parseContentWithImages(text: String): List<ContentSegment> {
+    val segments = mutableListOf<ContentSegment>()
+    val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
+    val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+    val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+
+    val allMatches = mutableListOf<Triple<Int, Int, String>>()
+    markdownRegex.findAll(text).forEach { m ->
+        if (m.groupValues.size > 2) allMatches.add(Triple(m.range.first, m.range.last, m.groupValues[2]))
+    }
+    htmlImgRegex.findAll(text).forEach { m ->
+        if (m.groupValues.size > 1) allMatches.add(Triple(m.range.first, m.range.last, m.groupValues[1]))
+    }
+    rawUrlRegex.findAll(text).forEach { m ->
+        allMatches.add(Triple(m.range.first, m.range.last, m.value))
+    }
+
+    allMatches.sortBy { it.first }
+    val filtered = mutableListOf<Triple<Int, Int, String>>()
+    var lastEnd = -1
+    for ((start, end, url) in allMatches) {
+        if (start > lastEnd) {
+            filtered.add(Triple(start, end, url))
+            lastEnd = end
+        }
+    }
+
+    var textPos = 0
+    for ((start, end, url) in filtered) {
+        if (start > textPos) {
+            segments.add(ContentSegment.Text(text.substring(textPos, start)))
+        }
+        segments.add(ContentSegment.Image(url))
+        textPos = end + 1
+    }
+
+    if (textPos < text.length) {
+        segments.add(ContentSegment.Text(text.substring(textPos)))
+    }
+
+    return segments.filter { segment ->
+        when (segment) {
+            is ContentSegment.Text -> segment.text.isNotBlank()
+            is ContentSegment.Image -> segment.url.isNotBlank()
+        }
+    }
+}
+
 /**
  * Normalizes a tag string for comparison by stripping emojis and non-alphanumeric characters,
  * then lowercasing. So "👩 Female" becomes "female", matching "female", "FEMALE", etc.
@@ -280,9 +338,6 @@ fun SettingJanitorPage() {
     var viewerOpen by remember { mutableStateOf(false) }
     var viewerCurrentPage by remember { mutableIntStateOf(0) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    var isImporting by remember { mutableStateOf(false) }
-    var importStatus by remember { mutableStateOf(ImportStatus.IDLE) }
 
     val activeState: JanitorLoadState = if (searchQuery.isNotBlank()) searchState else browseState
     val currentItems: List<JanitorCharacter> = when (activeState) {
@@ -449,75 +504,6 @@ fun SettingJanitorPage() {
         }
     }
 
-    fun importCharacter(character: JanitorCharacter) {
-        scope.launch {
-            try {
-                isImporting = true
-                val response = withContext(Dispatchers.IO) {
-                    httpClient.execute(
-                        PlatformHttpRequest(
-                            method = "POST",
-                            url = "$JANITOR_BASE_URL/api/extract",
-                            body = JsonInstant.encodeToString(JanitorExtractRequest(botId = character.id, characterId = character.id)).toByteArray(),
-                            mediaType = "application/json",
-                        )
-                    )
-                }
-                if (response.statusCode in 200..299) {
-                    val json = String(response.body, charset = Charsets.UTF_8)
-                    val extract = JsonInstant.decodeFromString<JanitorExtractResponse>(json)
-                    withContext(Dispatchers.Main) {
-                        // Register new tags into settings.assistantTags first, so UUIDs are stable
-                        val newTagNames = extract.tags.filter { tagName ->
-                            tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
-                        }
-                        val updatedSettings = if (newTagNames.isNotEmpty()) {
-                            val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
-                            assistantVM.updateSettings(
-                                settings.copy(
-                                    assistantTags = settings.assistantTags + newTags
-                                )
-                            )
-                            settings.copy(assistantTags = settings.assistantTags + newTags)
-                        } else {
-                            settings
-                        }
-                        val assistant = extractToAssistant(extract, updatedSettings)
-                        assistantVM.addAssistant(assistant)
-                        isImporting = false
-                        importStatus = ImportStatus.SUCCESS
-                        selectedCharacter = null
-                        haptics.perform(HapticPattern.Success)
-                        scope.launch {
-                            delay(750)
-                            if (importStatus == ImportStatus.SUCCESS) {
-                                bottomSheetState.hide()
-                            }
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        isImporting = false
-                        importStatus = ImportStatus.ERROR
-                    }
-                    toaster.show(
-                        message = "Import failed: HTTP ${response.statusCode}",
-                        type = ToastType.Error,
-                    )
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    isImporting = false
-                    importStatus = ImportStatus.ERROR
-                }
-                toaster.show(
-                    message = "Import failed: ${e.message ?: e.toString()}",
-                    type = ToastType.Error,
-                )
-            }
-        }
-    }
-
     LaunchedEffect(Unit) {
         loadBrowse("24h")
     }
@@ -624,9 +610,11 @@ fun SettingJanitorPage() {
                                     DropdownMenu(
                                         expanded = feedMenuOpen,
                                         onDismissRequest = { feedMenuOpen = false },
+                                        shape = RoundedCornerShape(20.dp),
+                                        containerColor = Color(0xFF000000),
                                         modifier = Modifier
                                             .background(Color(0xFF000000))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
                                     ) {
                                         listOf("Popular", "Trending", "Trending 24h", "Latest").forEach { option ->
                                             val isSelected = feedMode == option
@@ -1015,6 +1003,22 @@ fun SettingJanitorPage() {
         val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
         val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
+        var isImporting by remember(character.id) { mutableStateOf(false) }
+        var importStatus by remember(character.id) { mutableStateOf(ImportStatus.IDLE) }
+        val isAlreadyInHub = remember(character.name, settings.assistants) {
+            settings.assistants.any { it.name.trim().equals(character.name.trim(), ignoreCase = true) }
+        }
+
+        var isDismissing by remember { mutableStateOf(false) }
+        fun dismissWithAnimation() {
+            if (isDismissing) return
+            isDismissing = true
+            scope.launch {
+                bottomSheetState.hide()
+                selectedCharacter = null
+            }
+        }
+
         var sheetSelectedTab by remember { mutableIntStateOf(0) }
         val sheetTabTitles = listOf("Notes", "Personality", "Greetings")
 
@@ -1047,6 +1051,8 @@ fun SettingJanitorPage() {
         ModalBottomSheet(
             containerColor = sheetBgColor,
             shape = sheetShape,
+            dragHandle = null,
+            windowInsets = WindowInsets(0, 0, 0, 0),
             sheetGesturesEnabled = false,
             modifier = Modifier.border(
                 0.5.dp,
@@ -1054,13 +1060,7 @@ fun SettingJanitorPage() {
                 sheetShape,
             ),
             contentColor = contentTextColor,
-            onDismissRequest = {
-                scope.launch {
-                    bottomSheetState.hide()
-                }.invokeOnCompletion {
-                    selectedCharacter = null
-                }
-            },
+            onDismissRequest = { dismissWithAnimation() },
             sheetState = bottomSheetState,
         ) {
             me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -1124,7 +1124,7 @@ fun SettingJanitorPage() {
                                             )
                                         )
                                     )
-                                )
+                            )
                             // Drag handle overlaid at top center over hero image
                             Box(
                                 modifier = Modifier
@@ -1141,13 +1141,7 @@ fun SettingJanitorPage() {
                         }
                         // Close/cross button top-end corner over hero image
                         IconButton(
-                            onClick = {
-                                scope.launch {
-                                    bottomSheetState.hide()
-                                }.invokeOnCompletion {
-                                    selectedCharacter = null
-                                }
-                            },
+                            onClick = { dismissWithAnimation() },
                             modifier = Modifier
                                 .padding(top = 12.dp, end = 12.dp)
                                 .align(Alignment.TopEnd)
@@ -1220,10 +1214,15 @@ fun SettingJanitorPage() {
                                 fullExtract?.bio ?: character.bio.orEmpty(),
                                 fullExtract?.description ?: character.description.orEmpty(),
                                 fullExtract?.firstMessage ?: character.firstMessage.orEmpty(),
+                                (fullExtract?.alternateGreetings ?: character.alternateGreetings).joinToString("\n")
                             )
-                            val imgRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+                            val markdownRegex = Regex("!\\[([^\]]*)\\]\\(([^)]+)\\)")
+                            val htmlImgRegex = Regex("<img[^>]+src=['"]([^'"]+)['"]", RegexOption.IGNORE_CASE)
+                            val rawUrlRegex = Regex("https?://[^\\s<>"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
                             for (text in textBlobs) {
-                                imgRegex.findAll(text).forEach { m -> list.add(m.value) }
+                                markdownRegex.findAll(text).forEach { m -> if (m.groupValues.size > 2) list.add(m.groupValues[2]) }
+                                htmlImgRegex.findAll(text).forEach { m -> if (m.groupValues.size > 1) list.add(m.groupValues[1]) }
+                                rawUrlRegex.findAll(text).forEach { m -> list.add(m.value) }
                             }
                             list.filter { it.isNotBlank() }.distinct()
                         }
@@ -1267,46 +1266,67 @@ fun SettingJanitorPage() {
 
                         // Primary Action: Import to Hub
                         Spacer(modifier = Modifier.height(14.dp))
+                        val buttonBgColor = when (importStatus) {
+                            ImportStatus.SUCCESS -> Color(0xFF2E7D32)
+                            ImportStatus.ERROR -> Color(0xFFD32F2F)
+                            else -> Color.White
+                        }
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    if (importStatus == ImportStatus.SUCCESS) Color(0xFF2E7D32)
-                                    else if (importStatus == ImportStatus.ERROR) Color(0xFFD32F2F)
-                                    else Color.White
-                                )
-                                .clickable {
+                                .background(buttonBgColor)
+                                .clickable(enabled = !isImporting && importStatus != ImportStatus.SUCCESS) {
                                     haptics.perform(HapticPattern.Pop)
-                                    val extractToUse = fullExtract
-                                    if (extractToUse != null) {
-                                        val newTagNames = extractToUse.tags.filter { tagName ->
-                                            tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
-                                        }
-                                        val updatedSettings = if (newTagNames.isNotEmpty()) {
-                                            val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
-                                            assistantVM.updateSettings(
-                                                settings.copy(assistantTags = settings.assistantTags + newTags)
-                                            )
-                                            settings.copy(assistantTags = settings.assistantTags + newTags)
-                                        } else {
-                                            settings
-                                        }
-                                        val assistant = extractToAssistant(extractToUse, updatedSettings)
-                                        assistantVM.addAssistant(assistant)
-                                        selectedCharacter = null
-                                        importStatus = ImportStatus.SUCCESS
-                                        scope.launch {
-                                            delay(750)
-                                            if (importStatus == ImportStatus.SUCCESS) {
-                                                bottomSheetState.hide()
+                                    isImporting = true
+                                    scope.launch {
+                                        try {
+                                            val extractToUse = fullExtract ?: withContext(Dispatchers.IO) {
+                                                val resp = httpClient.execute(
+                                                    PlatformHttpRequest(
+                                                        method = "POST",
+                                                        url = "$JANITOR_BASE_URL/api/extract",
+                                                        body = JsonInstant.encodeToString(JanitorExtractRequest(botId = character.id, characterId = character.id)).toByteArray(),
+                                                        mediaType = "application/json",
+                                                    )
+                                                )
+                                                if (resp.statusCode in 200..299) {
+                                                    JsonInstant.decodeFromString<JanitorExtractResponse>(String(resp.body, charset = Charsets.UTF_8))
+                                                } else null
                                             }
-                                        }
-                                    } else {
-                                        importStatus = ImportStatus.IDLE
-                                        scope.launch {
-                                            importCharacter(character)
+
+                                            if (extractToUse != null) {
+                                                val newTagNames = extractToUse.tags.filter { tagName ->
+                                                    tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
+                                                }
+                                                val updatedSettings = if (newTagNames.isNotEmpty()) {
+                                                    val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
+                                                    assistantVM.updateSettings(
+                                                        settings.copy(assistantTags = settings.assistantTags + newTags)
+                                                    )
+                                                    settings.copy(assistantTags = settings.assistantTags + newTags)
+                                                } else {
+                                                    settings
+                                                }
+                                                val assistant = extractToAssistant(extractToUse, updatedSettings)
+                                                assistantVM.addAssistant(assistant)
+                                                isImporting = false
+                                                importStatus = ImportStatus.SUCCESS
+                                                haptics.perform(HapticPattern.Success)
+                                                delay(1000)
+                                                bottomSheetState.hide()
+                                                selectedCharacter = null
+                                            } else {
+                                                isImporting = false
+                                                importStatus = ImportStatus.ERROR
+                                                toaster.show("Import failed: unable to fetch character data", ToastType.Error)
+                                            }
+                                        } catch (e: Exception) {
+                                            isImporting = false
+                                            importStatus = ImportStatus.ERROR
+                                            toaster.show("Import error: ${e.message ?: "network issue"}", ToastType.Error)
                                         }
                                     }
                                 },
@@ -1338,18 +1358,26 @@ fun SettingJanitorPage() {
                                             tint = Color.White,
                                             modifier = Modifier.size(20.dp),
                                         )
-                                        Text("Failed", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                                        Text("Import Failed", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
                                     }
                                 }
                                 else -> {
                                     if (isImporting) {
-                                        JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(22.dp),
+                                            color = Color.Black,
+                                            strokeWidth = 2.5.dp
+                                        )
                                     } else {
-                                        Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
+                                        Text(
+                                            text = if (isAlreadyInHub) "Import Again" else "Import to Hub",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = Color.Black
+                                        )
                                     }
                                 }
                             }
-                        }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -1404,9 +1432,14 @@ fun SettingJanitorPage() {
                         ) { tab ->
                             when (tab) {
                                 0 -> {
-                                    // Notes Tab — creator notes / bio (HTML sanitized)
-                                    val rawNotes = fullExtract?.description ?: character.bio ?: character.description
-                                    val displayNotes = sanitizeHtml(rawNotes)
+                                    // Notes Tab — creator notes / bio (with in-place embedded images)
+                                    val rawNotes = when {
+                                        !fullExtract?.description.isNullOrBlank() -> fullExtract?.description
+                                        !fullExtract?.bio.isNullOrBlank() -> fullExtract?.bio
+                                        !character.bio.isNullOrBlank() -> character.bio
+                                        else -> character.description
+                                    }.orEmpty()
+
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -1415,12 +1448,44 @@ fun SettingJanitorPage() {
                                             .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                             .padding(16.dp),
                                     ) {
-                                        if (displayNotes.isNotBlank()) {
-                                            Text(
-                                                text = displayNotes,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = contentTextColor.copy(alpha = 0.9f),
-                                            )
+                                        val notesSegments = parseContentWithImages(rawNotes)
+                                        if (notesSegments.isNotEmpty()) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                notesSegments.forEach { segment ->
+                                                    when (segment) {
+                                                        is ContentSegment.Text -> {
+                                                            Text(
+                                                                text = sanitizeHtml(segment.text),
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                color = contentTextColor.copy(alpha = 0.9f),
+                                                            )
+                                                        }
+                                                        is ContentSegment.Image -> {
+                                                            val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .size(160.dp)
+                                                                    .clip(RoundedCornerShape(12.dp))
+                                                                    .background(Color(0xFF141520))
+                                                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                                                    .clickable {
+                                                                        viewerImageUrls = embeddedImageUrls.toList()
+                                                                        viewerCurrentPage = imageIndex
+                                                                        viewerOpen = true
+                                                                    },
+                                                            ) {
+                                                                AsyncImage(
+                                                                    model = segment.url,
+                                                                    contentDescription = null,
+                                                                    modifier = Modifier.fillMaxSize(),
+                                                                    alignment = Alignment.Center,
+                                                                    contentScale = ContentScale.Crop
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         } else {
                                             Text(
                                                 text = "No notes available.",
@@ -1463,85 +1528,139 @@ fun SettingJanitorPage() {
                                     }
                                 }
                                 2 -> {
-                                    // Greetings Tab — first message + alternate greetings
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    ) {
-                                        if (isExtractLoading) {
-                                            Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                                                JanitorOrbitalLoader(modifier = Modifier.size(36.dp))
+                                    // Greetings Tab — tabbed carousel matching Character Hub
+                                    if (isExtractLoading) {
+                                        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                            JanitorOrbitalLoader(modifier = Modifier.size(36.dp))
+                                        }
+                                    } else {
+                                        val allGreetings = remember(fullExtract, character) {
+                                            val list = mutableListOf<String>()
+                                            val first = fullExtract?.firstMessage ?: character.firstMessage.orEmpty()
+                                            if (first.isNotBlank() && !isDummyGreeting(first)) {
+                                                list.add(first)
                                             }
-                                        } else {
-                                            val firstMessage = fullExtract?.firstMessage ?: character.firstMessage.orEmpty()
-                                            if (firstMessage.isNotBlank() && !isDummyGreeting(firstMessage)) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(16.dp))
-                                                        .background(sheetBgColor)
-                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                                        .padding(16.dp),
-                                                ) {
-                                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                        Text(
-                                                            text = "First Message",
-                                                            fontSize = 13.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = contentTextColor.copy(alpha = 0.7f),
-                                                        )
-                                                        Text(
-                                                            text = firstMessage,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = contentTextColor.copy(alpha = 0.9f),
-                                                        )
+                                            val alts = fullExtract?.alternateGreetings ?: character.alternateGreetings
+                                            alts.filter { it.isNotBlank() && !isDummyGreeting(it) }.forEach { list.add(it) }
+                                            list
+                                        }
+                                        var activeGreetingIndex by rememberSaveable(character.id) { mutableIntStateOf(0) }
+
+                                        if (allGreetings.isNotEmpty()) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                if (allGreetings.size > 1) {
+                                                    val greetingRowState = rememberLazyListState()
+                                                    LazyRow(
+                                                        state = greetingRowState,
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        items(allGreetings.size) { idx ->
+                                                            val isGreetingSelected = activeGreetingIndex == idx
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .clip(RoundedCornerShape(8.dp))
+                                                                    .background(
+                                                                        if (isGreetingSelected) {
+                                                                            Color.White.copy(alpha = 0.20f)
+                                                                        } else {
+                                                                            Color.White.copy(alpha = 0.05f)
+                                                                        }
+                                                                    )
+                                                                    .border(
+                                                                        0.5.dp,
+                                                                        if (isGreetingSelected) {
+                                                                            Brush.verticalGradient(listOf(Color.White, Color.White))
+                                                                        } else cardBorderColor,
+                                                                        RoundedCornerShape(8.dp)
+                                                                    )
+                                                                    .clickable { activeGreetingIndex = idx }
+                                                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = if (idx == 0) "Intro #1 (Default)" else "Greeting #${idx + 1}",
+                                                                    fontSize = 12.sp,
+                                                                    fontWeight = if (isGreetingSelected) FontWeight.Bold else FontWeight.Medium,
+                                                                    color = if (isGreetingSelected) Color.White else contentTextColor.copy(alpha = 0.75f)
+                                                                )
+                                                            }
+                                                        }
                                                     }
                                                 }
-                                            }
 
-                                            val altGreetings = fullExtract?.alternateGreetings ?: character.alternateGreetings
-                                            altGreetings.filter { !isDummyGreeting(it) }.forEachIndexed { i, alt ->
-                                                if (alt.isNotBlank()) {
+                                                val safeIndex = activeGreetingIndex.coerceIn(0, (allGreetings.size - 1).coerceAtLeast(0))
+                                                AnimatedContent(
+                                                    targetState = safeIndex,
+                                                    transitionSpec = {
+                                                        val direction = if (targetState > initialState) 1 else -1
+                                                        (slideInHorizontally(animationSpec = tween(240)) { width -> width / 3 * direction } + fadeIn(animationSpec = tween(240))) togetherWith
+                                                            (slideOutHorizontally(animationSpec = tween(200)) { width -> -width / 3 * direction } + fadeOut(animationSpec = tween(200)))
+                                                    },
+                                                    label = "janitor_greetings_carousel"
+                                                ) { currentIdx ->
+                                                    val greetingText = allGreetings.getOrNull(currentIdx).orEmpty()
                                                     Box(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .clip(RoundedCornerShape(16.dp))
                                                             .background(sheetBgColor)
                                                             .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                                            .padding(16.dp),
+                                                            .padding(16.dp)
                                                     ) {
-                                                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                            Text(
-                                                                text = "Alternate Greeting #${i + 1}",
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = contentTextColor.copy(alpha = 0.7f),
-                                                            )
-                                                            Text(
-                                                                text = alt,
-                                                                style = MaterialTheme.typography.bodyMedium,
-                                                                color = contentTextColor.copy(alpha = 0.9f),
-                                                            )
+                                                        val greetingSegments = parseContentWithImages(greetingText)
+                                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                            greetingSegments.forEach { segment ->
+                                                                when (segment) {
+                                                                    is ContentSegment.Text -> {
+                                                                        Text(
+                                                                            text = segment.text,
+                                                                            style = MaterialTheme.typography.bodyMedium,
+                                                                            color = contentTextColor.copy(alpha = 0.9f),
+                                                                        )
+                                                                    }
+                                                                    is ContentSegment.Image -> {
+                                                                        val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
+                                                                        Box(
+                                                                            modifier = Modifier
+                                                                                .size(160.dp)
+                                                                                .clip(RoundedCornerShape(12.dp))
+                                                                                .background(Color(0xFF141520))
+                                                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                                                                .clickable {
+                                                                                    viewerImageUrls = embeddedImageUrls.toList()
+                                                                                    viewerCurrentPage = imageIndex
+                                                                                    viewerOpen = true
+                                                                                },
+                                                                        ) {
+                                                                            AsyncImage(
+                                                                                model = segment.url,
+                                                                                contentDescription = null,
+                                                                                modifier = Modifier.fillMaxSize(),
+                                                                                alignment = Alignment.Center,
+                                                                                contentScale = ContentScale.Crop
+                                                                            )
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
-
-                                            if (firstMessage.isBlank() && altGreetings.isEmpty()) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clip(RoundedCornerShape(16.dp))
-                                                        .background(sheetBgColor)
-                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                                        .padding(16.dp),
-                                                ) {
-                                                    Text(
-                                                        text = "No greetings available.",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = Color.White.copy(alpha = 0.5f),
-                                                    )
-                                                }
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(16.dp))
+                                                    .background(sheetBgColor)
+                                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                    .padding(16.dp)
+                                            ) {
+                                                Text(
+                                                    text = "No greetings available.",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color.White.copy(alpha = 0.5f),
+                                                )
                                             }
                                         }
                                     }
@@ -1555,6 +1674,77 @@ fun SettingJanitorPage() {
             }
         }
     }
+
+    // Image Viewer Dialog - Swipeable Embedded Image Viewer
+    if (viewerOpen && viewerImageUrls.isNotEmpty()) {
+        Dialog(
+            onDismissRequest = { viewerOpen = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            val viewerPagerState = rememberPagerState(
+                initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))
+            ) { viewerImageUrls.size }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.95f))
+            ) {
+                HorizontalPager(
+                    state = viewerPagerState,
+                    modifier = Modifier.fillMaxSize(),
+                ) { page ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AsyncImage(
+                            model = viewerImageUrls[page],
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            alignment = Alignment.Center,
+                            contentScale = ContentScale.Fit,
+                        )
+                    }
+                }
+                // Page counter indicator
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 40.dp),
+                ) {
+                    Text(
+                        text = "${viewerPagerState.currentPage + 1} / ${viewerImageUrls.size}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                // Close (X) button top-end corner
+                IconButton(
+                    onClick = { viewerOpen = false },
+                    modifier = Modifier
+                        .padding(top = 48.dp, end = 20.dp)
+                        .align(Alignment.TopEnd)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.50f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        }
+    }
+}
 
 /**
  * Custom pulsing dark-glass orbital loader. Replaces the stock circular progress spinner
@@ -1769,7 +1959,25 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
     val creator = extract.creator ?: extract.creatorName
     val avatarUrl = resolveAvatarUrl(extract.avatarHash ?: extract.avatarHash2)
     val systemPrompt = extract.systemPrompt ?: ""
-    val creatorNotes = extract.description ?: ""
+    val rawNotes = when {
+        !extract.description.isNullOrBlank() -> extract.description
+        !extract.bio.isNullOrBlank() -> extract.bio
+        else -> ""
+    }
+
+    // Append any embedded images from extract.embeddedImages that are not already in text
+    val missingEmbedded = extract.embeddedImages.filter { imgUrl ->
+        imgUrl.isNotBlank() && !rawNotes.contains(imgUrl) && !(extract.systemPrompt ?: "").contains(imgUrl) && !(extract.firstMessage ?: "").contains(imgUrl)
+    }
+    val creatorNotes = if (missingEmbedded.isNotEmpty()) {
+        val extraMarkdown = missingEmbedded.joinToString("
+") { "![Image]($it)" }
+        if (rawNotes.isNotBlank()) "$rawNotes
+
+$extraMarkdown" else extraMarkdown
+    } else {
+        rawNotes
+    }
 
     // Map firstMessage to presetMessages as an assistant greeting
     val presetMessages = extract.firstMessage?.takeIf { it.isNotBlank() }?.let { message ->

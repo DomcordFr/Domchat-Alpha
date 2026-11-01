@@ -89,6 +89,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.debounce
@@ -1542,6 +1545,18 @@ fun CharacterInspectorSheet(
     onDelete: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    var isDismissing by remember { mutableStateOf(false) }
+
+    fun dismissWithAnimation() {
+        if (isDismissing) return
+        isDismissing = true
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+        }
+    }
+
     val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
     // Charter: character popups are always a black glass plate, independent of glass/luminance settings.
     val sheetBgColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor()
@@ -1554,12 +1569,13 @@ fun CharacterInspectorSheet(
     var viewerCurrentPage by remember { mutableIntStateOf(0) }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { dismissWithAnimation() },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         containerColor = sheetBgColor,
         contentColor = contentTextColor,
         dragHandle = null,
+        windowInsets = WindowInsets(0, 0, 0, 0),
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
@@ -1627,7 +1643,8 @@ fun CharacterInspectorSheet(
                     val markdownText = listOf(
                         assistant.creatorNotes.orEmpty(),
                         assistant.systemPrompt,
-                        assistant.firstMessage
+                        assistant.firstMessage.orEmpty(),
+                        assistant.alternateGreetings.joinToString("\n")
                     ).joinToString("\n")
                     val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
                     val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
@@ -2243,7 +2260,7 @@ fun CharacterInspectorSheet(
 
             // Close button floating at top-right with safe margin
             IconButton(
-                onClick = onDismiss,
+                onClick = { dismissWithAnimation() },
                 modifier = Modifier
                     .padding(top = 16.dp, end = 16.dp)
                     .align(Alignment.TopEnd)
@@ -2264,15 +2281,15 @@ fun CharacterInspectorSheet(
 
     // Image Viewer Dialog - Swipeable Embedded Image Viewer
     if (viewerOpen && viewerImageUrls.isNotEmpty()) {
-        val viewerPagerState = rememberPagerState(initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))) { viewerImageUrls.size }
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+        Dialog(
+            onDismissRequest = { viewerOpen = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
+            val viewerPagerState = rememberPagerState(initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))) { viewerImageUrls.size }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.90f)),
+                    .background(Color.Black.copy(alpha = 0.95f)),
             ) {
                 HorizontalPager(
                     state = viewerPagerState,
