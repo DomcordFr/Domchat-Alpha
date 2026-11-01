@@ -43,6 +43,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FilterAlt
@@ -84,7 +85,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -299,7 +299,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 val tagFiltered = if (selectedTagIds.isEmpty()) {
                     base
                 } else {
-                    base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId) } }
+                    base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId.toString()) } }
                 }
                 val sorted = when (sortOption) {
                     CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
@@ -418,9 +418,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             Spacer(modifier = Modifier.weight(1f))
 
                             Row(
-                                modifier = Modifier
-                                    .verticalAlignment(Alignment.CenterVertically)
-                                    .horizontalArrangement(Arrangement.spacedBy(8.dp))
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 // Sort dropdown pill
                                 Box {
@@ -439,8 +438,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         Row(
                                             modifier = Modifier
                                                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                                                .verticalAlignment(Alignment.CenterVertically)
                                                 .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                            verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.Sort,
@@ -454,10 +453,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                     CharacterSortOption.NAME -> "Name A-Z"
                                                     CharacterSortOption.CREATOR -> "Creator"
                                                 },
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                    lineHeight = 1.2.em
-                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = Color.White
                                             )
@@ -484,10 +480,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             text = {
                                                 Text(
                                                     text = "Recent",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     color = if (sortOption == CharacterSortOption.RECENT) Color.White else Color(0xFFCCCCCC)
                                                 )
                                             },
@@ -498,7 +491,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.RECENT) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    imageVector = Check,
                                                     contentDescription = null,
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp)
@@ -509,10 +502,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             text = {
                                                 Text(
                                                     text = "Name A-Z",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     color = if (sortOption == CharacterSortOption.NAME) Color.White else Color(0xFFCCCCCC)
                                                 )
                                             },
@@ -523,7 +513,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.NAME) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    imageVector = Check,
                                                     contentDescription = null,
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp)
@@ -534,10 +524,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             text = {
                                                 Text(
                                                     text = "Creator",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     color = if (sortOption == CharacterSortOption.CREATOR) Color.White else Color(0xFFCCCCCC)
                                                 )
                                             },
@@ -548,7 +535,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    imageVector = Check,
                                                     contentDescription = null,
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp)
@@ -573,8 +560,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     Row(
                                         modifier = Modifier
                                             .padding(horizontal = 12.dp, vertical = 8.dp)
-                                            .verticalAlignment(Alignment.CenterVertically)
-                                            .horizontalArrangement(Arrangement.spacedBy(8.dp))
+                                            .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.FilterAlt,
@@ -584,10 +571,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         )
                                         Text(
                                             text = if (selectedTagIds.isEmpty()) "Filter" else "Filter (${selectedTagIds.size})",
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                lineHeight = 1.2.em
-                                            ),
+                                            style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
                                         )
@@ -677,9 +661,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         Text(
                                             text = "Filter by Tags",
                                             style = MaterialTheme.typography.titleMedium.copy(
-                                                platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                lineHeight = 1.2.em
-                                            ),
+                                                                                                                                            ),
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
                                         )
@@ -803,9 +785,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             Spacer(modifier = Modifier.weight(1f))
 
                             Row(
-                                modifier = Modifier
-                                    .verticalAlignment(Alignment.CenterVertically)
-                                    .horizontalArrangement(Arrangement.spacedBy(8.dp))
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 // Sort dropdown pill
                                 Box {
@@ -824,8 +805,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         Row(
                                             modifier = Modifier
                                                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                                                .verticalAlignment(Alignment.CenterVertically)
                                                 .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                            verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.Sort,
@@ -839,10 +820,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                     CharacterSortOption.NAME -> "Name A-Z"
                                                     CharacterSortOption.CREATOR -> "Creator"
                                                 },
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                    lineHeight = 1.2.em
-                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = Color.White
                                             )
@@ -869,10 +847,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             text = {
                                                 Text(
                                                     text = "Recent",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     color = if (sortOption == CharacterSortOption.RECENT) Color.White else Color(0xFFCCCCCC)
                                                 )
                                             },
@@ -883,7 +858,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.RECENT) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    imageVector = Check,
                                                     contentDescription = null,
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp)
@@ -894,10 +869,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             text = {
                                                 Text(
                                                     text = "Name A-Z",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     color = if (sortOption == CharacterSortOption.NAME) Color.White else Color(0xFFCCCCCC)
                                                 )
                                             },
@@ -908,7 +880,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.NAME) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    imageVector = Check,
                                                     contentDescription = null,
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp)
@@ -919,10 +891,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             text = {
                                                 Text(
                                                     text = "Creator",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     color = if (sortOption == CharacterSortOption.CREATOR) Color.White else Color(0xFFCCCCCC)
                                                 )
                                             },
@@ -933,7 +902,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
                                                 Icon(
-                                                    imageVector = Icons.Rounded.Check,
+                                                    imageVector = Check,
                                                     contentDescription = null,
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp)
@@ -958,8 +927,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     Row(
                                         modifier = Modifier
                                             .padding(horizontal = 12.dp, vertical = 8.dp)
-                                            .verticalAlignment(Alignment.CenterVertically)
-                                            .horizontalArrangement(Arrangement.spacedBy(8.dp))
+                                            .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.FilterAlt,
@@ -969,10 +938,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         )
                                         Text(
                                             text = if (selectedTagIds.isEmpty()) "Filter" else "Filter (${selectedTagIds.size})",
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                lineHeight = 1.2.em
-                                            ),
+                                            style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
                                         )

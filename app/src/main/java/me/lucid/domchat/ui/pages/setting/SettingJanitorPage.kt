@@ -92,7 +92,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -604,10 +603,7 @@ fun SettingJanitorPage() {
                                         ) {
                                             Text(
                                                 text = feedMode,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                    lineHeight = 1.2.em
-                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 color = Color.White,
                                                 fontWeight = FontWeight.Medium,
                                             )
@@ -691,10 +687,7 @@ fun SettingJanitorPage() {
                                                 )
                                                 Text(
                                                     text = "Sort",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                        lineHeight = 1.2.em
-                                                    ),
+                                                    style = MaterialTheme.typography.bodyMedium,
                                                     fontSize = 12.sp,
                                                     color = Color(0xFF8A8A96),
                                                 )
@@ -758,10 +751,7 @@ fun SettingJanitorPage() {
                                             )
                                             Text(
                                                 text = if (filterTags.isEmpty()) "Filter" else "Filter (${filterTags.size})",
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                                    lineHeight = 1.2.em
-                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 fontSize = 12.sp,
                                                 color = if (filterTags.isNotEmpty()) Color.White else Color(0xFF8A8A96),
                                             )
