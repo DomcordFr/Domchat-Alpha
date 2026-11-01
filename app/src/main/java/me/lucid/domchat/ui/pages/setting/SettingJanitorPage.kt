@@ -1317,6 +1317,7 @@ fun SettingJanitorPage() {
                                                 delay(1000)
                                                 bottomSheetState.hide()
                                                 selectedCharacter = null
+                                                toaster.show("Imported ${character.name}", ToastType.Success)
                                             } else {
                                                 isImporting = false
                                                 importStatus = ImportStatus.ERROR
