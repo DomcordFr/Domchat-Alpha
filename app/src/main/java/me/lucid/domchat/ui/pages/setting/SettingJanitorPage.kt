@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -25,16 +26,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -170,10 +177,8 @@ private fun resolveAvatarUrl(raw: String?): String =
  */
 private fun extractJanitorUuidFromUrl(url: String): String? {
     val uuidRegex = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
-    return urlRegex.find(url)?.groupValues?.get(1) ?: uuidRegex.find(url)?.value
+    return uuidRegex.find(url)?.value
 }
-
-private fun urlRegex(): Regex = Regex("https?://[^\\s<>\"]+")
 
 /**
  * Strips raw HTML tags and decodes common HTML entities so creator notes display as clean text.
@@ -506,7 +511,7 @@ fun SettingJanitorPage() {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.SortByAlpha,
+                                imageVector = Icons.Rounded.Sort,
                                 contentDescription = "Sort",
                                 tint = Color(0xFF8A8A96),
                                 modifier = Modifier.size(20.dp)
@@ -533,7 +538,7 @@ fun SettingJanitorPage() {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.FilterList,
+                                imageVector = Icons.Rounded.FilterAlt,
                                 contentDescription = "Filter",
                                 tint = Color(0xFF8A8A96),
                                 modifier = Modifier.size(20.dp)
@@ -576,46 +581,51 @@ fun SettingJanitorPage() {
                                 LiquidGlassTokens.SpecularBorderSubtle,
                                 AppShapes.SearchField,
                             ),
-                        onCommit = {
-                            val extractedUuid = extractJanitorUuidFromUrl(searchQuery)
-                            if (extractedUuid != null) {
-                                // Search by URL-extracted UUID
-                                scope.launch {
-                                    searchState = JanitorLoadState.Loading
-                                    try {
-                                        val response = withContext(Dispatchers.IO) {
-                                            httpClient.execute(
-                                                PlatformHttpRequest(
-                                                    method = "GET",
-                                                    url = "$JANITOR_BASE_URL/api/bots/$extractedUuid",
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                        ),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onSearch = {
+                                val extractedUuid = extractJanitorUuidFromUrl(searchQuery)
+                                if (extractedUuid != null) {
+                                    // Search by URL-extracted UUID
+                                    scope.launch {
+                                        searchState = JanitorLoadState.Loading
+                                        try {
+                                            val response = withContext(Dispatchers.IO) {
+                                                httpClient.execute(
+                                                    PlatformHttpRequest(
+                                                        method = "GET",
+                                                        url = "$JANITOR_BASE_URL/api/bots/$extractedUuid",
+                                                    )
                                                 )
-                                            )
-                                        }
-                                        if (response.statusCode in 200..299) {
-                                            val json = String(response.body, charset = Charsets.UTF_8)
-                                            val single = JsonInstant.decodeFromString<JanitorCharacter>(json)
-                                            withContext(Dispatchers.Main) {
-                                                browseState = JanitorLoadState.Success(listOf(single))
-                                                selectedTab = 0
                                             }
-                                        } else {
-                                            withContext(Dispatchers.Main) {
-                                                searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                                            if (response.statusCode in 200..299) {
+                                                val json = String(response.body, charset = Charsets.UTF_8)
+                                                val single = JsonInstant.decodeFromString<JanitorCharacter>(json)
+                                                withContext(Dispatchers.Main) {
+                                                    browseState = JanitorLoadState.Success(listOf(single))
+                                                    selectedTab = 0
+                                                }
+                                            } else {
+                                                withContext(Dispatchers.Main) {
+                                                    searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                                                }
                                             }
-                                        }
-                                    } catch (e: Exception) {
-                                        withContext(Dispatchers.Main) {
-                                            searchState = JanitorLoadState.Error(e.message ?: e.toString())
+                                        } catch (e: Exception) {
+                                            withContext(Dispatchers.Main) {
+                                                searchState = JanitorLoadState.Error(e.message ?: e.toString())
+                                            }
                                         }
                                     }
-                                }
-                            } else if (searchQuery.isNotBlank()) {
-                                scope.launch {
-                                    searchState = JanitorLoadState.Loading
-                                    loadSearch()
+                                } else if (searchQuery.isNotBlank()) {
+                                    scope.launch {
+                                        searchState = JanitorLoadState.Loading
+                                        loadSearch()
+                                    }
                                 }
                             }
-                        },
+                        ),
                     )
                 }
             }
@@ -632,9 +642,8 @@ fun SettingJanitorPage() {
             // Content area: loader centered, or grid + Load More button
             if (isLoading && currentItems.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .contentAlignment(Alignment.Center)
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     JanitorOrbitalLoader()
                 }
@@ -889,19 +898,19 @@ fun SettingJanitorPage() {
                         }
 
                         // Embedded images gallery (from bio, description, greetings)
-                        val embeddedImageUrls = remember(character) {
-                            buildList {
-                                add(fullExtract?.embeddedImages.orEmpty())
-                                add(fullExtract?.bio ?: character.bio.orEmpty())
-                                add(fullExtract?.description ?: character.description.orEmpty())
-                                add(fullExtract?.firstMessage ?: character.firstMessage.orEmpty())
+                        val embeddedImageUrls = remember(character, fullExtract) {
+                            val list = mutableListOf<String>()
+                            fullExtract?.embeddedImages?.let { list.addAll(it) }
+                            val textBlobs = listOf(
+                                fullExtract?.bio ?: character.bio.orEmpty(),
+                                fullExtract?.description ?: character.description.orEmpty(),
+                                fullExtract?.firstMessage ?: character.firstMessage.orEmpty(),
+                            )
+                            val imgRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+                            for (text in textBlobs) {
+                                imgRegex.findAll(text).forEach { m -> list.add(m.value) }
                             }
-                                .flatten()
-                                .filter { it.isNotBlank() }
-                                .flatMap { text ->
-                                    urlRegex().findAll(text).map { it.value }
-                                }
-                                .distinct()
+                            list.filter { it.isNotBlank() }.distinct()
                         }
                         if (embeddedImageUrls.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(12.dp))
@@ -1426,23 +1435,4 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         characterVersion = extract.id,
         tags = registeredTagIds,
     )
-}
-
-
-/**
- * Strips raw HTML tags and decodes common HTML entities for clean creator notes.
- */
-private fun sanitizeHtml(html: String?): String {
-    val text = html ?: return ""
-    return text
-        .replace(Regex("<[^>]*>"), "")
-        .replace("&nbsp;", " ")
-        .replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&#39;", "'")
-        .replace("&mdash;", "—")
-        .replace("&ndash;", "–")
-        .trim()
 }

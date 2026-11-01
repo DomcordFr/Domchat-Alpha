@@ -118,7 +118,6 @@ import androidx.compose.ui.graphics.SolidColor
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import kotlin.text.Regex
-import kotlin.text.buildList
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
@@ -1193,11 +1192,11 @@ fun CharacterInspectorSheet(
 
                 // Embedded images gallery (from bio/description or firstMessage markdown)
                 val embeddedImageUrls = remember(assistant) {
-                    val markdownText = buildList {
-                        add(assistant.bio ?: "")
-                        add(assistant.description ?: "")
-                        add(assistant.firstMessage)
-                    }.joinToString("\n")
+                    val markdownText = listOf(
+                        assistant.creatorNotes.orEmpty(),
+                        assistant.systemPrompt,
+                        assistant.firstMessage
+                    ).joinToString("\n")
                     Regex("!\\[[^\\]]*\\]\\(([^)]+)\\)").findAll(markdownText)
                         .map { it.groupValues[1] }
                         .filter { it.isNotBlank() }
