@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.animateItem
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,6 +84,7 @@ import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.font.FontWeight
@@ -306,20 +308,32 @@ fun AssistantPickerSheet(
                     contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
                 ) {
                     items(distinctTags, key = { it.id }) { tag ->
-                        val isSelected = tag.id in selectedTagIds
-                        FilterChip(
-                            onClick = {
+                    val isSelected = tag.id in selectedTagIds
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFF000000))
+                            .border(
+                                0.5.dp,
+                                LiquidGlassTokens.SpecularBorderSubtle,
+                                RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .clickable {
                                 selectedTagIds = if (isSelected) {
                                     selectedTagIds - tag.id
                                 } else {
                                     selectedTagIds + tag.id
                                 }
                             },
-                            label = { Text(tag.name) },
-                            selected = isSelected,
-                            shape = me.lucid.domchat.ui.theme.AppShapes.Chip,
-                            colors = me.lucid.domchat.ui.theme.appFilterChipColors(isSelected),
-                            border = me.lucid.domchat.ui.theme.appFilterChipBorder(isSelected),
+                    ) {
+                        Text(
+                            text = tag.name,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = if (isSelected) 1f else 0.9f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -363,6 +377,7 @@ fun AssistantPickerSheet(
 
                     Row(
                         modifier = Modifier
+                            .animateItem()
                             .fillMaxWidth()
                             .clip(cardShape)
                             .border(borderStroke, cardShape)
