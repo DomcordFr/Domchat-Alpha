@@ -40,6 +40,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -80,6 +81,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
 import coil3.compose.AsyncImage
 import kotlin.text.Charsets
+import kotlin.text.Regex
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -152,6 +154,7 @@ data class JanitorExtractResponse(
     @SerialName("firstMessage") val firstMessage: String? = null,
     @SerialName("character_version") val characterVersion: String? = null,
     @SerialName("tags") val tags: List<String> = emptyList(),
+    @SerialName("embeddedImages") val embeddedImages: List<String> = emptyList(),
     @SerialName("systemPrompt") val systemPrompt: String? = null,
     @SerialName("alternateGreetings") val alternateGreetings: List<String> = emptyList(),
     @SerialName("avatar") val avatarHash: String? = null,
@@ -160,6 +163,43 @@ data class JanitorExtractResponse(
 
 private fun resolveAvatarUrl(raw: String?): String =
     if (raw.isNullOrBlank()) "" else if (raw.startsWith("http")) raw else "$ELLA_CDN_BASE$raw"
+
+/**
+ * Extracts a JanitorAI bot UUID from a full bot URL (e.g. https://janitorai.com/bots/abc-123-def).
+ * Returns null if no UUID pattern is found.
+ */
+private fun extractJanitorUuidFromUrl(url: String): String? {
+    val uuidRegex = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+    return urlRegex.find(url)?.groupValues?.get(1) ?: uuidRegex.find(url)?.value
+}
+
+private fun urlRegex(): Regex = Regex("https?://[^\\s<>\"]+")
+
+/**
+ * Strips raw HTML tags and decodes common HTML entities so creator notes display as clean text.
+ */
+private fun sanitizeHtml(html: String?): String {
+    val text = html ?: return ""
+    var result = text
+        .replace(Regex("<[^>]*>"), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        .replace(Regex("&#(\\d+);")) { match ->
+            match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
+        }
+        .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
+        }
+        .replace(Regex("\\s+"), " ")
+        .trim()
+    return result
+}
 
 sealed class JanitorLoadState {
     object Loading : JanitorLoadState()
@@ -191,6 +231,9 @@ fun SettingJanitorPage() {
     var browseState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var searchState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var isTabSwitching by remember { mutableStateOf(false) }
+    var feedMode by remember { mutableStateOf("Popular") }
+    var page by remember { mutableIntStateOf(1) }
+    var isLoadingMore by remember { mutableStateOf(false) }
 
     var selectedCharacter by remember { mutableStateOf<JanitorCharacter?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -208,31 +251,44 @@ fun SettingJanitorPage() {
         else -> null
     }
 
-    fun loadBrowse(tab: String = "trending") {
+    fun loadBrowse(tab: String = "trending", pageNum: Int = 1, append: Boolean = false) {
         scope.launch {
             try {
-                browseState = JanitorLoadState.Loading
+                if (!append) {
+                    browseState = JanitorLoadState.Loading
+                } else {
+                    isLoadingMore = true
+                }
                 val response = withContext(Dispatchers.IO) {
                     httpClient.execute(
                         PlatformHttpRequest(
                             method = "GET",
-                            url = "$JANITOR_BASE_URL/api/browse?tab=$tab",
+                            url = "$JANITOR_BASE_URL/api/browse?tab=$tab&page=$pageNum",
                         )
                     )
                 }
                 if (response.statusCode in 200..299) {
                     val json = String(response.body, charset = Charsets.UTF_8)
                     val list = JsonInstant.decodeFromString<JanitorListResponse>(json)
+                    val newItems = (list.bots + list.characters + list.results).distinctBy { it.id }
                     withContext(Dispatchers.Main) {
-                        browseState = JanitorLoadState.Success((list.bots + list.characters + list.results).distinctBy { it.id })
+                        if (append) {
+                            val existing = (browseState as? JanitorLoadState.Success)?.items ?: emptyList()
+                            browseState = JanitorLoadState.Success((existing + newItems).distinctBy { it.id })
+                            isLoadingMore = false
+                        } else {
+                            browseState = JanitorLoadState.Success(newItems.distinctBy { it.id })
+                        }
                     }
                 } else {
                     withContext(Dispatchers.Main) {
+                        if (append) isLoadingMore = false
                         browseState = JanitorLoadState.Error("HTTP ${response.statusCode}")
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    if (append) isLoadingMore = false
                     browseState = JanitorLoadState.Error(e.message ?: e.toString())
                 }
             }
@@ -340,11 +396,18 @@ fun SettingJanitorPage() {
         loadBrowse("24h")
     }
 
-    LaunchedEffect(selectedTab) {
+    LaunchedEffect(selectedTab, feedMode) {
         isTabSwitching = true
+        page = 1
         try {
             if (selectedTab != 2) {
-                loadBrowse(if (selectedTab == 0) "24h" else "trending")
+                val tab = when (feedMode) {
+                    "Popular" -> "popular"
+                    "Trending" -> "trending"
+                    "Trending 24h" -> "24h"
+                    else -> "latest"
+                }
+                loadBrowse(tab, page)
             } else if (searchQuery.isBlank()) {
                 searchState = JanitorLoadState.Success(emptyList())
             }
@@ -376,70 +439,185 @@ fun SettingJanitorPage() {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // Header Controls: feed mode dropdown + Sort/Filter buttons + search bar
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "${currentItems.size} characters loaded",
-                    fontSize = 12.sp,
-                    color = Color(0xFF8A8A96)
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    tabs.forEachIndexed { index, tabName ->
-                        val isSelected = selectedTab == index
-                        androidx.compose.material3.Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                selectedTab = index
-                                if (index == 0) loadBrowse("24h")
-                                else if (index == 1) loadBrowse("trending")
-                            },
-                            color = if (isSelected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
-                            shape = RoundedCornerShape(10.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                0.5.dp,
-                                if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                            )
+                    // Feed mode selector
+                    Surface(
+                        modifier = Modifier
+                            .widthIn(max = 160.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF000000))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                        color = Color.Transparent,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 4.dp)
                         ) {
+                            val feedOptions = listOf("Popular", "Trending", "Trending 24h", "Latest")
+                            feedOptions.forEach { option ->
+                                val isSelected = feedMode == option
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            haptics.perform(HapticPattern.Pop)
+                                            feedMode = option
+                                            page = 1
+                                            if (option == "Popular") loadBrowse("popular", page)
+                                            else if (option == "Trending") loadBrowse("trending", page)
+                                            else if (option == "Trending 24h") loadBrowse("24h", page)
+                                            else loadBrowse("latest", page)
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = option,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) Color.White else Color(0xFF888888),
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Sort button
+                    Surface(
+                        modifier = Modifier
+                            .widthIn(min = 72.dp, max = 96.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF000000))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                        color = Color.Transparent,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.SortByAlpha,
+                                contentDescription = "Sort",
+                                tint = Color(0xFF8A8A96),
+                                modifier = Modifier.size(20.dp)
+                            )
                             Text(
-                                text = tabName,
-                                fontSize = 12.sp,
-                                color = if (isSelected) Color.White else Color(0xFF888888),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                text = "Sort",
+                                fontSize = 11.sp,
+                                color = Color(0xFF8A8A96),
+                            )
+                        }
+                    }
+
+                    // Filter button
+                    Surface(
+                        modifier = Modifier
+                            .widthIn(min = 72.dp, max = 96.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF000000))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                        color = Color.Transparent,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.FilterList,
+                                contentDescription = "Filter",
+                                tint = Color(0xFF8A8A96),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Filter",
+                                fontSize = 11.sp,
+                                color = Color(0xFF8A8A96),
                             )
                         }
                     }
                 }
-            }
 
-            if (selectedTab == 2) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search characters...") },
-                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                    singleLine = true,
-                    shape = AppShapes.SearchField,
-                    colors = appFieldColors(),
+                // Search bar (full width, supports text queries and Janitor bot URLs)
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clip(AppShapes.SearchField)
-                        .border(
-                            0.5.dp,
-                            LiquidGlassTokens.SpecularBorderSubtle,
-                            AppShapes.SearchField,
-                        ),
-                )
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search characters or paste Janitor bot URL...") },
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = AppShapes.SearchField,
+                        colors = appFieldColors(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(AppShapes.SearchField)
+                            .border(
+                                0.5.dp,
+                                LiquidGlassTokens.SpecularBorderSubtle,
+                                AppShapes.SearchField,
+                            ),
+                        onCommit = {
+                            val extractedUuid = extractJanitorUuidFromUrl(searchQuery)
+                            if (extractedUuid != null) {
+                                // Search by URL-extracted UUID
+                                scope.launch {
+                                    searchState = JanitorLoadState.Loading
+                                    try {
+                                        val response = withContext(Dispatchers.IO) {
+                                            httpClient.execute(
+                                                PlatformHttpRequest(
+                                                    method = "GET",
+                                                    url = "$JANITOR_BASE_URL/api/bots/$extractedUuid",
+                                                )
+                                            )
+                                        }
+                                        if (response.statusCode in 200..299) {
+                                            val json = String(response.body, charset = Charsets.UTF_8)
+                                            val single = JsonInstant.decodeFromString<JanitorCharacter>(json)
+                                            withContext(Dispatchers.Main) {
+                                                browseState = JanitorLoadState.Success(listOf(single))
+                                                selectedTab = 0
+                                            }
+                                        } else {
+                                            withContext(Dispatchers.Main) {
+                                                searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        withContext(Dispatchers.Main) {
+                                            searchState = JanitorLoadState.Error(e.message ?: e.toString())
+                                        }
+                                    }
+                                }
+                            } else if (searchQuery.isNotBlank()) {
+                                scope.launch {
+                                    searchState = JanitorLoadState.Loading
+                                    loadSearch()
+                                }
+                            }
+                        },
+                    )
+                }
             }
 
             loadError?.let { error ->
@@ -451,49 +629,82 @@ fun SettingJanitorPage() {
                 )
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                if (isLoading) {
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            JanitorOrbitalLoader()
+            // Content area: loader centered, or grid + Load More button
+            if (isLoading && currentItems.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .contentAlignment(Alignment.Center)
+                ) {
+                    JanitorOrbitalLoader()
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        items(currentItems) { character ->
+                            CharacterCard(
+                                character = character,
+                                onClick = {
+                                    selectedCharacter = character
+                                    scope.launch {
+                                        bottomSheetState.show()
+                                    }
+                                },
+                            )
                         }
                     }
-                } else if (currentItems.isEmpty() && !isLoading) {
-                    item {
-                        Text(
-                            text = if (selectedTab == 2 && searchQuery.isNotBlank()) {
-                                "No characters found"
-                            } else {
-                                "No characters available"
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.65f),
+
+                    // Load More button at bottom of grid
+                    if (!isLoadingMore && currentItems.isNotEmpty()) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                        )
-                    }
-                } else {
-                    items(currentItems) { character ->
-                        CharacterCard(
-                            character = character,
-                            onClick = {
-                                selectedCharacter = character
-                                scope.launch {
-                                    bottomSheetState.show()
+                                .padding(vertical = 16.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .widthIn(max = 200.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp)),
+                                color = Color.Transparent,
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
+                                    page += 1
+                                    val tab = when (feedMode) {
+                                        "Popular" -> "popular"
+                                        "Trending" -> "trending"
+                                        "Trending 24h" -> "24h"
+                                        else -> "latest"
+                                    }
+                                    loadBrowse(tab, page, append = true)
+                                },
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Load More",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White,
+                                    )
                                 }
-                            },
-                        )
+                            }
+                        }
                     }
                 }
             }
@@ -610,6 +821,24 @@ fun SettingJanitorPage() {
                                     )
                                 )
                         )
+                        // Close/cross button top-end corner over hero image
+                        IconButton(
+                            onClick = { selectedCharacter = null },
+                            modifier = Modifier
+                                .padding(top = 12.dp, end = 12.dp)
+                                .align(Alignment.TopEnd)
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.50f))
+                                .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Close",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
 
                     // Content below hero image with 20.dp horizontal padding
@@ -653,6 +882,54 @@ fun SettingJanitorPage() {
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White.copy(alpha = 0.92f),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Embedded images gallery (from bio, description, greetings)
+                        val embeddedImageUrls = remember(character) {
+                            buildList {
+                                add(fullExtract?.embeddedImages.orEmpty())
+                                add(fullExtract?.bio ?: character.bio.orEmpty())
+                                add(fullExtract?.description ?: character.description.orEmpty())
+                                add(fullExtract?.firstMessage ?: character.firstMessage.orEmpty())
+                            }
+                                .flatten()
+                                .filter { it.isNotBlank() }
+                                .flatMap { text ->
+                                    urlRegex().findAll(text).map { it.value }
+                                }
+                                .distinct()
+                        }
+                        if (embeddedImageUrls.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Embedded Images",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = contentTextColor.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(embeddedImageUrls, key = { it }) { imageUrl ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFF141520))
+                                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                    ) {
+                                        AsyncImage(
+                                            model = imageUrl,
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxSize(),
+                                            alignment = Alignment.Center,
+                                            contentScale = ContentScale.Crop
                                         )
                                     }
                                 }
@@ -914,22 +1191,31 @@ fun SettingJanitorPage() {
  * with a rotating ring that pulses alpha, matching the unified 0xFF141520 glass theme.
  */
 @Composable
-private fun JanitorOrbitalLoader(modifier: Modifier = Modifier.size(28.dp)) {
+private fun JanitorOrbitalLoader(modifier: Modifier = Modifier.size(54.dp)) {
     val infiniteTransition = rememberInfiniteTransition(label = "janitorOrbital")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
+            animation = tween(1400, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "orbitalRotation"
     )
+    val counterRotation by infiniteTransition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2100, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "orbitalCounterRotation"
+    )
     val pulse by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
+        initialValue = 0.35f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
+            animation = tween(900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "orbitalPulse"
@@ -938,25 +1224,57 @@ private fun JanitorOrbitalLoader(modifier: Modifier = Modifier.size(28.dp)) {
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
+        // Outer glowing spinning aperture
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(2.dp)
-                .clip(CircleShape)
+                .graphicsLayer {
+                    rotationZ = rotation
+                    alpha = 0.7f + 0.3f * pulse
+                }
                 .border(
-                    2.5.dp,
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF141520).copy(alpha = 0.95f),
-                            Color(0xFF141520).copy(alpha = 0.35f),
+                    1.5.dp,
+                    Brush.sweepGradient(
+                        listOf(
+                            Color.White.copy(alpha = 0.95f),
+                            Color.White.copy(alpha = 0.25f),
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.75f),
                         )
                     ),
                     CircleShape
                 )
+        )
+        // Inner counter-rotating ring
+        Box(
+            modifier = Modifier
+                .fillMaxSize(0.60f)
                 .graphicsLayer {
-                    rotationZ = rotation
-                    alpha = 0.6f + 0.4f * pulse
+                    rotationZ = counterRotation
+                    alpha = 0.5f + 0.5f * pulse
                 }
+                .border(
+                    1.dp,
+                    Brush.sweepGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.85f),
+                            Color.Transparent,
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+        // Center pulsing beacon
+        Box(
+            modifier = Modifier
+                .fillMaxSize(0.22f)
+                .graphicsLayer {
+                    scaleX = 0.8f + 0.35f * pulse
+                    scaleY = 0.8f + 0.35f * pulse
+                    alpha = 0.75f + 0.25f * pulse
+                }
+                .background(Color.White, CircleShape)
         )
     }
 }
@@ -1047,7 +1365,7 @@ private fun CharacterCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Horizontally scrollable tag pills — never covers the portrait
+            // Horizontally scrollable tag pills — black glass, full words
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1055,13 +1373,13 @@ private fun CharacterCard(
                 items(character.tags, key = { it }) { tagId ->
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFF141520))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFF000000))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
                     ) {
                         Text(
-                            text = tagId.replace("_", " ").trim(),
+                            text = tagId.toString().replace("_", " "),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White.copy(alpha = 0.92f),

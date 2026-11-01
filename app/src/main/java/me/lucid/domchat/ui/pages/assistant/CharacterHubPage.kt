@@ -117,6 +117,8 @@ import coil3.request.crossfade
 import androidx.compose.ui.graphics.SolidColor
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
+import kotlin.text.Regex
+import kotlin.text.buildList
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
@@ -465,10 +467,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         }
                     }
 
-                    item {
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-
                     loadError?.let { error ->
                         item {
                             CharacterHubErrorCard(
@@ -608,10 +606,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 }
                             }
                         }
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
                     loadError?.let { error ->
@@ -981,13 +975,13 @@ fun CharacterPortraitCard(
                 items(tagList, key = { it.toString() }) { tagId ->
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFF141520))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFF000000))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
                     ) {
                     Text(
-                        text = tagId.toString().take(8).uppercase(),
+                        text = tagId.toString().replace("_", " "),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White.copy(alpha = 0.92f),
@@ -1195,6 +1189,51 @@ fun CharacterInspectorSheet(
                                 )
                             )
                     )
+                }
+
+                // Embedded images gallery (from bio/description or firstMessage markdown)
+                val embeddedImageUrls = remember(assistant) {
+                    val markdownText = buildList {
+                        add(assistant.bio ?: "")
+                        add(assistant.description ?: "")
+                        add(assistant.firstMessage)
+                    }.joinToString("\n")
+                    Regex("!\\[[^\\]]*\\]\\(([^)]+)\\)").findAll(markdownText)
+                        .map { it.groupValues[1] }
+                        .filter { it.isNotBlank() }
+                        .toList()
+                }
+                if (embeddedImageUrls.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Embedded Images",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = contentTextColor.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(embeddedImageUrls, key = { it }) { imageUrl ->
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF141520))
+                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                            ) {
+                                AsyncImage(
+                                    model = imageUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    alignment = Alignment.Center,
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Content area

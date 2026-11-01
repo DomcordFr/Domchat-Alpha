@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
-import me.lucid.domchat.ui.theme.LocalDarkMode
 
 /**
  * Samsung One UI-style large collapsible app bar with centered title.
@@ -103,13 +102,6 @@ fun OneUITopAppBar(
     
     // Current title area height (shrinks as we collapse)
     val currentTitleAreaHeight = lerp(titleAreaHeight, 0.dp, collapseProgress)
-    
-    val isDark = LocalDarkMode.current
-    val barColor = if (isDark) {
-        Color(0xFF000000).copy(alpha = (0.75f + collapseProgress * 0.17f).coerceIn(0f, 0.92f))
-    } else {
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
-    }
 
     Column(
         modifier = modifier
@@ -118,8 +110,9 @@ fun OneUITopAppBar(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        if (isDark) Color(0xFF000000) else barColor,
-                        Color.Transparent
+                        Color(0xFF141520).copy(alpha = 0.92f),
+                        Color(0xFF000000).copy(alpha = 0.5f),
+                        Color.Transparent,
                     )
                 )
             )
