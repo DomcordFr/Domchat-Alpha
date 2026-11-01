@@ -351,13 +351,13 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         .nestedScroll(collapseBehavior.nestedScrollConnection)
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
-                    item {
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 4.dp)
+                                .padding(vertical = 4.dp)
                                 .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                             placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
@@ -375,11 +375,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         )
                     }
 
-                    item {
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 22.dp, vertical = 8.dp),
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
@@ -422,11 +422,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         }
                     }
 
-                    item {
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
+                                .padding(horizontal = 4.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -502,7 +502,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onValueChange = { searchQuery = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 4.dp)
+                                .padding(vertical = 4.dp)
                                 .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                             placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },

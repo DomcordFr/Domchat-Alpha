@@ -257,7 +257,8 @@ fun domChatIconPillContainerColor(): Color {
         val base = Color(0xFF141520)
         return base.copy(alpha = alpha)
     }
-    return liquidGlassSurfaceColor()
+    // Match bottom bar: clean clear floating control fill
+    return Color.Transparent
 }
 
 /**

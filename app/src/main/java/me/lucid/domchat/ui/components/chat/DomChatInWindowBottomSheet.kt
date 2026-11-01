@@ -91,7 +91,7 @@ fun DomChatInWindowBottomSheet(
     val scope = rememberCoroutineScope()
     val motionPolicy = me.lucid.domchat.ui.motion.LocalMotionPolicy.current
     val isDark = LocalDarkMode.current
-    val sheetBg = Color(0xFF000000)
+    val sheetBg = me.lucid.domchat.ui.modifier.domChatSheetContainerColor()
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
 
     var sheetHeightPx by remember { mutableFloatStateOf(1000f) }

@@ -374,23 +374,48 @@ fun SettingJanitorPage() {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                contentColor = MaterialTheme.colorScheme.primary,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF141520).copy(alpha = 0.92f))
-                    .zIndex(1f),
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                tabs.forEachIndexed { index, tab ->
-                    Tab(
-                        text = { Text(tab) },
-                        selected = selectedTab == index,
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            selectedTab = index
-                        },
-                    )
+                Text(
+                    text = "${currentItems.size} characters loaded",
+                    fontSize = 12.sp,
+                    color = Color(0xFF8A8A96)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    tabs.forEachIndexed { index, tabName ->
+                        val isSelected = selectedTab == index
+                        androidx.compose.material3.Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                selectedTab = index
+                                if (index == 0) loadBrowse("24h")
+                                else if (index == 1) loadBrowse("trending")
+                            },
+                            color = if (isSelected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp,
+                                if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                            )
+                        ) {
+                            Text(
+                                text = tabName,
+                                fontSize = 12.sp,
+                                color = if (isSelected) Color.White else Color(0xFF888888),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -478,17 +503,45 @@ fun SettingJanitorPage() {
         val cardBorderColor = LiquidGlassTokens.SpecularBorderSubtle
         val contentTextColor = Color(0xFFF2F2F7)
         val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
+        val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
         var sheetSelectedTab by remember { mutableIntStateOf(0) }
         val sheetTabTitles = listOf("Notes", "Personality", "Greetings")
 
+        var fullExtract by remember(character.id) { mutableStateOf<JanitorExtractResponse?>(null) }
+        var isExtractLoading by remember(character.id) { mutableStateOf(false) }
+
+        LaunchedEffect(character.id) {
+            isExtractLoading = true
+            fullExtract = null
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    httpClient.execute(
+                        PlatformHttpRequest(
+                            method = "POST",
+                            url = "$JANITOR_BASE_URL/api/extract",
+                            body = JsonInstant.encodeToString(JanitorExtractRequest(botId = character.id, characterId = character.id)).toByteArray(),
+                            mediaType = "application/json",
+                        )
+                    )
+                }
+                if (response.statusCode in 200..299) {
+                    val json = String(response.body, charset = Charsets.UTF_8)
+                    fullExtract = JsonInstant.decodeFromString<JanitorExtractResponse>(json)
+                }
+            } catch (_: Exception) {} finally {
+                isExtractLoading = false
+            }
+        }
+
         ModalBottomSheet(
             containerColor = sheetBgColor,
-            shape = AppShapes.Dialog,
+            shape = sheetShape,
+            dragHandle = null,
             modifier = Modifier.border(
                 0.5.dp,
                 LiquidGlassTokens.SpecularBorderBrush,
-                AppShapes.Dialog,
+                sheetShape,
             ),
             contentColor = contentTextColor,
             onDismissRequest = {
@@ -496,214 +549,214 @@ fun SettingJanitorPage() {
             },
             sheetState = bottomSheetState,
         ) {
-            Column(
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .fillMaxHeight(0.92f)
             ) {
-                // Hero Image with smooth vertical gradient fade into sheet background
-                Box(
+                val sheetScrollState = rememberScrollState()
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(340.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .fillMaxSize()
+                        .verticalScroll(sheetScrollState)
                 ) {
-                    if (imageUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = imageUrl,
-                            contentDescription = character.name,
-                            modifier = Modifier.fillMaxSize(),
-                            alignment = Alignment.TopCenter,
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(id = R.drawable.default_generical_pfp),
-                            fallback = painterResource(id = R.drawable.default_generical_pfp),
-                        )
-                    } else {
+                    // Full-bleed edge-to-edge hero image matching Character Hub
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(340.dp)
+                    ) {
+                        if (imageUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = character.name,
+                                modifier = Modifier.fillMaxSize(),
+                                alignment = Alignment.TopCenter,
+                                contentScale = ContentScale.Crop,
+                                placeholder = painterResource(id = R.drawable.default_generical_pfp),
+                                fallback = painterResource(id = R.drawable.default_generical_pfp),
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF000000)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(32.dp),
+                                    tint = Color.White.copy(alpha = 0.5f),
+                                )
+                            }
+                        }
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Color(0xFF000000)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = Color.White.copy(alpha = 0.5f),
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Transparent,
-                                        sheetBgColor.copy(alpha = 0.15f),
-                                        sheetBgColor.copy(alpha = 0.50f),
-                                        sheetBgColor.copy(alpha = 0.85f),
-                                        sheetBgColor.copy(alpha = 1f),
-                                    )
-                                )
-                            )
-                    )
-                }
-
-                // Character Title and Creator
-                Text(
-                    text = character.name.takeIf { it.isNotBlank() } ?: "Character",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = contentTextColor,
-                )
-                val displayCreator = character.creator ?: character.creatorName
-                displayCreator?.let { creator ->
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "by $creator",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.65f),
-                    )
-                }
-
-                // Primary Action: Import to Hub (positioned right below title)
-                Button(
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        importCharacter(character)
-                    },
-                    enabled = !isImporting,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black,
-                    ),
-                ) {
-                    if (isImporting) {
-                        JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
-                    } else {
-                        Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 3 Inspection Tabs (Notes, Personality, Greetings)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(sheetBgColor)
-                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(14.dp))
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    sheetTabTitles.forEachIndexed { index, title ->
-                        val isSelected = sheetSelectedTab == index
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
                                 .background(
-                                    if (isSelected) {
-                                        Color.White.copy(alpha = 0.16f)
-                                    } else Color.Transparent
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Transparent,
+                                            sheetBgColor.copy(alpha = 0.15f),
+                                            sheetBgColor.copy(alpha = 0.50f),
+                                            sheetBgColor.copy(alpha = 0.85f),
+                                            sheetBgColor.copy(alpha = 1f),
+                                        )
+                                    )
                                 )
-                                .clickable { sheetSelectedTab = index }
-                                .padding(horizontal = 4.dp, vertical = 9.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        )
+                    }
+
+                    // Content below hero image with 20.dp horizontal padding
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = character.name.takeIf { it.isNotBlank() } ?: "Character",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = contentTextColor,
+                        )
+
+                        val displayCreator = character.creator ?: character.creatorName
+                        displayCreator?.let { creator ->
                             Text(
-                                text = title,
-                                fontSize = 13.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) contentTextColor else contentTextColor.copy(alpha = 0.6f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = "Created by $creator",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.65f),
                             )
                         }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                AnimatedContent<Int>(
-                    targetState = sheetSelectedTab,
-                    transitionSpec = {
-                        val isForward = targetState > initialState
-                        (fadeIn(animationSpec = tween(220)) + slideInHorizontally(animationSpec = tween(220)) { width -> if (isForward) width / 4 else -width / 4 }) togetherWith
-                            (fadeOut(animationSpec = tween(180)) + slideOutHorizontally(animationSpec = tween(180)) { width -> if (isForward) -width / 4 else width / 4 })
-                    },
-                    label = "JanitorSheetTabsContent"
-                ) { tab ->
-                    when (tab) {
-                        0 -> {
-                            // Notes Tab — creator notes / bio
-                            val displayNotes = (character.bio ?: character.description).orEmpty().trim()
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(sheetBgColor)
-                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                    .padding(16.dp),
-                            ) {
-                                if (displayNotes.isNotBlank()) {
-                                    Text(
-                                        text = displayNotes,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = contentTextColor.copy(alpha = 0.9f),
-                                        maxLines = 10,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                } else {
-                                    Text(
-                                        text = "No notes available.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White.copy(alpha = 0.5f),
-                                    )
-                                }
-                            }
-                        }
-                        1 -> {
-                            // Personality Tab — system prompt / definition
-                            val systemPrompt = character.systemPrompt ?: ""
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(sheetBgColor)
-                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                    .padding(16.dp),
-                            ) {
-                                if (systemPrompt.isNotBlank()) {
-                                    Text(
-                                        text = systemPrompt,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = contentTextColor.copy(alpha = 0.9f),
-                                        maxLines = 10,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                } else {
-                                    Text(
-                                        text = "No system prompt defined.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White.copy(alpha = 0.5f),
-                                    )
-                                }
-                            }
-                        }
-                        2 -> {
-                            // Greetings Tab — first message + alternate greetings
-                            Column(
+                        // Tags row
+                        if (character.tags.isNotEmpty()) {
+                            LazyRow(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
-                                val firstMessage = character.firstMessage.orEmpty()
-                                if (firstMessage.isNotBlank()) {
+                                items(character.tags, key = { it }) { tagId ->
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(Color(0xFF141520))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    ) {
+                                        Text(
+                                            text = tagId.replace("_", " ").trim(),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White.copy(alpha = 0.92f),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Primary Action: Import to Hub
+                        Button(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                val extractToUse = fullExtract
+                                if (extractToUse != null) {
+                                    val newTagNames = extractToUse.tags.filter { tagName ->
+                                        tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
+                                    }
+                                    val updatedSettings = if (newTagNames.isNotEmpty()) {
+                                        val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
+                                        assistantVM.updateSettings(
+                                            settings.copy(assistantTags = settings.assistantTags + newTags)
+                                        )
+                                        settings.copy(assistantTags = settings.assistantTags + newTags)
+                                    } else {
+                                        settings
+                                    }
+                                    val assistant = extractToAssistant(extractToUse, updatedSettings)
+                                    assistantVM.addAssistant(assistant)
+                                    selectedCharacter = null
+                                    toaster.show(
+                                        message = "Imported '${assistant.name}' to Hub",
+                                        type = ToastType.Success,
+                                    )
+                                    haptics.perform(HapticPattern.Success)
+                                } else {
+                                    importCharacter(character)
+                                }
+                            },
+                            enabled = !isImporting,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color.Black,
+                            ),
+                        ) {
+                            if (isImporting) {
+                                JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
+                            } else {
+                                Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // 3 Inspection Tabs (Notes, Personality, Greetings)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(sheetBgColor)
+                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(14.dp))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            sheetTabTitles.forEachIndexed { index, title ->
+                                val isSelected = sheetSelectedTab == index
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (isSelected) {
+                                                Color.White.copy(alpha = 0.16f)
+                                            } else Color.Transparent
+                                        )
+                                        .clickable { sheetSelectedTab = index }
+                                        .padding(horizontal = 4.dp, vertical = 9.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = title,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) contentTextColor else contentTextColor.copy(alpha = 0.6f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        AnimatedContent<Int>(
+                            targetState = sheetSelectedTab,
+                            transitionSpec = {
+                                val isForward = targetState > initialState
+                                (fadeIn(animationSpec = tween(220)) + slideInHorizontally(animationSpec = tween(220)) { width -> if (isForward) width / 4 else -width / 4 }) togetherWith
+                                    (fadeOut(animationSpec = tween(180)) + slideOutHorizontally(animationSpec = tween(180)) { width -> if (isForward) -width / 4 else width / 4 })
+                            },
+                            label = "JanitorSheetTabsContent"
+                        ) { tab ->
+                            when (tab) {
+                                0 -> {
+                                    // Notes Tab — creator notes / bio (HTML sanitized)
+                                    val rawNotes = fullExtract?.description ?: character.bio ?: character.description
+                                    val displayNotes = sanitizeHtml(rawNotes)
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -712,58 +765,141 @@ fun SettingJanitorPage() {
                                             .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                             .padding(16.dp),
                                     ) {
-                                        Text(
-                                            text = "First Message",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = contentTextColor.copy(alpha = 0.7f),
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = firstMessage,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = contentTextColor.copy(alpha = 0.9f),
-                                            maxLines = 8,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    }
-                                }
-                                character.alternateGreetings.forEachIndexed { index, greeting ->
-                                    if (greeting.isNotBlank()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(16.dp))
-                                                .background(sheetBgColor)
-                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                                .padding(16.dp),
-                                        ) {
+                                        if (displayNotes.isNotBlank()) {
                                             Text(
-                                                text = "Greeting #${index + 1}",
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = contentTextColor.copy(alpha = 0.7f),
-                                            )
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = greeting,
+                                                text = displayNotes,
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = contentTextColor.copy(alpha = 0.9f),
-                                                maxLines = 6,
-                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "No notes available.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White.copy(alpha = 0.5f),
                                             )
                                         }
                                     }
                                 }
-                                if (firstMessage.isBlank() && character.alternateGreetings.all { it.isBlank() }) {
-                                    Text(
-                                        text = "No greetings defined.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White.copy(alpha = 0.5f),
-                                    )
+                                1 -> {
+                                    // Personality Tab — system prompt / definition
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(sheetBgColor)
+                                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                            .padding(16.dp),
+                                    ) {
+                                        if (isExtractLoading) {
+                                            Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                                JanitorOrbitalLoader(modifier = Modifier.size(36.dp))
+                                            }
+                                        } else {
+                                            val systemPrompt = fullExtract?.systemPrompt ?: character.systemPrompt ?: ""
+                                            if (systemPrompt.isNotBlank()) {
+                                                Text(
+                                                    text = systemPrompt,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = contentTextColor.copy(alpha = 0.9f),
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = "No system prompt defined.",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color.White.copy(alpha = 0.5f),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                2 -> {
+                                    // Greetings Tab — first message + alternate greetings
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        if (isExtractLoading) {
+                                            Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                                JanitorOrbitalLoader(modifier = Modifier.size(36.dp))
+                                            }
+                                        } else {
+                                            val firstMessage = fullExtract?.firstMessage ?: character.firstMessage.orEmpty()
+                                            if (firstMessage.isNotBlank()) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(16.dp))
+                                                        .background(sheetBgColor)
+                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                        .padding(16.dp),
+                                                ) {
+                                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                        Text(
+                                                            text = "First Message",
+                                                            fontSize = 13.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = contentTextColor.copy(alpha = 0.7f),
+                                                        )
+                                                        Text(
+                                                            text = firstMessage,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = contentTextColor.copy(alpha = 0.9f),
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            val altGreetings = fullExtract?.alternateGreetings ?: character.alternateGreetings
+                                            altGreetings.forEachIndexed { i, alt ->
+                                                if (alt.isNotBlank()) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(RoundedCornerShape(16.dp))
+                                                            .background(sheetBgColor)
+                                                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                            .padding(16.dp),
+                                                    ) {
+                                                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                            Text(
+                                                                text = "Alternate Greeting #${i + 1}",
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = contentTextColor.copy(alpha = 0.7f),
+                                                            )
+                                                            Text(
+                                                                text = alt,
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                color = contentTextColor.copy(alpha = 0.9f),
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if (firstMessage.isBlank() && altGreetings.isEmpty()) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(16.dp))
+                                                        .background(sheetBgColor)
+                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                        .padding(16.dp),
+                                                ) {
+                                                    Text(
+                                                        text = "No greetings available.",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = Color.White.copy(alpha = 0.5f),
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
             }
@@ -923,7 +1059,7 @@ private fun CharacterCard(
                             .padding(horizontal = 6.dp, vertical = 3.dp),
                     ) {
                         Text(
-                            text = tagId.take(8).uppercase(),
+                            text = tagId.replace("_", " ").trim(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White.copy(alpha = 0.92f),
@@ -970,4 +1106,23 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         characterVersion = extract.id,
         tags = registeredTagIds,
     )
+}
+
+
+/**
+ * Strips raw HTML tags and decodes common HTML entities for clean creator notes.
+ */
+private fun sanitizeHtml(html: String?): String {
+    val text = html ?: return ""
+    return text
+        .replace(Regex("<[^>]*>"), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&mdash;", "—")
+        .replace("&ndash;", "–")
+        .trim()
 }
