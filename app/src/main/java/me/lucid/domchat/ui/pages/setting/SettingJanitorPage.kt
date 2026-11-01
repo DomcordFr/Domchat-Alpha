@@ -568,38 +568,14 @@ fun SettingJanitorPage() {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Header items will go inside LazyVerticalGrid as item(span = { GridItemSpan(maxLineSpan) })
-        }
-
-            loadError?.let { error ->
-                Text(
-                    text = error,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFFF6B6B),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-
-            // Content area: loader centered, or single unified grid (header controls scroll away with cards)
-            if (isLoading && currentItems.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    JanitorOrbitalLoader()
-                }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
                     // Header items: scroll away with cards (only OneUITopAppBar stays sticky)
                     item(
                         span = { GridItemSpan(maxLineSpan) }
@@ -840,22 +816,63 @@ fun SettingJanitorPage() {
                         }
                     }
 
-                    // Character items
-                    items(sortedFilteredItems, key = { it.id }) { character ->
-                        CharacterCard(
-                            character = character,
-                            onClick = {
-                                selectedCharacter = character
-                                scope.launch {
-                                    bottomSheetState.show()
-                                }
-                            },
-                            modifier = Modifier.animateItemPlacement(),
-                        )
+                    // Load error message if any
+                    loadError?.let { error ->
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Text(
+                                text = error,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFFF6B6B),
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+
+                    // Content: loader below header when searching/loading initial items, empty state, or character cards
+                    if (isLoading && currentItems.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                JanitorOrbitalLoader()
+                            }
+                        }
+                    } else if (!isLoading && sortedFilteredItems.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (searchQuery.isNotBlank()) "No characters found for \"$searchQuery\"" else "No characters loaded",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF8A8A96),
+                                )
+                            }
+                        }
+                    } else {
+                        // Character items with smooth item placement animation
+                        items(sortedFilteredItems, key = { it.id }) { character ->
+                            CharacterCard(
+                                character = character,
+                                onClick = {
+                                    selectedCharacter = character
+                                    scope.launch {
+                                        bottomSheetState.show()
+                                    }
+                                },
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
 
                     // Load more button spanning both columns
-                    if (!isLoadingMore && currentItems.isNotEmpty()) {
+                    if (!isLoadingMore && currentItems.isNotEmpty() && searchQuery.isBlank()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Row(
                                 modifier = Modifier
@@ -901,11 +918,21 @@ fun SettingJanitorPage() {
                                 }
                             }
                         }
+                    } else if (isLoadingMore) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                JanitorOrbitalLoader(modifier = Modifier.size(32.dp))
+                            }
+                        }
                     }
                 }
             }
         }
-    }
 
     // Filter Dialog
     if (filterMenuOpen) {
@@ -1626,11 +1653,12 @@ private fun JanitorOrbitalLoader(modifier: Modifier = Modifier.size(54.dp)) {
 private fun CharacterCard(
     character: JanitorCharacter,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(0.68f)
             .clip(RoundedCornerShape(18.dp))
