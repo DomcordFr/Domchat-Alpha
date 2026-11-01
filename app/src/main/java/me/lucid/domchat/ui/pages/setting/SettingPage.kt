@@ -328,7 +328,14 @@ fun SettingPage(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search settings, models, personas...") },
+                    placeholder = {
+                        Text(
+                            "Search settings, models, personas...",
+                            maxLines = 1,
+                            singleLine = true,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             Icons.Rounded.Search,

@@ -263,7 +263,7 @@ fun SettingJanitorPage() {
 
     var isImporting by remember { mutableStateOf(false) }
 
-    val activeState: JanitorLoadState = if (selectedTab == 2) searchState else browseState
+    val activeState: JanitorLoadState = if (searchQuery.isNotBlank()) searchState else browseState
     val currentItems: List<JanitorCharacter> = when (activeState) {
         is JanitorLoadState.Success -> activeState.items
         else -> emptyList()
@@ -335,24 +335,71 @@ fun SettingJanitorPage() {
         scope.launch {
             try {
                 searchState = JanitorLoadState.Loading
-                val encodedQuery = searchQuery.urlEncode()
-                val response = withContext(Dispatchers.IO) {
-                    httpClient.execute(
-                        PlatformHttpRequest(
-                            method = "GET",
-                            url = "$JANITOR_BASE_URL/api/search?q=$encodedQuery",
+                val trimmedQuery = searchQuery.trim()
+                val isDirectLink = trimmedQuery.contains("janitorai.com/characters/")
+                val isUuid = trimmedQuery.matches(Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+
+                if (isDirectLink || isUuid) {
+                    // Direct bot link or UUID: fetch single character via /api/extract
+                    val botId = if (isDirectLink) {
+                        trimmedQuery.substringAfterLast("/").takeWhile { it != '?' && it != '/' && it != '#' }
+                    } else {
+                        trimmedQuery
+                    }
+                    val response = withContext(Dispatchers.IO) {
+                        httpClient.execute(
+                            PlatformHttpRequest(
+                                method = "GET",
+                                url = "$JANITOR_BASE_URL/api/extract?botId=$botId",
+                            )
                         )
-                    )
-                }
-                if (response.statusCode in 200..299) {
-                    val json = String(response.body, charset = Charsets.UTF_8)
-                    val list = JsonInstant.decodeFromString<JanitorListResponse>(json)
-                    withContext(Dispatchers.Main) {
-                        searchState = JanitorLoadState.Success((list.bots + list.characters + list.results).distinctBy { it.id })
+                    }
+                    if (response.statusCode in 200..299) {
+                        val json = String(response.body, charset = Charsets.UTF_8)
+                        val extract = JsonInstant.decodeFromString<JanitorExtractResponse>(json)
+                        withContext(Dispatchers.Main) {
+                            searchState = JanitorLoadState.Success(listOf(
+                                JanitorCharacter(
+                                    id = extract.id ?: "",
+                                    name = extract.name ?: "Imported Character",
+                                    creator = extract.creator ?: extract.creatorName,
+                                    bio = extract.bio,
+                                    description = extract.description,
+                                    characterVersion = extract.characterVersion,
+                                    tags = extract.tags,
+                                    avatarHash = extract.avatarHash ?: extract.avatarHash2,
+                                    systemPrompt = extract.systemPrompt,
+                                    firstMessage = extract.firstMessage,
+                                    alternateGreetings = extract.alternateGreetings,
+                                )
+                            ))
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                        }
                     }
                 } else {
-                    withContext(Dispatchers.Main) {
-                        searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                    // Normal query: search bots and creators via /api/search
+                    val encodedQuery = trimmedQuery.urlEncode()
+                    val response = withContext(Dispatchers.IO) {
+                        httpClient.execute(
+                            PlatformHttpRequest(
+                                method = "GET",
+                                url = "$JANITOR_BASE_URL/api/search?q=$encodedQuery",
+                            )
+                        )
+                    }
+                    if (response.statusCode in 200..299) {
+                        val json = String(response.body, charset = Charsets.UTF_8)
+                        val list = JsonInstant.decodeFromString<JanitorListResponse>(json)
+                        withContext(Dispatchers.Main) {
+                            searchState = JanitorLoadState.Success((list.bots + list.characters + list.results).distinctBy { it.id })
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -453,9 +500,12 @@ fun SettingJanitorPage() {
     }
 
     LaunchedEffect(searchQuery) {
-        if (selectedTab == 2 && searchQuery.isNotBlank()) {
-            loadSearch()
-        } else if (selectedTab == 2 && searchQuery.isBlank()) {
+        if (searchQuery.isNotBlank()) {
+            delay(350)
+            if (searchQuery.isNotBlank()) {
+                loadSearch()
+            }
+        } else {
             searchState = JanitorLoadState.Success(emptyList())
         }
     }
@@ -699,7 +749,14 @@ fun SettingJanitorPage() {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                placeholder = { Text("Search characters or paste Janitor bot URL...") },
+                                placeholder = {
+                                    Text(
+                                        "Search characters or paste Janitor bot URL...",
+                                        maxLines = 1,
+                                        singleLine = true,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
                                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
