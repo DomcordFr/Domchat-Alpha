@@ -355,7 +355,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     ) { padding ->
         AnimatedContent(
             targetState = isGridView,
-            transitionSpec = { fadeIn(spring()) togetherWith fadeOut(spring()) },
+            transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(90)) },
+            contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
             modifier = Modifier.fillMaxSize().padding(padding)
         ) { gridMode ->
@@ -407,7 +408,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(Color(0xFF000000))
                                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = "${filteredAssistants.size} Characters",
@@ -469,6 +470,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     DropdownMenu(
                                         expanded = sortMenuOpen,
                                         onDismissRequest = { sortMenuOpen = false },
+                                        shape = RoundedCornerShape(20.dp),
+                                        containerColor = Color(0xFF000000),
                                         modifier = Modifier
                                             .background(Color(0xFF000000))
                                             .border(
@@ -695,7 +698,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(Color(0xFF000000))
                                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = "${filteredAssistants.size} Characters",
@@ -757,6 +760,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     DropdownMenu(
                                         expanded = sortMenuOpen,
                                         onDismissRequest = { sortMenuOpen = false },
+                                        shape = RoundedCornerShape(20.dp),
+                                        containerColor = Color(0xFF000000),
                                         modifier = Modifier
                                             .background(Color(0xFF000000))
                                             .border(
@@ -1409,10 +1414,10 @@ fun CharacterListRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF141520))
+            .background(Color(0xFF000000))
             .border(
                 width = 0.5.dp,
-                brush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else SolidColor(Color(0xFFE5E5E5)),
+                brush = LiquidGlassTokens.SpecularBorderSubtle,
                 shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onClick)
@@ -1449,14 +1454,16 @@ fun CharacterListRow(
         val introsCount = assistant.alternateGreetings.size + 1
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(if (isDark) Color.White.copy(0.08f) else Color.Black.copy(0.05f))
-                .padding(horizontal = 8.dp, vertical = 3.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFF000000))
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Text(
                 text = "$introsCount greeting${if (introsCount > 1) "s" else ""}",
-                fontSize = 11.sp,
-                color = Color(0xFF8A8A96)
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(0.92f)
             )
         }
     }
@@ -1552,6 +1559,7 @@ fun CharacterInspectorSheet(
         sheetGesturesEnabled = false,
         containerColor = sheetBgColor,
         contentColor = contentTextColor,
+        dragHandle = null,
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {

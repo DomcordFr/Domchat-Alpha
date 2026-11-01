@@ -235,6 +235,13 @@ sealed class JanitorLoadState {
     data class Error(val message: String) : JanitorLoadState()
 }
 
+enum class ImportStatus {
+    IDLE,
+    IMPORTING,
+    SUCCESS,
+    ERROR
+}
+
 @Serializable
 private data class JanitorExtractRequest(
     @SerialName("bot_id") val botId: String,
@@ -265,7 +272,7 @@ fun SettingJanitorPage() {
     var feedMenuOpen by remember { mutableStateOf(false) }
     var sortMenuOpen by remember { mutableStateOf(false) }
     var filterMenuOpen by remember { mutableStateOf(false) }
-    var sortMode by rememberSaveable { mutableStateOf("Trending 24h") }
+    var sortMode by rememberSaveable { mutableStateOf("Default") }
     var filterTags by remember { mutableStateOf(emptySet<String>()) }
 
     var selectedCharacter by remember { mutableStateOf<JanitorCharacter?>(null) }
@@ -275,6 +282,7 @@ fun SettingJanitorPage() {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var isImporting by remember { mutableStateOf(false) }
+    var importStatus by remember { mutableStateOf(ImportStatus.IDLE) }
 
     val activeState: JanitorLoadState = if (searchQuery.isNotBlank()) searchState else browseState
     val currentItems: List<JanitorCharacter> = when (activeState) {
@@ -297,6 +305,7 @@ fun SettingJanitorPage() {
             }
             when (sortMode) {
                 "Name A-Z" -> items.sortedBy { it.name.lowercase() }
+                "Name Z-A" -> items.sortedByDescending { it.name.lowercase() }
                 else -> items
             }
         }
@@ -335,13 +344,30 @@ fun SettingJanitorPage() {
                 } else {
                     withContext(Dispatchers.Main) {
                         if (append) isLoadingMore = false
-                        browseState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                        // Retain existing items on error instead of wiping them
+                        val existing = (browseState as? JanitorLoadState.Success)?.items
+                        if (existing != null && existing.isNotEmpty()) {
+                            toaster.show(
+                                message = "Failed to load more characters. Server returned HTTP ${response.statusCode}.",
+                                type = ToastType.Error,
+                            )
+                        } else {
+                            browseState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                        }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     if (append) isLoadingMore = false
-                    browseState = JanitorLoadState.Error(e.message ?: e.toString())
+                    val existing = (browseState as? JanitorLoadState.Success)?.items
+                    if (existing != null && existing.isNotEmpty()) {
+                        toaster.show(
+                            message = "Failed to load more characters. ${e.message ?: e.toString()}",
+                            type = ToastType.Error,
+                        )
+                    } else {
+                        browseState = JanitorLoadState.Error(e.message ?: e.toString())
+                    }
                 }
             }
         }
@@ -459,17 +485,20 @@ fun SettingJanitorPage() {
                         val assistant = extractToAssistant(extract, updatedSettings)
                         assistantVM.addAssistant(assistant)
                         isImporting = false
+                        importStatus = ImportStatus.SUCCESS
                         selectedCharacter = null
-                        bottomSheetState.hide()
-                        toaster.show(
-                            message = "Imported '${extract.name ?: character.name}' to Hub",
-                            type = ToastType.Success,
-                        )
                         haptics.perform(HapticPattern.Success)
+                        scope.launch {
+                            delay(750)
+                            if (importStatus == ImportStatus.SUCCESS) {
+                                bottomSheetState.hide()
+                            }
+                        }
                     }
                 } else {
                     withContext(Dispatchers.Main) {
                         isImporting = false
+                        importStatus = ImportStatus.ERROR
                     }
                     toaster.show(
                         message = "Import failed: HTTP ${response.statusCode}",
@@ -479,6 +508,7 @@ fun SettingJanitorPage() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     isImporting = false
+                    importStatus = ImportStatus.ERROR
                 }
                 toaster.show(
                     message = "Import failed: ${e.message ?: e.toString()}",
@@ -610,7 +640,7 @@ fun SettingJanitorPage() {
                                             Icon(
                                                 imageVector = Icons.Rounded.ArrowDropDown,
                                                 contentDescription = "Dropdown",
-                                                tint = Color(0xFF8A8A96),
+                                                tint = Color.White,
                                                 modifier = Modifier.size(20.dp),
                                             )
                                         }
@@ -682,25 +712,28 @@ fun SettingJanitorPage() {
                                                 Icon(
                                                     imageVector = Icons.Rounded.Sort,
                                                     contentDescription = "Sort",
-                                                    tint = Color(0xFF8A8A96),
+                                                    tint = Color.White,
                                                     modifier = Modifier.size(18.dp),
                                                 )
                                                 Text(
                                                     text = "Sort",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     fontSize = 12.sp,
-                                                    color = Color(0xFF8A8A96),
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = Color.White,
                                                 )
                                             }
                                         }
                                         DropdownMenu(
                                             expanded = sortMenuOpen,
                                             onDismissRequest = { sortMenuOpen = false },
+                                            shape = RoundedCornerShape(20.dp),
+                                            containerColor = Color(0xFF000000),
                                             modifier = Modifier
                                                 .background(Color(0xFF000000))
-                                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
-                                        ) {
-                                            listOf("Trending 24h", "Trending", "Popular", "Latest", "Name A-Z").forEach { option ->
+                                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                                    ) {
+                                        listOf("Default", "Name A-Z", "Name Z-A").forEach { option ->
                                                 val isSelected = sortMode == option
                                                 DropdownMenuItem(
                                                     text = {
@@ -746,14 +779,15 @@ fun SettingJanitorPage() {
                                             Icon(
                                                 imageVector = Icons.Rounded.FilterAlt,
                                                 contentDescription = "Filter",
-                                                tint = if (filterTags.isNotEmpty()) Color.White else Color(0xFF8A8A96),
+                                                tint = Color.White,
                                                 modifier = Modifier.size(18.dp),
                                             )
                                             Text(
                                                 text = if (filterTags.isEmpty()) "Filter" else "Filter (${filterTags.size})",
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontSize = 12.sp,
-                                                color = if (filterTags.isNotEmpty()) Color.White else Color(0xFF8A8A96),
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.White,
                                             )
                                         }
                                     }
@@ -816,6 +850,7 @@ fun SettingJanitorPage() {
                                     bottomSheetState.show()
                                 }
                             },
+                            modifier = Modifier.animateItemPlacement(),
                         )
                     }
 
@@ -1204,48 +1239,90 @@ fun SettingJanitorPage() {
                         }
 
                         // Primary Action: Import to Hub
-                        Button(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                val extractToUse = fullExtract
-                                if (extractToUse != null) {
-                                    val newTagNames = extractToUse.tags.filter { tagName ->
-                                        tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
-                                    }
-                                    val updatedSettings = if (newTagNames.isNotEmpty()) {
-                                        val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
-                                        assistantVM.updateSettings(
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    if (importStatus == ImportStatus.SUCCESS) Color(0xFF2E7D32)
+                                    else if (importStatus == ImportStatus.ERROR) Color(0xFFD32F2F)
+                                    else Color.White
+                                )
+                                .clickable {
+                                    haptics.perform(HapticPattern.Pop)
+                                    val extractToUse = fullExtract
+                                    if (extractToUse != null) {
+                                        val newTagNames = extractToUse.tags.filter { tagName ->
+                                            tagName.isNotBlank() && settings.assistantTags.none { tag -> tag.name == tagName }
+                                        }
+                                        val updatedSettings = if (newTagNames.isNotEmpty()) {
+                                            val newTags = newTagNames.map { Tag(id = Uuid.random(), name = it) }
+                                            assistantVM.updateSettings(
+                                                settings.copy(assistantTags = settings.assistantTags + newTags)
+                                            )
                                             settings.copy(assistantTags = settings.assistantTags + newTags)
-                                        )
-                                        settings.copy(assistantTags = settings.assistantTags + newTags)
+                                        } else {
+                                            settings
+                                        }
+                                        val assistant = extractToAssistant(extractToUse, updatedSettings)
+                                        assistantVM.addAssistant(assistant)
+                                        selectedCharacter = null
+                                        importStatus = ImportStatus.SUCCESS
+                                        scope.launch {
+                                            delay(750)
+                                            if (importStatus == ImportStatus.SUCCESS) {
+                                                bottomSheetState.hide()
+                                            }
+                                        }
                                     } else {
-                                        settings
+                                        importStatus = ImportStatus.IDLE
+                                        scope.launch {
+                                            importCharacter(character)
+                                        }
                                     }
-                                    val assistant = extractToAssistant(extractToUse, updatedSettings)
-                                    assistantVM.addAssistant(assistant)
-                                    selectedCharacter = null
-                                    toaster.show(
-                                        message = "Imported '${assistant.name}' to Hub",
-                                        type = ToastType.Success,
-                                    )
-                                    haptics.perform(HapticPattern.Success)
-                                } else {
-                                    importCharacter(character)
-                                }
-                            },
-                            enabled = !isImporting,
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = Color.Black,
-                            ),
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
-                            if (isImporting) {
-                                JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
-                            } else {
-                                Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            when (importStatus) {
+                                ImportStatus.SUCCESS -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Check,
+                                            contentDescription = "Imported",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                        Text("Imported!", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                                    }
+                                }
+                                ImportStatus.ERROR -> {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = "Failed",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                        Text("Failed", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                                    }
+                                }
+                                else -> {
+                                    if (isImporting) {
+                                        JanitorOrbitalLoader(modifier = Modifier.size(20.dp))
+                                    } else {
+                                        Text("Import to Hub", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
+                                    }
+                                }
                             }
+                        }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -1451,7 +1528,6 @@ fun SettingJanitorPage() {
             }
         }
     }
-}
 
 /**
  * Custom pulsing dark-glass orbital loader. Replaces the stock circular progress spinner
