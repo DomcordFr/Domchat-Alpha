@@ -1,72 +1,51 @@
-# Audit Brief — JanitorAI Hub Redesign, 3-Tab Pre-Import Sheet & Full Data Mapping (task-029)
+# Audit Brief — Revert Complex Glass Controls, Fix 0% Opacity Tint, Universal Smooth Fade & Real JAI Logo (task-030)
 
 ## Intent Verification
 
-All four directive requirements are implemented in `SettingJanitorPage.kt`:
+All four directive requirements are implemented:
 
-1. **CharacterCard** — Replaced multi-row `FlowRow` tags with a single horizontally scrollable `LazyRow` with compact tag pills (`0xFF141520` background, `0.5dp` `SpecularBorderSubtle` border, trailing fade gradient). Card uses `aspectRatio(0.68f)`, full-bleed portrait, `CompositingStrategy.Offscreen`, bottom glass scrim, display name with `?: "Character"` fallback — matching `CharacterPortraitCard` design exactly.
+1. **SettingDisplayPage.kt & LiquidGlass.kt** — Reverted the complex 3-preset/dual-slider glass engine back to clean, simple controls. Removed `GlassPreset` enum usage, `glassPreset`/`isAdvancedGlassEnabled` state, `applyUiPreset`/`applyBubblePreset` functions, `GlassPresetSelector` composable, and Advanced Mode toggle. Kept clean sliders for Global UI (Opacity/Blur/Base Luminance → `glassAlpha`/`glassBlur`/`glassBaseLuminance`) and Chat Bubbles (Opacity/Blur/Tone → `chatBubbleAlpha`/`chatBubbleBlur`/`chatBubbleTone`) that directly control the corresponding `DisplaySetting` fields.
 
-2. **Detail Sheet** — Overhauled to match `CharacterInspectorSheet` structure:
-   - Hero image with bottom vertical gradient fade into pure black (`0xFF000000`)
-   - Character title & creator displayed below hero
-   - Primary "Import to Hub" button positioned right below title (matching "Start Chat" placement)
-   - 3 inspection tabs (Notes, Personality, Greetings) with smooth `AnimatedContent` transitions — full inspection of definition/scenario/greetings BEFORE importing
-   - Pure jet black background (`Color(0xFF000000)`) with `0.5dp` `SpecularBorderSubtle` specular glass borders on all cards/chips/tabs
+2. **Blur.kt** — Fixed 0% opacity tint:
+   - `domChatSheetContainerColor()`: Removed hardcoded opacity floor (`if (alpha <= 0.02f) return ...copy(alpha = 1f)`). Now returns `Color.Transparent` when `glassAlpha <= 0.001f`.
+   - `domChatChromeSurfaceColor()`: When `glassAlpha <= 0.001f` and linked, delegates to `liquidGlassSurfaceColor()` which returns `Color.Transparent`.
+   - `domChatIconPillContainerColor()`: Removed hardcoded `alpha = 0.35f`. Now uses `settings.displaySetting.glassAlpha` directly in non-linked branch, and delegates to `liquidGlassSurfaceColor()` when linked — matching `domChatFloatingSurfaceColor()` exactly.
+   - `domChatFloatingSurfaceColor()`: Already returns `Color.Transparent` when `glassAlpha <= 0.001f`.
 
-3. **Import Mapping** — `JanitorExtractResponse` now parses `firstMessage`, `description`, `systemPrompt`, `scenario`, `tags`. `extractToAssistant` maps:
-   - `firstMessage` → `presetMessages` (as `UIMessage` with `MessageRole.ASSISTANT`)
-   - `description` → `creatorNotes`
-   - `systemPrompt` → `systemPrompt`
-   - String tags → registered into `settings.assistantTags` (new `Tag` entries with random UUIDs), UUIDs assigned to `assistant.tags`
+3. **OneUITopAppBar.kt** — Updated vertical gradient from harsh stepped 82% solid stop (`colorStops = arrayOf(0.0f to barColor, 0.82f to barColor, 1.0f to barColor.copy(alpha = 0f))`) to smooth elegant gradient (`Brush.verticalGradient(colors = listOf(if (isDark) Color(0xFF000000) else barColor, Color.Transparent))`) — pure black to transparent.
 
-4. **Controls** — `JanitorOrbitalLoader` (pulsing dark-glass orbital ring) shown during tab switching (`isTabSwitching` flag) and extraction (`isImporting` flag). Clean sort options without dividers.
+4. **janitorai_logo.xml** — Replaced generic robot capsule vector with authentic JanitorAI Hampter vector (viewport 84x84, group with `translateX="-184.237383"` `translateY="1.329048"`).
 
-Strict null safety: no `!!` in the file. Pure black `0xFF000000` popover enforced.
+Strict null safety: no `!!` in any modified file. Pure black `0xFF000000` to transparent header fade enforced. Zero unused imports (`GlassPreset` import removed from SettingDisplayPage.kt and LiquidGlass.kt; `getValue` removed from LiquidGlass.kt).
 
 ## Call Chain & Architecture
 
-**SettingJanitorPage** is a setting page composable reached via `Screen.SettingJanitor`. State:
-- `settings` — collected via `assistantVM.settings.collectAsStateWithLifecycle()`
-- `selectedTab` — 0=Trending 24h, 1=Trending, 2=Search
-- `browseState`/`searchState` — `JanitorLoadState` (Loading/Success/Error)
-- `selectedCharacter` — currently inspected character
-- `bottomSheetState` — `rememberModalBottomSheetState`
-- `isImporting` — extraction in progress flag
-- `isTabSwitching` — tab transition loading flag
+**SettingDisplayPage:** `SettingVM` via `koinViewModel()` exposes `settings` StateFlow. Glass sliders read `settings.displaySetting` fields directly and write back via `updateDisplaySetting(settings.displaySetting.copy(...))` → `vm.updateSettings()` → `SettingsStore.update { ... }`. No preset picker state remains — sliders are the sole control surface.
 
-Flow:
-1. `loadBrowse(tab)` / `loadSearch()` → `withContext(Dispatchers.IO)` HTTP request → parse JSON → update state on `Dispatchers.Main`
-2. Tab switch → `LaunchedEffect(selectedTab)` sets `isTabSwitching = true`, loads data, then `isTabSwitching = false`
-3. `CharacterCard` click → `selectedCharacter = character` → `bottomSheetState.show()` → ModalBottomSheet
-4. Sheet 3 tabs → `AnimatedContent` switches Notes/Personality/Greetings content
-5. "Import to Hub" → `importCharacter(character)` → POST `/api/extract` with `JanitorExtractRequest(botId, characterId)` → parse `JanitorExtractResponse` → register new tags → `extractToAssistant(extract, updatedSettings)` → `assistantVM.addAssistant(assistant)` → toast + hide sheet
+**LiquidGlass.kt:** `liquidGlassSurfaceColor()`, `liquidGlassBorderBrush()`, `liquidBubbleSurfaceColor()` are `@Composable` functions reading `LocalSettings.current.displaySetting`. They return `Color`/`Brush` consumed by `Blur.kt` color functions and `Modifier.liquidGlassSurface()`.
 
-UI Layer: only renders state and emits intents. Zero business logic in composables.
+**Blur.kt:** `domChatSheetContainerColor()`, `domChatChromeSurfaceColor()`, `domChatIconPillContainerColor()`, `domChatFloatingSurfaceColor()` all read `LocalSettings.current` and delegate to `liquidGlassSurfaceColor()` when `linkChromeToGlass` is true, or use `glassAlpha` directly otherwise. Used by `Modifier.domChatBlurEffect()` and throughout the UI as container colors.
+
+**OneUITopAppBar:** Reads `LocalDarkMode.current` for `isDark`, computes `barColor`, and applies it as the top stop of a `Brush.verticalGradient` fading to `Color.Transparent` at the bottom. Used as `topBar` in `Scaffold` across all setting subpages.
 
 ## Recomposition & Memory Safety
 
-- **No `!!`**: Verified zero force-unwraps. Nullable access uses `?:`, `takeIf`, `isNullOrBlank()`, `orEmpty()`.
-- **Remember scoping**: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `isTabSwitching`, `selectedCharacter`, `bottomSheetState`, `isImporting`, `sheetSelectedTab` all use `remember` / `rememberModalBottomSheetState` / `mutableIntStateOf`.
-- **AnimatedContent**: Crossfades between `LazyVerticalGrid` and `LazyColumn` in main view, and between 3 sheet tabs — smooth transitions with `slideInHorizontally`/`slideOutHorizontally`.
-- **LazyRow tag row**: Clean horizontally scrollable row for tag pills, avoiding any offscreen GPU artifacts.
-- **CompositingStrategy.Offscreen**: On `CharacterCard` container, isolates offscreen rendering for alpha fade.
-- **Tag UUID stability**: New tag UUIDs generated once in `importCharacter`, registered into `settings.assistantTags`, then `extractToAssistant` uses the updated settings so UUIDs match between assistant.tags and settings.assistantTags.
+- **No `!!`**: Verified zero force-unwraps across all four modified files.
+- **Remember scoping**: All slider state (`localGlassAlpha`, `localGlassBlur`, `localBaseLuminance`, `localBubbleAlpha`, `localBubbleBlur`, `localBubbleTone`) uses `remember(key) { mutableFloatStateOf(...) }` keyed on the corresponding `DisplaySetting` field.
+- **No preset state**: `localGlassPreset`, `localIsAdvancedGlass`, `localBubblePreset` removed entirely — no stale state.
+- **No naked objects**: All color functions are `@Composable` and read `LocalSettings.current` during composition, recomputing when settings change.
+- **Unused imports removed**: `GlassPreset` from SettingDisplayPage.kt and LiquidGlass.kt; `getValue` from LiquidGlass.kt.
 
 ## Threading & Dispatchers
 
-- UI composition, animation, and layout on `Dispatcher.Main` — correct.
-- `JanitorOrbitalLoader` uses `rememberInfiniteTransition` + `animateFloat` — Main thread Compose animation API.
-- Network I/O strictly on `Dispatchers.IO` (`httpClient.execute` inside `withContext(Dispatchers.IO)`). JSON parsing on `Dispatchers.IO`. UI state updates marshalled to `Dispatchers.Main` via `withContext(Dispatchers.Main)`.
-- `scope.launch` (Main dispatcher) orchestrates the import flow, hopping to IO for the request and back to Main for state updates.
-- Tab switching loading state (`isTabSwitching`) set/reset in `LaunchedEffect(selectedTab)` with try/finally to ensure reset even on error.
+- All color resolution runs on `Dispatcher.Main` via Compose composition — correct and unchanged.
+- `vm.updateSettings()` runs inside `viewModelScope` (Main) and delegates to `SettingsStore.update` which persists to DataStore internally.
+- No new dispatchers, coroutines, or blocking calls introduced.
+- Glass color reads from `LocalSettings.current` during composition only — safe on Main thread.
 
 ## Offline & Error State Handling
 
-- **Fully local UI**: Card layout, sheet styling, tag registration, orbital loader all work offline.
-- **Network errors**: `loadBrowse`/`loadSearch` catch exceptions → `JanitorLoadState.Error(message)` → displayed as error Text in hub grid. `importCharacter` catches exceptions → `LocalToaster.current` `ToastType.Error`.
-- **HTTP errors**: Non-2xx status codes → `JanitorLoadState.Error("HTTP ${statusCode}")` for browse/search; import shows `"Import failed: HTTP ${statusCode}"`.
-- **Malformed JSON**: `JsonInstant.decodeFromString` wrapped in try/catch → error state.
-- **Missing avatar**: `resolveAvatarUrl` returns `""` for blank/null → fallback to `default_generical_pfp`.
-- **Null character fields**: `character.name.takeIf { it.isNotBlank() } ?: "Character"` fallback. `character.creator ?: character.creatorName` nullable chains. `character.tags.forEach` safe on empty list. `extract.firstMessage`, `extract.description`, `extract.systemPrompt` all nullable with Elvis fallbacks.
-- **Tag registration**: New tags only added if not already in `settings.assistantTags` (checked by name). Empty tag names filtered with `isNotBlank()`.
-- **Atomic settings update**: `settingsStore.update { current -> ... }` in `AssistantVM.addAssistant` prevents lost updates when multiple assistants are added in quick succession.
+- **Fully local**: Glass colors, header gradient, and logo vector work entirely offline. No network dependency.
+- **0% opacity handling**: All glass color functions explicitly return `Color.Transparent` when `glassAlpha <= 0.001f`, ensuring sheets, chrome, and icon pills become clear glass instead of showing forced dark/grey tint.
+- **Error states**: None introduced — glass color functions are pure derivations from settings with no failure modes. `SettingsStore.update` errors are handled by existing error handling in `SettingVM`.
+- **Backward compatibility**: `glassPreset` and `isAdvancedGlassEnabled` fields remain on `DisplaySetting` with defaults (`CUSTOM`, `false`), so existing serialized settings deserialize without migration. Sliders continue to drive the same underlying fields.

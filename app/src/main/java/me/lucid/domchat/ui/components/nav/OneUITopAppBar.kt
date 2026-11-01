@@ -117,10 +117,9 @@ fun OneUITopAppBar(
             .height(currentHeight)
             .background(
                 Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0.0f to barColor,
-                        0.82f to barColor,
-                        1.0f to barColor.copy(alpha = 0f)
+                    colors = listOf(
+                        if (isDark) Color(0xFF000000) else barColor,
+                        Color.Transparent
                     )
                 )
             )

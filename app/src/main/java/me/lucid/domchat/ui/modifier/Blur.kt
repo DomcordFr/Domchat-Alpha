@@ -209,7 +209,7 @@ fun domChatChromeSurfaceColor(): Color {
     val settings = LocalSettings.current
     val display = settings.displaySetting
     if (!display.linkChromeToGlass) {
-        val alpha = 0.55f
+        val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
         if (alpha <= 0.001f) return Color.Transparent
         val base = Color(0xFF141520)
         return base.copy(alpha = alpha)
@@ -252,7 +252,7 @@ fun domChatIconPillContainerColor(): Color {
     val settings = LocalSettings.current
     val display = settings.displaySetting
     if (!display.linkChromeToGlass) {
-        val alpha = 0.35f
+        val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
         if (alpha <= 0.001f) return Color.Transparent
         val base = Color(0xFF141520)
         return base.copy(alpha = alpha)
@@ -291,10 +291,9 @@ fun blurredContainerColor(
 /** Sheets use dynamic base luminance tone layered with glass alpha. Directly follows glassAlpha setting. */
 @Composable
 fun domChatSheetContainerColor(): Color {
-    // Opacity floor: at 0% glass alpha the plate must stay solid, never transparent.
     val settings = LocalSettings.current
     val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    if (alpha <= 0.02f) return liquidGlassSurfaceColor().copy(alpha = 1f)
+    if (alpha <= 0.001f) return Color.Transparent
     return liquidGlassSurfaceColor()
 }
 
