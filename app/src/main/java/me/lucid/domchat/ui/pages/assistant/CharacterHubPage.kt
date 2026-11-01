@@ -912,7 +912,7 @@ fun CharacterPortraitCard(
 
     // Resolve tag UUIDs to display names via settings.assistantTags; filter out raw UUIDs and missing names
     val resolvedTagNames = tagList.mapNotNull { tagId ->
-        settings.assistantTags.find { it.id == tagId }?.name?.takeIf { name ->
+        settings?.assistantTags?.find { it.id == tagId }?.name?.takeIf { name ->
             name.isNotBlank() && name.length <= 20 && !name.contains("-")
         }
     }.distinct()
@@ -1132,7 +1132,7 @@ fun CharacterHubErrorCard(
 @Composable
 fun CharacterInspectorSheet(
     assistant: Assistant,
-    settings: Settings,
+    settings: Settings? = null,
     isDark: Boolean,
     ttsProviders: List<TTSProviderSetting> = emptyList(),
     catalogSnapshot: ModelCatalogSnapshot? = null,
@@ -1347,7 +1347,7 @@ fun CharacterInspectorSheet(
 
                     // Horizontal scrollable tag pill row — resolves names from settings.assistantTags
                     val resolvedSheetTags = assistant.tags.mapNotNull { tagId ->
-                        settings.assistantTags.find { it.id == tagId }?.name?.takeIf { name ->
+                        settings?.assistantTags?.find { it.id == tagId }?.name?.takeIf { name ->
                             name.isNotBlank() && name.length <= 20 && !name.contains("-")
                         }
                     }.distinct()
@@ -1644,6 +1644,7 @@ fun CharacterInspectorSheet(
                                                     }
                                                 }
                                             }
+                                        }
                                     } else {
                                         Text(
                                             text = "No creator notes provided for this character.",
