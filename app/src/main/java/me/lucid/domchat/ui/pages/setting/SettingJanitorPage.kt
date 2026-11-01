@@ -1051,7 +1051,7 @@ fun SettingJanitorPage() {
             containerColor = sheetBgColor,
             shape = sheetShape,
             dragHandle = null,
-            contentWindowInsets = WindowInsets(0.dp),
+            contentWindowInsets = { WindowInsets(0.dp) },
             sheetGesturesEnabled = false,
             modifier = Modifier.border(
                 0.5.dp,
