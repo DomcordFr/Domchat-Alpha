@@ -294,6 +294,7 @@ fun SettingPage(
     }
 
     Scaffold(
+        containerColor = Color(0xFF000000),
         topBar = {
             OneUITopAppBar(
                 title = stringResource(R.string.settings),

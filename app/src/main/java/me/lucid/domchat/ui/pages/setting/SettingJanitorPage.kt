@@ -21,6 +21,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.grid.maxLineSpan
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +44,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -239,8 +244,13 @@ fun SettingJanitorPage() {
     var feedMode by remember { mutableStateOf("Popular") }
     var page by remember { mutableIntStateOf(1) }
     var isLoadingMore by remember { mutableStateOf(false) }
+    var sortMode by remember { mutableStateOf("Trending 24h") }
+    var filterTags by remember { mutableStateOf(emptySet<String>()) }
 
     var selectedCharacter by remember { mutableStateOf<JanitorCharacter?>(null) }
+    var viewerImageUrls by remember { mutableStateOf(emptyList<String>()) }
+    var viewerOpen by remember { mutableStateOf(false) }
+    var viewerCurrentPage by remember { mutableIntStateOf(0) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var isImporting by remember { mutableStateOf(false) }
@@ -254,6 +264,19 @@ fun SettingJanitorPage() {
     val loadError: String? = when (activeState) {
         is JanitorLoadState.Error -> activeState.message
         else -> null
+    }
+
+    val sortedFilteredItems: List<JanitorCharacter> = when (activeState) {
+        is JanitorLoadState.Success -> {
+            val items = activeState.items.filter { character ->
+                filterTags.isEmpty() || character.tags.any { tag -> filterTags.contains(tag) }
+            }
+            when (sortMode) {
+                "Name A-Z" -> items.sortedBy { it.name.lowercase() }
+                else -> items
+            }
+        }
+        else -> emptyList()
     }
 
     fun loadBrowse(tab: String = "trending", pageNum: Int = 1, append: Boolean = false) {
@@ -444,193 +467,13 @@ fun SettingJanitorPage() {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            // Header Controls: feed mode dropdown + Sort/Filter buttons + search bar
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // Feed mode selector
-                    Surface(
-                        modifier = Modifier
-                            .widthIn(max = 160.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFF000000))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
-                        color = Color.Transparent,
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        ) {
-                            val feedOptions = listOf("Popular", "Trending", "Trending 24h", "Latest")
-                            feedOptions.forEach { option ->
-                                val isSelected = feedMode == option
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            haptics.perform(HapticPattern.Pop)
-                                            feedMode = option
-                                            page = 1
-                                            if (option == "Popular") loadBrowse("popular", page)
-                                            else if (option == "Trending") loadBrowse("trending", page)
-                                            else if (option == "Trending 24h") loadBrowse("24h", page)
-                                            else loadBrowse("latest", page)
-                                        }
-                                        .padding(horizontal = 10.dp, vertical = 8.dp)
-                                ) {
-                                    Text(
-                                        text = option,
-                                        fontSize = 13.sp,
-                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                        color = if (isSelected) Color.White else Color(0xFF888888),
-                                    )
-                                }
-                            }
-                        }
-                    }
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Header items will go inside LazyVerticalGrid as item(span = { GridItemSpan(maxLineSpan) })
+        }
 
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Sort button
-                    Surface(
-                        modifier = Modifier
-                            .widthIn(min = 72.dp, max = 96.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFF000000))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
-                        color = Color.Transparent,
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Sort,
-                                contentDescription = "Sort",
-                                tint = Color(0xFF8A8A96),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = "Sort",
-                                fontSize = 11.sp,
-                                color = Color(0xFF8A8A96),
-                            )
-                        }
-                    }
-
-                    // Filter button
-                    Surface(
-                        modifier = Modifier
-                            .widthIn(min = 72.dp, max = 96.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFF000000))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
-                        color = Color.Transparent,
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.FilterAlt,
-                                contentDescription = "Filter",
-                                tint = Color(0xFF8A8A96),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = "Filter",
-                                fontSize = 11.sp,
-                                color = Color(0xFF8A8A96),
-                            )
-                        }
-                    }
-                }
-
-                // Search bar (full width, supports text queries and Janitor bot URLs)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search characters or paste Janitor bot URL...") },
-                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = AppShapes.SearchField,
-                        colors = appFieldColors(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(AppShapes.SearchField)
-                            .border(
-                                0.5.dp,
-                                LiquidGlassTokens.SpecularBorderSubtle,
-                                AppShapes.SearchField,
-                            ),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            imeAction = androidx.compose.ui.text.input.ImeAction.Search
-                        ),
-                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                            onSearch = {
-                                val extractedUuid = extractJanitorUuidFromUrl(searchQuery)
-                                if (extractedUuid != null) {
-                                    // Search by URL-extracted UUID
-                                    scope.launch {
-                                        searchState = JanitorLoadState.Loading
-                                        try {
-                                            val response = withContext(Dispatchers.IO) {
-                                                httpClient.execute(
-                                                    PlatformHttpRequest(
-                                                        method = "GET",
-                                                        url = "$JANITOR_BASE_URL/api/bots/$extractedUuid",
-                                                    )
-                                                )
-                                            }
-                                            if (response.statusCode in 200..299) {
-                                                val json = String(response.body, charset = Charsets.UTF_8)
-                                                val single = JsonInstant.decodeFromString<JanitorCharacter>(json)
-                                                withContext(Dispatchers.Main) {
-                                                    browseState = JanitorLoadState.Success(listOf(single))
-                                                    selectedTab = 0
-                                                }
-                                            } else {
-                                                withContext(Dispatchers.Main) {
-                                                    searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            withContext(Dispatchers.Main) {
-                                                searchState = JanitorLoadState.Error(e.message ?: e.toString())
-                                            }
-                                        }
-                                    }
-                                } else if (searchQuery.isNotBlank()) {
-                                    scope.launch {
-                                        searchState = JanitorLoadState.Loading
-                                        loadSearch()
-                                    }
-                                }
-                            }
-                        ),
-                    )
-                }
-            }
-
-            loadError?.let { error ->
+            loadError?.let { error ->            loadError?.let { error ->
                 Text(
                     text = error,
                     style = MaterialTheme.typography.bodySmall,
@@ -653,6 +496,335 @@ fun SettingJanitorPage() {
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
                 ) {
+                    // Header items: scroll away with cards (only OneUITopAppBar stays sticky)
+                    item(
+                        span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // Feed mode dropdown
+                            var feedMenuOpen by remember { mutableStateOf(false) }
+                            DropdownMenu(
+                                expanded = feedMenuOpen,
+                                onDismissRequest = { feedMenuOpen = false },
+                            ) {
+                                val feedOptions = listOf("Popular", "Trending", "Trending 24h", "Latest")
+                                feedOptions.forEach { option ->
+                                    val isSelected = feedMode == option
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            haptics.perform(HapticPattern.Pop)
+                                            feedMode = option
+                                            page = 1
+                                            feedMenuOpen = false
+                                            val tab = when (option) {
+                                                "Popular" -> "popular"
+                                                "Trending" -> "trending"
+                                                "Trending 24h" -> "24h"
+                                                else -> "latest"
+                                            }
+                                            loadBrowse(tab, page)
+                                        },
+                                        trailingIcon = {
+                                            if (isSelected) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                )
+                                            }
+                                        },
+                                    ) {
+                                        Text(
+                                            text = option,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (isSelected) Color.White else Color(0xFFCCCCCC),
+                                        )
+                                    }
+                                }
+                            }
+                            Surface(
+                                modifier = Modifier
+                                    .widthIn(max = 180.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                                color = Color.Transparent,
+                                onClick = { feedMenuOpen = true },
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = feedMode,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Rounded.ArrowDropDown,
+                                        contentDescription = "Dropdown",
+                                        tint = Color(0xFF8A8A96),
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            // Sort button (DropdownMenu)
+                            var sortMenuOpen by remember { mutableStateOf(false) }
+                            DropdownMenu(
+                                expanded = sortMenuOpen,
+                                onDismissRequest = { sortMenuOpen = false },
+                            ) {
+                                val sortOptions = listOf("Trending 24h", "Trending", "Popular", "Latest", "Name A-Z")
+                                sortOptions.forEach { option ->
+                                    val isSelected = sortMode == option
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            haptics.perform(HapticPattern.Pop)
+                                            sortMode = option
+                                            sortMenuOpen = false
+                                        },
+                                        trailingIcon = {
+                                            if (isSelected) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                )
+                                            }
+                                        },
+                                    ) {
+                                        Text(
+                                            text = option,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (isSelected) Color.White else Color(0xFFCCCCCC),
+                                        )
+                                    }
+                                }
+                            }
+                            Surface(
+                                modifier = Modifier
+                                    .widthIn(min = 72.dp, max = 96.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                                color = Color.Transparent,
+                                onClick = { sortMenuOpen = true },
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Sort,
+                                        contentDescription = "Sort",
+                                        tint = Color(0xFF8A8A96),
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Text(
+                                        text = "Sort",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF8A8A96),
+                                    )
+                                }
+                            }
+
+                            // Filter button (opens dialog/sheet with tag chips)
+                            var filterMenuOpen by remember { mutableStateOf(false) }
+                            val filterTagList = listOf("Female", "Male", "Smut", "Dead Dove", "Fluff", "Angst", "Fantasy", "Sci-Fi")
+                            Surface(
+                                modifier = Modifier
+                                    .widthIn(min = 72.dp, max = 96.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                                color = Color.Transparent,
+                                onClick = { filterMenuOpen = true },
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FilterAlt,
+                                        contentDescription = "Filter",
+                                        tint = Color(0xFF8A8A96),
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Text(
+                                        text = "Filter",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF8A8A96),
+                                    )
+                                }
+                            }
+                            // Filter dialog (shown when filterMenuOpen is true)
+                            if (filterMenuOpen) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .widthIn(max = 280.dp)
+                                            .background(Color(0xFF000000))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(16.dp))
+                                            .clip(RoundedCornerShape(16.dp)),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(16.dp),
+                                        ) {
+                                            Text(
+                                                text = "Filter by Tags",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            LazyVerticalGrid(
+                                                columns = GridCells.Fixed(2),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                            ) {
+                                                items(filterTagList) { tag ->
+                                                    val isSelected = filterTags.contains(tag)
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .widthIn(min = 60.dp)
+                                                            .height(32.dp)
+                                                            .clip(RoundedCornerShape(16.dp))
+                                                            .background(
+                                                                if (isSelected) Color.White.copy(alpha = 0.15f) else Color.Transparent
+                                                            )
+                                                            .border(
+                                                                0.5.dp,
+                                                                if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                                                RoundedCornerShape(16.dp)
+                                                            )
+                                                            .clickable {
+                                                                haptics.perform(HapticPattern.Pop)
+                                                                filterTags = if (isSelected) {
+                                                                    filterTags - tag
+                                                                } else {
+                                                                    filterTags + tag
+                                                                }
+                                                            },
+                                                    ) {
+                                                        Text(
+                                                            text = tag,
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = Color.White,
+                                                            textAlign = TextAlign.Center,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End,
+                                            ) {
+                                                TextButton(
+                                                    onClick = { filterMenuOpen = false },
+                                                ) {
+                                                    Text(text = "Done", color = Color(0xFF8A8A96))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Search bar (full width, supports text queries and Janitor bot URLs)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                            ) {
+                                OutlinedTextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    placeholder = { Text("Search characters or paste Janitor bot URL...") },
+                                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                                    trailingIcon = {
+                                        if (searchQuery.isNotEmpty()) {
+                                            IconButton(onClick = { searchQuery = "" }) {
+                                                Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                                            }
+                                        }
+                                    },
+                                    singleLine = true,
+                                    shape = AppShapes.SearchField,
+                                    colors = appFieldColors(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(AppShapes.SearchField)
+                                        .border(
+                                            0.5.dp,
+                                            LiquidGlassTokens.SpecularBorderSubtle,
+                                            AppShapes.SearchField,
+                                        ),
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                        imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                                    ),
+                                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                        onSearch = {
+                                            val extractedUuid = extractJanitorUuidFromUrl(searchQuery)
+                                            if (extractedUuid != null) {
+                                                // Search by URL-extracted UUID
+                                                scope.launch {
+                                                    searchState = JanitorLoadState.Loading
+                                                    try {
+                                                        val response = withContext(Dispatchers.IO) {
+                                                            httpClient.execute(
+                                                                PlatformHttpRequest(
+                                                                    method = "GET",
+                                                                    url = "$JANITOR_BASE_URL/api/bots/$extractedUuid",
+                                                                )
+                                                            }
+                                                        }
+                                                        if (response.statusCode in 200..299) {
+                                                            val json = String(response.body, charset = Charsets.UTF_8)
+                                                            val single = JsonInstant.decodeFromString<JanitorCharacter>(json)
+                                                            withContext(Dispatchers.Main) {
+                                                                browseState = JanitorLoadState.Success(listOf(single))
+                                                                selectedTab = 0
+                                                            }
+                                                        } else {
+                                                            withContext(Dispatchers.Main) {
+                                                                searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                                                            }
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        withContext(Dispatchers.Main) {
+                                                            searchState = JanitorLoadState.Error(e.message ?: e.toString())
+                                                        }
+                                                    }
+                                                }
+                                            } else if (searchQuery.isNotBlank()) {
+                                                scope.launch {
+                                                    searchState = JanitorLoadState.Loading
+                                                    loadSearch()
+                                                }
+                                            }
+                                        },
+                                    ),
+                                )
+                            }
+                        }
+                    }
+
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         modifier = Modifier
@@ -661,7 +833,7 @@ fun SettingJanitorPage() {
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        items(currentItems) { character ->
+                        items(sortedFilteredItems) { character ->
                             CharacterCard(
                                 character = character,
                                 onClick = {
@@ -760,6 +932,7 @@ fun SettingJanitorPage() {
             containerColor = sheetBgColor,
             shape = sheetShape,
             dragHandle = null,
+            sheetGesturesEnabled = false,
             modifier = Modifier.border(
                 0.5.dp,
                 LiquidGlassTokens.SpecularBorderBrush,
@@ -932,6 +1105,11 @@ fun SettingJanitorPage() {
                                             .clip(RoundedCornerShape(12.dp))
                                             .background(Color(0xFF141520))
                                             .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                            .clickable {
+                                                viewerImageUrls = embeddedImageUrls.toList()
+                                                viewerCurrentPage = embeddedImageUrls.indexOf(imageUrl).coerceAtLeast(0)
+                                                viewerOpen = true
+                                            }
                                     ) {
                                         AsyncImage(
                                             model = imageUrl,
@@ -1112,7 +1290,7 @@ fun SettingJanitorPage() {
                                             }
                                         } else {
                                             val firstMessage = fullExtract?.firstMessage ?: character.firstMessage.orEmpty()
-                                            if (firstMessage.isNotBlank()) {
+                                            if (firstMessage.isNotBlank() && !isDummyGreeting(firstMessage)) {
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
@@ -1138,7 +1316,7 @@ fun SettingJanitorPage() {
                                             }
 
                                             val altGreetings = fullExtract?.alternateGreetings ?: character.alternateGreetings
-                                            altGreetings.forEachIndexed { i, alt ->
+                                            altGreetings.filter { !isDummyGreeting(it) }.forEachIndexed { i, alt ->
                                                 if (alt.isNotBlank()) {
                                                     Box(
                                                         modifier = Modifier
@@ -1435,4 +1613,15 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         characterVersion = extract.id,
         tags = registeredTagIds,
     )
+}
+
+/**
+ * Returns true if a greeting text is a dummy placeholder (single dot, dash, underscore, "none"/"None"/"null", empty).
+ */
+private fun isDummyGreeting(text: String?): Boolean {
+    val t = text?.trim() ?: return true
+    return when (t) {
+        "", ".", "..", "...", "-", "_", "none", "None", "null" -> true
+        else -> false
+    }
 }

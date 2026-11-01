@@ -1,27 +1,18 @@
-# Audit Brief — Janitor Hub Redesign with Controls, Pagination, Custom Loader & Popover Cross (task-033)
+# Audit Brief — Janitor Hub Scrollable Header, Real Dropdown, Sort/Filter Actions & Glassy Tags (task-035)
 
 ## Intent Verification
 
-All seven directive requirements are implemented in `SettingJanitorPage.kt`:
+All four directive requirements are implemented in `SettingJanitorPage.kt`:
 
-1. **Header Controls** — Below the JanitorAI Hub heading:
-   - Left-aligned glassy feed mode dropdown selector: [Popular, Trending, Trending 24h, Latest] with clickable options that update `feedMode` state and reset `page = 1`
-   - Right side: two glassy option buttons — 'Sort' (sort icon) and 'Filter' (filter list icon), both in `0xFF000000` glass cards with `0.5dp` `SpecularBorderSubtle` borders
-   - Top-right: search bar supporting text queries AND full Janitor bot URLs; pasting a URL triggers `extractJanitorUuidFromUrl()` regex extraction and direct bot lookup via `/api/bots/{uuid}`
+1. **Header controls moved inside LazyVerticalGrid** — The feed selector, sort button, filter button, and search bar are now inside `LazyVerticalGrid` as `item(span = { GridItemSpan(maxLineSpan) })`. Only `OneUITopAppBar` remains sticky; all header controls scroll away with the card grid.
 
-2. **Pagination** — `page` counter (mutableIntStateOf starting at 1), `loadBrowse(tab, pageNum, append)` appends fetched bots to the current list via `distinctBy { it.id }`. Glassy 'Load More' button at bottom of grid increments page and calls `loadBrowse(tab, page, append = true)`.
+2. **Feed Dropdown (real DropdownMenu)** — Replaced the static column/row of feed modes with `DropdownMenu`. A single glassy pill button shows the active mode (e.g., "Trending 24h ▾") that toggles a popup with options: [Popular, Trending, Trending 24h, Latest].
 
-3. **Custom Centered Animated Loader** — `JanitorOrbitalLoader()` uses concentric glowing orbital rings: rotating `Box` with `2.5dp` border in `Color(0xFF141520)` gradient (0.95f → 0.35f alpha), `infiniteRepeatable` animation for rotation (1200ms) and pulse alpha (1000ms reverse). Centered via `Box(fillMaxSize, contentAlignment = Alignment.Center)` when loading with empty items.
+3. **Sort & Filter actions** — Sort opens a `DropdownMenu` (Trending 24h, Trending, Popular, Latest, Name A-Z) that sorts the character list. Filter opens a dialog/sheet with tag chips (Female, Male, Smut, Dead Dove, Fluff, Angst, Fantasy, Sci-Fi) that filters displayed items.
 
-4. **Tag design** — Black background `Color(0xFF000000)`, glassy `0.5dp` `SpecularBorderSubtle` border, pill shape `RoundedCornerShape(20.dp)`, full words via `.replace("_", " ")` with no truncation.
+4. **Tags in CharacterCard** — Tag pills use black background `Color(0xFF000000)`, glassy `0.5dp` `SpecularBorderSubtle` border, `RoundedCornerShape(20.dp)` pill shape, full words via `.replace("_", " ")` with no truncation.
 
-5. **Popover Sheet** — Smooth `ModalBottomSheet` animation with `skipPartiallyExpanded = true`; circular glassy Close (X) button in top-end corner over hero image (`0.50f` black scrim + `0.25f` white border); embedded images gallery renders from `bio`, `description`, `firstMessage`, and `embeddedImages` fields via URL regex extraction; hero avatar alignment = `Alignment.TopCenter` with `contentScale = ContentScale.Crop`.
-
-6. **Removed** — The `'___ characters loaded'` text indicator has been removed from the Janitor Hub page.
-
-7. **Schema** — `JanitorExtractResponse` now includes `@SerialName("embeddedImages") val embeddedImages: List<String> = emptyList()`.
-
-Strict null safety: no `!!` in the file. All nullable access uses `?:`, `takeIf`, `isNullOrBlank()`, `orEmpty()`. Unified glass theme `0xFF141520` enforced across cards, tag pills, load more button, and embedded image cards.
+Strict null safety: no `!!` in the file. All nullable access uses `?:`, `takeIf`, `isNullOrBlank()`, `orEmpty()`. Unified glass theme `0xFF141520` enforced on tag pills and load more button.
 
 ## Call Chain & Architecture
 
@@ -32,28 +23,31 @@ Strict null safety: no `!!` in the file. All nullable access uses `?:`, `takeIf`
 - `feedMode` — current feed mode selection
 - `page` — pagination counter (starts at 1)
 - `isLoadingMore` — load-more-in-progress flag
+- `sortMode` — current sort selection
+- `filterTags` — set of filter tags applied to filter items
 - `selectedCharacter` — currently inspected character
 - `bottomSheetState` — `rememberModalBottomSheetState`
 - `isImporting` — extraction in progress flag
 - `isTabSwitching` — tab transition loading flag
 
 Flow:
-1. `loadBrowse(tab, pageNum, append)` → `withContext(Dispatchers.IO)` HTTP request → parse JSON → update state on `Dispatchers.Main`. When `append=true`, merges new items with existing.
+1. `loadBrowse(tab, pageNum, append)` → `withContext(Dispatchers.IO)` HTTP request → parse JSON → update state on `Dispatchers.Main`. When `append=true`, merges new items with existing via `distinctBy { it.id }`.
 2. Tab/feed mode switch → `LaunchedEffect(selectedTab, feedMode)` sets `isTabSwitching = true`, resets `page = 1`, loads data, then `isTabSwitching = false`.
 3. Search bar `onCommit` → extracts UUID from URL via regex or performs text search → updates `browseState`.
 4. 'Load More' → increments `page`, calls `loadBrowse(tab, page, append = true)`.
 5. CharacterCard click → `selectedCharacter = character` → `bottomSheetState.show()` → `ModalBottomSheet`.
 6. Sheet "Import to Hub" → uses `fullExtract` (pre-fetched via `LaunchedEffect(character.id)`) → registers new tags → `extractToAssistant(extract, updatedSettings)` → `assistantVM.addAssistant(assistant)` → toast + hide sheet.
-7. Sheet embedded images → extracted from markdown URLs in `bio`/`description`/`firstMessage` + `extract.embeddedImages` via `urlRegex()`.
+7. Sheet embedded images → extracted from markdown URLs in `bio`/`description`/`firstMessage` + `extract.embeddedImages` via URL regex extraction.
 
 UI Layer: only renders state and emits intents. Zero business logic in composables.
 
 ## Recomposition & Memory Safety
 
 - **No `!!`**: Verified zero force-unwraps across the file.
-- **Remember scoping**: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `isTabSwitching`, `feedMode`, `page`, `isLoadingMore`, `selectedCharacter`, `bottomSheetState`, `isImporting`, `fullExtract`, `isExtractLoading`, `embeddedImageUrls` all use `remember` / `rememberModalBottomSheetState` / `mutableIntStateOf`.
+- **Remember scoping**: `selectedTab`, `searchQuery`, `browseState`, `searchState`, `isTabSwitching`, `feedMode`, `page`, `isLoadingMore`, `sortMode`, `filterTags`, `selectedCharacter`, `bottomSheetState`, `isImporting`, `fullExtract`, `isExtractLoading` all use `remember` / `rememberModalBottomSheetState` / `mutableIntStateOf`.
+- **DropdownMenu state**: `feedMenuOpen`, `sortMenuOpen`, `filterMenuOpen` are local `remember` states inside the grid item header, scoped to that composition.
 - **LazyVerticalGrid**: items(key = character.id) ensures stable identity across pagination appends.
-- **LaunchedEffect(key)**: `selectedTab` + `feedMode` key ensures reload only when either changes; `character.id` key ensures extract re-fetch only per character.
+- **Sorted/filtered items**: `sortedFilteredItems` is a derived value computed during composition from `activeState.items` with filter and sort applied — no state mutation during composition.
 - **No naked objects**: All state is `remember`-scoped or `collectAsStateWithLifecycle`-collected.
 
 ## Threading & Dispatchers

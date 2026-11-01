@@ -31,6 +31,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -1138,11 +1141,14 @@ fun CharacterInspectorSheet(
     val cardBgColor = Color(0xFF000000)
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
+    var viewerImageUrls by remember { mutableStateOf(emptyList<String>()) }
+    var viewerOpen by remember { mutableStateOf(false) }
+    var viewerCurrentPage by remember { mutableIntStateOf(0) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        sheetGesturesEnabled = true,
+        sheetGesturesEnabled = false,
         containerColor = sheetBgColor,
         contentColor = contentTextColor,
         dragHandle = null,
@@ -1222,6 +1228,11 @@ fun CharacterInspectorSheet(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0xFF141520))
                                     .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        viewerImageUrls = embeddedImageUrls.toList()
+                                        viewerCurrentPage = embeddedImageUrls.indexOf(imageUrl).coerceAtLeast(0)
+                                        viewerOpen = true
+                                    }
                             ) {
                                 AsyncImage(
                                     model = imageUrl,
@@ -1575,10 +1586,10 @@ fun CharacterInspectorSheet(
                                 // Opening Greetings Tab with animated carousel
                                 val allGreetings = remember(assistant.firstMessage, assistant.alternateGreetings) {
                                     val list = mutableListOf<String>()
-                                    if (assistant.firstMessage.isNotBlank()) {
+                                    if (assistant.firstMessage.isNotBlank() && !isDummyGreeting(assistant.firstMessage)) {
                                         list.add(assistant.firstMessage)
                                     }
-                                    list.addAll(assistant.alternateGreetings)
+                                    list.addAll(assistant.alternateGreetings.filter { !isDummyGreeting(it) })
                                     list
                                 }
 
@@ -1703,6 +1714,70 @@ fun CharacterInspectorSheet(
             }
         }
     }
+
+    // Image Viewer Dialog - Swipeable Embedded Image Viewer
+    if (viewerOpen && viewerImageUrls.isNotEmpty()) {
+        val viewerPagerState = rememberPagerState(initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))) { viewerImageUrls.size }
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.90f)),
+            ) {
+                HorizontalPager(
+                    state = viewerPagerState,
+                    modifier = Modifier.fillMaxSize(),
+                ) { page ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AsyncImage(
+                            model = viewerImageUrls[page],
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            alignment = Alignment.Center,
+                            contentScale = ContentScale.Fit,
+                        )
+                    }
+                }
+                // Page counter indicator
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 40.dp),
+                ) {
+                    Text(
+                        text = "${viewerPagerState.currentPage + 1} / ${viewerImageUrls.size}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                // Close (X) button top-end corner
+                IconButton(
+                    onClick = { viewerOpen = false },
+                    modifier = Modifier
+                        .padding(top = 40.dp, end = 20.dp)
+                        .align(Alignment.TopEnd)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.50f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -1737,4 +1812,15 @@ private fun sanitizeHtml(html: String?): String {
         .replace(Regex("\\s+"), " ")
         .trim()
     return result
+}
+
+/**
+ * Returns true if a greeting text is a dummy placeholder (single dot, dash, underscore, "none"/"None"/"null", empty).
+ */
+private fun isDummyGreeting(text: String?): Boolean {
+    val t = text?.trim() ?: return true
+    return when (t) {
+        "", ".", "..", "...", "-", "_", "none", "None", "null" -> true
+        else -> false
+    }
 }

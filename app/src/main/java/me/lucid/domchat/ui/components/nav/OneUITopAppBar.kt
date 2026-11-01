@@ -21,7 +21,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -107,15 +106,7 @@ fun OneUITopAppBar(
         modifier = modifier
             .fillMaxWidth()
             .height(currentHeight)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF141520).copy(alpha = 0.92f),
-                        Color(0xFF000000).copy(alpha = 0.5f),
-                        Color.Transparent,
-                    )
-                )
-            )
+            .background(Color(0xFF000000))
     ) {
         // Status bar spacer
         Spacer(modifier = Modifier.height(statusBarHeight))
