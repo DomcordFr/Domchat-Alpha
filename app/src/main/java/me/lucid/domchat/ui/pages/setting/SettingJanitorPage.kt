@@ -92,6 +92,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -218,6 +219,17 @@ private fun sanitizeHtml(html: String?): String {
     return result
 }
 
+/**
+ * Normalizes a tag string for comparison by stripping emojis and non-alphanumeric characters,
+ * then lowercasing. So "👩 Female" becomes "female", matching "female", "FEMALE", etc.
+ */
+private fun normalizeTag(tag: String): String {
+    return tag
+        .filter { c -> c.isLetterOrDigit() || c.isWhitespace() }
+        .lowercase()
+        .trim()
+}
+
 sealed class JanitorLoadState {
     object Loading : JanitorLoadState()
     data class Success(val items: List<JanitorCharacter>) : JanitorLoadState()
@@ -278,8 +290,11 @@ fun SettingJanitorPage() {
 
     val sortedFilteredItems: List<JanitorCharacter> = when (activeState) {
         is JanitorLoadState.Success -> {
+            val normalizedFilterTags = filterTags.map { normalizeTag(it) }.toSet()
             val items = activeState.items.filter { character ->
-                filterTags.isEmpty() || character.tags.any { tag -> filterTags.contains(tag) }
+                normalizedFilterTags.isEmpty() || character.tags.any { tag ->
+                    normalizedFilterTags.contains(normalizeTag(tag))
+                }
             }
             when (sortMode) {
                 "Name A-Z" -> items.sortedBy { it.name.lowercase() }
@@ -338,21 +353,18 @@ fun SettingJanitorPage() {
             try {
                 searchState = JanitorLoadState.Loading
                 val trimmedQuery = searchQuery.trim()
-                val isDirectLink = trimmedQuery.contains("janitorai.com/characters/")
-                val isUuid = trimmedQuery.matches(Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+                val uuid = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").find(trimmedQuery)?.value
 
-                if (isDirectLink || isUuid) {
-                    // Direct bot link or UUID: fetch single character via /api/extract
-                    val botId = if (isDirectLink) {
-                        trimmedQuery.substringAfterLast("/").takeWhile { it != '?' && it != '/' && it != '#' }
-                    } else {
-                        trimmedQuery
-                    }
+                if (uuid != null) {
+                    // UUID present (raw UUID or pasted character URL): POST to /api/extract
+                    val body = JsonInstant.encodeToString(JanitorExtractRequest(botId = uuid, characterId = uuid)).toByteArray()
                     val response = withContext(Dispatchers.IO) {
                         httpClient.execute(
                             PlatformHttpRequest(
-                                method = "GET",
-                                url = "$JANITOR_BASE_URL/api/extract?botId=$botId",
+                                method = "POST",
+                                url = "$JANITOR_BASE_URL/api/extract",
+                                body = body,
+                                mediaType = "application/json",
                             )
                         )
                     }
@@ -378,7 +390,7 @@ fun SettingJanitorPage() {
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                            searchState = JanitorLoadState.Error("Failed to load character. Server returned HTTP ${response.statusCode}. Please try again later.")
                         }
                     }
                 } else {
@@ -400,13 +412,13 @@ fun SettingJanitorPage() {
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
+                            searchState = JanitorLoadState.Error("Search failed. Server returned HTTP ${response.statusCode}. Please try again later.")
                         }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    searchState = JanitorLoadState.Error(e.message ?: e.toString())
+                    searchState = JanitorLoadState.Error("An unexpected error occurred. Please try again later.")
                 }
             }
         }
@@ -579,9 +591,9 @@ fun SettingJanitorPage() {
                                 Box {
                                     Surface(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(20.dp))
                                             .background(Color(0xFF000000))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp)),
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp)),
                                         color = Color.Transparent,
                                         onClick = { feedMenuOpen = true },
                                     ) {
@@ -592,7 +604,10 @@ fun SettingJanitorPage() {
                                         ) {
                                             Text(
                                                 text = feedMode,
-                                                style = MaterialTheme.typography.bodyMedium,
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                    lineHeight = 1.2.em
+                                                ),
                                                 color = Color.White,
                                                 fontWeight = FontWeight.Medium,
                                             )
@@ -657,9 +672,9 @@ fun SettingJanitorPage() {
                                     Box {
                                         Surface(
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
+                                                .clip(RoundedCornerShape(20.dp))
                                                 .background(Color(0xFF000000))
-                                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp)),
+                                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp)),
                                             color = Color.Transparent,
                                             onClick = { sortMenuOpen = true },
                                         ) {
@@ -676,6 +691,10 @@ fun SettingJanitorPage() {
                                                 )
                                                 Text(
                                                     text = "Sort",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
                                                     fontSize = 12.sp,
                                                     color = Color(0xFF8A8A96),
                                                 )
@@ -720,9 +739,9 @@ fun SettingJanitorPage() {
                                     // Filter button
                                     Surface(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(20.dp))
                                             .background(Color(0xFF000000))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp)),
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp)),
                                         color = Color.Transparent,
                                         onClick = { filterMenuOpen = true },
                                     ) {
@@ -739,6 +758,10 @@ fun SettingJanitorPage() {
                                             )
                                             Text(
                                                 text = if (filterTags.isEmpty()) "Filter" else "Filter (${filterTags.size})",
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                    lineHeight = 1.2.em
+                                                ),
                                                 fontSize = 12.sp,
                                                 color = if (filterTags.isNotEmpty()) Color.White else Color(0xFF8A8A96),
                                             )
@@ -753,7 +776,7 @@ fun SettingJanitorPage() {
                                 onValueChange = { searchQuery = it },
                                 placeholder = {
                                     Text(
-                                        "Search characters or paste Janitor bot URL...",
+                                        "Search characters or paste link...",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -782,40 +805,8 @@ fun SettingJanitorPage() {
                                 ),
                                 keyboardActions = androidx.compose.foundation.text.KeyboardActions(
                                     onSearch = {
-                                        val extractedUuid = extractJanitorUuidFromUrl(searchQuery)
-                                        if (extractedUuid != null) {
+                                        if (searchQuery.isNotBlank()) {
                                             scope.launch {
-                                                searchState = JanitorLoadState.Loading
-                                                try {
-                                                    val response = withContext(Dispatchers.IO) {
-                                                        httpClient.execute(
-                                                            PlatformHttpRequest(
-                                                                method = "GET",
-                                                                url = "$JANITOR_BASE_URL/api/bots/$extractedUuid",
-                                                            )
-                                                        )
-                                                    }
-                                                    if (response.statusCode in 200..299) {
-                                                        val json = String(response.body, charset = Charsets.UTF_8)
-                                                        val single = JsonInstant.decodeFromString<JanitorCharacter>(json)
-                                                        withContext(Dispatchers.Main) {
-                                                            browseState = JanitorLoadState.Success(listOf(single))
-                                                            selectedTab = 0
-                                                        }
-                                                    } else {
-                                                        withContext(Dispatchers.Main) {
-                                                            searchState = JanitorLoadState.Error("HTTP ${response.statusCode}")
-                                                        }
-                                                    }
-                                                } catch (e: Exception) {
-                                                    withContext(Dispatchers.Main) {
-                                                        searchState = JanitorLoadState.Error(e.message ?: e.toString())
-                                                    }
-                                                }
-                                            }
-                                        } else if (searchQuery.isNotBlank()) {
-                                            scope.launch {
-                                                searchState = JanitorLoadState.Loading
                                                 loadSearch()
                                             }
                                         }
@@ -917,7 +908,7 @@ fun SettingJanitorPage() {
                             Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
                         }
                     }
-                    val filterTagList = listOf("Female", "Male", "Smut", "Dead Dove", "Fluff", "Angst", "Fantasy", "Sci-Fi")
+                    val filterTagList = listOf("👩 Female", "👨 Male", "❤️‍🔥 Smut", "🕊🗡 Dead Dove", "❤️‍🩹 Fluff", "💔 Angst", "🐉 Fantasy", "🚀 Sci-Fi", "⛓️ Dominant", "👩 FemPov", "🧑‍🎨 OC", "😂 Comedy", "🔦 Horror", "🎲 RPG")
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -927,12 +918,12 @@ fun SettingJanitorPage() {
                             val isSelected = filterTags.contains(tag)
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(20.dp))
                                     .background(if (isSelected) Color.White.copy(alpha = 0.20f) else Color.Transparent)
                                     .border(
                                         0.5.dp,
                                         if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-                                        RoundedCornerShape(16.dp)
+                                        RoundedCornerShape(20.dp)
                                     )
                                     .clickable {
                                         haptics.perform(HapticPattern.Pop)
@@ -1004,21 +995,6 @@ fun SettingJanitorPage() {
         ModalBottomSheet(
             containerColor = sheetBgColor,
             shape = sheetShape,
-            dragHandle = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 36.dp, height = 4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(alpha = 0.35f))
-                    )
-                }
-            },
             sheetGesturesEnabled = false,
             modifier = Modifier.border(
                 0.5.dp,
@@ -1049,51 +1025,68 @@ fun SettingJanitorPage() {
                 ) {
                     // Full-bleed edge-to-edge hero image matching Character Hub
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(340.dp)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (imageUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = imageUrl,
-                                contentDescription = character.name,
-                                modifier = Modifier.fillMaxSize(),
-                                alignment = Alignment.TopCenter,
-                                contentScale = ContentScale.Crop,
-                                placeholder = painterResource(id = R.drawable.default_generical_pfp),
-                                fallback = painterResource(id = R.drawable.default_generical_pfp),
-                            )
-                        } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(340.dp)
+                        ) {
+                            if (imageUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = imageUrl,
+                                    contentDescription = character.name,
+                                    modifier = Modifier.fillMaxSize(),
+                                    alignment = Alignment.TopCenter,
+                                    contentScale = ContentScale.Crop,
+                                    placeholder = painterResource(id = R.drawable.default_generical_pfp),
+                                    fallback = painterResource(id = R.drawable.default_generical_pfp),
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color(0xFF000000)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(32.dp),
+                                        tint = Color.White.copy(alpha = 0.5f),
+                                    )
+                                }
+                            }
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color(0xFF000000)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
-                                    tint = Color.White.copy(alpha = 0.5f),
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Transparent,
-                                            sheetBgColor.copy(alpha = 0.15f),
-                                            sheetBgColor.copy(alpha = 0.50f),
-                                            sheetBgColor.copy(alpha = 0.85f),
-                                            sheetBgColor.copy(alpha = 1f),
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Transparent,
+                                                sheetBgColor.copy(alpha = 0.15f),
+                                                sheetBgColor.copy(alpha = 0.50f),
+                                                sheetBgColor.copy(alpha = 0.85f),
+                                                sheetBgColor.copy(alpha = 1f),
+                                            )
                                         )
                                     )
                                 )
-                        )
+                            // Drag handle overlaid at top center over hero image
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 10.dp)
+                                    .align(Alignment.TopCenter)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 36.dp, height = 4.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(Color.White.copy(alpha = 0.35f))
+                                )
+                            }
+                        }
                         // Close/cross button top-end corner over hero image
                         IconButton(
                             onClick = {

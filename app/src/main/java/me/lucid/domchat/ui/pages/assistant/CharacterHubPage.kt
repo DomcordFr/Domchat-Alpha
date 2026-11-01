@@ -42,8 +42,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Chat
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Notes
 import androidx.compose.material.icons.rounded.Search
@@ -51,6 +53,8 @@ import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material.icons.rounded.ViewList
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -80,6 +84,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -169,6 +174,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var debouncedQuery by remember { mutableStateOf("") }
     var isGridView by remember { mutableStateOf(true) }
     var sortOption by remember { mutableStateOf(CharacterSortOption.RECENT) }
+    var sortMenuOpen by remember { mutableStateOf(false) }
+    var filterMenuOpen by remember { mutableStateOf(false) }
+    var selectedTagIds by remember { mutableStateOf(emptySet<String>()) }
     var inspectingAssistant by remember { mutableStateOf<Assistant?>(null) }
     var showingCreatorNotesFor by remember { mutableStateOf<Assistant?>(null) }
     var characterToDelete by remember { mutableStateOf<Assistant?>(null) }
@@ -277,7 +285,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var filteredAssistants by remember { mutableStateOf(settings.assistants) }
 
     // Fast indexed background search: searches name, creator without scanning multi-KB prompt blobs
-    LaunchedEffect(settings.assistants, debouncedQuery, sortOption) {
+    LaunchedEffect(settings.assistants, debouncedQuery, sortOption, selectedTagIds) {
         try {
             withContext(Dispatchers.Default) {
                 val base = if (debouncedQuery.isEmpty()) {
@@ -288,10 +296,15 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             (char.creator?.lowercase()?.contains(debouncedQuery) == true)
                     }
                 }
+                val tagFiltered = if (selectedTagIds.isEmpty()) {
+                    base
+                } else {
+                    base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId) } }
+                }
                 val sorted = when (sortOption) {
-                    CharacterSortOption.NAME -> base.sortedBy { it.name.lowercase() }
-                    CharacterSortOption.CREATOR -> base.sortedBy { it.creator?.lowercase() ?: "" }
-                    CharacterSortOption.RECENT -> base
+                    CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
+                    CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
+                    CharacterSortOption.RECENT -> tagFiltered
                 }
                 val distinctSorted = sorted.distinctBy { it.id }
                 withContext(Dispatchers.Main) {
@@ -387,39 +400,196 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 .padding(horizontal = 4.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "${filteredAssistants.size} characters loaded",
-                                fontSize = 12.sp,
-                                color = Color(0xFF8A8A96)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "${filteredAssistants.size} Characters",
+                                    fontSize = 11.5.sp,
+                                    color = Color.White.copy(0.85f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
 
                             Spacer(modifier = Modifier.weight(1f))
 
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                modifier = Modifier
+                                    .verticalAlignment(Alignment.CenterVertically)
+                                    .horizontalArrangement(Arrangement.spacedBy(8.dp))
                             ) {
-                                CharacterSortOption.entries.forEach { option ->
-                                    val selected = sortOption == option
+                                // Sort dropdown pill
+                                Box {
                                     Surface(
-                                        onClick = { sortOption = option },
-                                        color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
-                                        shape = RoundedCornerShape(10.dp),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            0.5.dp,
-                                            if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                                        )
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(Color(0xFF000000))
+                                            .border(
+                                                0.5.dp,
+                                                LiquidGlassTokens.SpecularBorderSubtle,
+                                                RoundedCornerShape(20.dp)
+                                            ),
+                                        color = Color.Transparent,
+                                        onClick = { sortMenuOpen = true },
                                     ) {
-                                        Text(
-                                            text = when (option) {
-                                                CharacterSortOption.RECENT -> "Recent"
-                                                CharacterSortOption.NAME -> "Name"
-                                                CharacterSortOption.CREATOR -> "Creator"
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                                .verticalAlignment(Alignment.CenterVertically)
+                                                .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Sort,
+                                                contentDescription = "Sort",
+                                                tint = Color(0xFF8A8A96),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = when (sortOption) {
+                                                    CharacterSortOption.RECENT -> "Recent"
+                                                    CharacterSortOption.NAME -> "Name A-Z"
+                                                    CharacterSortOption.CREATOR -> "Creator"
+                                                },
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                    lineHeight = 1.2.em
+                                                ),
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.White
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Rounded.ArrowDropDown,
+                                                contentDescription = "Dropdown",
+                                                tint = Color(0xFF8A8A96),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = sortMenuOpen,
+                                        onDismissRequest = { sortMenuOpen = false },
+                                        modifier = Modifier
+                                            .background(Color(0xFF000000))
+                                            .border(
+                                                0.5.dp,
+                                                LiquidGlassTokens.SpecularBorderSubtle,
+                                                RoundedCornerShape(20.dp)
+                                            )
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Recent",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
+                                                    color = if (sortOption == CharacterSortOption.RECENT) Color.White else Color(0xFFCCCCCC)
+                                                )
                                             },
-                                            fontSize = 11.sp,
-                                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                            color = if (selected) Color.White else Color(0xFF888888),
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.RECENT
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.RECENT) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Name A-Z",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
+                                                    color = if (sortOption == CharacterSortOption.NAME) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.NAME
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.NAME) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Creator",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
+                                                    color = if (sortOption == CharacterSortOption.CREATOR) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.CREATOR
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else null
+                                        )
+                                    }
+                                }
+                                // Filter pill button
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color(0xFF000000))
+                                        .border(
+                                            0.5.dp,
+                                            LiquidGlassTokens.SpecularBorderSubtle,
+                                            RoundedCornerShape(20.dp)
+                                        ),
+                                    color = Color.Transparent,
+                                    onClick = { filterMenuOpen = true }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                                            .verticalAlignment(Alignment.CenterVertically)
+                                            .horizontalArrangement(Arrangement.spacedBy(8.dp))
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.FilterAlt,
+                                            contentDescription = "Filter",
+                                            tint = if (selectedTagIds.isNotEmpty()) Color.White else Color(0xFF8A8A96),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = if (selectedTagIds.isEmpty()) "Filter" else "Filter (${selectedTagIds.size})",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                lineHeight = 1.2.em
+                                            ),
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White
                                         )
                                     }
                                 }
@@ -487,6 +657,92 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onClick = { inspectingAssistant = char }
                         )
                     }
+
+                    // Filter Dialog - glassy tag filter sheet
+                    if (filterMenuOpen) {
+                        Dialog(onDismissRequest = { filterMenuOpen = false }) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(28.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(28.dp))
+                                    .padding(20.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Filter by Tags",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                lineHeight = 1.2.em
+                                            ),
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        IconButton(onClick = { filterMenuOpen = false }) {
+                                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                                        }
+                                    }
+
+                                    val allTags = settings.assistantTags
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        allTags.forEach { tag ->
+                                            val isSelected = selectedTagIds.contains(tag.id.toString())
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(20.dp))
+                                                    .background(if (isSelected) Color.White.copy(alpha = 0.20f) else Color.Transparent)
+                                                    .border(
+                                                        0.5.dp,
+                                                        if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                                        RoundedCornerShape(20.dp)
+                                                    )
+                                                    .clickable {
+                                                        haptics.perform(HapticPattern.Pop)
+                                                        selectedTagIds = if (isSelected) {
+                                                            selectedTagIds - tag.id.toString()
+                                                        } else {
+                                                            selectedTagIds + tag.id.toString()
+                                                        }
+                                                    }
+                                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                            ) {
+                                                Text(
+                                                    text = tag.name,
+                                                    fontSize = 12.sp,
+                                                    color = Color.White,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        TextButton(onClick = {
+                                            selectedTagIds = emptySet()
+                                            filterMenuOpen = false
+                                        }) {
+                                            Text("Reset", color = Color(0xFF8A8A96))
+                                        }
+                                        TextButton(onClick = { filterMenuOpen = false }) {
+                                            Text("Apply", color = Color.White, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
@@ -529,39 +785,196 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 .padding(horizontal = 22.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "${filteredAssistants.size} characters loaded",
-                                fontSize = 12.sp,
-                                color = Color(0xFF8A8A96)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "${filteredAssistants.size} Characters",
+                                    fontSize = 11.5.sp,
+                                    color = Color.White.copy(0.85f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
 
                             Spacer(modifier = Modifier.weight(1f))
 
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                modifier = Modifier
+                                    .verticalAlignment(Alignment.CenterVertically)
+                                    .horizontalArrangement(Arrangement.spacedBy(8.dp))
                             ) {
-                                CharacterSortOption.entries.forEach { option ->
-                                    val selected = sortOption == option
+                                // Sort dropdown pill
+                                Box {
                                     Surface(
-                                        onClick = { sortOption = option },
-                                        color = if (selected) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
-                                        shape = RoundedCornerShape(10.dp),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            0.5.dp,
-                                            if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                                        )
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(Color(0xFF000000))
+                                            .border(
+                                                0.5.dp,
+                                                LiquidGlassTokens.SpecularBorderSubtle,
+                                                RoundedCornerShape(20.dp)
+                                            ),
+                                        color = Color.Transparent,
+                                        onClick = { sortMenuOpen = true },
                                     ) {
-                                        Text(
-                                            text = when (option) {
-                                                CharacterSortOption.RECENT -> "Recent"
-                                                CharacterSortOption.NAME -> "Name"
-                                                CharacterSortOption.CREATOR -> "Creator"
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                                .verticalAlignment(Alignment.CenterVertically)
+                                                .horizontalArrangement(Arrangement.spacedBy(8.dp)),
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Sort,
+                                                contentDescription = "Sort",
+                                                tint = Color(0xFF8A8A96),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = when (sortOption) {
+                                                    CharacterSortOption.RECENT -> "Recent"
+                                                    CharacterSortOption.NAME -> "Name A-Z"
+                                                    CharacterSortOption.CREATOR -> "Creator"
+                                                },
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                    lineHeight = 1.2.em
+                                                ),
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.White
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Rounded.ArrowDropDown,
+                                                contentDescription = "Dropdown",
+                                                tint = Color(0xFF8A8A96),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = sortMenuOpen,
+                                        onDismissRequest = { sortMenuOpen = false },
+                                        modifier = Modifier
+                                            .background(Color(0xFF000000))
+                                            .border(
+                                                0.5.dp,
+                                                LiquidGlassTokens.SpecularBorderSubtle,
+                                                RoundedCornerShape(20.dp)
+                                            )
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Recent",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
+                                                    color = if (sortOption == CharacterSortOption.RECENT) Color.White else Color(0xFFCCCCCC)
+                                                )
                                             },
-                                            fontSize = 11.sp,
-                                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                            color = if (selected) Color.White else Color(0xFF888888),
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.RECENT
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.RECENT) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Name A-Z",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
+                                                    color = if (sortOption == CharacterSortOption.NAME) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.NAME
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.NAME) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Creator",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = 1.2.em
+                                                    ),
+                                                    color = if (sortOption == CharacterSortOption.CREATOR) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.CREATOR
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            } else null
+                                        )
+                                    }
+                                }
+                                // Filter pill button
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color(0xFF000000))
+                                        .border(
+                                            0.5.dp,
+                                            LiquidGlassTokens.SpecularBorderSubtle,
+                                            RoundedCornerShape(20.dp)
+                                        ),
+                                    color = Color.Transparent,
+                                    onClick = { filterMenuOpen = true }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                                            .verticalAlignment(Alignment.CenterVertically)
+                                            .horizontalArrangement(Arrangement.spacedBy(8.dp))
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.FilterAlt,
+                                            contentDescription = "Filter",
+                                            tint = if (selectedTagIds.isNotEmpty()) Color.White else Color(0xFF8A8A96),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = if (selectedTagIds.isEmpty()) "Filter" else "Filter (${selectedTagIds.size})",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                                lineHeight = 1.2.em
+                                            ),
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White
                                         )
                                     }
                                 }
@@ -1163,21 +1576,6 @@ fun CharacterInspectorSheet(
         sheetGesturesEnabled = false,
         containerColor = sheetBgColor,
         contentColor = contentTextColor,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.White.copy(alpha = 0.35f))
-                )
-            }
-        },
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
@@ -1195,31 +1593,48 @@ fun CharacterInspectorSheet(
             ) {
                 // Hero Image with smooth multi-stop cubic vertical gradient fade into sheet background
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(340.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    FullCharacterCardImage(
-                        name = assistant.name,
-                        avatar = assistant.avatar,
-                        modifier = Modifier.fillMaxSize()
-                    )
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Transparent,
-                                        sheetBgColor.copy(alpha = 0.15f),
-                                        sheetBgColor.copy(alpha = 0.50f),
-                                        sheetBgColor.copy(alpha = 0.85f),
-                                        sheetBgColor.copy(alpha = 1f)
+                            .fillMaxWidth()
+                            .height(340.dp)
+                    ) {
+                        FullCharacterCardImage(
+                            name = assistant.name,
+                            avatar = assistant.avatar,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Transparent,
+                                            sheetBgColor.copy(alpha = 0.15f),
+                                            sheetBgColor.copy(alpha = 0.50f),
+                                            sheetBgColor.copy(alpha = 0.85f),
+                                            sheetBgColor.copy(alpha = 1f)
+                                        )
                                     )
                                 )
                             )
-                    )
+                    }
+                    // Drag handle overlaid at top center over hero image
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 10.dp)
+                            .align(Alignment.TopCenter)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(width = 36.dp, height = 4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(alpha = 0.35f))
+                        )
+                    }
                 }
 
                 // Embedded images gallery (from bio/description or firstMessage markdown)
