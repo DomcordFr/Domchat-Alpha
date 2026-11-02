@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -151,8 +152,8 @@ fun AssistantCoreRoleplaySubPage(
         // ═══════════════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_creator_notes)) {
             SettingGroupItem(
-                title = stringResource(R.string.assistant_page_creator_notes),
-                subtitle = stringResource(R.string.assistant_detail_creator_notes_desc),
+                title = "Creator Notes",
+                subtitle = "Creator notes",
                 trailing = {
                     Surface(
                         color = Color(0xFF141520),
@@ -172,7 +173,7 @@ fun AssistantCoreRoleplaySubPage(
                                 .heightIn(min = 120.dp),
                             minLines = 6,
                             maxLines = 10,
-                            placeholder = { Text(stringResource(R.string.assistant_page_creator_notes_placeholder)) },
+                            placeholder = "Write creator notes...",
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
                                 fontFamily = FontFamily.Monospace,
                                 lineHeight = 20.sp

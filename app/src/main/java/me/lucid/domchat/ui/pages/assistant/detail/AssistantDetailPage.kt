@@ -384,7 +384,7 @@ fun AssistantDetailPage(
             }
         ) {
             composable(AssistantDetailRoutes.HOME) {
-                AnimatedContent<String?>(key = currentRoute) {
+                AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantDetailHome(
                         assistant = assistant,
                         onNavigateToCore = { navController.navigate(AssistantDetailRoutes.CORE) },
@@ -395,7 +395,7 @@ fun AssistantDetailPage(
 
             // Core Roleplay section - unified sub-page
             composable(AssistantDetailRoutes.CORE) {
-                AnimatedContent<String?>(key = currentRoute) {
+                AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantCoreRoleplaySubPage(
                         assistant = assistant,
                         tags = tags,
@@ -404,7 +404,6 @@ fun AssistantDetailPage(
                         onUpdate = { onUpdate(it) },
                         vm = vm,
                         catalogSnapshot = catalogSnapshot,
-                        rootNavController = rootNavController,
                         onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
                         onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
                     )
@@ -413,7 +412,7 @@ fun AssistantDetailPage(
 
             // Lorebooks (nested under Context Management)
             composable(AssistantDetailRoutes.LOREBOOKS) {
-                AnimatedContent<String?>(key = currentRoute) {
+                AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantLorebooksSubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) },
@@ -424,7 +423,7 @@ fun AssistantDetailPage(
 
             // Advanced
             composable(AssistantDetailRoutes.ADVANCED) {
-                AnimatedContent<String?>(key = currentRoute) {
+                AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantAdvancedSubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) }
