@@ -1316,6 +1316,7 @@ private fun ChatPageContent(
     var showUserRegenerateConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
+    val haptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)
     var showToolbarOverflowMenu by remember { mutableStateOf(false) }
     var showContextUsagePopup by remember { mutableStateOf(false) }
     var showChatInfoSheet by remember { mutableStateOf(false) }
@@ -1890,7 +1891,7 @@ private fun ChatPageContent(
                                     val toDelete = messageToDelete
                                     pendingDeleteMessage = null
                                     scope.launch {
-                                        val backup = frameConversation
+                                        val backup = conversation
                                         val removedIds = vm.deleteMessage(toDelete)
                                         toaster.show(
                                             message = context.getString(R.string.message_deleted),
