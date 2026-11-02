@@ -70,9 +70,17 @@ class AssistantDetailVM(
     val assistant: StateFlow<Assistant> = settingsStore
         .settingsFlow
         .map { settings ->
-            settings.assistants.find { it.id == assistantId } ?: settings.getCurrentAssistant()
+            settings.assistants.find { it.id == assistantId } ?: Assistant(id = assistantId)
         }.stateIn(
             scope = viewModelScope, started = SharingStarted.Lazily, initialValue = Assistant()
+        )
+
+    val isNewAssistant: StateFlow<Boolean> = settingsStore
+        .settingsFlow
+        .map { settings ->
+            settings.assistants.none { it.id == assistantId }
+        }.stateIn(
+            scope = viewModelScope, started = SharingStarted.Lazily, initialValue = true
         )
 
     private val _memorySearchQuery = MutableStateFlow("")
@@ -237,21 +245,41 @@ class AssistantDetailVM(
             val currentSettings = settingsStore.settingsFlow.value
             val oldAssistant = currentSettings.assistants.find { it.id == assistant.id }
             if (oldAssistant != null) {
-                checkAvatarDelete(old = oldAssistant, new = assistant) // 删除旧头像
-                checkBackgroundDelete(old = oldAssistant, new = assistant) // 删除旧背景
+                checkAvatarDelete(old = oldAssistant, new = assistant)
+                checkBackgroundDelete(old = oldAssistant, new = assistant)
             }
             settingsStore.update(
                 settings = currentSettings.copy(
-                    assistants = currentSettings.assistants.map {
-                        if (it.id == assistant.id) {
-                            assistant
-                        } else {
-                            it
+                    assistants = if (oldAssistant != null) {
+                        currentSettings.assistants.map {
+                            if (it.id == assistant.id) assistant else it
                         }
+                    } else {
+                        currentSettings.assistants + assistant
                     })
             )
             appStorageRepository.deleteFilesIfUnreferenced(
                 oldAssistant?.collectRemovedMediaRefs(new = assistant).orEmpty()
+            )
+        }
+    }
+
+    fun addNewAssistant(assistant: Assistant) {
+        viewModelScope.launch {
+            val currentSettings = settingsStore.settingsFlow.value
+            val seededAssistant = assistant.copy(
+                maxSearchResultsRetained = assistant.maxSearchResultsRetained ?: 10
+            )
+            val existingIds = currentSettings.assistants.map { it.id }.toSet()
+            val uniqueAssistant = if (seededAssistant.id in existingIds) {
+                seededAssistant.copy(id = Uuid.random())
+            } else {
+                seededAssistant
+            }
+            settingsStore.update(
+                settings = currentSettings.copy(
+                    assistants = currentSettings.assistants.plus(uniqueAssistant).distinctBy { it.id }
+                )
             )
         }
     }

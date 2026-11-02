@@ -350,9 +350,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    val newChar = Assistant(name = "New Character")
-                    vm.addAssistant(newChar)
-                    navController.navigate(Screen.AssistantDetail(id = newChar.id.toString()))
+                    scope.launch {
+                        val newChar = Assistant(name = "New Character")
+                        vm.addAssistant(newChar)
+                        navController.navigate(Screen.AssistantDetail(id = newChar.id.toString()))
+                    }
                 },
                 containerColor = Color.White,
                 contentColor = Color.Black,

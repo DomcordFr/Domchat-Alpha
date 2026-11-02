@@ -91,6 +91,8 @@
     <string name="assistant_page_message_template">Message Template</string>
     <string name="assistant_page_message_template_desc">Controls message format sent to LLM. Usually doesn\'t need modification.</string>
     <string name="assistant_page_name">Character Name</string>
+    <string name="assistant_page_name_placeholder">Display name</string>
+    <string name="assistant_page_chat_name_placeholder">Chat name</string>
     <string name="assistant_page_no_system_prompt">No System Prompt</string>
     <string name="assistant_page_preset_messages">Preset Messages</string>
     <string name="assistant_page_preset_messages_desc">Set initial conversation messages</string>

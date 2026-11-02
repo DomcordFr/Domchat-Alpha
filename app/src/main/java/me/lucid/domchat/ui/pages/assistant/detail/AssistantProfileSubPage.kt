@@ -120,18 +120,32 @@ fun AssistantProfileSubPage(
         // IDENTITY GROUP
         // ═══════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_profile_identity)) {
-            // Name
+            // Name (Display Name) + Chat Name
             SettingGroupItem(
                 title = stringResource(R.string.assistant_page_name),
                 subtitle = stringResource(R.string.assistant_profile_name_desc),
                 trailing = {
-                    DebouncedTextField(
-                        value = assistant.name,
-                        onValueChange = { onUpdate(assistant.copy(name = it)) },
-                        stateKey = assistant.id,
-                        modifier = Modifier.fillMaxWidth(0.5f),
-                        singleLine = true
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        DebouncedTextField(
+                            value = assistant.displayName ?: assistant.name,
+                            onValueChange = { onUpdate(assistant.copy(displayName = it.takeIf { it.isNotBlank() })) },
+                            stateKey = "${assistant.id}_display",
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text(stringResource(R.string.assistant_page_name_placeholder)) }
+                        )
+                        DebouncedTextField(
+                            value = assistant.chatName ?: assistant.name,
+                            onValueChange = { onUpdate(assistant.copy(chatName = it.takeIf { it.isNotBlank() })) },
+                            stateKey = "${assistant.id}_chat",
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text(stringResource(R.string.assistant_page_chat_name_placeholder)) }
+                        )
+                    }
                 }
             )
             

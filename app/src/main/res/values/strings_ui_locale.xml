@@ -66,6 +66,34 @@
     <string name="assistant_detail_advanced">Advanced</string>
     <string name="assistant_detail_advanced_desc">Templates, regex, custom headers</string>
 
+    <!-- Assistant detail 2-section -->
+    <string name="assistant_detail_section_core_roleplay">Core Roleplay</string>
+    <string name="assistant_detail_section_advanced">Advanced</string>
+    <string name="assistant_detail_core_profile_desc">Display name, chat name, tags, appearance</string>
+    <string name="assistant_detail_core_prompts_desc">Personality, scenario, initial messages</string>
+    <string name="assistant_detail_core_lorebooks_desc">Attach lorebooks to this character</string>
+    <string name="assistant_detail_advanced_models_desc">Chat model, parameters, reasoning</string>
+    <string name="assistant_detail_advanced_context_desc">Context budget, summarization</string>
+    <string name="assistant_detail_advanced_ui_desc">Per-character display settings</string>
+
+    <!-- Core Roleplay section -->
+    <string name="assistant_detail_section_persona">Persona</string>
+    <string name="assistant_detail_section_creator_notes">Creator Notes</string>
+    <string name="assistant_detail_creator_notes_desc">Character background, lore, and instructions</string>
+    <string name="assistant_detail_section_personality">Personality</string>
+    <string name="assistant_detail_personality_desc">System prompt and behavioral definition</string>
+    <string name="assistant_detail_section_scenario">Scenario</string>
+    <string name="assistant_page_authors_note">Author\'s Note</string>
+    <string name="assistant_detail_scenario_desc">Scene guidance and directives</string>
+    <string name="assistant_detail_section_initial_messages">Initial Messages</string>
+    <string name="assistant_detail_add_intro">Add Intro</string>
+    <string name="assistant_page_scenario_placeholder">Describe the setting, situation, and scene...</string>
+    <string name="assistant_detail_section_lorebooks">Lorebooks</string>
+    <string name="assistant_page_lorebooks">Lorebooks</string>
+    <string name="assistant_detail_lorebooks_desc">Attach lorebooks to this character</string>
+    <string name="assistant_detail_manage_lorebooks">Manage Lorebooks</string>
+    <string name="assistant_page_creator_notes_placeholder">Write creator notes, lore, and background...</string>
+
     <!-- Assistant advanced -->
     <string name="assistant_advanced_spontaneous_messaging">Spontaneous Messaging</string>
     <string name="assistant_advanced_enable_spontaneous">Enable Spontaneous Messages</string>

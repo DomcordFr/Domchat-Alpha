@@ -91,6 +91,8 @@ import me.lucid.domchat.ui.components.ui.ToastAction
 // Sub-routes within assistant detail
 private object AssistantDetailRoutes {
     const val HOME = "home"
+    const val CORE = "core"
+    const val ADVANCED = "advanced"
     const val PROFILE = "profile"
     const val MODEL = "model"
     const val PROMPTS = "prompts"
@@ -100,7 +102,6 @@ private object AssistantDetailRoutes {
     const val TOOLS = "tools"
     const val MEMORY = "memory"
     const val UI = "ui"
-    const val ADVANCED = "advanced"
 }
 
 @Composable
@@ -381,53 +382,24 @@ fun AssistantDetailPage(
             composable(AssistantDetailRoutes.HOME) {
                 AssistantDetailHome(
                     assistant = assistant,
-                    onNavigateToProfile = { navController.navigate(AssistantDetailRoutes.PROFILE) },
-                    onNavigateToModel = { navController.navigate(AssistantDetailRoutes.MODEL) },
-                    onNavigateToPrompts = { navController.navigate(AssistantDetailRoutes.PROMPTS) },
-                    onNavigateToContextManagement = { navController.navigate(AssistantDetailRoutes.CONTEXT_MANAGEMENT) },
-                    onNavigateToTools = { navController.navigate(AssistantDetailRoutes.TOOLS) },
-                    onNavigateToMemory = { navController.navigate(AssistantDetailRoutes.MEMORY) },
-                    onNavigateToUI = { navController.navigate(AssistantDetailRoutes.UI) },
+                    onNavigateToCore = { navController.navigate(AssistantDetailRoutes.CORE) },
                     onNavigateToAdvanced = { navController.navigate(AssistantDetailRoutes.ADVANCED) }
                 )
             }
 
-            // Profile (Identity, Tags, Appearance)
-            composable(AssistantDetailRoutes.PROFILE) {
-                AssistantProfileSubPage(
+            // Core Roleplay section - unified sub-page
+            composable(AssistantDetailRoutes.CORE) {
+                AssistantCoreRoleplaySubPage(
                     assistant = assistant,
                     tags = tags,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm
-                )
-            }
-
-            // Model (Chat model, parameters, reasoning)
-            composable(AssistantDetailRoutes.MODEL) {
-                AssistantModelSubPage(
-                    assistant = assistant,
                     providers = providers,
-                    ttsProviders = settings.ttsProviders,
+                    settings = settings,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm,
                     catalogSnapshot = catalogSnapshot,
-                    onUpdate = { onUpdate(it) }
-                )
-            }
-
-            // Prompts
-            composable(AssistantDetailRoutes.PROMPTS) {
-                AssistantPromptSubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm
-                )
-            }
-
-            // Context Management
-            composable(AssistantDetailRoutes.CONTEXT_MANAGEMENT) {
-                AssistantContextManagementSubPage(
-                    assistant = assistant,
-                    hasSummarizerModelConfigured = settings.summarizerModelId != null,
-                    onUpdate = { onUpdate(it) },
+                    mcpServerConfigs = mcpServerConfigs,
+                    conversationRepository = vm.conversationRepository,
+                    rootNavController = rootNavController,
                     onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
                     onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
                 )
@@ -439,62 +411,6 @@ fun AssistantDetailPage(
                     assistant = assistant,
                     onUpdate = { onUpdate(it) },
                     vm = vm
-                )
-            }
-
-            // Skills (nested under Context Management)
-            composable(AssistantDetailRoutes.SKILLS) {
-                AssistantSkillsSubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm
-                )
-            }
-
-            // Tools
-            composable(AssistantDetailRoutes.TOOLS) {
-                AssistantToolsSubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm,
-                    mcpServerConfigs = mcpServerConfigs
-                )
-            }
-
-            // Memory
-            composable(AssistantDetailRoutes.MEMORY) {
-                val embeddingProgress by vm.embeddingProgress.collectAsStateWithLifecycle()
-                val estimatedMemoryCapacity by vm.estimatedMemoryCapacity.collectAsStateWithLifecycle()
-                val needsEmbeddingRegeneration by vm.needsEmbeddingRegeneration.collectAsStateWithLifecycle()
-                val embeddingStatus by vm.embeddingStatus.collectAsStateWithLifecycle()
-                val retrievalDebugState by vm.retrievalDebugState.collectAsStateWithLifecycle()
-                AssistantMemorySettings(
-                    assistant = assistant,
-                    hasSummarizerModelConfigured = settings.summarizerModelId != null,
-                    memories = memories,
-                    onUpdateAssistant = { onUpdate(it) },
-                    onDeleteMemory = { vm.deleteMemory(it) },
-                    onAddMemory = { vm.addMemory(it) },
-                    onUpdateMemory = { vm.updateMemory(it) },
-                    onRegenerateEmbeddings = { vm.regenerateEmbeddings() },
-                    embeddingProgress = embeddingProgress,
-                    onTestRetrieval = { vm.testRetrieval(it) },
-                    retrievalDebugState = retrievalDebugState,
-                    assistantDetailVM = vm,
-                    estimatedMemoryCapacity = estimatedMemoryCapacity,
-                    needsEmbeddingRegeneration = needsEmbeddingRegeneration,
-                    embeddingStatus = embeddingStatus,
-                    initialMemoryTab = initialMemoryTab,
-                    scrollToMemoryId = scrollToMemoryId,
-                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
-                )
-            }
-
-            // UI Customization
-            composable(AssistantDetailRoutes.UI) {
-                AssistantUISubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) }
                 )
             }
 
@@ -550,13 +466,7 @@ fun AssistantDetailPage(
 @Composable
 private fun AssistantDetailHome(
     assistant: Assistant,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToModel: () -> Unit,
-    onNavigateToPrompts: () -> Unit,
-    onNavigateToContextManagement: () -> Unit,
-    onNavigateToTools: () -> Unit,
-    onNavigateToMemory: () -> Unit,
-    onNavigateToUI: () -> Unit,
+    onNavigateToCore: () -> Unit,
     onNavigateToAdvanced: () -> Unit
 ) {
     val useWideSettingsLayout = LocalSettingsWideLayout.current
@@ -616,64 +526,50 @@ private fun AssistantDetailHome(
         // ═══════════════════════════════════════════════════════════════════
         // NAVIGATION CARDS - Grouped properly
         // ═══════════════════════════════════════════════════════════════════
-        SettingsGroup(title = stringResource(R.string.assistant_detail_group_configuration)) {
+        // SECTION 1: CORE ROLEPLAY
+        SettingsGroup(title = stringResource(R.string.assistant_detail_section_core_roleplay)) {
             NavigationCard(
                 icon = Icons.Rounded.Person,
                 title = stringResource(R.string.assistant_detail_profile),
-                description = stringResource(R.string.assistant_detail_profile_desc),
-                onClick = onNavigateToProfile
+                description = stringResource(R.string.assistant_detail_core_profile_desc),
+                onClick = onNavigateToCore
             )
 
             NavigationCard(
                 icon = Icons.AutoMirrored.Rounded.Chat,
                 title = stringResource(R.string.assistant_page_tab_prompt),
-                description = stringResource(R.string.assistant_detail_prompts_desc),
-                onClick = onNavigateToPrompts
+                description = stringResource(R.string.assistant_detail_core_prompts_desc),
+                onClick = onNavigateToCore
             )
 
             NavigationCard(
                 icon = Icons.Rounded.DataObject,
-                title = stringResource(R.string.context_management_title),
-                description = stringResource(R.string.context_management_desc),
-                onClick = onNavigateToContextManagement
-            )
-
-            NavigationCard(
-                icon = Icons.Rounded.Psychology,
-                title = stringResource(R.string.assistant_detail_models),
-                description = stringResource(R.string.assistant_detail_models_desc),
-                onClick = onNavigateToModel
+                title = stringResource(R.string.assistant_detail_core_lorebooks),
+                description = stringResource(R.string.assistant_detail_core_lorebooks_desc),
+                onClick = onNavigateToCore
             )
         }
 
-        SettingsGroup(title = stringResource(R.string.assistant_detail_group_capabilities)) {
-            NavigationCard(
-                icon = Icons.Rounded.Memory,
-                title = stringResource(R.string.assistant_page_tab_memory),
-                description = stringResource(R.string.assistant_detail_memory_desc),
-                onClick = onNavigateToMemory
-            )
-
+        // SECTION 2: ADVANCED
+        SettingsGroup(title = stringResource(R.string.assistant_detail_section_advanced)) {
             NavigationCard(
                 icon = Icons.Rounded.Build,
-                title = stringResource(R.string.assistant_detail_tools_search),
-                description = stringResource(R.string.assistant_detail_tools_search_desc),
-                onClick = onNavigateToTools
-            )
-        }
-
-        SettingsGroup(title = stringResource(R.string.assistant_detail_group_other)) {
-            NavigationCard(
-                icon = Icons.Rounded.Palette,
-                title = stringResource(R.string.assistant_detail_ui_customization),
-                description = stringResource(R.string.assistant_detail_ui_customization_desc),
-                onClick = onNavigateToUI
+                title = stringResource(R.string.assistant_detail_models),
+                description = stringResource(R.string.assistant_detail_advanced_models_desc),
+                onClick = onNavigateToAdvanced
             )
 
             NavigationCard(
                 icon = Icons.Rounded.Tune,
-                title = stringResource(R.string.assistant_detail_advanced),
-                description = stringResource(R.string.assistant_detail_advanced_desc),
+                title = stringResource(R.string.assistant_detail_context_budget),
+                description = stringResource(R.string.assistant_detail_advanced_context_desc),
+                onClick = onNavigateToAdvanced
+            )
+
+            NavigationCard(
+                icon = Icons.Rounded.Palette,
+                title = stringResource(R.string.assistant_detail_ui_customization),
+                description = stringResource(R.string.assistant_detail_advanced_ui_desc),
                 onClick = onNavigateToAdvanced
             )
         }

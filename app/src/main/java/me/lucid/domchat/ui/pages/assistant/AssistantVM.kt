@@ -58,48 +58,46 @@ class AssistantVM(
         }
     }
 
-    fun addAssistant(assistant: Assistant) {
-        viewModelScope.launch {
-            try {
-                settingsStore.update { current ->
-                    val newAssistant = if (assistant.name.isBlank()) {
-                        assistant.copy(
-                            name = "Generical",
-                            avatar = Avatar.Resource(me.lucid.domchat.R.drawable.default_generical_pfp),
-                            enableTimeAwareness = true,
-                            systemPrompt = """
-                                You are the best generic assistant, called {{char}}. {{char}} is a really nice guy. He doesn't use emojis though. Use the search tool when looking for factual info. You can have opinions if the user asks you for one. 
+    suspend fun addAssistant(assistant: Assistant) {
+        try {
+            settingsStore.update { current ->
+                val newAssistant = if (assistant.name.isBlank()) {
+                    assistant.copy(
+                        name = "Generical",
+                        avatar = Avatar.Resource(me.lucid.domchat.R.drawable.default_generical_pfp),
+                        enableTimeAwareness = true,
+                        systemPrompt = """
+                            You are the best generic assistant, called {{char}}. {{char}} is a really nice guy. He doesn't use emojis though. Use the search tool when looking for factual info. You can have opinions if the user asks you for one. 
 
-                                **Context:
-                                - You are currently chatting to {{user}}
-                                - You are running on {{model_name}}
-                                - Date: {{cur_date}}
+                            **Context:
+                            - You are currently chatting to {{user}}
+                            - You are running on {{model_name}}
+                            - Date: {{cur_date}}
 
-                                **Additional info:
-                                - The UI supports LaTeX rendering
-                                - The user is chatting to you trough an app called DomChat
-                                - You are an AI/LLM and shouldn't hide this fact
-                            """.trimIndent()
+                            **Additional info:
+                            - The UI supports LaTeX rendering
+                            - The user is chatting to you trough an app called DomChat
+                            - You are an AI/LLM and shouldn't hide this fact
+                        """.trimIndent()
                         )
-                    } else {
-                        assistant
-                    }
-                    val seededAssistant = newAssistant.copy(
-                        maxSearchResultsRetained = newAssistant.maxSearchResultsRetained ?: 10
-                    )
-                    val existingIds = current.assistants.map { it.id }.toSet()
-                    val uniqueAssistant = if (seededAssistant.id in existingIds) {
-                        seededAssistant.copy(id = Uuid.random())
-                    } else {
-                        seededAssistant
-                    }
-                    current.copy(
-                        assistants = current.assistants.plus(uniqueAssistant).distinctBy { it.id }
-                    )
+                } else {
+                    assistant
                 }
-            } catch (e: Exception) {
-                PlatformLog.e("AssistantVM", e.message ?: e.toString())
+                val seededAssistant = newAssistant.copy(
+                    maxSearchResultsRetained = newAssistant.maxSearchResultsRetained ?: 10
+                )
+                val existingIds = current.assistants.map { it.id }.toSet()
+                val uniqueAssistant = if (seededAssistant.id in existingIds) {
+                    seededAssistant.copy(id = Uuid.random())
+                } else {
+                    seededAssistant
+                }
+                current.copy(
+                    assistants = current.assistants.plus(uniqueAssistant).distinctBy { it.id }
+                )
             }
+        } catch (e: Exception) {
+            PlatformLog.e("AssistantVM", e.message ?: e.toString())
         }
     }
 
