@@ -22,6 +22,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.Card
@@ -65,6 +67,7 @@ import androidx.compose.runtime.setValue
 import me.lucid.domchat.data.datastore.AnimationSpeedLevel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -97,10 +100,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.HorizontalDivider
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupInputItem
-import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.ColorMode
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
@@ -265,6 +269,62 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             }
                         }
                     )
+
+                    // Live Wallpaper Preview Card under Global Wallpaper
+                    if (!globalBg.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp)
+                                    .clip(RoundedCornerShape(AppShapes.CardMedium))
+                                    .border(
+                                        0.5.dp,
+                                        LiquidGlassTokens.SpecularBorderSubtle,
+                                        RoundedCornerShape(AppShapes.CardMedium)
+                                    )
+                                    .background(Color(0xFF141520))
+                            ) {
+                                AsyncImage(
+                                    model = globalBg,
+                                    contentDescription = "Global wallpaper preview",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                )
+                                // Live dim overlay applied to preview
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Color.Black.copy(
+                                                alpha = globalDim.coerceIn(0f, 0.95f)
+                                            )
+                                        )
+                                )
+                                // Live blur overlay (bottom scrim) applied to preview
+                                if (globalBlur > 0f) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(
+                                                            alpha = (globalBlur / 200f).coerceIn(0f, 0.5f)
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                     // Progressive Disclosure: Dimming and Blur sliders only show when wallpaper is set
                     AnimatedVisibility(visible = !globalBg.isNullOrBlank()) {

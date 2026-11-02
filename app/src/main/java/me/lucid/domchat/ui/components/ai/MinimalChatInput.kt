@@ -176,6 +176,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Spacer
@@ -2042,9 +2043,19 @@ fun MinimalChatInput(
                     }
                 }
 
-                // Blur Mode: Full Image vs Bottom Fade
+                // Blur Mode: Full Image vs Bottom Fade (animated glassy toggle tabs)
+                val fullTabBg by animateColorAsState(
+                    targetValue = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                    animationSpec = androidx.compose.animation.core.tween(180),
+                    label = "wallpaper_blur_mode_full_tab_bg"
+                )
+                val bottomFadeTabBg by animateColorAsState(
+                    targetValue = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                    animationSpec = androidx.compose.animation.core.tween(180),
+                    label = "wallpaper_blur_mode_bottom_fade_tab_bg"
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
+                    Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = Color.White)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2053,15 +2064,15 @@ fun MinimalChatInput(
                             onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color(0xFF000000),
-                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else Color.White,
-                            border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle)
+                            color = fullTabBg,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {
                             Text(
                                 "Full Image",
                                 modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                color = Color.White
                             )
                         }
 
@@ -2069,15 +2080,15 @@ fun MinimalChatInput(
                             onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            color = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color(0xFF000000),
-                            contentColor = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White else if (isDarkMode) Color(0xFFF2F2F7) else Color.White,
-                            border = androidx.compose.foundation.BorderStroke(0.5.dp, if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle)
+                            color = bottomFadeTabBg,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {
                             Text(
                                 "Bottom Fade",
                                 modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                color = Color.White
                             )
                         }
                     }
@@ -2099,14 +2110,18 @@ fun MinimalChatInput(
                     )
                 }
 
-                // If Bottom Fade, show Blur Height Reach slider
-                if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) {
+                // If Bottom Fade, show Blur Height Reach slider (animated)
+                AnimatedVisibility(
+                    visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(150)),
+                    exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(100)),
+                ) {
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
+                            Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = Color.White)
                             Text("${(blurHeightFractionDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
                         }
                         DomChatSlider(
@@ -2137,11 +2152,7 @@ fun MinimalChatInput(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    DomChatGlassPillButton(
-                        text = "Save for this chat",
-                        accent = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
+                    Surface(
                         onClick = {
                             val updatedConfig = me.lucid.domchat.data.datastore.ConversationWallpaperConfig(
                                 backgroundUri = chatBgDraft,
@@ -2166,8 +2177,26 @@ fun MinimalChatInput(
                                 }
                             }
                             showWallpaperSheet = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = AppShapes.ButtonPill,
+                        color = Color.Transparent,
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Save for this chat",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White,
+                                textAlign = TextAlign.Center,
+                            )
                         }
-                    )
+                    }
                 }
             }
         }

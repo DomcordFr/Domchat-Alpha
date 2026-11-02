@@ -1,87 +1,66 @@
-# Audit Brief — Top and Bottom Bars Opacity, Top Plus Home Navigation and Home Card
+# Audit Brief — Live Wallpaper Preview in Settings and Per-Chat Wallpaper Popover Polish
 
 ## Intent Verification
 
-**1. MinimalChatInput.kt — bottom plus button opacity**
-- `DomChatComposerAddButton` `containerColor` changed from `Color(0xFF000000).copy(alpha = 0.65f)` to `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))`.
-- Bottom bar plus button is now transparent/glassy; clamps user `glassAlpha` to [0.10, 0.75] so it never goes fully solid under low-opacity settings.
+**1. SettingDisplayPage.kt — live wallpaper preview card under Global Wallpaper**
+- Added a preview card (height `140.dp`, rounded via `AppShapes.CardMedium`, border `LiquidGlassTokens.SpecularBorderSubtle`, background `Color(0xFF141520)`) that renders when `globalBackground` is set.
+- Uses `AsyncImage(model = globalBg, contentScale = ContentScale.Crop)` to show the selected wallpaper.
+- Applies live dim overlay (`Color.Black.copy(alpha = globalDim.coerceIn(0f, 0.95f))`) and live blur overlay (vertical gradient scrim scaled by `globalBlur / 200f`) so the preview reflects current dim/blur settings.
+- Card only shows when a wallpaper is set; hidden otherwise (matches existing progressive-disclosure pattern).
 
-**2. ChatPage.kt — top bar opacity**
-- `ChatToolbar.topContainerColor` changed from `Color(0xFF000000).copy(alpha = 0.65f)` to `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))`.
-- Applied to top bar container, menu button, and action pill backgrounds via `domChatBlurEffect(topContainerColor, ...)`.
+**2. MinimalChatInput.kt — Per-Chat Wallpaper sheet polish (lines ~1992-2187)**
+- **Blur Mode toggle tabs (FULL vs BOTTOM_FADE):** replaced hardcoded `Color(0xFF000000)` unselected backgrounds with `Color.Transparent` glassy containers bordered by `LiquidGlassTokens.SpecularBorderSubtle`; selected state uses `Color.White.copy(alpha = 0.14f)`. Backgrounds animated via `animateColorAsState` (tween 180ms) so switching tabs smoothly crossfades.
+- **'Save for this chat' button:** replaced `DomChatGlassPillButton` (which forced left-aligned `SemiBold` text on a solid white surface) with a custom `Surface`-based glass button: `color = Color.Transparent`, border `LiquidGlassTokens.SpecularBorderSubtle`, text wrapped in a centered `Box` (`contentAlignment = Alignment.Center`), `FontWeight.Bold`, `textAlign = TextAlign.Center`.
+- **Blur Height Reach slider:** wrapped the `if (blurModeDraft == BOTTOM_FADE)` block in `AnimatedVisibility` (fadeIn 150ms / fadeOut 100ms) so the slider smoothly appears/disappears when toggling blur mode.
+- All `Color.White` text colors use non-conditional form; `isDarkMode` references removed where no longer needed.
 
-**3. ChatPage.kt — top plus navigates Home in active conversation**
-- Added `val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)`.
-- Added `val onNewChat` lambda: if `isActiveConversation` → `navController.navigate(Screen.ConversationList)`; else `navigateToChatPage(navController)`.
-- Both top and bottom `ChatToolbar(onNewChat = onNewChat)` call sites wired to the new lambda.
+**Null safety:** zero `!!` introduced. All nullable access uses smart-cast (`globalBg` inside `isNullOrBlank` guard), `coerceIn`, and Elvis operators.
 
-**4. ChatPage.kt — back-to-home**
-- Added `BackHandler(enabled = !drawerState.isOpen)` that `navController.navigate(Screen.ConversationList)`, coexisting with the existing drawer-close `BackHandler(enabled = drawerState.isOpen)`.
-
-**5. ChatDrawer.kt & ConversationList.kt — Home quick action card**
-- `ChatDrawer.kt` quickActions group: new `DomChatDrawerQuickAction` with `Icons.Rounded.Home`, label `"Home"`, `onClick = { navController.navigate(Screen.ConversationList); dismissDrawerAfterSelection() }`, placed above the Imagine card.
-- `ConversationList.kt`: renders `quickActions()` (so the Home card appears in the drawer-rendered list); added `Screen.ConversationList` route support via new `ConversationListPage`.
-- New `Screen.ConversationList` (data object) added to the sealed `Screen` interface in RouteActivity.kt; `composable<Screen.ConversationList> { ConversationListPage() }` registered.
-- New `ConversationListVM` (Koin-registered, no params) + `ConversationListPage` (Scaffold + OneUITopAppBar + ConversationList) power the home route.
-
-**Null safety:** zero `!!` introduced. All nullable access uses Elvis / safe-call / `coerceIn` / `getOrNull` patterns consistent with the codebase.
-
-**Theme:** unchanged usage of `Color(0xFF000000)` (AMOLED black) and `LiquidGlassTokens.SpecularBorderSubtle`; glass card theme (`0xFF141520`) preserved via existing `domChatCardContainerColor()`/`domChatBlurEffect`.
+**Theme:** `Color(0xFF000000)` AMOLED black, `Color(0xFF141520)` unified glass card, `LiquidGlassTokens.SpecularBorderSubtle` borders preserved throughout.
 
 ## Call Chain & Architecture
 
-**Opacity (render-only, no business logic):**
-- `settings.displaySetting.glassAlpha` (DataStore `Settings`, canonical via `SettingsStore.update`) → read in Compose via `collectAsStateWithLifecycle` → fed into `containerColor` for `DomChatComposerAddButton` (MinimalChatInput) and `topContainerColor` (ChatToolbar). Pure derivation, UI layer only.
+**SettingDisplayPage (settings layer):**
+- `settings.displaySetting.globalBackground / globalBackgroundDim / globalBackgroundBlur` read via `collectAsStateWithLifecycle` (DataStore → `SettingsStore`).
+- Preview card reads these directly and renders `AsyncImage` + dim/blur overlays. Pure UI derivation; no business logic, no VM calls.
+- Wallpaper picker (`ActivityResultContracts.PickVisualMedia`) writes to app storage and calls `updateDisplaySetting` → `vm.updateSettings(settings.copy(displaySetting = ...))` → `SettingsStore.update` (canonical settings API: normalization, secret migration, in-memory state, persist).
 
-**Top-plus navigation:**
-- `ChatPage.onNewChat` lambda → `navController.navigate(Screen.ConversationList)` when active conversation, else `navigateToChatPage(navController)` (ChatUtil) → `Screen.Chat` route.
-- `ChatToolbar` receives `onNewChat`; invoked from the Add/New-chat pill icon click.
+**MinimalChatInput (per-chat wallpaper popover):**
+- `settings.displaySetting.conversationWallpapers[convId]` and `assistant.background` seed the draft states (`chatBgDraft`, `blurDraft`, `dimDraft`, `blurModeDraft`, `blurHeightFractionDraft`) via `remember(existingConfig) { mutableStateOf(...) }`.
+- `blurModeDraft` drives `animateColorAsState` targets for tab backgrounds and `AnimatedVisibility` for the blur-height slider — UI state only.
+- "Save for this chat" builds `ConversationWallpaperConfig` and calls `settingsStore.update { ... }` inside `scope.launch` (main-safe coroutine, no blocking I/O on Main) to persist `conversationWallpapers` map.
+- `DomChatInWindowBottomSheet` hosts the sheet; dismissal via `onDismissRequest = { showWallpaperSheet = false }`.
 
-**Back-to-home:**
-- `BackHandler(enabled = !drawerState.isOpen)` in `ChatPage` → `navController.navigate(Screen.ConversationList)`. Mutually exclusive with the drawer-close handler (enabled states are inverses).
-
-**Home card / route:**
-- `Screen.ConversationList` data object added to `Screen` sealed interface (RouteActivity.kt).
-- `composable<Screen.ConversationList>` → `ConversationListPage()` → `ConversationListVM` (koinViewModel, no params) → `ConversationRepository.getAllConversationsPaging()` (Paging 3) → `ConversationList` UI component.
-- `ConversationListVM` also exposes `conversationJobs`, `completedGenerationIds` (from `chatService.generationDoneFlow`), `recentlyRestoredIds`, `errorFlow`, `assistants` (from `settingsStore.settingsFlow`), plus `deleteConversation`/`undoDeleteConversation`/`updatePinnedStatus`/`updateConversationTitle`/`generateTitle` delegating to `chatService`/`conversationRepo` on `Dispatchers.IO`.
-- `ChatDrawer` quickActions Home card → `navController.navigate(Screen.ConversationList)`.
-
-**DI:** `ConversationListVM` registered in `di/ViewModelModule.kt` (`viewModel<ConversationListVM> { ... }`). Dependencies (`SettingsStore`, `ConversationRepository`, `ChatService`, `UpdateChecker`) already Koin-bound.
+**UI boundaries respected:** UI layer only renders state and emits intents; settings persistence funnels through `SettingsStore.update` (normalization + persist). No new ViewModel needed for the preview (reads existing `settings.displaySetting`).
 
 ## Recomposition & Memory Safety
 
-- `glassAlpha` is a `Float` read via `collectAsStateWithLifecycle`; passing it into `copy(alpha = ...)` produces a new `Color` only when the setting changes — stable, no self-triggering loops.
-- `onNewChat` is a `val` lambda recomputed when `conversationInitialized`/`conversation` change; passed as a functional parameter to `ChatToolbar` (stable reference, no inline recomposition spike).
-- `BackHandler` is a standard Compose handler; no state retained.
-- `ConversationListPage`: `collectAsLazyPagingItems()` + `collectAsStateWithLifecycle(emptySet())` — lifecycle-aware, no naked flows. `assistantMap` built with `remember(assistants)`. `current` wrapped in `remember { Conversation.ofId(Uuid.random()) }` so it isn't re-randomized each recomposition.
-- `ConversationList` received a default for `current` (`Conversation.ofId(Uuid.random())`) so the standalone home page compiles; no existing call sites affected.
-- No `SnapshotStateList` passed to `items(...)`; Paging `LazyPagingItems` used as intended.
-- No force-unwraps (`!!`) anywhere in edited/new files.
+- `glassAlpha`-independent here; preview card reads `globalDim`/`globalBlur`/`globalBg` as immutable `Float`/`String` — recomposes only when those settings change.
+- `AsyncImage(model = globalBg)` — Coil handles image loading/caching internally; no bitmap retained in Compose state. Model is a file-path `String`, stable across recompositions.
+- `animateColorAsState` called inside `if (showWallpaperSheet)` block; targets derived from `blurModeDraft` — animation state is Compose-managed, no leaked `AnimationSpec` objects.
+- `remember(existingConfig) { mutableStateOf(...) }` for drafts — keyed on config, recreated only when config changes. `mutableFloatStateOf` / `mutableStateOf` used correctly.
+- `AnimatedVisibility` + `animateColorAsState` are standard Compose animation APIs; no naked animation objects.
+- No `SnapshotStateList` passed to `items()`; no derived-state violations.
+- No force-unwraps (`!!`) in edited regions.
 
 ## Threading & Dispatchers
 
-- Opacity and navigation reads are synchronous main-thread Compose operations; no blocking calls on `Dispatchers.Main`.
-- Navigation (`navController.navigate`) is main-thread-safe.
-- `ConversationListVM` delegates mutation to `Dispatchers.IO` (`updatePinnedStatus`, `updateConversationTitle`) and uses `viewModelScope` (ViewModel's `Dispatchers.Main` coroutine scope) only for launching IO work — never performs disk/network on Main.
-- Paging 3 (`getAllConversationsPaging`) runs on its own dispatcher internally; collected via `collectAsLazyPagingItems` in Compose (main-thread observer of a background flow).
-- No `Dispatchers.Main` used for I/O. No new background threads spawned on Main.
+- Opacity/preview/tab animation: synchronous main-thread Compose operations; no blocking calls on `Dispatchers.Main`.
+- Wallpaper image load via `AsyncImage` — Coil loads off-main internally.
+- Settings persistence: `settingsStore.update { ... }` invoked inside `scope.launch` (ViewModel/main scope) but the body only mutates an in-memory `Settings` copy; `SettingsStore.update` itself dispatches disk I/O internally (DataStore). No explicit `Dispatchers.IO` needed — matches existing code pattern in this file (line ~328 `scope.launch { settingsStore.update { ... } }`).
+- No `Dispatchers.Main` used for I/O. No new background threads spawned.
 
 ## Offline & Error State Handling
 
-- Opacity: total function (`coerceIn` clamps to [0.10, 0.75]); no failure mode; always renders a valid `Color`.
-- Navigation: `navController.navigate(Screen.ConversationList)` targets a registered composable — no unresolved route. `navigateToChatPage` retains its existing duplicate-route guard (`isAlreadyOnChat`).
-- Back handler: enabled guard prevents conflicting with drawer close; no exception surface.
-- Home route: `ConversationListVM.conversations` uses `.catch { emit(PagingData.empty()) }` so a repository failure degrades to an empty list instead of crashing; `errorFlow` exposed for optional surfacing.
-- Delete/pin/title regenerate are wrapped in `viewModelScope.launch { withContext(Dispatchers.IO) { ... } }`; repository exceptions propagate through the existing ChatService error flow (`errorFlow`) which ChatPage already toasts.
-- Offline: conversation list reads from local Room via Paging (no network required); fully functional offline.
-- Error states: Loading/Success/Empty/Exception handled by existing Paging + `errorFlow` toasts in `ChatPage` (unchanged).
+- Preview card: offline-capable (loads local app-storage file path via Coil); if image fails to load, Coil renders nothing/placeholder gracefully — no exception propagates to Compose.
+- Dim/blur overlays: total functions (`coerceIn` clamps); no failure mode.
+- Blur Mode tabs: `animateColorAsState` targets are total; no exception surface.
+- Save flow: wrapped in existing try/catch-free pattern consistent with the file (the `scope.launch` block mirrors existing wallpaper-save code at lines ~327-333). `chatBgDraft.isNullOrBlank()` guard removes map entry when no wallpaper, preventing stale entries.
+- `settingsStore.update` is the canonical API — handles normalization + persistence atomically; callers need not handle partial state.
+- Error states: existing sheet/toaster patterns apply; no new error modes introduced.
 
 ## Files Changed
 
-- `app/src/main/java/me/lucid/domchat/ui/components/ai/MinimalChatInput.kt` — `DomChatComposerAddButton` alpha → `glassAlpha.coerceIn(0.10f, 0.75f)`.
-- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt` — `topContainerColor` alpha; `isActiveConversation`/`onNewChat`; both toolbar `onNewChat` wired; `BackHandler(enabled = !drawerState.isOpen)` → Home.
-- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatDrawer.kt` — Home `DomChatDrawerQuickAction` (Icons.Rounded.Home) above Imagine.
-- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ConversationList.kt` — `current` default param; new `ConversationListPage`; page + VM imports.
-- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ConversationListVM.kt` (new) — home-route ViewModel.
-- `app/src/main/java/me/lucid/domchat/di/ViewModelModule.kt` — registered `ConversationListVM`.
-- `app/src/main/java/me/lucid/domchat/RouteActivity.kt` — added `Screen.ConversationList` + `composable<Screen.ConversationList>` route.
+- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingDisplayPage.kt` — added imports (`AsyncImage`, `ContentScale`, `Brush`, `LiquidGlassTokens`); added live wallpaper preview card under Global Wallpaper.
+- `app/src/main/java/me/lucid/domchat/ui/components/ai/MinimalChatInput.kt` — animated glassy Blur Mode tabs; centered bold 'Save for this chat' glass button; `AnimatedVisibility` around Blur Height Reach slider.
+- `audit_brief.md` — this document.
