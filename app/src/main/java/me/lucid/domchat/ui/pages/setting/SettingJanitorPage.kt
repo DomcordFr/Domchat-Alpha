@@ -33,7 +33,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -342,6 +341,14 @@ fun SettingJanitorPage() {
     var sortMenuOpen by remember { mutableStateOf(false) }
     var filterMenuOpen by remember { mutableStateOf(false) }
     var sortMode by rememberSaveable { mutableStateOf("Default") }
+    val sortArrowRotation by animateFloatAsState(
+        targetValue = if (sortMenuOpen) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = 400f
+        ),
+        label = "sort_arrow_rotation"
+    )
     var filterTags by remember { mutableStateOf(emptySet<String>()) }
 
     var selectedCharacter by remember { mutableStateOf<JanitorCharacter?>(null) }
@@ -693,18 +700,18 @@ fun SettingJanitorPage() {
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Sort,
-                                                    contentDescription = "Sort",
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(18.dp),
-                                                )
                                                 Text(
-                                                    text = "Sort",
+                                                    text = sortMode,
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.Medium,
                                                     color = Color.White,
+                                                )
+                                                Icon(
+                                                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                                                    contentDescription = "Sort",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp).rotate(sortArrowRotation),
                                                 )
                                             }
                                         }

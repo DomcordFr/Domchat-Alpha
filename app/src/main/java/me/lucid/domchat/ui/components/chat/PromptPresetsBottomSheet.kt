@@ -1,12 +1,13 @@
 package me.lucid.domchat.ui.components.chat
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -46,6 +47,8 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,6 +72,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -176,6 +180,15 @@ fun PromptPresetsBottomSheet(
     var formContent by remember { mutableStateOf("") }
     var formPosition by remember { mutableStateOf(PresetInjectionPosition.SYSTEM_PROMPT) }
     var formDepth by remember { mutableStateOf(0) }
+    var positionMenuOpen by remember { mutableStateOf(false) }
+    val positionArrowRotation by animateFloatAsState(
+        targetValue = if (positionMenuOpen) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = 400f
+        ),
+        label = "position_arrow_rotation"
+    )
 
     fun openCreate() {
         editingTargetId = null
@@ -523,43 +536,80 @@ fun PromptPresetsBottomSheet(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            PresetInjectionPosition.entries.forEach { pos ->
-                                val isSelected = formPosition == pos
-                                Surface(
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        formPosition = pos
-                                    },
-                                    color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.45f),
-                                    shape = RoundedCornerShape(10.dp),
-                                    border = BorderStroke(
-                                        0.5.dp,
-                                        if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                                    ),
-                                    modifier = Modifier.weight(1f)
+                        Box {
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF141520).copy(alpha = 0.45f))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                                color = Color.Transparent,
+                                onClick = { positionMenuOpen = true },
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Box(
-                                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = when (pos) {
-                                                PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                                                PresetInjectionPosition.AT_DEPTH -> "Depth D"
-                                                PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                                                PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
-                                            },
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                fontSize = 11.sp
-                                            ),
-                                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                                    Text(
+                                        text = when (formPosition) {
+                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                                            PresetInjectionPosition.AT_DEPTH -> "Depth $formDepth"
+                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                                        contentDescription = "Dropdown",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp).rotate(positionArrowRotation),
+                                    )
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = positionMenuOpen,
+                                onDismissRequest = { positionMenuOpen = false },
+                                shape = RoundedCornerShape(10.dp),
+                                containerColor = Color(0xFF000000),
+                                modifier = Modifier
+                                    .background(Color(0xFF000000))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
+                            ) {
+                                PresetInjectionPosition.entries.forEach { pos ->
+                                    val isSelected = formPosition == pos
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = when (pos) {
+                                                    PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                                                    PresetInjectionPosition.AT_DEPTH -> "Depth D"
+                                                    PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                                    PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                                },
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = if (isSelected) Color.White else Color(0xFFCCCCCC),
+                                            )
+                                        },
+                                        onClick = {
+                                            haptics.perform(HapticPattern.Pop)
+                                            formPosition = pos
+                                            positionMenuOpen = false
+                                        },
+                                        trailingIcon = if (isSelected) {
+                                            {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        } else null,
+                                    )
                                 }
                             }
                         }

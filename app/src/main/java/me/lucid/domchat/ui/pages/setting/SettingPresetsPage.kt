@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.setting
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -43,6 +44,8 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,6 +68,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -91,36 +95,6 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 
-/**
- * Glassy badge showing the preset injection position with a distinct color per type:
- * System (blue), Post-History (purple/magenta), Depth N (amber), Before User (emerald).
- */
-@Composable
-private fun PresetBadge(
-    position: PresetInjectionPosition,
-    depth: Int = 0,
-) {
-    val (label, color) = when (position) {
-        PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color(0xFF3B82F6)
-        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History" to Color(0xFFD946EF)
-        PresetInjectionPosition.AT_DEPTH -> "Depth $depth" to Color(0xFFF59E0B)
-        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF10B981)
-    }
-    Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = AppShapes.Tag,
-        border = BorderStroke(0.5.dp, color),
-        modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
-    ) {
-        Text(
-            text = "[ $label ]",
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-            color = color,
-            maxLines = 1,
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class, kotlin.ExperimentalStdlibApi::class)
 @Composable
 fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
@@ -142,6 +116,15 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
     var draftContent by remember { mutableStateOf("") }
     var draftPosition by remember { mutableStateOf(PresetInjectionPosition.SYSTEM_PROMPT) }
     var draftDepth by remember { mutableIntStateOf(0) }
+    var positionMenuOpen by remember { mutableStateOf(false) }
+    val positionArrowRotation by animateFloatAsState(
+        targetValue = if (positionMenuOpen) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = 400f
+        ),
+        label = "position_arrow_rotation"
+    )
 
     fun openEdit(preset: PromptPreset) {
         editingPreset = preset
@@ -374,10 +357,6 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                             )
                                         }
                                     }
-                                    PresetBadge(
-                                        position = preset.injectionPosition,
-                                        depth = preset.depth,
-                                    )
                                 }
                                 if (preset.description.isNotBlank()) {
                                     Spacer(Modifier.height(2.dp))
@@ -593,43 +572,80 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        PresetInjectionPosition.entries.forEach { pos ->
-                            val isSelected = draftPosition == pos
-                            Surface(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    draftPosition = pos
-                                },
-                                color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.45f),
-                                shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(
-                                    0.5.dp,
-                                    if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                                ),
-                                modifier = Modifier.weight(1f)
+                    Box {
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF141520).copy(alpha = 0.45f))
+                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                            color = Color.Transparent,
+                            onClick = { positionMenuOpen = true },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Box(
-                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = when (pos) {
-                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                                            PresetInjectionPosition.AT_DEPTH -> "Depth D"
-                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                                            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
-                                        },
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            fontSize = 11.sp
-                                        ),
-                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                Text(
+                                    text = when (draftPosition) {
+                                        PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                                        PresetInjectionPosition.AT_DEPTH -> "Depth $draftDepth"
+                                        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                )
+                                Icon(
+                                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = "Dropdown",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp).rotate(positionArrowRotation),
+                                )
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = positionMenuOpen,
+                            onDismissRequest = { positionMenuOpen = false },
+                            shape = RoundedCornerShape(10.dp),
+                            containerColor = Color(0xFF000000),
+                            modifier = Modifier
+                                .background(Color(0xFF000000))
+                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
+                        ) {
+                            PresetInjectionPosition.entries.forEach { pos ->
+                                val isSelected = draftPosition == pos
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = when (pos) {
+                                                PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                                                PresetInjectionPosition.AT_DEPTH -> "Depth D"
+                                                PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                                PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (isSelected) Color.White else Color(0xFFCCCCCC),
+                                        )
+                                    },
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        draftPosition = pos
+                                        positionMenuOpen = false
+                                    },
+                                    trailingIcon = if (isSelected) {
+                                        {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Check,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    } else null,
+                                )
                             }
                         }
                     }
