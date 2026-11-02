@@ -2411,10 +2411,10 @@ private fun CustomGreetingDialog(
                     maxLines = Int.MAX_VALUE,
                     minLines = 6,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                    colors = OutlinedTextFieldDefaults.outlinedTextFieldColors(
-                        containerColor = Color(0xFF000000),
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFF000000),
                         unfocusedContainerColor = Color(0xFF000000),
+                        disabledContainerColor = Color(0xFF000000),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         focusedBorderColor = Color.White.copy(alpha = 0.35f),

@@ -1704,7 +1704,7 @@ private fun AssistantMessageTurn(
                         if (isIntroMessage) {
                             onAddCustomGreeting()
                         } else {
-                            onRegenerate(assistantNode)
+                            onRegenerate()
                         }
                     }
                     totalDrag = 0f
