@@ -82,7 +82,7 @@ fun DomChatAboutContent(
         Surface(
             color = Color(0xFF000000),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f)),
             modifier = Modifier
                 .padding(vertical = 4.dp)
                 .pointerInput(onVersionLongPress) {
