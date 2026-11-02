@@ -30,11 +30,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.debounce
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.ai.core.MessageRole
 import me.lucid.ai.ui.UIMessage
@@ -165,7 +173,7 @@ fun AssistantCoreRoleplaySubPage(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         DebouncedTextField(
-                            value = assistant.creatorNotes,
+                            value = assistant.creatorNotes ?: "",
                             onValueChange = { onUpdate(assistant.copy(creatorNotes = it)) },
                             stateKey = "${assistant.id}_notes",
                             modifier = Modifier
@@ -287,7 +295,7 @@ fun AssistantCoreRoleplaySubPage(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         DebouncedTextField(
-                            value = assistant.authorsNote,
+                            value = assistant.authorsNote ?: "",
                             onValueChange = { onUpdate(assistant.copy(authorsNote = it)) },
                             stateKey = "${assistant.id}_scenario",
                             modifier = Modifier
@@ -295,7 +303,7 @@ fun AssistantCoreRoleplaySubPage(
                                 .heightIn(min = 120.dp),
                             minLines = 6,
                             maxLines = 10,
-                            placeholder = { Text(stringResource(R.string.assistant_page_scenario_placeholder)) },
+                            placeholder = stringResource(R.string.assistant_page_scenario_placeholder),
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
                                 fontFamily = FontFamily.Monospace,
                                 lineHeight = 20.sp
@@ -357,7 +365,7 @@ fun AssistantCoreRoleplaySubPage(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            intros.forEachIndexed { index, intro ->
+                            for ((index, intro) in intros.withIndex()) {
                                 var isEditing by remember { mutableStateOf(false) }
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -453,8 +461,7 @@ fun AssistantCoreRoleplaySubPage(
                                                         fontFamily = FontFamily.Monospace,
                                                         lineHeight = 20.sp
                                                     ),
-                                                    shape = AppShapes.InputField,
-                                                )
+                                                    )
                                                 Row(
                                                     modifier = Modifier.fillMaxWidth(),
                                                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,

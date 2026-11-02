@@ -1337,6 +1337,14 @@ private fun ChatPageContent(
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     val haptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)
+    val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
+    val onNewChat = {
+        if (isActiveConversation) {
+            navController.navigate(Screen.ConversationList)
+        } else {
+            navigateToChatPage(navController)
+        }
+    }
     var showToolbarOverflowMenu by remember { mutableStateOf(false) }
     var showContextUsagePopup by remember { mutableStateOf(false) }
     var showChatInfoSheet by remember { mutableStateOf(false) }

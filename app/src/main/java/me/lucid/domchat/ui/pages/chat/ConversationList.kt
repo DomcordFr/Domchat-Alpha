@@ -269,27 +269,13 @@ fun ConversationList(
                     is ConversationListItem.DateHeader -> {
                         DateHeaderItem(
                             label = item.label,
-                            modifier = Modifier.animateItemPlacement(
-                                fadeInSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
-                                fadeOutSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
-                                placementSpec = androidx.compose.animation.core.spring(
-                                    stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-                                    visibilityThreshold = androidx.compose.ui.unit.IntOffset.VisibilityThreshold
-                                )
-                            )
+                            modifier = Modifier
                         )
                     }
 
                     is ConversationListItem.PinnedHeader -> {
                         PinnedHeader(
-                            modifier = Modifier.animateItemPlacement(
-                                fadeInSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
-                                fadeOutSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
-                                placementSpec = androidx.compose.animation.core.spring(
-                                    stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-                                    visibilityThreshold = androidx.compose.ui.unit.IntOffset.VisibilityThreshold
-                                )
-                            )
+                            modifier = Modifier
                         )
                     }
 
@@ -307,14 +293,7 @@ fun ConversationList(
                             onPin = onPin,
                             searchQuery = searchQuery,
                             getAssistant = getAssistant,
-                            modifier = Modifier.animateItemPlacement(
-                                fadeInSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
-                                fadeOutSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
-                                placementSpec = androidx.compose.animation.core.spring(
-                                    stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-                                    visibilityThreshold = androidx.compose.ui.unit.IntOffset.VisibilityThreshold
-                                )
-                            )
+                            modifier = Modifier
                         )
                     }
 
@@ -773,7 +752,7 @@ fun ConversationListPage() {
     var conversationToDelete by remember { mutableStateOf<Conversation?>(null) }
 
     val assistants by vm.assistants.collectAsStateWithLifecycle(emptyList())
-    val assistantMap by remember(assistants) { assistants.associateBy { it.id } }
+    val assistantMap = remember(assistants) { assistants.associateBy { it.id } }
 
     val current = remember { Conversation.ofId(Uuid.random()) }
 

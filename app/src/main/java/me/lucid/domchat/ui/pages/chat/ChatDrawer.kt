@@ -434,7 +434,7 @@ fun ChatDrawerContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
+                            .align(Alignment.CenterHorizontally)
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp)
                             .zIndex(1f),

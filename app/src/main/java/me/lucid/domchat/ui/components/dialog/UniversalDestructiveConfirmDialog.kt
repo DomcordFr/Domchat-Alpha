@@ -38,7 +38,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete as DeleteIcon
+import androidx.compose.material.icons.rounded.Delete
 
 /**
  * A reusable, smooth-opening destructive action confirmation dialog.
@@ -178,7 +178,7 @@ fun UniversalDestructiveConfirmDialog(
                                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                                     ) {
                                         Icon(
-                                            imageVector = DeleteIcon,
+                                            imageVector = Icons.Rounded.Delete,
                                             contentDescription = null,
                                             tint = destructiveRed,
                                             modifier = Modifier.size(20.dp)

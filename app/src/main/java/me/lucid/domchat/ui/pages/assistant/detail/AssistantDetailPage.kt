@@ -553,7 +553,7 @@ private fun AssistantDetailHome(
 
             NavigationCard(
                 icon = Icons.Rounded.DataObject,
-                title = stringResource(R.string.assistant_detail_core_lorebooks),
+                title = "Attached Lorebooks",
                 description = stringResource(R.string.assistant_detail_core_lorebooks_desc),
                 onClick = onNavigateToCore
             )
@@ -570,7 +570,7 @@ private fun AssistantDetailHome(
 
             NavigationCard(
                 icon = Icons.Rounded.Tune,
-                title = stringResource(R.string.assistant_detail_context_budget),
+                title = "Context & Budget",
                 description = stringResource(R.string.assistant_detail_advanced_context_desc),
                 onClick = onNavigateToAdvanced
             )

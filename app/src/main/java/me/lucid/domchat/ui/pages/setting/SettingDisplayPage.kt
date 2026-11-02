@@ -283,10 +283,10 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(140.dp)
-                                    .clip(RoundedCornerShape(AppShapes.CardMedium))
+.clip(AppShapes.CardMedium)
                                     .border(
                                         BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                        RoundedCornerShape(AppShapes.CardMedium)
+                                        AppShapes.CardMedium
                                     )
                                     .background(Color(0xFF141520))
                             ) {

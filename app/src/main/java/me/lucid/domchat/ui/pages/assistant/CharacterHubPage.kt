@@ -16,8 +16,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -336,11 +337,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
                     CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
                     CharacterSortOption.RECENT -> {
-                        val activityMap = tagFiltered.associateWith { assistant ->
-                            runCatching {
-                                vm.getAssistantLastUpdateAt(assistant.id)
-                            }.getOrNull()
-                        }
+                        val activityMap = tagFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
                         tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
                     }
                 }
@@ -1776,8 +1773,8 @@ fun CharacterInspectorSheet(
     var showAttachLorebookDialog by remember { mutableStateOf(false) }
     var lorebookToDetach by remember { mutableStateOf<Lorebook?>(null) }
     var showDetachConfirm by remember { mutableStateOf(false) }
-    val attachedLorebookList = remember(settings.lorebooks, assistant.enabledLorebookIds) {
-        settings.lorebooks.filter { it.id in assistant.enabledLorebookIds }
+    val attachedLorebookList = remember(settings?.lorebooks, assistant.enabledLorebookIds) {
+        settings?.lorebooks?.filter { it.id in assistant.enabledLorebookIds } ?: emptyList()
     }
     val hasAttachedLorebooks = attachedLorebookList.isNotEmpty()
 
@@ -2528,7 +2525,7 @@ fun CharacterInspectorSheet(
 
     // Attach Lorebook Dialog - shows all available lorebooks to attach
     if (showAttachLorebookDialog) {
-        val availableLorebooks = settings.lorebooks.filter { it.id !in assistant.enabledLorebookIds }
+        val availableLorebooks = settings?.lorebooks?.filter { it.id !in assistant.enabledLorebookIds } ?: emptyList()
         Dialog(
             onDismissRequest = { showAttachLorebookDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
@@ -3155,7 +3152,6 @@ private fun CharacterActionPopover(
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             // "All" option
