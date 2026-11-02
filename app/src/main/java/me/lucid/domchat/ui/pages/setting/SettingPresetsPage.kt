@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
@@ -108,11 +109,12 @@ private fun PositionButton(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF141520).copy(alpha = 0.55f),
-        border = BorderStroke(
-            0.5.dp,
-            if (selected) selectedColor else LiquidGlassTokens.SpecularBorderSubtle
-        ),
+        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF000000),
+        border = if (selected) {
+            BorderStroke(0.5.dp, selectedColor)
+        } else {
+            BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+        },
         modifier = modifier,
     ) {
         Row(
@@ -695,7 +697,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
 
                     val estTokens = (draftContent.length / 3.8).roundToInt()
                     Surface(
-                        color = Color(0xFF141520).copy(alpha = 0.55f),
+                        color = Color(0xFF000000),
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)

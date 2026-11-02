@@ -46,6 +46,8 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Psychology
+import kotlin.math.roundToInt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -145,12 +147,13 @@ private fun PositionButton(
     val selectedColor = MaterialTheme.colorScheme.primary
     Surface(
         onClick = onClick,
-        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF141520).copy(alpha = 0.55f),
+        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF000000),
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(
-            0.5.dp,
-            if (selected) selectedColor else LiquidGlassTokens.SpecularBorderSubtle
-        ),
+        border = if (selected) {
+            BorderStroke(0.5.dp, selectedColor)
+        } else {
+            BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+        },
         modifier = modifier,
     ) {
         Row(
@@ -571,7 +574,7 @@ fun PromptPresetsBottomSheet(
 
                         val formEstTokens = (formContent.length / 3.8).roundToInt()
                         Surface(
-                            color = Color(0xFF141520).copy(alpha = 0.55f),
+                            color = Color(0xFF000000),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
