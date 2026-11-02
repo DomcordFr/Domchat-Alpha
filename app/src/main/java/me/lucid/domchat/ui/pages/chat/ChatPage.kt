@@ -727,6 +727,14 @@ fun ChatPage(
     val conversation by vm.conversation.collectAsStateWithLifecycle()
     val conversationInitialized by vm.conversationInitialized.collectAsStateWithLifecycle()
     val conversationAssistant by vm.conversationAssistant.collectAsStateWithLifecycle()
+    val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
+    val onNewChat = {
+        if (isActiveConversation) {
+            navController.navigate(Screen.ConversationList)
+        } else {
+            navigateToChatPage(navController)
+        }
+    }
     val loadingJob by vm.conversationJob.collectAsStateWithLifecycle()
     val conversationPersistenceMode by vm.conversationPersistenceMode.collectAsStateWithLifecycle()
     val currentChatModel by vm.currentChatModel.collectAsStateWithLifecycle()
@@ -768,6 +776,13 @@ fun ChatPage(
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch {
             drawerState.close()
+        }
+    }
+
+    // Navigate to Home when backing out of chat with the drawer closed
+    BackHandler(enabled = !drawerState.isOpen) {
+        scope.launch {
+            navController.navigate(Screen.ConversationList)
         }
     }
 
@@ -1510,9 +1525,7 @@ private fun ChatPageContent(
                                 showToolbarOverflowMenu = false
                                 showContextUsagePopup = !showContextUsagePopup
                             },
-                            onNewChat = {
-                                navigateToChatPage(navController)
-                            },
+                            onNewChat = onNewChat,
                             onOpenOverflowMenu = {
                                 showContextUsagePopup = false
                                 showToolbarOverflowMenu = !showToolbarOverflowMenu
@@ -1987,9 +2000,7 @@ private fun ChatPageContent(
                                 showToolbarOverflowMenu = false
                                 showContextUsagePopup = !showContextUsagePopup
                             },
-                            onNewChat = {
-                                navigateToChatPage(navController)
-                            },
+                            onNewChat = onNewChat,
                             onOpenOverflowMenu = {
                                 showContextUsagePopup = false
                                 showToolbarOverflowMenu = !showToolbarOverflowMenu
@@ -3246,7 +3257,7 @@ private fun ChatToolbar(
 ) {
     val scope = rememberCoroutineScope()
     val isDark = LocalDarkMode.current
-    val topContainerColor = Color(0xFF000000).copy(alpha = 0.65f)
+    val topContainerColor = Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))
     val topContainerBorder = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     val buttonShape = AppShapes.ButtonPill
     val topPillSize = AppSize.ChromePill

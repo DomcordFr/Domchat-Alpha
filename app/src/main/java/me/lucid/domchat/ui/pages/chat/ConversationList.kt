@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PushPin
@@ -103,6 +104,14 @@ import me.lucid.domchat.utils.toLocalTime
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.uuid.Uuid
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
+import me.lucid.domchat.ui.components.nav.BackButton
+import me.lucid.domchat.ui.components.nav.OneUITopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.platform.LocalContext
+import me.lucid.domchat.utils.navigateToChatPage
 
 /**
  * Represents different types of items in the conversation list
@@ -133,6 +142,7 @@ fun ColumnScope.ConversationList(
     onClick: (Conversation) -> Unit = {},
     onDelete: (Conversation) -> Unit = {},
     onRegenerateTitle: (Conversation) -> Unit = {},
+    current: Conversation = Conversation.ofId(Uuid.random()),
     onEditTitle: (Conversation, String) -> Unit = { _, _ -> },
     onPin: (Conversation) -> Unit = {},
     getAssistant: (Uuid) -> Assistant? = { null },
@@ -718,5 +728,67 @@ private fun ConversationItem(
                 }
             )
         }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun ConversationListPage() {
+    val vm: ConversationListVM = koinViewModel()
+    val navController = LocalNavController.current
+    val context = LocalContext.current
+    val haptics = rememberPremiumHaptics()
+
+    val conversations = vm.conversations.collectAsLazyPagingItems()
+    val conversationJobs by vm.conversationJobsSet.collectAsStateWithLifecycle(emptySet())
+    val completedGenerationIds by vm.completedGenerationIds.collectAsStateWithLifecycle(emptySet())
+    val recentlyRestoredIds by vm.recentlyRestoredIds.collectAsStateWithLifecycle(emptySet())
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchExpanded by remember { mutableStateOf(false) }
+
+    val assistants by vm.assistants.collectAsStateWithLifecycle(emptyList())
+    val assistantMap by remember(assistants) { assistants.associateBy { it.id } }
+
+    val current = remember { Conversation.ofId(Uuid.random()) }
+
+    Scaffold(
+        topBar = {
+            OneUITopAppBar(
+                title = "Conversations",
+                scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
+                navigationIcon = { BackButton() },
+            )
+        },
+        modifier = Modifier.fillMaxSize(),
+    ) { padding ->
+        ConversationList(
+            current = current,
+            conversations = conversations,
+            conversationJobs = conversationJobs,
+            completedGenerationIds = completedGenerationIds,
+            recentlyRestoredIds = recentlyRestoredIds,
+            searchQuery = searchQuery,
+            onSearchQueryChange = { searchQuery = it },
+            isSearchExpanded = isSearchExpanded,
+            onSearchExpandedChange = { isSearchExpanded = it },
+            modifier = Modifier.fillMaxSize().padding(padding),
+            onClick = { conversation ->
+                haptics.perform(HapticPattern.Tick)
+                navigateToChatPage(navController, conversation.id)
+            },
+            onDelete = { conversation ->
+                vm.deleteConversation(conversation)
+            },
+            onRegenerateTitle = { conversation ->
+                vm.generateTitle(conversation, true)
+            },
+            onEditTitle = { conversation, title ->
+                vm.updateConversationTitle(conversation, title)
+            },
+            onPin = { conversation ->
+                vm.updatePinnedStatus(conversation)
+            },
+            getAssistant = { assistantMap[it] },
+        )
     }
 }

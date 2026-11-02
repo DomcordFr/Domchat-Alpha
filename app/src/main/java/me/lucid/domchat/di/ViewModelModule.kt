@@ -5,6 +5,7 @@ import me.lucid.domchat.ui.pages.assistant.AssistantVM
 import me.lucid.domchat.ui.pages.assistant.detail.AssistantDetailVM
 import me.lucid.domchat.ui.pages.backup.BackupVM
 import me.lucid.domchat.ui.pages.chat.ChatVM
+import me.lucid.domchat.ui.pages.chat.ConversationListVM
 import me.lucid.domchat.ui.pages.developer.DeveloperVM
 import me.lucid.domchat.ui.pages.imggen.ImgGenVM
 import me.lucid.domchat.ui.pages.setting.SettingVM
@@ -30,6 +31,14 @@ val viewModelModule = module {
             appScope = get(),
             appStorageRepository = get(),
             modelMetadataResolver = get(),
+        )
+    }
+    viewModel<ConversationListVM> {
+        ConversationListVM(
+            settingsStore = get(),
+            conversationRepo = get(),
+            chatService = get(),
+            updateChecker = get(),
         )
     }
     viewModel<SettingVM> {

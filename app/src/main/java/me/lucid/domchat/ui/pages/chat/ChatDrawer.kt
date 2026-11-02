@@ -384,6 +384,23 @@ fun ChatDrawerContent(
                     val quickActionCardColor = domChatCardContainerColor()
                     DomChatDrawerQuickActionGroup {
                         DomChatDrawerQuickAction(
+                            label = "Home",
+                            containerColor = quickActionCardColor,
+                            onClick = {
+                                navController.navigate(Screen.ConversationList)
+                                dismissDrawerAfterSelection()
+                            },
+                            onHaptic = { haptics.perform(HapticPattern.Tick) },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Home,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                        )
+                        DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
                             containerColor = quickActionCardColor,
                             onClick = {

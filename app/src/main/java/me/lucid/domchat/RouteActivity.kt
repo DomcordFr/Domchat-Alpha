@@ -971,6 +971,10 @@ class RouteActivity : ComponentActivity() {
                         ImageGenPage()
                     }
 
+                    composable<Screen.ConversationList> {
+                        me.lucid.domchat.ui.pages.chat.ConversationListPage()
+                    }
+
                     composable<Screen.WebView> { backStackEntry ->
                         val route = backStackEntry.toRoute<Screen.WebView>()
                         WebViewPage(route.url, route.content)
@@ -1405,8 +1409,10 @@ sealed interface Screen {
     ) : Screen
 
     @Serializable
-    data class ShareHandler(val text: String, val files: List<String> = emptyList()) : Screen
+    data object ConversationList : Screen
 
+    @Serializable
+    data class ShareHandler(val text: String, val files: List<String> = emptyList()) : Screen
     @Serializable
     data object Setup : Screen
 

@@ -1,61 +1,87 @@
-# Audit Brief — Bot Display Name vs Chat Name Decoupling
+# Audit Brief — Top and Bottom Bars Opacity, Top Plus Home Navigation and Home Card
 
 ## Intent Verification
 
-**Assistant.kt**
-- Added `@SerialName("display_name") val displayName: String? = null` and `@SerialName("chat_name") val chatName: String? = null` to the `Assistant` data class (nullable, default `null`).
-- Added computed `val effectiveDisplayName: String` = `displayName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: "Character"`.
-- Added computed `val effectiveChatName: String` = `chatName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: displayName?.takeIf { it.isNotBlank() } ?: "Character"`.
-- All access null-safe (Elvis + `takeIf`), zero `!!`.
+**1. MinimalChatInput.kt — bottom plus button opacity**
+- `DomChatComposerAddButton` `containerColor` changed from `Color(0xFF000000).copy(alpha = 0.65f)` to `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))`.
+- Bottom bar plus button is now transparent/glassy; clamps user `glassAlpha` to [0.10, 0.75] so it never goes fully solid under low-opacity settings.
 
-**CharacterHubPage.kt**
-- Card display name (`CharacterPortraitCard`), hub list row name (`CharacterListRow`), inspector sheet title (`CharacterInspectorSheet`), `FullCharacterCardImage` name/content-description (portrait card, list row, inspector hero), and error card text now use `assistant.effectiveDisplayName`.
+**2. ChatPage.kt — top bar opacity**
+- `ChatToolbar.topContainerColor` changed from `Color(0xFF000000).copy(alpha = 0.65f)` to `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))`.
+- Applied to top bar container, menu button, and action pill backgrounds via `domChatBlurEffect(topContainerColor, ...)`.
 
-**ChatPage.kt**
-- Chat toolbar title and top-bar character pill (`UIAvatar`) now use `currentAssistant.effectiveChatName`.
-- Assistant message bubbles: `ChatMessageV2.kt` assistant-turn name label (`avatarName`) now uses `assistant.effectiveChatName`. (Chat bubbles are rendered by `ChatMessageV2`, called from `ChatPage` via `ChatList`; this is the physical location of the bubble name.)
+**3. ChatPage.kt — top plus navigates Home in active conversation**
+- Added `val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)`.
+- Added `val onNewChat` lambda: if `isActiveConversation` → `navController.navigate(Screen.ConversationList)`; else `navigateToChatPage(navController)`.
+- Both top and bottom `ChatToolbar(onNewChat = onNewChat)` call sites wired to the new lambda.
 
-**SettingJanitorPage.kt**
-- `extractToAssistant` now sets `name = rawName`, `displayName = rawName`, `chatName = extractCleanChatName(rawName)`.
-- New `extractCleanChatName(name)` splits on the first delimiter `|`, `-`, `—`, `[`, `(`, returns trimmed substring; null-safe, no `!!`.
+**4. ChatPage.kt — back-to-home**
+- Added `BackHandler(enabled = !drawerState.isOpen)` that `navController.navigate(Screen.ConversationList)`, coexisting with the existing drawer-close `BackHandler(enabled = drawerState.isOpen)`.
+
+**5. ChatDrawer.kt & ConversationList.kt — Home quick action card**
+- `ChatDrawer.kt` quickActions group: new `DomChatDrawerQuickAction` with `Icons.Rounded.Home`, label `"Home"`, `onClick = { navController.navigate(Screen.ConversationList); dismissDrawerAfterSelection() }`, placed above the Imagine card.
+- `ConversationList.kt`: renders `quickActions()` (so the Home card appears in the drawer-rendered list); added `Screen.ConversationList` route support via new `ConversationListPage`.
+- New `Screen.ConversationList` (data object) added to the sealed `Screen` interface in RouteActivity.kt; `composable<Screen.ConversationList> { ConversationListPage() }` registered.
+- New `ConversationListVM` (Koin-registered, no params) + `ConversationListPage` (Scaffold + OneUITopAppBar + ConversationList) power the home route.
+
+**Null safety:** zero `!!` introduced. All nullable access uses Elvis / safe-call / `coerceIn` / `getOrNull` patterns consistent with the codebase.
+
+**Theme:** unchanged usage of `Color(0xFF000000)` (AMOLED black) and `LiquidGlassTokens.SpecularBorderSubtle`; glass card theme (`0xFF141520`) preserved via existing `domChatCardContainerColor()`/`domChatBlurEffect`.
 
 ## Call Chain & Architecture
 
-**Model layer.** `Assistant` (`:app data/model/Assistant.kt`) is the Koin-serialized settings entity. `effectiveDisplayName`/`effectiveChatName` are pure computed properties (zero state, zero allocations beyond a `String`), consumed by UI as derived values.
+**Opacity (render-only, no business logic):**
+- `settings.displaySetting.glassAlpha` (DataStore `Settings`, canonical via `SettingsStore.update`) → read in Compose via `collectAsStateWithLifecycle` → fed into `containerColor` for `DomChatComposerAddButton` (MinimalChatInput) and `topContainerColor` (ChatToolbar). Pure derivation, UI layer only.
 
-**UI consumption (render only, no business logic).**
-- `CharacterHubPage` → `CharacterPortraitCard` / `CharacterListRow` / `CharacterInspectorSheet` read `assistant.effectiveDisplayName` at composition time.
-- `ChatPage` → `ChatToolbar` reads `currentAssistant.effectiveChatName` for toolbar title and pill; `ChatMessageV2` assistant-turn name label reads `assistant.effectiveChatName`.
+**Top-plus navigation:**
+- `ChatPage.onNewChat` lambda → `navController.navigate(Screen.ConversationList)` when active conversation, else `navigateToChatPage(navController)` (ChatUtil) → `Screen.Chat` route.
+- `ChatToolbar` receives `onNewChat`; invoked from the Add/New-chat pill icon click.
 
-**Import path.** `SettingJanitorPage.extractToAssistant` builds `Assistant` from `JanitorExtractResponse`; `chatName` populated from delimiter-split of raw name, `displayName` = raw name. Stored via `AssistantVM.addAssistant` → `PreferencesStore.update` (canonical settings API: normalization, secret migration, in-memory state, persist).
+**Back-to-home:**
+- `BackHandler(enabled = !drawerState.isOpen)` in `ChatPage` → `navController.navigate(Screen.ConversationList)`. Mutually exclusive with the drawer-close handler (enabled states are inverses).
 
-**Serialization.** New fields are nullable with defaults + `@SerialName`. Existing persisted `Assistant` JSON deserializes safely (defaults to null → computed fallbacks active). No Room/DataStore migration required.
+**Home card / route:**
+- `Screen.ConversationList` data object added to `Screen` sealed interface (RouteActivity.kt).
+- `composable<Screen.ConversationList>` → `ConversationListPage()` → `ConversationListVM` (koinViewModel, no params) → `ConversationRepository.getAllConversationsPaging()` (Paging 3) → `ConversationList` UI component.
+- `ConversationListVM` also exposes `conversationJobs`, `completedGenerationIds` (from `chatService.generationDoneFlow`), `recentlyRestoredIds`, `errorFlow`, `assistants` (from `settingsStore.settingsFlow`), plus `deleteConversation`/`undoDeleteConversation`/`updatePinnedStatus`/`updateConversationTitle`/`generateTitle` delegating to `chatService`/`conversationRepo` on `Dispatchers.IO`.
+- `ChatDrawer` quickActions Home card → `navController.navigate(Screen.ConversationList)`.
+
+**DI:** `ConversationListVM` registered in `di/ViewModelModule.kt` (`viewModel<ConversationListVM> { ... }`). Dependencies (`SettingsStore`, `ConversationRepository`, `ChatService`, `UpdateChecker`) already Koin-bound.
 
 ## Recomposition & Memory Safety
 
-- Computed properties are `val get()` — no mutable state, no self-triggering recomposition. They recompute only when the parent `Assistant` instance reference changes, which this feature does not alter.
-- UI reads occur during composition; `assistant`/`currentAssistant` are collected via `collectAsStateWithLifecycle` (lifecycle-aware) in `CharacterHubPage` and `ChatPage`. Passing a derived immutable `String` into `Text`/`UIAvatar` is stable — no `SnapshotStateList` passed to `items`, no derived-state violations.
-- `FullCharacterCardImage` receives `name` as a plain `String` parameter (content description + dummy avatar letter) — stable, no retained references, no memory leak.
-- No new coroutines, jobs, or scoped state introduced. Existing `remember`/`collectAsStateWithLifecycle` usage unchanged.
+- `glassAlpha` is a `Float` read via `collectAsStateWithLifecycle`; passing it into `copy(alpha = ...)` produces a new `Color` only when the setting changes — stable, no self-triggering loops.
+- `onNewChat` is a `val` lambda recomputed when `conversationInitialized`/`conversation` change; passed as a functional parameter to `ChatToolbar` (stable reference, no inline recomposition spike).
+- `BackHandler` is a standard Compose handler; no state retained.
+- `ConversationListPage`: `collectAsLazyPagingItems()` + `collectAsStateWithLifecycle(emptySet())` — lifecycle-aware, no naked flows. `assistantMap` built with `remember(assistants)`. `current` wrapped in `remember { Conversation.ofId(Uuid.random()) }` so it isn't re-randomized each recomposition.
+- `ConversationList` received a default for `current` (`Conversation.ofId(Uuid.random())`) so the standalone home page compiles; no existing call sites affected.
+- No `SnapshotStateList` passed to `items(...)`; Paging `LazyPagingItems` used as intended.
+- No force-unwraps (`!!`) anywhere in edited/new files.
 
 ## Threading & Dispatchers
 
-- All name resolution is synchronous, main-thread-safe String computation. No blocking calls on `Dispatchers.Main`.
-- `extractCleanChatName` is a pure function called while constructing the `Assistant` inside `extractToAssistant`, invoked from the import button handler inside `scope.launch { ... withContext(Dispatchers.IO) { ... } }`. The HTTP fetch (`/api/extract`) already runs on `Dispatchers.IO`; `Assistant` construction happens after the IO block returns, on `Dispatchers.Main` — safe because it is pure in-memory object construction, no I/O.
-- No new dispatchers introduced. `Dispatchers.IO` used only for HTTP/JSON import, as before.
+- Opacity and navigation reads are synchronous main-thread Compose operations; no blocking calls on `Dispatchers.Main`.
+- Navigation (`navController.navigate`) is main-thread-safe.
+- `ConversationListVM` delegates mutation to `Dispatchers.IO` (`updatePinnedStatus`, `updateConversationTitle`) and uses `viewModelScope` (ViewModel's `Dispatchers.Main` coroutine scope) only for launching IO work — never performs disk/network on Main.
+- Paging 3 (`getAllConversationsPaging`) runs on its own dispatcher internally; collected via `collectAsLazyPagingItems` in Compose (main-thread observer of a background flow).
+- No `Dispatchers.Main` used for I/O. No new background threads spawned on Main.
 
 ## Offline & Error State Handling
 
-- `effectiveDisplayName`/`effectiveChatName` are total functions: every branch returns a non-null `String` (final fallback `"Character"`). No exception path; empty/blank inputs degrade gracefully to fallback.
-- `extractCleanChatName`: no delimiter → full trimmed name; name starts with delimiter → empty string → `effectiveChatName` falls back through `name`/`displayName` to `"Character"`. Never throws.
-- Import flow: `extractToAssistant` is wrapped in `try/catch` (import button handler); `fullExtract` fetch failures surface `ImportStatus.ERROR` + toast; parse failures caught. Name decoupling does not alter error handling.
-- Offline: computed names require no network; fully local. Import requires network (pre-existing behavior) — failures handled by existing `JanitorLoadState.Error`/toast paths.
-- Null safety: zero `!!` across all edited files; all nullable access uses `?.`, `?:`, `takeIf`, `orEmpty()`.
+- Opacity: total function (`coerceIn` clamps to [0.10, 0.75]); no failure mode; always renders a valid `Color`.
+- Navigation: `navController.navigate(Screen.ConversationList)` targets a registered composable — no unresolved route. `navigateToChatPage` retains its existing duplicate-route guard (`isAlreadyOnChat`).
+- Back handler: enabled guard prevents conflicting with drawer close; no exception surface.
+- Home route: `ConversationListVM.conversations` uses `.catch { emit(PagingData.empty()) }` so a repository failure degrades to an empty list instead of crashing; `errorFlow` exposed for optional surfacing.
+- Delete/pin/title regenerate are wrapped in `viewModelScope.launch { withContext(Dispatchers.IO) { ... } }`; repository exceptions propagate through the existing ChatService error flow (`errorFlow`) which ChatPage already toasts.
+- Offline: conversation list reads from local Room via Paging (no network required); fully functional offline.
+- Error states: Loading/Success/Empty/Exception handled by existing Paging + `errorFlow` toasts in `ChatPage` (unchanged).
 
 ## Files Changed
 
-- `app/src/main/java/me/lucid/domchat/data/model/Assistant.kt` — `displayName`, `chatName`, `effectiveDisplayName`, `effectiveChatName`.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — card/list/inspector/error names → `effectiveDisplayName`.
-- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt` — toolbar title + pill → `effectiveChatName`.
-- `app/src/main/java/me/lucid/domchat/ui/components/chat/ChatMessageV2.kt` — assistant bubble name label → `effectiveChatName` (required for the "assistant message bubbles" requirement; bubbles render outside `ChatPage.kt` itself).
-- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt` — `extractToAssistant` + `extractCleanChatName` helper.
+- `app/src/main/java/me/lucid/domchat/ui/components/ai/MinimalChatInput.kt` — `DomChatComposerAddButton` alpha → `glassAlpha.coerceIn(0.10f, 0.75f)`.
+- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt` — `topContainerColor` alpha; `isActiveConversation`/`onNewChat`; both toolbar `onNewChat` wired; `BackHandler(enabled = !drawerState.isOpen)` → Home.
+- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatDrawer.kt` — Home `DomChatDrawerQuickAction` (Icons.Rounded.Home) above Imagine.
+- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ConversationList.kt` — `current` default param; new `ConversationListPage`; page + VM imports.
+- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ConversationListVM.kt` (new) — home-route ViewModel.
+- `app/src/main/java/me/lucid/domchat/di/ViewModelModule.kt` — registered `ConversationListVM`.
+- `app/src/main/java/me/lucid/domchat/RouteActivity.kt` — added `Screen.ConversationList` + `composable<Screen.ConversationList>` route.
