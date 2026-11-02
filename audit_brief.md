@@ -1,5 +1,5 @@
 # Intent Verification
-Verified implementation of Remove invalid align import from PromptPresetsBottomSheet according to specifications.
+Verified implementation of Remove unresolved animateItem from PromptPresetsBottomSheet according to specifications.
 
 # Call Chain & Architecture
 Integrated within Compose tree and architecture invariants.

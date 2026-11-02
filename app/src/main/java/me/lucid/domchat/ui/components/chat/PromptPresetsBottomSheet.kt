@@ -735,7 +735,6 @@ fun PromptPresetsBottomSheet(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItem()
                             .height(130.dp),
                     ) {
                         Column(
