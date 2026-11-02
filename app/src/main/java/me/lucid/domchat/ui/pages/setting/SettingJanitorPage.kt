@@ -1720,21 +1720,21 @@ private fun JanitorCharacterInspectorSheet(
                                                     }
                                                 }
                                             }
-                                        } else {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(16.dp))
-                                                    .background(sheetBgColor)
-                                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
-                                                    .padding(16.dp)
-                                            ) {
-                                                Text(
-                                                    text = "No greetings available.",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = Color.White.copy(alpha = 0.5f),
-                                                )
-                                            }
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(sheetBgColor)
+                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                .padding(16.dp)
+                                        ) {
+                                            Text(
+                                                text = "No greetings available.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White.copy(alpha = 0.5f),
+                                            )
                                         }
                                     }
                                 }
