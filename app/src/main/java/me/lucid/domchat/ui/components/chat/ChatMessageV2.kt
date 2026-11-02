@@ -1455,16 +1455,20 @@ private fun UserMessageTurn(
                     )
                     val userNickname = settings.displaySetting.getActivePersona().name
                     val displayContent = remember(part.text, assistant, userNickname) {
-                        part.text
-                            .replacePersonaPlaceholders(
-                                assistant = assistant,
-                                userNickname = userNickname,
+                        formatRoleplayTextWithCdnImages(
+                            cleanHtmlImgToMarkdown(
+                                part.text
+                                    .replacePersonaPlaceholders(
+                                        assistant = assistant,
+                                        userNickname = userNickname,
+                                    )
+                                    .replaceRegexes(
+                                        assistant = assistant,
+                                        scope = AssistantAffectScope.USER,
+                                        visual = true,
+                                    )
                             )
-                            .replaceRegexes(
-                                assistant = assistant,
-                                scope = AssistantAffectScope.USER,
-                                visual = true,
-                            )
+                        )
                     }
                     MarkdownBlock(
                         workspaceId = assistant?.workspaceId?.toString(),
@@ -1937,16 +1941,20 @@ private fun AssistantMessageTurn(
                         val currentText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(index)?.text ?: part.text
                         val userNickname = settings.displaySetting.getActivePersona().name
                         val displayContent = remember(currentText, assistant, userNickname) {
-                            currentText.trimStart()
-                                .replacePersonaPlaceholders(
-                                    assistant = assistant,
-                                    userNickname = userNickname,
+                            formatRoleplayTextWithCdnImages(
+                                cleanHtmlImgToMarkdown(
+                                    currentText.trimStart()
+                                        .replacePersonaPlaceholders(
+                                            assistant = assistant,
+                                            userNickname = userNickname,
+                                        )
+                                        .replaceRegexes(
+                                            assistant = assistant,
+                                            scope = AssistantAffectScope.ASSISTANT,
+                                            visual = true,
+                                        )
                                 )
-                                .replaceRegexes(
-                                    assistant = assistant,
-                                    scope = AssistantAffectScope.ASSISTANT,
-                                    visual = true,
-                                )
+                            )
                         }
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
@@ -2053,16 +2061,20 @@ private fun AssistantMessageTurn(
                     activeParts.forEachIndexed { index, part ->
                         val userNickname = settings.displaySetting.getActivePersona().name
                         val displayContent = remember(part.text, assistant, userNickname) {
-                            part.text.trimStart()
-                                .replacePersonaPlaceholders(
-                                    assistant = assistant,
-                                    userNickname = userNickname,
+                            formatRoleplayTextWithCdnImages(
+                                cleanHtmlImgToMarkdown(
+                                    part.text.trimStart()
+                                        .replacePersonaPlaceholders(
+                                            assistant = assistant,
+                                            userNickname = userNickname,
+                                        )
+                                        .replaceRegexes(
+                                            assistant = assistant,
+                                            scope = AssistantAffectScope.ASSISTANT,
+                                            visual = true,
+                                        )
                                 )
-                                .replaceRegexes(
-                                    assistant = assistant,
-                                    scope = AssistantAffectScope.ASSISTANT,
-                                    visual = true,
-                                )
+                            )
                         }
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),

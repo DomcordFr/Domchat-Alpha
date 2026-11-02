@@ -229,59 +229,6 @@ private fun sanitizeHtml(html: String?): String {
     return result
 }
 
-private sealed interface ContentSegment {
-    data class Text(val text: String) : ContentSegment
-    data class Image(val url: String) : ContentSegment
-}
-
-private fun parseContentWithImages(text: String): List<ContentSegment> {
-    val segments = mutableListOf<ContentSegment>()
-    val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
-    val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
-    val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
-
-    val allMatches = mutableListOf<Triple<Int, Int, String>>()
-    markdownRegex.findAll(text).forEach { m ->
-        if (m.groupValues.size > 2) allMatches.add(Triple(m.range.first, m.range.last, m.groupValues[2]))
-    }
-    htmlImgRegex.findAll(text).forEach { m ->
-        if (m.groupValues.size > 1) allMatches.add(Triple(m.range.first, m.range.last, m.groupValues[1]))
-    }
-    rawUrlRegex.findAll(text).forEach { m ->
-        allMatches.add(Triple(m.range.first, m.range.last, m.value))
-    }
-
-    allMatches.sortBy { it.first }
-    val filtered = mutableListOf<Triple<Int, Int, String>>()
-    var lastEnd = -1
-    for ((start, end, url) in allMatches) {
-        if (start > lastEnd) {
-            filtered.add(Triple(start, end, url))
-            lastEnd = end
-        }
-    }
-
-    var textPos = 0
-    for ((start, end, url) in filtered) {
-        if (start > textPos) {
-            segments.add(ContentSegment.Text(text.substring(textPos, start)))
-        }
-        segments.add(ContentSegment.Image(url))
-        textPos = end + 1
-    }
-
-    if (textPos < text.length) {
-        segments.add(ContentSegment.Text(text.substring(textPos)))
-    }
-
-    return segments.filter { segment ->
-        when (segment) {
-            is ContentSegment.Text -> segment.text.isNotBlank()
-            is ContentSegment.Image -> segment.url.isNotBlank()
-        }
-    }
-}
-
 /**
  * Normalizes a tag string for comparison by stripping emojis and non-alphanumeric characters,
  * then lowercasing. So "👩 Female" becomes "female", matching "female", "FEMALE", etc.
@@ -1063,10 +1010,6 @@ private fun JanitorCharacterInspectorSheet(
     val toaster = LocalToaster.current
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var viewerImageUrls by remember { mutableStateOf(emptyList<String>()) }
-    var viewerOpen by remember { mutableStateOf(false) }
-    var viewerCurrentPage by remember { mutableIntStateOf(0) }
-
     var isImporting by remember(character.id) { mutableStateOf(false) }
     var importStatus by remember(character.id) { mutableStateOf(ImportStatus.IDLE) }
     val isAlreadyInHub = remember(character.name, settings.assistants) {
@@ -1269,70 +1212,6 @@ private fun JanitorCharacterInspectorSheet(
                                         fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = Color.White.copy(alpha = 0.92f),
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Embedded images gallery (from bio, description, greetings)
-                    val embeddedImageUrls = remember(character, fullExtract) {
-                        val list = mutableListOf<String>()
-                        fullExtract?.embeddedImages?.let { list.addAll(it) }
-                        // Merge textBlobs from BOTH character and fullExtract so images
-                        // never disappear when fullExtract finishes loading.
-                        val textBlobs = listOf(
-                            character.bio.orEmpty(),
-                            fullExtract?.bio.orEmpty(),
-                            character.description.orEmpty(),
-                            fullExtract?.description.orEmpty(),
-                            character.firstMessage.orEmpty(),
-                            fullExtract?.firstMessage.orEmpty(),
-                            character.alternateGreetings.joinToString("\n"),
-                            fullExtract?.alternateGreetings?.joinToString("\n").orEmpty(),
-                        )
-                        val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
-                        val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
-                        val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
-                        for (text in textBlobs) {
-                            markdownRegex.findAll(text).forEach { m -> if (m.groupValues.size > 2) list.add(m.groupValues[2]) }
-                            htmlImgRegex.findAll(text).forEach { m -> if (m.groupValues.size > 1) list.add(m.groupValues[1]) }
-                            rawUrlRegex.findAll(text).forEach { m -> list.add(m.value) }
-                        }
-                        list.filter { it.isNotBlank() }.distinct()
-                    }
-                    if (embeddedImageUrls.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Embedded Images",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = contentTextColor.copy(alpha = 0.7f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(embeddedImageUrls, key = { it }) { imageUrl ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF141520))
-                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            viewerImageUrls = embeddedImageUrls.toList()
-                                            viewerCurrentPage = embeddedImageUrls.indexOf(imageUrl).coerceAtLeast(0)
-                                            viewerOpen = true
-                                        }
-                                ) {
-                                    AsyncImage(
-                                        model = imageUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize(),
-                                        alignment = Alignment.Center,
-                                        contentScale = ContentScale.Crop
                                     )
                                 }
                             }
@@ -1667,43 +1546,9 @@ private fun JanitorCharacterInspectorSheet(
                                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                                         .padding(16.dp)
                                                 ) {
-                                                    val greetingSegments = parseContentWithImages(greetingText)
-                                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                        greetingSegments.forEach { segment ->
-                                                            when (segment) {
-                                                                is ContentSegment.Text -> {
-                                                                    Text(
-                                                                        text = segment.text,
-                                                                        style = MaterialTheme.typography.bodyMedium,
-                                                                        color = contentTextColor.copy(alpha = 0.9f),
-                                                                    )
-                                                                }
-                                                                is ContentSegment.Image -> {
-                                                                    val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
-                                                                    Box(
-                                                                        modifier = Modifier
-                                                                            .size(160.dp)
-                                                                            .clip(RoundedCornerShape(12.dp))
-                                                                            .background(Color(0xFF141520))
-                                                                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                                                            .clickable {
-                                                                                viewerImageUrls = embeddedImageUrls.toList()
-                                                                                viewerCurrentPage = imageIndex
-                                                                                viewerOpen = true
-                                                                            },
-                                                                    ) {
-                                                                        AsyncImage(
-                                                                            model = segment.url,
-                                                                            contentDescription = null,
-                                                                            modifier = Modifier.fillMaxSize(),
-                                                                            alignment = Alignment.Center,
-                                                                            contentScale = ContentScale.Crop
-                                                                        )
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
+                                                    MarkdownBlock(
+                                                        content = formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(greetingText)),
+                                                    )
                                                 }
                                             }
                                         }
@@ -1729,76 +1574,6 @@ private fun JanitorCharacterInspectorSheet(
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
-                }
-            }
-        }
-    }
-
-    // Image Viewer Dialog - Swipeable Embedded Image Viewer
-    if (viewerOpen && viewerImageUrls.isNotEmpty()) {
-        Dialog(
-            onDismissRequest = { viewerOpen = false },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
-        ) {
-            val viewerPagerState = rememberPagerState(
-                initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))
-            ) { viewerImageUrls.size }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.95f))
-            ) {
-                HorizontalPager(
-                    state = viewerPagerState,
-                    modifier = Modifier.fillMaxSize(),
-                ) { page ->
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        AsyncImage(
-                            model = viewerImageUrls[page],
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            alignment = Alignment.Center,
-                            contentScale = ContentScale.Fit,
-                        )
-                    }
-                }
-                // Page counter indicator
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 40.dp),
-                ) {
-                    Text(
-                        text = "${viewerPagerState.currentPage + 1} / ${viewerImageUrls.size}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                // Close (X) button top-end corner
-                IconButton(
-                    onClick = { viewerOpen = false },
-                    modifier = Modifier
-                        .padding(top = 48.dp, end = 20.dp)
-                        .align(Alignment.TopEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.50f))
-                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Close",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp),
-                    )
                 }
             }
         }

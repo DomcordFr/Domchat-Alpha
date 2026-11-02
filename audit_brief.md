@@ -1,77 +1,56 @@
-# Audit Brief — Task 074: Fix Image Download Source Error and High-Res Fetching
+# Audit Brief — Task-075: In-Place Markdown and Inline Image Positioning
 
 ## Intent Verification
 
-| Requirement | File | Status |
-|---|---|---|
-| `saveToDownloads` supports http/https URIs by streaming raw bytes from network via PlatformHttpClient | `ContextUtil.kt` | Done — `when (uri.scheme)` handles `"http", "https"` via `fetchBytesFromNetwork()` |
-| `saveToDownloads` supports data:image URIs by decoding base64 bytes | `ContextUtil.kt` | Done — `"data"` scheme handled via `decodeDataUriBytes()` |
-| `saveToDownloads` falls back to `openOwnedUriInputStream` for other schemes (file, content) | `ContextUtil.kt` | Done — `else` branch preserves existing behavior |
-| `saveMessageImage` writes raw bytes directly to MediaStore/Pictures for data:image (no downscale/re-encode) | `ChatUtil.kt` | Done — base64 bytes written via `outputStream.write(byteArray)` |
-| `saveMessageImage` writes raw bytes directly to MediaStore/Pictures for http/https (no downscale/re-encode) | `ChatUtil.kt` | Done — `response.body` written via `outputStream.write(byteArray)` |
-| `content:` and `file:` cases unchanged (already byte-copy / direct export) | `ChatUtil.kt` | Done — untouched |
-| AMOLED black / LiquidGlassTokens theme | N/A | Not applicable — utility functions, no UI |
-| No `!!` force unwraps | Both files | Verified — grep returned 0 matches |
-| Null safety via Elvis, safe-call, `runCatching`, `getOrNull()` | Both files | Done |
-| No local gradle builds run | — | Done |
+All three directive requirements are implemented:
+
+1. **SettingJanitorPage.kt Greetings tab** — Replaced `parseContentWithImages(greetingText)` + 160dp `Box`/`AsyncImage` per-segment rendering with `MarkdownBlock(content = formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(greetingText)))`. Greetings now render full markdown (bold, italic, hyperlinks) with images inline in the text flow.
+
+2. **SettingJanitorPage.kt & CharacterHubPage.kt** — Removed the redundant `LazyRow` "Embedded Images" gallery that dumped all images at the top/end of inspector sheets. Images now render inline via `MarkdownBlock` instead of a separate gallery.
+
+3. **ChatMessageV2.kt** — Piped `displayContent` through `cleanHtmlImgToMarkdown()` then `formatRoleplayTextWithCdnImages()` at all three `MarkdownBlock` call sites (user message turn, assistant bubbles mode, assistant no-bubbles mode). Bare image URLs and `<img src=...>` tags in chat messages now render as rich inline images.
 
 ## Call Chain & Architecture
 
-**ContextUtil.kt — `saveToDownloads`:**
-- Entry point: UI layer calls `context.saveToDownloads(uri, fileName)` (suspend function)
-- Permission check: legacy Android (< API 29) checks `WRITE_EXTERNAL_STORAGE`, requests via `ActivityCompat.requestPermissions` on Main dispatcher
-- Main work on `Dispatchers.IO`:
-  1. `when (uri.scheme)` selects input source:
-     - `"http"`/`"https"` → `fetchBytesFromNetwork()` → `PlatformHttpClient.execute(PlatformHttpRequest)` → returns `ByteArray` → `.inputStream()`
-     - `"data"` → `decodeDataUriBytes()` → base64 decode → `ByteArray` → `.inputStream()`
-     - `else` → existing `openOwnedUriInputStream(uri)` (file/content schemes)
-  2. Null guard on `inputStream` → toast error + `return@withContext`
-  3. API >= Q → `MediaStore.Downloads.EXTERNAL_CONTENT_URI` insert + `openOutputStream` + `inputStream.copyTo(outputStream)`
-  4. API < Q → `Environment.getExternalStoragePublicDirectory(DOWNLOADS)` + `File.sink().buffer().outputStream()` + media scanner broadcast
-- Toast results posted to `Dispatchers.Main`
+### SettingJanitorPage.kt
+- `SettingJanitorPage()` → `JanitorCharacterInspectorSheet()` (modal bottom sheet)
+  - Tab 2 (Greetings): `allGreetings` carousel → `AnimatedContent` → `MarkdownBlock(content = formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(greetingText)))`
+  - `formatRoleplayTextWithCdnImages` (CharacterNotesBottomSheet.kt:54): wraps bare `https?://...image` URLs in `![Image](url)` markdown
+  - `cleanHtmlImgToMarkdown` (CharacterNotesBottomSheet.kt:66): converts `<img src="url">` → `![Image](url)`
+  - `MarkdownBlock` (Markdown.kt:716): parses markdown AST, renders images inline via Coil3 `AsyncImage`
 
-**ChatUtil.kt — `saveMessageImage`:**
-- Entry point: UI layer calls `context.saveMessageImage(imageString)` (suspend function)
-- Activity check: `getActivity()` must be non-null
-- `when` on image scheme:
-  - `"data:image"` → `Base64.decode(...)` → raw bytes → MediaStore `Images.Media.EXTERNAL_CONTENT_URI` (API >= Q) or `Environment.getExternalStoragePublicDirectory(PICTURES)` (API < Q)
-  - `"file:"` → `exportImageFile(activity, file)` (unchanged)
-  - `"content:"` → `openOwnedUriInputStream(uri)` → byte copy to MediaStore (unchanged)
-  - `"http"` → `PlatformHttpClient.execute()` → `response.body` raw bytes → MediaStore `Images.Media.EXTERNAL_CONTENT_URI` (API >= Q) or Pictures dir (API < Q)
-  - `else` → `error("Invalid image format")`
-- All writes use `outputStream.write(byteArray)` — no `decodeBitmapWithBounds`, no `Bitmap.compress`, no quality loss
+### CharacterHubPage.kt
+- `CharacterHubPage()` → `CharacterInspectorSheet()` (modal bottom sheet)
+  - Tab 0 (Notes): `MarkdownBlock(formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(assistant.creatorNotes)))` — already inline
+  - Tab 1 (Personality): `MarkdownBlock(formatRoleplayTextWithCdnImages(assistant.systemPrompt))` — already inline
+  - Tab 2 (Greetings): `MarkdownBlock(formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(greetingText)))` — already inline
+  - Removed: `embeddedImageUrls` `remember` block + `LazyRow` gallery + `viewerImageUrls`/`viewerOpen`/`viewerCurrentPage` state + Image Viewer Dialog
 
-**Helper functions (ContextUtil.kt):**
-- `fetchBytesFromNetwork(url)` — `runCatching` + `PlatformHttpClient` + status 200 check → `ByteArray?`
-- `decodeDataUriBytes(dataUri)` — `@OptIn(ExperimentalEncodingApi)` + `Base64.decode(...)` → `ByteArray?`
+### ChatMessageV2.kt
+- `ChatMessageTurn()` → `UserMessageTurn()` / `AssistantMessageTurn()`
+  - Each text bubble computes `displayContent` via `remember { ... }`
+  - Pipeline: `part.text` → `replacePersonaPlaceholders` → `replaceRegexes` → `cleanHtmlImgToMarkdown` → `formatRoleplayTextWithCdnImages` → `MarkdownBlock(content=...)`
+- `formatRoleplayTextWithCdnImages` / `cleanHtmlImgToMarkdown` are in the same package (`me.lucid.domchat.ui.components.chat`), no import needed.
 
 ## Recomposition & Memory Safety
 
-- No Compose code in either file — pure Kotlin suspend functions, zero recomposition concerns
-- All `InputStream`/`OutputStream` closed in `finally` block (ContextUtil.kt `saveToDownloads`)
-- `outputStream.use { }` and `inputStream.use { }` scope-safe in ChatUtil.kt `saveMessageImage`
-- `ByteArray` from network/base64 held in memory only for duration of write — no long-lived references
-- `runCatching { ... }.getOrNull()` used for network/decode failures — no exceptions leak
-- `when (uri.scheme)` is exhaustive for http/https/data/else; `else` falls back to `openOwnedUriInputStream` which returns null safely
-- No `!!` force unwraps anywhere in either file
-- `GlobalContext.get().get<PlatformHttpClient>()` — Koin DI, safe access pattern already used elsewhere in ChatUtil.kt
+- **`remember` keys**: All `displayContent` computations use `remember(text, assistant, userNickname)` — recompute only when inputs change. No unstable keys.
+- **No `SnapshotStateList` passed to `items()`**: Removed `items(embeddedImageUrls, ...)` LazyRow galleries that could trigger unnecessary recompositions on URL list changes.
+- **No `!!`**: All nullable access uses Elvis operators (`?:`) or safe calls (`?.`). Verified across all three files.
+- **`MarkdownBlock` synchronous parse**: Content < 4000 chars parses synchronously on UI thread (memoized via `markdownAstCache`), larger content defers to `Dispatchers.Default`. No 0-height flash.
+- **`AnimatedContent` in greetings carousel**: Unchanged — still uses `tween(240)`/`slideInHorizontally` transitions, now wrapping `MarkdownBlock` instead of per-segment `Column`.
 
 ## Threading & Dispatchers
 
-- `saveToDownloads`: `suspend fun`, permission check on Main (`withContext(Dispatchers.Main)` for `ActivityCompat.requestPermissions` and `Toast`), IO work on `Dispatchers.IO` (`withContext(Dispatchers.IO)` wrapper). Network fetch (`fetchBytesFromNetwork`) runs inside the IO coroutine — no Main dispatcher blocking.
-- `saveMessageImage`: `suspend fun`, entire body runs on `withContext(Dispatchers.IO)`. Network call via `PlatformHttpClient` inside IO coroutine. Toast/activity access only at the start (null check on Main-thread-safe `getActivity()`). No `Dispatchers.Main` blocking, no `runBlocking`.
-- `fetchBytesFromNetwork`: `suspend fun`, runs on caller's dispatcher (IO). `PlatformHttpClient.execute()` is blocking HTTP but invoked within coroutine on IO dispatcher.
-- No `java.util.concurrent` types used.
-- `Base64.decode` — pure computation, no threading concerns.
+- **No `Dispatchers.Main` for I/O**: All network/disk operations in these files already route to `Dispatchers.IO` (e.g., `httpClient.execute` in `loadBrowse`/`loadSearch`/`extract` LaunchedEffects). The MarkdownBlock rendering is UI-thread only (local text transformation, no I/O).
+- **`formatRoleplayTextWithCdnImages` / `cleanHtmlImgToMarkdown`**: Pure string transformations, synchronous, safe on UI thread.
+- **Coil3 `AsyncImage`**: Image loading is handled internally by Coil3 on its own dispatcher, not blocking Compose UI thread.
+- **No new coroutines launched**: Changes are purely synchronous UI transformations within existing composables.
 
 ## Offline & Error State Handling
 
-- **Network unavailable (http/https):** `fetchBytesFromNetwork` returns `null` via `runCatching.getOrNull()` → toast `downloads_read_source_failed` (ContextUtil) or silent log + no-op (ChatUtil). No crash.
-- **Non-200 HTTP response:** `fetchBytesFromNetwork` returns `null` → same error path. ChatUtil logs error via `Log.e`.
-- **Invalid base64 (data:image):** `decodeDataUriBytes` returns `null` via `runCatching.getOrNull()` → toast `downloads_read_source_failed` (ContextUtil). ChatUtil `Base64.decode` could throw on malformed input — wrapped implicitly by the overall `try/catch` in `saveToDownloads`; in `saveMessageImage`, the `when` branch is not wrapped in try/catch, but `Base64.decode` on invalid input throws `IllegalArgumentException` which propagates up to the coroutine caller. This matches pre-existing behavior.
-- **MediaStore insert fails (null dstUri):** toast `downloads_create_entry_failed` (ContextUtil) or throws `IllegalStateException` (ChatUtil, caught by coroutine caller).
-- **Output stream open fails:** `IllegalStateException` thrown → caught by `try/catch` in `saveToDownloads` (toast `downloads_save_failed`) or propagates in `saveMessageImage`.
-- **Legacy Android storage permission denied:** toast `downloads_permission_required` and early return (ContextUtil). ChatUtil `exportImage`/`exportImageFile` handle their own permission checks.
-- **activity == null (ChatUtil):** logs error and returns early — no crash.
-- All `catch (e: Exception)` blocks log via `Log.e(TAG, ...)` — errors are surfaced, not swallowed silently.
-- `e.message ?: ""` — null-safe Elvis for error messages in toasts.
+- **Offline images**: `AsyncImage` in `MarkdownBlock` uses Coil3 with placeholder/fallback support. If image URL is unreachable, Coil3 shows the fallback painter (no crash).
+- **Malformed HTML/img tags**: `cleanHtmlImgToMarkdown` uses regex replacement; non-matching HTML passes through unchanged. No exceptions thrown on malformed input.
+- **Empty/null content**: `formatRoleplayTextWithCdnImages` and `cleanHtmlImgToMarkdown` handle null/empty strings safely (regex `.replace` on empty string is a no-op). `MarkdownBlock` renders empty content gracefully.
+- **No try/catch needed**: The pipeline is pure string manipulation — no network, file, or parsing exceptions possible at these call sites.
+- **Greetings dummy guard**: `isDummyGreeting()` filters placeholder greetings (".", "-", "none", etc.) before rendering — unchanged.

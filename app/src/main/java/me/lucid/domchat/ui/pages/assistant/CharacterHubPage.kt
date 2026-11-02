@@ -1864,65 +1864,6 @@ fun CharacterInspectorSheet(
                         }
                     }
 
-                    // Embedded images gallery (from bio/description or firstMessage markdown)
-                    val embeddedImageUrls = remember(assistant) {
-                        val list = mutableListOf<String>()
-                        val markdownText = listOf(
-                            assistant.creatorNotes.orEmpty(),
-                            assistant.systemPrompt,
-                            assistant.firstMessage.orEmpty(),
-                            assistant.alternateGreetings.joinToString("\n")
-                        ).joinToString("\n")
-                        val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
-                        val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
-                        val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
-                        markdownRegex.findAll(markdownText).forEach { m ->
-                            if (m.groupValues.size > 2) list.add(m.groupValues[2])
-                        }
-                        htmlImgRegex.findAll(markdownText).forEach { m ->
-                            if (m.groupValues.size > 1) list.add(m.groupValues[1])
-                        }
-                        rawUrlRegex.findAll(markdownText).forEach { m -> list.add(m.value) }
-                        list.filter { it.isNotBlank() }.distinct()
-                    }
-                    if (embeddedImageUrls.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "Embedded Images",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = contentTextColor.copy(alpha = 0.7f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(embeddedImageUrls, key = { it }) { imageUrl ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF141520))
-                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            viewerImageUrls = embeddedImageUrls.toList()
-                                            viewerCurrentPage = embeddedImageUrls.indexOf(imageUrl).coerceAtLeast(0)
-                                            viewerOpen = true
-                                        }
-                                ) {
-                                    AsyncImage(
-                                        model = imageUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize(),
-                                        alignment = Alignment.Center,
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     // Character Voice (TTS) Quick Selector
                     if (ttsProviders.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(14.dp))
