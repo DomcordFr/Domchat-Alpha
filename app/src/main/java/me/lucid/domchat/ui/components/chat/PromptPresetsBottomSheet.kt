@@ -1,8 +1,10 @@
 package me.lucid.domchat.ui.components.chat
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,8 +49,6 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -131,6 +131,56 @@ private fun PresetBadge(
     }
 }
 
+/**
+ * Single selectable position button for the 2x2 injection-position grid.
+ */
+@Composable
+private fun PositionButton(
+    label: String,
+    position: PresetInjectionPosition,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val selectedColor = MaterialTheme.colorScheme.primary
+    Surface(
+        onClick = onClick,
+        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF141520).copy(alpha = 0.55f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(
+            0.5.dp,
+            if (selected) selectedColor else LiquidGlassTokens.SpecularBorderSubtle
+        ),
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    fontSize = 12.5.sp
+                ),
+                color = if (selected) selectedColor else Color.White,
+                maxLines = 1,
+            )
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = "Selected",
+                    tint = selectedColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PromptPresetsBottomSheet(
@@ -180,15 +230,6 @@ fun PromptPresetsBottomSheet(
     var formContent by remember { mutableStateOf("") }
     var formPosition by remember { mutableStateOf(PresetInjectionPosition.SYSTEM_PROMPT) }
     var formDepth by remember { mutableStateOf(0) }
-    var positionMenuOpen by remember { mutableStateOf(false) }
-    val positionArrowRotation by animateFloatAsState(
-        targetValue = if (positionMenuOpen) 180f else 0f,
-        animationSpec = spring(
-            dampingRatio = 0.5f,
-            stiffness = 400f
-        ),
-        label = "position_arrow_rotation"
-    )
 
     fun openCreate() {
         editingTargetId = null
@@ -528,6 +569,43 @@ fun PromptPresetsBottomSheet(
                             )
                         )
 
+                        val formEstTokens = (formContent.length / 3.8).roundToInt()
+                        Surface(
+                            color = Color(0xFF141520).copy(alpha = 0.55f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Psychology,
+                                        contentDescription = "Tokens",
+                                        tint = Color.White.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "Estimated tokens",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                }
+                                Text(
+                                    text = "~$formEstTokens · ${formContent.length} chars",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.align(Alignment.CenterVertically)
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
@@ -536,116 +614,99 @@ fun PromptPresetsBottomSheet(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF141520).copy(alpha = 0.55f))
-                                    .border(
-                                        0.5.dp,
-                                        if (positionMenuOpen) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-                                        RoundedCornerShape(12.dp)
-                                    ),
-                                color = Color.Transparent,
-                                onClick = { positionMenuOpen = true },
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = when (formPosition) {
-                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System Prompt"
-                                            PresetInjectionPosition.AT_DEPTH -> "At Depth ($formDepth)"
-                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before Last User"
-                                            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History Instructions"
-                                        },
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Rounded.KeyboardArrowDown,
-                                        contentDescription = "Dropdown",
-                                        tint = Color.White.copy(alpha = 0.85f),
-                                        modifier = Modifier.size(20.dp).rotate(positionArrowRotation),
-                                    )
-                                }
+                                PositionButton(
+                                    label = "System",
+                                    position = PresetInjectionPosition.SYSTEM_PROMPT,
+                                    selected = formPosition == PresetInjectionPosition.SYSTEM_PROMPT,
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        formPosition = PresetInjectionPosition.SYSTEM_PROMPT
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                PositionButton(
+                                    label = "Post-History",
+                                    position = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS,
+                                    selected = formPosition == PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS,
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        formPosition = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
-                            DropdownMenu(
-                                expanded = positionMenuOpen,
-                                onDismissRequest = { positionMenuOpen = false },
-                                shape = RoundedCornerShape(14.dp),
-                                containerColor = Color(0xFF000000),
-                                modifier = Modifier
-                                    .background(Color(0xFF000000))
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(14.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                PresetInjectionPosition.entries.forEach { pos ->
-                                    val isSelected = formPosition == pos
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                text = when (pos) {
-                                                    PresetInjectionPosition.SYSTEM_PROMPT -> "System Prompt"
-                                                    PresetInjectionPosition.AT_DEPTH -> "At Depth"
-                                                    PresetInjectionPosition.BEFORE_LAST_USER -> "Before Last User"
-                                                    PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History Instructions"
-                                                },
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = if (isSelected) Color.White else Color(0xFFCCCCCC),
-                                            )
-                                        },
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Pop)
-                                            formPosition = pos
-                                            positionMenuOpen = false
-                                        },
-                                        trailingIcon = if (isSelected) {
-                                            {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-                                        } else null,
-                                    )
-                                }
+                                PositionButton(
+                                    label = "Before User",
+                                    position = PresetInjectionPosition.BEFORE_LAST_USER,
+                                    selected = formPosition == PresetInjectionPosition.BEFORE_LAST_USER,
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        formPosition = PresetInjectionPosition.BEFORE_LAST_USER
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                PositionButton(
+                                    label = "At Depth",
+                                    position = PresetInjectionPosition.AT_DEPTH,
+                                    selected = formPosition == PresetInjectionPosition.AT_DEPTH,
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        formPosition = PresetInjectionPosition.AT_DEPTH
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                         }
 
-                        if (formPosition == PresetInjectionPosition.AT_DEPTH) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Depth (Messages from end)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "$formDepth",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.primary
+                        AnimatedVisibility(
+                            visible = formPosition == PresetInjectionPosition.AT_DEPTH,
+                            enter = expandVertically(animationSpec = spring(
+                                dampingRatio = 0.8f,
+                                stiffness = Spring.StiffnessLow
+                            )) + fadeIn(animationSpec = tween(400)),
+                            exit = shrinkVertically(animationSpec = spring(
+                                dampingRatio = 0.8f,
+                                stiffness = Spring.StiffnessLow
+                            )) + fadeOut(animationSpec = tween(300))
+                        ) {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Depth (Messages from end)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "$formDepth",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                DomChatSlider(
+                                    value = formDepth.toFloat(),
+                                    onValueChange = { formDepth = it.toInt() },
+                                    valueRange = 0f..10f,
+                                    steps = 9,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
-                            DomChatSlider(
-                                value = formDepth.toFloat(),
-                                onValueChange = { formDepth = it.toInt() },
-                                valueRange = 0f..10f,
-                                steps = 9,
-                                modifier = Modifier.fillMaxWidth()
-                            )
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))

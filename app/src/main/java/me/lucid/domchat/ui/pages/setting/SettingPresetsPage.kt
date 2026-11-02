@@ -1,13 +1,15 @@
 package me.lucid.domchat.ui.pages.setting
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +31,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
@@ -44,8 +45,6 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,7 +67,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -95,6 +93,56 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 
+/**
+ * Single selectable position button for the 2x2 injection-position grid.
+ */
+@Composable
+private fun PositionButton(
+    label: String,
+    position: PresetInjectionPosition,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val selectedColor = MaterialTheme.colorScheme.primary
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF141520).copy(alpha = 0.55f),
+        border = BorderStroke(
+            0.5.dp,
+            if (selected) selectedColor else LiquidGlassTokens.SpecularBorderSubtle
+        ),
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 12.5.sp,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                ),
+                color = if (selected) selectedColor else Color.White,
+                maxLines = 1,
+            )
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = "Selected",
+                    tint = selectedColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, kotlin.ExperimentalStdlibApi::class)
 @Composable
 fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
@@ -116,15 +164,6 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
     var draftContent by remember { mutableStateOf("") }
     var draftPosition by remember { mutableStateOf(PresetInjectionPosition.SYSTEM_PROMPT) }
     var draftDepth by remember { mutableIntStateOf(0) }
-    var positionMenuOpen by remember { mutableStateOf(false) }
-    val positionArrowRotation by animateFloatAsState(
-        targetValue = if (positionMenuOpen) 180f else 0f,
-        animationSpec = spring(
-            dampingRatio = 0.5f,
-            stiffness = 400f
-        ),
-        label = "position_arrow_rotation"
-    )
 
     fun openEdit(preset: PromptPreset) {
         editingPreset = preset
@@ -572,122 +611,124 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF141520).copy(alpha = 0.55f))
-                                .border(
-                                    0.5.dp,
-                                    if (positionMenuOpen) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-                                    RoundedCornerShape(12.dp)
-                                ),
-                            color = Color.Transparent,
-                            onClick = { positionMenuOpen = true },
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = when (draftPosition) {
-                                        PresetInjectionPosition.SYSTEM_PROMPT -> "System Prompt"
-                                        PresetInjectionPosition.AT_DEPTH -> "At Depth ($draftDepth)"
-                                        PresetInjectionPosition.BEFORE_LAST_USER -> "Before Last User"
-                                        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History Instructions"
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                )
-                                Icon(
-                                    imageVector = Icons.Rounded.KeyboardArrowDown,
-                                    contentDescription = "Dropdown",
-                                    tint = Color.White.copy(alpha = 0.85f),
-                                    modifier = Modifier.size(20.dp).rotate(positionArrowRotation),
-                                )
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = positionMenuOpen,
-                            onDismissRequest = { positionMenuOpen = false },
-                            shape = RoundedCornerShape(14.dp),
-                            containerColor = Color(0xFF000000),
-                            modifier = Modifier
-                                .background(Color(0xFF000000))
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(14.dp))
-                        ) {
-                            PresetInjectionPosition.entries.forEach { pos ->
-                                val isSelected = draftPosition == pos
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = when (pos) {
-                                                PresetInjectionPosition.SYSTEM_PROMPT -> "System Prompt"
-                                                PresetInjectionPosition.AT_DEPTH -> "At Depth"
-                                                PresetInjectionPosition.BEFORE_LAST_USER -> "Before Last User"
-                                                PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History Instructions"
-                                            },
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = if (isSelected) Color.White else Color(0xFFCCCCCC),
-                                        )
-                                    },
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        draftPosition = pos
-                                        positionMenuOpen = false
-                                    },
-                                    trailingIcon = if (isSelected) {
-                                        {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Check,
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    } else null,
-                                )
-                            }
-                        }
-                    }
-                    if (draftPosition == PresetInjectionPosition.AT_DEPTH) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PositionButton(
+                                label = "System",
+                                position = PresetInjectionPosition.SYSTEM_PROMPT,
+                                selected = draftPosition == PresetInjectionPosition.SYSTEM_PROMPT,
+                                modifier = Modifier.weight(1f),
+                                onClick = { draftPosition = PresetInjectionPosition.SYSTEM_PROMPT }
+                            )
+                            PositionButton(
+                                label = "Post-History",
+                                position = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS,
+                                selected = draftPosition == PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS,
+                                modifier = Modifier.weight(1f),
+                                onClick = { draftPosition = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS }
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PositionButton(
+                                label = "Before User",
+                                position = PresetInjectionPosition.BEFORE_LAST_USER,
+                                selected = draftPosition == PresetInjectionPosition.BEFORE_LAST_USER,
+                                modifier = Modifier.weight(1f),
+                                onClick = { draftPosition = PresetInjectionPosition.BEFORE_LAST_USER }
+                            )
+                            PositionButton(
+                                label = "At Depth",
+                                position = PresetInjectionPosition.AT_DEPTH,
+                                selected = draftPosition == PresetInjectionPosition.AT_DEPTH,
+                                modifier = Modifier.weight(1f),
+                                onClick = { draftPosition = PresetInjectionPosition.AT_DEPTH }
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = draftPosition == PresetInjectionPosition.AT_DEPTH,
+                        enter = expandVertically(animationSpec = spring(
+                            dampingRatio = 0.5f,
+                            stiffness = Spring.StiffnessLow
+                        )) + fadeIn(animationSpec = tween(300)),
+                        exit = shrinkVertically(animationSpec = spring(
+                            dampingRatio = 0.5f,
+                            stiffness = Spring.StiffnessLow
+                        )) + fadeOut(animationSpec = tween(300))
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Depth (Messages from end)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "$draftDepth",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            DomChatSlider(
+                                value = draftDepth.toFloat(),
+                                onValueChange = { draftDepth = it.toInt() },
+                                valueRange = 0f..10f,
+                                steps = 9,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    val estTokens = (draftContent.length / 3.8).roundToInt()
+                    Surface(
+                        color = Color(0xFF141520).copy(alpha = 0.55f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Psychology,
+                                    contentDescription = "Tokens",
+                                    tint = Color.White.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Estimated tokens",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
                             Text(
-                                text = "Depth (Messages from end)",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = "$draftDepth",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.primary
+                                text = "~$estTokens · ${draftContent.length} chars",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         }
-                        DomChatSlider(
-                            value = draftDepth.toFloat(),
-                            onValueChange = { draftDepth = it.toInt() },
-                            valueRange = 0f..10f,
-                            steps = 9,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
-                    val estTokens = (draftContent.length / 3.8).roundToInt()
-                    Text(
-                        text = "Estimated tokens: ~$estTokens · ${draftContent.length} chars",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White
-                    )
                 }
             },
             confirmButton = {

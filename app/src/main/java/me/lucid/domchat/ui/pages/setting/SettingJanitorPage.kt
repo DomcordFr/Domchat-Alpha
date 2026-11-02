@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -133,6 +134,9 @@ import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.pages.assistant.AssistantVM
+import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
+import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
+import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFieldColors
@@ -700,6 +704,12 @@ fun SettingJanitorPage() {
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Sort,
+                                                    contentDescription = "Sort",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp),
+                                                )
                                                 Text(
                                                     text = sortMode,
                                                     style = MaterialTheme.typography.bodyMedium,
@@ -709,7 +719,7 @@ fun SettingJanitorPage() {
                                                 )
                                                 Icon(
                                                     imageVector = Icons.Rounded.KeyboardArrowDown,
-                                                    contentDescription = "Sort",
+                                                    contentDescription = "Dropdown",
                                                     tint = Color.White,
                                                     modifier = Modifier.size(20.dp).rotate(sortArrowRotation),
                                                 )
@@ -1516,8 +1526,8 @@ private fun JanitorCharacterInspectorSheet(
                                 val hasCreatorImages = creatorNotes.contains("![") || creatorNotes.contains("<img")
                                 val rawNotes = when {
                                     hasCreatorImages -> creatorNotes
-                                    !fullExtract?.description.isNullOrBlank() -> fullExtract?.description
                                     !fullExtract?.bio.isNullOrBlank() -> fullExtract?.bio
+                                    !fullExtract?.description.isNullOrBlank() -> fullExtract?.description
                                     !character.bio.isNullOrBlank() -> character.bio
                                     else -> character.description
                                 }.orEmpty()
@@ -1530,44 +1540,12 @@ private fun JanitorCharacterInspectorSheet(
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
-                                    val notesSegments = parseContentWithImages(rawNotes)
-                                    if (notesSegments.isNotEmpty()) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            notesSegments.forEach { segment ->
-                                                when (segment) {
-                                                    is ContentSegment.Text -> {
-                                                        Text(
-                                                            text = sanitizeHtml(segment.text),
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = contentTextColor.copy(alpha = 0.9f),
-                                                        )
-                                                    }
-                                                    is ContentSegment.Image -> {
-                                                        val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .size(160.dp)
-                                                                .clip(RoundedCornerShape(12.dp))
-                                                                .background(Color(0xFF141520))
-                                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                                                .clickable {
-                                                                    viewerImageUrls = embeddedImageUrls.toList()
-                                                                    viewerCurrentPage = imageIndex
-                                                                    viewerOpen = true
-                                                                },
-                                                        ) {
-                                                            AsyncImage(
-                                                                model = segment.url,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.fillMaxSize(),
-                                                                alignment = Alignment.Center,
-                                                                contentScale = ContentScale.Crop
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    if (rawNotes.isNotBlank()) {
+                                        MarkdownBlock(
+                                            content = formatRoleplayTextWithCdnImages(
+                                                cleanHtmlImgToMarkdown(rawNotes)
+                                            )
+                                        )
                                     } else {
                                         Text(
                                             text = "No notes available.",

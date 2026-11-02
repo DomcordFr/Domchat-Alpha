@@ -136,6 +136,7 @@ import kotlin.text.Regex
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
+import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.AppToasterState
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
@@ -2040,43 +2041,11 @@ fun CharacterInspectorSheet(
                                 ) {
                                     val notes = assistant.creatorNotes?.trim().orEmpty()
                                     if (notes.isNotBlank()) {
-                                        val notesSegments = parseContentWithImages(notes)
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            notesSegments.forEach { segment ->
-                                                when (segment) {
-                                                    is ContentSegment.Text -> {
-                                                        Text(
-                                                            text = segment.text,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = contentTextColor.copy(alpha = 0.9f),
-                                                        )
-                                                    }
-                                                    is ContentSegment.Image -> {
-                                                        val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .size(160.dp)
-                                                                .clip(RoundedCornerShape(12.dp))
-                                                                .background(Color(0xFF141520))
-                                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                                                .clickable {
-                                                                    viewerImageUrls = embeddedImageUrls.toList()
-                                                                    viewerCurrentPage = imageIndex
-                                                                    viewerOpen = true
-                                                                },
-                                                        ) {
-                                                            AsyncImage(
-                                                                model = segment.url,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.fillMaxSize(),
-                                                                alignment = Alignment.Center,
-                                                                contentScale = ContentScale.Crop
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        MarkdownBlock(
+                                            content = formatRoleplayTextWithCdnImages(
+                                                cleanHtmlImgToMarkdown(notes)
+                                            )
+                                        )
                                     } else {
                                         Text(
                                             text = "No creator notes provided for this character.",
@@ -2225,42 +2194,18 @@ fun CharacterInspectorSheet(
                                                     .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                                     .padding(16.dp)
                                             ) {
-                                                val greetingSegments = parseContentWithImages(greetingText)
-                                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                    greetingSegments.forEach { segment ->
-                                                        when (segment) {
-                                                            is ContentSegment.Text -> {
-                                                                Text(
-                                                                    text = segment.text,
-                                                                    style = MaterialTheme.typography.bodyMedium,
-                                                                    color = contentTextColor.copy(alpha = 0.9f),
-                                                                )
-                                                            }
-                                                            is ContentSegment.Image -> {
-                                                                val imageIndex = embeddedImageUrls.indexOf(segment.url).coerceAtLeast(0)
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .size(160.dp)
-                                                                        .clip(RoundedCornerShape(12.dp))
-                                                                        .background(Color(0xFF141520))
-                                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                                                        .clickable {
-                                                                            viewerImageUrls = embeddedImageUrls.toList()
-                                                                            viewerCurrentPage = imageIndex
-                                                                            viewerOpen = true
-                                                                        },
-                                                                ) {
-                                                                    AsyncImage(
-                                                                        model = segment.url,
-                                                                        contentDescription = null,
-                                                                        modifier = Modifier.fillMaxSize(),
-                                                                        alignment = Alignment.Center,
-                                                                        contentScale = ContentScale.Crop
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
-                                                    }
+                                                if (greetingText.isNotBlank()) {
+                                                    MarkdownBlock(
+                                                        content = formatRoleplayTextWithCdnImages(
+                                                            cleanHtmlImgToMarkdown(greetingText)
+                                                        )
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "No greeting content.",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
                                                 }
                                             }
                                         }

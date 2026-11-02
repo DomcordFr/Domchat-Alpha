@@ -58,6 +58,19 @@ fun formatRoleplayTextWithCdnImages(text: String): String {
     }
 }
 
+/**
+ * Converts HTML `` tags into Markdown image syntax `![alt](url)` so that
+ * `MarkdownBlock` can render them as full-size in-place embedded images.
+ * Non-img HTML is left as-is for the markdown renderer to handle.
+ */
+fun cleanHtmlImgToMarkdown(text: String): String {
+    val imgRegex = Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)
+    return text.replace(imgRegex) { match ->
+        val url = match.groupValues[1]
+        "\n![Image]($url)\n"
+    }
+}
+
 @Composable
 fun CharacterNotesBottomSheet(
     assistant: me.lucid.domchat.data.model.Assistant,
