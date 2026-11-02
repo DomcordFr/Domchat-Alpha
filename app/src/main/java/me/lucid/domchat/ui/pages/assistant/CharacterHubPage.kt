@@ -101,6 +101,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Assistant
+import me.lucid.domchat.data.model.Lorebook
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.utils.truncateCreator
@@ -145,6 +146,7 @@ import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
+import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalToaster
@@ -1201,6 +1203,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             },
             onDelete = {
                 characterToDelete = char
+            },
+            onUpdateLorebookIds = { newIds ->
+                val updated = char.copy(enabledLorebookIds = newIds)
+                vm.updateAssistant(updated)
+                inspectingAssistant = updated
             }
         )
     }
@@ -1725,7 +1732,8 @@ fun CharacterInspectorSheet(
     onViewCreatorNotes: () -> Unit,
     onDuplicate: () -> Unit = {},
     onExport: () -> Unit = {},
-    onDelete: () -> Unit = {}
+    onDelete: () -> Unit = {},
+    onUpdateLorebookIds: ((Set<kotlin.uuid.Uuid>) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -1750,6 +1758,15 @@ fun CharacterInspectorSheet(
     var viewerImageUrls by remember { mutableStateOf(emptyList<String>()) }
     var viewerOpen by remember { mutableStateOf(false) }
     var viewerCurrentPage by remember { mutableIntStateOf(0) }
+
+    // Lorebook management state
+    var showAttachLorebookDialog by remember { mutableStateOf(false) }
+    var lorebookToDetach by remember { mutableStateOf<Lorebook?>(null) }
+    var showDetachConfirm by remember { mutableStateOf(false) }
+    val attachedLorebookList by remember(settings.lorebooks, assistant.enabledLorebookIds) {
+        settings.lorebooks.filter { it.id in assistant.enabledLorebookIds }
+    }
+    val hasAttachedLorebooks = attachedLorebookList.isNotEmpty()
 
     ModalBottomSheet(
         onDismissRequest = { dismissWithAnimation() },
@@ -2085,9 +2102,15 @@ fun CharacterInspectorSheet(
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // 3 TABS: 0: Notes, 1: Personality, 2: Greetings
+                    // TABS: 0: Notes, 1: Personality, 2: Greetings, 3: Lorebooks (when attached)
                     var selectedTab by remember { mutableIntStateOf(0) }
-                    val tabTitles = listOf("Notes", "Personality", "Greetings")
+                    val tabTitles = listOf("Notes", "Personality", "Greetings") + (if (hasAttachedLorebooks) listOf("Lorebooks") else emptyList())
+
+                    LaunchedEffect(tabTitles) {
+                        if (selectedTab >= tabTitles.size) {
+                            selectedTab = tabTitles.lastIndex
+                        }
+                    }
 
                     Row(
                         modifier = Modifier
@@ -2095,7 +2118,8 @@ fun CharacterInspectorSheet(
                             .clip(RoundedCornerShape(14.dp))
                             .background(cardBgColor)
                             .border(0.5.dp, cardBorderColor, RoundedCornerShape(14.dp))
-                            .padding(4.dp),
+                            .padding(4.dp)
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         tabTitles.forEachIndexed { index, title ->
@@ -2320,6 +2344,147 @@ fun CharacterInspectorSheet(
                                     }
                                 }
                             }
+                            3 -> {
+                                // Lorebooks Tab - manage attached lorebooks
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    if (attachedLorebookList.isEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(cardBgColor)
+                                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                .padding(16.dp)
+                                        ) {
+                                            Text(
+                                                text = "No lorebooks attached to this character.",
+                                                fontSize = 13.sp,
+                                                color = Color(0xFF8A8A96)
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = "Attached Lorebooks",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            attachedLorebookList.forEach { lorebook ->
+                                                val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(16.dp))
+                                                        .background(cardBgColor)
+                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                                        .padding(12.dp)
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Column(
+                                                            modifier = Modifier.weight(1f),
+                                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = lorebook.name.ifEmpty { "Unnamed Lorebook" },
+                                                                fontSize = 14.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.White,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                            if (lorebook.description.isNotBlank()) {
+                                                                Text(
+                                                                    text = lorebook.description,
+                                                                    fontSize = 12.sp,
+                                                                    color = Color.White.copy(alpha = 0.65f),
+                                                                    maxLines = 2,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
+                                                            }
+                                                            Text(
+                                                                text = "${lorebook.entries.size} entr${if (lorebook.entries.size == 1) "y" else "ies"}",
+                                                                fontSize = 11.sp,
+                                                                color = Color(0xFF8A8A96)
+                                                            )
+                                                        }
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                        ) {
+                                                            // Enable/Disable toggle
+                                                            HapticSwitch(
+                                                                checked = isEnabled,
+                                                                onCheckedChange = { newVal ->
+                                                                    val newIds = if (newVal) {
+                                                                        assistant.enabledLorebookIds + lorebook.id
+                                                                    } else {
+                                                                        assistant.enabledLorebookIds - lorebook.id
+                                                                    }
+                                                                    onUpdateLorebookIds?.invoke(newIds)
+                                                                },
+                                                                modifier = Modifier.size(40.dp)
+                                                            )
+                                                            // Detach button
+                                                            OutlinedButton(
+                                                                onClick = {
+                                                                    lorebookToDetach = lorebook
+                                                                    showDetachConfirm = true
+                                                                },
+                                                                modifier = Modifier.height(36.dp),
+                                                                shape = RoundedCornerShape(8.dp),
+                                                                border = BorderStroke(0.5.dp, cardBorderColor),
+                                                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
+                                                            ) {
+                                                                Text(
+                                                                    text = "Detach",
+                                                                    fontSize = 11.sp,
+                                                                    color = Color(0xFFEF4444)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        // Attach new lorebooks button
+                                        Button(
+                                            onClick = {
+                                                showAttachLorebookDialog = true
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF141520),
+                                                contentColor = Color.White
+                                            ),
+                                            border = BorderStroke(0.5.dp, cardBorderColor)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Add,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "Attach Lorebook",
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -2344,6 +2509,211 @@ fun CharacterInspectorSheet(
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)
                 )
+            }
+        }
+    }
+
+    // Attach Lorebook Dialog - shows all available lorebooks to attach
+    if (showAttachLorebookDialog) {
+        val availableLorebooks = settings.lorebooks.filter { it.id !in assistant.enabledLorebookIds }
+        Dialog(
+            onDismissRequest = { showAttachLorebookDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 420.dp)
+                        .background(Color(0xFF000000))
+                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
+                        .padding(20.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Attach Lorebook",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Select lorebooks to attach to this character.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                        if (availableLorebooks.isEmpty()) {
+                            Text(
+                                text = "No lorebooks available to attach.",
+                                fontSize = 13.sp,
+                                color = Color(0xFF8A8A96)
+                            )
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                availableLorebooks.forEach { lorebook ->
+                                    val alreadyAttached = assistant.enabledLorebookIds.contains(lorebook.id)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(cardBgColor)
+                                            .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
+                                            .padding(12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            HapticSwitch(
+                                                checked = alreadyAttached,
+                                                onCheckedChange = { newVal ->
+                                                    if (newVal) {
+                                                        val newIds = assistant.enabledLorebookIds + lorebook.id
+                                                        onUpdateLorebookIds?.invoke(newIds)
+                                                        showAttachLorebookDialog = false
+                                                    }
+                                                },
+                                                modifier = Modifier.size(40.dp)
+                                            )
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = lorebook.name.ifEmpty { "Unnamed Lorebook" },
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                if (lorebook.description.isNotBlank()) {
+                                                    Text(
+                                                        text = lorebook.description,
+                                                        fontSize = 12.sp,
+                                                        color = Color.White.copy(alpha = 0.65f),
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = lorebook.entries.size.toString() + " entr" + (if (lorebook.entries.size == 1) "y" else "ies"),
+                                                fontSize = 11.sp,
+                                                color = Color(0xFF8A8A96)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = { showAttachLorebookDialog = false },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White
+                            ),
+                            border = BorderStroke(0.5.dp, cardBorderColor)
+                        ) {
+                            Text(
+                                text = "Done",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Detach Confirmation Dialog
+    lorebookToDetach?.let { lorebook ->
+        Dialog(
+            onDismissRequest = {
+                lorebookToDetach = null
+                showDetachConfirm = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 420.dp)
+                        .background(Color(0xFF000000))
+                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
+                        .padding(20.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Detach Lorebook",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Remove " + lorebook.name.ifEmpty { "Unnamed Lorebook" } + " from this character?",
+                            fontSize = 13.sp,
+                            color = Color.White.copy(alpha = 0.85f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    lorebookToDetach = null
+                                    showDetachConfirm = false
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color.White.copy(alpha = 0.7f)
+                                )
+                            ) {
+                                Text(text = "Cancel")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    val newIds = assistant.enabledLorebookIds - lorebook.id
+                                    onUpdateLorebookIds?.invoke(newIds)
+                                    lorebookToDetach = null
+                                    showDetachConfirm = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color(0xFFEF4444)
+                                ),
+                                border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f))
+                            ) {
+                                Text(text = "Detach", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

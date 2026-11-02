@@ -1,81 +1,87 @@
-# Audit Brief — Character Hub Folders / Group Tabs & Recent Sort Timestamp Fix
+# Audit Brief — Character Hub Attached Lorebooks Tab & In-Sheet Management
 
 ## Intent Verification
 
-**1. Character Hub group tabs / folders**
-- Added `GroupTabsRow` composable: horizontally scrollable row of glassy tabs with `'All (count)'`, custom groups (from `groupNames` map), and `'+ New'` tab.
-- Tabs use `Color(0xFF000000)` surface with `BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` border; selected tab highlighted with `Color.White.copy(alpha = 0.14f)`.
-- Clicking `'+ New'` opens `NewGroupDialog` (glassy black dialog, `SpecularBorderSubtle` border) to enter a group name and create it.
-- Tab switching transitions with smooth animation via `selectedGroupId` state + `rememberScrollState()` on the `Row`.
-- Group tabs render in both grid mode (`LazyVerticalGrid`) and list mode (`LazyColumn`).
+**Task:** Add an attached lorebooks management tab to `CharacterInspectorSheet` in `CharacterHubPage.kt`.
 
-**2. Upload character button**
-- Changed `DomChatGlassPillButton` → `Surface` with `color = Color(0xFF000000)` and `border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` in both grid and list modes.
+**Implemented:**
 
-**3. Long-click character card popover**
-- `CharacterPortraitCard` and `CharacterListRow` now accept `onLongClick` parameter and apply `.longClickable(onLongClick = ...)`.
-- Long-press opens `CharacterActionPopover` (glassy black dialog, `SpecularBorderSubtle` border) with:
-  - **Move to group**: shows all groups in a 2-column grid with top search bar (groupSearchQuery) and bottom Done button.
-  - **Delete**: opens `DeleteConfirmationDialog` (glassy black dialog) that removes the assistant via `vm.removeAssistant()` with undo support.
-- Group assignment is session-scoped; `selectedGroupId` filters which tab is active.
+1. **Lorebooks tab appears when lorebooks are attached:**
+   - `hasAttachedLorebooks` computed from `settings.lorebooks.filter { it.id in assistant.enabledLorebookIds }`
+   - Tab bar becomes horizontally scrollable (`horizontalScroll(rememberScrollState())`)
+   - Tab titles list dynamically includes `"Lorebooks"` when `hasAttachedLorebooks` is true
+   - `selectedTab` state is clamped to valid range via `LaunchedEffect(tabTitles)` when tab list changes
 
-**4. Sort by Recent timestamp fix**
-- `CharacterSortOption.RECENT` now calls `vm.getAssistantLastUpdateAt(assistant.id)` (suspend function on `Dispatchers.IO`) to get each assistant's latest conversation `updateAt`.
-- Sorts `tagFiltered` by `activityMap[it.id] ?: Instant.MIN` in descending order.
-- Falls back to `Instant.MIN` for assistants with no conversations (stable, null-safe).
+2. **Lorebooks tab content (tab index 3):**
+   - Displays attached lorebook cards in a column
+   - Each card shows lorebook name, description, entry count, enable/disable `HapticSwitch`, and detach `OutlinedButton`
+   - Cards use black `Color(0xFF141520)` background with `LiquidGlassTokens.SpecularBorderSubtle` border (glassy theme, zero grey)
+   - Toggle updates `enabledLorebookIds` via `onUpdateLorebookIds` callback
+   - Detach opens a confirmation dialog
 
-**Null safety:** Zero `!!` introduced across all edited files. All nullable access uses `?.`, Elvis `?:`, `takeIf`, `orEmpty()`, `getOrNull()`, `isNotBlank()`.
+3. **Attach new lorebooks:**
+   - "Attach Lorebook" button opens `Attach Lorebook Dialog` (glassy black, `SpecularBorderSubtle` border)
+   - Dialog lists all available lorebooks (those not yet attached) with enable toggles
+   - "Done" button closes the dialog
 
-**Theme:** `Color(0xFF000000)` AMOLED black, `Color(0xFF141520)` unified glass card theme, `LiquidGlassTokens.SpecularBorderSubtle` borders throughout.
+4. **Detach confirmation dialog:**
+   - Shows confirmation before detaching a lorebook
+   - Confirmed removal updates `enabledLorebookIds` via `onUpdateLorebookIds`
+
+**Null safety:** Zero `!!` introduced. All nullable access uses `?.`, Elvis `?:`, `ifEmpty`, `isNotEmpty`, `in` checks.
+
+**Theme:** `Color(0xFF000000)` AMOLED black surfaces, `Color(0xFF141520)` unified glass card theme, `LiquidGlassTokens.SpecularBorderSubtle` borders on cards and dialogs.
 
 ## Call Chain & Architecture
 
-**Group tab navigation:**
-- `selectedGroupId` (String?, null = "All") stored in Compose `remember` state in `CharacterHubPage`.
-- `GroupTabsRow` reads `selectedGroupId` and `groupNames`; calls `onGroupSelected(groupId)` on tab click.
-- `onNewGroup` opens `NewGroupDialog`; creating a group generates `UUID.randomUUID()` as the group ID and stores `groupId → groupName` in `groupNames` map.
+**UI → ViewModel → SettingsStore:**
 
-**Long-click actions:**
-- `CharacterPortraitCard` / `CharacterListRow` → `onLongClick` sets `characterToMove` + `showMoveToGroupDialog = true`.
-- `CharacterActionPopover` displays Move-to-group grid + Delete button.
-- Move-to-group calls `onMoveToGroup(groupId)` which sets `selectedGroupId` (filtering active tab).
-- Delete calls `onDelete` which sets `characterToDelete` and opens `DeleteConfirmationDialog`.
-- Confirm delete calls `vm.removeAssistant(char)` with undo toast.
+1. `CharacterHubPage` renders `CharacterInspectorSheet` when `inspectingAssistant` is set
+2. `CharacterInspectorSheet` receives `onUpdateLorebookIds: ((Set<Uuid>) -> Unit)?` callback
+3. User toggles lorebook enable/disable → `onUpdateLorebookIds(newIds)` called
+4. Caller (main `CharacterHubPage` composable) calls `vm.updateAssistant(updated)` with `char.copy(enabledLorebookIds = newIds)`
+5. `AssistantVM.updateAssistant()` → `settingsStore.update { settings.copy(assistants = ...)}` → DataStore persistence
 
-**Sort by Recent:**
-- `LaunchedEffect(settings.assistants, debouncedQuery, sortOption, selectedTagIds)` runs on `Dispatchers.Default`.
-- For RECENT sort: `vm.getAssistantLastUpdateAt(assistant.id)` runs on `Dispatchers.IO` via `conversationRepo.getConversationsOfAssistant(assistantId).first().maxByOrNull { it.updateAt }`.
-- Results mapped to `activityMap` and sorted descending; null conversations fall back to `Instant.MIN`.
+**Detach flow:**
+1. User clicks detach on a lorebook card → `lorebookToDetach` set, `showDetachConfirm = true`
+2. Detach confirmation dialog shows
+3. Confirm → `onUpdateLorebookIds(assistant.enabledLorebookIds - lorebook.id)` → `vm.updateAssistant()` → persist
 
-**UI boundaries:** UI layer only renders state and emits intents. `AssistantVM` owns all business logic (add/remove/undo). `SettingsStore.update` is the canonical persistence API.
+**Attach flow:**
+1. User clicks "Attach Lorebook" → `showAttachLorebookDialog = true`
+2. Attach dialog lists `settings.lorebooks.filter { it.id !in assistant.enabledLorebookIds }`
+3. User toggles a lorebook on → `onUpdateLorebookIds(assistant.enabledLorebookIds + lorebook.id)`, dialog closes
+4. "Done" button also closes dialog
+
+**ViewModel boundary:** UI layer only renders state and emits intents via callbacks. `AssistantVM` (`vm.updateAssistant()`) is the single writer to `SettingsStore`.
 
 ## Recomposition & Memory Safety
 
-- All new state (`selectedGroupId`, `groupNames`, `newGroupName`, `showNewGroupDialog`, `characterToMove`, `showMoveToGroupDialog`, `groupSearchQuery`, `characterToDelete`) uses `remember { mutableStateOf(...) }`.
-- `GroupTabsRow` uses `rememberScrollState()` for horizontal scrolling; recomposes only when `selectedGroupId`/`groupNames` change.
-- `CharacterActionPopover` and `NewGroupDialog` are conditionally composed (`if (visible)`); no retained composition when closed.
-- `DeleteConfirmationDialog` reuses existing pattern from the file.
-- No `SnapshotStateList` passed to `items()`; all collections are immutable reads.
-- No force-unwraps (`!!`) introduced.
+- All new state (`showAttachLorebookDialog`, `lorebookToDetach`, `showDetachConfirm`, `attachedLorebookList`, `selectedTab`) uses `remember { mutableStateOf(...) }` or `remember(settings, assistant) { ... }`
+- `attachedLorebookList` is keyed on `settings.lorebooks` and `assistant.enabledLorebookIds` — recomputes only when these change
+- `LaunchedEffect(tabTitles)` clamps `selectedTab` when tab list changes — prevents out-of-range index
+- Tab bar uses `horizontalScroll(rememberScrollState())` — stable scroll state
+- No `SnapshotStateList` passed to `items()`; all collections are immutable reads
+- Dialogs conditionally composed (`if (showAttachLorebookDialog)`, `lorebookToDetach?.let`) — no retained composition when closed
+- No force-unwraps (`!!`) introduced
 
 ## Threading & Dispatchers
 
-- `getAssistantLastUpdateAt` is `suspend`, runs on `Dispatchers.IO` via `withContext`.
-- `LaunchedEffect` collecting sort results uses `withContext(Dispatchers.Main)` to update UI state.
-- `vm.removeAssistant` runs in `viewModelScope.launch` (main-safe).
-- No `Dispatchers.Main` blocking; all I/O strictly on `Dispatchers.IO`.
-- No new background threads spawned.
+- All lorebook UI state mutations are synchronous main-thread Compose operations
+- `vm.updateAssistant()` runs in `viewModelScope.launch` (main-safe coroutine scope); `SettingsStore.update` handles DataStore disk I/O internally
+- No `Dispatchers.Main` blocking; all disk I/O strictly internal to `SettingsStore.update`
+- No new background threads spawned
 
 ## Offline & Error State Handling
 
-- Group management is fully local (in-memory `Map<String, String>`); no network required.
-- Group creation generates `UUID.randomUUID()` locally; no server dependency.
-- `vm.removeAssistant` has `try/catch` with `PlatformLog.e`; undo support via `vm.undoRemoveAssistant`.
-- `getAssistantLastUpdateAt` uses `runCatching { ... }.getOrNull()` — failures degrade to `Instant.MIN` (stable sort position).
-- Error states: existing `loadError` / toaster patterns unchanged; no new error modes introduced.
+- Lorebook management is fully local (local DataStore/Room only) — no network required
+- Attach/detach are in-memory set operations on `Set<Uuid>`, persisted via `SettingsStore.update`
+- Empty state handled: "No lorebooks attached to this character." when list is empty
+- `vm.updateAssistant()` has existing `try/catch` with `PlatformLog.e` — failures don't crash
+- `onUpdateLorebookIds` is nullable with safe-call (`?.invoke`) — no crash if callback missing
+- Existing `errorFlow` toasters unchanged; no new error modes introduced
 
 ## Files Changed
 
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — Group tabs row, upload button glassy styling, long-click cards, `GroupTabsRow`/`NewGroupDialog`/`CharacterActionPopover`/`DeleteConfirmationDialog` components, sort-by-timestamp fix.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/AssistantVM.kt` — Added `getAssistantLastUpdateAt(assistantId)` suspend function; added `java.time.Instant` import.
-- `audit_brief.md` — this document.
+- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — Added lorebook management state, scrollable tab bar with Lorebooks tab, Lorebooks tab content (toggle/detach/attach cards), `Attach Lorebook` dialog, `Detach Confirmation` dialog, `onUpdateLorebookIds` parameter on `CharacterInspectorSheet`, wired callback in caller
+- `audit_brief.md` — this document
