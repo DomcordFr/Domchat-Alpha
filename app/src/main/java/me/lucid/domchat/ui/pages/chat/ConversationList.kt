@@ -472,11 +472,15 @@ private fun ConversationItem(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(72.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(
                     width = 0.5.dp,
                     brush = if (selected) LiquidGlassTokens.SpecularBorderSubtle else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
                     shape = RoundedCornerShape(16.dp)
+                )
+                .background(
+                    if (selected) Color.White.copy(alpha = 0.06f) else Color.Transparent
                 )
         ) {
             // Edge-to-edge character pfp on the right, showing 35% of the image smoothly blending into the left
@@ -541,8 +545,8 @@ private fun ConversationItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 72.dp)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .height(72.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (conversation.isFork) {
