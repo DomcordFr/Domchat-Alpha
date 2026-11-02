@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.assistant
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -390,13 +391,21 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         }
     ) { padding ->
         AnimatedContent(
-            targetState = isGridView,
-            transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(90)) },
+            targetState = isGridView to selectedGroupId,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
+                    animationSpec = tween(220, easing = FastOutSlowInEasing)
+                ) { width -> width / 4 }
+            } togetherWith (
+                fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
+                    animationSpec = tween(220, easing = FastOutSlowInEasing)
+                ) { width -> -width / 4 }
+            },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
             modifier = Modifier.fillMaxSize().padding(padding)
-        ) { gridMode ->
-            if (gridMode) {
+        ) { (isGridView, selectedGroupId) ->
+            if (isGridView) {
                 LazyVerticalGrid(
                     state = gridState,
                     columns = GridCells.Fixed(2),

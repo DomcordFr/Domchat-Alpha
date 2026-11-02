@@ -2166,10 +2166,17 @@ fun MinimalChatInput(
                 }
 
                 // If Bottom Fade, show Blur Height Reach slider (animated)
-                AnimatedVisibility(
-                    visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(150)),
-                    exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(100)),
+                AnimatedContent(
+                    key = blurModeDraft,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing)
+                        ) { width -> width / 4 }
+                    } togetherWith (
+                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing)
+                        ) { width -> -width / 4 }
+                    }
                 ) {
                     Column {
                         Row(

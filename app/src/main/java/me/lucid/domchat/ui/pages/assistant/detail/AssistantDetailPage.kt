@@ -1,10 +1,14 @@
 package me.lucid.domchat.ui.pages.assistant.detail
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -380,46 +384,54 @@ fun AssistantDetailPage(
             }
         ) {
             composable(AssistantDetailRoutes.HOME) {
-                AssistantDetailHome(
-                    assistant = assistant,
-                    onNavigateToCore = { navController.navigate(AssistantDetailRoutes.CORE) },
-                    onNavigateToAdvanced = { navController.navigate(AssistantDetailRoutes.ADVANCED) }
-                )
+                AnimatedContent(key = currentRoute) {
+                    AssistantDetailHome(
+                        assistant = assistant,
+                        onNavigateToCore = { navController.navigate(AssistantDetailRoutes.CORE) },
+                        onNavigateToAdvanced = { navController.navigate(AssistantDetailRoutes.ADVANCED) }
+                    )
+                }
             }
 
             // Core Roleplay section - unified sub-page
             composable(AssistantDetailRoutes.CORE) {
-                AssistantCoreRoleplaySubPage(
-                    assistant = assistant,
-                    tags = tags,
-                    providers = providers,
-                    settings = settings,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm,
-                    catalogSnapshot = catalogSnapshot,
-                    mcpServerConfigs = mcpServerConfigs,
-                    conversationRepository = vm.conversationRepository,
-                    rootNavController = rootNavController,
-                    onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
-                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
-                )
+                AnimatedContent(key = currentRoute) {
+                    AssistantCoreRoleplaySubPage(
+                        assistant = assistant,
+                        tags = tags,
+                        providers = providers,
+                        settings = settings,
+                        onUpdate = { onUpdate(it) },
+                        vm = vm,
+                        catalogSnapshot = catalogSnapshot,
+                        mcpServerConfigs = mcpServerConfigs,
+                        conversationRepository = vm.conversationRepository,
+                        rootNavController = rootNavController,
+                        onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
+                        onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                    )
+                }
             }
 
             // Lorebooks (nested under Context Management)
             composable(AssistantDetailRoutes.LOREBOOKS) {
-                AssistantLorebooksSubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm
-                )
+                AnimatedContent(key = currentRoute) {
+                    AssistantLorebooksSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) },
+                        vm = vm
+                    )
+                }
             }
 
             // Advanced
             composable(AssistantDetailRoutes.ADVANCED) {
-                AssistantAdvancedSubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) }
-                )
+                AnimatedContent(key = currentRoute) {
+                    AssistantAdvancedSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
             }
         }
     }

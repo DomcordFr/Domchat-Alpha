@@ -5,13 +5,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -247,7 +250,19 @@ fun ColumnScope.ConversationList(
                     }
                 }
             ) { index ->
-                when (val item = conversations[index]) {
+                AnimatedContent(
+                    targetState = current.id,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing)
+                        ) { width -> width / 4 }
+                    } togetherWith (
+                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing)
+                        ) { width -> -width / 4 }
+                    }
+                ) {
+                    when (val item = conversations[index]) {
                     is ConversationListItem.DateHeader -> {
                         DateHeaderItem(
                             label = item.label,
@@ -305,6 +320,7 @@ fun ColumnScope.ConversationList(
                     }
                 }
             }
+                }
         }
 
         if (canScrollBackward) {

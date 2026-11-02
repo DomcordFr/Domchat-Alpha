@@ -408,27 +408,29 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             }
 
                             if (settings.displaySetting.backgroundBlurMode == BackgroundBlurMode.BOTTOM_FADE) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("Fade Blur Height", style = MaterialTheme.typography.bodyMedium)
-                                    Text("${(localFadeHeight * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                AnimatedContent(key = settings.displaySetting.backgroundBlurMode) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Fade Blur Height", style = MaterialTheme.typography.bodyMedium)
+                                        Text("${(localFadeHeight * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                    }
+                                    DomChatSlider(
+                                        value = localFadeHeight,
+                                        onValueChange = {
+                                            if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
+                                                haptics.perform(HapticPattern.Tick)
+                                            }
+                                            localFadeHeight = it
+                                        },
+                                        onValueChangeFinished = {
+                                            updateDisplaySetting(settings.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
+                                        },
+                                        valueRange = 0.10f..1.0f
+                                    )
                                 }
-                                DomChatSlider(
-                                    value = localFadeHeight,
-                                    onValueChange = {
-                                        if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
-                                            haptics.perform(HapticPattern.Tick)
-                                        }
-                                        localFadeHeight = it
-                                    },
-                                    onValueChangeFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
-                                    },
-                                    valueRange = 0.10f..1.0f
-                                )
                             }
                         }
                     }
