@@ -21,11 +21,16 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import me.lucid.common.http.urlDecode
+import me.lucid.common.platform.GlobalContext
+import me.lucid.common.platform.PlatformHttpClient
+import me.lucid.common.platform.PlatformHttpRequest
 import okio.buffer
 import okio.sink
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.R
@@ -309,7 +314,35 @@ suspend fun Context.saveToDownloads(uri: Uri, fileName: String) {
         var outputStream: OutputStream? = null
         var inputStream: InputStream? = null
         try {
-            inputStream = openOwnedUriInputStream(uri)
+            inputStream = when (uri.scheme) {
+                "http", "https" -> {
+                    val bytes = fetchBytesFromNetwork(uri.toString()) ?: run {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@saveToDownloads,
+                                getString(R.string.downloads_read_source_failed),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        return@withContext
+                    }
+                    bytes.inputStream()
+                }
+                "data" -> {
+                    val bytes = decodeDataUriBytes(uri.toString()) ?: run {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@saveToDownloads,
+                                getString(R.string.downloads_read_source_failed),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        return@withContext
+                    }
+                    bytes.inputStream()
+                }
+                else -> openOwnedUriInputStream(uri)
+            }
             if (inputStream == null) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -384,4 +417,35 @@ suspend fun Context.saveToDownloads(uri: Uri, fileName: String) {
             }
         }
     }
+}
+
+/**
+ * Fetch raw bytes from an http/https URL via PlatformHttpClient.
+ */
+private suspend fun Context.fetchBytesFromNetwork(url: String): ByteArray? {
+    return runCatching {
+        val client = GlobalContext.get().get<PlatformHttpClient>()
+        val response = client.execute(
+            PlatformHttpRequest(
+                method = "GET",
+                url = url,
+            )
+        )
+        if (response.statusCode == 200) {
+            response.body
+        } else {
+            null
+        }
+    }.getOrNull()
+}
+
+/**
+ * Decode a data: URI (e.g. data:image/png;base64,....) into raw bytes.
+ */
+@OptIn(ExperimentalEncodingApi::class)
+private fun Context.decodeDataUriBytes(dataUri: String): ByteArray? {
+    return runCatching {
+        val base64Part = dataUri.substringAfter("base64,")
+        Base64.decode(base64Part.toByteArray())
+    }.getOrNull()
 }

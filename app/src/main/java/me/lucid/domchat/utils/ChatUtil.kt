@@ -96,8 +96,35 @@ suspend fun Context.saveMessageImage(image: String) = withContext(Dispatchers.IO
     when {
         image.startsWith("data:image") -> {
             val byteArray = Base64.decode(image.substringAfter("base64,").toByteArray())
-            val bitmap = decodeBitmapWithBounds(byteArray, 2048, 2048)
-            bitmap?.let { exportImage(activity, it) }
+            // Write raw bytes directly to MediaStore/Pictures to preserve full native resolution
+            val fileName = "Domchat_${System.currentTimeMillis()}.png"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                }
+                val destUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                if (destUri != null) {
+                    contentResolver.openOutputStream(destUri)?.use { outputStream ->
+                        outputStream.write(byteArray)
+                    } ?: throw IllegalStateException("Failed to open output stream for MediaStore")
+                } else {
+                    throw IllegalStateException("Failed to create MediaStore entry")
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val destFile = java.io.File(imagesDir, fileName)
+                destFile.sink().buffer().outputStream().use { outputStream ->
+                    outputStream.write(byteArray)
+                }
+                @Suppress("DEPRECATION")
+                val mediaScanIntent = android.content.Intent(android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                mediaScanIntent.data = android.net.Uri.fromFile(destFile)
+                sendBroadcast(mediaScanIntent)
+            }
+            Log.i(TAG, "saveMessageImage: Saved data:image to gallery: $fileName")
         }
 
         image.startsWith("file:") -> {
@@ -155,16 +182,44 @@ suspend fun Context.saveMessageImage(image: String) = withContext(Dispatchers.IO
                 )
 
                 if (response.statusCode == 200) {
-                    val bitmap = decodeBitmapWithBounds(response.body, 2048, 2048)
-                    bitmap?.let { exportImage(activity, it) }
+                    // Write raw original bytes directly to MediaStore/Pictures to preserve
+                    // full native resolution and quality (no downscaling/re-encoding).
+                    val byteArray = response.body
+                    val fileName = "Domchat_${System.currentTimeMillis()}.png"
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                        }
+                        val destUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                        if (destUri != null) {
+                            contentResolver.openOutputStream(destUri)?.use { outputStream ->
+                                outputStream.write(byteArray)
+                            } ?: throw IllegalStateException("Failed to open output stream for MediaStore")
+                        } else {
+                            throw IllegalStateException("Failed to create MediaStore entry")
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                        val destFile = java.io.File(imagesDir, fileName)
+                        destFile.sink().buffer().outputStream().use { outputStream ->
+                            outputStream.write(byteArray)
+                        }
+                        @Suppress("DEPRECATION")
+                        val mediaScanIntent = android.content.Intent(android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                        mediaScanIntent.data = android.net.Uri.fromFile(destFile)
+                        sendBroadcast(mediaScanIntent)
+                    }
+                    Log.i(TAG, "saveMessageImage: Saved http image to gallery: $fileName")
                 } else {
                     Log.e(
                         TAG,
                         "saveMessageImage: Failed to download image from $image, response code: ${response.statusCode}"
                     )
-                    null // Return null on failure
                 }
-            }.getOrNull() // Return null if any exception occurs during download
+            }.getOrNull()
         }
 
         else -> error("Invalid image format")

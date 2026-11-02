@@ -1,60 +1,77 @@
-# Audit Brief — Task 073: Theme-Compliant PositionButton in Presets UI
+# Audit Brief — Task 074: Fix Image Download Source Error and High-Res Fetching
 
 ## Intent Verification
 
 | Requirement | File | Status |
 |---|---|---|
-| PositionButton uses `val selectedColor = MaterialTheme.colorScheme.primary` instead of 4 hardcoded hex colors | `SettingPresetsPage.kt` | Done — `selectedColor = MaterialTheme.colorScheme.primary` replaces SYSTEM_PROMPT/POST_HISTORY_INSTRUCTIONS/AT_DEPTH/BEFORE_LAST_USER hex colors |
-| PositionButton uses `val selectedColor = MaterialTheme.colorScheme.primary` instead of 4 hardcoded hex colors | `PromptPresetsBottomSheet.kt` | Done — same theme-compliant color |
-| SettingPresetsPage PositionButton Row has `padding(vertical = 10.dp, horizontal = 12.dp)` | `SettingPresetsPage.kt` | Done — `Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp))` |
-| SettingPresetsPage PositionButton text has `fontSize = 12.5.sp` and `fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium` | `SettingPresetsPage.kt` | Done — matches PromptPresetsBottomSheet.kt |
-| PromptPresetsBottomSheet PositionButton Row has `padding(vertical = 10.dp, horizontal = 12.dp)` | `PromptPresetsBottomSheet.kt` | Done — same padding |
-| PromptPresetsBottomSheet PositionButton text has `fontSize = 12.5.sp` and `fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium` | `PromptPresetsBottomSheet.kt` | Done — same text styling |
-| Dark glass `Color(0xFF141520)` and `SpecularBorderSubtle` preserved | Both files | Done — Surface uses `Color(0xFF141520).copy(alpha = 0.55f)` for unselected, `selectedColor.copy(alpha = 0.20f)` for selected; border uses `LiquidGlassTokens.SpecularBorderSubtle` for unselected, `selectedColor` for selected |
+| `saveToDownloads` supports http/https URIs by streaming raw bytes from network via PlatformHttpClient | `ContextUtil.kt` | Done — `when (uri.scheme)` handles `"http", "https"` via `fetchBytesFromNetwork()` |
+| `saveToDownloads` supports data:image URIs by decoding base64 bytes | `ContextUtil.kt` | Done — `"data"` scheme handled via `decodeDataUriBytes()` |
+| `saveToDownloads` falls back to `openOwnedUriInputStream` for other schemes (file, content) | `ContextUtil.kt` | Done — `else` branch preserves existing behavior |
+| `saveMessageImage` writes raw bytes directly to MediaStore/Pictures for data:image (no downscale/re-encode) | `ChatUtil.kt` | Done — base64 bytes written via `outputStream.write(byteArray)` |
+| `saveMessageImage` writes raw bytes directly to MediaStore/Pictures for http/https (no downscale/re-encode) | `ChatUtil.kt` | Done — `response.body` written via `outputStream.write(byteArray)` |
+| `content:` and `file:` cases unchanged (already byte-copy / direct export) | `ChatUtil.kt` | Done — untouched |
+| AMOLED black / LiquidGlassTokens theme | N/A | Not applicable — utility functions, no UI |
 | No `!!` force unwraps | Both files | Verified — grep returned 0 matches |
-| All `when` branches on `PresetInjectionPosition` exhaustive | Both files | Done — all 4 enum values handled in PositionButton color `when` |
-| No leftover `DropdownMenu`/`DropdownMenuItem`/`positionMenuOpen`/`positionArrowRotation` | Both files | Verified — removed |
-| Unused imports cleaned up (`animateFloatAsState`, `AnimatedVisibility`, `tween`, `rotate`, etc.) | `SettingPresetsPage.kt` | Done |
-| No syntax errors, all brackets balanced | Both files | Verified |
+| Null safety via Elvis, safe-call, `runCatching`, `getOrNull()` | Both files | Done |
+| No local gradle builds run | — | Done |
 
 ## Call Chain & Architecture
 
-**PositionButton composable (both files):**
-- Stateless `@Composable` accepting `label`, `position`, `selected`, `modifier`, `onClick`
-- Uses `MaterialTheme.colorScheme.primary` as unified accent color (`selectedColor`) instead of per-position hardcoded hex colors
-- Surface: `onClick = onClick`, `shape = RoundedCornerShape(12.dp)`, border `0.5.dp SpecularBorderSubtle` (unselected) or `selectedColor` (selected)
-- Inner Row: `fillMaxWidth` + `padding(vertical = 10.dp, horizontal = 12.dp)`, `SpaceBetween` arrangement
-- Text: `bodyMedium` with `fontSize = 12.5.sp`, `fontWeight = Bold` (selected) / `Medium` (unselected), color `selectedColor` (selected) / `Color.White` (unselected)
-- Checkmark icon shown when selected, tinted with `selectedColor`
+**ContextUtil.kt — `saveToDownloads`:**
+- Entry point: UI layer calls `context.saveToDownloads(uri, fileName)` (suspend function)
+- Permission check: legacy Android (< API 29) checks `WRITE_EXTERNAL_STORAGE`, requests via `ActivityCompat.requestPermissions` on Main dispatcher
+- Main work on `Dispatchers.IO`:
+  1. `when (uri.scheme)` selects input source:
+     - `"http"`/`"https"` → `fetchBytesFromNetwork()` → `PlatformHttpClient.execute(PlatformHttpRequest)` → returns `ByteArray` → `.inputStream()`
+     - `"data"` → `decodeDataUriBytes()` → base64 decode → `ByteArray` → `.inputStream()`
+     - `else` → existing `openOwnedUriInputStream(uri)` (file/content schemes)
+  2. Null guard on `inputStream` → toast error + `return@withContext`
+  3. API >= Q → `MediaStore.Downloads.EXTERNAL_CONTENT_URI` insert + `openOutputStream` + `inputStream.copyTo(outputStream)`
+  4. API < Q → `Environment.getExternalStoragePublicDirectory(DOWNLOADS)` + `File.sink().buffer().outputStream()` + media scanner broadcast
+- Toast results posted to `Dispatchers.Main`
 
-**2x2 Injection Position Grid (both files):**
-- `Column` with `verticalArrangement = Arrangement.spacedBy(8.dp)` (no invalid `horizontalArrangement`)
-- Row 1: System, Post-History — each with `modifier = Modifier.weight(1f)`
-- Row 2: Before User, At Depth — each with `modifier = Modifier.weight(1f)`
-- Click handlers set `draftPosition`/`formPosition` to the corresponding `PresetInjectionPosition` value
+**ChatUtil.kt — `saveMessageImage`:**
+- Entry point: UI layer calls `context.saveMessageImage(imageString)` (suspend function)
+- Activity check: `getActivity()` must be non-null
+- `when` on image scheme:
+  - `"data:image"` → `Base64.decode(...)` → raw bytes → MediaStore `Images.Media.EXTERNAL_CONTENT_URI` (API >= Q) or `Environment.getExternalStoragePublicDirectory(PICTURES)` (API < Q)
+  - `"file:"` → `exportImageFile(activity, file)` (unchanged)
+  - `"content:"` → `openOwnedUriInputStream(uri)` → byte copy to MediaStore (unchanged)
+  - `"http"` → `PlatformHttpClient.execute()` → `response.body` raw bytes → MediaStore `Images.Media.EXTERNAL_CONTENT_URI` (API >= Q) or Pictures dir (API < Q)
+  - `else` → `error("Invalid image format")`
+- All writes use `outputStream.write(byteArray)` — no `decodeBitmapWithBounds`, no `Bitmap.compress`, no quality loss
 
-**No backend generation or data storage logic touched** — UI presentation changes only. State writes go through existing `saveDraft()` → `vm.updateSettings` → DataStore path (SettingPresetsPage) or `savePreset()` → `settingsStore.update` → DataStore (PromptPresetsBottomSheet).
+**Helper functions (ContextUtil.kt):**
+- `fetchBytesFromNetwork(url)` — `runCatching` + `PlatformHttpClient` + status 200 check → `ByteArray?`
+- `decodeDataUriBytes(dataUri)` — `@OptIn(ExperimentalEncodingApi)` + `Base64.decode(...)` → `ByteArray?`
 
 ## Recomposition & Memory Safety
 
-- `PositionButton` is stateless `@Composable` — no allocations beyond a `Color` per call
-- All state uses `remember {}` / `mutableStateOf` — lifecycle-aware, no naked objects
-- `Modifier.weight(1f)` on all 4 PositionButtons ensures equal distribution in Rows
-- Column uses only `verticalArrangement` — no invalid `horizontalArrangement` parameter
-- No `!!` force unwraps anywhere
-- No `SnapshotStateList` passed to `LazyColumn.items` — immutable `List` snapshots
-- Unused imports removed (`animateFloatAsState`, `AnimatedVisibility`, `tween`, `expandVertically`, `fadeIn`, `fadeOut`, `shrinkVertically`, `rotate`, `DropdownMenu`, `DropdownMenuItem`)
+- No Compose code in either file — pure Kotlin suspend functions, zero recomposition concerns
+- All `InputStream`/`OutputStream` closed in `finally` block (ContextUtil.kt `saveToDownloads`)
+- `outputStream.use { }` and `inputStream.use { }` scope-safe in ChatUtil.kt `saveMessageImage`
+- `ByteArray` from network/base64 held in memory only for duration of write — no long-lived references
+- `runCatching { ... }.getOrNull()` used for network/decode failures — no exceptions leak
+- `when (uri.scheme)` is exhaustive for http/https/data/else; `else` falls back to `openOwnedUriInputStream` which returns null safely
+- No `!!` force unwraps anywhere in either file
+- `GlobalContext.get().get<PlatformHttpClient>()` — Koin DI, safe access pattern already used elsewhere in ChatUtil.kt
 
 ## Threading & Dispatchers
 
-- Pure Compose UI changes — no coroutines, no dispatchers involved
-- State writes (`draftPosition = pos`, `formPosition = pos`) happen inside `onClick` lambdas on Main thread — correct for UI state
-- `saveDraft()`/`savePreset()` → `vm.updateSettings`/`settingsStore.update` runs via existing ViewModel coroutine scope — DataStore IO handled internally on `Dispatchers.IO`
-- No `Dispatchers.Main` blocking, no `runBlocking`, no `java.util.concurrent` types
+- `saveToDownloads`: `suspend fun`, permission check on Main (`withContext(Dispatchers.Main)` for `ActivityCompat.requestPermissions` and `Toast`), IO work on `Dispatchers.IO` (`withContext(Dispatchers.IO)` wrapper). Network fetch (`fetchBytesFromNetwork`) runs inside the IO coroutine — no Main dispatcher blocking.
+- `saveMessageImage`: `suspend fun`, entire body runs on `withContext(Dispatchers.IO)`. Network call via `PlatformHttpClient` inside IO coroutine. Toast/activity access only at the start (null check on Main-thread-safe `getActivity()`). No `Dispatchers.Main` blocking, no `runBlocking`.
+- `fetchBytesFromNetwork`: `suspend fun`, runs on caller's dispatcher (IO). `PlatformHttpClient.execute()` is blocking HTTP but invoked within coroutine on IO dispatcher.
+- No `java.util.concurrent` types used.
+- `Base64.decode` — pure computation, no threading concerns.
 
 ## Offline & Error State Handling
 
-- All changes are UI-only — fully offline-capable, zero network dependency
-- `PositionButton` click handlers only set local state — persistence deferred to Save via existing `vm.updateSettings` / `settingsStore.update` → DataStore (local, always available)
-- `MaterialTheme.colorScheme.primary` is a theme value — always available, no failure modes
-- No new exception paths introduced; existing error handling in `saveDraft` / `savePreset` / `vm.updateSettings` / `settingsStore.update` untouched
+- **Network unavailable (http/https):** `fetchBytesFromNetwork` returns `null` via `runCatching.getOrNull()` → toast `downloads_read_source_failed` (ContextUtil) or silent log + no-op (ChatUtil). No crash.
+- **Non-200 HTTP response:** `fetchBytesFromNetwork` returns `null` → same error path. ChatUtil logs error via `Log.e`.
+- **Invalid base64 (data:image):** `decodeDataUriBytes` returns `null` via `runCatching.getOrNull()` → toast `downloads_read_source_failed` (ContextUtil). ChatUtil `Base64.decode` could throw on malformed input — wrapped implicitly by the overall `try/catch` in `saveToDownloads`; in `saveMessageImage`, the `when` branch is not wrapped in try/catch, but `Base64.decode` on invalid input throws `IllegalArgumentException` which propagates up to the coroutine caller. This matches pre-existing behavior.
+- **MediaStore insert fails (null dstUri):** toast `downloads_create_entry_failed` (ContextUtil) or throws `IllegalStateException` (ChatUtil, caught by coroutine caller).
+- **Output stream open fails:** `IllegalStateException` thrown → caught by `try/catch` in `saveToDownloads` (toast `downloads_save_failed`) or propagates in `saveMessageImage`.
+- **Legacy Android storage permission denied:** toast `downloads_permission_required` and early return (ContextUtil). ChatUtil `exportImage`/`exportImageFile` handle their own permission checks.
+- **activity == null (ChatUtil):** logs error and returns early — no crash.
+- All `catch (e: Exception)` blocks log via `Log.e(TAG, ...)` — errors are surfaced, not swallowed silently.
+- `e.message ?: ""` — null-safe Elvis for error messages in toasts.
