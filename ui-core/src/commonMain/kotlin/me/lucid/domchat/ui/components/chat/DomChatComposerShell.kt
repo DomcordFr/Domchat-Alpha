@@ -116,12 +116,10 @@ fun RowScope.DomChatComposerCapsule(
     Surface(
         shape = DomChatComposerInputShape,
         color = containerColor,
-        border = if (containerColor != Color.Transparent && containerColor.alpha > 0.02f) {
-            BorderStroke(
-                AppSurface.SoftEdgeWidth,
-                Color.White.copy(alpha = 0.15f),
-            )
-        } else null,
+        border = BorderStroke(
+            0.5.dp,
+            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+        ),
         modifier = modifier.defaultMinSize(minHeight = AppSize.ChromePill),
     ) {
         content()

@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.assistant
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -8,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.mutableIntStateOf
@@ -179,6 +181,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var isGridView by remember { mutableStateOf(true) }
     var sortOption by remember { mutableStateOf(CharacterSortOption.RECENT) }
     var sortMenuOpen by remember { mutableStateOf(false) }
+    val sortArrowRotation by animateFloatAsState(
+        targetValue = if (sortMenuOpen) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = 400f
+        ),
+        label = "sort_arrow_rotation"
+    )
     var filterMenuOpen by remember { mutableStateOf(false) }
     var selectedTagIds by remember { mutableStateOf(emptySet<String>()) }
     var inspectingAssistant by remember { mutableStateOf<Assistant?>(null) }
@@ -415,8 +425,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             ) {
                                 Text(
                                     text = "${filteredAssistants.size} Characters",
-                                    fontSize = 11.5.sp,
-                                    color = Color.White.copy(0.85f),
+                                    fontSize = 12.sp,
+                                    color = Color.White,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -442,14 +452,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         onClick = { sortMenuOpen = true },
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.Sort,
                                                 contentDescription = "Sort",
-                                                tint = Color(0xFF8A8A96),
+                                                tint = Color.White,
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Text(
@@ -460,13 +470,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
+                                                fontSize = 12.sp,
                                                 color = Color.White
                                             )
                                             Icon(
                                                 imageVector = Icons.Rounded.ArrowDropDown,
                                                 contentDescription = "Dropdown",
-                                                tint = Color(0xFF8A8A96),
-                                                modifier = Modifier.size(20.dp)
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp).rotate(sortArrowRotation)
                                             )
                                         }
                                     }
@@ -571,20 +582,21 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     onClick = { filterMenuOpen = true }
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.FilterAlt,
                                             contentDescription = "Filter",
-                                            tint = if (selectedTagIds.isNotEmpty()) Color.White else Color(0xFF8A8A96),
+                                            tint = Color.White,
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
                                             text = if (selectedTagIds.isEmpty()) "Filter" else "Filter (${selectedTagIds.size})",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium,
+                                            fontSize = 12.sp,
                                             color = Color.White
                                         )
                                     }
@@ -705,8 +717,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             ) {
                                 Text(
                                     text = "${filteredAssistants.size} Characters",
-                                    fontSize = 11.5.sp,
-                                    color = Color.White.copy(0.85f),
+                                    fontSize = 12.sp,
+                                    color = Color.White,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -732,14 +744,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                         onClick = { sortMenuOpen = true },
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.Sort,
                                                 contentDescription = "Sort",
-                                                tint = Color(0xFF8A8A96),
+                                                tint = Color.White,
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Text(
@@ -750,13 +762,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
+                                                fontSize = 12.sp,
                                                 color = Color.White
                                             )
                                             Icon(
                                                 imageVector = Icons.Rounded.ArrowDropDown,
                                                 contentDescription = "Dropdown",
-                                                tint = Color(0xFF8A8A96),
-                                                modifier = Modifier.size(20.dp)
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp).rotate(sortArrowRotation)
                                             )
                                         }
                                     }
@@ -861,20 +874,21 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     onClick = { filterMenuOpen = true }
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.FilterAlt,
                                             contentDescription = "Filter",
-                                            tint = if (selectedTagIds.isNotEmpty()) Color.White else Color(0xFF8A8A96),
+                                            tint = Color.White,
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
                                             text = if (selectedTagIds.isEmpty()) "Filter" else "Filter (${selectedTagIds.size})",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium,
+                                            fontSize = 12.sp,
                                             color = Color.White
                                         )
                                     }

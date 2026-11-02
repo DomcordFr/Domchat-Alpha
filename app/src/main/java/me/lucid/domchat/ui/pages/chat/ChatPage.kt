@@ -1315,6 +1315,7 @@ private fun ChatPageContent(
     // State for user message regeneration confirmation dialog
     var showUserRegenerateConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
+    var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var showToolbarOverflowMenu by remember { mutableStateOf(false) }
     var showContextUsagePopup by remember { mutableStateOf(false) }
     var showChatInfoSheet by remember { mutableStateOf(false) }
@@ -1637,20 +1638,7 @@ private fun ChatPageContent(
                                         inputState.setContents(it.parts)
                                     },
                                     onDelete = { message ->
-                                        scope.launch {
-                                            val backup = frameConversation
-                                            val removedIds = vm.deleteMessage(message)
-                                            toaster.show(
-                                                message = context.getString(R.string.message_deleted),
-                                                action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                                    label = context.getString(R.string.undo),
-                                                    onClick = {
-                                                        vm.updateConversation(backup)
-                                                        vm.markNodesAsRestored(removedIds)
-                                                    }
-                                                )
-                                            )
-                                        }
+                                        pendingDeleteMessage = message
                                     },
                                     onUpdateMessage = { newNode ->
                                         val oldNode = frameConversation.messageNodes.find { it.id == newNode.id }
@@ -1873,6 +1861,60 @@ private fun ChatPageContent(
                                 onClick = {
                                     showUserRegenerateConfirmDialog = false
                                     pendingUserRegenerateMessage = null
+                                }
+                            ) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        }
+                    )
+                }
+
+                // Message deletion confirmation dialog
+                pendingDeleteMessage?.let { messageToDelete ->
+                    AlertDialog(
+                        onDismissRequest = {
+                            pendingDeleteMessage = null
+                        },
+                        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+                        title = {
+                            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+                            Text("Delete message?")
+                        },
+                        text = {
+                            Text("Are you sure you want to delete this message?")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    haptics.perform(HapticPattern.Error)
+                                    val toDelete = messageToDelete
+                                    pendingDeleteMessage = null
+                                    scope.launch {
+                                        val backup = frameConversation
+                                        val removedIds = vm.deleteMessage(toDelete)
+                                        toaster.show(
+                                            message = context.getString(R.string.message_deleted),
+                                            action = me.lucid.domchat.ui.components.ui.ToastAction(
+                                                label = context.getString(R.string.undo),
+                                                onClick = {
+                                                    vm.updateConversation(backup)
+                                                    vm.markNodesAsRestored(removedIds)
+                                                }
+                                            )
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.delete),
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    pendingDeleteMessage = null
                                 }
                             ) {
                                 Text(stringResource(R.string.cancel))
@@ -3053,12 +3095,8 @@ private fun ChatToolbar(
 ) {
     val scope = rememberCoroutineScope()
     val isDark = LocalDarkMode.current
-    val topContainerColor = domChatIconPillContainerColor()
-    val topContainerBorder = if (isDark) {
-        BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
-    } else {
-        domChatSoftEdgeBorder()
-    }
+    val topContainerColor = Color(0xFF000000).copy(alpha = 0.65f)
+    val topContainerBorder = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     val buttonShape = AppShapes.ButtonPill
     val topPillSize = AppSize.ChromePill
     // State for assistant picker - must be at function level for proper recomposition

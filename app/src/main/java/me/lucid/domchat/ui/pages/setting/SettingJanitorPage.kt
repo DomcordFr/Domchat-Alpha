@@ -65,6 +65,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -74,6 +75,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.rotate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
@@ -327,6 +329,14 @@ fun SettingJanitorPage() {
     var page by rememberSaveable { mutableIntStateOf(1) }
     var isLoadingMore by remember { mutableStateOf(false) }
     var feedMenuOpen by remember { mutableStateOf(false) }
+    val feedArrowRotation by animateFloatAsState(
+        targetValue = if (feedMenuOpen) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = 400f
+        ),
+        label = "feed_arrow_rotation"
+    )
     var sortMenuOpen by remember { mutableStateOf(false) }
     var filterMenuOpen by remember { mutableStateOf(false) }
     var sortMode by rememberSaveable { mutableStateOf("Default") }
@@ -602,7 +612,7 @@ fun SettingJanitorPage() {
                                                 imageVector = Icons.Rounded.ArrowDropDown,
                                                 contentDescription = "Dropdown",
                                                 tint = Color.White,
-                                                modifier = Modifier.size(20.dp),
+                                                modifier = Modifier.size(20.dp).rotate(feedArrowRotation),
                                             )
                                         }
                                     }

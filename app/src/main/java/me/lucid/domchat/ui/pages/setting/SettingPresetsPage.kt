@@ -329,8 +329,9 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                     )
                                     if (preset.isSystem) {
                                         Surface(
-                                            color = Color.White.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(6.dp)
+                                            color = Color(0xFF000000),
+                                            shape = RoundedCornerShape(6.dp),
+                                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                         ) {
                                             Text(
                                                 text = "Default",
@@ -367,12 +368,12 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                             Surface(
                                 color = Color(0xFF000000),
                                 shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Text(
                                     text = "~$tokenEstimate tok",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isDark) Color.White else Color.White,
+                                    color = Color.White,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                                 )
                             }
@@ -381,12 +382,12 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                             Surface(
                                 color = Color(0xFF000000),
                                 shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Text(
                                     text = "$charCount c · ${lineCount}L",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.65f),
+                                    color = Color.White,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                                 )
                             }
@@ -398,13 +399,14 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF34D399)
                             }
                             Surface(
-                                color = posColor.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(8.dp)
+                                color = Color(0xFF000000),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Text(
                                     text = posLabel,
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = posColor,
+                                    color = Color.White,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                                 )
                             }

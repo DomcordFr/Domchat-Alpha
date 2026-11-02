@@ -2,6 +2,10 @@
 
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.draw.rotate
+
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -211,6 +215,14 @@ fun SettingChatStoragePage(
     var isLoadingOtherUploads by remember { mutableStateOf(false) }
     var showOtherUploadsInspector by rememberSaveable { mutableStateOf(false) }
     var showAllStorageCategories by rememberSaveable { mutableStateOf(false) }
+    val storageArrowRotation by animateFloatAsState(
+        targetValue = if (showAllStorageCategories) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = 400f
+        ),
+        label = "storage_arrow_rotation"
+    )
     var embeddingCacheStats by remember { mutableStateOf<List<EmbeddingCacheModelStats>>(emptyList()) }
     var isCleaningEmbeddingCache by remember { mutableStateOf(false) }
     var showEmbeddingCacheInspector by rememberSaveable { mutableStateOf(false) }
@@ -350,9 +362,7 @@ fun SettingChatStoragePage(
                                         Icon(
                                             imageVector = Icons.Rounded.KeyboardArrowDown,
                                             contentDescription = null,
-                                            modifier = Modifier.graphicsLayer {
-                                                rotationZ = if (showAllStorageCategories) 180f else 0f
-                                            },
+                                            modifier = Modifier.rotate(storageArrowRotation),
                                         )
                                     },
                                     onClick = {

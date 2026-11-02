@@ -27,10 +27,10 @@ fun DomChatMenuButton(
     modifier: Modifier = Modifier.size(AppSize.ChromePill),
     size: Dp = AppSize.ChromePill,
     shape: Shape = AppShapes.ButtonPill,
-    containerColor: Color = Color(0xFF141520).copy(alpha = 0.55f),
+    containerColor: Color = Color(0xFF000000).copy(alpha = 0.65f),
     border: BorderStroke = BorderStroke(
-        AppSurface.SoftEdgeWidth,
-        Color.White.copy(alpha = 0.15f),
+        0.5.dp,
+        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
     ),
 ) {
     Surface(

@@ -2454,16 +2454,21 @@ private fun AnnotatedString.Builder.applyStreamingRevealStyle(
                 startAlpha = startAlpha,
                 blurEnabled = reveal.blurEnabled,
             )
-            if (visuals.alpha >= 0.995f && visuals.blurRadius <= 0.01f) return@fastForEach
+            val glowFactor = 1f - easedProgress
+            val glowRadius = maxOf(visuals.blurRadius, 10f * glowFactor)
+            val floatShift = 0.18f * (1f - easedProgress)
+
+            if (visuals.alpha >= 0.995f && glowRadius <= 0.01f && floatShift <= 0.005f) return@fastForEach
 
             addStyle(
                 style = SpanStyle(
                     color = reveal.color.copy(alpha = visuals.alpha),
-                    shadow = if (visuals.blurRadius > 0.01f) {
+                    baselineShift = if (floatShift > 0.005f) BaselineShift(floatShift) else null,
+                    shadow = if (glowRadius > 0.01f) {
                         Shadow(
-                            color = reveal.color.copy(alpha = visuals.alpha),
+                            color = reveal.color.copy(alpha = (visuals.alpha * 0.9f).coerceIn(0f, 1f)),
                             offset = Offset.Zero,
-                            blurRadius = visuals.blurRadius,
+                            blurRadius = glowRadius,
                         )
                     } else {
                         null

@@ -856,7 +856,7 @@ fun MinimalChatInput(
                                 keyboardController?.hide()
                             }
                         },
-                        containerColor = Color.Transparent,
+                        containerColor = Color(0xFF000000).copy(alpha = 0.65f),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .size(AppSize.ChromePill)

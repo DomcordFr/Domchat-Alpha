@@ -676,13 +676,15 @@ private fun SharedTransitionScope.ChatListNormal(
                     },
                 ) { index, group ->
                     Column(
-                        modifier = Modifier.entrance(
-                            key = "${conversation.id}:turn:${group.firstNode.id}",
-                            motionPolicy = motionPolicy,
-                            from = EntranceDirection.UP,
-                            delayMs = (displayGroups.lastIndex - index).coerceAtLeast(0) * 70,
-                            allow = entranceOpen.value || index == displayGroups.lastIndex,
-                        )
+                        modifier = Modifier
+                            .animateItem()
+                            .entrance(
+                                key = "${conversation.id}:turn:${group.firstNode.id}",
+                                motionPolicy = motionPolicy,
+                                from = EntranceDirection.UP,
+                                delayMs = (displayGroups.lastIndex - index).coerceAtLeast(0) * 70,
+                                allow = entranceOpen.value || index >= displayGroups.lastIndex - 1,
+                            )
                     ) {
                         // Check if any node in group is selected
                         val isSelected = remember(group, selectedItems, selecting) {
