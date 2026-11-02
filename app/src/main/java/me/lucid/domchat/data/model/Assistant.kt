@@ -50,6 +50,10 @@ data class Assistant(
     val preferBuiltInSearch: Boolean = false, // If true, use built-in search when model supports it, otherwise fall back to searchMode
     val embeddingModelId: Uuid? = null, // 用于生成嵌入的模型
     val name: String = "",
+    @SerialName("display_name")
+    val displayName: String? = null,
+    @SerialName("chat_name")
+    val chatName: String? = null,
     val avatar: Avatar = Avatar.Dummy,
     val useAssistantAvatar: Boolean = false, // 使用助手头像替代模型头像
     val tags: List<Uuid> = emptyList(),
@@ -134,6 +138,20 @@ data class Assistant(
     val firstMessage: String
         get() = presetMessages.firstOrNull { it.role == me.lucid.ai.core.MessageRole.ASSISTANT }?.toText().orEmpty()
             .ifBlank { presetMessages.firstOrNull()?.toText().orEmpty() }
+
+    /**
+     * Display name used in hubs, lists, and inspector sheets.
+     * Prefers the explicit [displayName], falls back to [name], then "Character".
+     */
+    val effectiveDisplayName: String
+        get() = displayName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: "Character"
+
+    /**
+     * Chat name used in the chat toolbar, character pill, and assistant message bubbles.
+     * Prefers the explicit [chatName], falls back to [name], then [displayName], then "Character".
+     */
+    val effectiveChatName: String
+        get() = chatName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: displayName?.takeIf { it.isNotBlank() } ?: "Character"
 }
 
 fun Assistant.getInitialMessageNodes(): List<me.lucid.ai.ui.MessageNode> {

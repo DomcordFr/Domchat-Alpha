@@ -1789,7 +1789,7 @@ private fun CharacterCard(
 }
 
 private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settings): Assistant {
-    val name = extract.name ?: "Imported Character"
+    val rawName = extract.name ?: "Imported Character"
     val creator = extract.creator ?: extract.creatorName
     val avatarUrl = resolveAvatarUrl(extract.avatarHash ?: extract.avatarHash2)
     val systemPrompt = extract.systemPrompt ?: ""
@@ -1826,7 +1826,9 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
     }
 
     return Assistant(
-        name = name,
+        name = rawName,
+        displayName = rawName,
+        chatName = extractCleanChatName(rawName),
         avatar = if (avatarUrl.isBlank()) Avatar.Dummy else Avatar.Image(avatarUrl),
         systemPrompt = systemPrompt,
         presetMessages = presetMessages,
@@ -1836,6 +1838,18 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         characterVersion = extract.characterVersion ?: "",
         tags = registeredTagIds,
     )
+}
+
+/**
+ * Extracts a clean chat name from a raw bot name by cutting at the first platform
+ * delimiter ('|', '-', '—', '[', '('). Returns the full name trimmed when no
+ * delimiter is present. Strictly null-safe; never throws on blank input.
+ */
+private fun extractCleanChatName(name: String): String {
+    val delimiters = charArrayOf('|', '-', '\u2014', '[', '(')
+    val cutIndex = delimiters.map { name.indexOf(it) }.filter { it > 0 }.minOrNull() ?: name.length
+    val clean = name.substring(0, cutIndex.coerceAtLeast(0).coerceAtMost(name.length)).trim()
+    return clean.ifBlank { name.trim() }
 }
 
 /**

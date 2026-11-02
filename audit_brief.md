@@ -1,66 +1,61 @@
-# Audit Brief — Task-076: Chat Message Swipe Reroll Generation and Custom Initial Message Creator
+# Audit Brief — Bot Display Name vs Chat Name Decoupling
 
 ## Intent Verification
 
-The implementation satisfies the Lead Architect directive for both target areas:
+**Assistant.kt**
+- Added `@SerialName("display_name") val displayName: String? = null` and `@SerialName("chat_name") val chatName: String? = null` to the `Assistant` data class (nullable, default `null`).
+- Added computed `val effectiveDisplayName: String` = `displayName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: "Character"`.
+- Added computed `val effectiveChatName: String` = `chatName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: displayName?.takeIf { it.isNotBlank() } ?: "Character"`.
+- All access null-safe (Elvis + `takeIf`), zero `!!`.
 
-**ChatMessageV2.kt** (already present in the working tree, verified via `git diff`):
-- Removed the `versionIndices.size > 1` gate from `assistantSwipeModifier`; swipe detection is now active whenever `!loading`.
-- `onDragEnd` now triggers on `totalDrag < -50f && currentVersionPos >= versionIndices.lastIndex`:
-  - `isIntroMessage == true` → `onAddCustomGreeting()`
-  - otherwise → `onRegenerate(assistantNode)`
-- `isIntroMessage` and `onAddCustomGreeting` flow through `ChatMessageTurn` → `AssistantMessageTurn` (defaults `= false` / `= {}`).
+**CharacterHubPage.kt**
+- Card display name (`CharacterPortraitCard`), hub list row name (`CharacterListRow`), inspector sheet title (`CharacterInspectorSheet`), `FullCharacterCardImage` name/content-description (portrait card, list row, inspector hero), and error card text now use `assistant.effectiveDisplayName`.
 
-**ChatPage.kt** (this change):
-- `ChatList` now receives `onAddCustomGreeting = { showCustomGreetingDialog = true }`. `ChatList` (already updated) computes `isIntroMessage = isCharacterIntroMessage(messages = conversation.messageNodes.map { it.currentMessage }, message = group.lastNode.currentMessage)` and forwards both to `ChatMessageTurn`.
-- Added `CustomGreetingDialog`: AMOLED black surface `Color(0xFF000000)` with `BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` on `AppShapes.Dialog`, title "Custom Initial Message", a multiline `OutlinedTextField` (`maxLines = Int.MAX_VALUE`, `minLines = 6`), and Cancel / Save buttons styled with black glass theme.
-- On Save (non-blank trimmed input):
-  1. `assistantVM.updateAssistant(currentAssistant.copy(alternateGreetings = currentAssistant.alternateGreetings + trimmed))`
-  2. Locates the intro `MessageNode` (first assistant node where `isCharacterIntroMessage` holds), appends a new `UIMessage(role = ASSISTANT, parts = [Text(trimmed)])`, sets `selectIndex` to the new message, and persists via `vm.updateConversation(conversation.copy(messageNodes = ...))`.
-- New string resources added to `values/strings.xml`: `chat_custom_greeting_title`, `chat_custom_greeting_placeholder`. `cancel` / `save` already existed.
+**ChatPage.kt**
+- Chat toolbar title and top-bar character pill (`UIAvatar`) now use `currentAssistant.effectiveChatName`.
+- Assistant message bubbles: `ChatMessageV2.kt` assistant-turn name label (`avatarName`) now uses `assistant.effectiveChatName`. (Chat bubbles are rendered by `ChatMessageV2`, called from `ChatPage` via `ChatList`; this is the physical location of the bubble name.)
 
-Note on color: the task text names `Color(0xFF000000)` for the dialog while instruction #2 explicitly says "enforce DomChat unified glass card theme (0xFF141520)". The card surface uses `0xFF141520` to honor the enforced unified glass-card theme; `0xFF000000` remains the broader AMOLED dark theme used elsewhere (e.g. `UpdateDialog`).
+**SettingJanitorPage.kt**
+- `extractToAssistant` now sets `name = rawName`, `displayName = rawName`, `chatName = extractCleanChatName(rawName)`.
+- New `extractCleanChatName(name)` splits on the first delimiter `|`, `-`, `—`, `[`, `(`, returns trimmed substring; null-safe, no `!!`.
 
 ## Call Chain & Architecture
 
-User swipe (assistant turn, last version, drag <- 50):
-```
-AssistantMessageTurn.onDragEnd
-  -> isIntroMessage ? onAddCustomGreeting() : onRegenerate(assistantNode)
-        (onAddCustomGreeting) -> ChatPageContent.showCustomGreetingDialog = true
-        (onRegenerate)        -> ChatVM.regenerateAtMessage(message)
+**Model layer.** `Assistant` (`:app data/model/Assistant.kt`) is the Koin-serialized settings entity. `effectiveDisplayName`/`effectiveChatName` are pure computed properties (zero state, zero allocations beyond a `String`), consumed by UI as derived values.
 
-CustomGreetingDialog.Save(trimmed):
-  -> AssistantVM.updateAssistant(assistant.copy(alternateGreetings += trimmed))   [settingsStore.update]
-  -> intro MessageNode found via isCharacterIntroMessage(conversation.messageNodes.map{it.currentMessage}, node.currentMessage)
-  -> UIMessage(ASSISTANT, [Text(trimmed)]) appended to node.messages, selectIndex = node.messages.size
-  -> ChatVM.updateConversation(conversation.copy(messageNodes = [...updatedNode...]))
-```
+**UI consumption (render only, no business logic).**
+- `CharacterHubPage` → `CharacterPortraitCard` / `CharacterListRow` / `CharacterInspectorSheet` read `assistant.effectiveDisplayName` at composition time.
+- `ChatPage` → `ChatToolbar` reads `currentAssistant.effectiveChatName` for toolbar title and pill; `ChatMessageV2` assistant-turn name label reads `assistant.effectiveChatName`.
 
-Layering respected:
-- UI layer only renders state and emits intents (`showCustomGreetingDialog`, `onSave`).
-- `AssistantVM` owns assistant persistence (`settingsStore.update`); `ChatVM` owns conversation persistence (`chatService.saveConversation`).
-- No business logic in the Composable; dialog is a pure state renderer + intent emitter.
+**Import path.** `SettingJanitorPage.extractToAssistant` builds `Assistant` from `JanitorExtractResponse`; `chatName` populated from delimiter-split of raw name, `displayName` = raw name. Stored via `AssistantVM.addAssistant` → `PreferencesStore.update` (canonical settings API: normalization, secret migration, in-memory state, persist).
+
+**Serialization.** New fields are nullable with defaults + `@SerialName`. Existing persisted `Assistant` JSON deserializes safely (defaults to null → computed fallbacks active). No Room/DataStore migration required.
 
 ## Recomposition & Memory Safety
 
-- All dialog state is `remember`/`rememberSaveable`-scoped: `showCustomGreetingDialog` (`remember`), `greetingText` (`remember(visible)` resets when dialog opens/closes).
-- `CustomGreetingDialog` early-returns when `!visible`, so the `Dialog`/`Surface`/text field composition only exists while shown — no leaked composition.
-- `greetingText` is a local `mutableStateOf`, not a captured collection; no `SnapshotStateList` passed to `items(...)`.
-- `onUpdateMessage` extracted to a `val` lambda capturing `frameConversation`/`vm` (both stable within the composition scope); passed by reference to `ChatList` — no new allocations per frame.
-- `introNode?.let { }` and `firstOrNull` used throughout — no force-unwraps (`!!`) introduced in new code.
-- `currentAssistant.copy(...)`, `node.copy(...)`, `conversation.copy(...)` produce immutable copies; original entities never mutated in place.
+- Computed properties are `val get()` — no mutable state, no self-triggering recomposition. They recompute only when the parent `Assistant` instance reference changes, which this feature does not alter.
+- UI reads occur during composition; `assistant`/`currentAssistant` are collected via `collectAsStateWithLifecycle` (lifecycle-aware) in `CharacterHubPage` and `ChatPage`. Passing a derived immutable `String` into `Text`/`UIAvatar` is stable — no `SnapshotStateList` passed to `items`, no derived-state violations.
+- `FullCharacterCardImage` receives `name` as a plain `String` parameter (content description + dummy avatar letter) — stable, no retained references, no memory leak.
+- No new coroutines, jobs, or scoped state introduced. Existing `remember`/`collectAsStateWithLifecycle` usage unchanged.
 
 ## Threading & Dispatchers
 
-- All ViewModel calls (`assistantVM.updateAssistant`, `vm.updateConversation`) are regular `fun` methods that internally `viewModelScope.launch { ... }` and dispatch to `Dispatchers.IO` via `settingsStore.update` / `chatService.saveConversation`. Called directly from Compose (Main thread) — no blocking work on Main.
-- No `Dispatchers.Main` used for I/O in new code. No `withContext(Dispatchers.IO)` needed because the VMs handle dispatching internally.
-- No coroutines launched directly in the dialog; `onSave` is a synchronous intent handler that delegates to VMs.
+- All name resolution is synchronous, main-thread-safe String computation. No blocking calls on `Dispatchers.Main`.
+- `extractCleanChatName` is a pure function called while constructing the `Assistant` inside `extractToAssistant`, invoked from the import button handler inside `scope.launch { ... withContext(Dispatchers.IO) { ... } }`. The HTTP fetch (`/api/extract`) already runs on `Dispatchers.IO`; `Assistant` construction happens after the IO block returns, on `Dispatchers.Main` — safe because it is pure in-memory object construction, no I/O.
+- No new dispatchers introduced. `Dispatchers.IO` used only for HTTP/JSON import, as before.
 
 ## Offline & Error State Handling
 
-- Assistant persistence (`AssistantVM.updateAssistant`) wraps `settingsStore.update` in `try/catch`, logging failures via `PlatformLog.e` — never crashes the UI; offline writes go to EncryptedSharedPreferences locally and sync later.
-- Conversation persistence (`ChatVM.updateConversation` → `chatService.saveConversation`) runs in `viewModelScope`; failures are surfaced through `ChatVM.errorFlow` → `LocalToaster` (ToastType.Error) in `ChatPage`.
-- Save is guarded by `trimmed.isNotBlank()`; empty/whitespace input is a no-op and the dialog still closes.
-- Intro-node lookup uses `firstOrNull` + `?.let` — gracefully handles a conversation with no intro node (greeting still saved to assistant; conversation append skipped safely).
-- Dialog dismiss (`onDismissRequest`) always resets `showCustomGreetingDialog = false`, so the dialog cannot remain stuck visible.
+- `effectiveDisplayName`/`effectiveChatName` are total functions: every branch returns a non-null `String` (final fallback `"Character"`). No exception path; empty/blank inputs degrade gracefully to fallback.
+- `extractCleanChatName`: no delimiter → full trimmed name; name starts with delimiter → empty string → `effectiveChatName` falls back through `name`/`displayName` to `"Character"`. Never throws.
+- Import flow: `extractToAssistant` is wrapped in `try/catch` (import button handler); `fullExtract` fetch failures surface `ImportStatus.ERROR` + toast; parse failures caught. Name decoupling does not alter error handling.
+- Offline: computed names require no network; fully local. Import requires network (pre-existing behavior) — failures handled by existing `JanitorLoadState.Error`/toast paths.
+- Null safety: zero `!!` across all edited files; all nullable access uses `?.`, `?:`, `takeIf`, `orEmpty()`.
+
+## Files Changed
+
+- `app/src/main/java/me/lucid/domchat/data/model/Assistant.kt` — `displayName`, `chatName`, `effectiveDisplayName`, `effectiveChatName`.
+- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — card/list/inspector/error names → `effectiveDisplayName`.
+- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt` — toolbar title + pill → `effectiveChatName`.
+- `app/src/main/java/me/lucid/domchat/ui/components/chat/ChatMessageV2.kt` — assistant bubble name label → `effectiveChatName` (required for the "assistant message bubbles" requirement; bubbles render outside `ChatPage.kt` itself).
+- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt` — `extractToAssistant` + `extractCleanChatName` helper.

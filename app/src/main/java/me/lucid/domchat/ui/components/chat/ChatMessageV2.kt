@@ -1647,7 +1647,7 @@ private fun AssistantMessageTurn(
     }
     
     // Get avatar info
-    val avatarName = assistant?.name?.ifEmpty { null } ?: model?.displayName ?: defaultAssistantName
+    val avatarName = assistant?.effectiveChatName ?: model?.displayName ?: defaultAssistantName
     val avatarValue = assistant?.avatar ?: Avatar.Dummy
     var previewBotAvatarUrl by remember { mutableStateOf<String?>(null) }
     val onBotAvatarClick: () -> Unit = {

@@ -1349,7 +1349,7 @@ fun CharacterPortraitCard(
     ) {
         // Full-bleed avatar background
         FullCharacterCardImage(
-            name = assistant.name,
+            name = assistant.effectiveDisplayName,
             avatar = assistant.avatar,
             modifier = Modifier.fillMaxSize()
         )
@@ -1379,7 +1379,7 @@ fun CharacterPortraitCard(
             horizontalAlignment = Alignment.Start
         ) {
             // Character display name: bold white, max 2 lines, ellipsis overflow.
-            val displayName = assistant.name.takeIf { it.isNotBlank() } ?: "Character"
+            val displayName = assistant.effectiveDisplayName
             Text(
                 text = displayName,
                 fontWeight = FontWeight.Bold,
@@ -1449,7 +1449,7 @@ fun CharacterListRow(
                 .clip(RoundedCornerShape(14.dp))
         ) {
             FullCharacterCardImage(
-                name = assistant.name,
+                name = assistant.effectiveDisplayName,
                 avatar = assistant.avatar,
                 modifier = Modifier.fillMaxSize()
             )
@@ -1457,7 +1457,7 @@ fun CharacterListRow(
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = assistant.name,
+                text = assistant.effectiveDisplayName,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
                 color = Color.White
@@ -1515,7 +1515,7 @@ fun CharacterHubErrorCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = assistant.name.takeIf { it.isNotBlank() } ?: "Character",
+                text = assistant.effectiveDisplayName,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -1617,7 +1617,7 @@ fun CharacterInspectorSheet(
                             .height(340.dp)
                     ) {
                         FullCharacterCardImage(
-                            name = assistant.name,
+                            name = assistant.effectiveDisplayName,
                             avatar = assistant.avatar,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -1662,7 +1662,7 @@ fun CharacterInspectorSheet(
                 ) {
                     // Character Title and Creator
                     Text(
-                        text = assistant.name,
+                        text = assistant.effectiveDisplayName,
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = contentTextColor

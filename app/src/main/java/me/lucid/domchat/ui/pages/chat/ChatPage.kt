@@ -3111,7 +3111,7 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarNewChatLayer(
             contentAlignment = Alignment.Center
         ) {
             me.lucid.domchat.ui.components.ui.UIAvatar(
-                name = currentAssistant.name.ifBlank { "Character" },
+                name = currentAssistant.effectiveChatName,
                 value = currentAssistant.avatar,
                 modifier = Modifier.size(30.dp),
                 onClick = null
@@ -3352,7 +3352,7 @@ private fun ChatToolbar(
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = currentAssistant.name,
+                        text = currentAssistant.effectiveChatName,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = if (LocalDarkMode.current) Color.White else Color.Black
