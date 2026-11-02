@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
@@ -146,7 +147,6 @@ fun ConversationList(
     onClick: (Conversation) -> Unit = {},
     onDelete: (Conversation) -> Unit = {},
     onRegenerateTitle: (Conversation) -> Unit = {},
-    current: Conversation = Conversation.ofId(Uuid.random()),
     onEditTitle: (Conversation, String) -> Unit = { _, _ -> },
     onPin: (Conversation) -> Unit = {},
     getAssistant: (Uuid) -> Assistant? = { null },
@@ -250,7 +250,7 @@ fun ConversationList(
                     }
                 }
             ) { index ->
-                AnimatedContent(
+                AnimatedContent<Uuid>(
                     targetState = current.id,
                     transitionSpec = {
                         fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(

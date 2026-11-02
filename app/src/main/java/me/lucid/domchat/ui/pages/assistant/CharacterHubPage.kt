@@ -390,16 +390,17 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             }
         }
     ) { padding ->
-        AnimatedContent(
+        AnimatedContent<Pair<Boolean, String?>>(
             targetState = isGridView to selectedGroupId,
             transitionSpec = {
-                fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
+                (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
                     animationSpec = tween(220, easing = FastOutSlowInEasing)
-                ) { width -> width / 4 }
-            } togetherWith (
-                fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
-                    animationSpec = tween(220, easing = FastOutSlowInEasing)
-                ) { width -> -width / 4 }
+                ) { width -> width / 4 })
+                    .togetherWith(
+                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing)
+                        ) { width -> -width / 4 }
+                    )
             },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",

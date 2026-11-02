@@ -121,13 +121,13 @@ import androidx.compose.material.icons.rounded.Upload
 fun AssistantPage(vm: AssistantVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val useWideSettingsLayout = LocalSettingsWideLayout.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val createState = useEditState<Assistant> {
-        vm.addAssistant(it)
+        scope.launch { vm.addAssistant(it) }
     }
     val navController = LocalNavController.current
     val toaster = me.lucid.domchat.ui.context.LocalToaster.current
     val context = androidx.compose.ui.platform.LocalContext.current
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     var pendingAssistantDelete by remember { mutableStateOf<Assistant?>(null) }
     var pendingAssistantImpact by remember { mutableStateOf<AssistantDeleteImpact?>(null) }

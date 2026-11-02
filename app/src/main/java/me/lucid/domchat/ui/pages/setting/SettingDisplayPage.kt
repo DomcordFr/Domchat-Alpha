@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
@@ -97,6 +98,7 @@ import me.lucid.domchat.ui.hooks.rememberColorMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.rememberSharedPreferenceBoolean
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.HorizontalDivider
 import me.lucid.domchat.ui.theme.LocalDarkMode

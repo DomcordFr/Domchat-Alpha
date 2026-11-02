@@ -64,7 +64,9 @@ import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.rounded.Close
 import org.koin.compose.koinInject
 
 @Composable

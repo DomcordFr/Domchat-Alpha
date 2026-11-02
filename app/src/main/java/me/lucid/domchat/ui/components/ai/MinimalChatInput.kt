@@ -45,6 +45,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.combinedClickable
@@ -2169,13 +2170,14 @@ fun MinimalChatInput(
                 AnimatedContent(
                     key = blurModeDraft,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
+                        (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
                             animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> width / 4 }
-                    } togetherWith (
-                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
-                            animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> -width / 4 }
+                        ) { width -> width / 4 })
+                            .togetherWith(
+                                fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
+                                    animationSpec = tween(220, easing = FastOutSlowInEasing)
+                                ) { width -> -width / 4 }
+                            )
                     }
                 ) {
                     Column {

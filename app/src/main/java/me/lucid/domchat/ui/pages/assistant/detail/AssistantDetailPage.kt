@@ -384,7 +384,7 @@ fun AssistantDetailPage(
             }
         ) {
             composable(AssistantDetailRoutes.HOME) {
-                AnimatedContent(key = currentRoute) {
+                AnimatedContent<String?>(key = currentRoute) {
                     AssistantDetailHome(
                         assistant = assistant,
                         onNavigateToCore = { navController.navigate(AssistantDetailRoutes.CORE) },
@@ -395,7 +395,7 @@ fun AssistantDetailPage(
 
             // Core Roleplay section - unified sub-page
             composable(AssistantDetailRoutes.CORE) {
-                AnimatedContent(key = currentRoute) {
+                AnimatedContent<String?>(key = currentRoute) {
                     AssistantCoreRoleplaySubPage(
                         assistant = assistant,
                         tags = tags,
@@ -415,7 +415,7 @@ fun AssistantDetailPage(
 
             // Lorebooks (nested under Context Management)
             composable(AssistantDetailRoutes.LOREBOOKS) {
-                AnimatedContent(key = currentRoute) {
+                AnimatedContent<String?>(key = currentRoute) {
                     AssistantLorebooksSubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) },
@@ -426,7 +426,7 @@ fun AssistantDetailPage(
 
             // Advanced
             composable(AssistantDetailRoutes.ADVANCED) {
-                AnimatedContent(key = currentRoute) {
+                AnimatedContent<String?>(key = currentRoute) {
                     AssistantAdvancedSubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) }

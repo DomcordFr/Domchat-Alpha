@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.align
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -723,7 +724,7 @@ fun PromptPresetsBottomSheet(
                     .weight(1f, fill = false)
                     .nestedScroll(overscrollAbsorber)
             ) {
-                itemsIndexed(allPresets, key = { _, it -> it.id }) { index, preset ->
+                itemsIndexed(allPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
 
                     Surface(
