@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.chat
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -114,7 +115,7 @@ private fun PresetBadge(
     Surface(
         color = color.copy(alpha = 0.15f),
         shape = AppShapes.Tag,
-        border = BorderStroke(0.5.dp, color, AppShapes.Tag),
+        border = BorderStroke(0.5.dp, color),
         modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
     ) {
         Text(
@@ -427,11 +428,8 @@ fun PromptPresetsBottomSheet(
             AnimatedContent(
                 targetState = isEditingOrCreating,
                 transitionSpec = {
-                    if (targetState) {
-                        expandVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeIn()
-                    } else {
-                        shrinkVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeOut()
-                    }
+                    (expandVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeIn()) togetherWith
+                        (shrinkVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeOut())
                 },
                 contentAlignment = Alignment.TopCenter,
             ) { visible ->

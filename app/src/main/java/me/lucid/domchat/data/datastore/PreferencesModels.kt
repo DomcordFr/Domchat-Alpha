@@ -27,6 +27,7 @@ import me.lucid.domchat.data.model.TextSelectionAction
 import me.lucid.domchat.data.model.AssistantOverlayConfig
 import me.lucid.domchat.data.model.TextSelectionConfig
 import me.lucid.domchat.data.model.PromptPreset
+import me.lucid.domchat.data.model.PresetInjectionPosition
 import me.lucid.domchat.data.model.UserPersona
 import me.lucid.domchat.data.sync.BackupCleanupResult
 import me.lucid.domchat.ui.theme.PresetThemes

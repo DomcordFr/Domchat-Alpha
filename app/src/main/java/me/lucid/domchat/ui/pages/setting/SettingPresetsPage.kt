@@ -109,7 +109,7 @@ private fun PresetBadge(
     Surface(
         color = color.copy(alpha = 0.15f),
         shape = AppShapes.Tag,
-        border = BorderStroke(0.5.dp, color, AppShapes.Tag),
+        border = BorderStroke(0.5.dp, color),
         modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
     ) {
         Text(
@@ -434,6 +434,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color.White
                                 PresetInjectionPosition.AT_DEPTH -> "Depth @ ${preset.depth}" to Color(0xFF38BDF8)
                                 PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF34D399)
+                                PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History" to Color(0xFFD946EF)
                             }
                             Surface(
                                 color = Color(0xFF000000),
@@ -645,14 +646,14 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "${draftDepth.value}",
+                                text = "$draftDepth",
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                         DomChatSlider(
-                            value = draftDepth.value.toFloat(),
-                            onValueChange = { draftDepth.value = it.toInt() },
+                            value = draftDepth.toFloat(),
+                            onValueChange = { draftDepth = it.toInt() },
                             valueRange = 0f..10f,
                             steps = 9,
                             modifier = Modifier.fillMaxWidth()
