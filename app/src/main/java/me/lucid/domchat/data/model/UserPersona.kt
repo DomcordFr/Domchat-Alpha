@@ -1,5 +1,6 @@
 package me.lucid.domchat.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -10,5 +11,7 @@ data class UserPersona(
     val pronouns: String = "",
     val description: String = "",
     val avatar: Avatar = Avatar.Dummy,
+    @SerialName("enabled_lorebook_ids")
+    val enabledLorebookIds: Set<String> = emptySet(),
     val isDefault: Boolean = false
 )

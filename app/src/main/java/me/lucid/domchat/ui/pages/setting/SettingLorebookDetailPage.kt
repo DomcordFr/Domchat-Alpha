@@ -129,6 +129,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 
 @Composable
@@ -905,10 +906,13 @@ private fun EntryEditorSheet(
     }
     
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = { dismissEditor() },
         sheetState = sheetState,
@@ -921,12 +925,13 @@ private fun EntryEditorSheet(
                     }
                 }
             )
-        }
+        },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = maxSheetHeight)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
@@ -945,6 +950,16 @@ private fun EntryEditorSheet(
                     style = MaterialTheme.typography.titleLarge
                 )
                 AutoSaveIndicator(visible = isAutoSaving)
+                IconButton(
+                    onClick = { dismissEditor() },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                }
             }
 
             FormItem(
@@ -1298,17 +1313,22 @@ private fun LorebookEditorSheet(
     }
     
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
-        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
         contentColor = Color(0xFFF2F2F7),
         onDismissRequest = { dismissEditor() },
-        sheetState = sheetState
+        sheetState = sheetState,
+        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = maxSheetHeight)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1323,6 +1343,16 @@ private fun LorebookEditorSheet(
                     style = MaterialTheme.typography.titleLarge
                 )
                 AutoSaveIndicator(visible = isAutoSaving)
+                IconButton(
+                    onClick = { dismissEditor() },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                }
             }
 
             // Cover picker + Name input inline

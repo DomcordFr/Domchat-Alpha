@@ -71,6 +71,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -290,16 +291,10 @@ fun LorebooksPageContent(
                 item(key = "empty") {
                     val isDark = LocalDarkMode.current
                     val emptyShape = RoundedCornerShape(20.dp)
-                    val borderBrush = Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = if (isDark) 0.22f else 0.12f),
-                            Color.White.copy(alpha = if (isDark) 0.06f else 0.03f)
-                        )
-                    )
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                         shape = emptyShape,
-                        border = BorderStroke(0.5.dp, borderBrush)
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                     ) {
                         Column(
                             modifier = Modifier
@@ -477,17 +472,11 @@ private fun LorebookCard(
 ) {
     val isDark = LocalDarkMode.current
     val cardShape = RoundedCornerShape(18.dp)
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (isDark) 0.22f else 0.12f),
-            Color.White.copy(alpha = if (isDark) 0.06f else 0.03f)
-        )
-    )
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         shape = cardShape,
-        border = BorderStroke(0.5.dp, borderBrush)
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
     ) {
         Row(
             modifier = Modifier
@@ -593,6 +582,9 @@ internal fun LorebookCreatorSheet(
     
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
@@ -616,21 +608,38 @@ internal fun LorebookCreatorSheet(
         shape = sheetShape,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, sheetShape).imePadding(),
         dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = maxSheetHeight)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.lorebooks_page_create_lorebook),
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.lorebooks_page_create_lorebook),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+            }
 
             // Cover picker + Name input inline
             Row(

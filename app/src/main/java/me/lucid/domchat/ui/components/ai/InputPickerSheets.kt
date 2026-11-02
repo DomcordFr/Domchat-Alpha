@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import me.lucid.domchat.R
@@ -251,13 +255,17 @@ internal fun LorebooksPickerSheet(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
 
     ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+        containerColor = Color(0xFF000000),
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         sheetGesturesEnabled = true,
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
@@ -265,16 +273,33 @@ internal fun LorebooksPickerSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = maxSheetHeight)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = stringResource(R.string.lorebooks_picker_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.lorebooks_picker_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+            }
 
             if (settings.lorebooks.isEmpty()) {
                 Text(
@@ -314,11 +339,10 @@ internal fun LorebooksPickerSheet(
                     }
 
                     CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            ),
+                        Surface(
+                            color = Color(0xFF000000),
                             shape = shape,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = { onNavigateToLorebook(lorebook.id.toString()) }
                         ) {
                             Row(
