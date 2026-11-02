@@ -1104,22 +1104,31 @@ private fun EntryEditorSheet(
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.65f)
                         )
-                        DebouncedTextField(
-                            value = tokenBudget.toString(),
-                            onValueChange = { newVal ->
-                                val parsed = newVal.filter { it.isDigit() }.toIntOrNull() ?: 1000
-                                tokenBudget = parsed
+                        HapticSwitch(
+                            checked = tokenBudget <= 0,
+                            onCheckedChange = { unlimited ->
+                                tokenBudget = if (unlimited) 0 else 1000
                                 if (entry != null) {
-                                    onAutoSave?.invoke(buildCurrentEntry(currentTokenBudget = parsed))
+                                    onAutoSave?.invoke(buildCurrentEntry(currentTokenBudget = tokenBudget))
                                 }
                             },
-                            stateKey = "entry_token_budget_${entry?.id ?: "new"}",
-                            modifier = Modifier.width(90.dp),
-                            singleLine = true,
                         )
                     }
+                    DebouncedTextField(
+                        value = tokenBudget.toString(),
+                        onValueChange = { newVal ->
+                            val parsed = newVal.filter { it.isDigit() }.toIntOrNull() ?: 1000
+                            tokenBudget = parsed
+                            if (entry != null) {
+                                onAutoSave?.invoke(buildCurrentEntry(currentTokenBudget = parsed))
+                            }
+                        },
+                        stateKey = "entry_token_budget_${entry?.id ?: "new"}",
+                        modifier = Modifier.width(90.dp),
+                        singleLine = true,
+                    )
                     DomChatSlider(
-                        value = tokenBudget.coerceIn(100, 8192).toFloat(),
+                        value = tokenBudget.coerceIn(0f, 65536f).toFloat(),
                         onValueChange = { newVal: Float ->
                             val parsed = newVal.toInt()
                             tokenBudget = parsed
@@ -1127,7 +1136,7 @@ private fun EntryEditorSheet(
                                 onAutoSave?.invoke(buildCurrentEntry(currentTokenBudget = parsed))
                             }
                         },
-                        valueRange = 100f..8192f,
+                        valueRange = 0f..65536f,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

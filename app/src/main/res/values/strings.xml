@@ -532,7 +532,7 @@
     <string name="select_and_copy">Select &amp; Copy</string>
     <string name="send">Send</string>
     <string name="setting_display_page_amoled_dark_mode_desc">Use pure black background in dark mode</string>
-    <string name="setting_display_page_amoled_dark_mode_title">AMOLED Dark Mode</string>
+    <string name="setting_display_page_amoled_dark_mode_title">Dark Mode</string>
     <string name="setting_display_page_auto_collapse_thinking_desc">Automatically collapse thinking content when done</string>
     <string name="setting_display_page_auto_collapse_thinking_title">Auto Collapse Thinking</string>
     <string name="setting_display_page_reasoning_preview_desc">Expand the activity pill to show live reasoning while generating</string>

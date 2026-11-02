@@ -81,11 +81,8 @@ fun DomChatAboutContent(
         Spacer(Modifier.height(8.dp))
         Surface(
             color = Color(0xFF000000),
-            shape = CircleShape,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                Color.White.copy(alpha = 0.20f)
-            ),
+            shape = RoundedCornerShape(8.dp),
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             modifier = Modifier
                 .padding(vertical = 4.dp)
                 .pointerInput(onVersionLongPress) {
@@ -100,7 +97,7 @@ fun DomChatAboutContent(
                 },
         ) {
             Text(
-                text = "v$versionName",
+                text = "v$versionName • Maintained by Lucid",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
@@ -115,7 +112,7 @@ fun DomChatAboutContent(
         ) {
             DomChatAboutItem(
                 icon = Icons.Rounded.Code,
-                title = "Maintained by Domcord",
+                title = "Maintained by Lucid",
                 subtitle = "https://github.com/DomcordFr/Domchat",
                 trailing = Icons.AutoMirrored.Rounded.OpenInNew,
                 darkTheme = darkTheme,
