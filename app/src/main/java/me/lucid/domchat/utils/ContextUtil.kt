@@ -21,7 +21,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import me.lucid.common.http.urlDecode
-import me.lucid.common.platform.GlobalContext
+import org.koin.core.context.GlobalContext
 import me.lucid.common.platform.PlatformHttpClient
 import me.lucid.common.platform.PlatformHttpRequest
 import okio.buffer
