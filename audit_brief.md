@@ -1,81 +1,56 @@
-# Audit Brief — Fix Jai Hub Popover, Import Button Animation, Character Hub Images, and Dropdown Arrows
-
-**Task:** task-067 — seven coordinated fixes across three files.
+# Audit Brief — Task 068: Redirect Persona Editing to Settings & Unify Glassy Black Destructive Confirmation Dialogs
 
 ## Intent Verification
 
-Confirmed against `task-067_directive.json`:
+| Requirement | File | Status |
+|---|---|---|
+| Remove cramped inline persona edit/create form from chat persona bottom sheet | `PersonaPickerBottomSheet.kt` | Done — `isEditingOrCreating`, `editingTargetId`, `form*`, `avatarGalleryLauncher`, `openCreateForm`, `openEditForm`, `savePersona`, and the `AnimatedVisibility` creator/editor block removed. Search field + personas list always visible. |
+| Tap Edit (header "Manage Personas") → close sheet + `navController.navigate(Screen.SettingPersonas)` | `PersonaPickerBottomSheet.kt` | Done (header Edit surface already routed to `Screen.SettingPersonas`; preserved). |
+| Tap Create Persona (+) → close sheet + `navController.navigate(Screen.SettingPersonas)` | `PersonaPickerBottomSheet.kt` | Done — `openCreateForm()` replaced with `onDismissRequest(); navController.navigate(Screen.SettingPersonas)`. |
+| Tap Edit on any persona row → close sheet + `navController.navigate(Screen.SettingPersonas)` | `PersonaPickerBottomSheet.kt` | Done — per-row Edit surface now calls `onDismissRequest(); navController.navigate(Screen.SettingPersonas)` instead of `openEditForm(persona)`. |
+| Delete persona shows `AlertDialog` with `containerColor = domChatDialogContainerColor()` (pure black 0xFF000000), `modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog)`, `ApplyDialogWindowBlur()` | `PersonaPickerBottomSheet.kt` | Done — `personaToDelete` state + dialog at bottom-sheet scope. |
+| Character delete confirmation dialog: pure black container + `modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog)` | `CharacterHubPage.kt` | Done — modifier added to existing `AlertDialog` (container already `domChatDialogContainerColor()`). |
+| Delete preset shows `AlertDialog` confirmation (was inline-delete with no confirmation) | `PromptPresetsBottomSheet.kt` | Done — `presetToDelete` state, delete icon sets state instead of calling `deletePreset` directly, dialog added. |
+| Delete preset shows `AlertDialog` confirmation (was inline-delete with no confirmation) | `SettingPresetsPage.kt` | Done — `presetToDelete` state, delete TextButton sets state, dialog added after the edit dialog. |
 
-1. **Jai Popover Animation** — Refactored the inline `selectedCharacter?.let { ... ModalBottomSheet(...) }` block in `SettingJanitorPage.kt` into a self-contained `@Composable private fun JanitorCharacterInspectorSheet(...)`. It owns `rememberModalBottomSheetState(skipPartiallyExpanded = true)`, calls `sheetState.show()` via `LaunchedEffect(character)` for smooth bottom-sheet entry, and exposes `dismissWithAnimation()` (guarded by `isDismissing`) that calls `sheetState.hide()` then `onDismiss()`. Page-level `bottomSheetState`, `viewerImageUrls`, `viewerOpen`, `viewerCurrentPage` removed; all state now lives inside the composable.
-
-2. **Import Button Animation** — `buttonBgColor` changed from a plain `val` to `val buttonBgColor by animateColorAsState(targetValue = ..., animationSpec = tween(300), label = "ImportButtonBg")`. Button content wrapped in `AnimatedContent(targetState = importStatus, transitionSpec = { fadeIn(tween(150)) + fadeOut(tween(150)) }, label = "ImportButtonContent")` so the transition to the green "Imported!" checkmark is smooth.
-
-3. **Import Coroutine Cancellation** — In the import `catch (e: Exception)` block, added `if (e is CancellationException) throw e` before setting error state, so sheet dismissal (cancellation) does not surface a false error toast.
-
-4. **Preserve Embedded Images** — `embeddedImageUrls` now merges textBlobs from BOTH `character` and `fullExtract` (bio, description, firstMessage, alternateGreetings from each) instead of eliding one side with `?:`, so images never disappear when `fullExtract` finishes loading. Notes tab: `creatorNotes` containing `![` or `<img` takes precedence over plain extracted descriptions.
-
-5. **Character Hub Popover Images** — In `CharacterInspectorSheet` (`CharacterHubPage.kt`), the Embedded Images gallery block was removed from between the hero image and the content area, and re-inserted below the Secondary Character Management buttons (Export, Clone, Delete) inside the content `Column` that already carries `.padding(horizontal = 20.dp)`, so it never touches screen edges.
-
-6. **Unified Dropdown Chevron** — `Icons.Rounded.ArrowDropDown` → `Icons.Rounded.KeyboardArrowDown` in all three files; imports updated accordingly (`ArrowDropDown` import removed, `KeyboardArrowDown` import added where absent). `SettingLorebookDetailPage.kt` already imported `KeyboardArrowDown`; the unused `ArrowDropDown` import was removed.
-
-7. **Jai Search respects feedMode** — `loadSearch()` normal query URL now appends `&sort=$sortParam` where `sortParam` maps `Popular → popular`, `Trending → trending`, `Trending 24h → 24h`, `Latest → latest`. Added `LaunchedEffect(feedMode)` that re-triggers `loadSearch()` when `feedMode` changes and `searchQuery` is not blank.
-
-Files edited:
-- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt`
-- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingLorebookDetailPage.kt`
-
-No Gradle build was run (per constraint).
-
-Null safety: no `!!` introduced. All nullable reads use Elvis (`?:`), safe calls (`?.`), or `orEmpty()`. `conversation`/`character`/`assistant` references are non-null in their scopes.
-
-Glass-card theme: `0xFF141520` preserved on image box backgrounds; no theme colors altered.
+`Screen.SettingPersonas` exists as `data object SettingPersonas : Screen` at `RouteActivity.kt:1453`. `domChatDialogContainerColor()` = `Color(0xFF000000)` (pure black) per `Blur.kt:335`. `AppShapes.Dialog` = `RoundedCornerShape(28.dp)` per `DomChatDesignTokens.kt:82`.
 
 ## Call Chain & Architecture
 
-**SettingJanitorPage.kt**
-- `SettingJanitorPage` (UI layer) renders the JanitorAI hub grid. On character card click, sets `selectedCharacter = character`; the `selectedCharacter?.let { JanitorCharacterInspectorSheet(...) }` call composes the sheet.
-- `JanitorCharacterInspectorSheet` owns `ModalBottomSheet` with internal `sheetState`. `LaunchedEffect(character)` calls `sheetState.show()` on selection for smooth bottom-up animation. `dismissWithAnimation()` hides sheet then invokes `onDismiss()` (which clears `selectedCharacter`).
-- Import flow: click → `scope.launch { ... }` → `withContext(Dispatchers.IO) { httpClient.execute(...) }` → `extractToAssistant(...)` → `assistantVM.addAssistant(...)`. ViewModel/Repository boundary handles persistence.
-- `loadSearch()` executes search via `/api/search?q=...&sort=$sortParam` on `Dispatchers.IO`; results posted to `Dispatchers.Main`.
-- `loadBrowse()` similar pattern for browse tabs.
+**Persona edit/create (chat sheet → settings):**
+`PersonaPickerBottomSheet` header Edit / (+) / per-row Edit icons → `onDismissRequest()` (sheet collapse callback owned by caller) → `navController.navigate(Screen.SettingPersonas)` → `RouteActivity` `NavHost` `composable<Screen.SettingPersonas>` → `SettingPersonasPage` (settings). UI layer only emits intents; no business logic in the sheet. Navigation uses the existing type-safe `Screen` route — no direct `navController.navigate(Screen.Chat(...))` violation.
 
-**CharacterHubPage.kt**
-- `CharacterHubPage` renders the character gallery; `inspectingAssistant` triggers `CharacterInspectorSheet(...)`. The sheet owns its own `sheetState` and `dismissWithAnimation()`.
-- Embedded Images gallery now lives inside the content `Column(.padding(horizontal = 20.dp))` below Start Chat / Edit / Export / Clone / Delete buttons.
-- `onStartChat` → `vm.createConversation(char.id)` on `Dispatchers.IO` → `navigateToChatPage(...)` on Main.
+**Persona delete:**
+`Delete` icon (row, only when `currentPersonas.size > 1`) → `personaToDelete = persona` (remembered UI state) → `AlertDialog` enters composition over the sheet → confirm `Delete` → `deletePersona(id)` → `scope.launch { settingsStore.update { ... } }` → `SettingsStore.update` canonical API (normalization + secret migration + DataStore persist + in-memory state) → dismiss (`personaToDelete = null`). Cancel → `personaToDelete = null`.
 
-**SettingLorebookDetailPage.kt**
-- Chevron-only change; no logic impact.
+**Preset delete (PromptPresetsBottomSheet / SettingPresetsPage):**
+Delete icon / TextButton → `presetToDelete = preset` → `AlertDialog` → confirm → `deletePreset(id)` → `settingsStore.update` (bottom sheet) / `vm.updateSettings` (settings page, ViewModel → Repository) → DataStore persist → dismiss. In `PromptPresetsBottomSheet`, `deletePreset` also syncs `conversation.enabledPromptPresetIds` when `onUpdateConversation` is provided (per-chat override path preserved).
 
-Layering respected: UI renders state and emits intents; ViewModel owns business logic and coroutine management; Repository handles data.
+**Character delete (CharacterHubPage):**
+`CharacterInspectorSheet.onDelete` → `characterToDelete = char` → existing `AlertDialog` → confirm → `vm.removeAssistant(toDelete)` with undo toast → `characterToDelete = null`.
+
+Call depth: UI → ViewModel (`AssistantVM`/`SettingVM`) → Repository → DataStore (EncryptedSharedPreferences / DataStore Preferences). No repository logic added; only UI confirmation gating introduced before existing mutators.
 
 ## Recomposition & Memory Safety
 
-- `sheetState`, `viewerImageUrls`, `viewerOpen`, `viewerCurrentPage`, `isImporting`, `importStatus`, `fullExtract`, `isExtractLoading`, `sheetSelectedTab` all use `remember(...)` / `remember(character.id)` / `mutableStateOf` — Compose-lifecycle-aware, no naked objects.
-- `buttonBgColor by animateColorAsState(...)` — recomputes only when `importStatus` changes; tween(300) is bounded.
-- `AnimatedContent` with `fadeIn`/`fadeOut` tween(150) — bounded transitions, no infinite recomposition.
-- `LaunchedEffect(character)` for `sheetState.show()` — runs once per character selection, keyed on `character`, no repeated execution.
-- `LaunchedEffect(feedMode)` — runs only when `feedMode` changes, guarded by `searchQuery.isNotBlank()`.
-- No `SnapshotStateList`/mutable collections passed to `items(...)`. All `items(...)` use stable keys (`it.id`, `it`).
-- `rememberPremiumHaptics()` — Compose-lifecycle-aware haptics handle (consistent with other declarations in the file).
-- No `!!` force-unwraps anywhere in the edited regions.
+- All dialog-scoped state is `remember { mutableStateOf<...?>(null) }` keyed to the composable lifetime: `personaToDelete` (PersonaPicker), `presetToDelete` (both preset files), `characterToDelete` (CharacterHub, pre-existing). Dialogs compose conditionally via `?.let { }` — when null, no `AlertDialog` nodes enter the composition, so no leaked dialog windows.
+- No `!!` anywhere. Nullable handled via safe-call `?.let`, Elvis `?:`, and `firstOrNull()?.id` in `deletePersona`.
+- `rememberModalBottomSheetState`, `rememberCoroutineScope`, `rememberPremiumHaptics`, `rememberAmoledDarkMode` — all lifecycle-aware remember calls; no naked objects.
+- `AlertDialog` uses `properties = DialogProperties(usePlatformDefaultWidth = false)` + `Modifier.widthIn(max = 320.dp)` to avoid oversized dialogs on small screens; `shape = AppShapes.Dialog` clamps the container to the 28.dp token.
+- `ApplyDialogWindowBlur()` is invoked inside `titleContent` (a `@Composable` slot) so the `LaunchedEffect` inside it runs once per dialog instance, keyed on `LocalView.current` + blur radius + blur-active flag — no per-frame recomposition.
+- No `SnapshotStateList` passed to `LazyColumn.items`; `filteredPersonas` / `allPresets` are immutable `List` snapshots derived via `remember(…, …)` — safe for `items(…, key = { it.id })`.
+- `personaToDelete`/`presetToDelete` writes happen only inside `onClick` lambdas, never during composition — no side-effect-during-compose violations.
 
 ## Threading & Dispatchers
 
-- Network (`httpClient.execute`) strictly on `Dispatchers.IO` via `withContext(Dispatchers.IO) {}`.
-- State updates (`searchState = ...`, `browseState = ...`, `fullExtract = ...`, `isExtractLoading = ...`) marshalled back to `Dispatchers.Main` via `withContext(Dispatchers.Main) {}`.
-- `scope.launch {}` (UI `rememberCoroutineScope()`) used for import coroutine and sheet show/hide — UI-scope, not `Dispatchers.Main` for I/O.
-- `sheetState.show()` / `sheetState.hide()` are suspending ModalBottomSheetState calls, correctly invoked inside `scope.launch {}` / `LaunchedEffect`.
-- No `Dispatchers.Main` used for disk/network; no `withContext(Dispatchers.Main)` for compute.
-- `CancellationException` rethrow prevents spurious error toasts when the coroutine is cancelled by sheet dismissal.
+- All `settingsStore.update { … }` / `vm.updateSettings` / `vm.removeAssistant` calls run inside `scope.launch { … }` (coroutineScope from `rememberCoroutineScope`, inherits Main dispatcher). `SettingsStore.update` performs DataStore IO internally (Dispatchers.IO inside the datastore) — UI coroutine does not block Main.
+- `CharacterHubPage` already uses `withContext(Dispatchers.IO)` for file import/export and `withContext(Dispatchers.Default)` for search filtering, then `withContext(Dispatchers.Main)` to write UI state — unchanged by this task.
+- No new coroutines introduced beyond the existing `scope.launch` wrappers around the pre-existing mutators (`deletePersona`, `deletePreset`, `vm.removeAssistant`). No `Dispatchers.Main` blocking, no `runBlocking`.
+- No `java.util.concurrent` types used.
 
 ## Offline & Error State Handling
 
-- `JanitorLoadState` sealed class (`Loading` / `Success(items)` / `Error(message)`) explicitly models all states; UI renders loader, error text, or cards accordingly.
-- Browse errors retain existing items when available (toaster shows "Failed to load more...") rather than wiping state.
-- Search errors: `searchState = JanitorLoadState.Error("...")`; catch block shows generic unexpected-error toast.
-- Import: `ImportStatus.IDLE / IMPORTING / SUCCESS / ERROR`; ERROR state renders red "Import Failed" button; catch block shows `toaster.show("Import error: ...", ToastType.Error)`.
-- CancellationException rethrown — not swallowed as error — so dismissal never produces a false error toast.
-- Undo pattern exists elsewhere in the codebase (delete flows) but import is fire-and-forget; no partial state to roll back on failure since `assistantVM.addAssistant` only runs on success.
-- Offline: search/browse are network-dependent; errors surface via `ToastType.Error` and `JanitorLoadState.Error`. Local state (`currentItems`) is retained across transient failures.
+- Persona/preset mutations write to `Settings` DataStore (local, always available) — fully offline-capable; no network dependency. `SettingsStore.update` is the canonical path and is crash-safe (normalization stages run inside the update block).
+- `deletePersona` guards active-persona reassignment: if the deleted persona is active, falls back to `remaining.firstOrNull()?.id` — null-safe via `?.id`, so deletion of the last active persona leaves `activePersonaId` unchanged rather than throwing.
+- Delete is gated behind confirmation, so accidental taps cannot cause data loss. Character delete keeps an Undo toast with `vm.undoRemoveAssistant(toDelete)` (pre-existing safety net).
+- No exception paths were introduced; existing `try/catch` in unrelated flows (import/export, character start chat) untouched. Errors from DataStore writes propagate through the normal `SettingsStore.update` mechanism and are not swallowed by this change.

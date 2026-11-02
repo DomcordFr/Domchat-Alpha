@@ -105,6 +105,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
 
     var showEditDialog by remember { mutableStateOf(false) }
     var editingPreset by remember { mutableStateOf<PromptPreset?>(null) }
+    var presetToDelete by remember { mutableStateOf<PromptPreset?>(null) }
     var draftName by remember { mutableStateOf("") }
     var draftDescription by remember { mutableStateOf("") }
     var draftContent by remember { mutableStateOf("") }
@@ -486,7 +487,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 }
 
                                 if (!preset.isSystem) {
-                                    TextButton(onClick = { deletePreset(preset.id) }) {
+                                    TextButton(onClick = { presetToDelete = preset }) {
                                         Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFFFF453A))
                                         Spacer(Modifier.width(4.dp))
                                         Text("Delete", style = MaterialTheme.typography.labelSmall, color = Color(0xFFFF453A))
@@ -571,6 +572,55 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
             dismissButton = {
                 TextButton(onClick = { showEditDialog = false }) {
                     Text("Cancel", color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Unspecified)
+                }
+            }
+        )
+    }
+
+    // Preset delete confirmation dialog (glassy black, destructive)
+    presetToDelete?.let { preset ->
+        AlertDialog(
+            onDismissRequest = { presetToDelete = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
+            shape = AppShapes.Dialog,
+            containerColor = domChatDialogContainerColor(),
+            title = {
+                ApplyDialogWindowBlur()
+                Text(
+                    text = "Delete ${preset.name}?",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            },
+            text = {
+                Text(
+                    text = "This preset will be permanently removed from your presets list.",
+                    fontSize = 13.5.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        deletePreset(preset.id)
+                        presetToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF453A),
+                        contentColor = Color.White
+                    ),
+                    shape = AppShapes.CardMedium
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { presetToDelete = null }) {
+                    Text("Cancel", color = Color.White.copy(alpha = 0.7f))
                 }
             }
         )

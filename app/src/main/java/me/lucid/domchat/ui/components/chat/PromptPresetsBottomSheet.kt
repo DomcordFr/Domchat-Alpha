@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,6 +73,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
@@ -81,6 +84,7 @@ import me.lucid.domchat.data.model.PromptPreset
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip
@@ -88,6 +92,7 @@ import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
+import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import org.koin.compose.koinInject
 
@@ -134,6 +139,7 @@ fun PromptPresetsBottomSheet(
 
     var isEditingOrCreating by remember { mutableStateOf(false) }
     var editingTargetId by remember { mutableStateOf<String?>(null) }
+    var presetToDelete by remember { mutableStateOf<PromptPreset?>(null) }
     var formName by remember { mutableStateOf("") }
     var formDescription by remember { mutableStateOf("") }
     var formContent by remember { mutableStateOf("") }
@@ -705,7 +711,7 @@ fun PromptPresetsBottomSheet(
                                     IconButton(
                                         onClick = {
                                             haptics.perform(HapticPattern.Pop)
-                                            deletePreset(preset.id)
+                                            presetToDelete = preset
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {
@@ -735,5 +741,54 @@ fun PromptPresetsBottomSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
         }
+    }
+
+    // Preset delete confirmation dialog (glassy black, destructive)
+    presetToDelete?.let { preset ->
+        AlertDialog(
+            onDismissRequest = { presetToDelete = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
+            shape = AppShapes.Dialog,
+            containerColor = domChatDialogContainerColor(),
+            title = {
+                ApplyDialogWindowBlur()
+                Text(
+                    text = "Delete ${preset.name}?",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "This preset will be permanently removed from your presets list.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        deletePreset(preset.id)
+                        presetToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { presetToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

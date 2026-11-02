@@ -1111,6 +1111,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             onDismissRequest = { characterToDelete = null },
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             title = {
                 me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(
