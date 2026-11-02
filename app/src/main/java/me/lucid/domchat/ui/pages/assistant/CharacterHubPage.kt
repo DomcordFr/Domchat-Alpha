@@ -137,6 +137,7 @@ import kotlin.text.Regex
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
+import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.AppToasterState
@@ -1384,10 +1385,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     // Delete confirmation dialog
     characterToDelete?.let { char ->
-        DeleteConfirmationDialog(
+        UniversalDestructiveConfirmDialog(
             visible = true,
-            assistant = char,
-            onDismiss = { characterToDelete = null },
+            title = "Delete character?",
+            message = "This will permanently remove \"${char.effectiveDisplayName}\" from your library.",
             onConfirm = {
                 vm.removeAssistant(char)
                 characterToDelete = null
@@ -1398,6 +1399,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         onClick = { vm.undoRemoveAssistant(char) }
                     )
                 )
+            },
+            onDismiss = {
+                characterToDelete = null
             }
         )
     }

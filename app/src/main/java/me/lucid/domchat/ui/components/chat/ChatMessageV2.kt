@@ -112,6 +112,7 @@ import me.lucid.domchat.data.ai.tools.parseJsonElementWithRecovery
 import me.lucid.domchat.ui.components.message.ChatMessageActionButtons
 import me.lucid.domchat.ui.components.message.ChatMessageActionsSheet
 import me.lucid.domchat.ui.components.message.ChatMessageCopySheet
+import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.message.ActiveChatMessageAction
 import me.lucid.domchat.ui.components.message.LocalActiveChatMessageAction
 import me.lucid.domchat.ui.components.richtext.buildMarkdownPreviewHtml
@@ -1068,6 +1069,8 @@ fun ChatMessageTurn(
     // State for sheets
     var showActionsSheet by remember { mutableStateOf(false) }
     var showSelectCopySheet by remember { mutableStateOf(false) }
+    var showConfirmDelete by remember { mutableStateOf(false) }
+    var messageToDelete by remember { mutableStateOf<MessageNode?>(null) }
     var timelineOpen by remember { mutableStateOf(false) }
     var timelineOpenRequest by remember { mutableStateOf<TimelineOpenRequest?>(null) }
     var showUserDropdown by remember { mutableStateOf(false) }
@@ -1210,7 +1213,10 @@ fun ChatMessageTurn(
                         message = actionTargetNode.currentMessage,
                         model = model,
                         onEdit = { onEdit(actionTargetNode) },
-                        onDelete = { onDelete(actionTargetNode) },
+                        onDelete = {
+                            messageToDelete = actionTargetNode
+                            showConfirmDelete = true
+                        },
                         onFork = { onFork(actionTargetNode) },
                         onSelectAndCopy = { showSelectCopySheet = true },
                         onWebViewPreview = {
@@ -1230,7 +1236,10 @@ fun ChatMessageTurn(
             ChatMessageActionsSheet(
                 message = actionTargetNode.currentMessage,
                 onEdit = { onEdit(actionTargetNode) },
-                onDelete = { onDelete(actionTargetNode) },
+                onDelete = {
+                    messageToDelete = actionTargetNode
+                    showConfirmDelete = true
+                },
                 onFork = { onFork(actionTargetNode) },
                 model = model,
                 onSelectAndCopy = { showSelectCopySheet = true },
@@ -1253,6 +1262,23 @@ fun ChatMessageTurn(
         ChatMessageCopySheet(
             message = actionTargetNode.currentMessage,
             onDismissRequest = { showSelectCopySheet = false }
+        )
+    }
+
+    messageToDelete?.let { nodeToDelete ->
+        UniversalDestructiveConfirmDialog(
+            visible = showConfirmDelete,
+            title = "Delete message?",
+            message = "This will permanently remove this message from the conversation.",
+            onConfirm = {
+                onDelete(nodeToDelete)
+                messageToDelete = null
+                showConfirmDelete = false
+            },
+            onDismiss = {
+                messageToDelete = null
+                showConfirmDelete = false
+            }
         )
     }
 }

@@ -85,6 +85,7 @@ import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.data.model.Lorebook
 import me.lucid.domchat.data.model.collectMediaFileRefs
+import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.FormItem
@@ -249,6 +250,8 @@ fun LorebooksPageContent(
     var isUnlocked by remember { mutableStateOf(false) }
     var neighborsUnlocked by remember { mutableStateOf(false) }
     var orderedLorebooks by remember { mutableStateOf(settings.lorebooks) }
+    var showConfirmDelete by remember { mutableStateOf(false) }
+    var lorebookToDelete by remember { mutableStateOf<Lorebook?>(null) }
     var isReordering by remember { mutableStateOf(false) }
     var awaitingPersistedOrder by remember { mutableStateOf(false) }
     val canDelete = true
@@ -374,34 +377,8 @@ fun LorebooksPageContent(
                                     }
                                 },
                                 onDelete = {
-                                    val deletedLorebook = lorebook
-                                    val cleanupKey = "lorebook:${deletedLorebook.id}"
-                                    vm.updateSettings(
-                                        settings.copy(lorebooks = settings.lorebooks.filter { it.id != lorebook.id })
-                                    )
-                                    vm.cleanupFilesIfUnreferenced(
-                                        fileRefs = deletedLorebook.collectMediaFileRefs(),
-                                        delayMs = me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS,
-                                        cleanupKey = cleanupKey,
-                                    )
-                                    toaster.show(
-                                        message = context.getString(
-                                            R.string.lorebooks_page_deleted,
-                                            lorebook.name.ifEmpty { context.getString(R.string.lorebooks_page_unnamed) }
-                                        ),
-                                        duration = me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS,
-                                        action = ToastAction(
-                                            label = context.getString(R.string.undo),
-                                            onClick = {
-                                                vm.cancelUnreferencedFileCleanup(cleanupKey)
-                                                vm.updateSettings(
-                                                    settings.copy(lorebooks = settings.lorebooks.toMutableList().apply {
-                                                        add(index.coerceAtMost(size), deletedLorebook)
-                                                    })
-                                                )
-                                            }
-                                        )
-                                    )
+                                    lorebookToDelete = lorebook
+                                    showConfirmDelete = true
                                 },
                                 modifier = Modifier
                                     .scale(if (isDragging) 0.95f else 1f)
@@ -459,6 +436,49 @@ fun LorebooksPageContent(
                         )
                     )
                 )
+        )
+    }
+}
+
+    lorebookToDelete?.let { lorebook ->
+        UniversalDestructiveConfirmDialog(
+            visible = showConfirmDelete,
+            title = "Delete lorebook?",
+            message = "This will permanently remove \"${lorebook.name.ifEmpty { "Unnamed Lorebook" }}\" and all its entries.",
+            onConfirm = {
+                vm.updateSettings(
+                    settings.copy(lorebooks = settings.lorebooks.filter { it.id != lorebook.id })
+                )
+                vm.cleanupFilesIfUnreferenced(
+                    fileRefs = lorebook.collectMediaFileRefs(),
+                    delayMs = me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS,
+                    cleanupKey = "lorebook:${lorebook.id}",
+                )
+                toaster.show(
+                    message = context.getString(
+                        R.string.lorebooks_page_deleted,
+                        lorebook.name.ifEmpty { context.getString(R.string.lorebooks_page_unnamed) }
+                    ),
+                    duration = me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS,
+                    action = ToastAction(
+                        label = context.getString(R.string.undo),
+                        onClick = {
+                            vm.cancelUnreferencedFileCleanup("lorebook:${lorebook.id}")
+                            vm.updateSettings(
+                                settings.copy(lorebooks = settings.lorebooks.toMutableList().apply {
+                                    add(index.coerceAtMost(size), lorebook)
+                                })
+                            )
+                        }
+                    )
+                )
+                lorebookToDelete = null
+                showConfirmDelete = false
+            },
+            onDismiss = {
+                lorebookToDelete = null
+                showConfirmDelete = false
+            }
         )
     }
 }

@@ -88,6 +88,7 @@ import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.components.chat.ConversationRowSurface
+import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.nav.DomChatDrawerSearch
 import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.ui.text.style.TextAlign
@@ -745,6 +746,8 @@ fun ConversationListPage() {
     val recentlyRestoredIds by vm.recentlyRestoredIds.collectAsStateWithLifecycle(emptySet())
     var searchQuery by remember { mutableStateOf("") }
     var isSearchExpanded by remember { mutableStateOf(false) }
+    var showConfirmDelete by remember { mutableStateOf(false) }
+    var conversationToDelete by remember { mutableStateOf<Conversation?>(null) }
 
     val assistants by vm.assistants.collectAsStateWithLifecycle(emptyList())
     val assistantMap by remember(assistants) { assistants.associateBy { it.id } }
@@ -777,7 +780,8 @@ fun ConversationListPage() {
                 navigateToChatPage(navController, conversation.id)
             },
             onDelete = { conversation ->
-                vm.deleteConversation(conversation)
+                conversationToDelete = conversation
+                showConfirmDelete = true
             },
             onRegenerateTitle = { conversation ->
                 vm.generateTitle(conversation, true)
@@ -789,6 +793,23 @@ fun ConversationListPage() {
                 vm.updatePinnedStatus(conversation)
             },
             getAssistant = { assistantMap[it] },
+        )
+    }
+
+    conversationToDelete?.let { conversation ->
+        UniversalDestructiveConfirmDialog(
+            visible = showConfirmDelete,
+            title = "Delete conversation?",
+            message = "This will permanently remove \"${conversation.title.ifBlank { "Unnamed conversation" }}\" from your history.",
+            onConfirm = {
+                vm.deleteConversation(conversation)
+                conversationToDelete = null
+                showConfirmDelete = false
+            },
+            onDismiss = {
+                conversationToDelete = null
+                showConfirmDelete = false
+            }
         )
     }
 }
