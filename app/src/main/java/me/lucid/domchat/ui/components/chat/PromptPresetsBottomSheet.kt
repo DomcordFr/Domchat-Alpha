@@ -535,27 +535,34 @@ fun PromptPresetsBottomSheet(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             Surface(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0xFF141520).copy(alpha = 0.45f))
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp)),
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF141520).copy(alpha = 0.55f))
+                                    .border(
+                                        0.5.dp,
+                                        if (positionMenuOpen) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                        RoundedCornerShape(12.dp)
+                                    ),
                                 color = Color.Transparent,
                                 onClick = { positionMenuOpen = true },
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
                                         text = when (formPosition) {
-                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                                            PresetInjectionPosition.AT_DEPTH -> "Depth $formDepth"
-                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                                            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System Prompt"
+                                            PresetInjectionPosition.AT_DEPTH -> "At Depth ($formDepth)"
+                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before Last User"
+                                            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History Instructions"
                                         },
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
@@ -565,7 +572,7 @@ fun PromptPresetsBottomSheet(
                                     Icon(
                                         imageVector = Icons.Rounded.KeyboardArrowDown,
                                         contentDescription = "Dropdown",
-                                        tint = Color.White,
+                                        tint = Color.White.copy(alpha = 0.85f),
                                         modifier = Modifier.size(20.dp).rotate(positionArrowRotation),
                                     )
                                 }
@@ -573,11 +580,11 @@ fun PromptPresetsBottomSheet(
                             DropdownMenu(
                                 expanded = positionMenuOpen,
                                 onDismissRequest = { positionMenuOpen = false },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 containerColor = Color(0xFF000000),
                                 modifier = Modifier
                                     .background(Color(0xFF000000))
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(14.dp))
                             ) {
                                 PresetInjectionPosition.entries.forEach { pos ->
                                     val isSelected = formPosition == pos
@@ -585,10 +592,10 @@ fun PromptPresetsBottomSheet(
                                         text = {
                                             Text(
                                                 text = when (pos) {
-                                                    PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                                                    PresetInjectionPosition.AT_DEPTH -> "Depth D"
-                                                    PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                                                    PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                                    PresetInjectionPosition.SYSTEM_PROMPT -> "System Prompt"
+                                                    PresetInjectionPosition.AT_DEPTH -> "At Depth"
+                                                    PresetInjectionPosition.BEFORE_LAST_USER -> "Before Last User"
+                                                    PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History Instructions"
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = if (isSelected) Color.White else Color(0xFFCCCCCC),
