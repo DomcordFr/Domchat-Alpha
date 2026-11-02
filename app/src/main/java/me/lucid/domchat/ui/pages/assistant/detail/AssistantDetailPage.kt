@@ -404,8 +404,6 @@ fun AssistantDetailPage(
                         onUpdate = { onUpdate(it) },
                         vm = vm,
                         catalogSnapshot = catalogSnapshot,
-                        mcpServerConfigs = mcpServerConfigs,
-                        conversationRepository = vm.conversationRepository,
                         rootNavController = rootNavController,
                         onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
                         onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }

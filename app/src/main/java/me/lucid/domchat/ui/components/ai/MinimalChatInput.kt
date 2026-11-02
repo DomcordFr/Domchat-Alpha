@@ -94,6 +94,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.FormatItalic
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Fullscreen
@@ -2167,7 +2168,7 @@ fun MinimalChatInput(
                 }
 
                 // If Bottom Fade, show Blur Height Reach slider (animated)
-                AnimatedContent(
+                AnimatedContent<String?>(
                     key = blurModeDraft,
                     transitionSpec = {
                         (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(

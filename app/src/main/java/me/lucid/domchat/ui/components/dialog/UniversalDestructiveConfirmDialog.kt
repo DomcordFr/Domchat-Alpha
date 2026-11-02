@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
@@ -132,7 +133,7 @@ fun UniversalDestructiveConfirmDialog(
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
 
-                            Spacer(modifier = androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp)))
+                            Spacer(Modifier.height(20.dp))
 
                             // Action buttons
                             Row(
@@ -153,7 +154,7 @@ fun UniversalDestructiveConfirmDialog(
                                     Text(text = cancelLabel)
                                 }
 
-                                Spacer(modifier = androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp)))
+                                Spacer(Modifier.width(8.dp))
 
                                 // Delete button - AMOLED black with red accent border and red text
                                 Button(
@@ -180,9 +181,9 @@ fun UniversalDestructiveConfirmDialog(
                                             imageVector = DeleteIcon,
                                             contentDescription = null,
                                             tint = destructiveRed,
-                                            modifier = androidx.compose.foundation.layout.Size(20.dp)
+                                            modifier = Modifier.size(20.dp)
                                         )
-                                        Spacer(modifier = androidx.compose.foundation.layout.Spacer(Modifier.width(6.dp)))
+                                        Spacer(Modifier.width(6.dp))
                                         Text(
                                             text = confirmLabel,
                                             fontWeight = FontWeight.Bold,

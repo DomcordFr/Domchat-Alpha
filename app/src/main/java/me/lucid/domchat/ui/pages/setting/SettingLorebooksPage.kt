@@ -465,9 +465,7 @@ fun LorebooksPageContent(
                             onClick = {
                                 vm.cancelUnreferencedFileCleanup("lorebook:${lorebook.id}")
                                 vm.updateSettings(
-                                    settings.copy(lorebooks = settings.lorebooks.toMutableList().apply {
-                                        add(index.coerceAtMost(size), lorebook)
-                                    })
+                                    settings.copy(lorebooks = settings.lorebooks + lorebook)
                                 )
                             }
                         )

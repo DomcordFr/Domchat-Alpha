@@ -1525,7 +1525,6 @@ private fun ChatPageContent(
                                 showToolbarOverflowMenu = false
                                 showContextUsagePopup = !showContextUsagePopup
                             },
-                            onNewChat = onNewChat,
                             onOpenOverflowMenu = {
                                 showContextUsagePopup = false
                                 showToolbarOverflowMenu = !showToolbarOverflowMenu
@@ -2000,7 +1999,6 @@ private fun ChatPageContent(
                                 showToolbarOverflowMenu = false
                                 showContextUsagePopup = !showContextUsagePopup
                             },
-                            onNewChat = onNewChat,
                             onOpenOverflowMenu = {
                                 showContextUsagePopup = false
                                 showToolbarOverflowMenu = !showToolbarOverflowMenu

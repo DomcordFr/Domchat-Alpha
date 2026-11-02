@@ -122,7 +122,7 @@ fun AssistantCoreRoleplaySubPage(
                             stateKey = "${assistant.id}_display",
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            placeholder = { Text(stringResource(R.string.assistant_page_name_placeholder)) }
+                            placeholder = stringResource(R.string.assistant_page_name_placeholder)
                         )
                         DebouncedTextField(
                             value = assistant.chatName ?: assistant.name,
@@ -130,7 +130,7 @@ fun AssistantCoreRoleplaySubPage(
                             stateKey = "${assistant.id}_chat",
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            placeholder = { Text(stringResource(R.string.assistant_page_chat_name_placeholder)) }
+                            placeholder = stringResource(R.string.assistant_page_chat_name_placeholder)
                         )
                     }
                 }

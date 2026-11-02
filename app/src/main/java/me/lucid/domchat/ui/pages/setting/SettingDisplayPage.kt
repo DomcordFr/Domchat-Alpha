@@ -285,9 +285,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     .height(140.dp)
                                     .clip(RoundedCornerShape(AppShapes.CardMedium))
                                     .border(
-                                        0.5.dp,
-                                        LiquidGlassTokens.SpecularBorderSubtle,
-                                        RoundedCornerShape(AppShapes.CardMedium)
+                                        BorderStroke(
+                                            0.5.dp,
+                                            LiquidGlassTokens.SpecularBorderSubtle,
+                                            RoundedCornerShape(AppShapes.CardMedium)
+                                        )
                                     )
                                     .background(Color(0xFF141520))
                             ) {
@@ -410,7 +412,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             }
 
                             if (settings.displaySetting.backgroundBlurMode == BackgroundBlurMode.BOTTOM_FADE) {
-                                AnimatedContent(key = settings.displaySetting.backgroundBlurMode) {
+                                AnimatedContent<BackgroundBlurMode>(key = settings.displaySetting.backgroundBlurMode) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,

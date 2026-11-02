@@ -405,7 +405,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
             modifier = Modifier.fillMaxSize().padding(padding)
-        ) { (isGridView, selectedGroupId) ->
+        ) { (targetGrid, targetGroup) ->
             if (isGridView) {
                 LazyVerticalGrid(
                     state = gridState,
