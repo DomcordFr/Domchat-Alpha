@@ -2169,7 +2169,7 @@ fun MinimalChatInput(
 
                 // If Bottom Fade, show Blur Height Reach slider (animated)
                 AnimatedContent<String?>(
-                    key = blurModeDraft,
+                    targetState = blurModeDraft,
                     transitionSpec = {
                         (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
                             animationSpec = tween(220, easing = FastOutSlowInEasing)

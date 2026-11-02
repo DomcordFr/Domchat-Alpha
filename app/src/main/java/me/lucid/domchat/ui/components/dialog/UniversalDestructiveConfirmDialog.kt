@@ -198,4 +198,3 @@ fun UniversalDestructiveConfirmDialog(
             }
         }
     }
-}

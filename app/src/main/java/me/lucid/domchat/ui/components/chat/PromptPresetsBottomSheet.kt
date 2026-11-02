@@ -348,7 +348,6 @@ fun PromptPresetsBottomSheet(
             Box(
                 modifier = Modifier
                     .padding(top = 8.dp, bottom = 4.dp)
-                    .align(Alignment.CenterHorizontally)
             ) {
                 Box(
                     modifier = Modifier

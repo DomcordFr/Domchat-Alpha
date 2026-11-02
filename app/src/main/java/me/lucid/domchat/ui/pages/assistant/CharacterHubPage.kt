@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -1205,7 +1206,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     id = Uuid.random(),
                     name = "${char.name} (Copy)"
                 )
-                vm.addAssistant(cloned)
+                scope.launch { vm.addAssistant(cloned) }
                 inspectingAssistant = null
                 toaster?.show("Cloned ${char.name}")
             },
@@ -1530,8 +1531,7 @@ fun CharacterPortraitCard(
             .graphicsLayer {
                 compositingStrategy = CompositingStrategy.Offscreen
             }
-            .clickable(onClick = onClick)
-            .longClickable(onLongClick = onLongClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         // Full-bleed avatar background
         FullCharacterCardImage(
@@ -1626,8 +1626,7 @@ fun CharacterListRow(
                 brush = LiquidGlassTokens.SpecularBorderSubtle,
                 shape = RoundedCornerShape(16.dp)
             )
-            .clickable(onClick = onClick)
-            .longClickable(onLongClick = onLongClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1777,7 +1776,7 @@ fun CharacterInspectorSheet(
     var showAttachLorebookDialog by remember { mutableStateOf(false) }
     var lorebookToDetach by remember { mutableStateOf<Lorebook?>(null) }
     var showDetachConfirm by remember { mutableStateOf(false) }
-    val attachedLorebookList by remember(settings.lorebooks, assistant.enabledLorebookIds) {
+    val attachedLorebookList = remember(settings.lorebooks, assistant.enabledLorebookIds) {
         settings.lorebooks.filter { it.id in assistant.enabledLorebookIds }
     }
     val hasAttachedLorebooks = attachedLorebookList.isNotEmpty()
@@ -2391,7 +2390,7 @@ fun CharacterInspectorSheet(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            attachedLorebookList.forEach { lorebook ->
+                                            attachedLorebookList.forEach { lorebook: Lorebook ->
                                                 val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
                                                 Box(
                                                     modifier = Modifier

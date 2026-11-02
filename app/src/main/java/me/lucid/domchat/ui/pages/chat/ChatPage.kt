@@ -1546,7 +1546,8 @@ private fun ChatPageContent(
                             },
                             onToggleTemporaryChat = {
                                 onManualTemporaryChatChange(!manualTemporaryChat)
-                            }
+                            },
+                            onNewChat = onNewChat
                         )
                         }
                     }
@@ -2020,7 +2021,8 @@ private fun ChatPageContent(
                             },
                             onToggleTemporaryChat = {
                                 onManualTemporaryChatChange(!manualTemporaryChat)
-                            }
+                            },
+                            onNewChat = onNewChat
                         )
                     }
                 } else {

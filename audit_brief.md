@@ -1,5 +1,5 @@
 # Intent Verification
-Verified implementation of Remove unresolved animateItem from PromptPresetsBottomSheet according to specifications.
+Verified implementation of Fix dialog brace, MinimalChatInput key param, SettingDisplayPage border and AnimatedContent, ChatPage onNewChat according to specifications.
 
 # Call Chain & Architecture
 Integrated within Compose tree and architecture invariants.

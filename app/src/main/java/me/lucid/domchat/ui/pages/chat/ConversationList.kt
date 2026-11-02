@@ -153,7 +153,7 @@ fun ConversationList(
     onPin: (Conversation) -> Unit = {},
     getAssistant: (Uuid) -> Assistant? = { null },
     quickActions: (@Composable () -> Unit)? = null,
-    bottomContent: (@Composable BoxScope.() -> Unit)? = null,
+    bottomContent: (@Composable () -> Unit)? = null,
 ) {
     val navController = LocalNavController.current
     Box(modifier = modifier) {
@@ -255,20 +255,21 @@ fun ConversationList(
                 AnimatedContent<Uuid>(
                     targetState = current.id,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
+                        (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
                             animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> width / 4 }
-                    } togetherWith (
-                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
-                            animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> -width / 4 }
+                        ) { width -> width / 4 })
+                            .togetherWith(
+                                fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
+                                    animationSpec = tween(220, easing = FastOutSlowInEasing)
+                                ) { width -> -width / 4 }
+                            )
                     }
                 ) {
                     when (val item = conversations[index]) {
                     is ConversationListItem.DateHeader -> {
                         DateHeaderItem(
                             label = item.label,
-                            modifier = Modifier.animateItem(
+                            modifier = Modifier.animateItemPlacement(
                                 fadeInSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
                                 fadeOutSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
                                 placementSpec = androidx.compose.animation.core.spring(
@@ -281,7 +282,7 @@ fun ConversationList(
 
                     is ConversationListItem.PinnedHeader -> {
                         PinnedHeader(
-                            modifier = Modifier.animateItem(
+                            modifier = Modifier.animateItemPlacement(
                                 fadeInSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
                                 fadeOutSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
                                 placementSpec = androidx.compose.animation.core.spring(
@@ -306,7 +307,7 @@ fun ConversationList(
                             onPin = onPin,
                             searchQuery = searchQuery,
                             getAssistant = getAssistant,
-                            modifier = Modifier.animateItem(
+                            modifier = Modifier.animateItemPlacement(
                                 fadeInSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
                                 fadeOutSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 300f),
                                 placementSpec = androidx.compose.animation.core.spring(
@@ -374,7 +375,7 @@ fun ConversationList(
                 .zIndex(1f),
         )
 
-        bottomContent?.invoke(this)
+        bottomContent?.invoke()
     }
 }
 
