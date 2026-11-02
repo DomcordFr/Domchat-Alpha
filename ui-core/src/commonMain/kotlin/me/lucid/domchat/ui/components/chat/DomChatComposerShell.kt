@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,6 +54,15 @@ enum class DomChatComposerAction {
     QuestionnaireSubmit,
     ToolApprovalDeny,
 }
+
+private val SpecularBorderSubtle =
+    Brush.verticalGradient(
+        listOf(
+            Color.White.copy(alpha = 0.22f),
+            Color.White.copy(alpha = 0.06f),
+            Color.Transparent,
+        ),
+    )
 
 /** Exact bottom-aligned production composer row used by Android and iOS. */
 @Composable
@@ -111,15 +121,13 @@ fun DomChatComposerAddButton(
 fun RowScope.DomChatComposerCapsule(
     modifier: Modifier = Modifier.weight(1f).heightIn(min = AppSize.ChromePill),
     containerColor: Color = Color(0xFF141520).copy(alpha = 0.60f),
+    border: BorderStroke? = BorderStroke(0.5.dp, SpecularBorderSubtle),
     content: @Composable () -> Unit,
 ) {
     Surface(
         shape = DomChatComposerInputShape,
         color = containerColor,
-        border = BorderStroke(
-            0.5.dp,
-            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
-        ),
+        border = border,
         modifier = modifier.defaultMinSize(minHeight = AppSize.ChromePill),
     ) {
         content()

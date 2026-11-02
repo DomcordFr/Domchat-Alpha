@@ -8,6 +8,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -19,6 +20,15 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.AppSurface
 
+private val SpecularBorderSubtle =
+    Brush.verticalGradient(
+        listOf(
+            Color.White.copy(alpha = 0.22f),
+            Color.White.copy(alpha = 0.06f),
+            Color.Transparent,
+        ),
+    )
+
 /** The production chat-toolbar drawer button shared by Android and iOS. */
 @Composable
 fun DomChatMenuButton(
@@ -28,10 +38,7 @@ fun DomChatMenuButton(
     size: Dp = AppSize.ChromePill,
     shape: Shape = AppShapes.ButtonPill,
     containerColor: Color = Color(0xFF000000).copy(alpha = 0.65f),
-    border: BorderStroke = BorderStroke(
-        0.5.dp,
-        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
-    ),
+    border: BorderStroke = BorderStroke(0.5.dp, SpecularBorderSubtle),
 ) {
     Surface(
         onClick = onClick,
