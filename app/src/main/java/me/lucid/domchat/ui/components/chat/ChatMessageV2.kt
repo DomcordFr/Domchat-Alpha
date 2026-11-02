@@ -1042,6 +1042,8 @@ fun ChatMessageTurn(
     onModeClick: ((me.lucid.ai.ui.UsedMode) -> Unit)? = null,
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)? = null,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)? = null,
+    isIntroMessage: Boolean = false,
+    onAddCustomGreeting: () -> Unit = {},
 ) {
     val settings = LocalSettings.current
     val context = LocalContext.current
@@ -1188,6 +1190,8 @@ fun ChatMessageTurn(
                     onMemoryClick = onMemoryClick,
                     onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
                     ttsProviderOverride = ttsProviderOverride,
+                    isIntroMessage = isIntroMessage,
+                    onAddCustomGreeting = onAddCustomGreeting,
                     modifier = modifier
                 )
             }
@@ -1606,6 +1610,8 @@ private fun AssistantMessageTurn(
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)?,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)?,
     ttsProviderOverride: me.lucid.tts.provider.TTSProviderSetting?,
+    isIntroMessage: Boolean = false,
+    onAddCustomGreeting: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isTimelineLive = loading && isLastTurn
@@ -1672,7 +1678,7 @@ private fun AssistantMessageTurn(
     val assistantNode = group.nodeWithMostVersions
     val versionIndices = remember(assistantNode.messages) { assistantNode.versionSelectionIndices() }
     val currentVersionPos = remember(assistantNode.messages, assistantNode.selectIndex) { assistantNode.versionSelectionPosition() }
-    val assistantSwipeModifier = if (versionIndices.size > 1 && !loading) {
+    val assistantSwipeModifier = if (!loading) {
         Modifier.pointerInput(assistantNode.id, currentVersionPos) {
             var totalDrag = 0f
             detectHorizontalDragGestures(
@@ -1692,6 +1698,13 @@ private fun AssistantMessageTurn(
                         if (targetIndex != null) {
                             haptics.perform(HapticPattern.Pop)
                             onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                        }
+                    } else if (totalDrag < -50f && currentVersionPos >= versionIndices.lastIndex) {
+                        haptics.perform(HapticPattern.Pop)
+                        if (isIntroMessage) {
+                            onAddCustomGreeting()
+                        } else {
+                            onRegenerate(assistantNode)
                         }
                     }
                     totalDrag = 0f

@@ -60,6 +60,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FilledIconButton
@@ -105,6 +107,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.ui.text.style.TextOverflow
@@ -158,6 +161,7 @@ import me.lucid.ai.provider.Model
 import me.lucid.ai.provider.ModelAbility
 import me.lucid.ai.provider.baseCapacityTokens
 import me.lucid.ai.provider.contextCapacityTokens
+import me.lucid.ai.ui.MessageNode
 import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.UIMessagePart
 import kotlin.math.roundToInt
@@ -196,6 +200,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberChatInputState
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.useEditState
+import me.lucid.domchat.ui.pages.assistant.AssistantVM
 import me.lucid.domchat.service.ChatPersistenceMode
 import me.lucid.domchat.service.ContextManagementActivity
 import me.lucid.domchat.ui.theme.AssistantChatTheme
@@ -1324,6 +1329,8 @@ private fun ChatPageContent(
     var isChatShareSelecting by rememberSaveable { mutableStateOf(false) }
     var selectedChatShareItems by remember(conversation.id) { mutableStateOf<Set<Uuid>>(emptySet()) }
     var showExportSheet by remember { mutableStateOf(false) }
+    var showCustomGreetingDialog by remember { mutableStateOf(false) }
+    val assistantVM = koinViewModel<AssistantVM>()
     var chatSearchQuery by rememberSaveable(conversation.id) { mutableStateOf(initialSearchQuery.orEmpty()) }
     var consumedInitialSearchQuery by remember(conversation.id) { mutableStateOf<String?>(null) }
     val toolbarPlacement = chatTopBarPlacement(setting)
@@ -1605,6 +1612,34 @@ private fun ChatPageContent(
                                             )
                                         }
                                     }
+                                    val onUpdateMessage = { newNode: MessageNode ->
+                                        val oldNode = frameConversation.messageNodes.find { it.id == newNode.id }
+                                        if (oldNode != null) {
+                                            if (oldNode.messages.size != newNode.messages.size) {
+                                                vm.updateConversation(
+                                                    frameConversation.copy(
+                                                        messageNodes = frameConversation.messageNodes.map { node ->
+                                                            if (node.id == newNode.id) newNode else node
+                                                        }
+                                                    )
+                                                )
+                                            } else if (oldNode.selectIndex != newNode.selectIndex) {
+                                                vm.selectMessageNode(newNode.id, newNode.selectIndex)
+                                            } else {
+                                                vm.updateConversation(
+                                                    frameConversation.copy(
+                                                        messageNodes = frameConversation.messageNodes.map { node ->
+                                                            if (node.id == newNode.id) {
+                                                                newNode
+                                                            } else {
+                                                                node
+                                                            }
+                                                        }
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
                                     ChatList(
                                         innerPadding = PaddingValues(
                                             top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
@@ -1641,34 +1676,7 @@ private fun ChatPageContent(
                                     onDelete = { message ->
                                         pendingDeleteMessage = message
                                     },
-                                    onUpdateMessage = { newNode ->
-                                        val oldNode = frameConversation.messageNodes.find { it.id == newNode.id }
-                                        if (oldNode != null) {
-                                            if (oldNode.messages.size != newNode.messages.size) {
-                                                vm.updateConversation(
-                                                    frameConversation.copy(
-                                                        messageNodes = frameConversation.messageNodes.map { node ->
-                                                            if (node.id == newNode.id) newNode else node
-                                                        }
-                                                    )
-                                                )
-                                            } else if (oldNode.selectIndex != newNode.selectIndex) {
-                                                vm.selectMessageNode(newNode.id, newNode.selectIndex)
-                                            } else {
-                                                vm.updateConversation(
-                                                    frameConversation.copy(
-                                                        messageNodes = frameConversation.messageNodes.map { node ->
-                                                            if (node.id == newNode.id) {
-                                                                newNode
-                                                            } else {
-                                                                node
-                                                            }
-                                                        }
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    },
+                                    onUpdateMessage = onUpdateMessage,
                                     onForkMessage = {
                                         scope.launch {
                                             val forkConversation = vm.forkMessage(it)
@@ -1677,6 +1685,7 @@ private fun ChatPageContent(
                                             }
                                         }
                                     },
+                                    onAddCustomGreeting = { showCustomGreetingDialog = true },
                                     )
                                 }
                             }
@@ -2259,6 +2268,47 @@ private fun ChatPageContent(
                 )
             }
 
+            // Custom initial message creator dialog (swipe-reroll on intro message)
+            if (showCustomGreetingDialog) {
+                CustomGreetingDialog(
+                    visible = true,
+                    onDismissRequest = { showCustomGreetingDialog = false },
+                    onSave = { newGreeting ->
+                        val trimmed = newGreeting.trim()
+                        if (trimmed.isNotBlank()) {
+                            val updatedAssistant = currentAssistant.copy(
+                                alternateGreetings = currentAssistant.alternateGreetings + trimmed,
+                            )
+                            assistantVM.updateAssistant(updatedAssistant)
+                            val introNode = conversation.messageNodes.firstOrNull { node ->
+                                node.currentMessage.role == MessageRole.ASSISTANT &&
+                                    isCharacterIntroMessage(
+                                        messages = conversation.messageNodes.map { it.currentMessage },
+                                        message = node.currentMessage,
+                                    )
+                            }
+                            introNode?.let { node ->
+                                val newMessage = UIMessage(
+                                    role = MessageRole.ASSISTANT,
+                                    parts = listOf(UIMessagePart.Text(text = trimmed)),
+                                )
+                                val updatedNode = node.copy(
+                                    messages = node.messages + newMessage,
+                                    selectIndex = node.messages.size,
+                                )
+                                val updatedConversation = conversation.copy(
+                                    messageNodes = conversation.messageNodes.map { n ->
+                                        if (n.id == updatedNode.id) updatedNode else n
+                                    },
+                                )
+                                vm.updateConversation(updatedConversation)
+                            }
+                        }
+                        showCustomGreetingDialog = false
+                    },
+                )
+            }
+
             androidx.compose.animation.AnimatedVisibility(
                 visible = showToolbarOverflowMenu,
                 enter = fadeIn(
@@ -2314,6 +2364,106 @@ private fun ChatPageContent(
 
 }
 
+}
+
+@Composable
+private fun CustomGreetingDialog(
+    visible: Boolean,
+    onDismissRequest: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    if (!visible) return
+    val haptics = rememberPremiumHaptics()
+    var greetingText by remember(visible) { mutableStateOf("") }
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            shape = AppShapes.Dialog,
+            color = Color(0xFF000000),
+            tonalElevation = 12.dp,
+            modifier = Modifier
+                .widthIn(max = 420.dp)
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.chat_custom_greeting_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+                OutlinedTextField(
+                    value = greetingText,
+                    onValueChange = { greetingText = it },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.chat_custom_greeting_placeholder),
+                            color = Color.White.copy(alpha = 0.5f),
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 120.dp),
+                    maxLines = Int.MAX_VALUE,
+                    minLines = 6,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                    colors = OutlinedTextFieldDefaults.outlinedTextFieldColors(
+                        containerColor = Color(0xFF000000),
+                        focusedContainerColor = Color(0xFF000000),
+                        unfocusedContainerColor = Color(0xFF000000),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                        cursorColor = Color.White,
+                    ),
+                    shape = AppShapes.CardMedium,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            onDismissRequest()
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.White.copy(alpha = 0.7f),
+                        ),
+                    ) {
+                        Text(text = stringResource(R.string.cancel))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            onSave(greetingText)
+                        },
+                        enabled = greetingText.trim().isNotBlank(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF000000),
+                            contentColor = Color.White,
+                            disabledContainerColor = Color(0xFF000000).copy(alpha = 0.4f),
+                            disabledContentColor = Color.White.copy(alpha = 0.4f),
+                        ),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.save),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

@@ -1335,6 +1335,10 @@
     <string name="greeting_late_evening">Winding down?</string>
     <string name="greeting_early_hours">Still up? Get some rest</string>
 
+    <!-- Custom Initial Message -->
+    <string name="chat_custom_greeting_title">Custom Initial Message</string>
+    <string name="chat_custom_greeting_placeholder">Write your custom initial message...</string>
+
     <!-- New Chat Templates -->
     <string name="new_chat_template_write">Write</string>
     <string name="new_chat_template_write_prompt">Help me write </string>

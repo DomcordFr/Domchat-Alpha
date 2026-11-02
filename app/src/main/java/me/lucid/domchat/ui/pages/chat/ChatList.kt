@@ -274,6 +274,7 @@ fun ChatList(
     onForkMessage: (UIMessage) -> Unit = {},
     onDelete: (UIMessage) -> Unit = {},
     onUpdateMessage: (MessageNode) -> Unit = {},
+    onAddCustomGreeting: () -> Unit = {},
     onJumpToMessage: (Int) -> Unit = {},
 ) {
     SharedTransitionLayout {
@@ -312,6 +313,7 @@ fun ChatList(
                     onForkMessage = onForkMessage,
                     onDelete = onDelete,
                     onUpdateMessage = onUpdateMessage,
+                    onAddCustomGreeting = onAddCustomGreeting,
                     animatedVisibilityScope = this@AnimatedContent,
                 )
             }
@@ -336,6 +338,7 @@ private fun SharedTransitionScope.ChatListNormal(
     onForkMessage: (UIMessage) -> Unit,
     onDelete: (UIMessage) -> Unit,
     onUpdateMessage: (MessageNode) -> Unit,
+    onAddCustomGreeting: () -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val scope = rememberCoroutineScope()
@@ -731,6 +734,13 @@ private fun SharedTransitionScope.ChatListNormal(
                                 onMemoryClick = onMemoryClick,
                                 showRegenerate = showRegenerate,
                                 onExpandedStreamingCodeBlockChanged = if (loading && isLastTurn) onStreamingCodeBlockExpanded else null,
+                                isIntroMessage = remember(conversation, group) {
+                                    isCharacterIntroMessage(
+                                        messages = conversation.messageNodes.map { it.currentMessage },
+                                        message = group.lastNode.currentMessage,
+                                    )
+                                },
+                                onAddCustomGreeting = onAddCustomGreeting,
                                 modifier = if (loading && isLastTurn) {
                                     Modifier.onSizeChanged {
                                         if (followStreamingBottom && !state.isScrollInProgress) {
