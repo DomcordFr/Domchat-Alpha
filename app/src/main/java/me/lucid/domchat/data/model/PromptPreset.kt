@@ -11,7 +11,9 @@ enum class PresetInjectionPosition {
     @SerialName("depth")
     AT_DEPTH,
     @SerialName("before_last_user")
-    BEFORE_LAST_USER
+    BEFORE_LAST_USER,
+    @SerialName("post_history")
+    POST_HISTORY_INSTRUCTIONS,
 }
 
 @Serializable

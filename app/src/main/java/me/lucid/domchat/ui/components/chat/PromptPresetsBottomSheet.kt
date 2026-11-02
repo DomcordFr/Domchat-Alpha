@@ -1,6 +1,6 @@
 package me.lucid.domchat.ui.components.chat
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -95,6 +95,36 @@ import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import org.koin.compose.koinInject
+
+/**
+ * Glassy badge showing the preset injection position with a distinct color per type:
+ * System (blue), Post-History (purple/magenta), Depth N (amber), Before User (emerald).
+ */
+@Composable
+private fun PresetBadge(
+    position: PresetInjectionPosition,
+    depth: Int = 0,
+) {
+    val (label, color) = when (position) {
+        PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color(0xFF3B82F6)
+        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History" to Color(0xFFD946EF)
+        PresetInjectionPosition.AT_DEPTH -> "Depth $depth" to Color(0xFFF59E0B)
+        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF10B981)
+    }
+    Surface(
+        color = color.copy(alpha = 0.15f),
+        shape = AppShapes.Tag,
+        border = BorderStroke(0.5.dp, color, AppShapes.Tag),
+        modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
+    ) {
+        Text(
+            text = "[ $label ]",
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+            color = color,
+            maxLines = 1,
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -394,20 +424,27 @@ fun PromptPresetsBottomSheet(
             }
 
             // Inline Creator / Editor
-            AnimatedVisibility(
-                visible = isEditingOrCreating,
-                enter = expandVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeIn(),
-                exit = shrinkVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeOut()
-            ) {
-                Surface(
-                    color = Color(0xFF141520).copy(alpha = 0.75f),
-                    shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+            AnimatedContent(
+                targetState = isEditingOrCreating,
+                transitionSpec = {
+                    if (targetState) {
+                        expandVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeIn()
+                    } else {
+                        shrinkVertically(spring(dampingRatio = 0.75f, stiffness = 350f)) + fadeOut()
+                    }
+                },
+                contentAlignment = Alignment.TopCenter,
+            ) { visible ->
+                if (visible) {
+                    Surface(
+                        color = Color(0xFF141520).copy(alpha = 0.75f),
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = if (editingTargetId == null) "Create Prompt Preset" else "Edit Preset",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -516,6 +553,7 @@ fun PromptPresetsBottomSheet(
                                                 PresetInjectionPosition.SYSTEM_PROMPT -> "System"
                                                 PresetInjectionPosition.AT_DEPTH -> "Depth D"
                                                 PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                                PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
                                             },
                                             style = MaterialTheme.typography.labelSmall.copy(
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -576,7 +614,8 @@ fun PromptPresetsBottomSheet(
                         }
                     }
                 }
-            }
+            } // end if (visible)
+        }
 
             // Presets List
             LazyColumn(
@@ -600,7 +639,9 @@ fun PromptPresetsBottomSheet(
                             width = if (isEnabled) 1.5.dp else 0.5.dp,
                             brush = if (isEnabled) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
                     ) {
                         Row(
                             modifier = Modifier
@@ -659,12 +700,9 @@ fun PromptPresetsBottomSheet(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    DomChatGlassChip(
-                                        text = when (preset.injectionPosition) {
-                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                                            PresetInjectionPosition.AT_DEPTH -> "Depth ${preset.depth}"
-                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                                        }
+                                    PresetBadge(
+                                        position = preset.injectionPosition,
+                                        depth = preset.depth,
                                     )
                                 }
 

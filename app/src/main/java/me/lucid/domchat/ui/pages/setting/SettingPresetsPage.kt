@@ -79,6 +79,7 @@ import me.lucid.domchat.data.model.PromptPreset
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -89,6 +90,36 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
+
+/**
+ * Glassy badge showing the preset injection position with a distinct color per type:
+ * System (blue), Post-History (purple/magenta), Depth N (amber), Before User (emerald).
+ */
+@Composable
+private fun PresetBadge(
+    position: PresetInjectionPosition,
+    depth: Int = 0,
+) {
+    val (label, color) = when (position) {
+        PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color(0xFF3B82F6)
+        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History" to Color(0xFFD946EF)
+        PresetInjectionPosition.AT_DEPTH -> "Depth $depth" to Color(0xFFF59E0B)
+        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF10B981)
+    }
+    Surface(
+        color = color.copy(alpha = 0.15f),
+        shape = AppShapes.Tag,
+        border = BorderStroke(0.5.dp, color, AppShapes.Tag),
+        modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
+    ) {
+        Text(
+            text = "[ $label ]",
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+            color = color,
+            maxLines = 1,
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, kotlin.ExperimentalStdlibApi::class)
 @Composable
@@ -295,7 +326,8 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                     color = Color(0xFF000000),
                     border = BorderStroke(
@@ -342,6 +374,10 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                             )
                                         }
                                     }
+                                    PresetBadge(
+                                        position = preset.injectionPosition,
+                                        depth = preset.depth,
+                                    )
                                 }
                                 if (preset.description.isNotBlank()) {
                                     Spacer(Modifier.height(2.dp))
@@ -549,6 +585,79 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                         shape = AppShapes.InputField,
                         colors = appFieldColors(),
                     )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Injection Position",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        PresetInjectionPosition.entries.forEach { pos ->
+                            val isSelected = draftPosition == pos
+                            Surface(
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
+                                    draftPosition = pos
+                                },
+                                color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color(0xFF141520).copy(alpha = 0.45f),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(
+                                    0.5.dp,
+                                    if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = when (pos) {
+                                            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                                            PresetInjectionPosition.AT_DEPTH -> "Depth D"
+                                            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                                            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                                        },
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            fontSize = 11.sp
+                                        ),
+                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (draftPosition == PresetInjectionPosition.AT_DEPTH) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Depth (Messages from end)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "${draftDepth.value}",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        DomChatSlider(
+                            value = draftDepth.value.toFloat(),
+                            onValueChange = { draftDepth.value = it.toInt() },
+                            valueRange = 0f..10f,
+                            steps = 9,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                     val estTokens = (draftContent.length / 3.8).roundToInt()
                     Text(
                         text = "Estimated tokens: ~$estTokens · ${draftContent.length} chars",

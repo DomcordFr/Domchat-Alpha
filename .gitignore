@@ -23,6 +23,7 @@ __pycache__/
 *.class
 *.log
 *.jks
+!app/keystore/release.jks
 *.keystore
 Thumbs.db
 graphify-out/

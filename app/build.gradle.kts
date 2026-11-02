@@ -149,6 +149,17 @@ android {
                     keyPassword = keyPasswordValue
                 }
             }
+
+            // Fallback to permanent repository release keystore so all CI and local builds share identical signature
+            if (storeFile == null || storeFile?.exists() != true) {
+                val repoKeystore = file("keystore/release.jks")
+                if (repoKeystore.exists()) {
+                    storeFile = repoKeystore
+                    storePassword = "domchat_release_pass"
+                    keyAlias = "domchat"
+                    keyPassword = "domchat_release_pass"
+                }
+            }
         }
     }
 

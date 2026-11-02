@@ -1616,6 +1616,9 @@ class GenerationHandler(
             val beforeLatestPresets = activePresets.filter {
                 it.injectionPosition == me.lucid.domchat.data.model.PresetInjectionPosition.BEFORE_LAST_USER
             }
+            val postHistoryPresets = activePresets.filter {
+                it.injectionPosition == me.lucid.domchat.data.model.PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS
+            }
 
             // These positions intentionally become in-context messages rather than
             // system-prompt text. That makes TOP_OF_CHAT, BEFORE_LATEST and AT_DEPTH
@@ -1686,6 +1689,9 @@ class GenerationHandler(
                             add(msg)
                         }
                     }
+
+                    // Post-history instructions: injected at the bottom of context, right before the assistant response
+                    postHistoryPresets.forEach { add(presetMessage(it)) }
                 } else {
                     // If the active turn has no USER message (e.g. initial assistant greeting),
                     // prepend dynamic context as system/user before the turn messages.
@@ -1714,6 +1720,9 @@ class GenerationHandler(
                         parts = allContextAttachments
                     ))
                 }
+
+                // Post-history instructions: injected at the bottom of context, right before the assistant response
+                postHistoryPresets.forEach { add(presetMessage(it)) }
             }
         }.limitImagesForModel(model)
         val smartMessageBudget = if (smartEnabled) {
