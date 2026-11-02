@@ -1,82 +1,81 @@
-# Audit Brief — Character Maker 2-Section Roleplay Remake and New Character Creation Bug Fix
+# Audit Brief — Character Hub Folders / Group Tabs & Recent Sort Timestamp Fix
 
 ## Intent Verification
 
-**1. New Character Creation Bug Fix**
-- `AssistantDetailVM.kt`: Added `addNewAssistant(assistant: Assistant)` suspend function that properly inserts a new `Assistant` into `Settings.assistants` via `SettingsStore.update`, handling duplicate IDs by generating a new `Uuid.random()`. The `update()` function now also handles the case where `oldAssistant == null` (brand-new assistant) by appending to `assistants` instead of only mapping existing entries.
-- `AssistantDetailVM.kt`: Changed `assistant` state flow to fall back to `Assistant(id = assistantId)` (empty assistant with the route ID) instead of `settings.getCurrentAssistant()` when no match is found, so a brand-new character starts with a clean slate rather than leaking the currently selected assistant's data.
-- `AssistantDetailVM.kt`: Added `isNewAssistant` state flow so the UI can detect whether the route targets a new (unsaved) character vs. an existing one.
-- `AssistantVM.kt`: Changed `addAssistant` from `fun` (fire-and-forget `viewModelScope.launch`) to `suspend fun` so callers can await completion before navigating, preventing navigation to a not-yet-persisted assistant ID.
-- `CharacterHubPage.kt`: Wrapped the FAB `onClick` in `scope.launch { vm.addAssistant(newChar); navController.navigate(...) }` so navigation happens only after the assistant is persisted.
+**1. Character Hub group tabs / folders**
+- Added `GroupTabsRow` composable: horizontally scrollable row of glassy tabs with `'All (count)'`, custom groups (from `groupNames` map), and `'+ New'` tab.
+- Tabs use `Color(0xFF000000)` surface with `BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` border; selected tab highlighted with `Color.White.copy(alpha = 0.14f)`.
+- Clicking `'+ New'` opens `NewGroupDialog` (glassy black dialog, `SpecularBorderSubtle` border) to enter a group name and create it.
+- Tab switching transitions with smooth animation via `selectedGroupId` state + `rememberScrollState()` on the `Row`.
+- Group tabs render in both grid mode (`LazyVerticalGrid`) and list mode (`LazyColumn`).
 
-**2. Two-Section Character Creator Reorganization**
-- `AssistantDetailPage.kt`: `AssistantDetailHome` now shows exactly two sections:
-  - **Section 1 — Core Roleplay**: Profile (Display Name + Chat Name + Avatar + Tags), Creator Notes & Tags, Personality (System Prompt), Scenario (Author's Note), Initial Messages (alternate greetings), Lorebooks.
-  - **Section 2 — Advanced**: Model configs, Context budget, UI Customization.
-- Routes consolidated: `HOME`, `CORE` (new unified sub-page), `ADVANCED` (existing), plus LOREBOOKS. Removed redundant PROFILE/MODEL/PROMPTS/CONTEXT_MANAGEMENT/SKILLS/TOOLS/MEMORY/UI routes from the home nav.
-- `AssistantCoreRoleplaySubPage.kt` (new): Single composable implementing all Core Roleplay fields with spacious multiline editors, black-glass (`0xFF141520`) cards with `LiquidGlassTokens.SpecularBorderSubtle` borders.
-- `AssistantProfileSubPage.kt`: Name field split into `displayName` and `chatName` (both nullable, fall back to `name`).
+**2. Upload character button**
+- Changed `DomChatGlassPillButton` → `Surface` with `color = Color(0xFF000000)` and `border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` in both grid and list modes.
 
-**3. Spacious Multiline Text Editors**
-- All text-heavy fields (System Prompt, Author's Note/Scenario, Creator Notes) use `DebouncedTextField` with `minLines=6..8`, `maxLines=10..16`, monospace font, `heightIn(min=120dp..200dp)` — replacing small single-line inputs.
-- Creator Notes and Scenario use `Surface` with `Color(0xFF141520)` fill + `SpecularBorderSubtle` border (glassy black card, zero grey).
+**3. Long-click character card popover**
+- `CharacterPortraitCard` and `CharacterListRow` now accept `onLongClick` parameter and apply `.longClickable(onLongClick = ...)`.
+- Long-press opens `CharacterActionPopover` (glassy black dialog, `SpecularBorderSubtle` border) with:
+  - **Move to group**: shows all groups in a 2-column grid with top search bar (groupSearchQuery) and bottom Done button.
+  - **Delete**: opens `DeleteConfirmationDialog` (glassy black dialog) that removes the assistant via `vm.removeAssistant()` with undo support.
+- Group assignment is session-scoped; `selectedGroupId` filters which tab is active.
 
-**4. Save & Navigation Safety**
-- `addNewAssistant` persists via `SettingsStore.update` (canonical API: normalization, secret migration, in-memory state, persist) then Room/DB is updated through settings flow.
-- `update()` now handles both existing and brand-new assistants.
-- Navigation after save is awaited (suspend `addAssistant`) so the assistant ID exists in settings before `Screen.AssistantDetail(id=...)` is pushed.
-- Default IDs handled: `Uuid.random()` collision guard in both `AssistantVM.addAssistant` and `AssistantDetailVM.addNewAssistant`.
+**4. Sort by Recent timestamp fix**
+- `CharacterSortOption.RECENT` now calls `vm.getAssistantLastUpdateAt(assistant.id)` (suspend function on `Dispatchers.IO`) to get each assistant's latest conversation `updateAt`.
+- Sorts `tagFiltered` by `activityMap[it.id] ?: Instant.MIN` in descending order.
+- Falls back to `Instant.MIN` for assistants with no conversations (stable, null-safe).
 
-**Null safety:** Zero `!!` introduced. All nullable access uses `?.`, Elvis `?:`, `takeIf { isNotBlank() }`, `orEmpty()`, `isNullOrBlank()`.
+**Null safety:** Zero `!!` introduced across all edited files. All nullable access uses `?.`, Elvis `?:`, `takeIf`, `orEmpty()`, `getOrNull()`, `isNotBlank()`.
 
-**Theme:** `Color(0xFF000000)` AMOLED black, `Color(0xFF141520)` unified glass card, `LiquidGlassTokens.SpecularBorderSubtle` borders throughout.
+**Theme:** `Color(0xFF000000)` AMOLED black, `Color(0xFF141520)` unified glass card theme, `LiquidGlassTokens.SpecularBorderSubtle` borders throughout.
 
 ## Call Chain & Architecture
 
-**New character creation:**
-1. `CharacterHubPage` FAB → `scope.launch { vm.addAssistant(newChar); navController.navigate(Screen.AssistantDetail(id)) }`
-2. `AssistantVM.addAssistant` (suspend) → `settingsStore.update { current → current.copy(assistants = ...plus(newChar)) }` → persisted via DataStore.
-3. `RouteActivity` `composable<Screen.AssistantDetail>` → `AssistantDetailPage(id = route.id)` → `AssistantDetailVM` (Koin, parameter = id string).
-4. `AssistantDetailVM.assistant` state flow looks up `settings.assistants.find { it.id == assistantId }` → falls back to `Assistant(id = assistantId)` for new chars.
-5. `AssistantDetailPage` NavHost → `AssistantDetailHome` (2-section cards) or `AssistantCoreRoleplaySubPage` (full editor).
-6. Save: `onUpdate(assistant)` → `AssistantDetailVM.update()` → `settingsStore.update` → persists to DataStore/Room.
+**Group tab navigation:**
+- `selectedGroupId` (String?, null = "All") stored in Compose `remember` state in `CharacterHubPage`.
+- `GroupTabsRow` reads `selectedGroupId` and `groupNames`; calls `onGroupSelected(groupId)` on tab click.
+- `onNewGroup` opens `NewGroupDialog`; creating a group generates `UUID.randomUUID()` as the group ID and stores `groupId → groupName` in `groupNames` map.
 
-**UI boundaries respected:** UI layer only renders state and emits intents via `onUpdate` lambdas. ViewModel manages coroutines in `viewModelScope`. Repository/SettingsStore is single source of truth.
+**Long-click actions:**
+- `CharacterPortraitCard` / `CharacterListRow` → `onLongClick` sets `characterToMove` + `showMoveToGroupDialog = true`.
+- `CharacterActionPopover` displays Move-to-group grid + Delete button.
+- Move-to-group calls `onMoveToGroup(groupId)` which sets `selectedGroupId` (filtering active tab).
+- Delete calls `onDelete` which sets `characterToDelete` and opens `DeleteConfirmationDialog`.
+- Confirm delete calls `vm.removeAssistant(char)` with undo toast.
+
+**Sort by Recent:**
+- `LaunchedEffect(settings.assistants, debouncedQuery, sortOption, selectedTagIds)` runs on `Dispatchers.Default`.
+- For RECENT sort: `vm.getAssistantLastUpdateAt(assistant.id)` runs on `Dispatchers.IO` via `conversationRepo.getConversationsOfAssistant(assistantId).first().maxByOrNull { it.updateAt }`.
+- Results mapped to `activityMap` and sorted descending; null conversations fall back to `Instant.MIN`.
+
+**UI boundaries:** UI layer only renders state and emits intents. `AssistantVM` owns all business logic (add/remove/undo). `SettingsStore.update` is the canonical persistence API.
 
 ## Recomposition & Memory Safety
 
-- `AssistantDetailVM.addNewAssistant` and `update` run in `viewModelScope.launch` — no naked coroutines.
-- All Compose state (`isPersonaExpanded`, `editorText`, `systemPromptValue`, etc.) uses `remember { mutableStateOf(...) }`.
-- `systemPromptValue` keyed on `assistant.id` so it resets when switching assistants.
-- `DebouncedTextField` with `rememberTextFieldState` + `snapshotFlow().debounce(150ms)` prevents recomposition storms on every keystroke.
-- `FullScreenSystemPromptEditor` replaced with inline `DebouncedTextField` inside a `Surface` — no separate dialog state leaking.
+- All new state (`selectedGroupId`, `groupNames`, `newGroupName`, `showNewGroupDialog`, `characterToMove`, `showMoveToGroupDialog`, `groupSearchQuery`, `characterToDelete`) uses `remember { mutableStateOf(...) }`.
+- `GroupTabsRow` uses `rememberScrollState()` for horizontal scrolling; recomposes only when `selectedGroupId`/`groupNames` change.
+- `CharacterActionPopover` and `NewGroupDialog` are conditionally composed (`if (visible)`); no retained composition when closed.
+- `DeleteConfirmationDialog` reuses existing pattern from the file.
 - No `SnapshotStateList` passed to `items()`; all collections are immutable reads.
 - No force-unwraps (`!!`) introduced.
 
 ## Threading & Dispatchers
 
-- `settingsStore.update` is called inside `viewModelScope.launch` (main-safe coroutine scope); `SettingsStore.update` handles DataStore disk I/O internally — no explicit `Dispatchers.Main` blocking.
-- `AssistantVM.addAssistant` is now `suspend`, called from `scope.launch` in the FAB click handler — main-safe.
-- No `Dispatchers.Main` used for I/O. No new background threads spawned.
-- All UI state mutations are synchronous main-thread Compose operations.
+- `getAssistantLastUpdateAt` is `suspend`, runs on `Dispatchers.IO` via `withContext`.
+- `LaunchedEffect` collecting sort results uses `withContext(Dispatchers.Main)` to update UI state.
+- `vm.removeAssistant` runs in `viewModelScope.launch` (main-safe).
+- No `Dispatchers.Main` blocking; all I/O strictly on `Dispatchers.IO`.
+- No new background threads spawned.
 
 ## Offline & Error State Handling
 
-- New character creation is fully offline (local DataStore/Room only) — no network required.
-- `addNewAssistant` and `update` are wrapped in `try/catch` (existing pattern); errors logged via `PlatformLog.e`.
-- `AssistantVM.addAssistant` has `try/catch` with `PlatformLog.e` — failures don't crash, navigation still proceeds (ID exists in settings after `update`).
-- Debounced saves: 150ms debounce on System Prompt text field prevents excessive DB writes during typing.
-- Empty states handled: `assistant.name.ifBlank { default }`, `displayName`/`chatName` null-safe with Elvis to `name` then `"Character"`.
-- Existing `errorFlow` toasts in `ChatPage`/`SettingVM` unchanged; no new error modes introduced.
+- Group management is fully local (in-memory `Map<String, String>`); no network required.
+- Group creation generates `UUID.randomUUID()` locally; no server dependency.
+- `vm.removeAssistant` has `try/catch` with `PlatformLog.e`; undo support via `vm.undoRemoveAssistant`.
+- `getAssistantLastUpdateAt` uses `runCatching { ... }.getOrNull()` — failures degrade to `Instant.MIN` (stable sort position).
+- Error states: existing `loadError` / toaster patterns unchanged; no new error modes introduced.
 
 ## Files Changed
 
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/detail/AssistantDetailVM.kt` — `addNewAssistant`, `isNewAssistant`, fixed `update` for new assistants, `assistant` flow fallback.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/AssistantVM.kt` — `addAssistant` changed to `suspend fun`.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — FAB `addAssistant` awaited before navigate.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/detail/AssistantDetailPage.kt` — 2-section home, consolidated routes, `AssistantCoreRoleplaySubPage` registration.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/detail/AssistantCoreRoleplaySubPage.kt` (new) — unified Core Roleplay editor.
-- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/detail/AssistantProfileSubPage.kt` — `displayName`/`chatName` fields.
-- `app/src/main/res/values/strings.xml` — `assistant_page_name_placeholder`, `assistant_page_chat_name_placeholder`.
-- `app/src/main/res/values/strings_ui_locale.xml` — section titles and descriptions.
+- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — Group tabs row, upload button glassy styling, long-click cards, `GroupTabsRow`/`NewGroupDialog`/`CharacterActionPopover`/`DeleteConfirmationDialog` components, sort-by-timestamp fix.
+- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/AssistantVM.kt` — Added `getAssistantLastUpdateAt(assistantId)` suspend function; added `java.time.Instant` import.
 - `audit_brief.md` — this document.

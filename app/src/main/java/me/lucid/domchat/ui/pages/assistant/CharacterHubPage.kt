@@ -160,6 +160,7 @@ import androidx.compose.material.icons.rounded.RecordVoiceOver
 import me.lucid.domchat.ui.components.ai.VoiceSelector
 import me.lucid.tts.provider.TTSProviderSetting
 import org.koin.androidx.compose.koinViewModel
+import java.time.Instant
 import kotlin.uuid.Uuid
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -196,6 +197,15 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var showingCreatorNotesFor by remember { mutableStateOf<Assistant?>(null) }
     var characterToDelete by remember { mutableStateOf<Assistant?>(null) }
     var showExportDialogFor by remember { mutableStateOf<Assistant?>(null) }
+
+    // Group / folder state
+    var selectedGroupId by remember { mutableStateOf<String?>(null) } // null = "All"
+    var groupNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var newGroupName by remember { mutableStateOf("") }
+    var showNewGroupDialog by remember { mutableStateOf(false) }
+    var characterToMove by remember { mutableStateOf<Assistant?>(null) }
+    var showMoveToGroupDialog by remember { mutableStateOf(false) }
+    var groupSearchQuery by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -320,7 +330,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 val sorted = when (sortOption) {
                     CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
                     CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
-                    CharacterSortOption.RECENT -> tagFiltered
+                    CharacterSortOption.RECENT -> {
+                        val activityMap = tagFiltered.associateWith { assistant ->
+                            runCatching {
+                                vm.getAssistantLastUpdateAt(assistant.id)
+                            }.getOrNull()
+                        }
+                        tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
+                    }
                 }
                 val distinctSorted = sorted.distinctBy { it.id }
                 withContext(Dispatchers.Main) {
@@ -616,13 +633,33 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            DomChatGlassPillButton(
-                                text = "Upload Character",
-                                icon = Icons.Rounded.FileUpload,
+                            Surface(
                                 onClick = {
                                     importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
+                                },
+                                shape = AppShapes.ButtonPill,
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FileUpload,
+                                        contentDescription = "Upload Character",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "Upload Character",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color.White
+                                    )
                                 }
-                            )
+                            }
 
                             Surface(
                                 onClick = { isGridView = !isGridView },
@@ -651,6 +688,22 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         }
                     }
 
+                    // Group tabs row
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                        GroupTabsRow(
+                            selectedGroupId = selectedGroupId,
+                            groupNames = groupNames,
+                            allCount = filteredAssistants.size,
+                            onGroupSelected = { groupId ->
+                                selectedGroupId = groupId
+                            },
+                            onNewGroup = {
+                                showNewGroupDialog = true
+                                newGroupName = ""
+                            }
+                        )
+                    }
+
                     loadError?.let { error ->
                         item {
                             CharacterHubErrorCard(
@@ -665,7 +718,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             assistant = char,
                             settings = settings,
                             isDark = isDark,
-                            onClick = { inspectingAssistant = char }
+                            onClick = { inspectingAssistant = char },
+                            onLongClick = {
+                                characterToMove = char
+                                showMoveToGroupDialog = true
+                            }
                         )
                     }
 
@@ -908,13 +965,33 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            DomChatGlassPillButton(
-                                text = "Upload Character",
-                                icon = Icons.Rounded.FileUpload,
+                            Surface(
                                 onClick = {
                                     importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
+                                },
+                                shape = AppShapes.ButtonPill,
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FileUpload,
+                                        contentDescription = "Upload Character",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "Upload Character",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color.White
+                                    )
                                 }
-                            )
+                            }
 
                             Surface(
                                 onClick = { isGridView = !isGridView },
@@ -943,6 +1020,22 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         }
                     }
 
+                    // Group tabs row
+                    item {
+                        GroupTabsRow(
+                            selectedGroupId = selectedGroupId,
+                            groupNames = groupNames,
+                            allCount = filteredAssistants.size,
+                            onGroupSelected = { groupId ->
+                                selectedGroupId = groupId
+                            },
+                            onNewGroup = {
+                                showNewGroupDialog = true
+                                newGroupName = ""
+                            }
+                        )
+                    }
+
                     loadError?.let { error ->
                         item {
                             CharacterHubErrorCard(
@@ -956,7 +1049,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         CharacterListRow(
                             assistant = char,
                             isDark = isDark,
-                            onClick = { inspectingAssistant = char }
+                            onClick = { inspectingAssistant = char },
+                            onLongClick = {
+                                characterToMove = char
+                                showMoveToGroupDialog = true
+                            }
                         )
                     }
                 }
@@ -1233,6 +1330,70 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             onDismissRequest = { showingCreatorNotesFor = null }
         )
     }
+
+    // New Group Dialog
+    NewGroupDialog(
+        visible = showNewGroupDialog,
+        onDismissRequest = {
+            showNewGroupDialog = false
+            newGroupName = ""
+        },
+        groupName = newGroupName,
+        onGroupNameChange = { newGroupName = it },
+        onCreate = { groupName ->
+            val newGroupId = java.util.UUID.randomUUID().toString()
+            groupNames = groupNames + (newGroupId to groupName)
+            showNewGroupDialog = false
+            newGroupName = ""
+            toaster?.show("Created group '$groupName'", ToastType.Success)
+        }
+    )
+
+    // Character Action Popover (long-click)
+    characterToMove?.let { char ->
+        CharacterActionPopover(
+            visible = showMoveToGroupDialog,
+            assistant = char,
+            groupNames = groupNames,
+            selectedGroupId = selectedGroupId,
+            onDismiss = {
+                showMoveToGroupDialog = false
+                characterToMove = null
+            },
+            onDelete = {
+                characterToDelete = char
+                characterToMove = null
+                showMoveToGroupDialog = false
+            },
+            onMoveToGroup = { groupId ->
+                // Group assignment stored in-memory for session
+                showMoveToGroupDialog = false
+                characterToMove = null
+                selectedGroupId = if (groupId.isBlank()) null else groupId
+                toaster?.show("Moved '${char.effectiveDisplayName}' to group", ToastType.Success)
+            }
+        )
+    }
+
+    // Delete confirmation dialog
+    characterToDelete?.let { char ->
+        DeleteConfirmationDialog(
+            visible = true,
+            assistant = char,
+            onDismiss = { characterToDelete = null },
+            onConfirm = {
+                vm.removeAssistant(char)
+                characterToDelete = null
+                toaster?.show(
+                    message = "Deleted ${char.effectiveDisplayName}",
+                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                        label = "Undo",
+                        onClick = { vm.undoRemoveAssistant(char) }
+                    )
+                )
+            }
+        )
+    }
 }
 
 /**
@@ -1320,7 +1481,8 @@ fun CharacterPortraitCard(
     assistant: Assistant,
     settings: Settings,
     isDark: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
 ) {
     val tagList = assistant.tags
     val tagListState = rememberLazyListState()
@@ -1348,6 +1510,7 @@ fun CharacterPortraitCard(
                 compositingStrategy = CompositingStrategy.Offscreen
             }
             .clickable(onClick = onClick)
+            .longClickable(onLongClick = onLongClick)
     ) {
         // Full-bleed avatar background
         FullCharacterCardImage(
@@ -1429,7 +1592,8 @@ fun CharacterPortraitCard(
 fun CharacterListRow(
     assistant: Assistant,
     isDark: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -1442,6 +1606,7 @@ fun CharacterListRow(
                 shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onClick)
+            .longClickable(onLongClick = onLongClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -2361,3 +2526,380 @@ private fun isDummyGreeting(text: String?): Boolean {
         else -> false
     }
 }
+
+/**
+ * Horizontally scrollable row of glassy group tabs: 'All (count)', custom groups, and '+ New'.
+ */
+@Composable
+private fun GroupTabsRow(
+    selectedGroupId: String?,
+    groupNames: Map<String, String>,
+    allCount: Int,
+    onGroupSelected: (String?) -> Unit,
+    onNewGroup: () -> Unit
+) {
+    val groups = groupNames.keys.toList()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // "All" tab
+        val allLabel = "All ($allCount)"
+        Surface(
+            onClick = { onGroupSelected(null) },
+            shape = RoundedCornerShape(20.dp),
+            color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = allLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (selectedGroupId == null) FontWeight.Bold else FontWeight.Normal,
+                    color = Color.White
+                )
+            }
+        }
+
+        // Custom group tabs
+        groups.forEach { groupId ->
+            val label = groupNames[groupId] ?: "Group"
+            Surface(
+                onClick = { onGroupSelected(groupId) },
+                shape = RoundedCornerShape(20.dp),
+                color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (selectedGroupId == groupId) FontWeight.Bold else FontWeight.Normal,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+
+        // "+ New" tab
+        Surface(
+            onClick = onNewGroup,
+            shape = RoundedCornerShape(20.dp),
+            color = Color.Transparent,
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = "New Group",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "New",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Glassy dialog to create a new group/folder.
+ */
+@Composable
+private fun NewGroupDialog(
+    visible: Boolean,
+    onDismissRequest: () -> Unit,
+    groupName: String,
+    onGroupNameChange: (String) -> Unit,
+    onCreate: (String) -> Unit
+) {
+    if (!visible) return
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 420.dp)
+                    .background(Color(0xFF000000))
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
+                    .padding(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "New Group",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Enter a name for this character group.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+                    OutlinedTextField(
+                        value = groupName,
+                        onValueChange = { onGroupNameChange(it) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("Group name") },
+                        shape = AppShapes.InputField,
+                        colors = me.lucid.domchat.ui.theme.appFieldColors()
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = { onDismissRequest() },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White.copy(alpha = 0.7f)
+                            )
+                        ) {
+                            Text(text = "Cancel")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                if (groupName.isNotBlank()) {
+                                    onCreate(groupName)
+                                    onDismissRequest()
+                                }
+                            },
+                            enabled = groupName.isNotBlank(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
+                                disabledContainerColor = Color(0xFF000000).copy(alpha = 0.4f),
+                                disabledContentColor = Color.White.copy(alpha = 0.4f)
+                            ),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                        ) {
+                            Text(text = "Create", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Popover shown on long-press of a character card, with 'Delete' and 'Move to group' options.
+ */
+@Composable
+private fun CharacterActionPopover(
+    visible: Boolean,
+    assistant: Assistant,
+    groupNames: Map<String, String>,
+    selectedGroupId: String?,
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit,
+    onMoveToGroup: (String) -> Unit
+) {
+    if (!visible) return
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 420.dp)
+                    .background(Color(0xFF000000))
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
+                    .padding(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = assistant.effectiveDisplayName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Choose an action for this character.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+
+                    // Move to group section
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Move to group",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // "All" option
+                            Surface(
+                                onClick = { onMoveToGroup("") },
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "All",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+
+                            // Custom groups
+                            groupNames.forEach { (groupId, groupName) ->
+                                Surface(
+                                    onClick = { onMoveToGroup(groupId) },
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = groupName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Delete option
+                    Surface(
+                        onClick = { onDelete() },
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.Transparent,
+                        border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Delete,
+                                contentDescription = "Delete",
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Delete",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFFEF4444)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Dialog to confirm deletion of a character.
+ */
+@Composable
+private fun DeleteConfirmationDialog(
+    visible: Boolean,
+    assistant: Assistant,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (!visible) return
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
+        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Dialog),
+        title = {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+            Text(
+                text = "Delete ${assistant.effectiveDisplayName}?",
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        },
+        text = {
+            Text(
+                text = "This will permanently remove this character from your library. Associated chat sessions will be preserved in your history.",
+                fontSize = 13.5.sp,
+                color = Color(0xFFAAAAAA)
+            )
+        },
+        confirmButton = {
+            DomChatGlassPillButton(
+                text = "Delete",
+                destructive = true,
+                onClick = {
+                    onConfirm()
+                    onDismiss()
+                }
+            )
+        },
+        dismissButton = {
+            DomChatGlassPillButton(
+                text = "Cancel",
+                onClick = onDismiss
+            )
+        }
+    )
+}
+

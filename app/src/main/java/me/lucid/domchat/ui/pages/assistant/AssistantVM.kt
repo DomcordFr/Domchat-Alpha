@@ -21,6 +21,7 @@ import me.lucid.domchat.data.repository.AppStorageRepository
 import me.lucid.domchat.data.repository.MemoryRepository
 import me.lucid.domchat.service.ChatService
 import kotlin.uuid.Uuid
+import java.time.Instant
 
 data class AssistantDeleteImpact(
     val conversationCount: Int,
@@ -204,6 +205,18 @@ class AssistantVM(
             } catch (e: Exception) {
                 PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
+        }
+    }
+
+    /**
+     * Returns the latest conversation [updateAt] for the given assistant, or null if no
+     * conversations exist. Runs on Dispatchers.IO.
+     */
+    suspend fun getAssistantLastUpdateAt(assistantId: Uuid): Instant? {
+        return withContext(Dispatchers.IO) {
+            conversationRepo.getConversationsOfAssistant(assistantId)
+                .first()
+                .maxByOrNull { it.updateAt }?.updateAt
         }
     }
 
