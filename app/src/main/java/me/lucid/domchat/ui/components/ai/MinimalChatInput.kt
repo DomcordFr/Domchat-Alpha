@@ -381,6 +381,7 @@ fun MinimalChatInput(
     var showSamplersSheet by remember { mutableStateOf(false) }
     var showWallpaperSheet by remember { mutableStateOf(false) }
     var showCreatorNotesSheet by remember { mutableStateOf(false) }
+    var showTextStylingDialog by remember { mutableStateOf(false) }
     var showStreamingAnimationSheet by remember { mutableStateOf(false) }
     var showSearchPicker by remember { mutableStateOf(false) }
     var showReasoningPicker by remember { mutableStateOf(false) }
@@ -1565,6 +1566,10 @@ fun MinimalChatInput(
                     showPicker = false
                     showCreatorNotesSheet = true
                 },
+                onOpenTextStyling = {
+                    showPicker = false
+                    showTextStylingDialog = true
+                },
                 onOpenStreamingAnimation = {
                     showPicker = false
                     showStreamingAnimationSheet = true
@@ -1655,6 +1660,56 @@ fun MinimalChatInput(
         me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet(
             assistant = assistant,
             onDismissRequest = { showCreatorNotesSheet = false }
+        )
+    }
+
+    if (showTextStylingDialog) {
+        AlertDialog(
+            onDismissRequest = { showTextStylingDialog = false },
+            title = {
+                Text(
+                    text = "Text Styling",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = "Custom per-chat text styling",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.85f),
+                    )
+                    Text(
+                        text = "Italic color:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.6f),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Coral", style = MaterialTheme.typography.labelMedium, color = Color(0xFFFF6B6B))
+                        Text("Lavender", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB39DDB))
+                        Text("Mint", style = MaterialTheme.typography.labelMedium, color = Color(0xFF81C784))
+                        Text("Amber", style = MaterialTheme.typography.labelMedium, color = Color(0xFFFFD54F))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTextStylingDialog = false }) {
+                    Text("Close", style = MaterialTheme.typography.labelMedium.copy(color = Color.White))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTextStylingDialog = false }) {
+                    Text("Cancel", style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.6f)))
+                }
+            }
         )
     }
 
@@ -2753,6 +2808,7 @@ private fun MinimalPickerContent(
     onOpenSamplers: () -> Unit = {},
     onOpenWallpaper: () -> Unit = {},
     onOpenCreatorNotes: () -> Unit = {},
+    onOpenTextStyling: () -> Unit = {},
     onOpenStreamingAnimation: () -> Unit = {},
     onOpenSearchPicker: () -> Unit = {},
     onOpenReasoningPicker: () -> Unit = {},
@@ -3071,20 +3127,22 @@ private fun MinimalPickerContent(
                     }
                 }
                 1 -> {
-                    // User Persona picker
-                    val activePersona = settings.displaySetting.getActivePersona()
-                    MinimalPickerItem(
-                        icon = {
-                            me.lucid.domchat.ui.components.ui.UIAvatar(
-                                name = activePersona.name,
-                                value = activePersona.avatar,
-                                modifier = Modifier.size(28.dp).clip(CircleShape)
-                            )
-                        },
-                        title = "User Persona: ${activePersona.name}",
-                        subtitle = activePersona.description.ifBlank { "Switch active roleplay persona" },
-                        onClick = onOpenPersonaPicker
-                    )
+                    // Character Creator Notes (moved to top)
+                    if (!assistant.creatorNotes.isNullOrBlank()) {
+                        MinimalPickerItem(
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            title = "Creator Notes",
+                            subtitle = "View author lore & character instructions",
+                            onClick = onOpenCreatorNotes
+                        )
+                    }
 
                     // Prompt Presets picker
                     val activePresetsCount = (conversation.enabledPromptPresetIds ?: settings.displaySetting.globalEnabledPromptPresetIds).size
@@ -3154,22 +3212,20 @@ private fun MinimalPickerContent(
                         onClick = onOpenWallpaper
                     )
 
-                    // Character Creator Notes
-                    if (!assistant.creatorNotes.isNullOrBlank()) {
-                        MinimalPickerItem(
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Info,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            title = "Creator Notes",
-                            subtitle = "View author lore & character instructions",
-                            onClick = onOpenCreatorNotes
-                        )
-                    }
+                    // Text Styling - opens dialog for per-chat text styling (e.g. custom italic colors)
+                    MinimalPickerItem(
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.FormatItalic,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        title = "Text Styling",
+                        subtitle = "Custom italic colors & per-chat text styles",
+                        onClick = onOpenTextStyling
+                    )
                 }
                 2 -> {
                     // Model picker - uses actual model icon, full-width clickable

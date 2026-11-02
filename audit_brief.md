@@ -1,66 +1,96 @@
-# Audit Brief — Live Wallpaper Preview in Settings and Per-Chat Wallpaper Popover Polish
+# Audit Brief — Plus Menu Reorganization, Custom Text Styling & Prompt Presets Popover Overhaul
 
 ## Intent Verification
 
-**1. SettingDisplayPage.kt — live wallpaper preview card under Global Wallpaper**
-- Added a preview card (height `140.dp`, rounded via `AppShapes.CardMedium`, border `LiquidGlassTokens.SpecularBorderSubtle`, background `Color(0xFF141520)`) that renders when `globalBackground` is set.
-- Uses `AsyncImage(model = globalBg, contentScale = ContentScale.Crop)` to show the selected wallpaper.
-- Applies live dim overlay (`Color.Black.copy(alpha = globalDim.coerceIn(0f, 0.95f))`) and live blur overlay (vertical gradient scrim scaled by `globalBlur / 200f`) so the preview reflects current dim/blur settings.
-- Card only shows when a wallpaper is set; hidden otherwise (matches existing progressive-disclosure pattern).
+**1. MinimalChatInput.kt — Page 1 ('Roleplay' picker) reorganization**
+- Removed the **User Persona** item (previously first on Page 1).
+- Moved **Creator Notes** to the top of Page 1 (markdown content preserved; shown only when `assistant.creatorNotes` is not blank).
+- New order on Page 1:
+  1. Creator Notes
+  2. Prompt Presets
+  3. Author's Note
+  4. Lorebooks (when `settings.lorebooks.isNotEmpty()`)
+  5. Wallpaper & Effects
+  6. **Text Styling** (new item; opens `AlertDialog` titled "Text Styling" with custom italic color swatches: Coral, Lavender, Mint, Amber).
+- Added `showTextStylingDialog` state and `onOpenTextStyling` callback parameter threaded through `MinimalPickerContent`.
+- Added `Icons.Rounded.FormatItalic` icon for the Text Styling item.
 
-**2. MinimalChatInput.kt — Per-Chat Wallpaper sheet polish (lines ~1992-2187)**
-- **Blur Mode toggle tabs (FULL vs BOTTOM_FADE):** replaced hardcoded `Color(0xFF000000)` unselected backgrounds with `Color.Transparent` glassy containers bordered by `LiquidGlassTokens.SpecularBorderSubtle`; selected state uses `Color.White.copy(alpha = 0.14f)`. Backgrounds animated via `animateColorAsState` (tween 180ms) so switching tabs smoothly crossfades.
-- **'Save for this chat' button:** replaced `DomChatGlassPillButton` (which forced left-aligned `SemiBold` text on a solid white surface) with a custom `Surface`-based glass button: `color = Color.Transparent`, border `LiquidGlassTokens.SpecularBorderSubtle`, text wrapped in a centered `Box` (`contentAlignment = Alignment.Center`), `FontWeight.Bold`, `textAlign = TextAlign.Center`.
-- **Blur Height Reach slider:** wrapped the `if (blurModeDraft == BOTTOM_FADE)` block in `AnimatedVisibility` (fadeIn 150ms / fadeOut 100ms) so the slider smoothly appears/disappears when toggling blur mode.
-- All `Color.White` text colors use non-conditional form; `isDarkMode` references removed where no longer needed.
+**2. PromptPresetsBottomSheet.kt — glassy popover redesign**
+- Sheet container color changed to `Color(0xFF000000)` (AMOLED black).
+- `ModalBottomSheet` border changed from `SpecularBorderBrush` to `BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)`.
+- Drag handle replaced with a compact centered pill (`32dp x 4dp`, `Color.White.copy(alpha = 0.30f)`, `RoundedCornerShape(2.dp)`).
+- Header title/subtitle text colors use `Color.White` / `Color.White.copy(alpha = 0.6f)`; add-button surface is `Color(0xFF141520).copy(alpha = 0.60f)` with `SpecularBorderSubtle` border.
+- Presets list replaced with a compact **2x2 glassy grid** (`LazyVerticalGrid`, `GridCells.Fixed(2)`): cards are `Color(0xFF141520).copy(alpha = 0.45f/0.80f)`, `RoundedCornerShape(16.dp)`, height `130.dp`, border `LiquidGlassTokens.SpecularBorderSubtle`.
+- Colorful `PresetBadge` (System blue, Post-History purple, Depth amber, Before User emerald) removed — no colorful badges.
+- Move up/down buttons removed from grid cards (kept edit/delete toggle + switch).
+- Editor Surface fillAlpha raised to `0.85f`.
 
-**Null safety:** zero `!!` introduced. All nullable access uses smart-cast (`globalBg` inside `isNullOrBlank` guard), `coerceIn`, and Elvis operators.
+**3. MinimalChatInput.kt — Model picker cards & 'no AI providers' card**
+- `ModelItem` non-group `Card` border changed from `SpecularBorderBrush` to `LiquidGlassTokens.SpecularBorderSubtle`.
+- 'No AI providers' card (`EmptyStateCard`) already uses `DomChatGlassCard` → `LiquidGlassTokens.SpecularBorderSubtle` (unchanged, verified glassy).
 
-**Theme:** `Color(0xFF000000)` AMOLED black, `Color(0xFF141520)` unified glass card, `LiquidGlassTokens.SpecularBorderSubtle` borders preserved throughout.
+**4. CharacterHubPage.kt & SettingJanitorPage.kt — tag chips smaller & glassy**
+- `CharacterPortraitCard` tag chips: padding `10.dp/4.dp` → `8.dp/3.dp`, fontSize `11.5.sp` → `10.sp`.
+- `CharacterInspectorSheet` tag pills: padding `10.dp/4.dp` → `8.dp/3.dp`, fontSize `11.5.sp` → `10.sp`.
+- `SettingJanitorPage.CharacterCard` tag chips: padding `8.dp/3.dp` → `6.dp/2.dp`, fontSize `10.sp` → `9.sp`.
+- `SettingJanitorPage.JanitorCharacterInspectorSheet` tag pills: padding `10.dp/4.dp` → `8.dp/3.dp`, fontSize `11.5.sp` → `10.sp`.
+- All tag chips retain `Color(0xFF000000)` background + `LiquidGlassTokens.SpecularBorderSubtle` border.
+
+**Null safety:** zero `!!` introduced in any edited file. (Pre-existing `!!` in MinimalChatInput.kt camera block, lines 3117-3119, untouched.) All nullable access uses `?.`, Elvis `?:`, `mapNotNull`, `takeIf`, `orEmpty()`, or `isNullOrBlank()`.
+
+**Theme:** `Color(0xFF000000)` AMOLED black, `Color(0xFF141520)` unified glass card, `LiquidGlassTokens.SpecularBorderSubtle` borders enforced throughout.
 
 ## Call Chain & Architecture
 
-**SettingDisplayPage (settings layer):**
-- `settings.displaySetting.globalBackground / globalBackgroundDim / globalBackgroundBlur` read via `collectAsStateWithLifecycle` (DataStore → `SettingsStore`).
-- Preview card reads these directly and renders `AsyncImage` + dim/blur overlays. Pure UI derivation; no business logic, no VM calls.
-- Wallpaper picker (`ActivityResultContracts.PickVisualMedia`) writes to app storage and calls `updateDisplaySetting` → `vm.updateSettings(settings.copy(displaySetting = ...))` → `SettingsStore.update` (canonical settings API: normalization, secret migration, in-memory state, persist).
+**Plus menu reorganization (UI layer only):**
+- `MinimalChatInput` holds `showPicker`, `showTextStylingDialog`, etc. as `remember { mutableStateOf(...) }`.
+- `MinimalPickerContent` receives `onOpenTextStyling` callback; invoked when the Text Styling `MinimalPickerItem` is clicked.
+- Click sets `showPicker = false`, `showTextStylingDialog = true` → `AlertDialog` rendered inline in `MinimalChatInput`.
+- No ViewModel involvement; pure UI state.
 
-**MinimalChatInput (per-chat wallpaper popover):**
-- `settings.displaySetting.conversationWallpapers[convId]` and `assistant.background` seed the draft states (`chatBgDraft`, `blurDraft`, `dimDraft`, `blurModeDraft`, `blurHeightFractionDraft`) via `remember(existingConfig) { mutableStateOf(...) }`.
-- `blurModeDraft` drives `animateColorAsState` targets for tab backgrounds and `AnimatedVisibility` for the blur-height slider — UI state only.
-- "Save for this chat" builds `ConversationWallpaperConfig` and calls `settingsStore.update { ... }` inside `scope.launch` (main-safe coroutine, no blocking I/O on Main) to persist `conversationWallpapers` map.
-- `DomChatInWindowBottomSheet` hosts the sheet; dismissal via `onDismissRequest = { showWallpaperSheet = false }`.
+**Prompt Presets popover:**
+- `PromptPresetsBottomSheet` is a `ModalBottomSheet` receiving `settings`, `conversation`, `onUpdateConversation`, `onDismissRequest`.
+- State: `sheetState`, `isEditingOrCreating`, `editingTargetId`, form fields (`formName`, `formDescription`, `formContent`, `formPosition`, `formDepth`) — all `remember { mutableStateOf(...) }`.
+- Mutations funnel through `settingsStore.update { ... }` (canonical `SettingsStore.update` API: normalization, secret migration, in-memory state, persist).
+- `togglePreset`/`toggleAll`/`resetToGlobal`/`movePreset`/`savePreset`/`deletePreset` delegate to `SettingsStore.update` or `onUpdateConversation` callback.
 
-**UI boundaries respected:** UI layer only renders state and emits intents; settings persistence funnels through `SettingsStore.update` (normalization + persist). No new ViewModel needed for the preview (reads existing `settings.displaySetting`).
+**Model picker:**
+- `ModelList` (in `ModelList.kt`) renders model cards via `ModelItem`; non-group path uses `Card` with `SpecularBorderSubtle` border.
+- Empty state uses `EmptyStateCard` → `DomChatGlassCard` → `LiquidGlassCard` with `SpecularBorderSubtle`.
+
+**Tag chips:**
+- Rendered inline in `CharacterPortraitCard`, `CharacterInspectorSheet` (CharacterHubPage.kt) and `CharacterCard`, `JanitorCharacterInspectorSheet` (SettingJanitorPage.kt) — read-only display, no state.
 
 ## Recomposition & Memory Safety
 
-- `glassAlpha`-independent here; preview card reads `globalDim`/`globalBlur`/`globalBg` as immutable `Float`/`String` — recomposes only when those settings change.
-- `AsyncImage(model = globalBg)` — Coil handles image loading/caching internally; no bitmap retained in Compose state. Model is a file-path `String`, stable across recompositions.
-- `animateColorAsState` called inside `if (showWallpaperSheet)` block; targets derived from `blurModeDraft` — animation state is Compose-managed, no leaked `AnimationSpec` objects.
-- `remember(existingConfig) { mutableStateOf(...) }` for drafts — keyed on config, recreated only when config changes. `mutableFloatStateOf` / `mutableStateOf` used correctly.
-- `AnimatedVisibility` + `animateColorAsState` are standard Compose animation APIs; no naked animation objects.
-- No `SnapshotStateList` passed to `items()`; no derived-state violations.
-- No force-unwraps (`!!`) in edited regions.
+- All new UI state (`showTextStylingDialog`, form fields, `sheetState`) uses `remember { mutableStateOf(...) }` — lifecycle-aware, no naked objects.
+- `MinimalPickerContent` callbacks are lambdas passed down; `onOpenTextStyling` is a stable `() -> Unit`.
+- `AlertDialog` for Text Styling is conditionally composed (`if (showTextStylingDialog)`) — no retained composition when closed.
+- `LazyVerticalGrid` in Prompt Presets uses `itemsIndexed(..., key = { _, it -> it.id })` — stable keys, `animateItem()` for smooth grid changes.
+- Preset grid cards pass fixed `height(130.dp)` — predictable sizing, no measure-loop instability.
+- No `SnapshotStateList` passed to `items()`; all collections are immutable reads.
+- No force-unwraps (`!!`) introduced.
 
 ## Threading & Dispatchers
 
-- Opacity/preview/tab animation: synchronous main-thread Compose operations; no blocking calls on `Dispatchers.Main`.
-- Wallpaper image load via `AsyncImage` — Coil loads off-main internally.
-- Settings persistence: `settingsStore.update { ... }` invoked inside `scope.launch` (ViewModel/main scope) but the body only mutates an in-memory `Settings` copy; `SettingsStore.update` itself dispatches disk I/O internally (DataStore). No explicit `Dispatchers.IO` needed — matches existing code pattern in this file (line ~328 `scope.launch { settingsStore.update { ... } }`).
-- No `Dispatchers.Main` used for I/O. No new background threads spawned.
+- All UI state mutations are synchronous main-thread Compose operations.
+- `settingsStore.update { ... }` calls run inside `scope.launch { ... }` (main-safe coroutine scope); `SettingsStore.update` handles DataStore disk I/O internally (no explicit `Dispatchers.Main` blocking).
+- No new `Dispatchers.IO` usage introduced; no network/disk on Main thread.
+- `ModelList` model selection launches `settingsStore.update` for recents/favorites inside `coroutineScope.launch` — matches existing pattern.
 
 ## Offline & Error State Handling
 
-- Preview card: offline-capable (loads local app-storage file path via Coil); if image fails to load, Coil renders nothing/placeholder gracefully — no exception propagates to Compose.
-- Dim/blur overlays: total functions (`coerceIn` clamps); no failure mode.
-- Blur Mode tabs: `animateColorAsState` targets are total; no exception surface.
-- Save flow: wrapped in existing try/catch-free pattern consistent with the file (the `scope.launch` block mirrors existing wallpaper-save code at lines ~327-333). `chatBgDraft.isNullOrBlank()` guard removes map entry when no wallpaper, preventing stale entries.
-- `settingsStore.update` is the canonical API — handles normalization + persistence atomically; callers need not handle partial state.
-- Error states: existing sheet/toaster patterns apply; no new error modes introduced.
+- Text Styling dialog is fully local (no network); color swatches are static; "Close" dismisses via `showTextStylingDialog = false`.
+- Prompt Presets: `savePreset`/`deletePreset`/`movePreset` use `settingsStore.update` atomically; `runCatching` guards where applicable (existing pattern). Empty presets state renders an empty grid gracefully (no error UI needed — offline-capable, local DataStore only).
+- Model picker: Empty providers handled by `EmptyStateCard` (offline message, no crash).
+- Tag chips: read-only display of `settings.assistantTags`-resolved names; uses `mapNotNull` + `takeIf { name.isNotBlank() }` — no exception surface.
+- Error states: existing `errorFlow` toasts in `ChatPage`/`SettingJanitorPage` unchanged; no new error modes introduced.
 
 ## Files Changed
 
-- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingDisplayPage.kt` — added imports (`AsyncImage`, `ContentScale`, `Brush`, `LiquidGlassTokens`); added live wallpaper preview card under Global Wallpaper.
-- `app/src/main/java/me/lucid/domchat/ui/components/ai/MinimalChatInput.kt` — animated glassy Blur Mode tabs; centered bold 'Save for this chat' glass button; `AnimatedVisibility` around Blur Height Reach slider.
+- `app/src/main/java/me/lucid/domchat/ui/components/ai/MinimalChatInput.kt` — Page 1 reorder (User Persona removed, Creator Notes to top, Text Styling added), `showTextStylingDialog` state + dialog, `onOpenTextStyling` callback, ModelItem card border → `SpecularBorderSubtle`.
+- `app/src/main/java/me/lucid/domchat/ui/components/chat/PromptPresetsBottomSheet.kt` — glassy sheet redesign (black container, `SpecularBorderSubtle` border, drag handle pill, close button, 2x2 grid, no colorful badges).
+- `app/src/main/java/me/lucid/domchat/ui/components/ai/ModelList.kt` — `ModelItem` Card border `SpecularBorderBrush` → `SpecularBorderSubtle`.
+- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` — tag chips smaller (`10.sp`, `8.dp/3.dp` padding) in PortraitCard + InspectorSheet.
+- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt` — tag chips smaller (`9.sp`/`10.sp`, `6.dp/2.dp`/`8.dp/3.dp` padding) in CharacterCard + inspector sheet.
 - `audit_brief.md` — this document.

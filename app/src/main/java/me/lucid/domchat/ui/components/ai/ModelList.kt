@@ -1143,7 +1143,7 @@ private fun ModelItem(
         Card(
             modifier = modifier.border(
                 width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
             ),
             shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,

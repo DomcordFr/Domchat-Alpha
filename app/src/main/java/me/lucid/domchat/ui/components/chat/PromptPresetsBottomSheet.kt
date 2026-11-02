@@ -34,6 +34,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -102,36 +104,6 @@ import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import org.koin.compose.koinInject
-
-/**
- * Glassy badge showing the preset injection position with a distinct color per type:
- * System (blue), Post-History (purple/magenta), Depth N (amber), Before User (emerald).
- */
-@Composable
-private fun PresetBadge(
-    position: PresetInjectionPosition,
-    depth: Int = 0,
-) {
-    val (label, color) = when (position) {
-        PresetInjectionPosition.SYSTEM_PROMPT -> "System" to Color(0xFF3B82F6)
-        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History" to Color(0xFFD946EF)
-        PresetInjectionPosition.AT_DEPTH -> "Depth $depth" to Color(0xFFF59E0B)
-        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User" to Color(0xFF10B981)
-    }
-    Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = AppShapes.Tag,
-        border = BorderStroke(0.5.dp, color),
-        modifier = Modifier.padding(vertical = 6.dp, horizontal = 10.dp),
-    ) {
-        Text(
-            text = "[ $label ]",
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-            color = color,
-            maxLines = 1,
-        )
-    }
-}
 
 /**
  * Single selectable position button for the 2x2 injection-position grid.
@@ -363,7 +335,7 @@ fun PromptPresetsBottomSheet(
     }
 
     ApplyDialogWindowBlur()
-    val effectiveSheetContainerColor = domChatSheetContainerColor()
+    val effectiveSheetContainerColor = Color(0xFF000000)
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
@@ -373,16 +345,21 @@ fun PromptPresetsBottomSheet(
         containerColor = effectiveSheetContainerColor,
         shape = sheetShape,
         dragHandle = {
-            Surface(
-                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
-                color = Color.White.copy(alpha = 0.25f),
-                shape = CircleShape
+            Box(
+                modifier = Modifier
+                    .padding(top = 8.dp, bottom = 4.dp)
+                    .align(Alignment.CenterHorizontally)
             ) {
-                Box(modifier = Modifier.size(width = 36.dp, height = 4.dp))
+                Box(
+                    modifier = Modifier
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.White.copy(alpha = 0.30f))
+                )
             }
         },
         modifier = modifier
-            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
+            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, sheetShape)
     ) {
         Column(
             modifier = Modifier
@@ -390,7 +367,7 @@ fun PromptPresetsBottomSheet(
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .navigationBarsPadding()
         ) {
-            // Header
+            // Header with close button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -404,7 +381,7 @@ fun PromptPresetsBottomSheet(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp
                             ),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color.White,
                         )
                         if (conversation != null) {
                             Spacer(modifier = Modifier.width(8.dp))
@@ -418,7 +395,7 @@ fun PromptPresetsBottomSheet(
                     Text(
                         text = "Toggle & inject multiple roleplay instruction cards",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.6f),
                     )
                 }
 
@@ -429,7 +406,7 @@ fun PromptPresetsBottomSheet(
                             openCreate()
                         },
                         shape = CircleShape,
-                        color = Color(0xFF141520).copy(alpha = 0.75f),
+                        color = Color(0xFF141520).copy(alpha = 0.60f),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     ) {
                         Icon(
@@ -447,7 +424,7 @@ fun PromptPresetsBottomSheet(
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "Cancel",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White.copy(alpha = 0.7f),
                         )
                     }
                 }
@@ -492,7 +469,7 @@ fun PromptPresetsBottomSheet(
             ) { visible ->
                 if (visible) {
                     Surface(
-                        color = Color(0xFF141520).copy(alpha = 0.75f),
+                        color = Color(0xFF141520).copy(alpha = 0.85f),
                         shape = RoundedCornerShape(20.dp),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
@@ -736,9 +713,11 @@ fun PromptPresetsBottomSheet(
             } // end if (visible)
         }
 
-            // Presets List
-            LazyColumn(
+            // Presets grid - compact glassy 2x2 cards
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
@@ -748,118 +727,83 @@ fun PromptPresetsBottomSheet(
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
 
                     Surface(
-                        color = if (isEnabled) {
-                            Color(0xFF141520).copy(alpha = 0.80f)
-                        } else {
-                            Color(0xFF141520).copy(alpha = 0.45f)
-                        },
-                        shape = RoundedCornerShape(18.dp),
+                        color = if (isEnabled) Color(0xFF141520).copy(alpha = 0.80f) else Color(0xFF141520).copy(alpha = 0.45f),
+                        shape = RoundedCornerShape(16.dp),
                         border = BorderStroke(
-                            width = if (isEnabled) 1.5.dp else 0.5.dp,
-                            brush = if (isEnabled) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                            width = if (isEnabled) 1.0.dp else 0.5.dp,
+                            brush = LiquidGlassTokens.SpecularBorderSubtle,
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem()
+                            .height(130.dp),
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
-                            if (allPresets.size > 1) {
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(end = 6.dp)
-                                ) {
-                                    IconButton(
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Pop)
-                                            movePreset(index, index - 1)
-                                        },
-                                        enabled = index > 0,
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.KeyboardArrowUp,
-                                            contentDescription = "Move Up",
-                                            tint = if (index > 0) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Pop)
-                                            movePreset(index, index + 1)
-                                        },
-                                        enabled = index < allPresets.size - 1,
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.KeyboardArrowDown,
-                                            contentDescription = "Move Down",
-                                            tint = if (index < allPresets.size - 1) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            }
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Text(
-                                        text = preset.name,
-                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    PresetBadge(
-                                        position = preset.injectionPosition,
-                                        depth = preset.depth,
-                                    )
-                                }
-
-                                if (preset.description.isNotBlank()) {
-                                    Text(
-                                        text = preset.description,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 Text(
-                                    text = preset.content,
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                    color = Color.White.copy(alpha = 0.5f),
-                                    maxLines = 2,
+                                    text = preset.name,
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White,
+                                    maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                Switch(
+                                    checked = isEnabled,
+                                    onCheckedChange = { togglePreset(preset.id, it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                    ),
+                                    modifier = Modifier.size(32.dp),
                                 )
                             }
 
+                            if (preset.description.isNotBlank()) {
+                                Text(
+                                    text = preset.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.55f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+
+                            Text(
+                                text = preset.content,
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                color = Color.White.copy(alpha = 0.45f),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 IconButton(
                                     onClick = {
                                         haptics.perform(HapticPattern.Pop)
                                         openEdit(preset)
                                     },
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(32.dp),
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Edit,
                                         contentDescription = "Edit",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        tint = Color.White.copy(alpha = 0.6f),
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
@@ -870,26 +814,16 @@ fun PromptPresetsBottomSheet(
                                             haptics.perform(HapticPattern.Pop)
                                             presetToDelete = preset
                                         },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(32.dp),
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.Delete,
                                             contentDescription = "Delete",
-                                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                                            tint = Color.White.copy(alpha = 0.5f),
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
                                 }
-
-                                Switch(
-                                    checked = isEnabled,
-                                    onCheckedChange = { togglePreset(preset.id, it) },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedTrackColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    modifier = Modifier.padding(start = 6.dp)
-                                )
                             }
                         }
                     }

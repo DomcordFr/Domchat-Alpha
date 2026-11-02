@@ -1205,13 +1205,15 @@ private fun JanitorCharacterInspectorSheet(
                                         .clip(RoundedCornerShape(20.dp))
                                         .background(Color(0xFF000000))
                                         .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                                        .padding(horizontal = 8.dp, vertical = 3.dp),
                                 ) {
                                     Text(
                                         text = tagId.replace("_", " ").trim(),
-                                        fontSize = 11.5.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = Color.White.copy(alpha = 0.92f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                             }
@@ -1771,11 +1773,11 @@ private fun CharacterCard(
                             .clip(RoundedCornerShape(20.dp))
                             .background(Color(0xFF000000))
                             .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = tagId.toString().replace("_", " "),
-                            fontSize = 10.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White.copy(alpha = 0.92f),
                             maxLines = 1,

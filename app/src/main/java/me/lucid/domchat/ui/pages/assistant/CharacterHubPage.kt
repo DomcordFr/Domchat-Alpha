@@ -1404,11 +1404,11 @@ fun CharacterPortraitCard(
                             .clip(RoundedCornerShape(20.dp))
                             .background(Color(0xFF000000))
                             .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
                     ) {
                     Text(
                         text = tagName.replace("_", " "),
-                        fontSize = 11.5.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White.copy(alpha = 0.92f),
                         maxLines = 1,
@@ -1746,11 +1746,11 @@ fun CharacterInspectorSheet(
                                         .clip(RoundedCornerShape(20.dp))
                                         .background(Color(0xFF000000))
                                         .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                                        .padding(horizontal = 8.dp, vertical = 3.dp),
                                 ) {
                                     Text(
                                         text = tagName.replace("_", " "),
-                                        fontSize = 11.5.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = Color.White.copy(alpha = 0.92f),
                                         maxLines = 1,
