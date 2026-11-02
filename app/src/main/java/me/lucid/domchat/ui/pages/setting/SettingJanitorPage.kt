@@ -108,6 +108,7 @@ import coil3.compose.AsyncImage
 import kotlin.text.Charsets
 import kotlin.text.Regex
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -1397,7 +1398,7 @@ private fun JanitorCharacterInspectorSheet(
                     ) {
                         AnimatedContent(
                             targetState = importStatus,
-                            transitionSpec = { fadeIn(tween(150)) + fadeOut(tween(150)) },
+                            transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) },
                             label = "ImportButtonContent",
                         ) { status ->
                             when (status) {
