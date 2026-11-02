@@ -44,7 +44,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Chat
-import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Edit
@@ -474,7 +474,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 color = Color.White
                                             )
                                             Icon(
-                                                imageVector = Icons.Rounded.ArrowDropDown,
+                                                imageVector = Icons.Rounded.KeyboardArrowDown,
                                                 contentDescription = "Dropdown",
                                                 tint = Color.White,
                                                 modifier = Modifier.size(20.dp).rotate(sortArrowRotation)
@@ -766,7 +766,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 color = Color.White
                                             )
                                             Icon(
-                                                imageVector = Icons.Rounded.ArrowDropDown,
+                                                imageVector = Icons.Rounded.KeyboardArrowDown,
                                                 contentDescription = "Dropdown",
                                                 tint = Color.White,
                                                 modifier = Modifier.size(20.dp).rotate(sortArrowRotation)
@@ -1651,64 +1651,6 @@ fun CharacterInspectorSheet(
                     }
                 }
 
-                // Embedded images gallery (from bio/description or firstMessage markdown)
-                val embeddedImageUrls = remember(assistant) {
-                    val list = mutableListOf<String>()
-                    val markdownText = listOf(
-                        assistant.creatorNotes.orEmpty(),
-                        assistant.systemPrompt,
-                        assistant.firstMessage.orEmpty(),
-                        assistant.alternateGreetings.joinToString("\n")
-                    ).joinToString("\n")
-                    val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
-                    val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
-                    val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
-                    markdownRegex.findAll(markdownText).forEach { m ->
-                        if (m.groupValues.size > 2) list.add(m.groupValues[2])
-                    }
-                    htmlImgRegex.findAll(markdownText).forEach { m ->
-                        if (m.groupValues.size > 1) list.add(m.groupValues[1])
-                    }
-                    rawUrlRegex.findAll(markdownText).forEach { m -> list.add(m.value) }
-                    list.filter { it.isNotBlank() }.distinct()
-                }
-                if (embeddedImageUrls.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Embedded Images",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = contentTextColor.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(embeddedImageUrls, key = { it }) { imageUrl ->
-                            Box(
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF141520))
-                                    .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        viewerImageUrls = embeddedImageUrls.toList()
-                                        viewerCurrentPage = embeddedImageUrls.indexOf(imageUrl).coerceAtLeast(0)
-                                        viewerOpen = true
-                                    }
-                            ) {
-                                AsyncImage(
-                                    model = imageUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    alignment = Alignment.Center,
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        }
-                    }
-                }
 
                 // Content area
                 Column(
@@ -1917,6 +1859,65 @@ fun CharacterInspectorSheet(
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
                         ) {
                             Icon(Icons.Rounded.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
+                        }
+                    }
+
+                    // Embedded images gallery (from bio/description or firstMessage markdown)
+                    val embeddedImageUrls = remember(assistant) {
+                        val list = mutableListOf<String>()
+                        val markdownText = listOf(
+                            assistant.creatorNotes.orEmpty(),
+                            assistant.systemPrompt,
+                            assistant.firstMessage.orEmpty(),
+                            assistant.alternateGreetings.joinToString("\n")
+                        ).joinToString("\n")
+                        val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
+                        val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+                        val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+                        markdownRegex.findAll(markdownText).forEach { m ->
+                            if (m.groupValues.size > 2) list.add(m.groupValues[2])
+                        }
+                        htmlImgRegex.findAll(markdownText).forEach { m ->
+                            if (m.groupValues.size > 1) list.add(m.groupValues[1])
+                        }
+                        rawUrlRegex.findAll(markdownText).forEach { m -> list.add(m.value) }
+                        list.filter { it.isNotBlank() }.distinct()
+                    }
+                    if (embeddedImageUrls.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "Embedded Images",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = contentTextColor.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(embeddedImageUrls, key = { it }) { imageUrl ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFF141520))
+                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            viewerImageUrls = embeddedImageUrls.toList()
+                                            viewerCurrentPage = embeddedImageUrls.indexOf(imageUrl).coerceAtLeast(0)
+                                            viewerOpen = true
+                                        }
+                                ) {
+                                    AsyncImage(
+                                        model = imageUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        alignment = Alignment.Center,
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
                         }
                     }
 

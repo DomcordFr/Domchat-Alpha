@@ -1,51 +1,81 @@
-# Audit Brief — Fix unresolved references in ChatPage delete confirmation dialog
+# Audit Brief — Fix Jai Hub Popover, Import Button Animation, Character Hub Images, and Dropdown Arrows
 
-**Task:** task-066 — fix two unresolved references in `ChatPageContent` in `ChatPage.kt`.
+**Task:** task-067 — seven coordinated fixes across three files.
 
 ## Intent Verification
 
-Confirmed against `task-066_directive.json`:
+Confirmed against `task-067_directive.json`:
 
-1. Declared `val haptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)` inside `ChatPageContent`, immediately after the `pendingDeleteMessage` state declaration (near line 1318, now line 1319). `rememberPremiumHaptics` is already imported at line 197 (`me.lucid.domchat.ui.hooks.rememberPremiumHaptics`); `setting` is in scope (`val setting by vm.settings.collectAsStateWithLifecycle()`, line 721).
-2. In the `pendingDeleteMessage` confirmButton `onClick` (line 1893 → now line 1894), replaced `val backup = frameConversation` with `val backup = conversation`. `frameConversation` is scoped inside the `AnimatedContent` lambda (declared at line 1569 within `targetConversationId -> {...}`) and is out of scope at the delete-dialog confirm button, making it an unresolved reference. `conversation` (line 722) is in scope at the confirm button.
+1. **Jai Popover Animation** — Refactored the inline `selectedCharacter?.let { ... ModalBottomSheet(...) }` block in `SettingJanitorPage.kt` into a self-contained `@Composable private fun JanitorCharacterInspectorSheet(...)`. It owns `rememberModalBottomSheetState(skipPartiallyExpanded = true)`, calls `sheetState.show()` via `LaunchedEffect(character)` for smooth bottom-sheet entry, and exposes `dismissWithAnimation()` (guarded by `isDismissing`) that calls `sheetState.hide()` then `onDismiss()`. Page-level `bottomSheetState`, `viewerImageUrls`, `viewerOpen`, `viewerCurrentPage` removed; all state now lives inside the composable.
 
-File edited:
-- `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt`
+2. **Import Button Animation** — `buttonBgColor` changed from a plain `val` to `val buttonBgColor by animateColorAsState(targetValue = ..., animationSpec = tween(300), label = "ImportButtonBg")`. Button content wrapped in `AnimatedContent(targetState = importStatus, transitionSpec = { fadeIn(tween(150)) + fadeOut(tween(150)) }, label = "ImportButtonContent")` so the transition to the green "Imported!" checkmark is smooth.
+
+3. **Import Coroutine Cancellation** — In the import `catch (e: Exception)` block, added `if (e is CancellationException) throw e` before setting error state, so sheet dismissal (cancellation) does not surface a false error toast.
+
+4. **Preserve Embedded Images** — `embeddedImageUrls` now merges textBlobs from BOTH `character` and `fullExtract` (bio, description, firstMessage, alternateGreetings from each) instead of eliding one side with `?:`, so images never disappear when `fullExtract` finishes loading. Notes tab: `creatorNotes` containing `![` or `<img` takes precedence over plain extracted descriptions.
+
+5. **Character Hub Popover Images** — In `CharacterInspectorSheet` (`CharacterHubPage.kt`), the Embedded Images gallery block was removed from between the hero image and the content area, and re-inserted below the Secondary Character Management buttons (Export, Clone, Delete) inside the content `Column` that already carries `.padding(horizontal = 20.dp)`, so it never touches screen edges.
+
+6. **Unified Dropdown Chevron** — `Icons.Rounded.ArrowDropDown` → `Icons.Rounded.KeyboardArrowDown` in all three files; imports updated accordingly (`ArrowDropDown` import removed, `KeyboardArrowDown` import added where absent). `SettingLorebookDetailPage.kt` already imported `KeyboardArrowDown`; the unused `ArrowDropDown` import was removed.
+
+7. **Jai Search respects feedMode** — `loadSearch()` normal query URL now appends `&sort=$sortParam` where `sortParam` maps `Popular → popular`, `Trending → trending`, `Trending 24h → 24h`, `Latest → latest`. Added `LaunchedEffect(feedMode)` that re-triggers `loadSearch()` when `feedMode` changes and `searchQuery` is not blank.
+
+Files edited:
+- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingJanitorPage.kt`
+- `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt`
+- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingLorebookDetailPage.kt`
 
 No Gradle build was run (per constraint).
 
-Null safety: no `!!` operators introduced. `setting.displaySetting.enableUIHaptics` is a non-null Boolean read from a collected StateFlow. `conversation` is a non-null `Conversation` collected via `collectAsStateWithLifecycle()`. `rememberPremiumHaptics` returns a non-null `PremiumHaptics`.
+Null safety: no `!!` introduced. All nullable reads use Elvis (`?:`), safe calls (`?.`), or `orEmpty()`. `conversation`/`character`/`assistant` references are non-null in their scopes.
 
-Glass-card theme: `0xFF141520` theme color is untouched; no theme colors were modified.
+Glass-card theme: `0xFF141520` preserved on image box backgrounds; no theme colors altered.
 
 ## Call Chain & Architecture
 
-- `ChatPageContent` is a Compose UI-layer composable in `ChatPage.kt` (`me.lucid.domchat.ui.pages.chat`). It renders the chat surface and emits user intents to the ViewModel (`vm`). Zero business logic lives here.
-- `haptics` (new, line 1319) feeds `haptics.perform(HapticPattern.Error)` at the delete-dialog confirm button (line 1889). It is a UI-side haptics handle, created once via `rememberPremiumHaptics(...)` and gated by `setting.displaySetting.enableUIHaptics`.
-- `conversation` (line 722) is the single source of truth for the active conversation, collected from `vm.conversation`. At the delete confirm button, `val removedIds = vm.deleteMessage(toDelete)` performs the deletion through the ViewModel/Repository boundary; `backup = conversation` captures the pre-deletion snapshot so the Undo toast action can call `vm.updateConversation(backup)` + `vm.markNodesAsRestored(removedIds)`.
-- `scope.launch { ... }` (line 1893) uses `rememberCoroutineScope()` (line 711) — a UI-scope coroutine launched from Compose, not a ViewModel scope. It coordinates the delete + toast flow.
-- Layering respected: UI renders state (`conversation`, `setting`, `haptics`), emits intents (`vm.deleteMessage`, `vm.updateConversation`, `vm.markNodesAsRestored`), no business logic in the composable.
+**SettingJanitorPage.kt**
+- `SettingJanitorPage` (UI layer) renders the JanitorAI hub grid. On character card click, sets `selectedCharacter = character`; the `selectedCharacter?.let { JanitorCharacterInspectorSheet(...) }` call composes the sheet.
+- `JanitorCharacterInspectorSheet` owns `ModalBottomSheet` with internal `sheetState`. `LaunchedEffect(character)` calls `sheetState.show()` on selection for smooth bottom-up animation. `dismissWithAnimation()` hides sheet then invokes `onDismiss()` (which clears `selectedCharacter`).
+- Import flow: click → `scope.launch { ... }` → `withContext(Dispatchers.IO) { httpClient.execute(...) }` → `extractToAssistant(...)` → `assistantVM.addAssistant(...)`. ViewModel/Repository boundary handles persistence.
+- `loadSearch()` executes search via `/api/search?q=...&sort=$sortParam` on `Dispatchers.IO`; results posted to `Dispatchers.Main`.
+- `loadBrowse()` similar pattern for browse tabs.
+
+**CharacterHubPage.kt**
+- `CharacterHubPage` renders the character gallery; `inspectingAssistant` triggers `CharacterInspectorSheet(...)`. The sheet owns its own `sheetState` and `dismissWithAnimation()`.
+- Embedded Images gallery now lives inside the content `Column(.padding(horizontal = 20.dp))` below Start Chat / Edit / Export / Clone / Delete buttons.
+- `onStartChat` → `vm.createConversation(char.id)` on `Dispatchers.IO` → `navigateToChatPage(...)` on Main.
+
+**SettingLorebookDetailPage.kt**
+- Chevron-only change; no logic impact.
+
+Layering respected: UI renders state and emits intents; ViewModel owns business logic and coroutine management; Repository handles data.
 
 ## Recomposition & Memory Safety
 
-- `haptics` is created with `rememberPremiumHaptics(...)`, which is Compose-lifecycle-aware (returns a remembered instance tied to the composition). No naked object; no per-recomposition allocation.
-- `conversation` is collected via `collectAsStateWithLifecycle()` — lifecycle-aware, recomposes only when the value changes, no leaked collection.
-- `remember { mutableStateOf<...>(null) }` for `pendingDeleteMessage` — standard Compose state, survives recomposition, cleared (`= null`) on dismiss and after confirm.
-- `scope.launch {}` captures `conversation` by value at confirm time (`val backup = conversation`), so the Undo lambda holds a stable snapshot even if `conversation` changes later. No dangling references to a mutable StateFlow.
-- No `SnapshotStateList`/mutable collections passed to `items()`. No `derivedStateOf` concerns here.
-- `haptics` reads `setting.displaySetting.enableUIHaptics` at composition time; if the setting changes, `rememberPremiumHaptics` re-runs only when its `enabled` parameter changes (keyed by the factory), consistent with other `haptics` declarations elsewhere in the file (lines 2326, 2494, 2697, 3105, etc.).
+- `sheetState`, `viewerImageUrls`, `viewerOpen`, `viewerCurrentPage`, `isImporting`, `importStatus`, `fullExtract`, `isExtractLoading`, `sheetSelectedTab` all use `remember(...)` / `remember(character.id)` / `mutableStateOf` — Compose-lifecycle-aware, no naked objects.
+- `buttonBgColor by animateColorAsState(...)` — recomputes only when `importStatus` changes; tween(300) is bounded.
+- `AnimatedContent` with `fadeIn`/`fadeOut` tween(150) — bounded transitions, no infinite recomposition.
+- `LaunchedEffect(character)` for `sheetState.show()` — runs once per character selection, keyed on `character`, no repeated execution.
+- `LaunchedEffect(feedMode)` — runs only when `feedMode` changes, guarded by `searchQuery.isNotBlank()`.
+- No `SnapshotStateList`/mutable collections passed to `items(...)`. All `items(...)` use stable keys (`it.id`, `it`).
+- `rememberPremiumHaptics()` — Compose-lifecycle-aware haptics handle (consistent with other declarations in the file).
+- No `!!` force-unwraps anywhere in the edited regions.
 
 ## Threading & Dispatchers
 
-- `haptics.perform(HapticPattern.Error)` runs on the Compose UI/Main thread — haptics are a UI-side, synchronous effect. This is correct; haptics must be performed on Main.
-- `vm.deleteMessage(...)`, `vm.updateConversation(...)`, `vm.markNodesAsRestored(...)` are suspending ViewModel calls invoked inside `scope.launch {}`. Per architecture, the ViewModel routes network/disk work to `Dispatchers.IO` internally; the UI composable never calls `Dispatchers.Main` for I/O and never launches background work directly on Main beyond the UI effect itself.
-- No `Dispatchers.IO` / `Dispatchers.Main` references are introduced or violated in this file at these edit points. No `withContext` needed here.
-- `LaunchedEffect(vm)` (line 715) for error flow collection remains untouched; already lifecycle-aware.
+- Network (`httpClient.execute`) strictly on `Dispatchers.IO` via `withContext(Dispatchers.IO) {}`.
+- State updates (`searchState = ...`, `browseState = ...`, `fullExtract = ...`, `isExtractLoading = ...`) marshalled back to `Dispatchers.Main` via `withContext(Dispatchers.Main) {}`.
+- `scope.launch {}` (UI `rememberCoroutineScope()`) used for import coroutine and sheet show/hide — UI-scope, not `Dispatchers.Main` for I/O.
+- `sheetState.show()` / `sheetState.hide()` are suspending ModalBottomSheetState calls, correctly invoked inside `scope.launch {}` / `LaunchedEffect`.
+- No `Dispatchers.Main` used for disk/network; no `withContext(Dispatchers.Main)` for compute.
+- `CancellationException` rethrow prevents spurious error toasts when the coroutine is cancelled by sheet dismissal.
 
 ## Offline & Error State Handling
 
-- Delete confirmation is a user-initiated, local-database-driven action (message deletion via Repository → Room). It does not depend on network, so Offline is not a failure mode for the delete itself.
-- Error states: `vm.errorFlow` is collected via `LaunchedEffect(vm)` (line 715) and surfaced through `toaster.show(...)` with `ToastType.Error` — generic error handling covers exceptions from `deleteMessage`/`updateConversation`/`markNodesAsRestored`.
-- The Undo toast (`R.string.undo`) provides recovery: on click, `vm.updateConversation(backup)` restores the pre-deletion conversation and `vm.markNodesAsRestored(removedIds)` restores removed message nodes — explicit Success/rollback path.
-- Loading state is implicit (the delete is fast/local); no separate Loading UI required for this dialog. `isGenerating` (line 1331) is unrelated to delete flow.
-- All UI strings (`Delete message?`, `Are you sure...`, `message_deleted`, `undo`, `delete`) are resolved via `context.getString` / `stringResource` — no hardcoded strings, consistent with i18n setup.
+- `JanitorLoadState` sealed class (`Loading` / `Success(items)` / `Error(message)`) explicitly models all states; UI renders loader, error text, or cards accordingly.
+- Browse errors retain existing items when available (toaster shows "Failed to load more...") rather than wiping state.
+- Search errors: `searchState = JanitorLoadState.Error("...")`; catch block shows generic unexpected-error toast.
+- Import: `ImportStatus.IDLE / IMPORTING / SUCCESS / ERROR`; ERROR state renders red "Import Failed" button; catch block shows `toaster.show("Import error: ...", ToastType.Error)`.
+- CancellationException rethrown — not swallowed as error — so dismissal never produces a false error toast.
+- Undo pattern exists elsewhere in the codebase (delete flows) but import is fire-and-forget; no partial state to roll back on failure since `assistantVM.addAssistant` only runs on success.
+- Offline: search/browse are network-dependent; errors surface via `ToastType.Error` and `JanitorLoadState.Error`. Local state (`currentItems`) is retained across transient failures.
