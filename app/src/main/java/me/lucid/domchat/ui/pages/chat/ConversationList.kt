@@ -132,7 +132,7 @@ sealed class ConversationListItem {
 }
 
 @Composable
-fun ColumnScope.ConversationList(
+fun ConversationList(
     current: Conversation,
     conversations: LazyPagingItems<ConversationListItem>,
     conversationJobs: Set<Uuid>,
