@@ -1160,7 +1160,7 @@ private fun ModelItem(
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth())
+                        .fillMaxWidth()
                         .combinedClickable(
                             enabled = true,
                             onLongClick = {
@@ -1186,7 +1186,7 @@ private fun ModelItem(
                         contentColor = Color.White
                     )
                     Column(
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         Text(
