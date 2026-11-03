@@ -178,7 +178,7 @@ fun DomChatAssistantPickerSheet(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxWidth()1f, fill = false),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 itemsIndexed(filteredAssistants, key = { _, item -> item.id }) { index, assistant ->
@@ -222,7 +222,7 @@ fun DomChatAssistantPickerSheet(
                     ) {
                         avatar(assistant, Modifier.size(40.dp))
                         Column(
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(
