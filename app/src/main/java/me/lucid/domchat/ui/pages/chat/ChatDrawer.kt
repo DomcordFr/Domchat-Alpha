@@ -10,6 +10,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -387,7 +388,6 @@ fun ChatDrawerContent(
                         DomChatDrawerQuickAction(
                             label = "Home",
                             containerColor = quickActionCardColor,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = {
                                 navigateToChatPage(navController)
                                 dismissDrawerAfterSelection()
@@ -405,7 +405,6 @@ fun ChatDrawerContent(
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
                             containerColor = quickActionCardColor,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
                                 dismissDrawerAfterSelection()
@@ -423,7 +422,6 @@ fun ChatDrawerContent(
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
                             containerColor = quickActionCardColor,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = {
                                 navController.navigate(Screen.Menu)
                                 dismissDrawerAfterSelection()

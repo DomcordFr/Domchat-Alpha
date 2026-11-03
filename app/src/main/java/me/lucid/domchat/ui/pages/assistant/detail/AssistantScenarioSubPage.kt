@@ -29,6 +29,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.ui.DebouncedTextField
+import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
+import me.lucid.domchat.ui.pages.setting.components.SettingGroupInputItem
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
