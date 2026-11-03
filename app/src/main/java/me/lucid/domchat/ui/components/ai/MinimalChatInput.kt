@@ -1612,9 +1612,33 @@ fun MinimalChatInput(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight(0.85f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalArrangement = Arrangement.SpaceBetween
+                        .verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Select Model",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    IconButton(
+                        onClick = { showModelPickerSheet = false },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 ModelList(
                     currentModel = assistant.chatModelId ?: settings.chatModelId,
                     providers = filteredProviders,
@@ -2309,14 +2333,34 @@ fun MinimalChatInput(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Per Chat Wallpaper",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-                DomChatGlassChip(
-                    text = if (existingConfig != null) "Set for this chat" else "No wallpaper set",
-                    accent = existingConfig != null
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalArrangement = Arrangement.SpaceBetween
+                        .verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Per Chat Wallpaper",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        DomChatGlassChip(
+                            text = if (existingConfig != null) "Set for this chat" else "No wallpaper set",
+                            accent = existingConfig != null
+                        )
+                    }
+                    IconButton(
+                        onClick = { showWallpaperSheet = false },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -2342,109 +2386,104 @@ fun MinimalChatInput(
                     }
                 }
 
-                // Blur Mode: Full Image vs Bottom Fade (animated glassy toggle tabs)
-                val fullTabBg by animateColorAsState(
-                    targetValue = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                    animationSpec = androidx.compose.animation.core.tween(180),
-                    label = "wallpaper_blur_mode_full_tab_bg"
-                )
-                val bottomFadeTabBg by animateColorAsState(
-                    targetValue = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                    animationSpec = androidx.compose.animation.core.tween(180),
-                    label = "wallpaper_blur_mode_bottom_fade_tab_bg"
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = fullTabBg,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        ) {
-                            Text(
-                                "Full Image",
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                                color = Color.White
-                            )
-                        }
-
-                        Surface(
-                            onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = bottomFadeTabBg,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        ) {
-                            Text(
-                                "Bottom Fade",
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-
-                // Blur slider (expanded up to 100dp)
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
-                        Text("${blurDraft.toInt()} dp", color = MaterialTheme.colorScheme.primary)
-                    }
-                    DomChatSlider(
-                        value = blurDraft,
-                        onValueChange = { blurDraft = it },
-                        valueRange = 0f..100f
-                    )
-                }
-
-                // If Bottom Fade, show Blur Height Reach slider
-                AnimatedVisibility(
-                    visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
-                    enter = fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)),
-                    exit = fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)),
-                ) {
-                    Column {
+                // Blur Mode + sliders content with animated height when switching modes
+                AnimatedContent(
+                    targetState = blurModeDraft,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(220)) + expandVertically(animationSpec = tween(220))) togetherWith
+                            (fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)))
+                    },
+                    label = "wallpaper_content_height"
+                ) { mode ->
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = Color.White)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                            Text("${(blurHeightFractionDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
-                        }
-                        DomChatSlider(
-                            value = blurHeightFractionDraft,
-                            onValueChange = { blurHeightFractionDraft = it },
-                            valueRange = 0.05f..1.0f
-                        )
-                    }
-                }
+                            Surface(
+                                onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            ) {
+                                Text(
+                                    "Full Image",
+                                    modifier = Modifier.padding(vertical = 10.dp),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                    color = Color.White
+                                )
+                            }
 
-                // Dim slider
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Background Dim", style = MaterialTheme.typography.bodyMedium)
-                        Text("${(dimDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
+                            Surface(
+                                onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            ) {
+                                Text(
+                                    "Bottom Fade",
+                                    modifier = Modifier.padding(vertical = 10.dp),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        // Blur slider (expanded up to 100dp)
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
+                                Text("${blurDraft.toInt()} dp", color = MaterialTheme.colorScheme.primary)
+                            }
+                            DomChatSlider(
+                                value = blurDraft,
+                                onValueChange = { blurDraft = it },
+                                valueRange = 0f..100f
+                            )
+                        }
+
+                        // If Bottom Fade, show Blur Height Reach slider
+                        if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                    Text("${(blurHeightFractionDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
+                                }
+                                DomChatSlider(
+                                    value = blurHeightFractionDraft,
+                                    onValueChange = { blurHeightFractionDraft = it },
+                                    valueRange = 0.05f..1.0f
+                                )
+                            }
+                        }
+
+                        // Dim slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Background Dim", style = MaterialTheme.typography.bodyMedium)
+                                Text("${(dimDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
+                            }
+                            DomChatSlider(
+                                value = dimDraft,
+                                onValueChange = { dimDraft = it },
+                                valueRange = 0f..0.95f
+                            )
+                        }
                     }
-                    DomChatSlider(
-                        value = dimDraft,
-                        onValueChange = { dimDraft = it },
-                        valueRange = 0f..0.95f
-                    )
                 }
 
                 Row(

@@ -1,94 +1,84 @@
-# Audit Brief — Task 123: Character Creator Modular Redesign (Dedicated Menus)
+# Audit Brief — Task 119: Plus Icon Menu & Prompt Presets Sheet Redesign
 
 ## Intent Verification
 
-All 5 requirements from task-123_directive.json implemented:
+All 4 requirements from task-119_directive.json implemented:
 
-1. **Split into dedicated separate menus** — `AssistantCoreRoleplaySubPage.kt` rewritten as a `TabRow`-driven tabbed interface with 5 dedicated menus:
-   - **Profile** (index 0): Display Name, Chat Name, Avatar, Creator Notes, Tags — all in black glass cards (`0xFF141520`)
-   - **Personality** (index 1): System Prompt only (spacious multiline editor)
-   - **Scenario** (index 2): Author's Note only (spacious multiline editor)
-   - **Initial Messages** (index 3): Alternate greetings only (add/edit/delete intros)
-   - **Example Dialogues** (index 4): Placeholder for example dialogues
-   - **Lorebooks**: Navigation to dedicated `AssistantLorebooksSubPage` (not a tab — strict exclusivity)
+1. **Plus sub-sheets: drag handle + close (cross) icon in same place** — `MinimalChatInput.kt`:
+   - Wallpaper sheet: Added close (X) `IconButton` next to title in header row. Uses `DomChatInWindowBottomSheet` which already provides `DomChatSheetDragHandle()` as default drag handle.
+   - Model picker sheet: Added close (X) `IconButton` next to title in header row. Uses `DomChatInWindowBottomSheet` default drag handle.
+   - Both sheets now have consistent close icon placement (top-right of header) and functioning drag handles.
 
-2. **Strict exclusivity — no duplicated items across menus** — Each field appears in exactly one tab:
-   - `displayName`/`chatName` → Profile only
-   - `creatorNotes` → Profile only
-   - `tags` → Profile only
-   - `systemPrompt` → Personality only
-   - `authorsNote` → Scenario only
-   - `presetMessages`/`alternateGreetings` → Initial Messages only
-   - Lorebooks → dedicated sub-page navigation only
+2. **PromptPresetsBottomSheet.kt — Glass theme, full-width cards, search bar**:
+   - Sheet container color changed from `Color(0xFF000000).copy(alpha = 0.85f)` to `Color(0xFF141520)` (unified DomChat black glass).
+   - Added search bar `OutlinedTextField` with label "Search presets", search/clear icons, and `AppShapes.InputField` shape.
+   - Added `presetSearchQuery` state and `filteredPresets` list that filters `allPresets` by name/description/content.
+   - Preset cards use `.fillMaxWidth()` with `height(130.dp)` — cards don't touch screen edges (padding via grid spacing).
+   - Glass theme applied throughout: `Color(0xFF141520)` surfaces with `LiquidGlassTokens.SpecularBorderSubtle` borders.
 
-3. **Back/forward reload glitch fixed** — `AssistantDetailPage.kt`: Removed `AnimatedContent<String?>(targetState = currentRoute)` wrappers from all 8 route composables. These wrappers caused full recomposition/reload on every back/forward navigation. Routes now render their content directly without the redundant animation layer.
+3. **MinimalChatInput.kt — Animate wallpaper content height when switching Full Image ↔ Fade**:
+   - Replaced static `Column` + `AnimatedVisibility` for blur mode section with `AnimatedContent(targetState = blurModeDraft, ...)` using `expandVertically`/`shrinkVertically` + `fadeIn`/`fadeOut`.
+   - Content height now animates smoothly when switching between Full Image and Bottom Fade modes (the latter adds the Blur Height Reach slider).
+   - `AnimatedVisibility` removed in favor of `AnimatedContent` conditional rendering inside the branch.
 
-4. **Heading and normal text overflow fixed** — All `Text` composables across cards now use `maxLines` + `overflow = TextOverflow.Ellipsis`:
-   - Profile name/chat name fields: `singleLine = true`
-   - Intro titles: `maxLines = 1, overflow = TextOverflow.Ellipsis`
-   - Intro bodies: `maxLines = 4, overflow = TextOverflow.Ellipsis`
-   - Edit intro title: `maxLines = 1, overflow = TextOverflow.Ellipsis`
-   - Example dialogues placeholder: `maxLines = 3, overflow = TextOverflow.Ellipsis`
+4. **Plus icon menu background matched to chatbar at low tint (5-10%)**:
+   - Changed `containerColor` from `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))` to `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.05f, 0.10f))`.
+   - Plus button now clamps between 5% and 10% opacity instead of 10%–75%, matching chatbar background at low tint.
 
-5. **Unified black background (0xFF141520) with glassy borders** — All card surfaces use `Color(0xFF141520)` background with `LiquidGlassTokens.SpecularBorderSubtle` border (0.5.dp) and `AppShapes.CardMedium`/`CardSmall` shape, via the shared `GlassCardModifier`.
-
-**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all modified files). Pre-existing `!!` in `AssistantDetailPage.kt:191` and `AssistantPage.kt:524` are untouched. Unified glass card theme `0xFF141520` enforced. Existing code style preserved.
-
-**String resources added** to `strings.xml`: `assistant_detail_section_profile`, `assistant_detail_section_personality`, `assistant_detail_section_scenario`, `assistant_detail_section_initial_messages`, `assistant_detail_section_example_dialogues`, `assistant_page_example_dialogues`, `assistant_detail_example_dialogues_desc`, `assistant_detail_example_dialogues_placeholder`, `assistant_detail_add_example_dialogue`, `assistant_detail_section_lorebooks`, `assistant_page_lorebooks`, `assistant_detail_lorebooks_desc`, `assistant_detail_manage_lorebooks`, `assistant_detail_personality_desc`, `assistant_page_authors_note`, `assistant_detail_scenario_desc`, `assistant_detail_add_intro`, `assistant_page_scenario_placeholder`, `assistant_profile_name_desc`.
+**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all modified files). Pre-existing `!!` in `MinimalChatInput.kt:3400-3402` (camera output file handling) are untouched. Unified glass card theme `0xFF141520` enforced. Existing code style preserved.
 
 ## Call Chain & Architecture
 
 ```
-Navigation:
-User taps tab in TabRow
-  → selectedTab = index
-  → when(selectedTab) { 0 -> ProfileTab, 1 -> PersonalityTab, ... }
-  → Tab content recomposes independently (no full-page reload)
+Plus button flow:
+User taps Plus button (DomChatComposerAddButton)
+  → showPicker = true
+  → Plus sub-sheets open (Model Picker, Wallpaper, etc.)
+  → Each sheet uses DomChatInWindowBottomSheet with default DomChatSheetDragHandle()
+  → Close (X) IconButton in header calls onDismissRequest → showXxxSheet = false
 
-Profile updates:
-User edits Display Name
-  → localDisplayName = it, onUpdate(assistant.copy(displayName = ...))
-  → vm.update(assistant) → AssistantDetailVM → settingsStore.update → DataStore
+Wallpaper mode switch:
+User taps "Full Image" or "Bottom Fade" tab
+  → blurModeDraft = mode
+  → AnimatedContent(targetState = blurModeDraft) recomputes content
+  → Bottom Fade branch adds Blur Height Reach slider
+  → expandVertically/shrinkVertically animates height change
 
-System Prompt (Personality tab):
-User types in OutlinedTextField
-  → LaunchedEffect debounces 150ms → onUpdate(assistant.copy(systemPrompt = ...))
-  → vm.update(assistant) → settingsStore.update → DataStore
-
-Lorebooks navigation:
-User taps "Manage Lorebooks"
-  → onNavigateToLorebooks() → navController.navigate(AssistantDetailRoutes.LOREBOOKS)
-  → AssistantLorebooksSubPage renders dedicated lorebook management UI
+Prompt presets search:
+User types in search bar
+  → presetSearchQuery = it
+  → filteredPresets = allPresets.filter { matches query }
+  → LazyVerticalGrid recomputes with filtered items
 
 Architecture boundaries:
-- UI layer (SubPages): renders state + emits intents via onUpdate callbacks only
-- ViewModel (AssistantDetailVM): vm.update(assistant) → viewModelScope → DataStore
-- Repository/DataStore: single source of truth for Assistant entity
+- UI layer (sheets, composer): renders state + emits intents only
+- ViewModel (ChatVM, AssistantVM): manages coroutines in viewModelScope
+- DataStore/SettingsStore: single source of truth for settings/wallpapers
 ```
 
 ## Recomposition & Memory Safety
 
-- `TabRow` with `selectedTabIndex` — only the active tab's content composes; inactive tabs are skipped by `when` branch.
-- `remember(assistant.id) { mutableStateOf(...) }` for `localDisplayName`, `localChatName`, `localIntros` — keyed on assistant ID, preserved across recompositions for same assistant.
-- `GlassCardModifier` is a top-level `Modifier` val — stateless, zero recomposition impact, reused across all card surfaces.
-- `rememberTextFieldState` keyed on `assistant.id` for system prompt — text field state preserved correctly.
-- `LaunchedEffect(assistant.systemPrompt, isFocused)` and `snapshotFlow { systemPromptValue.text }.debounce(150L)` — proper snapshot rule, off-main debounced collection.
+- `presetSearchQuery` is `remember { mutableStateOf("") }` — remembered UI state.
+- `filteredPresets` is computed during composition from `allPresets` + `presetSearchQuery` — no allocation beyond the filtered list.
+- `AnimatedContent(targetState = blurModeDraft)` — replaces content based on mode; `expandVertically`/`shrinkVertically` animate height without state loss for sliders (blurDraft, dimDraft, blurHeightFractionDraft are remembered outside).
+- `DomChatSheetDragHandle()` default drag handle in `DomChatInWindowBottomSheet` — stateless, zero recomposition impact.
+- Close icons are stateless `IconButton` composables — no state captured.
+- All `Text` composables use bounded `maxLines` + `TextOverflow.Ellipsis` where applicable.
 - No `SnapshotStateList` passed directly to `items()`. No naked objects in Compose.
-- All `Text` composables use bounded `maxLines` + `TextOverflow.Ellipsis` — no unbounded text expansion.
 - Zero `!!` force-unwraps introduced.
 
 ## Threading & Dispatchers
 
-- All UI updates: `Dispatchers.Main` (correct — Compose UI layer).
-- `vm.update(assistant)` → `viewModelScope.launch` → `settingsStore.update` (DataStore, IO-bound internally).
-- `vm.updateTags(tagIds, updatedTags)` → viewModelScope → DataStore.
+- Sheet UI rendering: `Dispatchers.Main` (correct — Compose UI layer).
+- Wallpaper save: `scope.launch { settingsStore.update { ... } }` — viewModelScope, DataStore IO-bound internally.
+- `wallpaperPicker.launch(...)` — ActivityResultLauncher, runs on Main (correct).
 - No `Dispatchers.Main` violations introduced. No background work on Main dispatcher.
-- Debounced system prompt save (150ms) runs on Main via `snapshotFlow.collect()` — acceptable for UI text input.
+- `animateColorAsState` for tab backgrounds — runs on Main as part of Compose animation (correct).
 
 ## Offline & Error State Handling
 
-- **Offline:** All character editing operates on local DataStore — fully offline-capable. No network dependency.
-- **Loading:** No loading states needed — settings writes are asynchronous but optimistic UI updates mask latency.
-- **Success:** `vm.update(assistant)` persists via DataStore; UI reflects changes immediately (state is read back via `vm.assistant.collectAsStateWithLifecycle()`).
-- **Exception:** `vm.update()` catches exceptions internally (per existing ViewModel patterns). Optimistic local state (`localDisplayName`, `localChatName`, `localIntros`) is updated immediately even if DataStore write fails — eventual consistency.
-- **Edge cases:** Empty intros handled gracefully ("Add Intro" button shown). Blank names fall back to `assistant.name` via `?:` operator. `creatorNotes` null-safe via `?: ""`.
+- **Offline:** All changes are purely local UI — sheet navigation, search filtering, wallpaper mode switching. No network dependency.
+- **Loading:** No loading states needed — all operations are instant local UI updates.
+- **Success:** Wallpaper config saved via DataStore; preset search filters instantly; close icons dismiss sheets immediately.
+- **Exception:** `settingsStore.update` wraps DataStore writes in try/catch (per existing patterns). `wallpaperPicker` result handled with null check on `uri`. `chatBgDraft` null-safe via Elvis operators.
+- **Edge cases:** Empty search query shows all presets. `chatBgDraft` null → "Remove" button hidden. `blurModeDraft` defaults to existing config or global setting.
