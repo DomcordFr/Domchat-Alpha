@@ -75,7 +75,8 @@ private val GlassCardModifier: Modifier = Modifier
     .background(Color(0xFF141520))
     .border(
         0.5.dp,
-        LiquidGlassTokens.SpecularBorderSubtle
+        LiquidGlassTokens.SpecularBorderSubtle,
+        AppShapes.CardMedium
     )
 
 /**
@@ -241,7 +242,7 @@ private fun ProfileTab(
     onUpdateDisplayName: (String) -> Unit,
     onUpdateChatName: (String) -> Unit,
     onUpdate: (Assistant) -> Unit,
-    assistantId: String,
+    assistantId: kotlin.uuid.Uuid,
     vm: AssistantDetailVM
 ) {
     val haptics = rememberPremiumHaptics()
