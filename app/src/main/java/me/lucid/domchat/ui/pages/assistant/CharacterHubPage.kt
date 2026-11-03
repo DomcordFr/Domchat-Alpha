@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -663,7 +662,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
                                     .wrapContentWidth()
-                                    .align(Alignment.CenterStart)
+                                    .align(Alignment.CenterVertically)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Row(
@@ -998,7 +997,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
                                     .wrapContentWidth()
-                                    .align(Alignment.CenterStart)
+                                    .align(Alignment.CenterVertically)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Row(
@@ -1372,7 +1371,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 toaster?.show("Group deleted", ToastType.Success)
             },
             onReorderGroup = { groupId, delta ->
-                val entries = groupNames.toMutableList()
+                val entries = groupNames.entries.toMutableList()
                 val currentIndex = entries.indexOfFirst { it.key == groupId }
                 if (currentIndex >= 0) {
                     val newIndex = (currentIndex + delta).coerceIn(0, entries.lastIndex)
