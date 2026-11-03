@@ -74,6 +74,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -1668,10 +1669,19 @@ fun MinimalChatInput(
 
     if (showTextStylingDialog) {
         val rules = settings.displaySetting.rpStyleRules.toMutableList()
-        var selectedRule by remember { mutableStateOf<me.lucid.domchat.data.datastore.RpStyleRule?>(null) }
+        var selectedStyleIndex by remember { mutableStateOf<Int?>(null) } // 0=Quote,1=Italic,2=Code,3=Custom
+        var customSymbols by remember { mutableStateOf("") }
         var rDraft by remember { mutableIntStateOf(0) }
         var gDraft by remember { mutableIntStateOf(0) }
         var bDraft by remember { mutableIntStateOf(0) }
+
+        // Built-in text styling patterns
+        private val styleDefs = listOf(
+            Pair("Quote", ">"),
+            Pair("Italic", "*"),
+            Pair("Code", "`"),
+            Pair("Custom", null)
+        )
 
         fun parseColor(hex: String): Color {
             val c = hex.removePrefix("#").toInt(16)
@@ -1686,12 +1696,39 @@ fun MinimalChatInput(
         fun rgbToHex(r: Int, g: Int, b: Int): String =
             "#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}"
 
-        fun applyDraftToSelected() {
-            selectedRule?.let { rule ->
-                val idx = rules.indexOfFirst { it.id == rule.id }
-                if (idx >= 0) {
-                    rules[idx] = rule.copy(colorHex = rgbToHex(rDraft, gDraft, bDraft))
+        // Resolve the active rule for the selected style (built-in or custom)
+        val activeRule: me.lucid.domchat.data.datastore.RpStyleRule? by remember {
+            selectedStyleIndex?.let { idx ->
+                val (label, pattern) = styleDefs[idx]
+                val effectivePattern = if (idx == 3) customSymbols.takeIf { it.isNotBlank() } else pattern
+                effectivePattern?.let { pat ->
+                    rules.find { it.pattern == pat }
                 }
+            } ?: null
+        }
+
+        fun setStyleColor(r: Int, g: Int, b: Int) {
+            val hex = rgbToHex(r, g, b)
+            activeRule?.let { rule ->
+                val ruleList = rules.toMutableList()
+                val ruleIdx = ruleList.indexOfFirst { it.id == rule.id }
+                if (ruleIdx >= 0) {
+                    ruleList[ruleIdx] = rule.copy(colorHex = hex)
+                    rules.clear()
+                    rules.addAll(ruleList)
+                }
+            }
+        }
+
+        fun ensureCustomRule() {
+            val syms = customSymbols.trim()
+            if (syms.isBlank()) return
+            val existing = rules.find { it.pattern == syms }
+            if (existing == null) {
+                rules.add(me.lucid.domchat.data.datastore.RpStyleRule(
+                    pattern = syms,
+                    colorHex = rgbToHex(rDraft, gDraft, bDraft)
+                ))
             }
         }
 
@@ -1712,7 +1749,8 @@ fun MinimalChatInput(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .animateContentSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Header row
@@ -1743,57 +1781,69 @@ fun MinimalChatInput(
                     color = Color.White.copy(alpha = 0.12f)
                 )
 
-                // Rules list
+                // 2x2 grid of text style buttons
                 Text(
-                    text = "Text Styling Rules",
+                    text = "Choose a style",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White.copy(alpha = 0.7f)
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val standardPatterns = listOf("*" to "Italic (*)", ">" to "Quote (>)", "`" to "Code (`)")
-                    val customPatterns = rules.filter { it.pattern !in standardPatterns.map { it.first } }
-                    (standardPatterns + customPatterns.map { it.pattern to "Custom: ${it.pattern}" }).forEach { (pattern, label) ->
-                        val rule = rules.find { it.pattern == pattern }
-                        val isSelected = selectedRule?.id == rule?.id
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(styleDefs.indices, key = { it }) { idx ->
+                        val (label, pattern) = styleDefs[idx]
+                        val isSelected = selectedStyleIndex == idx
                         Surface(
                             onClick = {
-                                selectedRule = rule
-                                val hex = rule?.colorHex ?: "#808080"
-                                val c = hex.removePrefix("#").toInt(16)
-                                rDraft = (c shr 16) and 0xff
-                                gDraft = (c shr 8) and 0xff
-                                bDraft = c and 0xff
+                                haptics.perform(HapticPattern.Pop)
+                                selectedStyleIndex = idx
+                                if (idx == 3) {
+                                    customSymbols = ""
+                                } else {
+                                    customSymbols = ""
+                                    activeRule?.let { rule ->
+                                        rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
+                                        gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
+                                        bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
+                                    }
+                                }
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
                             border = BorderStroke(
                                 0.5.dp,
                                 if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
                             ),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().height(72.dp)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(parseColor(rule?.colorHex ?: "#808080"))
+                                        .size(20.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
                                 )
                                 Text(
                                     text = label,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                     color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
                                 )
                                 Spacer(Modifier.weight(1f))
-                                if (rule != null) {
-                                    Text(
-                                        text = rule.colorHex,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White.copy(alpha = 0.5f)
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
@@ -1801,135 +1851,118 @@ fun MinimalChatInput(
                     }
                 }
 
-                // Selected rule color editor
-                selectedRule?.let { rule ->
+                // Custom symbols field (animated in when Custom is selected)
+                AnimatedVisibility(
+                    visible = selectedStyleIndex == 3,
+                    enter = fadeIn(animationSpec = tween(220)) + expandVertically(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)),
+                    exit = fadeOut(animationSpec = tween(140)) + shrinkVertically(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f))
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Surrounding symbols",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        OutlinedTextField(
+                            value = customSymbols,
+                            onValueChange = { customSymbols = it },
+                            label = { Text("e.g. **bold** or ~~strikethrough~~") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White.copy(alpha = 0.9f),
+                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                            )
+                        )
+                    }
+                }
+
+                // RGB sliders (0..255) - apply to the selected rule
+                selectedStyleIndex?.let { idx ->
+                    val (label, _) = styleDefs[idx]
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
-                            text = "Rule: ${rule.pattern}",
+                            text = "Color for $label",
                             style = MaterialTheme.typography.labelLarge,
                             color = Color.White.copy(alpha = 0.7f)
                         )
-                        Text(
-                            text = "Color",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White
-                        )
-                        // Preset swatches
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            listOf(
-                                "#FF6B6B" to "Coral",
-                                "#B39DDB" to "Lavender",
-                                "#81C784" to "Mint",
-                                "#FFD54F" to "Amber",
-                                "#4FC3F7" to "Sky",
-                                "#F06292" to "Pink",
-                                "#AED581" to "Light Green",
-                                "#FFB74D" to "Orange"
-                            ).forEach { (hex, name) ->
-                                val isActive = rule.colorHex == hex
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(parseColor(hex))
-                                        .border(if (isActive) 2.dp else 0.dp, Color.White, CircleShape)
-                                        .clickable {
-                                            val c = hex.removePrefix("#").toInt(16)
-                                            rDraft = (c shr 16) and 0xff
-                                            gDraft = (c shr 8) and 0xff
-                                            bDraft = c and 0xff
-                                        }
-                                ) { }
-                            }
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        // RGB sliders (0..255)
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "R",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = rDraft.toString(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            DomChatSlider(
-                                value = rDraft.toFloat(),
-                                onValueChange = { rDraft = it.toInt() },
-                                valueRange = 0f..255f,
-                                steps = 255
+                            Text(
+                                text = "R",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
+                            )
+                            Text(
+                                text = rDraft.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
-
-                        Column(
+                        DomChatSlider(
+                            value = rDraft.toFloat(),
+                            onValueChange = { rDraft = it.toInt(); setStyleColor(rDraft, gDraft, bDraft) },
+                            valueRange = 0f..255f,
+                            steps = 255
+                        )
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "G",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = gDraft.toString(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            DomChatSlider(
-                                value = gDraft.toFloat(),
-                                onValueChange = { gDraft = it.toInt() },
-                                valueRange = 0f..255f,
-                                steps = 255
+                            Text(
+                                text = "G",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
+                            )
+                            Text(
+                                text = gDraft.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
-
-                        Column(
+                        DomChatSlider(
+                            value = gDraft.toFloat(),
+                            onValueChange = { gDraft = it.toInt(); setStyleColor(rDraft, gDraft, bDraft) },
+                            valueRange = 0f..255f,
+                            steps = 255
+                        )
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "B",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = bDraft.toString(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            DomChatSlider(
-                                value = bDraft.toFloat(),
-                                onValueChange = { bDraft = it.toInt() },
-                                valueRange = 0f..255f,
-                                steps = 255
+                            Text(
+                                text = "B",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White
+                            )
+                            Text(
+                                text = bDraft.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
+                        DomChatSlider(
+                            value = bDraft.toFloat(),
+                            onValueChange = { bDraft = it.toInt(); setStyleColor(rDraft, gDraft, bDraft) },
+                            valueRange = 0f..255f,
+                            steps = 255
+                        )
                     }
                 }
 
@@ -1944,7 +1977,9 @@ fun MinimalChatInput(
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            applyDraftToSelected()
+                            if (selectedStyleIndex == 3) {
+                                ensureCustomRule()
+                            }
                             saveRules()
                             showTextStylingDialog = false
                             haptics.perform(HapticPattern.Success)
@@ -1983,10 +2018,33 @@ fun MinimalChatInput(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "AI Streaming Animation",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                // Header row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "AI Streaming Animation",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = { showStreamingAnimationSheet = false }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    color = Color.White.copy(alpha = 0.12f)
                 )
+
                 Text(
                     text = "Customize how AI replies appear during streaming: fade in smoothly vs snapping word by word.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -2098,10 +2156,33 @@ fun MinimalChatInput(
                     .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Author's Note",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                // Header row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Author's Note",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = { showAuthorsNoteSheet = false }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    color = Color.White.copy(alpha = 0.12f)
                 )
+
                 Text(
                     text = "Injected into context depth to guide tone, scenario, or persona behavior.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -2184,9 +2265,31 @@ fun MinimalChatInput(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Samplers & Generation",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                // Header row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Samplers & Generation",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = { showSamplersSheet = false }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    color = Color.White.copy(alpha = 0.12f)
                 )
 
                 // Temperature
@@ -2306,13 +2409,32 @@ fun MinimalChatInput(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .animateContentSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Per Chat Wallpaper",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
+                // Header row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Per Chat Wallpaper",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = { showWallpaperSheet = false }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+
                 DomChatGlassChip(
                     text = if (existingConfig != null) "Set for this chat" else "No wallpaper set",
                     accent = existingConfig != null

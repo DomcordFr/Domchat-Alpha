@@ -73,6 +73,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -85,6 +86,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.model.Conversation
@@ -198,7 +201,24 @@ fun PromptPresetsBottomSheet(
     val isChatSpecific = conversation?.enabledPromptPresetIds != null
 
     var isEditingOrCreating by remember { mutableStateOf(false) }
+    var presetSearchQuery by remember { mutableStateOf("") }
+    var debouncedPresetQuery by remember { mutableStateOf("") }
     var editingTargetId by remember { mutableStateOf<String?>(null) }
+
+    // 250ms debouncer for preset search
+    LaunchedEffect(Unit) {
+        snapshotFlow { presetSearchQuery }
+            .debounce(250)
+            .distinctUntilChanged()
+            .collect { debouncedPresetQuery = it.trim().lowercase() }
+    }
+
+    val filteredPresets = allPresets.filter { preset ->
+        debouncedPresetQuery.isEmpty() ||
+            preset.name.lowercase().contains(debouncedPresetQuery) ||
+            preset.description.lowercase().contains(debouncedPresetQuery) ||
+            preset.content.lowercase().contains(debouncedPresetQuery)
+    }
     var presetToDelete by remember { mutableStateOf<PromptPreset?>(null) }
     var formName by remember { mutableStateOf("") }
     var formDescription by remember { mutableStateOf("") }
@@ -441,6 +461,49 @@ fun PromptPresetsBottomSheet(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Search bar at top
+            OutlinedTextField(
+                value = presetSearchQuery,
+                onValueChange = { presetSearchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                placeholder = { Text("Search presets...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                trailingIcon = {
+                    if (presetSearchQuery.isNotEmpty()) {
+                        IconButton(onClick = { presetSearchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Clear,
+                                contentDescription = "Clear",
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color.White.copy(alpha = 0.9f),
+                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                )
+            )
 
             // Action row: Enable All / Disable All / Reset to Global
             Row(
@@ -723,17 +786,16 @@ fun PromptPresetsBottomSheet(
             } // end if (visible)
         }
 
-            // Presets grid - compact glassy 2x2 cards
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            // Presets list - full-width glassy cards with 16.dp horizontal margin
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
-                    .nestedScroll(overscrollAbsorber)
+                    .padding(horizontal = 16.dp)
+                    .nestedScroll(overscrollAbsorber),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                itemsIndexed(allPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
+                itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
 
                     Surface(
