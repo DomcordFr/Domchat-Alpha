@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -70,6 +71,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -92,9 +94,11 @@ import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.FormatItalic
+import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Fullscreen
@@ -3529,10 +3533,7 @@ private fun MinimalPickerContent(
                         },
                         title = "Text Styling",
                         subtitle = "Custom italic colors & per-chat text styles",
-                        onClick = {
-                            showTextStylingDialog = true
-                            onOpenTextStyling()
-                        }
+                        onClick = onOpenTextStyling
                     )
                 }
                 2 -> {
@@ -4235,7 +4236,7 @@ private fun findDialogWindow(view: View): Window? {
 }
 
 @Composable
-private fun StyleGridButton(
+private fun RowScope.StyleGridButton(
     text: String,
     icon: ImageVector,
     isSelected: Boolean,
