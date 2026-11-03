@@ -1,5 +1,7 @@
 package me.lucid.domchat.ui.pages.assistant.detail
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +30,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -134,7 +137,6 @@ fun AssistantCoreRoleplaySubPage(
         // ═════════════════════════════════════════════════════════════════════════
         TabRow(
             selectedTabIndex = selectedTab,
-            onTabSelected = { selectedTab = it },
             modifier = Modifier.fillMaxWidth()
         ) {
             tabTitles.forEachIndexed { index, title ->
@@ -460,7 +462,7 @@ private fun ScenarioTab(
 @Composable
 private fun InitialMessagesTab(
     assistant: Assistant,
-    localIntros: MutableList<String>,
+    localIntros: List<String>,
     onUpdateIntros: (List<String>) -> Unit,
     haptics: me.lucid.domchat.ui.hooks.PremiumHaptics
 ) {
@@ -551,9 +553,8 @@ private fun InitialMessagesTab(
                             if (isEditing) {
                                 var editorText by remember { mutableStateOf(intro) }
                                 Surface(
-                                    modifier = GlassCardModifier,
-                                    shape = AppShapes.CardMedium,
-                                    padding = Modifier.padding(vertical = 8.dp)
+                                    modifier = GlassCardModifier.padding(vertical = 8.dp),
+                                    shape = AppShapes.CardMedium
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(16.dp),

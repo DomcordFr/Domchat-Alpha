@@ -1378,7 +1378,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     if (currentIndex != newIndex) {
                         val entry = entries.removeAt(currentIndex)
                         entries.add(newIndex, entry)
-                        groupNames = entries.toMap()
+                        groupNames = entries.associate { it.key to it.value }
                     }
                 }
             }
