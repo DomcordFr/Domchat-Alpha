@@ -389,98 +389,82 @@ fun AssistantDetailPage(
             }
         ) {
             composable(AssistantDetailRoutes.HOME) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantDetailHome(
-                        assistant = assistant,
-                        navController = navController,
-                    )
-                }
+                AssistantDetailHome(
+                    assistant = assistant,
+                    navController = navController,
+                )
             }
 
             // Core Roleplay section - unified sub-page
             composable(AssistantDetailRoutes.CORE) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantCoreRoleplaySubPage(
-                        assistant = assistant,
-                        tags = tags,
-                        providers = providers,
-                        settings = settings,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm,
-                        catalogSnapshot = catalogSnapshot,
-                        onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
-                        onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
-                    )
-                }
+                AssistantCoreRoleplaySubPage(
+                    assistant = assistant,
+                    tags = tags,
+                    providers = providers,
+                    settings = settings,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm,
+                    catalogSnapshot = catalogSnapshot,
+                    onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
+                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                )
             }
 
             // Lorebooks (nested under Context Management)
             composable(AssistantDetailRoutes.LOREBOOKS) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantLorebooksSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm
-                    )
-                }
+                AssistantLorebooksSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm
+                )
             }
 
             // Advanced
             composable(AssistantDetailRoutes.ADVANCED) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantAdvancedSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantAdvancedSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Profile
             composable(AssistantDetailRoutes.PROFILE) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantProfileSubPage(
-                        assistant = assistant,
-                        tags = tags,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm
-                    )
-                }
+                AssistantProfileSubPage(
+                    assistant = assistant,
+                    tags = tags,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm
+                )
             }
 
             // Model Configuration
             composable(AssistantDetailRoutes.MODEL) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantModelSubPage(
-                        assistant = assistant,
-                        providers = providers,
-                        ttsProviders = settings.ttsProviders,
-                        catalogSnapshot = catalogSnapshot,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantModelSubPage(
+                    assistant = assistant,
+                    providers = providers,
+                    ttsProviders = settings.ttsProviders,
+                    catalogSnapshot = catalogSnapshot,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Context & Budget / Context Management
             composable(AssistantDetailRoutes.CONTEXT_MANAGEMENT) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantContextManagementSubPage(
-                        assistant = assistant,
-                        hasSummarizerModelConfigured = false,
-                        onUpdate = { onUpdate(it) },
-                        onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
-                        onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
-                    )
-                }
+                AssistantContextManagementSubPage(
+                    assistant = assistant,
+                    hasSummarizerModelConfigured = false,
+                    onUpdate = { onUpdate(it) },
+                    onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
+                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                )
             }
 
             // UI Customization
             composable(AssistantDetailRoutes.UI) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantUISubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantUISubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
         }
     }

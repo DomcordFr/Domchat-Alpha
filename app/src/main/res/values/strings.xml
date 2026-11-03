@@ -1635,4 +1635,23 @@
   <string name="context_meter_exact">Exact</string>
   <string name="setting_ui_context_token_summary_title">Display context token summary</string>
   <string name="setting_ui_context_token_summary_desc">Show the context usage meter and its token breakdown in chat</string>
+  <string name="assistant_detail_section_profile">Profile</string>
+  <string name="assistant_detail_section_personality">Personality</string>
+  <string name="assistant_detail_section_scenario">Scenario</string>
+  <string name="assistant_detail_section_initial_messages">Initial Messages</string>
+  <string name="assistant_detail_section_example_dialogues">Example Dialogues</string>
+  <string name="assistant_page_example_dialogues">Example Dialogues</string>
+  <string name="assistant_detail_example_dialogues_desc">Example dialogues for few-shot prompting</string>
+  <string name="assistant_detail_example_dialogues_placeholder">No example dialogues configured.</string>
+  <string name="assistant_detail_add_example_dialogue">Add Example Dialogue</string>
+  <string name="assistant_detail_section_lorebooks">Lorebooks</string>
+  <string name="assistant_page_lorebooks">Lorebooks</string>
+  <string name="assistant_detail_lorebooks_desc">Attach lorebooks to this character</string>
+  <string name="assistant_detail_manage_lorebooks">Manage Lorebooks</string>
+  <string name="assistant_detail_personality_desc">Define the character&apos;s system prompt</string>
+  <string name="assistant_page_authors_note">Author&apos;s Note</string>
+  <string name="assistant_detail_scenario_desc">Set the scenario and world context</string>
+  <string name="assistant_detail_add_intro">Add Intro</string>
+  <string name="assistant_page_scenario_placeholder">Write the scenario...</string>
+  <string name="assistant_profile_name_desc">Set how the character is addressed</string>
 </resources>

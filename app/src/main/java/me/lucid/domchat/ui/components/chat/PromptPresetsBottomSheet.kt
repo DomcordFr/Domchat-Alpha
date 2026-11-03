@@ -205,6 +205,7 @@ fun PromptPresetsBottomSheet(
     var formContent by remember { mutableStateOf("") }
     var formPosition by remember { mutableStateOf(PresetInjectionPosition.SYSTEM_PROMPT) }
     var formDepth by remember { mutableStateOf(0) }
+    var presetSearchQuery by remember { mutableStateOf("") }
 
     fun openCreate() {
         editingTargetId = null
@@ -335,7 +336,7 @@ fun PromptPresetsBottomSheet(
     }
 
     ApplyDialogWindowBlur()
-    val effectiveSheetContainerColor = Color(0xFF000000).copy(alpha = 0.85f)
+    val effectiveSheetContainerColor = Color(0xFF141520)
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
@@ -439,6 +440,37 @@ fun PromptPresetsBottomSheet(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Search bar for prompts
+            OutlinedTextField(
+                value = presetSearchQuery,
+                onValueChange = { presetSearchQuery = it },
+                label = { Text("Search presets") },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.5f)) },
+                trailingIcon = {
+                    if (presetSearchQuery.isNotEmpty()) {
+                        IconButton(onClick = { presetSearchQuery = "" }) {
+                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.5f))
+                        }
+                    }
+                },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = AppShapes.InputField,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color.White.copy(alpha = 0.9f),
+                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                )
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -724,6 +756,12 @@ fun PromptPresetsBottomSheet(
         }
 
             // Presets grid - compact glassy 2x2 cards
+            val filteredPresets = allPresets.filter { preset ->
+                presetSearchQuery.isBlank() ||
+                    preset.name.lowercase().contains(presetSearchQuery.lowercase()) ||
+                    preset.description.lowercase().contains(presetSearchQuery.lowercase()) ||
+                    preset.content.lowercase().contains(presetSearchQuery.lowercase())
+            }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -733,7 +771,7 @@ fun PromptPresetsBottomSheet(
                     .weight(1f, fill = false)
                     .nestedScroll(overscrollAbsorber)
             ) {
-                itemsIndexed(allPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
+                itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
 
                     Surface(
