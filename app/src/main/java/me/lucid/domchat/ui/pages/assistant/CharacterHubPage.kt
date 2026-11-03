@@ -655,7 +655,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
                                     .wrapContentWidth()
-                                    .align(Alignment.Center)
+                                    .align(Alignment.CenterVertically)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Row(
@@ -990,7 +990,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
                                     .wrapContentWidth()
-                                    .align(Alignment.Center)
+                                    .align(Alignment.CenterVertically)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Row(
