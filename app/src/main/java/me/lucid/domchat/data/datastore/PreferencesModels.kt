@@ -689,6 +689,10 @@ fun Settings.getEffectiveDisplaySetting(assistant: Assistant? = null): DisplaySe
         streamingFadeDurationMs = ui.streamingFadeDurationMs ?: displaySetting.streamingFadeDurationMs,
         streamingFadeStartAlpha = ui.streamingFadeStartAlpha ?: displaySetting.streamingFadeStartAlpha,
         streamingContinuousFlow = ui.streamingContinuousFlow ?: displaySetting.streamingContinuousFlow,
+        // Text styling overrides from assistant
+        customDialogueColor = ui.textColorHex ?: displaySetting.customDialogueColor,
+        customActionColor = ui.accentColorHex ?: displaySetting.customActionColor,
+        customUserTextColor = ui.bgColorHex ?: displaySetting.customUserTextColor,
     )
 }
 

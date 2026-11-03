@@ -385,6 +385,12 @@ fun MinimalChatInput(
     var showWallpaperSheet by remember { mutableStateOf(false) }
     var showCreatorNotesSheet by remember { mutableStateOf(false) }
     var showTextStylingDialog by remember { mutableStateOf(false) }
+    var stylingMode by remember(settings.displaySetting.customDialogueColor) {
+        mutableStateOf(settings.displaySetting.customDialogueColor?.let { "custom" } ?: "italic")
+    }
+    var customDelimiter by remember(settings.displaySetting.customActionColor) {
+        mutableStateOf(settings.displaySetting.customActionColor ?: "")
+    }
     var showStreamingAnimationSheet by remember { mutableStateOf(false) }
     var showSearchPicker by remember { mutableStateOf(false) }
     var showReasoningPicker by remember { mutableStateOf(false) }
@@ -1767,69 +1773,98 @@ fun MinimalChatInput(
                     color = Color.White.copy(alpha = 0.12f)
                 )
 
-                // Rules list
-                Text(
-                    text = "Text Styling Rules",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val standardPatterns = listOf("*" to "Italic (*)", ">" to "Quote (>)", "`" to "Code (`)")
-                    val customPatterns = rules.filter { it.pattern !in standardPatterns.map { it.first } }
-                    (standardPatterns + customPatterns.map { it.pattern to "Custom: ${it.pattern}" }).forEach { (pattern, label) ->
-                        val rule = rules.find { it.pattern == pattern }
-                        val isSelected = selectedRule?.id == rule?.id
-                        Surface(
+                // 2x2 Grid of styling buttons: Quote, Italic, Code, Custom
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        StyleGridButton(
+                            text = "Quote",
+                            icon = Icons.Rounded.FormatQuote,
+                            isSelected = stylingMode == "quote",
                             onClick = {
-                                selectedRule = rule
-                                val hex = rule?.colorHex ?: "#808080"
-                                val c = hex.removePrefix("#").toInt(16)
-                                rDraft = (c shr 16) and 0xff
-                                gDraft = (c shr 8) and 0xff
-                                bDraft = c and 0xff
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
-                            border = BorderStroke(
-                                0.5.dp,
-                                if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(parseColor(rule?.colorHex ?: "#808080"))
-                                )
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
-                                )
-                                Spacer(Modifier.weight(1f))
-                                if (rule != null) {
-                                    Text(
-                                        text = rule.colorHex,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White.copy(alpha = 0.5f)
-                                    )
-                                }
+                                stylingMode = "quote"
+                                selectedRule = null
                             }
-                        }
+                        )
+                        StyleGridButton(
+                            text = "Italic",
+                            icon = Icons.Rounded.FormatItalic,
+                            isSelected = stylingMode == "italic",
+                            onClick = {
+                                stylingMode = "italic"
+                                selectedRule = null
+                            }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        StyleGridButton(
+                            text = "Code",
+                            icon = Icons.Rounded.Code,
+                            isSelected = stylingMode == "code",
+                            onClick = {
+                                stylingMode = "code"
+                                selectedRule = null
+                            }
+                        )
+                        StyleGridButton(
+                            text = "Custom",
+                            icon = Icons.Rounded.Edit,
+                            isSelected = stylingMode == "custom",
+                            onClick = {
+                                stylingMode = "custom"
+                                selectedRule = null
+                            }
+                        )
                     }
                 }
 
-                // Selected rule color editor
-                selectedRule?.let { rule ->
+                // Custom delimiter input (shown when Custom selected)
+                if (stylingMode == "custom") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 4.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = customDelimiter,
+                            onValueChange = { customDelimiter = it },
+                            label = { Text("Delimiter Symbols") },
+                            placeholder = { Text("e.g. ** || __") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                cursorColor = Color.White.copy(alpha = 0.9f),
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Selected rule / color editor
+                if (stylingMode != "custom") {
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
-                            text = "Rule: ${rule.pattern}",
+                            text = "Style: ${stylingMode.uppercaseFirst()}",
                             style = MaterialTheme.typography.labelLarge,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -1838,38 +1873,6 @@ fun MinimalChatInput(
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White
                         )
-                        // Preset swatches
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf(
-                                "#FF6B6B" to "Coral",
-                                "#B39DDB" to "Lavender",
-                                "#81C784" to "Mint",
-                                "#FFD54F" to "Amber",
-                                "#4FC3F7" to "Sky",
-                                "#F06292" to "Pink",
-                                "#AED581" to "Light Green",
-                                "#FFB74D" to "Orange"
-                            ).forEach { (hex, name) ->
-                                val isActive = rule.colorHex == hex
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(parseColor(hex))
-                                        .border(if (isActive) 2.dp else 0.dp, Color.White, CircleShape)
-                                        .clickable {
-                                            val c = hex.removePrefix("#").toInt(16)
-                                            rDraft = (c shr 16) and 0xff
-                                            gDraft = (c shr 8) and 0xff
-                                            bDraft = c and 0xff
-                                        }
-                                ) { }
-                            }
-                        }
-                        Spacer(Modifier.height(8.dp))
                         // RGB sliders (0..255)
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -1968,8 +1971,25 @@ fun MinimalChatInput(
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            applyDraftToSelected()
-                            saveRules()
+                            // Save scoped to active chat (assistant uiSettings)
+                            scope.launch {
+                                val currentAssistant = settings.getCurrentAssistant()
+                                val updatedUiSettings = currentAssistant.uiSettings.copy(
+                                    textStylingMode = stylingMode,
+                                    customDelimiter = customDelimiter.takeIf { it.isNotBlank() },
+                                    textColorHex = rgbToHex(rDraft, gDraft, bDraft),
+                                    accentColorHex = rgbToHex(rDraft, gDraft, bDraft),
+                                    bgColorHex = rgbToHex(rDraft, gDraft, bDraft),
+                                )
+                                settingsStore.update { cur ->
+                                    val assistants = cur.assistants.map { a ->
+                                        if (a.id == currentAssistant.id) {
+                                            a.copy(uiSettings = updatedUiSettings)
+                                        } else a
+                                    }
+                                    cur.copy(assistants = assistants)
+                                }
+                            }
                             showTextStylingDialog = false
                             haptics.perform(HapticPattern.Success)
                         }
@@ -3507,7 +3527,10 @@ private fun MinimalPickerContent(
                         },
                         title = "Text Styling",
                         subtitle = "Custom italic colors & per-chat text styles",
-                        onClick = onOpenTextStyling
+                        onClick = {
+                            showTextStylingDialog = true
+                            onOpenTextStyling()
+                        }
                     )
                 }
                 2 -> {
@@ -4208,3 +4231,45 @@ private fun findDialogWindow(view: View): Window? {
     }
     return null
 }
+
+@Composable
+private fun StyleGridButton(
+    text: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color(0xFF000000).copy(alpha = 0.35f),
+        border = BorderStroke(
+            0.5.dp,
+            if (isSelected) Color.White else Color.White.copy(alpha = 0.12f)
+        ),
+        modifier = Modifier
+            .weight(1f)
+            .height(72.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                ),
+                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.8f),
+            )
+        }
+    }
+}
+

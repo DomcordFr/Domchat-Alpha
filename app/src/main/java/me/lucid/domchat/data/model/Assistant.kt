@@ -36,6 +36,12 @@ data class AssistantUISettings(
     val streamingFadeDurationMs: Int? = null,
     val streamingFadeStartAlpha: Float? = null,
     val streamingContinuousFlow: Boolean? = null,
+    // Text styling customization (per-assistant/chat scope)
+    val textStylingMode: String? = null, // "quote" | "italic" | "code" | "custom"
+    val customDelimiter: String? = null,
+    val textColorHex: String? = null,
+    val accentColorHex: String? = null,
+    val bgColorHex: String? = null,
 )
 
 @Serializable

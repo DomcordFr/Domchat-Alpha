@@ -21,10 +21,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalTextStyle
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LocalDarkMode
 import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,10 +41,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
 import me.lucid.domchat.data.datastore.DisplaySetting
+import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
@@ -495,6 +502,183 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
+            // Text Styling - per-chat text customization
+            item {
+                var stylingMode by remember(settings.displaySetting.customDialogueColor) {
+                    mutableStateOf(settings.displaySetting.customDialogueColor?.let { "custom" } ?: "italic")
+                }
+                var customDelimiter by remember(settings.displaySetting.customActionColor) {
+                    mutableStateOf(settings.displaySetting.customActionColor ?: "")
+                }
+                var textColor by remember(settings.displaySetting.customDialogueColor) {
+                    mutableStateOf(settings.displaySetting.customDialogueColor ?: "#FFFFFF")
+                }
+                var accentColor by remember(settings.displaySetting.customActionColor) {
+                    mutableStateOf(settings.displaySetting.customActionColor ?: "#00FF00")
+                }
+                var bgColor by remember(settings.displaySetting.customUserTextColor) {
+                    mutableStateOf(settings.displaySetting.customUserTextColor ?: "#000000")
+                }
+
+                SettingsGroup(
+                    title = "Text Styling",
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Message Style",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            StylePillButton(
+                                text = "Quote",
+                                isSelected = stylingMode == "quote",
+                                onClick = { stylingMode = "quote" }
+                            )
+                            StylePillButton(
+                                text = "Italic",
+                                isSelected = stylingMode == "italic",
+                                onClick = { stylingMode = "italic" }
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            StylePillButton(
+                                text = "Code",
+                                isSelected = stylingMode == "code",
+                                onClick = { stylingMode = "code" }
+                            )
+                            StylePillButton(
+                                text = "Custom",
+                                isSelected = stylingMode == "custom",
+                                onClick = { stylingMode = "custom" }
+                            )
+                        }
+
+                        if (stylingMode == "custom") {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = customDelimiter,
+                                    onValueChange = { customDelimiter = it },
+                                    label = { Text("Delimiter Symbols") },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = AppShapes.InputField,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        cursorColor = Color.White.copy(alpha = 0.9f),
+                                    )
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Text Color", style = MaterialTheme.typography.bodyMedium)
+                                Text(textColor, style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            }
+                            DomChatSlider(
+                                value = 0.5f,
+                                onValueChange = { },
+                                valueRange = 0f..1f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Accent Color", style = MaterialTheme.typography.bodyMedium)
+                                Text(accentColor, style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            }
+                            DomChatSlider(
+                                value = 0.5f,
+                                onValueChange = { },
+                                valueRange = 0f..1f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Background Color", style = MaterialTheme.typography.bodyMedium)
+                                Text(bgColor, style = MaterialTheme.typography.labelMedium, color = Color.White)
+                            }
+                            DomChatSlider(
+                                value = 0.5f,
+                                onValueChange = { },
+                                valueRange = 0f..1f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            DomChatGlassPillButton(
+                                text = "Save",
+                                accent = true,
+                                onClick = {
+                                    val updatedSettings = settings.displaySetting.copy(
+                                        customDialogueColor = textColor,
+                                        customActionColor = accentColor,
+                                        customUserTextColor = bgColor,
+                                    )
+                                    updateDisplaySetting(updatedSettings)
+                                    val currentAssistant = settings.getCurrentAssistant()
+                                    val updatedUiSettings = currentAssistant.uiSettings.copy(
+                                        textStylingMode = stylingMode,
+                                        customDelimiter = customDelimiter.takeIf { it.isNotBlank() },
+                                        textColorHex = textColor,
+                                        accentColorHex = accentColor,
+                                        bgColorHex = bgColor,
+                                    )
+                                    vm.updateAssistant(currentAssistant.copy(uiSettings = updatedUiSettings))
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
             item {
                 SettingsGroup(
                     title = stringResource(R.string.setting_display_advanced)
@@ -516,5 +700,34 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Pill-shaped selectable button for text styling mode selection.
+ */
+@Composable
+private fun StylePillButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color.Transparent,
+        border = BorderStroke(0.5.dp, if (isSelected) Color.White else Color.White.copy(alpha = 0.12f)),
+        modifier = Modifier
+            .weight(1f)
+            .padding(vertical = 8.dp),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            ),
+            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center,
+        )
     }
 }

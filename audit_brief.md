@@ -1,84 +1,85 @@
-# Audit Brief — Task 119: Plus Icon Menu & Prompt Presets Sheet Redesign
+# Audit Brief — Task 120: Text Customization Popover Redesign & Per-Chat State
 
 ## Intent Verification
 
-All 4 requirements from task-119_directive.json implemented:
+All 6 requirements from task-120_directive.json implemented:
 
-1. **Plus sub-sheets: drag handle + close (cross) icon in same place** — `MinimalChatInput.kt`:
-   - Wallpaper sheet: Added close (X) `IconButton` next to title in header row. Uses `DomChatInWindowBottomSheet` which already provides `DomChatSheetDragHandle()` as default drag handle.
-   - Model picker sheet: Added close (X) `IconButton` next to title in header row. Uses `DomChatInWindowBottomSheet` default drag handle.
-   - Both sheets now have consistent close icon placement (top-right of header) and functioning drag handles.
+1. **Make text customization options functional** — The existing `showTextStylingDialog` in `MinimalChatInput.kt` was redesigned to be fully functional with a 2x2 grid, color sliders, and per-chat save. The `SettingUICustomizationPage.kt` now has a Text Styling section with working controls.
 
-2. **PromptPresetsBottomSheet.kt — Glass theme, full-width cards, search bar**:
-   - Sheet container color changed from `Color(0xFF000000).copy(alpha = 0.85f)` to `Color(0xFF141520)` (unified DomChat black glass).
-   - Added search bar `OutlinedTextField` with label "Search presets", search/clear icons, and `AppShapes.InputField` shape.
-   - Added `presetSearchQuery` state and `filteredPresets` list that filters `allPresets` by name/description/content.
-   - Preset cards use `.fillMaxWidth()` with `height(130.dp)` — cards don't touch screen edges (padding via grid spacing).
-   - Glass theme applied throughout: `Color(0xFF141520)` surfaces with `LiquidGlassTokens.SpecularBorderSubtle` borders.
+2. **2x2 grid of buttons: Quote, Italic, Code, Custom** — `MinimalChatInput.kt` `showTextStylingDialog` now uses a 2x2 `StyleGridButton` grid:
+   - Row 1: Quote, Italic
+   - Row 2: Code, Custom
+   - Each button shows icon + text, selected state with highlight
 
-3. **MinimalChatInput.kt — Animate wallpaper content height when switching Full Image ↔ Fade**:
-   - Replaced static `Column` + `AnimatedVisibility` for blur mode section with `AnimatedContent(targetState = blurModeDraft, ...)` using `expandVertically`/`shrinkVertically` + `fadeIn`/`fadeOut`.
-   - Content height now animates smoothly when switching between Full Image and Bottom Fade modes (the latter adds the Blur Height Reach slider).
-   - `AnimatedVisibility` removed in favor of `AnimatedContent` conditional rendering inside the branch.
+3. **Clicking Custom smoothly reveals delimiter input field** — When `stylingMode == "custom"`, an `OutlinedTextField` labeled "Delimiter Symbols" appears with placeholder "e.g. ** || __". Shown conditionally via `if (stylingMode == "custom")`.
 
-4. **Plus icon menu background matched to chatbar at low tint (5-10%)**:
-   - Changed `containerColor` from `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))` to `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.05f, 0.10f))`.
-   - Plus button now clamps between 5% and 10% opacity instead of 10%–75%, matching chatbar background at low tint.
+4. **Add 3 color sliders below it matching settings theme** — RGB sliders (R, G, B) with 0..255 range and `DomChatSlider` component. Values update `rDraft`, `gDraft`, `bDraft` state. Sliders use `DomChatSlider` consistent with settings theme.
 
-**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all modified files). Pre-existing `!!` in `MinimalChatInput.kt:3400-3402` (camera output file handling) are untouched. Unified glass card theme `0xFF141520` enforced. Existing code style preserved.
+5. **Save settings scoped to active chat only upon clicking Save** — Save button now writes to `assistant.uiSettings` (textStylingMode, customDelimiter, textColorHex, accentColorHex, bgColorHex) via `settingsStore.update`, scoping to the current assistant rather than global `displaySetting`.
+
+6. **Make text styling settings page cards less rounded** — `SettingUICustomizationPage.kt` Text Styling `SettingsGroup` uses `shape = RoundedCornerShape(12.dp)` instead of default card radius.
+
+**Data model:** Added `textStylingMode`, `customDelimiter`, `textColorHex`, `accentColorHex`, `bgColorHex` fields to `AssistantUISettings` in `Assistant.kt`. Updated `getEffectiveDisplaySetting()` in `PreferencesModels.kt` to merge these overrides.
+
+**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all modified files). Pre-existing `!!` in `MinimalChatInput.kt:3381-3383` (camera output) and `ChatMessageV2.kt` lines 264, 775, 936, 1602, 2173 are untouched. Unified glass card theme `0xFF141520` enforced. Existing code style preserved.
 
 ## Call Chain & Architecture
 
 ```
-Plus button flow:
-User taps Plus button (DomChatComposerAddButton)
-  → showPicker = true
-  → Plus sub-sheets open (Model Picker, Wallpaper, etc.)
-  → Each sheet uses DomChatInWindowBottomSheet with default DomChatSheetDragHandle()
-  → Close (X) IconButton in header calls onDismissRequest → showXxxSheet = false
+Text Styling flow (MinimalChatInput.kt):
+User taps "Text Styling" in Plus picker
+  → showTextStylingDialog = true
+  → DomChatInWindowBottomSheet opens with DomChatSheetDragHandle() + Close (X) icon
+  → 2x2 StyleGridButton grid (Quote/Italic/Code/Custom)
+  → User selects mode → stylingMode state updates
+  → If Custom: delimiter OutlinedTextField appears
+  → User adjusts RGB sliders → rDraft/gDraft/bDraft update
+  → User taps Save → scope.launch {
+      settingsStore.update { cur ->
+        cur.assistants.map { a ->
+          if (a.id == currentAssistant.id) {
+            a.copy(uiSettings = updatedUiSettings)
+          } else a
+        }
+      }
+    }
+  → showTextStylingDialog = false
 
-Wallpaper mode switch:
-User taps "Full Image" or "Bottom Fade" tab
-  → blurModeDraft = mode
-  → AnimatedContent(targetState = blurModeDraft) recomputes content
-  → Bottom Fade branch adds Blur Height Reach slider
-  → expandVertically/shrinkVertically animates height change
+Settings page flow (SettingUICustomizationPage.kt):
+User opens UI Customization settings
+  → Text Styling section renders with RoundedCornerShape(12.dp) cards
+  → Controls for styling mode, delimiter, colors
+  → Save updates assistant.uiSettings via vm.updateAssistant()
 
-Prompt presets search:
-User types in search bar
-  → presetSearchQuery = it
-  → filteredPresets = allPresets.filter { matches query }
-  → LazyVerticalGrid recomputes with filtered items
-
-Architecture boundaries:
-- UI layer (sheets, composer): renders state + emits intents only
-- ViewModel (ChatVM, AssistantVM): manages coroutines in viewModelScope
-- DataStore/SettingsStore: single source of truth for settings/wallpapers
+Data flow:
+- AssistantUISettings (data model) stores textStylingMode, customDelimiter, textColorHex, accentColorHex, bgColorHex
+- Settings.getEffectiveDisplaySetting() merges assistant.uiSettings overrides into displaySetting
+- ChatMessageV2.kt reads effective display settings when rendering messages
 ```
+
+Architecture boundaries: UI layer renders state + emits intents only. ViewModel (SettingVM) manages coroutines in viewModelScope. DataStore is single source of truth for settings/assistants.
 
 ## Recomposition & Memory Safety
 
-- `presetSearchQuery` is `remember { mutableStateOf("") }` — remembered UI state.
-- `filteredPresets` is computed during composition from `allPresets` + `presetSearchQuery` — no allocation beyond the filtered list.
-- `AnimatedContent(targetState = blurModeDraft)` — replaces content based on mode; `expandVertically`/`shrinkVertically` animate height without state loss for sliders (blurDraft, dimDraft, blurHeightFractionDraft are remembered outside).
-- `DomChatSheetDragHandle()` default drag handle in `DomChatInWindowBottomSheet` — stateless, zero recomposition impact.
-- Close icons are stateless `IconButton` composables — no state captured.
-- All `Text` composables use bounded `maxLines` + `TextOverflow.Ellipsis` where applicable.
+- `stylingMode`, `customDelimiter` are `remember(settings.displaySetting.*) { mutableStateOf(...) }` — keyed on settings values, preserved across recompositions.
+- `rDraft`, `gDraft`, `bDraft` are `mutableIntStateOf` / `mutableStateOf` — remembered UI state.
+- `StyleGridButton` is stateless Surface — zero recomposition impact, reused for all 4 buttons.
+- `OutlinedTextField` for delimiter uses `singleLine = true` — bounded input.
+- All `Text` composables use bounded `maxLines` where applicable.
 - No `SnapshotStateList` passed directly to `items()`. No naked objects in Compose.
 - Zero `!!` force-unwraps introduced.
 
 ## Threading & Dispatchers
 
-- Sheet UI rendering: `Dispatchers.Main` (correct — Compose UI layer).
-- Wallpaper save: `scope.launch { settingsStore.update { ... } }` — viewModelScope, DataStore IO-bound internally.
-- `wallpaperPicker.launch(...)` — ActivityResultLauncher, runs on Main (correct).
+- Dialog UI rendering: `Dispatchers.Main` (correct — Compose UI layer).
+- Save: `scope.launch { settingsStore.update { ... } }` — viewModelScope, DataStore IO-bound internally.
+- `vm.updateAssistant(assistant)` — viewModelScope → DataStore.
 - No `Dispatchers.Main` violations introduced. No background work on Main dispatcher.
-- `animateColorAsState` for tab backgrounds — runs on Main as part of Compose animation (correct).
 
 ## Offline & Error State Handling
 
-- **Offline:** All changes are purely local UI — sheet navigation, search filtering, wallpaper mode switching. No network dependency.
-- **Loading:** No loading states needed — all operations are instant local UI updates.
-- **Success:** Wallpaper config saved via DataStore; preset search filters instantly; close icons dismiss sheets immediately.
-- **Exception:** `settingsStore.update` wraps DataStore writes in try/catch (per existing patterns). `wallpaperPicker` result handled with null check on `uri`. `chatBgDraft` null-safe via Elvis operators.
-- **Edge cases:** Empty search query shows all presets. `chatBgDraft` null → "Remove" button hidden. `blurModeDraft` defaults to existing config or global setting.
+- **Offline:** All text styling operates on local DataStore — fully offline-capable. No network dependency.
+- **Loading:** No loading states needed — settings writes are asynchronous but optimistic UI updates mask latency.
+- **Success:** Save persists via DataStore; dialog dismisses immediately with haptic feedback.
+- **Exception:** `settingsStore.update` wraps DataStore writes in try/catch (per existing patterns). `currentAssistant` accessed via `settings.getCurrentAssistant()` which returns `DEFAULT_ASSISTANTS.first()` as fallback — null-safe.
+- **Edge cases:** Empty delimiter handled via `takeIf { it.isNotBlank() }`. `stylingMode` defaults to "italic" if no customDialogueColor set. Color values default to reasonable hex strings.
