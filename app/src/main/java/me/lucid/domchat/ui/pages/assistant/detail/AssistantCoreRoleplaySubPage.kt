@@ -62,6 +62,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
+import me.lucid.domchat.ui.pages.setting.components.SettingGroupInputItem
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
@@ -117,10 +118,10 @@ fun AssistantCoreRoleplaySubPage(
                 )
             }
 
-            SettingGroupItem(
+            SettingGroupInputItem(
                 title = stringResource(R.string.assistant_page_name),
                 subtitle = stringResource(R.string.assistant_profile_name_desc),
-                trailing = {
+                content = {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -159,10 +160,10 @@ fun AssistantCoreRoleplaySubPage(
         // SECTION: CREATOR NOTES & TAGS (black background, glassy borders)
         // ═══════════════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_creator_notes)) {
-            SettingGroupItem(
+            SettingGroupInputItem(
                 title = "Creator Notes",
                 subtitle = "Creator notes",
-                trailing = {
+                content = {
                     Surface(
                         color = Color(0xFF141520),
                         border = androidx.compose.foundation.BorderStroke(
@@ -196,10 +197,10 @@ fun AssistantCoreRoleplaySubPage(
         // SECTION: PERSONALITY (System Prompt - spacious multiline)
         // ═══════════════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_personality)) {
-            SettingGroupItem(
+            SettingGroupInputItem(
                 title = stringResource(R.string.assistant_page_system_prompt),
                 subtitle = stringResource(R.string.assistant_detail_personality_desc),
-                trailing = {
+                content = {
                     Surface(
                         color = Color(0xFF141520),
                         border = androidx.compose.foundation.BorderStroke(

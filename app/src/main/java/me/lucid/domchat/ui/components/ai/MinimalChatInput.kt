@@ -202,6 +202,7 @@ import me.lucid.domchat.data.datastore.resolveConversationContext
 import me.lucid.domchat.ui.components.chat.PersonaPickerBottomSheet
 import me.lucid.domchat.ui.components.chat.PromptPresetsBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.canManuallySummarizeConversation
 import me.lucid.domchat.data.model.Conversation
@@ -1666,53 +1667,235 @@ fun MinimalChatInput(
     }
 
     if (showTextStylingDialog) {
-        AlertDialog(
-            onDismissRequest = { showTextStylingDialog = false },
-            title = {
-                Text(
-                    text = "Text Styling",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White,
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = "Custom per-chat text styling",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.85f),
-                    )
-                    Text(
-                        text = "Italic color:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.6f),
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("Coral", style = MaterialTheme.typography.labelMedium, color = Color(0xFFFF6B6B))
-                        Text("Lavender", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB39DDB))
-                        Text("Mint", style = MaterialTheme.typography.labelMedium, color = Color(0xFF81C784))
-                        Text("Amber", style = MaterialTheme.typography.labelMedium, color = Color(0xFFFFD54F))
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showTextStylingDialog = false }) {
-                    Text("Close", style = MaterialTheme.typography.labelMedium.copy(color = Color.White))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTextStylingDialog = false }) {
-                    Text("Cancel", style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.6f)))
+        val rules = settings.displaySetting.rpStyleRules.toMutableList()
+        var selectedRule by remember { mutableStateOf<me.lucid.domchat.data.datastore.RpStyleRule?>(null) }
+        var rDraft by remember { mutableIntStateOf(0) }
+        var gDraft by remember { mutableIntStateOf(0) }
+        var bDraft by remember { mutableIntStateOf(0) }
+
+        fun parseColor(hex: String): Color {
+            val c = hex.removePrefix("#").toInt(16)
+            return Color(
+                red = ((c shr 16) and 0xff) / 255f,
+                green = ((c shr 8) and 0xff) / 255f,
+                blue = (c and 0xff) / 255f,
+                alpha = 1f
+            )
+        }
+
+        fun rgbToHex(r: Int, g: Int, b: Int): String =
+            "#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}"
+
+        fun applyDraftToSelected() {
+            selectedRule?.let { rule ->
+                val idx = rules.indexOfFirst { it.id == rule.id }
+                if (idx >= 0) {
+                    rules[idx] = rule.copy(colorHex = rgbToHex(rDraft, gDraft, bDraft))
                 }
             }
-        )
+        }
+
+        fun saveRules() {
+            settingsStore.update { cur ->
+                cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = rules.toList()))
+            }
+        }
+
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showTextStylingDialog = false },
+            dragHandle = { DomChatSheetDragHandle() },
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Text Styling",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = { showTextStylingDialog = false }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    color = Color.White.copy(alpha = 0.12f)
+                )
+
+                // Rules list
+                Text(
+                    text = "Text Styling Rules",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val standardPatterns = listOf("*" to "Italic (*)", ">" to "Quote (>)", "`" to "Code (`)")
+                    val customPatterns = rules.filter { it.pattern !in standardPatterns.map { it.first } }
+                    (standardPatterns + customPatterns.map { it.pattern to "Custom: ${it.pattern}" }).forEach { (pattern, label) ->
+                        val rule = rules.find { it.pattern == pattern }
+                        val isSelected = selectedRule?.id == rule?.id
+                        Surface(
+                            onClick = {
+                                selectedRule = rule
+                                val hex = rule?.colorHex ?: "#808080"
+                                val c = hex.removePrefix("#").toInt(16)
+                                rDraft = (c shr 16) and 0xff
+                                gDraft = (c shr 8) and 0xff
+                                bDraft = c and 0xff
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
+                            border = BorderStroke(
+                                0.5.dp,
+                                if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(18.dp).clip(RoundedCornerShape(4.dp)),
+                                    background = parseColor(rule?.colorHex ?: "#808080")
+                                )
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
+                                )
+                                Spacer(Modifier.weight(1f))
+                                if (rule != null) {
+                                    Text(
+                                        text = rule.colorHex,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color.White.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Selected rule color editor
+                selectedRule?.let { rule ->
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "Rule: ${rule.pattern}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "Color",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+                        // Preset swatches
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                "#FF6B6B" to "Coral",
+                                "#B39DDB" to "Lavender",
+                                "#81C784" to "Mint",
+                                "#FFD54F" to "Amber",
+                                "#4FC3F7" to "Sky",
+                                "#F06292" to "Pink",
+                                "#AED581" to "Light Green",
+                                "#FFB74D" to "Orange"
+                            ).forEach { (hex, name) ->
+                                val isActive = rule.colorHex == hex
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(parseColor(hex))
+                                        .border(if (isActive) 2.dp else 0.dp, Color.White, CircleShape)
+                                        .clickable {
+                                            val c = hex.removePrefix("#").toInt(16)
+                                            rDraft = (c shr 16) and 0xff
+                                            gDraft = (c shr 8) and 0xff
+                                            bDraft = c and 0xff
+                                        }
+                                ) { }
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        // RGB sliders (0..255)
+                        listOf(
+                            Triple("R", rDraft, { rDraft = it }),
+                            Triple("G", gDraft, { gDraft = it }),
+                            Triple("B", bDraft, { bDraft = it })
+                        ).forEach { (label, value, onChange) ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = value.toString(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            DomChatSlider(
+                                value = value.toFloat(),
+                                onValueChange = { onChange(it.toInt()) },
+                                valueRange = 0f..255f,
+                                steps = 255
+                            )
+                        }
+                    }
+                }
+
+                // Save / Cancel
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { showTextStylingDialog = false }) {
+                        Text("Cancel", style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.7f)))
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            applyDraftToSelected()
+                            saveRules()
+                            showTextStylingDialog = false
+                            haptics.perform(HapticPattern.Success)
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                }
+            }
+        }
     }
 
     if (showStreamingAnimationSheet) {
@@ -2167,19 +2350,11 @@ fun MinimalChatInput(
                     )
                 }
 
-                // If Bottom Fade, show Blur Height Reach slider (animated)
-                AnimatedContent(
-                    targetState = blurModeDraft,
-                    transitionSpec = {
-                        (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
-                            animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> width / 4 })
-                            .togetherWith(
-                                fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
-                                    animationSpec = tween(220, easing = FastOutSlowInEasing)
-                                ) { width -> -width / 4 }
-                            )
-                    }
+                // If Bottom Fade, show Blur Height Reach slider
+                AnimatedVisibility(
+                    visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
+                    enter = fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)),
+                    exit = fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)),
                 ) {
                     Column {
                         Row(
@@ -2245,8 +2420,8 @@ fun MinimalChatInput(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = AppShapes.ButtonPill,
-                        color = Color.Transparent,
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary),
                     ) {
                         Box(
                             modifier = Modifier

@@ -37,6 +37,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
@@ -387,8 +389,7 @@ fun AssistantDetailPage(
                 AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantDetailHome(
                         assistant = assistant,
-                        onNavigateToCore = { navController.navigate(AssistantDetailRoutes.CORE) },
-                        onNavigateToAdvanced = { navController.navigate(AssistantDetailRoutes.ADVANCED) }
+                        navController = navController,
                     )
                 }
             }
@@ -425,6 +426,54 @@ fun AssistantDetailPage(
             composable(AssistantDetailRoutes.ADVANCED) {
                 AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantAdvancedSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
+            }
+
+            // Profile
+            composable(AssistantDetailRoutes.PROFILE) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantProfileSubPage(
+                        assistant = assistant,
+                        tags = tags,
+                        onUpdate = { onUpdate(it) },
+                        vm = vm
+                    )
+                }
+            }
+
+            // Model Configuration
+            composable(AssistantDetailRoutes.MODEL) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantModelSubPage(
+                        assistant = assistant,
+                        providers = providers,
+                        ttsProviders = settings.ttsProviders,
+                        catalogSnapshot = catalogSnapshot,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
+            }
+
+            // Context & Budget / Context Management
+            composable(AssistantDetailRoutes.CONTEXT_MANAGEMENT) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantContextManagementSubPage(
+                        assistant = assistant,
+                        hasSummarizerModelConfigured = false,
+                        onUpdate = { onUpdate(it) },
+                        onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
+                        onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                    )
+                }
+            }
+
+            // UI Customization
+            composable(AssistantDetailRoutes.UI) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantUISubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) }
                     )
@@ -475,8 +524,7 @@ fun AssistantDetailPage(
 @Composable
 private fun AssistantDetailHome(
     assistant: Assistant,
-    onNavigateToCore: () -> Unit,
-    onNavigateToAdvanced: () -> Unit
+    navController: NavHostController,
 ) {
     val useWideSettingsLayout = LocalSettingsWideLayout.current
     Column(
@@ -496,12 +544,12 @@ private fun AssistantDetailHome(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Hero animation for smooth List ↔ Home transition
-            UIAvatar(
-                value = assistant.avatar,
-                name = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-                onUpdate = null, // Read-only in home view
+            Box(
                 modifier = Modifier
                     .size(96.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF141520))
+                    .border(1.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     .let { modifier ->
                         if (useWideSettingsLayout) {
                             modifier
@@ -509,7 +557,14 @@ private fun AssistantDetailHome(
                             modifier.heroAnimation(key = "assistant_avatar_${assistant.id}")
                         }
                     }
-            )
+            ) {
+                UIAvatar(
+                    value = assistant.avatar,
+                    name = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
+                    onUpdate = null, // Read-only in home view
+                    modifier = Modifier.size(96.dp)
+                )
+            }
             
             Text(
                 text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
@@ -541,21 +596,21 @@ private fun AssistantDetailHome(
                 icon = Icons.Rounded.Person,
                 title = stringResource(R.string.assistant_detail_profile),
                 description = stringResource(R.string.assistant_detail_core_profile_desc),
-                onClick = onNavigateToCore
+                onClick = { navController.navigate(AssistantDetailRoutes.PROFILE) }
             )
 
             NavigationCard(
                 icon = Icons.AutoMirrored.Rounded.Chat,
                 title = stringResource(R.string.assistant_page_tab_prompt),
                 description = stringResource(R.string.assistant_detail_core_prompts_desc),
-                onClick = onNavigateToCore
+                onClick = { navController.navigate(AssistantDetailRoutes.CORE) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.DataObject,
                 title = "Attached Lorebooks",
                 description = stringResource(R.string.assistant_detail_core_lorebooks_desc),
-                onClick = onNavigateToCore
+                onClick = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) }
             )
         }
 
@@ -565,21 +620,21 @@ private fun AssistantDetailHome(
                 icon = Icons.Rounded.Build,
                 title = stringResource(R.string.assistant_detail_models),
                 description = stringResource(R.string.assistant_detail_advanced_models_desc),
-                onClick = onNavigateToAdvanced
+                onClick = { navController.navigate(AssistantDetailRoutes.MODEL) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.Tune,
                 title = "Context & Budget",
                 description = stringResource(R.string.assistant_detail_advanced_context_desc),
-                onClick = onNavigateToAdvanced
+                onClick = { navController.navigate(AssistantDetailRoutes.CONTEXT_MANAGEMENT) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.Palette,
                 title = stringResource(R.string.assistant_detail_ui_customization),
                 description = stringResource(R.string.assistant_detail_advanced_ui_desc),
-                onClick = onNavigateToAdvanced
+                onClick = { navController.navigate(AssistantDetailRoutes.UI) }
             )
         }
 

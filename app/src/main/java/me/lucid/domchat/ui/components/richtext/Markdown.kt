@@ -1686,10 +1686,11 @@ private fun MarkdownNode(
             val text = node.getTextInNode(content)
             val direction = rememberContentDirection(text)
             val streamingReveal = LocalStreamingTextReveal.current
-            val revealText = remember(text, streamingReveal) {
+            val rpStyleRules = LocalSettings.current.displaySetting.rpStyleRules
+            val revealText = remember(text, streamingReveal, rpStyleRules) {
                 buildAnnotatedString {
                     val outputStart = length
-                    append(text)
+                    appendTextWithCustomPatterns(text, rpStyleRules)
                     applyStreamingRevealStyle(
                         reveal = streamingReveal,
                         sourceStart = node.startOffset,

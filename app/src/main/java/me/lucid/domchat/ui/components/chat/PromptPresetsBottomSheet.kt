@@ -335,7 +335,7 @@ fun PromptPresetsBottomSheet(
     }
 
     ApplyDialogWindowBlur()
-    val effectiveSheetContainerColor = Color(0xFF000000)
+    val effectiveSheetContainerColor = Color(0xFF000000).copy(alpha = 0.85f)
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
@@ -382,6 +382,17 @@ fun PromptPresetsBottomSheet(
                             ),
                             color = Color.White,
                         )
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = onDismissRequest,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Close",
+                                tint = Color.White.copy(alpha = 0.7f),
+                            )
+                        }
                         if (conversation != null) {
                             Spacer(modifier = Modifier.width(8.dp))
                             DomChatGlassChip(
@@ -748,7 +759,8 @@ fun PromptPresetsBottomSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = preset.name,
+                                text = preset.name,
+                                    modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                                     color = Color.White,
                                     maxLines = 1,

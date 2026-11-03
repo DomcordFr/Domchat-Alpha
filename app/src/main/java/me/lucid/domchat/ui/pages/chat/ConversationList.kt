@@ -354,7 +354,15 @@ fun ConversationList(
                 .zIndex(1f),
         )
 
-        bottomContent?.invoke()
+        Box(
+    modifier = Modifier
+        .align(Alignment.BottomCenter)
+        .fillMaxWidth()
+        .padding(horizontal = 8.dp, vertical = 8.dp)
+        .zIndex(2f)
+) {
+    bottomContent?.invoke()
+}
     }
 }
 

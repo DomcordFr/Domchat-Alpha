@@ -409,7 +409,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 LazyVerticalGrid(
                     state = gridState,
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 96.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
@@ -652,7 +652,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 shape = AppShapes.ButtonPill,
                                 color = Color(0xFF000000),
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .wrapContentWidth()
+                                    .align(Alignment.Center)
+                                    .padding(horizontal = 16.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -742,7 +745,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             } else {
                 LazyColumn(
                     state = listState,
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxSize()
@@ -984,7 +987,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 shape = AppShapes.ButtonPill,
                                 color = Color(0xFF000000),
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .wrapContentWidth()
+                                    .align(Alignment.Center)
+                                    .padding(horizontal = 16.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1956,25 +1962,15 @@ fun CharacterInspectorSheet(
                         }
                     }
 
-                    // Top few lines of creator notes as a blurb (HTML-sanitized)
-                    val notesBlurb = remember(assistant.creatorNotes) {
-                        sanitizeHtml(assistant.creatorNotes)
-                            .lineSequence()
-                            ?.map { it.trim() }
-                            ?.filter { it.isNotBlank() }
-                            ?.take(3)
-                            ?.joinToString("\n")
-                            .orEmpty()
-                    }
-                    if (notesBlurb.isNotBlank()) {
+                    // Creator notes blurb — MarkdownBlock so images and markdown
+                    // in creator notes are not stripped.
+                    val creatorNotesBlurb = assistant.creatorNotes.orEmpty()
+                    if (creatorNotesBlurb.isNotBlank()) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = notesBlurb,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp,
-                            color = Color(0xFFC0C0C8),
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis
+                        MarkdownBlock(
+                            content = formatRoleplayTextWithCdnImages(
+                                cleanHtmlImgToMarkdown(creatorNotesBlurb)
+                            )
                         )
                     }
 
@@ -3021,7 +3017,9 @@ private fun NewGroupDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp)
+                .background(Color.Black.copy(alpha = 0.65f))
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
         ) {
             Surface(
                 modifier = Modifier
@@ -3059,34 +3057,21 @@ private fun NewGroupDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        TextButton(
+                        DomChatGlassPillButton(
+                            text = "Cancel",
                             onClick = { onDismissRequest() },
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = Color.White.copy(alpha = 0.7f)
-                            )
-                        ) {
-                            Text(text = "Cancel")
-                        }
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Button(
+                        DomChatGlassPillButton(
+                            text = "Create",
+                            enabled = groupName.isNotBlank(),
                             onClick = {
                                 if (groupName.isNotBlank()) {
                                     onCreate(groupName)
                                     onDismissRequest()
                                 }
                             },
-                            enabled = groupName.isNotBlank(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF000000),
-                                contentColor = Color.White,
-                                disabledContainerColor = Color(0xFF000000).copy(alpha = 0.4f),
-                                disabledContentColor = Color.White.copy(alpha = 0.4f)
-                            ),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-                        ) {
-                            Text(text = "Create", fontWeight = FontWeight.SemiBold)
-                        }
+                        )
                     }
                 }
             }

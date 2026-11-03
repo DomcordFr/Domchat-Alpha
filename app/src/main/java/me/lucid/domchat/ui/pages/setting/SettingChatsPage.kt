@@ -111,6 +111,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.uuid.Uuid
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 
 private enum class ChatSortOrder {
@@ -469,6 +470,7 @@ fun SettingChatsPage(
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 68.dp, max = 82.dp)
                                 .clip(cardShape)
                                 .domChatBlurEffect(containerColor = cardBg, shape = cardShape)
                                 .combinedClickable(
@@ -579,7 +581,10 @@ fun SettingChatsPage(
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 fontSize = 11.sp
                                             ),
-                                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.65f)
+                                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.65f),
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
                                 }

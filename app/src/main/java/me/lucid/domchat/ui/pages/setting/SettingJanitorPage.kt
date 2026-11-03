@@ -1401,15 +1401,10 @@ private fun JanitorCharacterInspectorSheet(
                         when (tab) {
                             0 -> {
                                 // Notes Tab — creator notes / bio (with in-place embedded images)
-                                // Creator notes containing image markdown take precedence
-                                // over plain extracted descriptions.
-                                val creatorNotes = character.bio.orEmpty()
-                                val hasCreatorImages = creatorNotes.contains("![") || creatorNotes.contains("<img")
                                 val rawNotes = when {
-                                    hasCreatorImages -> creatorNotes
+                                    !character.bio.isNullOrBlank() -> character.bio
                                     !fullExtract?.bio.isNullOrBlank() -> fullExtract?.bio
                                     !fullExtract?.description.isNullOrBlank() -> fullExtract?.description
-                                    !character.bio.isNullOrBlank() -> character.bio
                                     else -> character.description
                                 }.orEmpty()
 

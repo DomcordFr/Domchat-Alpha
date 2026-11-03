@@ -460,7 +460,7 @@ fun ChatDrawerContent(
                                 .clip(me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
-                                    navController.navigate(Screen.AssistantDetail(id = currentAssistant.id.toString()))
+                                    navController.navigate(Screen.ConversationList)
                                     dismissDrawerAfterSelection()
                                 },
                         ) {
