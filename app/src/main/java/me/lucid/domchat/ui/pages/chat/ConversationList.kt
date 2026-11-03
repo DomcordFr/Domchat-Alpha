@@ -349,6 +349,7 @@ fun ConversationList(
             placeholder = stringResource(id = R.string.chat_page_search_placeholder),
             hint = stringResource(R.string.chat_page_search_hint),
             containerColor = domChatIconPillContainerColor(),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(1f),
@@ -644,7 +645,7 @@ private fun ConversationItem(
             expanded = showDropdownMenu,
             onDismissRequest = { showDropdownMenu = false },
             shape = RoundedCornerShape(18.dp),
-            containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.80f) else MaterialTheme.colorScheme.surfaceContainerHigh,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         ) {
             DropdownMenuItem(

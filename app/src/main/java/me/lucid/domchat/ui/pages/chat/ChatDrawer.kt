@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.chat
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatChromeSurfaceColor
 
@@ -386,8 +387,9 @@ fun ChatDrawerContent(
                         DomChatDrawerQuickAction(
                             label = "Home",
                             containerColor = quickActionCardColor,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = {
-                                navController.navigate(Screen.ConversationList)
+                                navigateToChatPage(navController)
                                 dismissDrawerAfterSelection()
                             },
                             onHaptic = { haptics.perform(HapticPattern.Tick) },
@@ -403,6 +405,7 @@ fun ChatDrawerContent(
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
                             containerColor = quickActionCardColor,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
                                 dismissDrawerAfterSelection()
@@ -420,6 +423,7 @@ fun ChatDrawerContent(
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
                             containerColor = quickActionCardColor,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             onClick = {
                                 navController.navigate(Screen.Menu)
                                 dismissDrawerAfterSelection()
@@ -442,17 +446,13 @@ fun ChatDrawerContent(
                         val actionButtonSize = 42.dp
                         val assistantAvatarSize = 30.dp
                         val itemColor = domChatChromeSurfaceColor()
-                        val pillBorder = androidx.compose.foundation.BorderStroke(
-                            0.5.dp,
-                            if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
-                        )
                         val haptics = rememberPremiumHaptics()
                         val assistantName = currentAssistant.name.ifEmpty { defaultAssistantName }
 
                         Surface(
                             color = itemColor,
                             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                            border = pillBorder,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(actionButtonSize)
@@ -513,7 +513,7 @@ fun ChatDrawerContent(
                                 dismissDrawerAfterSelection()
                             },
                             containerColor = itemColor,
-                            border = pillBorder,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             size = actionButtonSize,
                         )
                     }

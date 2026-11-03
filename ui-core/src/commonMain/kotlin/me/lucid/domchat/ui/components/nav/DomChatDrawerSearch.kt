@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
@@ -49,6 +50,7 @@ fun DomChatDrawerSearch(
     hint: String,
     modifier: Modifier = Modifier,
     containerColor: Color = Color.Unspecified,
+    shape: Shape = AppShapes.SearchField,
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -117,8 +119,8 @@ fun DomChatDrawerSearch(
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused && !expanded) onExpandedChange(true)
                         }
-                        .border(searchBorderStroke, AppShapes.SearchField),
-                    shape = AppShapes.SearchField,
+                        .border(searchBorderStroke, shape),
+                    shape = shape,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = searchContainerColor,
                         unfocusedContainerColor = searchContainerColor,
