@@ -345,9 +345,8 @@ fun AssistantPickerSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxWidth())
                         .padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = if (searchQuery.isNotBlank()) "No characters found for \"$searchQuery\"" else "No characters available",
@@ -358,7 +357,6 @@ fun AssistantPickerSheet(
             } else {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxWidth())
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
