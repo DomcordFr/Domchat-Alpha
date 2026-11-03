@@ -1,72 +1,74 @@
-# Audit Brief — Task 121: JanitorAI Hub Cards, Markdown Formatting & Notes Section
+# Audit Brief — Task 122: Navigation & Top/Bottom Bar Opacity / Gradient Slider
 
 ## Intent Verification
 
-All 4 requirements from task-121_directive.json implemented:
+All 4 requirements from task-122_directive.json implemented:
 
-1. **SettingJanitorPage.kt — Fix image links and markdown formatting disappearing after 1s (Notes tab)** — Wrapped `formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(rawNotes))` in `remember(rawNotes) { ... }` so the formatted content is cached and preserved across recompositions instead of being regenerated and potentially lost. Applied in the Notes tab (tab index 0) of `JanitorCharacterInspectorSheet`.
+1. **Route Home button to MenuPage (not ConversationList)** — `ChatPage.kt`:
+   - `onNewChat` (line 733): `navController.navigate(Screen.ConversationList)` → `navController.navigate(Screen.Menu)`
+   - BackHandler "Navigate to Home" (line 785): `navController.navigate(Screen.ConversationList)` → `navController.navigate(Screen.Menu)`
+   - `Screen.Menu` is already registered in `RouteActivity.kt` (line 926-928) rendering `MenuPage()`. `Screen` import already exists (line 172) and `Screen.Menu` is already used elsewhere (lines 1111, 1343).
 
-2. **SettingJanitorPage.kt — Increase auto-dismiss delay on successful import** — Changed `delay(1000)` → `delay(2000)` after `importStatus = ImportStatus.SUCCESS`, so the "Imported!" success state is visible for 2 seconds before the sheet hides.
+2. **Fix top bar/bottom bar too dark at 5% opacity** — `ChatPage.kt` line 3268:
+   - Removed `.coerceIn(0.10f, 0.75f)` from `glassAlpha`
+   - `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))` → `Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha)`
+   - This allows `glassAlpha` to go down to 0% (fully transparent) instead of being clamped to 10% minimum. `topContainerColor` is used for both top and bottom bars via `ChatToolbarActionPill`, so both are fixed.
 
-3. **CharacterHubPage.kt — Do not dump full notes section into small blurb area** — Replaced the full `MarkdownBlock(content = formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(creatorNotesBlurb)))` blurb above the action buttons with a truncated plain-text preview (`take(220)` + ellipsis, max 3 lines, ellipsis overflow). Full notes + images remain available via the inspector sheet.
+3. **Add slider for background black gradient intensity** — Two files:
+   - `PreferencesModels.kt`: Added `barGradientIntensity: Float = 0.60f` field to `DisplaySetting` data class
+   - `SettingDisplayPage.kt`: Added `localBarGradientIntensity` state + `DomChatSlider` (0.0f..1.0f) with percentage display, wired to `updateDisplaySetting(settings.displaySetting.copy(barGradientIntensity = ...))`
+   - `Background.kt`: Replaced hardcoded gradient alpha values (0.55f, 0.65f) with `settings.displaySetting.barGradientIntensity`
 
-4. **Render notes images in-place where creator placed them** — Already handled by the existing pipeline: `formatRoleplayTextWithCdnImages` converts bare image URLs to `![Image](url)` at their position in the text; `cleanHtmlImgToMarkdown` converts `` tags to `![Image](url)` at their position; `MarkdownBlock` renders them inline. Applied consistently in both CharacterHubPage Notes tab and CharacterNotesBottomSheet. No images are dumped at the end.
+4. **Match chat page top bar background to bottom bar chat bar background** — Both already use the same `topContainerColor` variable in `ChatToolbar`. With the `coerceIn` removed, they both respect the user's `glassAlpha` setting uniformly.
 
-**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across both files). Unified glass card theme `0xFF141520` untouched. Existing 4-space indent and import grouping preserved.
+**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all modified files). Pre-existing `!!` at ChatPage.kt lines 2119, 2137 are unrelated. Unified glass card theme `0xFF141520` untouched. Existing code style preserved.
 
 ## Call Chain & Architecture
 
 ```
-SettingJanitorPage import flow:
-User taps "Import to Hub"
-  → isImporting = true
-  → scope.launch { fetch extract → extractToAssistant → assistantVM.addAssistant }
-  → importStatus = SUCCESS
-  → haptics.perform(HapticPattern.Success)
-  → delay(2000)  [INCREASED from 1000]
-  → sheetState.hide(), onDismiss()
-  → toaster.show("Imported X", Success)
+Navigation:
+User clicks Home / backs out of chat
+  → navController.navigate(Screen.Menu)
+  → RouteActivity.kt: composable<Screen.Menu> { MenuPage() }
+  → MenuPage() renders home landing with generic assistant/actions
 
-JanitorCharacterInspectorSheet Notes tab:
-sheetSelectedTab == 0
-  → rawNotes = character.bio ?: fullExtract.bio ?: fullExtract.description ?: character.description
-  → formattedNotes = remember(rawNotes) { formatRoleplayTextWithCdnImages(cleanHtmlImgToMarkdown(rawNotes)) }
-  → MarkdownBlock(content = formattedNotes)  [cached across recompositions]
+Bar opacity:
+User adjusts glassAlpha slider in SettingDisplayPage
+  → updateDisplaySetting(settings.displaySetting.copy(glassAlpha = ...))
+  → vm.updateSettings(settings.copy(displaySetting = ...)) → DataStore
+  → ChatPage.kt collects settings.displaySetting.glassAlpha
+  → topContainerColor = Color(0xFF000000).copy(alpha = glassAlpha)
+  → Applied to DomChatMenuButton + ChatToolbarActionPill (top + bottom bars)
 
-CharacterHubPage blurb area:
-creatorNotesBlurb = assistant.creatorNotes.orEmpty()
-  → preview = take(220) + "…" if longer
-  → Text(preview, bodySmall, alpha 0.7, maxLines=3, ellipsis)
-
-Architecture boundaries:
-- UI layer renders state + emits intents only
-- ViewModel (AssistantVM) manages settings/coroutines in viewModelScope
-- DataStore is single source of truth for settings/assistants
+Bar gradient intensity:
+User adjusts Bar Gradient Intensity slider in SettingDisplayPage
+  → updateDisplaySetting(settings.displaySetting.copy(barGradientIntensity = ...))
+  → Background.kt collects settings.displaySetting.barGradientIntensity
+  → Brush.verticalGradient alpha = barGradientIntensity at top/bottom edges
 ```
+
+Architecture boundaries: UI layer renders state + emits intents only. ViewModel (`SettingVM`, `ChatVM`) manages coroutines in `viewModelScope`. DataStore is single source of truth for `DisplaySetting`.
 
 ## Recomposition & Memory Safety
 
-- `remember(rawNotes) { ... }` caches formatted notes content keyed on `rawNotes` string — content only recomputes when notes change, not on every composition. Prevents the "disappearing after 1s" issue where recomposition could regenerate/lose formatting.
-- `rememberModalBottomSheetState` for sheet lifecycle — properly dismissed via `dismissWithAnimation()`.
-- `sheetSelectedTab` is `mutableIntStateOf` — remembered UI state.
-- `fullExtract` and `isExtractLoading` are `remember(character.id) { ... }` — keyed on character ID, preserved across recompositions for same character.
-- CharacterHubPage blurb uses plain `Text` (no MarkdownBlock) — zero parsing cost, no markdown AST allocation.
+- `topContainerColor` is a `val` derived from `settings.displaySetting.glassAlpha` — recomputes only when settings change, not per-frame.
+- `barGradientIntensity` in Background.kt is collected via `rememberUserSettingsState()` — recomputes only when setting changes.
+- `localBarGradientIntensity` in SettingDisplayPage.kt is `remember(settings.displaySetting.barGradientIntensity) { mutableFloatStateOf(...) }` — keyed on settings value, preserved across recompositions.
+- `DomChatSlider` follows the same pattern as existing glass sliders (glassAlpha, glassBlur, etc.).
 - No `SnapshotStateList` passed directly to `items()`. No naked objects in Compose.
-- Zero `!!` force-unwraps.
+- Zero `!!` force-unwraps introduced.
 
 ## Threading & Dispatchers
 
-- HTTP extract calls run on `Dispatchers.IO` via `withContext(Dispatchers.IO)` — correct for network I/O.
-- State updates (`fullExtract =`, `browseState =`, `searchState =`, `importStatus =`) happen on `Dispatchers.Main` via `withContext(Dispatchers.Main)` — correct for UI state.
-- `delay(2000)` for auto-dismiss runs inside `scope.launch` (viewModelScope/coroutine scope) — not blocking Main thread.
-- `vm.addAssistant(assistant)` launches on `viewModelScope` → `settingsStore.update` (DataStore, IO-bound).
+- All settings updates flow through `updateDisplaySetting` → `vm.updateSettings` → `viewModelScope.launch` → `settingsStore.update` (DataStore, IO-bound internally).
+- Settings collection uses `collectAsStateWithLifecycle()` — lifecycle-aware, Main thread only for UI state.
 - No `Dispatchers.Main` violations introduced. No background work on Main dispatcher.
+- Navigation calls (`navController.navigate`) run on Main thread (correct — Compose UI layer).
 
 ## Offline & Error State Handling
 
-- **Offline:** JanitorAI Hub requires network (HTTP API calls). Offline state handled via `JanitorLoadState.Error` with toaster messages. Import failures show `importStatus = ERROR` with toaster error message.
-- **Loading:** `isExtractLoading` shows `JanitorOrbitalLoader` in Personality/Greetings tabs while extract fetches. `isImporting` shows `CircularProgressIndicator` on the Import button.
-- **Success:** Toaster shows "Imported X" with `ToastType.Success`. Import button turns green with checkmark icon for 2 seconds (increased from 1).
-- **Exception:** Extract `LaunchedEffect` catches all exceptions silently (no UI impact — fullExtract remains null). Import `try/catch` handles `CancellationException` (rethrows) and other exceptions with ERROR status + error toaster.
-- **Empty states:** "No notes available." / "No system prompt defined." / "No greetings available." fallback Text when content is blank.
-- CharacterHubPage blurb gracefully handles null/blank `creatorNotes` via `.orEmpty()` and `isNotBlank()` guard.
+- **Offline:** All changes are purely local UI/navigation — no network dependency. Settings persist in DataStore locally.
+- **Loading:** No loading states needed for slider or navigation changes (instant local operations).
+- **Success:** Settings persist immediately via DataStore. Slider updates reflect in real-time.
+- **Exception:** `updateDisplaySetting` wraps DataStore writes in `viewModelScope.launch` with try/catch (per existing ViewModel patterns). If DataStore write fails, local `displaySetting` state is still updated (optimistic UI), providing graceful degradation.
+- **Default value:** `barGradientIntensity` defaults to `0.60f` in `DisplaySetting`, matching the previous hardcoded average of 0.55f/0.65f for backward compatibility.

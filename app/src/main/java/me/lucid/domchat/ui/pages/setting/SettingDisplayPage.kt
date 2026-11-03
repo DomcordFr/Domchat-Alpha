@@ -476,6 +476,9 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         var localBaseLuminance by remember(settings.displaySetting.glassBaseLuminance) {
                             mutableFloatStateOf(settings.displaySetting.glassBaseLuminance)
                         }
+                        var localBarGradientIntensity by remember(settings.displaySetting.barGradientIntensity) {
+                            mutableFloatStateOf(settings.displaySetting.barGradientIntensity)
+                        }
                         var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) {
                             mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha)
                         }
@@ -600,6 +603,36 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 }
                             )
                         }
+
+                        // Bar Gradient Intensity Slider (controls black gradient intensity behind top/bottom bars)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Bar Gradient Intensity", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "${(localBarGradientIntensity * 100).roundToInt()}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White
+                            )
+                        }
+                        DomChatSlider(
+                            value = localBarGradientIntensity,
+                            onValueChange = {
+                                val rounded = (it * 100f).roundToInt() / 100f
+                                if (rounded != localBarGradientIntensity) {
+                                    haptics.perform(HapticPattern.Tick)
+                                    localBarGradientIntensity = rounded
+                                }
+                            },
+                            onValueChangeFinished = {
+                                updateDisplaySetting(
+                                    settings.displaySetting.copy(barGradientIntensity = localBarGradientIntensity)
+                                )
+                            },
+                            valueRange = 0f..1.0f
+                        )
 
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),

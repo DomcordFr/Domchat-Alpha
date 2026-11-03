@@ -730,7 +730,7 @@ fun ChatPage(
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (isActiveConversation) {
-            navController.navigate(Screen.ConversationList)
+            navController.navigate(Screen.Menu)
         } else {
             navigateToChatPage(navController)
         }
@@ -782,7 +782,7 @@ fun ChatPage(
     // Navigate to Home when backing out of chat with the drawer closed
     BackHandler(enabled = !drawerState.isOpen) {
         scope.launch {
-            navController.navigate(Screen.ConversationList)
+            navController.navigate(Screen.Menu)
         }
     }
 
@@ -1340,7 +1340,7 @@ private fun ChatPageContent(
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (isActiveConversation) {
-            navController.navigate(Screen.ConversationList)
+            navController.navigate(Screen.Menu)
         } else {
             navigateToChatPage(navController)
         }
@@ -3318,7 +3318,7 @@ private fun ChatToolbar(
 ) {
     val scope = rememberCoroutineScope()
     val isDark = LocalDarkMode.current
-    val topContainerColor = Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f))
+    val topContainerColor = Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha)
     val topContainerBorder = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
     val buttonShape = AppShapes.ButtonPill
     val topPillSize = AppSize.ChromePill

@@ -175,10 +175,10 @@ fun AssistantBackground(
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                0f to edgeFadeColor.copy(alpha = 0.55f),
+                                0f to edgeFadeColor.copy(alpha = settings.displaySetting.barGradientIntensity),
                                 0.18f to Color.Transparent,
                                 0.72f to Color.Transparent,
-                                1f to edgeFadeColor.copy(alpha = 0.65f),
+                                1f to edgeFadeColor.copy(alpha = settings.displaySetting.barGradientIntensity),
                             )
                         )
                 )
