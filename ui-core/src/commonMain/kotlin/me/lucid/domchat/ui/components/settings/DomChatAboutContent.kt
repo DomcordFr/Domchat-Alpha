@@ -97,7 +97,7 @@ fun DomChatAboutContent(
                 },
         ) {
             Text(
-                text = "v$versionName • Maintained by Lucid",
+                text = "v$versionName",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,

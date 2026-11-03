@@ -79,7 +79,7 @@ private fun DomChatGlassPillButtonContent(
         onClick = onClick,
         enabled = enabled,
         shape = AppShapes.ButtonPill,
-        color = if (enabled) Color(0xFFFFFFFF) else Color(0xFFFFFFFF).copy(alpha = 0.45f),
+        color = if (enabled) Color(0xFF000000).copy(alpha = 0.15f) else Color(0xFF000000).copy(alpha = 0.05f),
         border = BorderStroke(
             0.5.dp,
             if (destructive) BorderStroke(0.5.dp, Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.6f)).brush
@@ -100,7 +100,7 @@ private fun DomChatGlassPillButtonContent(
                     modifier = Modifier.size(14.dp),
                     tint = when {
                         destructive -> Color(DOMCHAT_DESTRUCTIVE)
-                        else -> Color(0xFF000000)
+                        else -> Color.White
                     }
                 )
             }
@@ -110,9 +110,9 @@ private fun DomChatGlassPillButtonContent(
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = when {
-                    !enabled -> Color(0xFF000000).copy(alpha = 0.4f)
+                    !enabled -> Color.White.copy(alpha = 0.4f)
                     destructive -> Color(DOMCHAT_DESTRUCTIVE)
-                    else -> Color(0xFF000000)
+                    else -> Color.White
                 },
                 maxLines = 1,
             )

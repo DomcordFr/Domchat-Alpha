@@ -1865,93 +1865,146 @@ private fun ChatPageContent(
 
                 // User message regeneration confirmation dialog
                 if (showUserRegenerateConfirmDialog && pendingUserRegenerateMessage != null) {
-                    AlertDialog(
+                    Dialog(
                         onDismissRequest = {
                             showUserRegenerateConfirmDialog = false
                             pendingUserRegenerateMessage = null
                         },
-                        title = { Text(stringResource(R.string.chat_regenerate_user_message_title)) },
-                        text = {
-                            Text(stringResource(R.string.chat_regenerate_user_message_warning))
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    pendingUserRegenerateMessage?.let { message ->
-                                        vm.regenerateAtMessage(message)
+                        properties = androidx.compose.material3.DialogProperties(usePlatformDefaultWidth = false)
+                    ) {
+                        Surface(
+                            color = Color(0xFF000000),
+                            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
+                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 420.dp)
+                                .padding(20.dp),
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.chat_regenerate_user_message_title),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = stringResource(R.string.chat_regenerate_user_message_warning),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            pendingUserRegenerateMessage?.let { message ->
+                                                vm.regenerateAtMessage(message)
+                                            }
+                                            showUserRegenerateConfirmDialog = false
+                                            pendingUserRegenerateMessage = null
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = Color.White.copy(alpha = 0.7f)
+                                        ),
+                                    ) {
+                                        Text(stringResource(R.string.regenerate))
                                     }
-                                    showUserRegenerateConfirmDialog = false
-                                    pendingUserRegenerateMessage = null
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    TextButton(
+                                        onClick = {
+                                            showUserRegenerateConfirmDialog = false
+                                            pendingUserRegenerateMessage = null
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = Color.White.copy(alpha = 0.7f)
+                                        ),
+                                    ) {
+                                        Text(stringResource(R.string.cancel))
+                                    }
                                 }
-                            ) {
-                                Text(stringResource(R.string.regenerate))
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    showUserRegenerateConfirmDialog = false
-                                    pendingUserRegenerateMessage = null
-                                }
-                            ) {
-                                Text(stringResource(R.string.cancel))
                             }
                         }
-                    )
+                    }
                 }
 
                 // Message deletion confirmation dialog
                 pendingDeleteMessage?.let { messageToDelete ->
-                    AlertDialog(
+                    Dialog(
                         onDismissRequest = {
                             pendingDeleteMessage = null
                         },
-                        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-                        title = {
-                            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-                            Text("Delete message?")
-                        },
-                        text = {
-                            Text("Are you sure you want to delete this message?")
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Error)
-                                    val toDelete = messageToDelete
-                                    pendingDeleteMessage = null
-                                    scope.launch {
-                                        val backup = conversation
-                                        val removedIds = vm.deleteMessage(toDelete)
-                                        toaster.show(
-                                            message = context.getString(R.string.message_deleted),
-                                            action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                                label = context.getString(R.string.undo),
-                                                onClick = {
-                                                    vm.updateConversation(backup)
-                                                    vm.markNodesAsRestored(removedIds)
-                                                }
-                                            )
-                                        )
-                                    }
-                                }
+                        properties = androidx.compose.material3.DialogProperties(usePlatformDefaultWidth = false)
+                    ) {
+                        Surface(
+                            color = Color(0xFF000000),
+                            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
+                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 420.dp)
+                                .padding(20.dp),
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.delete),
-                                    color = MaterialTheme.colorScheme.error
+                                    text = "Delete message?",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White
                                 )
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    pendingDeleteMessage = null
+                                Text(
+                                    text = "Are you sure you want to delete this message?",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            haptics.perform(HapticPattern.Error)
+                                            val toDelete = messageToDelete
+                                            pendingDeleteMessage = null
+                                            scope.launch {
+                                                val backup = conversation
+                                                val removedIds = vm.deleteMessage(toDelete)
+                                                toaster.show(
+                                                    message = context.getString(R.string.message_deleted),
+                                                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                                                        label = context.getString(R.string.undo),
+                                                        onClick = {
+                                                            vm.updateConversation(backup)
+                                                            vm.markNodesAsRestored(removedIds)
+                                                        }
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.delete),
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    TextButton(
+                                        onClick = {
+                                            pendingDeleteMessage = null
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = Color.White.copy(alpha = 0.7f)
+                                        ),
+                                    ) {
+                                        Text(stringResource(R.string.cancel))
+                                    }
                                 }
-                            ) {
-                                Text(stringResource(R.string.cancel))
                             }
                         }
-                    )
+                    }
                 }
 
                 // Gradient behind floating toolbar - hidden when showing new chat content or in transparent immersive mode
@@ -2396,12 +2449,12 @@ private fun CustomGreetingDialog(
     var greetingText by remember(visible) { mutableStateOf("") }
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
-            shape = AppShapes.Dialog,
+            shape = RoundedCornerShape(20.dp),
             color = Color(0xFF000000),
             tonalElevation = 12.dp,
             modifier = Modifier
                 .widthIn(max = 420.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp)),
         ) {
             Column(
                 modifier = Modifier
