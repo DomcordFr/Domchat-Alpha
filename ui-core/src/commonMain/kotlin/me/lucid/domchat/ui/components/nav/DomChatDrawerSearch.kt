@@ -112,7 +112,7 @@ fun DomChatDrawerSearch(
                     value = query,
                     onValueChange = onQueryChange,
                     modifier = Modifier
-                        .fillMaxWidth())
+                        .fillMaxWidth()
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused && !expanded) onExpandedChange(true)

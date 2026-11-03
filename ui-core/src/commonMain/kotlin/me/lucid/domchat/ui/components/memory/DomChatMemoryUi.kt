@@ -241,7 +241,10 @@ fun DomChatMemoryRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.fillMaxWidth()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 AnimatedVisibility(
                     visible = typeLabel != null || embeddingWarning != null,
                     enter = fadeIn() + expandVertically(),
