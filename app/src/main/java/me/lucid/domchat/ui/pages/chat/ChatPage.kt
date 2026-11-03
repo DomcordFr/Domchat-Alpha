@@ -1870,7 +1870,7 @@ private fun ChatPageContent(
                             showUserRegenerateConfirmDialog = false
                             pendingUserRegenerateMessage = null
                         },
-                        properties = androidx.compose.material3.DialogProperties(usePlatformDefaultWidth = false)
+                        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
                     ) {
                         Surface(
                             color = Color(0xFF000000),
@@ -1936,7 +1936,7 @@ private fun ChatPageContent(
                         onDismissRequest = {
                             pendingDeleteMessage = null
                         },
-                        properties = androidx.compose.material3.DialogProperties(usePlatformDefaultWidth = false)
+                        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
                     ) {
                         Surface(
                             color = Color(0xFF000000),

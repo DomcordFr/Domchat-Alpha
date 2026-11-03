@@ -388,10 +388,10 @@ fun ChatDrawerContent(
                     DomChatDrawerQuickActionGroup {
                         Surface(
                             color = quickActionCardColor,
+                            shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                             border = BorderStroke(
                                 0.5.dp,
-                                LiquidGlassTokens.SpecularBorderSubtle,
-                                me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                                LiquidGlassTokens.SpecularBorderSubtle
                             ),
                             modifier = Modifier.padding(horizontal = 4.dp),
                         ) {
@@ -415,10 +415,10 @@ fun ChatDrawerContent(
                         }
                         Surface(
                             color = quickActionCardColor,
+                            shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                             border = BorderStroke(
                                 0.5.dp,
-                                LiquidGlassTokens.SpecularBorderSubtle,
-                                me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                                LiquidGlassTokens.SpecularBorderSubtle
                             ),
                             modifier = Modifier.padding(horizontal = 4.dp),
                         ) {
@@ -442,10 +442,10 @@ fun ChatDrawerContent(
                         }
                         Surface(
                             color = quickActionCardColor,
+                            shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                             border = BorderStroke(
                                 0.5.dp,
-                                LiquidGlassTokens.SpecularBorderSubtle,
-                                me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                                LiquidGlassTokens.SpecularBorderSubtle
                             ),
                             modifier = Modifier.padding(horizontal = 4.dp),
                         ) {

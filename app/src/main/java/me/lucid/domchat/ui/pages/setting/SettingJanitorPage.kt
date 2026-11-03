@@ -1409,7 +1409,7 @@ private fun JanitorCharacterInspectorSheet(
                                 }.orEmpty()
 
                                 // Cache formatted content so images/markdown persist across recompositions
-                                val formattedNotes by remember(rawNotes) {
+                                val formattedNotes = remember(rawNotes) {
                                     formatRoleplayTextWithCdnImages(
                                         cleanHtmlImgToMarkdown(rawNotes)
                                     )

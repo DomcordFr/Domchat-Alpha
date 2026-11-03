@@ -71,6 +71,7 @@ import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import me.lucid.domchat.ui.components.ui.HapticSwitch
@@ -1631,12 +1632,12 @@ private fun ModelGenerationParamsEditor(
     model: Model,
     onModelChange: (Model) -> Unit,
 ) {
-    val temperature by remember(model.temperature) { mutableStateOf(model.temperature ?: 0.7f) }
-    val topP by remember(model.topP) { mutableStateOf(model.topP ?: 1.0f) }
-    val frequencyPenalty by remember(model.frequencyPenalty) { mutableStateOf(model.frequencyPenalty ?: 0.0f) }
-    val presencePenalty by remember(model.presencePenalty) { mutableStateOf(model.presencePenalty ?: 0.0f) }
-    val repetitionPenalty by remember(model.repetitionPenalty) { mutableStateOf(model.repetitionPenalty ?: 1.0f) }
-    val maxTokens by remember(model.maxTokens) { mutableStateOf(model.maxTokens ?: 0) }
+    var temperature by remember(model.temperature) { mutableFloatStateOf(model.temperature ?: 0.7f) }
+    var topP by remember(model.topP) { mutableFloatStateOf(model.topP ?: 1.0f) }
+    var frequencyPenalty by remember(model.frequencyPenalty) { mutableFloatStateOf(model.frequencyPenalty ?: 0.0f) }
+    var presencePenalty by remember(model.presencePenalty) { mutableFloatStateOf(model.presencePenalty ?: 0.0f) }
+    var repetitionPenalty by remember(model.repetitionPenalty) { mutableFloatStateOf(model.repetitionPenalty ?: 1.0f) }
+    var maxTokens by remember(model.maxTokens) { mutableIntStateOf(model.maxTokens ?: 0) }
 
     FormItem(
         label = { Text(stringResource(R.string.setting_provider_page_generation_params_title)) },
