@@ -664,7 +664,7 @@ private fun RpStyleRuleDialog(
                             valueRange = 0f..255f,
                             activeTrackColorOverride = Color(0xFFFF5252),
                             thumbColorOverride = Color(0xFFFF5252),
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         )
                         Text("$red", modifier = Modifier.width(36.dp), color = if (isDark) Color.White else Color.Unspecified)
                     }
@@ -677,7 +677,7 @@ private fun RpStyleRuleDialog(
                             valueRange = 0f..255f,
                             activeTrackColorOverride = Color(0xFF4CAF50),
                             thumbColorOverride = Color(0xFF4CAF50),
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         )
                         Text("$green", modifier = Modifier.width(36.dp), color = if (isDark) Color.White else Color.Unspecified)
                     }
@@ -690,7 +690,7 @@ private fun RpStyleRuleDialog(
                             valueRange = 0f..255f,
                             activeTrackColorOverride = Color(0xFF448AFF),
                             thumbColorOverride = Color(0xFF448AFF),
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         )
                         Text("$blue", modifier = Modifier.width(36.dp), color = if (isDark) Color.White else Color.Unspecified)
                     }

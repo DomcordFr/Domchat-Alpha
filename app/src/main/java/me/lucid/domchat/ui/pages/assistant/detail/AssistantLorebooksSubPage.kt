@@ -229,7 +229,7 @@ private fun LorebookSelectionCard(
 
             // Lorebook info
             Column(
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(

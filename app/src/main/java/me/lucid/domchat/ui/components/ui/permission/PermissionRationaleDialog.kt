@@ -123,14 +123,14 @@ internal fun PermissionRationaleDialog(
                     ) {
                         OutlinedButton(
                             onClick = onCancel,
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         ) {
                             Text(stringResource(R.string.cancel))
                         }
 
                         Button(
                             onClick = onProceed, // 这里会跳转到设置
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         ) {
                             Text(stringResource(R.string.permission_go_to_settings))
                         }
@@ -143,14 +143,14 @@ internal fun PermissionRationaleDialog(
                     ) {
                         OutlinedButton(
                             onClick = onCancel,
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         ) {
                             Text(stringResource(R.string.cancel))
                         }
 
                         Button(
                             onClick = onProceed,
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         ) {
                             Text(stringResource(R.string.confirm))
                         }
@@ -186,7 +186,7 @@ private fun PermissionItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(modifier = Modifier.fillMaxWidth()1f)) {
+                Box(modifier = Modifier.fillMaxWidth()) {
                     ProvideTextStyle(value = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium)) {
                         permissionInfo.displayName()
                     }

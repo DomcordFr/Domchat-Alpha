@@ -529,7 +529,7 @@ fun SettingChatsPage(
                                 }
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth()1f),
+                                    modifier = Modifier.fillMaxWidth()),
                                     verticalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Row(

@@ -900,7 +900,7 @@ private fun TimelineEntryItem(
                     text = getTimelineLabel(entry) + durationLabel,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()1f)
+                    modifier = Modifier.fillMaxWidth())
                 )
             }
         } else {
@@ -1025,7 +1025,7 @@ private fun TimelineAccordionEntry(
                     text = getTimelineLabel(entry) + durationLabel,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                 )
                 val inspectedImageCount = (entry as? TimelineEntry.ToolCall)
                     ?.let { (it.resultJson as? JsonObject)?.get("inspected_images") as? JsonArray }
@@ -1249,7 +1249,7 @@ private fun TimelineDivider(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()1f)
+                .fillMaxWidth())
                 .height(1.dp)
                 .background(color.copy(alpha = 0.2f))
         )
@@ -1271,7 +1271,7 @@ private fun TimelineDivider(
         }
         Box(
             modifier = Modifier
-                .fillMaxWidth()1f)
+                .fillMaxWidth())
                 .height(1.dp)
                 .background(color.copy(alpha = 0.2f))
         )

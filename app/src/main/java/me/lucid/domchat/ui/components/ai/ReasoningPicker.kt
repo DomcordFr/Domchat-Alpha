@@ -439,7 +439,7 @@ private fun ReasoningOptionItem(
             icon()
         }
         Column(
-            modifier = Modifier.fillMaxWidth()1f).padding(end = 8.dp),
+            modifier = Modifier.fillMaxWidth()).padding(end = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
@@ -512,7 +512,7 @@ private fun ReasoningLevelCard(
             ) {
                 icon()
                 Column(
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     ProvideTextStyle(MaterialTheme.typography.titleMedium) {

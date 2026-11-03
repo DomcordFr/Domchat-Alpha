@@ -131,7 +131,7 @@ fun DomChatSettingGroupItem(
                 Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
             }
             Column(
-                modifier = Modifier.fillMaxWidth()1f).padding(end = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
@@ -182,7 +182,7 @@ fun DomChatSettingGroupInputItem(
                     Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
                 }
                 Column(
-                    modifier = Modifier.fillMaxWidth()1f).padding(end = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(

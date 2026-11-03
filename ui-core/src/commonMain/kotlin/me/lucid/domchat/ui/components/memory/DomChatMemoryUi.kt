@@ -160,7 +160,7 @@ fun DomChatMemorySettingsItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth()1f).padding(end = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
@@ -241,7 +241,7 @@ fun DomChatMemoryRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.fillMaxWidth()1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 AnimatedVisibility(
                     visible = typeLabel != null || embeddingWarning != null,
                     enter = fadeIn() + expandVertically(),

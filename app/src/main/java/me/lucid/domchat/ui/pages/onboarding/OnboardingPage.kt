@@ -514,7 +514,7 @@ private fun LocalModelSetupBottomBar(
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF9A9AA2),
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
             )
             Button(                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFFFFFFF),
@@ -969,7 +969,7 @@ private fun ManualModelsPage(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     lineHeight = MaterialTheme.typography.titleLarge.lineHeight,
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                 )
                 IconButton(
         onClick = { showInfo = true }) {
@@ -1361,7 +1361,7 @@ private fun ProviderPresetCard(
             )
         }
         Column(
-            modifier = Modifier.fillMaxWidth()1f),
+            modifier = Modifier.fillMaxWidth()),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -1399,7 +1399,7 @@ private fun ProviderCustomCard(onClick: () -> Unit) {
             tint = Color(0xFFF2F2F7),
         )
         Column(
-            modifier = Modifier.fillMaxWidth()1f),
+            modifier = Modifier.fillMaxWidth()),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -1444,7 +1444,7 @@ private fun ProviderNanoGptCard(onClick: () -> Unit) {
             )
         }
         Column(
-            modifier = Modifier.fillMaxWidth()1f),
+            modifier = Modifier.fillMaxWidth()),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -1593,7 +1593,7 @@ private fun SetupModelSelectableRow(
             contentColor = Color.White,
         )
         Column(
-            modifier = Modifier.fillMaxWidth()1f),
+            modifier = Modifier.fillMaxWidth()),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -1815,7 +1815,7 @@ private fun CustomProviderKeyPage(
                 apiTypes.forEachIndexed { index, type ->
                     val isSelected = selectedType == type
                     SegmentedButton(
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                         selected = isSelected,
                         onClick = {
                             val newProvider = when (type) {

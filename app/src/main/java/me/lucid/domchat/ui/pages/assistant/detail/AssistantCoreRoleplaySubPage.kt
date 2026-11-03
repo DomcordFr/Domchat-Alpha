@@ -501,7 +501,7 @@ private fun InitialMessagesTab(
                                 ),
                                 shape = AppShapes.CardSmall,
                                 modifier = Modifier
-                                    .fillMaxWidth()1f)
+                                    .fillMaxWidth())
                                     .clickable {
                                         haptics.perform(HapticPattern.Pop)
                                         isEditing = true
@@ -516,7 +516,7 @@ private fun InitialMessagesTab(
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
-                                        Spacer(modifier = Modifier.fillMaxWidth()1f))
+                                        Spacer(modifier = Modifier.fillMaxWidth())
                                         IconButton(
                                             onClick = {
                                                 haptics.perform(HapticPattern.Tick)

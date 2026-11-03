@@ -193,7 +193,7 @@ fun ContextBudgetBottomSheet(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()1f)
+                    .fillMaxWidth())
                     .verticalScroll(rememberScrollState())
             ) {
                 // Per-chat inheritance toggle
@@ -211,7 +211,7 @@ fun ContextBudgetBottomSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = "Inherit Global Context Settings",
                                     fontSize = 14.sp,
@@ -554,7 +554,7 @@ fun ContextBudgetBottomSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.fillMaxWidth()1f)) {
+                                Column(modifier = Modifier.fillMaxWidth()) {
                                     Text(
                                         text = "Smart Overflow Auto-Pruning",
                                         fontSize = 14.sp,

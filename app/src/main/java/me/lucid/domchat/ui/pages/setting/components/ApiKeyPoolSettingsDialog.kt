@@ -190,7 +190,7 @@ private fun StrategyOptionCard(
                 modifier = Modifier.size(24.dp),
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.fillMaxWidth()1f)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,

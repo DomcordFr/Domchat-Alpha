@@ -1289,7 +1289,7 @@ private fun LocalHuggingFaceInstallFab(
                 ) {
                     OutlinedButton(
                         onClick = { showSheet = false },
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
@@ -1300,7 +1300,7 @@ private fun LocalHuggingFaceInstallFab(
                             showSheet = false
                         },
                         enabled = url.isNotBlank() && !isDownloading,
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                     ) {
                         Text(stringResource(R.string.local_llm_install_url_action))
                     }
@@ -1373,7 +1373,7 @@ private fun ModelSettingsForm(
 
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxWidth().fillMaxWidth()1f)
+            modifier = Modifier.fillMaxWidth().fillMaxWidth())
         ) { page ->
             when (page) {
                 0 -> {
@@ -1430,7 +1430,7 @@ private fun ModelSettingsForm(
                                     onModelChange(model.copy(displayName = it))
                                 },
                                 label = { Text(stringResource(if (isEdit) R.string.setting_provider_page_model_name else R.string.setting_provider_page_model_display_name)) },
-                                modifier = Modifier.fillMaxWidth()1f),
+                                modifier = Modifier.fillMaxWidth()),
                                 placeholder = {
                                     if (!isEdit) {
                                         Text(stringResource(R.string.setting_provider_page_model_display_name_placeholder))
@@ -1944,9 +1944,9 @@ private fun ModelPickerFab(
                             Text(stringResource(if (allFilteredSelected) R.string.deselect_all else R.string.select_all))
                         }
                         if (isLoading) {
-                            LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth()1f))
+                            LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
                         } else {
-                            Spacer(modifier = Modifier.fillMaxWidth()1f))
+                            Spacer(modifier = Modifier.fillMaxWidth())
                         }
                         Button(
                             onClick = {
@@ -1969,7 +1969,7 @@ private fun ModelPickerFab(
                         )
                     }
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (filteredModels.isEmpty()) {
@@ -2064,7 +2064,7 @@ private fun ModelPickerFab(
                                 )
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.fillMaxWidth()1f),
+                                    modifier = Modifier.fillMaxWidth()),
                                 ) {
                                     Text(
                                         text = model.displayName,
@@ -2151,7 +2151,7 @@ private fun AddNewModelFab(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .fillMaxWidth()
                     ) {
                         ModelSettingsForm(
@@ -2170,7 +2170,7 @@ private fun AddNewModelFab(
                             onClick = {
                                 dialogState.dismiss()
                             },
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth()),
                         ) {
                             Text(stringResource(R.string.cancel))
                         }
@@ -2195,7 +2195,7 @@ private fun AddNewModelFab(
                                     dialogState.confirm()
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth()),
                         ) {
                             Text(stringResource(R.string.setting_provider_page_add))
                         }
@@ -2325,7 +2325,7 @@ private fun ModelPicker(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxWidth()1f)
+                        .fillMaxWidth())
                         .clipToBounds(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(8.dp),
@@ -2387,7 +2387,7 @@ private fun ModelPicker(
                                     verticalArrangement = Arrangement.spacedBy(
                                         4.dp
                                     ),
-                                    modifier = Modifier.fillMaxWidth()1f),
+                                    modifier = Modifier.fillMaxWidth()),
                                 ) {
                                     Text(
                                         text = it.displayName,
@@ -2885,7 +2885,7 @@ private fun BackendModelToggle(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()1f)
+                .fillMaxWidth())
                 .padding(end = 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
@@ -3210,7 +3210,7 @@ private fun LocalLiteRtModelIdentitySheet(
                     onValueChange = { onModelChange(model.copy(displayName = it)) },
                     label = { Text(stringResource(R.string.setting_provider_page_model_display_name)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
                     colors = appFieldColors(),
                 )
@@ -3222,14 +3222,14 @@ private fun LocalLiteRtModelIdentitySheet(
             ) {
                 OutlinedButton(
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
                 Button(
                     onClick = onConfirm,
                     enabled = model.displayName.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                 ) {
                     Text(stringResource(R.string.confirm))
                 }
@@ -3301,7 +3301,7 @@ private fun ModelCard(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .fillMaxWidth()
                     ) {
                         ModelSettingsForm(
@@ -3320,7 +3320,7 @@ private fun ModelCard(
                             onClick = {
                                 dialogState.dismiss()
                             },
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth()),
                         ) {
                             Text(stringResource(R.string.cancel))
                         }
@@ -3330,7 +3330,7 @@ private fun ModelCard(
                                     dialogState.confirm()
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth()),
                         ) {
                             Text(stringResource(R.string.confirm))
                         }
@@ -3373,7 +3373,7 @@ private fun ModelCard(
                 modifier = Modifier.size(32.dp),
             )
             Column(
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
@@ -3455,7 +3455,7 @@ private fun BuiltInToolsSettings(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
@@ -3529,7 +3529,7 @@ private fun ProviderOverrideSettings(
                         Text(
                             text = "${providerOverride.name} (Override)",
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth()1f)
+                            modifier = Modifier.fillMaxWidth())
                         )
                         IconButton(
                             onClick = {
@@ -3602,7 +3602,7 @@ private fun ProviderOverrideSettings(
 
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {

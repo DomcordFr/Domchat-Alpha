@@ -97,7 +97,7 @@ containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceCon
                 // No text content available
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()1f)
+                        .fillMaxWidth())
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -113,7 +113,7 @@ containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceCon
                 SelectionContainer {
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
                     ) {

@@ -126,7 +126,7 @@ fun TTSProviderConfigure(
             FormItem(
                 label = { Text(stringResource(R.string.setting_tts_page_name)) },
                 description = { Text(stringResource(R.string.setting_tts_page_name_description)) },
-                modifier = Modifier.fillMaxWidth()1f)
+                modifier = Modifier.fillMaxWidth())
             ) {
                 OutlinedTextField(
                     value = setting.name,

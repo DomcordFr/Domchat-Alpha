@@ -253,7 +253,7 @@ fun ColumnScope.VoiceList(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()1f)
+            .fillMaxWidth())
             .fillMaxWidth()
     ) {
         LazyColumn(
@@ -586,7 +586,7 @@ private fun VoiceSectionHeader(
             style = MaterialTheme.typography.labelMedium,
             color = Color.White.copy(alpha = 0.55f),
         )
-        Spacer(modifier = Modifier.fillMaxWidth()1f))
+        Spacer(modifier = Modifier.fillMaxWidth())
         trailingContent()
     }
 }
@@ -638,7 +638,7 @@ private fun VoiceItem(
             .padding(vertical = 12.dp, horizontal = 16.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()1f),
+            modifier = Modifier.fillMaxWidth()),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(

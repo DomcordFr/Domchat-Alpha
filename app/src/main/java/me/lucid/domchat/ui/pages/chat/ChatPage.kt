@@ -1135,7 +1135,7 @@ fun ChatPage(
                             }
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()1f)
+                                    .fillMaxWidth())
                                     .fillMaxHeight()
                             ) {
                                 ChatPageContent(
@@ -2758,7 +2758,7 @@ private fun ChatShareSelectionModeBar(
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
 
-            Spacer(Modifier.fillMaxWidth()1f))
+            Spacer(Modifier.fillMaxWidth())
 
             Tooltip(tooltip = { Text(stringResource(R.string.select_all)) }) {
                 IconButton(
@@ -3412,7 +3412,7 @@ private fun ChatToolbar(
             // Centered Character Name with click for Creator Notes - Clean transparent floating text (no background)
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()1f)
+                    .fillMaxWidth())
                     .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -4260,7 +4260,7 @@ private fun ContextUsagePopupContent(
             AnimatedContent(
                 targetState = isEditingLimit,
                 transitionSpec = { fadeIn(tween(140)) togetherWith fadeOut(tween(110)) },
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 label = "context_meter_header_text",
             ) { editing ->
                 if (editing) {
@@ -4319,7 +4319,7 @@ private fun ContextUsagePopupContent(
 
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()1f)
+                    .fillMaxWidth())
                     .height(24.dp)
                     .onGloballyPositioned { coordinates ->
                         barWidthPx = coordinates.size.width.toFloat().coerceAtLeast(1f)
@@ -4526,7 +4526,7 @@ private fun ContextUsagePopupContent(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Spacer(Modifier.fillMaxWidth()1f))
+            Spacer(Modifier.fillMaxWidth())
             AnimatedContent(
                 targetState = usage.confidence,
                 transitionSpec = { fadeIn(tween(140)) togetherWith fadeOut(tween(110)) },

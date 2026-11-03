@@ -169,12 +169,12 @@ private fun MenuStatsContent(
                     StatsRow {
                         StatCardSkeleton(
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                         StatCardSkeleton(
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                     }
@@ -189,7 +189,7 @@ private fun MenuStatsContent(
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                         StatCard(
@@ -203,7 +203,7 @@ private fun MenuStatsContent(
                             },
                             contentColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                     }
@@ -218,12 +218,12 @@ private fun MenuStatsContent(
                     StatsRow {
                         StatCardSkeleton(
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                         StatCardSkeleton(
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                     }
@@ -242,7 +242,7 @@ private fun MenuStatsContent(
                             },
                             contentColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                         StatCard(
@@ -252,7 +252,7 @@ private fun MenuStatsContent(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .fillMaxHeight()
                         )
                     }

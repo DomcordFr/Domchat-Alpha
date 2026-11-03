@@ -288,7 +288,7 @@ private fun MemoryDebugger(
                     value = query,
                     onValueChange = setQuery,
                     label = { Text(stringResource(R.string.assistant_memory_test_query)) },
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     singleLine = true,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 )

@@ -647,7 +647,7 @@ private fun FloatingInputBar(
                     Surface(
                         shape = RoundedCornerShape(innerCornerRadius),
                         color = if (LocalDarkMode.current) Color.Black.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.08f),
-                        modifier = Modifier.fillMaxWidth()1f)
+                        modifier = Modifier.fillMaxWidth())
                     ) {
                         TextField(
                             value = prompt,

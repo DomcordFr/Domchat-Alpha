@@ -164,7 +164,7 @@ private fun UsedLorebookEntryItem(
             
             // Entry info
             Column(
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 // Lorebook Name (above entry title)

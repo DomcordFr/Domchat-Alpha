@@ -653,7 +653,7 @@ contentColor = Color(0xFFF2F2F7),
                 // Configuration options based on service type
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxWidth()1f)
+                        .fillMaxWidth())
                         .clipToBounds(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -760,7 +760,7 @@ contentColor = Color(0xFFF2F2F7),
                         onClick = {
                             editingService = null
                         },
-                        modifier = Modifier.fillMaxWidth()1f)
+                        modifier = Modifier.fillMaxWidth())
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
@@ -773,7 +773,7 @@ contentColor = Color(0xFFF2F2F7),
                             vm.updateSettings(settings.copy(searchServices = newServices))
                             editingService = null
                         },
-                        modifier = Modifier.fillMaxWidth()1f)
+                        modifier = Modifier.fillMaxWidth())
                     ) {
                         Text(stringResource(R.string.chat_page_save))
                     }
@@ -1052,7 +1052,7 @@ private fun SearchServiceEditorSheet(
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()1f)
+                    .fillMaxWidth())
                     .clipToBounds(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -1095,7 +1095,7 @@ private fun SearchServiceEditorSheet(
             ) {
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()1f)
+                    modifier = Modifier.fillMaxWidth())
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -1104,7 +1104,7 @@ private fun SearchServiceEditorSheet(
                     onClick = {
                         onSave(service, currentService)
                     },
-                    modifier = Modifier.fillMaxWidth()1f)
+                    modifier = Modifier.fillMaxWidth())
                 ) {
                     Text(stringResource(R.string.chat_page_save))
                 }
@@ -1242,7 +1242,7 @@ contentColor = Color(0xFFF2F2F7),
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .clipToBounds()
                             .nestedScroll(nestedScrollConnection),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -1283,7 +1283,7 @@ contentColor = Color(0xFFF2F2F7),
                                         modifier = Modifier.size(40.dp),
                                         contentColor = Color.White,
                                     )
-                                    Column(modifier = Modifier.fillMaxWidth()1f)) {
+                                    Column(modifier = Modifier.fillMaxWidth()) {
                                         Text(
                                             text = preset.name,
                                             style = MaterialTheme.typography.titleMedium,
@@ -1391,7 +1391,7 @@ private fun SearchServiceItemContent(
         )
         
         Column(
-            modifier = Modifier.fillMaxWidth()1f),
+            modifier = Modifier.fillMaxWidth()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(

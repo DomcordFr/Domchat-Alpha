@@ -94,7 +94,7 @@ fun ChatMessageStyleSelector(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth()1f)) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text = style.displayName,
                                 fontSize = 15.sp,

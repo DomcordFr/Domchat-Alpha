@@ -635,7 +635,7 @@ private fun PreviewActionButton(
                 color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()1f)
+                modifier = Modifier.fillMaxWidth())
             )
             Icon(
                 imageVector = Icons.Rounded.Edit,
@@ -691,7 +691,7 @@ private fun ActionCard(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(

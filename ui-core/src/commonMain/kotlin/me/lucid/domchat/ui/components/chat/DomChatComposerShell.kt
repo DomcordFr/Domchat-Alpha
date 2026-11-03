@@ -119,7 +119,7 @@ fun DomChatComposerAddButton(
 /** The production 24 dp input capsule; text, attachments, and actions are slotted inside. */
 @Composable
 fun RowScope.DomChatComposerCapsule(
-    modifier: Modifier = Modifier.fillMaxWidth()1f).heightIn(min = AppSize.ChromePill),
+    modifier: Modifier = Modifier.fillMaxWidth().heightIn(min = AppSize.ChromePill),
     containerColor: Color = Color(0xFF141520).copy(alpha = 0.60f),
     border: BorderStroke? = BorderStroke(0.5.dp, SpecularBorderSubtle),
     content: @Composable () -> Unit,

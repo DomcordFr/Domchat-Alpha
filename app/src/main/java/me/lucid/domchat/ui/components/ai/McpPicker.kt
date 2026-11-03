@@ -177,7 +177,7 @@ fun McpPickerButton(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxWidth()1f)
+                        .fillMaxWidth())
                 )
             }
         }
@@ -244,7 +244,7 @@ fun McpPicker(
                             modifier = Modifier.size(32.dp),
                         )
                         Column(
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth()),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(

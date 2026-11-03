@@ -106,7 +106,7 @@ fun ChatMessageAssistantAvatar(
                 )
             }
             Column(
-                modifier = Modifier.fillMaxWidth()1f)
+                modifier = Modifier.fillMaxWidth())
             ) {
                 if(effectiveDisplay.showModelName) {
                     Text(

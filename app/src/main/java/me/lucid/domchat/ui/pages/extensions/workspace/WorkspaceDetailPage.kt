@@ -689,7 +689,7 @@ private fun WorkspaceToolApprovalCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         Text(
@@ -1002,7 +1002,7 @@ private fun WorkspacePathBar(
             )
             Text(
                 text = path.ifBlank { "/" },
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -1050,7 +1050,7 @@ private fun WorkspaceFileCard(
                     },
                 )
                 Column(
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(

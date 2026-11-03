@@ -259,7 +259,7 @@ private fun ColorPalettePicker(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
-                    .fillMaxWidth()1f)
+                    .fillMaxWidth())
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 4.dp, vertical = 3.dp)
             ) {

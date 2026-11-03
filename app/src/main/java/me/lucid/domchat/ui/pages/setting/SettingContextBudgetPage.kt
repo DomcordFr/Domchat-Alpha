@@ -284,7 +284,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             presets.take(3).forEach { tokens ->
                                 val selected = maxContextTokens == tokens
                                 Surface(
-                                    modifier = Modifier.fillMaxWidth()1f),
+                                    modifier = Modifier.fillMaxWidth()),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) {
                                         Color.White.copy(alpha = 0.18f)
@@ -328,7 +328,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             presets.drop(3).forEach { tokens ->
                                 val selected = maxContextTokens == tokens
                                 Surface(
-                                    modifier = Modifier.fillMaxWidth()1f),
+                                    modifier = Modifier.fillMaxWidth()),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) {
                                         Color.White.copy(alpha = 0.18f)
@@ -546,7 +546,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = "Auto-Prune Overflow Turns",
                                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
@@ -598,7 +598,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = "Enable Compaction",
                                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)

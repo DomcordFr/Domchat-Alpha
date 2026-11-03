@@ -472,7 +472,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 )
                             }
 
-                            Spacer(modifier = Modifier.fillMaxWidth()1f))
+                            Spacer(modifier = Modifier.fillMaxWidth())
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -807,7 +807,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 )
                             }
 
-                            Spacer(modifier = Modifier.fillMaxWidth()1f))
+                            Spacer(modifier = Modifier.fillMaxWidth())
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1634,7 +1634,7 @@ fun CharacterListRow(
             )
         }
         Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.fillMaxWidth()1f)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = assistant.effectiveDisplayName,
                 fontWeight = FontWeight.Bold,
@@ -1978,7 +1978,7 @@ fun CharacterInspectorSheet(
                                 onStartChat()
                             },
                             modifier = Modifier
-                                .fillMaxWidth()1f)
+                                .fillMaxWidth())
                                 .height(48.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.White,
@@ -2013,7 +2013,7 @@ fun CharacterInspectorSheet(
                     ) {
                         OutlinedButton(
                             onClick = onExport,
-                            modifier = Modifier.fillMaxWidth()1f).height(40.dp),
+                            modifier = Modifier.fillMaxWidth()).height(40.dp),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(0.5.dp, cardBorderColor),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = contentTextColor)
@@ -2025,7 +2025,7 @@ fun CharacterInspectorSheet(
 
                         OutlinedButton(
                             onClick = onDuplicate,
-                            modifier = Modifier.fillMaxWidth()1f).height(40.dp),
+                            modifier = Modifier.fillMaxWidth()).height(40.dp),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(0.5.dp, cardBorderColor),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = contentTextColor)
@@ -2124,7 +2124,7 @@ fun CharacterInspectorSheet(
                             val isSelected = selectedTab == index
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()1f)
+                                    .fillMaxWidth())
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
                                         if (isSelected) {
@@ -2390,7 +2390,7 @@ fun CharacterInspectorSheet(
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         Column(
-                                                            modifier = Modifier.fillMaxWidth()1f),
+                                                            modifier = Modifier.fillMaxWidth()),
                                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                                         ) {
                                                             Text(
@@ -2584,7 +2584,7 @@ fun CharacterInspectorSheet(
                                                 modifier = Modifier.size(40.dp)
                                             )
                                             Column(
-                                                modifier = Modifier.fillMaxWidth()1f),
+                                                modifier = Modifier.fillMaxWidth()),
                                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                                             ) {
                                                 Text(

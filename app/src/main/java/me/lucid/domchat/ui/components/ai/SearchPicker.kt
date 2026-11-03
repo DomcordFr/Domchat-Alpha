@@ -416,7 +416,7 @@ private fun SearchToggleItem(
             text = stringResource(R.string.use_web_search),
             style = MaterialTheme.typography.titleMedium,
             color = contentColor,
-            modifier = Modifier.fillMaxWidth()1f)
+            modifier = Modifier.fillMaxWidth())
         )
         IconButton(
             onClick = {
@@ -527,7 +527,7 @@ private fun SearchProviderItem(
             text = SearchServiceOptions.TYPES[service::class] ?: "Unknown",
             style = MaterialTheme.typography.titleMedium,
             color = contentColor,
-            modifier = Modifier.fillMaxWidth()1f)
+            modifier = Modifier.fillMaxWidth())
         )
     }
 }
@@ -564,7 +564,7 @@ private fun BuiltInSearchSetting(
             ) {
                 Icon(Icons.Rounded.Search, null)
                 Column(
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(

@@ -1015,7 +1015,7 @@ private fun ReasoningPreviewCard(
                     )
                 },
                 label = "reasoning_preview_title",
-                modifier = Modifier.fillMaxWidth()1f)
+                modifier = Modifier.fillMaxWidth())
             ) { title ->
                 Text(
                     text = title,

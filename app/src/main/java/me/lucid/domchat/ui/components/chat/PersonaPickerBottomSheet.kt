@@ -318,7 +318,6 @@ fun PersonaPickerBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxWidth()1f, fill = false)
                     .nestedScroll(overscrollAbsorber)
             ) {
                 items(filteredPersonas, key = { it.id }) { persona ->
@@ -354,7 +353,7 @@ fun PersonaPickerBottomSheet(
 
                             Spacer(modifier = Modifier.width(14.dp))
 
-                            Column(modifier = Modifier.fillMaxWidth()1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)

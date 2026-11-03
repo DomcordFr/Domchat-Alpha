@@ -420,7 +420,7 @@ private fun CodeBlockHeader(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()1f)
+                .fillMaxWidth())
                 .fillMaxWidth(),
             contentAlignment = Alignment.CenterStart
         ) {

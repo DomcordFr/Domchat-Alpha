@@ -502,7 +502,7 @@ private fun ProviderConfigWarningCard(navController: NavHostController) {
                 contentDescription = null,
                 tint = Color(0xFFFF453A)
             )
-            Column(modifier = Modifier.fillMaxWidth()1f)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.setting_page_config_api_title),
                     style = MaterialTheme.typography.titleSmall,

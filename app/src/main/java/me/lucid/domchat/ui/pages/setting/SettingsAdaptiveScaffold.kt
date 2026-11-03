@@ -116,7 +116,7 @@ fun AdaptiveSettingsScaffold(
         }
         Box(
             modifier = Modifier
-                .fillMaxWidth()1f)
+                .fillMaxWidth())
                 .fillMaxHeight()
         ) {
             Box(

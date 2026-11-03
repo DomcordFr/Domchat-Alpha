@@ -156,7 +156,7 @@ fun BackgroundPicker(
                         text = stringResource(R.string.assistant_page_background_set),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.fillMaxWidth()1f)
+                        modifier = Modifier.fillMaxWidth())
                     )
                     TextButton(
                         onClick = {

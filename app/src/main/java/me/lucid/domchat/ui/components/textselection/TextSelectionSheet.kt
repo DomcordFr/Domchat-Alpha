@@ -544,7 +544,7 @@ private fun ResultContent(
             ) {
                 // Copy button
                 TactileActionSurface(
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     shape = QuickAskInnerShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
                     onClick = {
@@ -575,7 +575,7 @@ private fun ResultContent(
                 // Continue in app button - hide for translate action
                 if (!isTranslate) {
                     TactileActionSurface(
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                         shape = QuickAskInnerShape,
                         color = MaterialTheme.colorScheme.secondaryContainer,
                         onClick = onContinueInApp

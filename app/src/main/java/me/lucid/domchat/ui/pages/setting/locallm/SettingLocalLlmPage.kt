@@ -590,7 +590,7 @@ private fun InstalledModelCard(
                 } else {
                     AutoAIIcon(name = model.displayName, modifier = Modifier.size(36.dp))
                 }
-                Column(modifier = Modifier.fillMaxWidth()1f)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(model.displayName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
                         "%.1f GB".format(model.sizeInBytes / 1_000_000_000f),
@@ -643,7 +643,7 @@ private fun ImportedDownloadCard(
                     contentDescription = null,
                     modifier = Modifier.size(36.dp),
                 )
-                Column(modifier = Modifier.fillMaxWidth()1f)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         download.displayName,
                         style = MaterialTheme.typography.titleMedium,
@@ -693,7 +693,7 @@ private fun DownloadableModelCard(
                 } else {
                     AutoAIIcon(name = meta.name, modifier = Modifier.size(36.dp))
                 }
-                Column(modifier = Modifier.fillMaxWidth()1f)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(meta.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
@@ -774,7 +774,7 @@ private fun DownloadStatus(
                     stringResource(R.string.local_llm_status_error_format, download.message),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFFFF453A),
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                 )
                 TextButton(onClick = onDismissError) { Text(stringResource(R.string.cancel)) }
             }
@@ -863,7 +863,7 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-                    OutlinedButton(onClick = { showSheet = false }, modifier = Modifier.fillMaxWidth()1f)) {
+                    OutlinedButton(onClick = { showSheet = false }, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.cancel))
                     }
                     Button(
@@ -878,7 +878,7 @@ private fun ImportModelFab(onInstallUrl: (String) -> Unit) {
                             }
                         },
                         enabled = url.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth()1f),
+                        modifier = Modifier.fillMaxWidth()),
                     ) {
                         Text(stringResource(R.string.local_llm_install_url_action))
                     }
@@ -938,7 +938,7 @@ private fun ModelSettingsSheet(
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.local_llm_rename_label)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()1f),
+                    modifier = Modifier.fillMaxWidth()),
                     shape = AppShapes.InputField,
                     colors = appFieldColors(),
                 )
@@ -1052,7 +1052,7 @@ private fun LocalChatBackendToggle(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()1f)
+                .fillMaxWidth())
                 .padding(end = 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {

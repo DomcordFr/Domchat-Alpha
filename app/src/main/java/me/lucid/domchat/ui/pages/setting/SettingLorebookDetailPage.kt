@@ -735,7 +735,7 @@ private fun EntryCard(
 
             // Middle Content (Text)
             Column(
-                modifier = Modifier.fillMaxWidth()1f),
+                modifier = Modifier.fillMaxWidth()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
@@ -1405,7 +1405,7 @@ private fun LorebookEditorSheet(
                 }
                 
                 // Name input
-                Column(modifier = Modifier.fillMaxWidth()1f)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.lorebooks_page_name),
                         style = MaterialTheme.typography.labelMedium,
@@ -1717,7 +1717,7 @@ private fun AssistantLorebookToggleSheet(
                         Text(
                             text = assistant.name.ifEmpty { "Character" },
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.fillMaxWidth()1f),
+                            modifier = Modifier.fillMaxWidth()),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )

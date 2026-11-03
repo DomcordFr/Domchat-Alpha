@@ -146,7 +146,7 @@ fun NewChatContent(
                         title = "Continue Story",
                         onClick = { onTemplateClick(continuePrompt) },
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .entrance(
                                 key = "newchat:tpl:0:Continue Story",
                                 motionPolicy = motionPolicy,
@@ -159,7 +159,7 @@ fun NewChatContent(
                         title = "Describe Scene",
                         onClick = { onTemplateClick(describePrompt) },
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .entrance(
                                 key = "newchat:tpl:1:Describe Scene",
                                 motionPolicy = motionPolicy,
@@ -172,7 +172,7 @@ fun NewChatContent(
                         title = "Take Action",
                         onClick = { onTemplateClick(actionPrompt) },
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .entrance(
                                 key = "newchat:tpl:2:Take Action",
                                 motionPolicy = motionPolicy,
@@ -185,7 +185,7 @@ fun NewChatContent(
                         title = "Inner Thoughts",
                         onClick = { onTemplateClick(thoughtsPrompt) },
                         modifier = Modifier
-                            .fillMaxWidth()1f)
+                            .fillMaxWidth())
                             .entrance(
                                 key = "newchat:tpl:3:Inner Thoughts",
                                 motionPolicy = motionPolicy,

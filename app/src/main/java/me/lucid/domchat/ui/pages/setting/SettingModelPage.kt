@@ -183,7 +183,7 @@ private fun DefaultTtsVoiceSetting(
         description = { Text("Voice used for manual and automatic TTS") },
         icon = { Icon(Icons.AutoMirrored.Rounded.VolumeUp, null) },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 VoiceSelector(
                     voiceId = settings.selectedTTSVoiceId,
                     providers = settings.ttsProviders,
@@ -225,7 +225,7 @@ private fun DefaultSTTModelSetting(
             Icon(Icons.Rounded.Mic, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.sttModelId,
                     type = ModelType.STT,
@@ -371,7 +371,7 @@ private fun DefaultTranslationModelSetting(
             Icon(Icons.Rounded.Translate, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.translateModeId,
                     type = ModelType.CHAT,
@@ -485,7 +485,7 @@ private fun DefaultSuggestionModelSetting(
             Icon(Icons.Rounded.TipsAndUpdates, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.suggestionModelId,
                     type = ModelType.CHAT,
@@ -614,7 +614,7 @@ private fun DefaultTitleModelSetting(
             Icon(Icons.Rounded.Title, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.titleModelId,
                     type = ModelType.CHAT,
@@ -734,7 +734,7 @@ private fun DefaultSummarizerModelSetting(
             Icon(Icons.Rounded.Psychology, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.summarizerModelId,
                     type = ModelType.CHAT,
@@ -827,7 +827,7 @@ private fun DefaultSubagentModelSetting(
             Icon(Icons.Rounded.Psychology, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.subagentModelId,
                     type = ModelType.CHAT,
@@ -918,7 +918,7 @@ private fun DefaultChatModelSetting(
             Text(stringResource(R.string.setting_model_page_chat_model_desc))
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.chatModelId,
                     type = ModelType.CHAT,
@@ -959,7 +959,7 @@ private fun DefaultOcrModelSetting(
             Icon(Icons.Rounded.DocumentScanner, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.ocrModelId,
                     type = ModelType.CHAT,
@@ -1081,7 +1081,7 @@ private fun DefaultImageGenerationModelSetting(
             Icon(Icons.Rounded.AutoAwesome, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 ModelSelector(
                     modelId = settings.imageGenerationModelId,
                     type = ModelType.IMAGE,
@@ -1121,7 +1121,7 @@ private fun DefaultEmbeddingModelSetting(
             Icon(Icons.Rounded.Psychology, null)
         },
         actions = {
-            Box(modifier = Modifier.fillMaxWidth()1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1269,7 +1269,7 @@ private fun HelperReasoningSettings(
                 )
             }
             Column(
-                modifier = Modifier.fillMaxWidth()1f).padding(end = 8.dp),
+                modifier = Modifier.fillMaxWidth()).padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
