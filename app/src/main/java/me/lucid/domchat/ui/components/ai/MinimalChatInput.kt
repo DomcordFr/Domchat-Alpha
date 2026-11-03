@@ -95,6 +95,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.FormatItalic
+import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Fullscreen
@@ -1624,10 +1625,9 @@ fun MinimalChatInput(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalArrangement = Arrangement.SpaceBetween
-                        .verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Select Model",
@@ -1787,7 +1787,7 @@ fun MinimalChatInput(
                     ) {
                         StyleGridButton(
                             text = "Quote",
-                            icon = Icons.Rounded.FormatQuote,
+                            icon = FormatQuote,
                             isSelected = stylingMode == "quote",
                             onClick = {
                                 stylingMode = "quote"
@@ -2354,10 +2354,9 @@ fun MinimalChatInput(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalArrangement = Arrangement.SpaceBetween
-                        .verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
                         Text(
