@@ -544,7 +544,6 @@ internal fun ColumnScope.ModelList(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth())
             .fillMaxWidth()
     ) {
             // 1. Scrollable List of Models
