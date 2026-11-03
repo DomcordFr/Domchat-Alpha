@@ -350,6 +350,8 @@ data class DisplaySetting(
     val linkChromeToGlass: Boolean = true,
     val backgroundBlurMode: me.lucid.domchat.data.model.BackgroundBlurMode = me.lucid.domchat.data.model.BackgroundBlurMode.FULL,
     val globalBackgroundBlurHeightFraction: Float = 0.75f,
+    // Bar black gradient intensity (0f = none, 1f = full black gradient on top/bottom bars)
+    val barBlackGradientIntensity: Float = 0f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
     // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the

@@ -422,8 +422,8 @@ private fun RpStyleRuleItem(
 
     Card(
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = AppShapes.CardLarge,
-        modifier = modifier.border(1.dp, cardBorder, AppShapes.CardLarge),
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.border(1.dp, cardBorder, RoundedCornerShape(12.dp)),
         onClick = onEdit
     ) {
         ListItem(

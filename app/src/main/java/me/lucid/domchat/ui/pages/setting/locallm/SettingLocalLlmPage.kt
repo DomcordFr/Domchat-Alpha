@@ -978,6 +978,46 @@ private fun ModelSettingsSheet(
                     valueText = "%.2f".format(config.temperature ?: default.temperature),
                     onChange = { push(config.copy(temperature = it)) },
                 )
+                SliderRow(
+                    label = "Top-K",
+                    value = (config.topK ?: default.topK).toFloat(),
+                    valueRange = 1f..128f,
+                    steps = 0,
+                    valueText = (config.topK ?: default.topK).toString(),
+                    onChange = { push(config.copy(topK = it.toInt())) },
+                )
+                SliderRow(
+                    label = "Top-P",
+                    value = config.topP ?: default.topP,
+                    valueRange = 0f..1f,
+                    steps = 0,
+                    valueText = "%.2f".format(config.topP ?: default.topP),
+                    onChange = { push(config.copy(topP = it)) },
+                )
+                SliderRow(
+                    label = "Frequency Penalty",
+                    value = config.frequencyPenalty ?: default.frequencyPenalty,
+                    valueRange = 0f..2f,
+                    steps = 0,
+                    valueText = "%.2f".format(config.frequencyPenalty ?: default.frequencyPenalty),
+                    onChange = { push(config.copy(frequencyPenalty = it)) },
+                )
+                SliderRow(
+                    label = "Presence Penalty",
+                    value = config.presencePenalty ?: default.presencePenalty,
+                    valueRange = 0f..2f,
+                    steps = 0,
+                    valueText = "%.2f".format(config.presencePenalty ?: default.presencePenalty),
+                    onChange = { push(config.copy(presencePenalty = it)) },
+                )
+                SliderRow(
+                    label = "Repetition Penalty",
+                    value = config.repetitionPenalty ?: default.repetitionPenalty,
+                    valueRange = 0f..2f,
+                    steps = 0,
+                    valueText = "%.2f".format(config.repetitionPenalty ?: default.repetitionPenalty),
+                    onChange = { push(config.copy(repetitionPenalty = it)) },
+                )
 
                 LocalChatBackendToggle(
                     backend = backend,

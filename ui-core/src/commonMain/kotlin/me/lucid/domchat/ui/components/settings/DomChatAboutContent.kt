@@ -82,7 +82,16 @@ fun DomChatAboutContent(
         Surface(
             color = Color(0xFF000000),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f)),
+            border = BorderStroke(
+                0.5.dp,
+                Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.22f),
+                        Color.White.copy(alpha = 0.06f),
+                        Color.Transparent,
+                    )
+                )
+            ),
             modifier = Modifier
                 .padding(vertical = 4.dp)
                 .pointerInput(onVersionLongPress) {
@@ -97,7 +106,7 @@ fun DomChatAboutContent(
                 },
         ) {
             Text(
-                text = "v$versionName • Maintained by Lucid",
+                text = "v$versionName",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
@@ -110,15 +119,6 @@ fun DomChatAboutContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            DomChatAboutItem(
-                icon = Icons.Rounded.Code,
-                title = "Maintained by Lucid",
-                subtitle = "https://github.com/DomcordFr/Domchat",
-                trailing = Icons.AutoMirrored.Rounded.OpenInNew,
-                darkTheme = darkTheme,
-                onHaptic = onHaptic,
-                onClick = onSourceCode,
-            )
         }
         Spacer(Modifier.height(24.dp))
         AboutSectionTitle("System Information")

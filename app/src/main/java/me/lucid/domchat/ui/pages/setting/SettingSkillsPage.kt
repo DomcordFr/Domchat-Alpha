@@ -372,7 +372,7 @@ fun SkillsPageContent(
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
                         shape = emptyShape,
-                        border = BorderStroke(0.5.dp, borderBrush)
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                     ) {
                         Box(
                             modifier = Modifier

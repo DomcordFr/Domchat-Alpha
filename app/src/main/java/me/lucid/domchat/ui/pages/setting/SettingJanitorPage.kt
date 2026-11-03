@@ -1276,7 +1276,7 @@ private fun JanitorCharacterInspectorSheet(
                                             isImporting = false
                                             importStatus = ImportStatus.SUCCESS
                                             haptics.perform(HapticPattern.Success)
-                                            delay(1000)
+                                            delay(1500)
                                             sheetState.hide()
                                             onDismiss()
                                             toaster.show("Imported ${character.name}", ToastType.Success)

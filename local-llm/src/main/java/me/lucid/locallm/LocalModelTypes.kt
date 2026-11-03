@@ -51,6 +51,12 @@ data class LocalModelConfig(
     val maxTokens: Int? = null,
     /** Total context window (prefill + decode). Overrides the default KV cache size when set; capped at the model's maxContextLength. */
     val contextLength: Int? = null,
+    /** Presence penalty. */
+    val presencePenalty: Float? = null,
+    /** Frequency penalty. */
+    val frequencyPenalty: Float? = null,
+    /** Repetition penalty. */
+    val repetitionPenalty: Float? = null,
     val accelerator: LocalAccelerator = LocalAccelerator.AUTO,
 )
 
@@ -78,6 +84,12 @@ data class LocalModelDefaultConfig(
     val maxContextLength: Int? = null,
     /** Curated max output tokens. */
     val maxTokens: Int = 4096,
+    /** Presence penalty. */
+    val presencePenalty: Float = 0f,
+    /** Frequency penalty. */
+    val frequencyPenalty: Float = 0f,
+    /** Repetition penalty. */
+    val repetitionPenalty: Float = 1f,
     /** Ordered accelerator preference, e.g. ["gpu", "cpu"]. First entry is tried first under AUTO. */
     val accelerators: List<String> = listOf("gpu", "cpu"),
     /** Preferred accelerator for the vision encoder. */
