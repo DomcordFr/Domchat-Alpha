@@ -1352,6 +1352,34 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 characterToMove = null
                 selectedGroupId = targetGroupId
                 toaster?.show("Moved '${char.effectiveDisplayName}' to group", ToastType.Success)
+            },
+            onDeleteGroup = { groupId ->
+                // Remove the group and reassign its characters to "All"
+                val newGroupNames = groupNames - groupId
+                groupNames = newGroupNames
+                scope.launch {
+                    settings.assistants
+                        .filter { it.groupId == groupId }
+                        .forEach { assistant ->
+                            vm.updateAssistant(assistant.copy(groupId = null))
+                        }
+                }
+                if (selectedGroupId == groupId) {
+                    selectedGroupId = null
+                }
+                toaster?.show("Group deleted", ToastType.Success)
+            },
+            onReorderGroup = { groupId, delta ->
+                val entries = groupNames.toMutableList()
+                val currentIndex = entries.indexOfFirst { it.key == groupId }
+                if (currentIndex >= 0) {
+                    val newIndex = (currentIndex + delta).coerceIn(0, entries.lastIndex)
+                    if (currentIndex != newIndex) {
+                        val entry = entries.removeAt(currentIndex)
+                        entries.add(newIndex, entry)
+                        groupNames = entries.toMap()
+                    }
+                }
             }
         )
     }
@@ -3038,7 +3066,8 @@ private fun NewGroupDialog(
 }
 
 /**
- * Popover shown on long-press of a character card, with 'Delete' and 'Move to group' options.
+ * Popover shown on long-press of a character card, with 'Delete', 'Move to group',
+ * 'Delete group', and group reorder actions.
  */
 @Composable
 private fun CharacterActionPopover(
@@ -3048,7 +3077,9 @@ private fun CharacterActionPopover(
     selectedGroupId: String?,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    onMoveToGroup: (String) -> Unit
+    onMoveToGroup: (String) -> Unit,
+    onDeleteGroup: (String) -> Unit,
+    onReorderGroup: (String, Int) -> Unit
 ) {
     if (!visible) return
     Dialog(
@@ -3058,7 +3089,8 @@ private fun CharacterActionPopover(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp)
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
         ) {
             Surface(
                 modifier = Modifier
@@ -3070,7 +3102,7 @@ private fun CharacterActionPopover(
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
                         text = assistant.effectiveDisplayName,
@@ -3094,57 +3126,106 @@ private fun CharacterActionPopover(
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.8f)
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // "All" option
-                            Surface(
-                                onClick = { onMoveToGroup("") },
-                                shape = RoundedCornerShape(20.dp),
-                                color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "All",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White
-                                    )
-                                }
-                            }
 
-                            // Custom groups
-                            groupNames.forEach { (groupId, groupName) ->
-                                Surface(
-                                    onClick = { onMoveToGroup(groupId) },
-                                    shape = RoundedCornerShape(20.dp),
-                                    color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                        // "All" option
+                        Surface(
+                            onClick = { onMoveToGroup("") },
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier.wrapContentWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "All",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        // Custom groups in horizontally scrollable LazyRow
+                        val groupList = groupNames.entries.toList()
+                        if (groupList.isNotEmpty()) {
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(groupList, key = { it.key }) { entry ->
+                                    val groupId = entry.key
+                                    val groupName = entry.value
+                                    val isSelected = selectedGroupId == groupId
+                                    val currentIndex = groupList.indexOfFirst { it.key == groupId }
+                                    Surface(
+                                        onClick = { onMoveToGroup(groupId) },
+                                        shape = RoundedCornerShape(20.dp),
+                                        color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                        modifier = Modifier.wrapContentWidth()
                                     ) {
-                                        Text(
-                                            text = groupName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.White
-                                        )
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                                                .widthIn(min = 120.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = groupName,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            // Delete group button
+                                            IconButton(
+                                                onClick = { onDeleteGroup(groupId) },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Close,
+                                                    contentDescription = "Delete group",
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                            // Reorder: move up
+                                            IconButton(
+                                                onClick = { onReorderGroup(groupId, -1) },
+                                                enabled = currentIndex > 0,
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.KeyboardArrowUp,
+                                                    contentDescription = "Move group up",
+                                                    tint = Color.White.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                            // Reorder: move down
+                                            IconButton(
+                                                onClick = { onReorderGroup(groupId, 1) },
+                                                enabled = currentIndex < groupList.lastIndex,
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                                                    contentDescription = "Move group down",
+                                                    tint = Color.White.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Delete option
+                    // Delete option (character delete)
                     Surface(
                         onClick = { onDelete() },
                         shape = RoundedCornerShape(20.dp),

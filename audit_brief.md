@@ -1,84 +1,89 @@
-# Audit Brief — Task 116: Character Groups Spacing, Upload Button, and Group Filter Isolation
+# Audit Brief — Task 117: Character Card Long-Press Popover Redesign & Group Reordering
 
 ## Intent Verification
 
-All 6 requirements from task-116_directive.json implemented in `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` (plus one supporting field in `Assistant.kt`):
+All 4 requirements from task-117_directive.json implemented in `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt`:
 
-1. **Tighten GroupTabsRow spacing** — `Arrangement.spacedBy(8.dp)` → `Arrangement.spacedBy(4.dp)` in `GroupTabsRow` Row. Applied once; verified at `GroupTabsRow` definition.
+1. **Popover positioning — vertically centered, no bottom cut-off** — Outer `Box` in `CharacterActionPopover` now has `contentAlignment = Alignment.Center` (previously defaulted to `TopStart`). The Surface content is anchored to the vertical center of the Dialog, preventing bottom-edge cut-off on small screens. Padding (`20.dp`) preserved as margin around the centered card.
 
-2. **Left-align upload button** — `.align(Alignment.CenterVertically)` → `.align(Alignment.CenterStart)` on both grid-view (line ~658) and list-view (line ~993) Upload Character Surface modifiers. Two occurrences replaced via `replaceAll`; both verified.
+2. **Groups in horizontally scrollable LazyRow** — Replaced the `Row` + `weight(1f)` custom group pills with a `LazyRow` (`horizontalArrangement = Arrangement.spacedBy(8.dp)`) using `items(groupList, key = { it.key })`. Each group pill is `wrapContentWidth` sized with a `widthIn(min = 120.dp)` Row for consistent touch targets. Horizontal scrolling only activates when groups exceed available width.
 
-3. **Group filtering isolation** — Added `val groupId: String? = null` field to `Assistant` data class. Added `selectedGroupId` to `LaunchedEffect` dependency list. New `groupFiltered` step filters `tagFiltered` by `char.groupId == selectedGroupId` (null = show all). Sort sources updated from `tagFiltered` → `groupFiltered`. Persisted group moves via `vm.updateAssistant(char.copy(groupId = targetGroupId))`.
+3. **Group delete + reorder actions** — Added `onDeleteGroup: (String) -> Unit` and `onReorderGroup: (String, Int) -> Unit` callbacks to `CharacterActionPopover`. Each group pill now shows:
+   - Close (X) icon button → `onDeleteGroup(groupId)` (red tint)
+   - KeyboardArrowUp icon button → `onReorderGroup(groupId, -1)` (disabled at index 0)
+   - KeyboardArrowDown icon button → `onReorderGroup(groupId, 1)` (disabled at last index)
+   
+   Call site handles: deleting group removes it from `groupNames` and reassigns all characters with `groupId == deletedId` to `null` ("All"); reordering converts the `Map` to a mutable list, moves the entry by delta, and writes back as `toMap()`.
 
-4. **Eliminate duplicate delete popups** — Removed inline `AlertDialog` delete confirmation block (was between Inspector Sheet and Export Dialog). Kept single `UniversalDestructiveConfirmDialog` (animated, vertical-centered Dialog, no cut-off). Dialog message now states "Associated chat sessions will be preserved in your history."
+4. **Cleaned up ugly random spacing** — Removed `Spacer(modifier = Modifier.height(12.dp))` between sections; replaced with consistent `Arrangement.spacedBy(16.dp)` on the outer Column and `spacedBy(8.dp)` on inner sections. Removed `Modifier.weight(1f)` from group pills (caused uneven stretching). All pill heights unified at `vertical = 10.dp`.
 
-5. **'All' full-width distortion** — Added `.wrapContentWidth()` to all three tab Surfaces in `GroupTabsRow` ("All", custom groups, "+ New") so tabs size to content instead of forcing full width when no extra groups exist. Changed `allCount` from `filteredAssistants.size` (dynamic/shrinking per group) to `settings.assistants.size` (stable total) in both grid and list GroupTabsRow call sites.
-
-6. **New group creation popup bottom cut-off** — `NewGroupDialog` outer Box `contentAlignment = Alignment.Center` → `Alignment.TopCenter`, preventing content from being vertically centered and cut off at the bottom edge.
-
-**Constraints:** ZERO `!!` force-unwraps (grep-confirmed across all touched files). Unified glass card theme `0xFF141520` unchanged — no theme constants altered. Existing 4-space indent and import grouping preserved.
+**Constraints:** ZERO `!!` force-unwraps (grep-confirmed). Unified glass card theme `0xFF141520` untouched. Existing 4-space indent and import grouping preserved. `TextOverflow` already imported.
 
 ## Call Chain & Architecture
 
 ```
-User taps GroupTabsRow tab
-  → onGroupSelected(groupId) → selectedGroupId = groupId
-  → LaunchedEffect(settings.assistants, ..., selectedGroupId) recomputes
-      withContext(Dispatchers.Default) {
-        base = settings.assistants (search-filtered)
-        tagFiltered = base (tag-filtered)
-        groupFiltered = tagFiltered.filter { char.groupId == selectedGroupId }
-        sorted = groupFiltered.sortedBy(...)
-        filteredAssistants = distinctSorted  (Main dispatcher)
-      }
-  → LazyVerticalGrid/LazyColumn items(filteredAssistants) render only group members
-```
-
-```
 User long-presses character card
   → characterToMove = char, showMoveToGroupDialog = true
-  → CharacterActionPopover onMoveToGroup(groupId)
-      → updated = char.copy(groupId = targetGroupId)
-      → scope.launch { vm.updateAssistant(updated) }  (viewModelScope → settingsStore.update → DataStore)
-      → selectedGroupId = targetGroupId (re-filter hub)
+  → CharacterActionPopover opens (Dialog, vertically centered)
 ```
 
 ```
-User taps delete in popover / inspector
-  → characterToDelete = char
-  → UniversalDestructiveConfirmDialog (single instance)
-  → onConfirm → vm.removeAssistant(char) → optimistic settings removal
-      → deferred tombstone on Dispatchers.IO after undo window
-      → toaster shows "Deleted X" with Undo action
+User taps group pill in LazyRow
+  → onMoveToGroup(groupId)
+    → updated = char.copy(groupId = targetGroupId)
+    → scope.launch { vm.updateAssistant(updated) }   (viewModelScope → settingsStore.update → DataStore)
+    → selectedGroupId = targetGroupId   (hub re-filters)
+    → showMoveToGroupDialog = false
 ```
 
-Architectural boundaries per AGENTS.md: UI layer only renders state + emits intents; ViewModel (`AssistantVM`) exposes `settings` StateFlow and manages coroutines in `viewModelScope`; Repository/DataStore is single source of truth. Group persistence routes through `settingsStore.update { current.copy(assistants = ...) }` — same path as all assistant mutations.
+```
+User taps Close (X) on group pill
+  → onDeleteGroup(groupId)
+    → groupNames = groupNames - groupId
+    → scope.launch { settings.assistants.filter { it.groupId == groupId }.forEach { vm.updateAssistant(it.copy(groupId = null)) } }
+    → if selectedGroupId == groupId: selectedGroupId = null
+```
+
+```
+User taps Up/Down arrow on group pill
+  → onReorderGroup(groupId, delta)
+    → entries = groupNames.toMutableList()
+    → move entry by delta, clamp to [0, lastIndex]
+    → groupNames = entries.toMap()
+```
+
+```
+User taps Delete (character)
+  → onDelete() → characterToDelete = char → UniversalDestructiveConfirmDialog
+    → onConfirm → vm.removeAssistant(char) → optimistic DataStore removal + deferred IO tombstone
+```
+
+Architecture: UI layer renders state and emits intents only. ViewModel (`AssistantVM`) owns `settings` StateFlow and coroutines in `viewModelScope`. DataStore is single source of truth. No business logic in composables.
 
 ## Recomposition & Memory Safety
 
-- `GroupTabsRow` spacing change is stateless Modifier geometry; no state captured, zero recomposition side effects.
-- `.align(Alignment.CenterStart)` on upload button is a stateless Modifier; no allocation per frame beyond the modifier chain itself.
-- `groupFiltered` is computed inside `LaunchedEffect` on `Dispatchers.Default`, then assigned to `filteredAssistants` (a `mutableStateOf`) on `Dispatchers.Main`. Snapshot rule followed: value computed off-main, then `withContext(Dispatchers.Main) { filteredAssistants = distinctSorted }`.
-- `filteredAssistants` read via `remember { mutableStateOf(...) }`; Lazy grids/columns use `items(..., key = { it.id.toString() })` for stable item identity — no `SnapshotStateList` passed directly to `items()`.
-- `selectedGroupId` is `remember { mutableStateOf<String?>(null) }` — remembered, lifecycle-aware UI state.
-- Group tabs use `.wrapContentWidth()` — no full-width distortion; tabs size to content, eliminating wasted space when no extra groups exist.
-- `NewGroupDialog` now `Alignment.TopCenter` — content anchored to top, no bottom cut-off; dialog Surface has `.widthIn(max = 420.dp)` capped width.
-- No `!!` force-unwraps anywhere; all nullable access uses safe calls, Elvis, or defensive guards.
-- No naked objects in Compose — all state `remember`ed or collected via `collectAsStateWithLifecycle`.
+- `contentAlignment = Alignment.Center` on the outer Box is a static layout property; zero state, zero recomposition impact.
+- `LazyRow` with `items(groupList, key = { it.key })` provides stable item identity — Compose recomposes only changed group pills, not the whole row.
+- `groupList = groupNames.entries.toList()` is derived inside the composable on each recomposition, but it's a small list (groups count is low) and not held in mutable state — acceptable.
+- `currentIndex = groupList.indexOfFirst { it.key == groupId }` computed per item during composition — O(n) per item but n is small (groups count); no allocation beyond the index Int.
+- `Modifier.wrapContentWidth()` on pills + `widthIn(min = 120.dp)` on inner Row ensures consistent touch targets without full-width stretching.
+- `groupNames` is `remember { mutableStateOf<Map<String, String>> }` — remembered, lifecycle-aware UI state.
+- All callbacks (`onDeleteGroup`, `onReorderGroup`, `onMoveToGroup`) launch coroutines via `scope.launch` (`rememberCoroutineScope()`) — not inline composition mutations.
+- No `SnapshotStateList` passed to `items()`. No `!!` force-unwraps. No naked objects — all state `remember`ed or collected via `collectAsStateWithLifecycle`.
 
 ## Threading & Dispatchers
 
-- All Compose UI/layout edits execute on `Dispatchers.Main` (correct for UI layer).
-- Group filter computation (`tagFilter` → `groupFilter` → `sorted`) runs on `Dispatchers.Default` inside `LaunchedEffect`, then results posted to Main — no Main-thread blocking on hundreds of characters.
-- `vm.updateAssistant(updated)` launches on `viewModelScope` → `settingsStore.update` (DataStore, IO-bound) — not on Main.
-- `vm.removeAssistant(char)` optimistic removal on `viewModelScope`; deferred Room/database tombstone on `appScope.launch` → `Dispatchers.IO` (per `loadDeleteImpact`/`removeAssistant` in AssistantVM).
-- Import/export parsers use `withContext(Dispatchers.IO)` — unchanged, no Main-thread disk access.
-- No `Dispatchers.Main` violations introduced; no background work on Main dispatcher.
+- Popover UI/layout: `Dispatchers.Main` (correct — Compose UI layer).
+- `vm.updateAssistant(updated)` → `viewModelScope.launch` → `settingsStore.update` (DataStore, IO-bound) — not on Main.
+- Group delete reassigns characters via `scope.launch { settings.assistants.filter {...}.forEach { vm.updateAssistant(...) } }` — viewModelScope, not Main-blocking.
+- Deferred Room/database tombstone (from `vm.removeAssistant`) runs on `appScope.launch` → `Dispatchers.IO` — unchanged from existing behavior.
+- No `Dispatchers.Main` violations introduced. No background work on Main dispatcher.
 
 ## Offline & Error State Handling
 
-- **Offline:** Groups, assistants, and settings live entirely in local DataStore/Room — no network dependency for group filtering, tab rendering, or delete. File import uses local document picker (`OpenDocument`) and local `AssistantExportImport.parseImport` — fully offline-capable.
-- **Loading:** `loadError` state is captured; `CharacterHubErrorCard` renders when `loadError != null` (isolates per-load failure without taking down the gallery).
-- **Success:** Toaster confirms create/move/delete via `toaster?.show(...)`; undo available for delete via `vm.undoRemoveAssistant`.
-- **Exception:** `LaunchedEffect` catch block sets `loadError = e` and `filteredAssistants = emptyList()` on Main. `vm.updateAssistant`/`vm.removeAssistant` catch exceptions internally and log via `PlatformLog.e` — no crash propagation.
-- **Empty state:** `allCount = settings.assistants.size` is stable (not filtered), so the "All" tab label doesn't shrink/distort when a group is selected and has no members. Group tabs width-collapse via `.wrapContentWidth()` when only "All" exists.
+- **Offline:** Groups, `groupNames`, assistants, and settings all live in local DataStore — fully offline-capable. No network dependency for popover, group delete, or group reorder.
+- **Loading:** No loading states needed — DataStore writes are asynchronous but optimistic UI updates (toaster + immediate state change) mask latency.
+- **Success:** Toaster confirms "Moved X to group", "Group deleted".
+- **Exception:** `vm.updateAssistant` catches exceptions internally and logs via `PlatformLog.e` — no crash propagation to UI. `groupNames = groupNames - groupId` is a local state mutation that succeeds regardless of DataStore outcome (eventual consistency via VM).
+- **Empty state:** If `groupNames` is empty, the LazyRow block is skipped (`if (groupList.isNotEmpty())`), showing only "All" option and Delete character option.
+- **Selection safety:** Up/down reorder arrows are `enabled = false` at boundaries (index 0 / lastIndex) — no out-of-bounds errors. `indexOfFirst` returns -1 if not found, guarded by `if (currentIndex >= 0)`.
