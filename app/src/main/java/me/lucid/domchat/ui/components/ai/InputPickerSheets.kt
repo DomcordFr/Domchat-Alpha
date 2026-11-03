@@ -412,7 +412,7 @@ internal fun LorebooksPickerSheet(
                                 }
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth()),
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
@@ -504,7 +504,7 @@ internal fun PluginsPickerSheet(
                 onUpdateAssistant = onUpdateAssistant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxWidth()),
+                    .fillMaxWidth()
             )
         }
     }
