@@ -1696,8 +1696,10 @@ fun MinimalChatInput(
         }
 
         fun saveRules() {
-            settingsStore.update { cur ->
-                cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = rules.toList()))
+            scope.launch {
+                settingsStore.update { cur ->
+                    cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = rules.toList()))
+                }
             }
         }
 
@@ -1776,8 +1778,10 @@ fun MinimalChatInput(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Box(
-                                    modifier = Modifier.size(18.dp).clip(RoundedCornerShape(4.dp)),
-                                    background = parseColor(rule?.colorHex ?: "#808080")
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(parseColor(rule?.colorHex ?: "#808080"))
                                 )
                                 Text(
                                     text = label,
@@ -1843,30 +1847,85 @@ fun MinimalChatInput(
                         }
                         Spacer(Modifier.height(8.dp))
                         // RGB sliders (0..255)
-                        listOf(
-                            Triple("R", rDraft, { rDraft = it }),
-                            Triple("G", gDraft, { gDraft = it }),
-                            Triple("B", bDraft, { bDraft = it })
-                        ).forEach { (label, value, onChange) ->
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = label,
+                                    text = "R",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = value.toString(),
+                                    text = rDraft.toString(),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                             DomChatSlider(
-                                value = value.toFloat(),
-                                onValueChange = { onChange(it.toInt()) },
+                                value = rDraft.toFloat(),
+                                onValueChange = { rDraft = it.toInt() },
+                                valueRange = 0f..255f,
+                                steps = 255
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "G",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = gDraft.toString(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            DomChatSlider(
+                                value = gDraft.toFloat(),
+                                onValueChange = { gDraft = it.toInt() },
+                                valueRange = 0f..255f,
+                                steps = 255
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "B",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = bDraft.toString(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            DomChatSlider(
+                                value = bDraft.toFloat(),
+                                onValueChange = { bDraft = it.toInt() },
                                 valueRange = 0f..255f,
                                 steps = 255
                             )
