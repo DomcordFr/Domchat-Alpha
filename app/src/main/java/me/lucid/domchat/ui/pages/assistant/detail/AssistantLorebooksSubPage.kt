@@ -119,12 +119,11 @@ fun AssistantLorebooksSubPage(
                     .fillMaxWidth()
             )
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalArrangement = Arrangement.spacedBy(4.dp)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                itemsIndexed(lorebooks, key = { _, it -> it.id }) { index, lorebook ->
+                lorebooks.forEachIndexed { index, lorebook ->
                     val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
 
                     val position = when {
