@@ -58,7 +58,7 @@ fun DomChatSettingsGroup(
                 .padding(horizontal = horizontalPadding)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF000000),
+            color = Color(0xFF141520),
             border = androidx.compose.foundation.BorderStroke(
                 0.5.dp,
                 Brush.verticalGradient(

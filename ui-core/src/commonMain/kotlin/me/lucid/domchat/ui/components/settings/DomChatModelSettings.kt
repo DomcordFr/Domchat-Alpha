@@ -59,7 +59,7 @@ fun DomChatModelFeatureCard(
         ),
         shape = cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF000000),
+            containerColor = Color(0xFF141520),
         ),
     ) {
         Column(
@@ -145,7 +145,7 @@ fun DomChatGroupedModelRow(
     val rowBackground = if (selected) {
         Color.White.copy(alpha = 0.18f)
     } else {
-        Color(0xFF000000)
+        Color(0xFF141520)
     }
     val borderBrush = Brush.verticalGradient(
         listOf(

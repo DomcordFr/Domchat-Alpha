@@ -8,17 +8,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * Canon colors for every settings input field: solid black container, glass-grey
- * ladder, and a hairline specular white border that reads as glass on black.
- * Shared everywhere so focus/blur states stay consistent across the app.
+ * Canon colors for every settings input field: unified glass container
+ * (0xFF141520), glass-grey ladder, and a hairline specular white border that
+ * reads as glass on dark. Shared everywhere so focus/blur states stay
+ * consistent across the app.
  * @Composable so Kotlin resolves the parameterized defaults builder (the
  * non-composable overload takes no parameters).
  */
 @Composable
 fun appFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = Color(0xFF000000),
-    unfocusedContainerColor = Color(0xFF000000),
-    disabledContainerColor = Color(0xFF000000),
+    focusedContainerColor = Color(0xFF141520),
+    unfocusedContainerColor = Color(0xFF141520),
+    disabledContainerColor = Color(0xFF141520),
     focusedTextColor = Color(0xFFF2F2F7),
     unfocusedTextColor = Color(0xFFF2F2F7),
     disabledTextColor = Color(0xFF8A8A96),
@@ -53,14 +54,14 @@ val AppFieldShape = RoundedCornerShape(12.dp)
 @Composable
 fun appFilterChipColors(selected: Boolean): androidx.compose.material3.SelectableChipColors =
     androidx.compose.material3.FilterChipDefaults.filterChipColors(
-        containerColor = Color(0xFF000000),
+        containerColor = Color(0xFF141520),
         labelColor = Color(0xFF8A8A96),
         iconColor = Color(0xFF8A8A96),
         selectedContainerColor = Color.White.copy(alpha = 0.16f),
         selectedLabelColor = Color(0xFFF2F2F7),
         selectedLeadingIconColor = Color(0xFFF2F2F7),
         selectedTrailingIconColor = Color(0xFFF2F2F7),
-        disabledContainerColor = Color(0xFF000000),
+        disabledContainerColor = Color(0xFF141520),
         disabledLabelColor = Color(0xFF8A8A96),
     )
 
@@ -81,13 +82,13 @@ fun appSegmentedButtonColors() = androidx.compose.material3.SegmentedButtonDefau
     activeContainerColor = Color.White.copy(alpha = 0.16f),
     activeContentColor = Color(0xFFF2F2F7),
     activeBorderColor = Color.White.copy(alpha = 0.38f),
-    inactiveContainerColor = Color(0xFF000000),
+    inactiveContainerColor = Color(0xFF141520),
     inactiveContentColor = Color(0xFF8A8A96),
     inactiveBorderColor = Color.White.copy(alpha = 0.12f),
     disabledActiveContainerColor = Color.White.copy(alpha = 0.12f),
     disabledActiveContentColor = Color(0xFF8A8A96),
     disabledActiveBorderColor = Color.White.copy(alpha = 0.18f),
-    disabledInactiveContainerColor = Color(0xFF000000),
+    disabledInactiveContainerColor = Color(0xFF141520),
     disabledInactiveContentColor = Color(0xFF8A8A96),
     disabledInactiveBorderColor = Color.White.copy(alpha = 0.08f),
 )

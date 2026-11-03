@@ -52,7 +52,7 @@ fun DomChatProvidersBottomBar(
             Surface(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 shape = RoundedCornerShape(28.dp),
-                color = Color(0xFF000000),
+                color = Color(0xFF141520),
                 border = BorderStroke(
                     0.5.dp,
                     Brush.verticalGradient(listOf(

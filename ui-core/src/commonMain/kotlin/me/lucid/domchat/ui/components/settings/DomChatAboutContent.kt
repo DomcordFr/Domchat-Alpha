@@ -80,7 +80,7 @@ fun DomChatAboutContent(
         )
         Spacer(Modifier.height(8.dp))
         Surface(
-            color = Color(0xFF000000),
+            color = Color(0xFF141520),
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f)),
             modifier = Modifier
@@ -148,7 +148,7 @@ fun DomChatAboutContent(
         Spacer(Modifier.height(32.dp))
         Surface(
             shape = RoundedCornerShape(50),
-            color = Color(0xFF000000),
+            color = Color(0xFF141520),
             border = BorderStroke(
                 0.5.dp,
                 Brush.verticalGradient(
@@ -208,7 +208,7 @@ private fun DomChatAboutItem(
             }
         },
         enabled = onClick != null,
-        color = Color(0xFF000000),
+        color = Color(0xFF141520),
         contentColor = Color(0xFFF2F2F7),
         shape = RoundedCornerShape(16.dp),
         border = androidx.compose.foundation.BorderStroke(
