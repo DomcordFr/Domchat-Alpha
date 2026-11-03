@@ -187,7 +187,7 @@ private fun UsedLorebookEntryItem(
                 // Activation Reason
                 if (!entry.activationReason.isNullOrBlank()) {
                     Text(
-                        text = entry.activationReason!!,
+                        text = entry.activationReason ?: "",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         maxLines = 1,

@@ -242,7 +242,7 @@ fun CustomBodies(customBodies: List<CustomBody>, onUpdate: (List<CustomBody>) ->
                             isError = jsonParseError != null,
                             supportingText = {
                                 if (jsonParseError != null) {
-                                    Text(jsonParseError!!)
+                                    Text(jsonParseError ?: "")
                                 }
                             },
                             minLines = 3,

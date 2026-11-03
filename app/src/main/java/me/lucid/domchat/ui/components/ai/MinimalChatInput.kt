@@ -3413,13 +3413,15 @@ private fun MinimalPickerContent(
                                     subtitle = "Capture a photo for the chat",
                                     onClick = {
                                         if (cameraPermission.allRequiredPermissionsGranted) {
-                                            cameraOutputFile = context.cacheDir.resolve("camera_${Uuid.random()}.jpg")
-                                            cameraOutputUri = FileProvider.getUriForFile(
+                                            val file = context.cacheDir.resolve("camera_${Uuid.random()}.jpg")
+                                            cameraOutputFile = file
+                                            val uri = FileProvider.getUriForFile(
                                                 context,
                                                 "${context.packageName}.fileprovider",
-                                                cameraOutputFile!!
+                                                file
                                             )
-                                            cameraLauncher.launch(cameraOutputUri!!)
+                                            cameraOutputUri = uri
+                                            cameraLauncher.launch(uri)
                                         } else {
                                             cameraPermission.requestPermissions()
                                         }

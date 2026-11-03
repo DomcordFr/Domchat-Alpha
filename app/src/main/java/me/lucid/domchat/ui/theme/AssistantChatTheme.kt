@@ -60,14 +60,14 @@ fun AssistantChatTheme(
         }
     }
 
-    if (seedColor == null) {
+    val seed = seedColor ?: run {
         content()
         return
     }
 
     val scheme = buildAssistantColorScheme(
         baseScheme = MaterialTheme.colorScheme,
-        seedColor = seedColor!!,
+        seedColor = seed,
         darkTheme = darkTheme
     ).let { baseScheme ->
         if (darkTheme) {

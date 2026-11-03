@@ -58,9 +58,11 @@ class ModelInstall(
         // Embedding models ship a small SentencePiece tokenizer alongside the .tflite; fetch it first
         // (it's tiny, so we don't fold it into the reported progress of the large model file).
         val tokenizerPath = meta.tokenizerDownloadUrl?.let { url ->
-            val file = modelFile(meta.tokenizerFile!!)
-            downloadTo(url, file, -1) { /* no progress for the tokenizer */ }
-            file.absolutePath
+            meta.tokenizerFile?.let { file ->
+                val f = modelFile(file)
+                downloadTo(url, f, -1) { /* no progress for the tokenizer */ }
+                f.absolutePath
+            }
         }
         val target = modelFile(meta.modelFile)
         downloadTo(meta.downloadUrl, target, meta.sizeInBytes, onProgress)

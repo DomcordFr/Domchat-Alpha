@@ -261,7 +261,7 @@ fun List<MessageNode>.groupIntoTurns(
 
     fun finishCurrentGroup() {
         if (currentGroup.isNotEmpty() && currentGroupRole != null) {
-            val role = currentGroupRole!!
+            val role = currentGroupRole ?: return
             val groupIdx = groups.size
             val prev = previousGroups?.getOrNull(groupIdx)
             if (prev != null &&
@@ -772,7 +772,7 @@ internal fun buildTimelineEntries(
         when (part) {
             is UIMessagePart.Reasoning -> {
                 val durationMs = if (part.finishedAt != null) {
-                    (part.finishedAt!! - part.createdAt).inWholeMilliseconds
+                    (part.finishedAt?.let { finished -> (finished - part.createdAt).inWholeMilliseconds } ?: 0L)
                 } else if (!loading) {
                     (kotlin.time.Clock.System.now() - part.createdAt).inWholeMilliseconds.coerceAtLeast(0L)
                 } else 0L
@@ -933,7 +933,7 @@ internal fun deriveActivityState(
         // Generation complete - determine what to show based on activities
         val totalReasoningMs = reasoningParts.sumOf { r ->
             if (r.finishedAt != null) {
-                (r.finishedAt!! - r.createdAt).inWholeMilliseconds
+                (r.finishedAt?.let { finished -> (finished - r.createdAt).inWholeMilliseconds } ?: 0L)
             } else 0L
         }
         
@@ -1597,9 +1597,9 @@ private fun UserMessageTurn(
         }
     }
 
-    if (previewUserAvatarUrl != null) {
+    previewUserAvatarUrl?.let { url ->
         me.lucid.domchat.ui.components.ui.ImagePreviewDialog(
-            images = listOf(previewUserAvatarUrl!!),
+            images = listOf(url),
             onDismissRequest = { previewUserAvatarUrl = null }
         )
     }
@@ -2168,9 +2168,9 @@ private fun AssistantMessageTurn(
         }
     }
 
-    if (previewBotAvatarUrl != null) {
+    previewBotAvatarUrl?.let { url ->
         me.lucid.domchat.ui.components.ui.ImagePreviewDialog(
-            images = listOf(previewBotAvatarUrl!!),
+            images = listOf(url),
             onDismissRequest = { previewBotAvatarUrl = null }
         )
     }

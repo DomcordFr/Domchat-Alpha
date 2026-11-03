@@ -112,7 +112,7 @@ fun WebViewPage(url: String, content: String) {
                             expanded = showDropdown,
                             onDismissRequest = { showDropdown = false },
                             shape = RoundedCornerShape(18.dp),
-                            containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = if (isDark) Color(0xFF141520) else MaterialTheme.colorScheme.surfaceContainerHigh,
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {
                             DropdownMenuItem(

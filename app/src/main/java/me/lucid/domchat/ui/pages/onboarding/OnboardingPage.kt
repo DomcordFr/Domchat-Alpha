@@ -358,9 +358,10 @@ fun OnboardingPage(vm: OnboardingVM = koinViewModel()) {
                 )
 
                 SetupPage.ManualKey -> {
-                    if (manualProvider?.name == "Custom provider") {
-                        CustomProviderKeyPage(
-                            provider = manualProvider!!,
+                    manualProvider?.let { provider ->
+                        if (provider.name == "Custom provider") {
+                            CustomProviderKeyPage(
+                                provider = provider,
                             onProviderChange = { manualProvider = it },
                             apiKey = apiKey,
                             onApiKeyChange = { apiKey = it },
@@ -401,6 +402,7 @@ fun OnboardingPage(vm: OnboardingVM = koinViewModel()) {
                                 }
                             },
                         )
+                    }
                     }
                 }
 

@@ -2001,7 +2001,7 @@ class GenerationHandler(
         if (assistant.authorsNote?.isNotBlank() == true) {
             val noteModelName = model.displayName.ifBlank { model.modelId }
             val evaluatedNote = RoleplayPromptAssembler.evaluateMacros(
-                text = assistant.authorsNote!!,
+                text = assistant.authorsNote ?: "",
                 charName = assistant.name.ifBlank { "Character" },
                 userName = settings.displaySetting.getActivePersona().name.ifBlank { "User" },
                 modelName = noteModelName

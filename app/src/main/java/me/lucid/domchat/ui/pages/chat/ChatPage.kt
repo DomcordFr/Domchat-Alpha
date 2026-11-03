@@ -2167,10 +2167,12 @@ private fun ChatPageContent(
                     },
                     onSendClick = {
                         if (inputState.isEditing()) {
-                            vm.handleMessageEdit(
-                                parts = inputState.getContents(),
-                                messageId = inputState.editingMessage!!,
-                            )
+                            inputState.editingMessage?.let { messageId ->
+                                vm.handleMessageEdit(
+                                    parts = inputState.getContents(),
+                                    messageId = messageId,
+                                )
+                            }
                         } else {
                             if (currentChatModel == null) {
                                 toaster.show(modelRequiredMessage, type = ToastType.Error)
@@ -2185,10 +2187,12 @@ private fun ChatPageContent(
                     },
                     onLongSendClick = {
                         if (inputState.isEditing()) {
-                            vm.handleMessageEdit(
-                                parts = inputState.getContents(),
-                                messageId = inputState.editingMessage!!,
-                            )
+                            inputState.editingMessage?.let { messageId ->
+                                vm.handleMessageEdit(
+                                    parts = inputState.getContents(),
+                                    messageId = messageId,
+                                )
+                            }
                         } else {
                             if (currentChatModel == null) {
                                 toaster.show(modelRequiredMessage, type = ToastType.Error)

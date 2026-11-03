@@ -32,8 +32,9 @@ fun <T> useEditState(
         }
 
         override fun confirm() {
-            if (currentState != null) {
-                onUpdate(currentState!!)
+            val state = currentState
+            if (state != null) {
+                onUpdate(state)
                 isEditing = false
                 currentState = null
             }

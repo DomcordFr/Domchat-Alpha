@@ -131,7 +131,7 @@ object OcrTransformer : InputMessageTransformer, KoinComponent {
                                             fileName = fileName,
                                         )
                                     )
-                                    UIMessagePart.Text(ocrResult.promptText!!)
+                                    UIMessagePart.Text(ocrResult.promptText ?: "")
                                 } else {
                                     part
                                 }

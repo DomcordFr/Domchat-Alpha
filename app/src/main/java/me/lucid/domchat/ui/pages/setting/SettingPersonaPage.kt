@@ -558,18 +558,20 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     }
 
     // Square Cropper integration
-    if (showCropper && selectedImageUri != null) {
-        SquareCropImageScreen(
-            sourceUri = selectedImageUri!!,
-            onCropComplete = { croppedUri ->
-                showCropper = false
-                selectedImageUri = null
-                formAvatar = Avatar.Image(croppedUri.toString())
-            },
-            onCancel = {
-                showCropper = false
-                selectedImageUri = null
-            }
-        )
+    if (showCropper) {
+        selectedImageUri?.let { uri ->
+            SquareCropImageScreen(
+                sourceUri = uri,
+                onCropComplete = { croppedUri ->
+                    showCropper = false
+                    selectedImageUri = null
+                    formAvatar = Avatar.Image(croppedUri.toString())
+                },
+                onCancel = {
+                    showCropper = false
+                    selectedImageUri = null
+                }
+            )
+        }
     }
 }

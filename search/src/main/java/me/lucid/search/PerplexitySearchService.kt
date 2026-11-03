@@ -78,8 +78,8 @@ object PerplexitySearchService : SearchService<SearchServiceOptions.PerplexityOp
                     .take(commonOptions.resultSize)
                     .map {
                         SearchResultItem(
-                            title = it.title!!,
-                            url = it.url!!,
+                            title = it.title ?: "",
+                            url = it.url ?: "",
                             text = it.snippet ?: it.text ?: ""
                         )
                     }

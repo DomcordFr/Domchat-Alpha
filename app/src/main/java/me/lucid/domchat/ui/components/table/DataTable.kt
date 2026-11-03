@@ -115,7 +115,7 @@ fun DataTable(
             val rowHeights = IntArray(rowCount) { r ->
                 var h = 0
                 for (c in 0 until columnCount) {
-                    h = max(h, bodyP1[r * columnCount + c]!!.height)
+                    h = max(h, bodyP1[r * columnCount + c]?.height ?: 0)
                 }
                 h
             }

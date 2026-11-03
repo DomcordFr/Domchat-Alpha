@@ -385,11 +385,12 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 editingRule = null
             },
             onSave = { newRule ->
-                if (editingRule != null) {
+                val rule = editingRule
+                if (rule != null) {
                     // Edit existing
                     updateDisplaySetting(
                         displaySetting.rpStyleRules.map {
-                            if (it.id == editingRule!!.id) newRule else it
+                            if (it.id == rule.id) newRule else it
                         }
                     )
                 } else {

@@ -868,6 +868,7 @@ private fun ConnectionTesterButton(
                 TextButton(
                     onClick = {
                         if (model == null) return@TextButton
+                        val m = model ?: return@TextButton
                         val providerInstance = providerManager.getProviderByType(provider)
                         scope.launch {
                             runCatching {
@@ -878,7 +879,7 @@ private fun ConnectionTesterButton(
                                         UIMessage.user("hello")
                                     ),
                                     params = TextGenerationParams(
-                                        model = model!!,
+                                        model = m,
                                     )
                                 )
                                 testState = UiState.Success("Success")
@@ -3581,7 +3582,10 @@ private fun ProviderOverrideSettings(
                     editingProvider = null
                 }
             ) {
-                var internalProvider by remember(editingProvider) { mutableStateOf(editingProvider!!) }
+                var internalProvider by remember(editingProvider) {
+                    val provider = editingProvider ?: error("editingProvider must not be null")
+                    mutableStateOf(provider)
+                }
 
                 Column(
                     modifier = Modifier

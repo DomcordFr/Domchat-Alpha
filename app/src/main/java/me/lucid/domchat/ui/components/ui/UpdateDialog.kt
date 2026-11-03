@@ -195,7 +195,9 @@ fun UpdateDialog(
                                 haptics.perform(HapticPattern.Pop)
                                 when {
                                     isDownloaded && progress.localUri != null -> {
-                                        updateChecker.installDownloadedUpdate(context, progress.localUri!!)
+                                        progress.localUri?.let { uri ->
+                                            updateChecker.installDownloadedUpdate(context, uri)
+                                        }
                                     }
                                     primaryDownload != null -> {
                                         downloadId = updateChecker.downloadUpdate(context, primaryDownload)

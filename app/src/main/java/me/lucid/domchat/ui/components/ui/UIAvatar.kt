@@ -312,19 +312,21 @@ fun UIAvatar(
     }
     
     // Square cropper dialog
-    if (showCropper && selectedImageUri != null) {
-        me.lucid.domchat.ui.components.crop.SquareCropImageScreen(
-            sourceUri = selectedImageUri!!,
-            onCropComplete = { croppedUri ->
-                showCropper = false
-                selectedImageUri = null
-                onUpdate?.invoke(Avatar.Image(croppedUri.toString()))
-            },
-            onCancel = {
-                showCropper = false
-                selectedImageUri = null
-            }
-        )
+    if (showCropper) {
+        selectedImageUri?.let { uri ->
+            me.lucid.domchat.ui.components.crop.SquareCropImageScreen(
+                sourceUri = uri,
+                onCropComplete = { croppedUri ->
+                    showCropper = false
+                    selectedImageUri = null
+                    onUpdate?.invoke(Avatar.Image(croppedUri.toString()))
+                },
+                onCancel = {
+                    showCropper = false
+                    selectedImageUri = null
+                }
+            )
+        }
     }
 }
 

@@ -55,7 +55,7 @@ fun UserMessageDropdown(
         modifier = modifier,
         offset = offset,
         shape = RoundedCornerShape(18.dp),
-        containerColor = if (isDark) Color(0xFF141418).copy(alpha = 0.94f) else me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.94f) else me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         DropdownMenuItem(

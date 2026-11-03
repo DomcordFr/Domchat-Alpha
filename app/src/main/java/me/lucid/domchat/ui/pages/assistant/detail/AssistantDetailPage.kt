@@ -187,8 +187,8 @@ fun AssistantDetailPage(
         if (uri != null && pendingExportBytes != null) {
             scope.launch {
                 try {
-                    context.contentResolver.openOutputStream(uri)?.use { 
-                        it.write(pendingExportBytes!!)
+                    context.contentResolver.openOutputStream(uri)?.use { out ->
+                        pendingExportBytes?.let { bytes -> out.write(bytes) }
                     }
                     toaster.show(context.getString(R.string.export_success))
                 } catch (e: Exception) {

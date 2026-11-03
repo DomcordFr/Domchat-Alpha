@@ -521,7 +521,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
     }
 
     if (pendingImportResult != null) {
-        val res = pendingImportResult!!
+        val res = pendingImportResult ?: return
         ImportConfigDialog(
             onDismissRequest = { pendingImportResult = null },
             hasMemories = res.hasMemories,
