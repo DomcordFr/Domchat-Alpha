@@ -95,7 +95,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.FormatItalic
-import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Fullscreen
@@ -143,6 +142,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -199,6 +199,7 @@ import me.lucid.domchat.data.ai.mcp.McpManager
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.findProvider
 import me.lucid.domchat.data.datastore.getActivePersona
+import me.lucid.domchat.data.datastore.getCurrentAssistant
 import me.lucid.domchat.data.datastore.resolveConversationContext
 import me.lucid.domchat.ui.components.chat.PersonaPickerBottomSheet
 import me.lucid.domchat.ui.components.chat.PromptPresetsBottomSheet
@@ -1787,7 +1788,7 @@ fun MinimalChatInput(
                     ) {
                         StyleGridButton(
                             text = "Quote",
-                            icon = FormatQuote,
+                            icon = Icons.Rounded.FormatQuote,
                             isSelected = stylingMode == "quote",
                             onClick = {
                                 stylingMode = "quote"
@@ -1864,7 +1865,7 @@ fun MinimalChatInput(
                 if (stylingMode != "custom") {
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
-                            text = "Style: ${stylingMode.uppercaseFirst()}",
+                            text = "Style: ${stylingMode.replaceFirstChar { it.uppercase() }}",
                             style = MaterialTheme.typography.labelLarge,
                             color = Color.White.copy(alpha = 0.7f)
                         )
