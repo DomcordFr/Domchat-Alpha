@@ -1948,15 +1948,18 @@ fun CharacterInspectorSheet(
                         }
                     }
 
-                    // Creator notes blurb — MarkdownBlock so images and markdown
-                    // in creator notes are not stripped.
+                    // Creator notes blurb — short preview only (full notes + images available via inspector sheet)
                     val creatorNotesBlurb = assistant.creatorNotes.orEmpty()
                     if (creatorNotesBlurb.isNotBlank()) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        MarkdownBlock(
-                            content = formatRoleplayTextWithCdnImages(
-                                cleanHtmlImgToMarkdown(creatorNotesBlurb)
-                            )
+                        val preview = creatorNotesBlurb.take(220)
+                        val hasMore = creatorNotesBlurb.length > 220
+                        Text(
+                            text = preview + (if (hasMore) "…" else ""),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
 

@@ -1275,7 +1275,7 @@ private fun JanitorCharacterInspectorSheet(
                                             isImporting = false
                                             importStatus = ImportStatus.SUCCESS
                                             haptics.perform(HapticPattern.Success)
-                                            delay(1000)
+                                            delay(2000)
                                             sheetState.hide()
                                             onDismiss()
                                             toaster.show("Imported ${character.name}", ToastType.Success)
@@ -1408,6 +1408,13 @@ private fun JanitorCharacterInspectorSheet(
                                     else -> character.description
                                 }.orEmpty()
 
+                                // Cache formatted content so images/markdown persist across recompositions
+                                val formattedNotes by remember(rawNotes) {
+                                    formatRoleplayTextWithCdnImages(
+                                        cleanHtmlImgToMarkdown(rawNotes)
+                                    )
+                                }
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1418,9 +1425,7 @@ private fun JanitorCharacterInspectorSheet(
                                 ) {
                                     if (rawNotes.isNotBlank()) {
                                         MarkdownBlock(
-                                            content = formatRoleplayTextWithCdnImages(
-                                                cleanHtmlImgToMarkdown(rawNotes)
-                                            )
+                                            content = formattedNotes
                                         )
                                     } else {
                                         Text(
