@@ -518,6 +518,7 @@ fun SettingJanitorPage() {
     }
 
     Scaffold(
+        containerColor = Color(0xFF000000),
         topBar = {
             OneUITopAppBar(
                 title = "JanitorAI Hub",
@@ -1416,10 +1417,23 @@ private fun JanitorCharacterInspectorSheet(
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
-                                    if (rawNotes.isNotBlank()) {
+                                    // Embedded images referenced by the extract but not already
+                                    // present in the note text are rendered as in-place markdown
+                                    // images instead of being stripped or dumped as raw URLs.
+                                    val embeddedImageUrls = (fullExtract?.embeddedImages ?: emptyList())
+                                        .filter { it.isNotBlank() }
+                                        .filter { url -> rawNotes.contains(url) == false }
+                                    val notesContent = when {
+                                        embeddedImageUrls.isNotEmpty() && rawNotes.isNotBlank() ->
+                                            "$rawNotes\n\n${embeddedImageUrls.joinToString("\n") { "![Image]($it)" }}"
+                                        embeddedImageUrls.isNotEmpty() ->
+                                            embeddedImageUrls.joinToString("\n") { "![Image]($it)" }
+                                        else -> rawNotes
+                                    }
+                                    if (notesContent.isNotBlank()) {
                                         MarkdownBlock(
                                             content = formatRoleplayTextWithCdnImages(
-                                                cleanHtmlImgToMarkdown(rawNotes)
+                                                cleanHtmlImgToMarkdown(notesContent)
                                             )
                                         )
                                     } else {

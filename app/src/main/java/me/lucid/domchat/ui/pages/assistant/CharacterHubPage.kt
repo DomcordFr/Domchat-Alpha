@@ -110,12 +110,15 @@ import me.lucid.domchat.data.model.Lorebook
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.utils.truncateCreator
+import me.lucid.domchat.utils.JsonInstant
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -142,7 +145,6 @@ import kotlin.text.Regex
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
-import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.AppToasterState
@@ -177,6 +179,50 @@ enum class CharacterSortOption {
     NAME, RECENT, CREATOR
 }
 
+private const val HUB_GROUP_PREFS = "character_hub_groups"
+private const val PREFS_KEY_GROUPS = "group_names"
+private const val PREFS_KEY_ASSIGNMENTS = "char_assignments"
+
+/**
+ * Reads the persisted group name map (groupId -> displayName) from SharedPreferences.
+ */
+private fun loadGroupNames(context: Context): Map<String, String> =
+    try {
+        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+            .getString(PREFS_KEY_GROUPS, null)?.let {
+                JsonInstant.decodeFromString<Map<String, String>>(it)
+            } ?: emptyMap()
+    } catch (_: Exception) {
+        emptyMap()
+    }
+
+/**
+ * Reads the persisted character -> group assignment map (characterId string -> groupId).
+ */
+private fun loadCharAssignments(context: Context): Map<String, String> =
+    try {
+        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+            .getString(PREFS_KEY_ASSIGNMENTS, null)?.let {
+                JsonInstant.decodeFromString<Map<String, String>>(it)
+            } ?: emptyMap()
+    } catch (_: Exception) {
+        emptyMap()
+    }
+
+private fun saveGroupNames(context: Context, groups: Map<String, String>) {
+    try {
+        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+            .edit().putString(PREFS_KEY_GROUPS, JsonInstant.encodeToString(groups)).apply()
+    } catch (_: Exception) { /* best-effort persistence */ }
+}
+
+private fun saveCharAssignments(context: Context, assignments: Map<String, String>) {
+    try {
+        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+            .edit().putString(PREFS_KEY_ASSIGNMENTS, JsonInstant.encodeToString(assignments)).apply()
+    } catch (_: Exception) { /* best-effort persistence */ }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
@@ -209,6 +255,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     // Group / folder state
     var selectedGroupId by remember { mutableStateOf<String?>(null) } // null = "All"
     var groupNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var charGroupAssignments by remember { mutableStateOf<Map<String, String>>(emptyMap()) } // characterId -> groupId
     var newGroupName by remember { mutableStateOf("") }
     var showNewGroupDialog by remember { mutableStateOf(false) }
     var characterToMove by remember { mutableStateOf<Assistant?>(null) }
@@ -219,6 +266,21 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     val scope = rememberCoroutineScope()
     val toaster: AppToasterState? = LocalToaster.current
     val haptics = rememberPremiumHaptics()
+
+    /**
+     * Persists group names and character-to-group assignments to SharedPreferences
+     * ('character_hub_groups') on the IO dispatcher.
+     */
+    fun persistGroups() {
+        val groupsSnapshot = groupNames
+        val assignmentsSnapshot = charGroupAssignments
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                saveGroupNames(context, groupsSnapshot)
+                saveCharAssignments(context, assignmentsSnapshot)
+            }
+        }
+    }
 
     var pendingExportJson by remember { mutableStateOf("") }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -316,10 +378,29 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             .collect { debouncedQuery = it.trim().lowercase() }
     }
 
+    // Restore persisted groups + character-to-group assignments from SharedPreferences
+    LaunchedEffect(Unit) {
+        scope.launch {
+            val groups = withContext(Dispatchers.IO) { loadGroupNames(context) }
+            val assignments = withContext(Dispatchers.IO) { loadCharAssignments(context) }
+            withContext(Dispatchers.Main) {
+                groupNames = groups
+                charGroupAssignments = assignments
+            }
+        }
+    }
+
     var filteredAssistants by remember { mutableStateOf(settings.assistants) }
 
     // Fast indexed background search: searches name, creator without scanning multi-KB prompt blobs
-    LaunchedEffect(settings.assistants, debouncedQuery, sortOption, selectedTagIds) {
+    LaunchedEffect(
+        settings.assistants,
+        debouncedQuery,
+        sortOption,
+        selectedTagIds,
+        selectedGroupId,
+        charGroupAssignments
+    ) {
         try {
             withContext(Dispatchers.Default) {
                 val base = if (debouncedQuery.isEmpty()) {
@@ -335,12 +416,21 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 } else {
                     base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId.toString()) } }
                 }
+                // Group filter: 'All' (null) shows every character; a selected group shows only
+                // characters whose persisted assignment points at that group.
+                val groupFiltered = if (selectedGroupId == null) {
+                    tagFiltered
+                } else {
+                    tagFiltered.filter { char ->
+                        charGroupAssignments[char.id.toString()] == selectedGroupId
+                    }
+                }
                 val sorted = when (sortOption) {
-                    CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
-                    CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
+                    CharacterSortOption.NAME -> groupFiltered.sortedBy { it.name.lowercase() }
+                    CharacterSortOption.CREATOR -> groupFiltered.sortedBy { it.creator?.lowercase() ?: "" }
                     CharacterSortOption.RECENT -> {
-                        val activityMap = tagFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
-                        tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
+                        val activityMap = groupFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
+                        groupFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
                     }
                 }
                 val distinctSorted = sorted.distinctBy { it.id }
@@ -644,7 +734,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 4.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.Start
                         ) {
                             Surface(
                                 onClick = {
@@ -656,7 +746,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 modifier = Modifier
                                     .wrapContentWidth()
                                     .align(Alignment.CenterVertically)
-                                    .padding(horizontal = 16.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -709,7 +798,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         GroupTabsRow(
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
-                            allCount = filteredAssistants.size,
+                            allCount = settings.assistants.size,
                             onGroupSelected = { groupId ->
                                 selectedGroupId = groupId
                             },
@@ -979,7 +1068,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.Start
                         ) {
                             Surface(
                                 onClick = {
@@ -991,7 +1080,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 modifier = Modifier
                                     .wrapContentWidth()
                                     .align(Alignment.CenterVertically)
-                                    .padding(horizontal = 16.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -1044,7 +1132,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         GroupTabsRow(
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
-                            allCount = filteredAssistants.size,
+                            allCount = settings.assistants.size,
                             onGroupSelected = { groupId ->
                                 selectedGroupId = groupId
                             },
@@ -1235,7 +1323,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             onDismissRequest = { characterToDelete = null },
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
+            modifier = Modifier
+                .wrapContentHeight()
+                .padding(horizontal = 28.dp)
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             title = {
                 me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(
@@ -1246,7 +1337,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             },
             text = {
                 Text(
-                    text = "This will permanently remove this character from your library. Associated chat sessions will be preserved in your history.",
+                    text = "This will permanently remove this character from your library. Associated chat sessions will be preserved.",
                     fontSize = 13.5.sp,
                     color = Color(0xFFAAAAAA)
                 )
@@ -1258,6 +1349,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     onClick = {
                         val toDelete = char
                         characterToDelete = null
+                        charGroupAssignments = charGroupAssignments - toDelete.id.toString()
+                        persistGroups()
                         if (inspectingAssistant?.id == toDelete.id) {
                             inspectingAssistant = null
                         }
@@ -1375,11 +1468,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     // Character Action Popover (long-click)
     characterToMove?.let { char ->
+        val charGroupId = charGroupAssignments[char.id.toString()]
         CharacterActionPopover(
             visible = showMoveToGroupDialog,
             assistant = char,
+            characterGroupId = charGroupId,
             groupNames = groupNames,
-            selectedGroupId = selectedGroupId,
             onDismiss = {
                 showMoveToGroupDialog = false
                 characterToMove = null
@@ -1390,37 +1484,32 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 showMoveToGroupDialog = false
             },
             onMoveToGroup = { groupId ->
-                // Group assignment stored in-memory for session
+                val newGroupId = if (groupId.isBlank()) null else groupId
+                charGroupAssignments = if (newGroupId == null) {
+                    charGroupAssignments - char.id.toString()
+                } else {
+                    charGroupAssignments + (char.id.toString() to newGroupId)
+                }
+                persistGroups()
                 showMoveToGroupDialog = false
                 characterToMove = null
-                selectedGroupId = if (groupId.isBlank()) null else groupId
-                toaster?.show("Moved '${char.effectiveDisplayName}' to group", ToastType.Success)
+                selectedGroupId = newGroupId
+                toaster?.show("Moved '${char.effectiveDisplayName}'", ToastType.Success)
+            },
+            onDeleteGroup = { groupId ->
+                groupNames = groupNames - groupId
+                charGroupAssignments = charGroupAssignments.filterValues { it != groupId }
+                persistGroups()
+                if (selectedGroupId == groupId) {
+                    selectedGroupId = null
+                }
+                showMoveToGroupDialog = false
+                characterToMove = null
+                toaster?.show("Group deleted", ToastType.Success)
             }
         )
     }
 
-    // Delete confirmation dialog
-    characterToDelete?.let { char ->
-        UniversalDestructiveConfirmDialog(
-            visible = true,
-            title = "Delete character?",
-            message = "This will permanently remove \"${char.effectiveDisplayName}\" from your library.",
-            onConfirm = {
-                vm.removeAssistant(char)
-                characterToDelete = null
-                toaster?.show(
-                    message = "Deleted ${char.effectiveDisplayName}",
-                    action = me.lucid.domchat.ui.components.ui.ToastAction(
-                        label = "Undo",
-                        onClick = { vm.undoRemoveAssistant(char) }
-                    )
-                )
-            },
-            onDismiss = {
-                characterToDelete = null
-            }
-        )
-    }
 }
 
 /**
@@ -1659,6 +1748,19 @@ fun CharacterListRow(
                     text = "by ${assistant.creator.truncateCreator(10)}",
                     fontSize = 12.sp,
                     color = Color(0xFF8A8A96)
+                )
+            }
+            // Creator notes blurb — truncate multi-KB notes/bios to 160 chars with ellipsis
+            // so a long creator note never dumps a wall of text into the hub row.
+            assistant.creatorNotes?.takeIf { it.isNotBlank() }?.let { notes ->
+                val trimmed = notes.trim()
+                val blurb = if (trimmed.length > 160) "${trimmed.take(160).trim()}..." else trimmed
+                Text(
+                    text = blurb,
+                    fontSize = 11.sp,
+                    color = Color.White.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -2922,7 +3024,7 @@ private fun GroupTabsRow(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         // "All" tab
         val allLabel = "All ($allCount)"
@@ -2931,10 +3033,10 @@ private fun GroupTabsRow(
             shape = RoundedCornerShape(20.dp),
             color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -2954,10 +3056,10 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.padding(horizontal = 4.dp)
+                modifier = Modifier
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -2976,10 +3078,10 @@ private fun GroupTabsRow(
             shape = RoundedCornerShape(20.dp),
             color = Color.Transparent,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -3019,7 +3121,8 @@ private fun NewGroupDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.65f))
-                .padding(20.dp),
+                .padding(20.dp)
+                .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -3081,17 +3184,20 @@ private fun NewGroupDialog(
 }
 
 /**
- * Popover shown on long-press of a character card, with 'Delete' and 'Move to group' options.
+ * Centered popover shown on long-press of a character card. Shows the character's groups as a
+ * horizontally scrollable row of chips and offers remove-from-group / delete-group / delete actions.
+ * The dialog wraps its height and is vertically centered so it is never cut off at the top or bottom.
  */
 @Composable
 private fun CharacterActionPopover(
     visible: Boolean,
     assistant: Assistant,
+    characterGroupId: String?,
     groupNames: Map<String, String>,
-    selectedGroupId: String?,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    onMoveToGroup: (String) -> Unit
+    onMoveToGroup: (String?) -> Unit,
+    onDeleteGroup: (String) -> Unit
 ) {
     if (!visible) return
     Dialog(
@@ -3101,19 +3207,23 @@ private fun CharacterActionPopover(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp)
+                .padding(24.dp)
+                .imePadding(),
+            contentAlignment = Alignment.Center
         ) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 420.dp)
+                    .widthIn(max = 460.dp)
+                    .wrapContentHeight()
                     .background(Color(0xFF000000))
                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
-                    .padding(20.dp)
+                    .padding(20.dp),
+                color = Color.Transparent,
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
                         text = assistant.effectiveDisplayName,
@@ -3122,72 +3232,64 @@ private fun CharacterActionPopover(
                         color = Color.White
                     )
                     Text(
-                        text = "Choose an action for this character.",
+                        text = "Manage groups",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.65f)
                     )
 
-                    // Move to group section
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Groups as horizontally scrollable chips
+                    Text(
+                        text = "Groups",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "Move to group",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.8f)
+                        // "All" (ungrouped) chip — wraps content, never forced to full width
+                        val isAll = characterGroupId == null
+                        GroupActionChip(
+                            text = "All",
+                            selected = isAll,
+                            onClick = { onMoveToGroup(null) }
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // "All" option
-                            Surface(
-                                onClick = { onMoveToGroup("") },
-                                shape = RoundedCornerShape(20.dp),
-                                color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "All",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-
-                            // Custom groups
-                            groupNames.forEach { (groupId, groupName) ->
-                                Surface(
-                                    onClick = { onMoveToGroup(groupId) },
-                                    shape = RoundedCornerShape(20.dp),
-                                    color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = groupName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                            }
+                        groupNames.forEach { (groupId, groupName) ->
+                            val isSelected = characterGroupId == groupId
+                            GroupActionChip(
+                                text = groupName,
+                                selected = isSelected,
+                                onClick = { onMoveToGroup(groupId) }
+                            )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    if (characterGroupId != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DomChatGlassPillButton(
+                                text = "Remove from group",
+                                onClick = { onMoveToGroup(null) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            DomChatGlassPillButton(
+                                text = "Delete group",
+                                destructive = true,
+                                onClick = { onDeleteGroup(characterGroupId ?: "") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
 
-                    // Delete option
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Delete character
                     Surface(
                         onClick = { onDelete() },
                         shape = RoundedCornerShape(20.dp),
@@ -3207,7 +3309,7 @@ private fun CharacterActionPopover(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "Delete",
+                                text = "Delete character",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFFEF4444)
                             )
@@ -3215,6 +3317,37 @@ private fun CharacterActionPopover(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Single group chip inside the action popover. Wraps content so the 'All' chip never expands
+ * to full width when no extra groups exist.
+ */
+@Composable
+private fun GroupActionChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (selected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        modifier = Modifier.wrapContentWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = Color.White
+            )
         }
     }
 }
