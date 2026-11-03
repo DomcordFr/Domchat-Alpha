@@ -166,6 +166,32 @@ class AssistantDetailVM(
             scope = viewModelScope, started = SharingStarted.Lazily, initialValue = emptyList()
         )
 
+    // Draft state retained across back/forward navigation to prevent reload loss
+    private val _draftAssistant = MutableStateFlow<Assistant?>(null)
+    val draftAssistant: StateFlow<Assistant?> = _draftAssistant.asStateFlow()
+
+    fun loadDraft() {
+        val current = assistant.value
+        if (_draftAssistant.value == null) {
+            _draftAssistant.value = current
+        }
+    }
+
+    fun updateDraft(assistant: Assistant) {
+        _draftAssistant.value = assistant
+    }
+
+    fun commitDraft() {
+        _draftAssistant.value?.let { draft ->
+            update(draft)
+            _draftAssistant.value = null
+        }
+    }
+
+    fun discardDraft() {
+        _draftAssistant.value = null
+    }
+
     fun updateTags(tagIds: List<Uuid>, tags: List<Tag>) {
         viewModelScope.launch {
             // First, update the global tags list

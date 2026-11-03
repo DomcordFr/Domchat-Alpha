@@ -100,17 +100,19 @@ import me.lucid.domchat.ui.components.ui.ToastAction
 // Sub-routes within assistant detail
 private object AssistantDetailRoutes {
     const val HOME = "home"
-    const val CORE = "core"
-    const val ADVANCED = "advanced"
     const val PROFILE = "profile"
-    const val MODEL = "model"
-    const val PROMPTS = "prompts"
-    const val CONTEXT_MANAGEMENT = "context_management"
+    const val PERSONALITY = "personality"
+    const val SCENARIO = "scenario"
+    const val GREETINGS = "greetings"
+    const val EXAMPLE_DIALOGUES = "example_dialogues"
     const val LOREBOOKS = "lorebooks"
+    const val MODEL = "model"
+    const val CONTEXT_MANAGEMENT = "context_management"
+    const val UI = "ui"
+    const val ADVANCED = "advanced"
+    const val MEMORY = "memory"
     const val SKILLS = "skills"
     const val TOOLS = "tools"
-    const val MEMORY = "memory"
-    const val UI = "ui"
 }
 
 @Composable
@@ -154,7 +156,7 @@ fun AssistantDetailPage(
     var showExportOptionsDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
     var pendingExportContent by remember { androidx.compose.runtime.mutableStateOf("") }
     var pendingExportBytes by remember { androidx.compose.runtime.mutableStateOf<ByteArray?>(null) }
-    
+
     // Export file launcher (JSON)
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -162,7 +164,7 @@ fun AssistantDetailPage(
         if (uri != null && pendingExportContent.isNotEmpty()) {
             scope.launch {
                 try {
-                    context.contentResolver.openOutputStream(uri)?.use { 
+                    context.contentResolver.openOutputStream(uri)?.use {
                         it.write(pendingExportContent.toByteArray())
                     }
                     toaster.show(context.getString(R.string.export_success))
@@ -179,7 +181,7 @@ fun AssistantDetailPage(
             }
         }
     }
-    
+
     // Export file launcher (PNG)
     val pngExportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("image/png")
@@ -187,8 +189,8 @@ fun AssistantDetailPage(
         if (uri != null && pendingExportBytes != null) {
             scope.launch {
                 try {
-                    context.contentResolver.openOutputStream(uri)?.use { 
-                        it.write(pendingExportBytes!!)
+                    context.contentResolver.openOutputStream(uri)?.use {
+                        it.write(pendingExportBytes ?: ByteArray(0))
                     }
                     toaster.show(context.getString(R.string.export_success))
                 } catch (e: Exception) {
@@ -213,7 +215,7 @@ fun AssistantDetailPage(
             vm.clearSnackbarMessage()
         }
     }
-    
+
     // Auto-navigate to start route if specified (e.g., for deep linking to memory)
     LaunchedEffect(startRoute) {
         if (startRoute == AssistantDetailRoutes.MEMORY) {
@@ -232,17 +234,17 @@ fun AssistantDetailPage(
         topBar = {
             TopAppBar(
                 title = {
-                    // Show title only on sub-pages, not on home - fade in only, instant exit
                     AnimatedVisibility(
                         visible = currentRoute != null && currentRoute != AssistantDetailRoutes.HOME,
                         enter = fadeIn(),
-                        exit = fadeOut(animationSpec = tween(0)) // Instant exit to avoid fade artifact
+                        exit = fadeOut(animationSpec = tween(0))
                     ) {
                         Text(
                             text = assistant.name.ifBlank {
                                 stringResource(R.string.assistant_page_default_assistant)
                             },
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 },
@@ -262,7 +264,7 @@ fun AssistantDetailPage(
                                     contentDescription = stringResource(R.string.assistant_detail_export)
                                 )
                             }
-                            
+
                             val isDark = LocalDarkMode.current
                             DropdownMenu(
                                 expanded = showExportMenu,
@@ -397,7 +399,70 @@ fun AssistantDetailPage(
                 }
             }
 
-            // Core Roleplay section - unified sub-page
+            // Profile (avatar, display & chat name, creator notes, tags)
+            composable(AssistantDetailRoutes.PROFILE) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantProfileSubPage(
+                        assistant = assistant,
+                        tags = tags,
+                        onUpdate = { onUpdate(it) },
+                        vm = vm
+                    )
+                }
+            }
+
+            // Personality (system prompt)
+            composable(AssistantDetailRoutes.PERSONALITY) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantPersonalitySubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
+            }
+
+            // Scenario (author's note)
+            composable(AssistantDetailRoutes.SCENARIO) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantScenarioSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
+            }
+
+            // Greetings (initial message + alternate greetings)
+            composable(AssistantDetailRoutes.GREETINGS) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantGreetingsSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
+            }
+
+            // Example Dialogues & SillyTavern settings
+            composable(AssistantDetailRoutes.EXAMPLE_DIALOGUES) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantExampleDialoguesSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) }
+                    )
+                }
+            }
+
+            // Lorebooks (nested under Context Management)
+            composable(AssistantDetailRoutes.LOREBOOKS) {
+                AnimatedContent<String?>(targetState = currentRoute) {
+                    AssistantLorebooksSubPage(
+                        assistant = assistant,
+                        onUpdate = { onUpdate(it) },
+                        vm = vm
+                    )
+                }
+            }
+
+            // Core Roleplay shell (retained for route compatibility)
             composable(AssistantDetailRoutes.CORE) {
                 AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantCoreRoleplaySubPage(
@@ -414,35 +479,12 @@ fun AssistantDetailPage(
                 }
             }
 
-            // Lorebooks (nested under Context Management)
-            composable(AssistantDetailRoutes.LOREBOOKS) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantLorebooksSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm
-                    )
-                }
-            }
-
             // Advanced
             composable(AssistantDetailRoutes.ADVANCED) {
                 AnimatedContent<String?>(targetState = currentRoute) {
                     AssistantAdvancedSubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) }
-                    )
-                }
-            }
-
-            // Profile
-            composable(AssistantDetailRoutes.PROFILE) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantProfileSubPage(
-                        assistant = assistant,
-                        tags = tags,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm
                     )
                 }
             }
@@ -485,8 +527,6 @@ fun AssistantDetailPage(
         }
     }
 
-
-    
     if (showExportOptionsDialog) {
         ExportOptionsDialog(
             title = stringResource(R.string.assistant_detail_export_options),
@@ -498,9 +538,9 @@ fun AssistantDetailPage(
                 scope.launch {
                     try {
                         val content = AssistantExportImport.exportToLastChatBundle(
-                            assistant = assistant, 
-                            context = context, 
-                            includeMemories = includeMemories, 
+                            assistant = assistant,
+                            context = context,
+                            includeMemories = includeMemories,
                             includeLorebooks = includeLorebooks
                         )
                         pendingExportContent = content
@@ -536,9 +576,9 @@ private fun AssistantDetailHome(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        // ═══════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
         // HEADER SECTION - Avatar, Name, System Prompt Preview (2 lines, centered)
-        // ═══════════════════════════════════════════════════════════════════
+        // ════════════════════════════════════════════════════════════════════
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -546,7 +586,6 @@ private fun AssistantDetailHome(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Hero animation for smooth List ↔ Home transition
             Box(
                 modifier = Modifier
                     .size(96.dp)
@@ -564,17 +603,19 @@ private fun AssistantDetailHome(
                 UIAvatar(
                     value = assistant.avatar,
                     name = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-                    onUpdate = null, // Read-only in home view
+                    onUpdate = null,
                     modifier = Modifier.size(96.dp)
                 )
             }
-            
+
             Text(
                 text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
                 style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            
+
             if (assistant.systemPrompt.isNotBlank()) {
                 Text(
                     text = assistant.systemPrompt,
@@ -590,10 +631,9 @@ private fun AssistantDetailHome(
 
         Spacer(Modifier.height(8.dp))
 
+        // ════════════════════════════════════════════════════════════════════
+        // NAVIGATION CARDS - Dedicated modular sub-pages
         // ═══════════════════════════════════════════════════════════════════
-        // NAVIGATION CARDS - Grouped properly
-        // ═══════════════════════════════════════════════════════════════════
-        // SECTION 1: CORE ROLEPLAY
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_core_roleplay)) {
             NavigationCard(
                 icon = Icons.Rounded.Person,
@@ -603,21 +643,41 @@ private fun AssistantDetailHome(
             )
 
             NavigationCard(
-                icon = Icons.AutoMirrored.Rounded.Chat,
-                title = stringResource(R.string.assistant_page_tab_prompt),
-                description = stringResource(R.string.assistant_detail_core_prompts_desc),
-                onClick = { navController.navigate(AssistantDetailRoutes.CORE) }
+                icon = Icons.Rounded.Psychology,
+                title = stringResource(R.string.assistant_detail_section_personality),
+                description = stringResource(R.string.assistant_detail_personality_desc),
+                onClick = { navController.navigate(AssistantDetailRoutes.PERSONALITY) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.DataObject,
-                title = "Attached Lorebooks",
+                title = stringResource(R.string.assistant_detail_section_scenario),
+                description = stringResource(R.string.assistant_detail_scenario_desc),
+                onClick = { navController.navigate(AssistantDetailRoutes.SCENARIO) }
+            )
+
+            NavigationCard(
+                icon = Icons.AutoMirrored.Rounded.Chat,
+                title = stringResource(R.string.assistant_detail_section_initial_messages),
+                description = stringResource(R.string.assistant_detail_add_intro),
+                onClick = { navController.navigate(AssistantDetailRoutes.GREETINGS) }
+            )
+
+            NavigationCard(
+                icon = Icons.Rounded.DataObject,
+                title = stringResource(R.string.assistant_detail_section_lorebooks),
                 description = stringResource(R.string.assistant_detail_core_lorebooks_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) }
             )
+
+            NavigationCard(
+                icon = Icons.Rounded.Upload,
+                title = stringResource(R.string.assistant_page_preset_messages),
+                description = stringResource(R.string.assistant_page_preset_messages_desc),
+                onClick = { navController.navigate(AssistantDetailRoutes.EXAMPLE_DIALOGUES) }
+            )
         }
 
-        // SECTION 2: ADVANCED
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_advanced)) {
             NavigationCard(
                 icon = Icons.Rounded.Build,

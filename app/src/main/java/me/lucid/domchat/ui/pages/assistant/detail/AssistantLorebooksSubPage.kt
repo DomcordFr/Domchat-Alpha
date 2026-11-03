@@ -50,92 +50,105 @@ import kotlin.uuid.Uuid
 fun AssistantLorebooksSubPage(
     assistant: Assistant,
     onUpdate: (Assistant) -> Unit,
-    vm: AssistantDetailVM
+    vm: me.lucid.domchat.ui.pages.assistant.detail.AssistantDetailVM
 ) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val lorebooks = settings.lorebooks
     val navController = LocalNavController.current
-    
-    if (lorebooks.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            EmptyStateCard(
-                icon = Icons.Rounded.Book,
-                title = stringResource(R.string.assistant_lorebooks_empty),
-                description = stringResource(R.string.assistant_lorebooks_empty_hint),
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp) // Match Lorebooks settings spacing
-        ) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (lorebooks.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                EmptyStateCard(
+                    icon = Icons.Rounded.Book,
+                    title = stringResource(R.string.assistant_lorebooks_empty),
+                    description = stringResource(R.string.assistant_lorebooks_empty_hint),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        } else {
             // Description card header
-            item(key = "description") {
-                Card(
-                    colors = assistantGlassCardColors(),
-                    border = assistantGlassBorder(),
-                    shape = AppShapes.CardLarge
+            Surface(
+                color = Color(0xFF141520),
+                border = androidx.compose.foundation.BorderStroke(
+                    0.5.dp,
+                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                ),
+                shape = AppShapes.CardLarge,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.assistant_lorebooks_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(R.string.assistant_lorebooks_desc),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.assistant_lorebooks_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = stringResource(R.string.assistant_lorebooks_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
-                Spacer(Modifier.height(12.dp))
             }
-            
+
+            Spacer(Modifier.height(12.dp))
+
             // Section header for lorebook list
-            item(key = "section_header") {
-                Text(
-                    text = stringResource(R.string.lorebooks_section_available),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp)
-                )
-            }
-            
-            itemsIndexed(lorebooks, key = { _, it -> it.id }) { index, lorebook ->
-                val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
-                
-                // Calculate position for connected card styling
-                val position = when {
-                    lorebooks.size == 1 -> me.lucid.domchat.ui.components.ui.ItemPosition.ONLY
-                    index == 0 -> me.lucid.domchat.ui.components.ui.ItemPosition.FIRST
-                    index == lorebooks.lastIndex -> me.lucid.domchat.ui.components.ui.ItemPosition.LAST
-                    else -> me.lucid.domchat.ui.components.ui.ItemPosition.MIDDLE
-                }
-                
-                LorebookSelectionCard(
-                    lorebook = lorebook,
-                    isEnabled = isEnabled,
-                    position = position,
-                    onClick = { navController.navigate(Screen.SettingLorebookDetail(lorebook.id.toString())) },
-                    onToggle = { enabled ->
-                        val newIds = if (enabled) {
-                            assistant.enabledLorebookIds + lorebook.id
-                        } else {
-                            assistant.enabledLorebookIds - lorebook.id
-                        }
-                        onUpdate(assistant.copy(enabledLorebookIds = newIds))
+            Text(
+                text = stringResource(R.string.lorebooks_section_available),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp)
+                    .fillMaxWidth()
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                itemsIndexed(lorebooks, key = { _, it -> it.id }) { index, lorebook ->
+                    val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
+
+                    val position = when {
+                        lorebooks.size == 1 -> me.lucid.domchat.ui.components.ui.ItemPosition.ONLY
+                        index == 0 -> me.lucid.domchat.ui.components.ui.ItemPosition.FIRST
+                        index == lorebooks.lastIndex -> me.lucid.domchat.ui.components.ui.ItemPosition.LAST
+                        else -> me.lucid.domchat.ui.components.ui.ItemPosition.MIDDLE
                     }
-                )
+
+                    LorebookSelectionCard(
+                        lorebook = lorebook,
+                        isEnabled = isEnabled,
+                        position = position,
+                        onClick = { navController.navigate(Screen.SettingLorebookDetail(lorebook.id.toString())) },
+                        onToggle = { enabled ->
+                            val newIds = if (enabled) {
+                                assistant.enabledLorebookIds + lorebook.id
+                            } else {
+                                assistant.enabledLorebookIds - lorebook.id
+                            }
+                            onUpdate(assistant.copy(enabledLorebookIds = newIds))
+                        }
+                    )
+                }
             }
         }
     }
@@ -149,27 +162,34 @@ private fun LorebookSelectionCard(
     onClick: () -> Unit,
     onToggle: (Boolean) -> Unit
 ) {
-    // Calculate shape based on position for connected look (matching Lorebooks settings page)
     val cornerRadius = 28.dp
     val smallCorner = 8.dp
     val shape = when (position) {
         me.lucid.domchat.ui.components.ui.ItemPosition.ONLY -> RoundedCornerShape(cornerRadius)
         me.lucid.domchat.ui.components.ui.ItemPosition.FIRST -> RoundedCornerShape(
-            topStart = cornerRadius, topEnd = cornerRadius,
-            bottomStart = smallCorner, bottomEnd = smallCorner
+            topStart = cornerRadius,
+            topEnd = cornerRadius,
+            bottomStart = smallCorner,
+            bottomEnd = smallCorner
         )
         me.lucid.domchat.ui.components.ui.ItemPosition.MIDDLE -> RoundedCornerShape(smallCorner)
         me.lucid.domchat.ui.components.ui.ItemPosition.LAST -> RoundedCornerShape(
-            topStart = smallCorner, topEnd = smallCorner,
-            bottomStart = cornerRadius, bottomEnd = cornerRadius
+            topStart = smallCorner,
+            topEnd = smallCorner,
+            bottomStart = cornerRadius,
+            bottomEnd = cornerRadius
         )
     }
-    
+
     Card(
-        colors = assistantGlassCardColors(),
-        border = assistantGlassBorder(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF141520)),
+        border = androidx.compose.foundation.BorderStroke(
+            0.5.dp,
+            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+        ),
         shape = shape,
-        onClick = onClick
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
@@ -178,7 +198,6 @@ private fun LorebookSelectionCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Book cover or placeholder
             val bookShape = when (position) {
                 me.lucid.domchat.ui.components.ui.ItemPosition.ONLY -> RoundedCornerShape(
                     topStart = 16.dp, topEnd = 6.dp,
@@ -196,7 +215,7 @@ private fun LorebookSelectionCard(
             }
             Surface(
                 shape = bookShape,
-                color = if (isEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                color = Color(0xFF000000),
                 modifier = Modifier.size(width = 50.dp, height = 70.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -220,14 +239,13 @@ private fun LorebookSelectionCard(
                                 Icons.Rounded.Book,
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp),
-                                tint = if (isEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = Color.White.copy(alpha = 0.8f)
                             )
                         }
                     }
                 }
             }
 
-            // Lorebook info
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -237,13 +255,14 @@ private fun LorebookSelectionCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = Color.White
                 )
                 if (lorebook.description.isNotEmpty()) {
                     Text(
                         text = lorebook.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -251,11 +270,10 @@ private fun LorebookSelectionCard(
                 Text(
                     text = stringResource(R.string.lorebooks_page_entries_count, lorebook.entries.size),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 )
             }
 
-            // Toggle
             HapticSwitch(
                 checked = isEnabled,
                 onCheckedChange = onToggle
