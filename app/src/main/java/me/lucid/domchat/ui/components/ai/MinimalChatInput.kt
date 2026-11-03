@@ -35,6 +35,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.animateContentSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.ui.SearchProviderIcon
 import me.lucid.search.SearchServiceOptions
@@ -75,6 +76,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -143,6 +145,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -1676,7 +1679,7 @@ fun MinimalChatInput(
         var bDraft by remember { mutableIntStateOf(0) }
 
         // Built-in text styling patterns
-        private val styleDefs = listOf(
+        val styleDefs = listOf(
             Pair("Quote", ">"),
             Pair("Italic", "*"),
             Pair("Code", "`"),
@@ -1787,37 +1790,34 @@ fun MinimalChatInput(
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White.copy(alpha = 0.7f)
                 )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(styleDefs.indices, key = { it }) { idx ->
-                        val (label, pattern) = styleDefs[idx]
-                        val isSelected = selectedStyleIndex == idx
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val (label0, pattern0) = styleDefs[0]
+                        val isSelected0 = selectedStyleIndex == 0
                         Surface(
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
-                                selectedStyleIndex = idx
-                                if (idx == 3) {
-                                    customSymbols = ""
-                                } else {
-                                    customSymbols = ""
-                                    activeRule?.let { rule ->
-                                        rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
-                                        gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
-                                        bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
-                                    }
+                                selectedStyleIndex = 0
+                                customSymbols = ""
+                                activeRule?.let { rule ->
+                                    rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
+                                    gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
+                                    bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
                                 }
                             },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
+                            color = if (isSelected0) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
                             border = BorderStroke(
                                 0.5.dp,
-                                if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
+                                if (isSelected0) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
                             ),
-                            modifier = Modifier.fillMaxWidth().height(72.dp)
+                            modifier = Modifier.weight(1f).height(72.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1833,12 +1833,162 @@ fun MinimalChatInput(
                                         .background(parseColor(activeRule?.colorHex ?: "#808080"))
                                 )
                                 Text(
-                                    text = label,
+                                    text = label0,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
+                                    color = if (isSelected0) MaterialTheme.colorScheme.primary else Color.White
                                 )
                                 Spacer(Modifier.weight(1f))
-                                if (isSelected) {
+                                if (isSelected0) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                        val (label1, pattern1) = styleDefs[1]
+                        val isSelected1 = selectedStyleIndex == 1
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                selectedStyleIndex = 1
+                                customSymbols = ""
+                                activeRule?.let { rule ->
+                                    rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
+                                    gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
+                                    bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected1) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
+                            border = BorderStroke(
+                                0.5.dp,
+                                if (isSelected1) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
+                            ),
+                            modifier = Modifier.weight(1f).height(72.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
+                                )
+                                Text(
+                                    text = label1,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = if (isSelected1) MaterialTheme.colorScheme.primary else Color.White
+                                )
+                                Spacer(Modifier.weight(1f))
+                                if (isSelected1) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val (label2, pattern2) = styleDefs[2]
+                        val isSelected2 = selectedStyleIndex == 2
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                selectedStyleIndex = 2
+                                customSymbols = ""
+                                activeRule?.let { rule ->
+                                    rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
+                                    gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
+                                    bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected2) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
+                            border = BorderStroke(
+                                0.5.dp,
+                                if (isSelected2) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
+                            ),
+                            modifier = Modifier.weight(1f).height(72.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
+                                )
+                                Text(
+                                    text = label2,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = if (isSelected2) MaterialTheme.colorScheme.primary else Color.White
+                                )
+                                Spacer(Modifier.weight(1f))
+                                if (isSelected2) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                        val (label3, pattern3) = styleDefs[3]
+                        val isSelected3 = selectedStyleIndex == 3
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                selectedStyleIndex = 3
+                                customSymbols = ""
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected3) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
+                            border = BorderStroke(
+                                0.5.dp,
+                                if (isSelected3) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
+                            ),
+                            modifier = Modifier.weight(1f).height(72.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
+                                )
+                                Text(
+                                    text = label3,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = if (isSelected3) MaterialTheme.colorScheme.primary else Color.White
+                                )
+                                Spacer(Modifier.weight(1f))
+                                if (isSelected3) {
                                     Icon(
                                         imageVector = Icons.Rounded.Check,
                                         contentDescription = "Selected",

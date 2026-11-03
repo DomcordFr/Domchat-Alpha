@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
+import me.lucid.domchat.ui.pages.setting.components.SettingGroupInputItem
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
@@ -45,7 +47,7 @@ fun AssistantExampleDialoguesSubPage(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SettingsGroup(title = stringResource(R.string.assistant_page_preset_messages)) {
-            SettingGroupItem(
+            SettingGroupInputItem(
                 title = stringResource(R.string.assistant_page_preset_messages),
                 subtitle = stringResource(R.string.assistant_page_preset_messages_desc),
                 content = {

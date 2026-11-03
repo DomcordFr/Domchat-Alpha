@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -1484,7 +1485,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 showMoveToGroupDialog = false
             },
             onMoveToGroup = { groupId ->
-                val newGroupId = if (groupId.isBlank()) null else groupId
+                val newGroupId = if (groupId.isNullOrBlank()) null else groupId
                 charGroupAssignments = if (newGroupId == null) {
                     charGroupAssignments - char.id.toString()
                 } else {
@@ -3270,7 +3271,7 @@ private fun CharacterActionPopover(
                     if (characterGroupId != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             DomChatGlassPillButton(
                                 text = "Remove from group",

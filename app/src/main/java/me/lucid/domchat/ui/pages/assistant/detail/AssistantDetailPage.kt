@@ -100,6 +100,7 @@ import me.lucid.domchat.ui.components.ui.ToastAction
 // Sub-routes within assistant detail
 private object AssistantDetailRoutes {
     const val HOME = "home"
+    const val CORE = "core"
     const val PROFILE = "profile"
     const val PERSONALITY = "personality"
     const val SCENARIO = "scenario"
