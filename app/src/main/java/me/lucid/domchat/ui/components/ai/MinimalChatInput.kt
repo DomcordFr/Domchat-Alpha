@@ -2699,7 +2699,7 @@ private fun WorkspaceRequiredCard(
                 )
             }
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
