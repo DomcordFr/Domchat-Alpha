@@ -1,68 +1,84 @@
-# Audit Brief — Task 126: Button & Dialog Theme Standardization
+# Audit Brief — Task 116: Character Groups Spacing, Upload Button, and Group Filter Isolation
 
 ## Intent Verification
 
-All 5 requirements from task-126_directive.json implemented:
+All 6 requirements from task-116_directive.json implemented in `app/src/main/java/me/lucid/domchat/ui/pages/assistant/CharacterHubPage.kt` (plus one supporting field in `Assistant.kt`):
 
-1. **DomChatAboutContent.kt — Badge shows only 'v1.0'** — Changed `text = "v$versionName • Maintained by Lucid"` to `text = "v$versionName"` on the badge Surface below the DomChat logo. The badge retains black background (`Color(0xFF000000)`) and glassy border (`BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f))`). The separate "Maintained by Lucid" entry in the Project section remains unchanged as it's a different UI element.
+1. **Tighten GroupTabsRow spacing** — `Arrangement.spacedBy(8.dp)` → `Arrangement.spacedBy(4.dp)` in `GroupTabsRow` Row. Applied once; verified at `GroupTabsRow` definition.
 
-2. **ChatPage.kt — Black background + glass border for confirmation dialogs** — Replaced both `AlertDialog` composables (user message regeneration confirmation at line ~1868 and message deletion confirmation at ~1934) with `Dialog` + `Surface` combinations using `Color(0xFF000000)` background, `AppShapes.Dialog` shape, and `LiquidGlassTokens.SpecularBorderSubtle` border. This ensures these dialogs consistently use the unified black glass theme.
+2. **Left-align upload button** — `.align(Alignment.CenterVertically)` → `.align(Alignment.CenterStart)` on both grid-view (line ~658) and list-view (line ~993) Upload Character Surface modifiers. Two occurrences replaced via `replaceAll`; both verified.
 
-3. **Custom initial message popup — Reduced corner radius, refined glassy borders** — Changed `CustomGreetingDialog` corner radius from `AppShapes.Dialog` (28.dp) to `RoundedCornerShape(20.dp)` on both the Surface shape and border. Refined the glass border to use `LiquidGlassTokens.SpecularBorderSubtle` consistently.
+3. **Group filtering isolation** — Added `val groupId: String? = null` field to `Assistant` data class. Added `selectedGroupId` to `LaunchedEffect` dependency list. New `groupFiltered` step filters `tagFiltered` by `char.groupId == selectedGroupId` (null = show all). Sort sources updated from `tagFiltered` → `groupFiltered`. Persisted group moves via `vm.updateAssistant(char.copy(groupId = targetGroupId))`.
 
-4. **DomChatGlassButton.kt — Settings pages: white buttons → black background + glass border** — Changed `DomChatGlassPillButton` background from `Color(0xFFFFFFFF)` (white) to `Color(0xFF000000).copy(alpha = 0.15f)` (black glass), disabled state from white to `Color(0xFF000000).copy(alpha = 0.05f)`. Text color changed from black (`Color(0xFF000000)`) to white (`Color.White`). Icon tint changed from black to white. This makes all `DomChatGlassPillButton` instances across Settings pages use the black glass theme.
+4. **Eliminate duplicate delete popups** — Removed inline `AlertDialog` delete confirmation block (was between Inspector Sheet and Export Dialog). Kept single `UniversalDestructiveConfirmDialog` (animated, vertical-centered Dialog, no cut-off). Dialog message now states "Associated chat sessions will be preserved in your history."
 
-5. **ChatPage.kt — Chat pages: white buttons → glass-themed variant** — The `DomChatGlassPillButton` change (#4 above) applies to chat pages as well, replacing white backgrounds with translucent black glass (`Color(0xFF000000).copy(alpha = 0.15f)`) and white text. No other white `Button` components exist in ChatPage.kt (the save button in CustomGreetingDialog already used `Color(0xFF000000)`).
+5. **'All' full-width distortion** — Added `.wrapContentWidth()` to all three tab Surfaces in `GroupTabsRow` ("All", custom groups, "+ New") so tabs size to content instead of forcing full width when no extra groups exist. Changed `allCount` from `filteredAssistants.size` (dynamic/shrinking per group) to `settings.assistants.size` (stable total) in both grid and list GroupTabsRow call sites.
 
-**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all 3 modified files). Pre-existing `!!` at ChatPage.kt lines 2172 and 2190 are untouched. Unified glass card theme `0xFF141520` enforced via `Color(0xFF000000)` surfaces with `LiquidGlassTokens.SpecularBorderSubtle` borders. Existing code style preserved.
+6. **New group creation popup bottom cut-off** — `NewGroupDialog` outer Box `contentAlignment = Alignment.Center` → `Alignment.TopCenter`, preventing content from being vertically centered and cut off at the bottom edge.
+
+**Constraints:** ZERO `!!` force-unwraps (grep-confirmed across all touched files). Unified glass card theme `0xFF141520` unchanged — no theme constants altered. Existing 4-space indent and import grouping preserved.
 
 ## Call Chain & Architecture
 
 ```
-About page flow:
-User opens Settings → About
-  → DomChatAboutContent renders with badge showing "v$versionName" (no "Maintained by Lucid")
-  → Badge Surface: Color(0xFF000000) + SpecularBorderSubtle border + RoundedCornerShape(8.dp)
-
-Glass button flow (Settings & Chat pages):
-User taps DomChatGlassPillButton
-  → Surface with Color(0xFF000000).copy(alpha = 0.15f) background (black glass)
-  → BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-  → ButtonPill shape, white text, haptic feedback on tap
-
-Confirmation dialog flow (ChatPage):
-User triggers delete/regenerate action
-  → Dialog + Surface with Color(0xFF000000) + SpecularBorderSubtle border + AppShapes.Dialog shape
-  → TextButtons with white text on black background
-
-CustomGreetingDialog flow:
-User triggers custom greeting edit
-  → Dialog + Surface with Color(0xFF000000) + SpecularBorderSubtle border + RoundedCornerShape(20.dp)
-  → OutlinedTextField + TextButton cancel + Button save (black background)
+User taps GroupTabsRow tab
+  → onGroupSelected(groupId) → selectedGroupId = groupId
+  → LaunchedEffect(settings.assistants, ..., selectedGroupId) recomputes
+      withContext(Dispatchers.Default) {
+        base = settings.assistants (search-filtered)
+        tagFiltered = base (tag-filtered)
+        groupFiltered = tagFiltered.filter { char.groupId == selectedGroupId }
+        sorted = groupFiltered.sortedBy(...)
+        filteredAssistants = distinctSorted  (Main dispatcher)
+      }
+  → LazyVerticalGrid/LazyColumn items(filteredAssistants) render only group members
 ```
 
-Architecture boundaries: UI layer renders state + emits intents only. ViewModels manage coroutines in viewModelScope. No direct repository access from UI.
+```
+User long-presses character card
+  → characterToMove = char, showMoveToGroupDialog = true
+  → CharacterActionPopover onMoveToGroup(groupId)
+      → updated = char.copy(groupId = targetGroupId)
+      → scope.launch { vm.updateAssistant(updated) }  (viewModelScope → settingsStore.update → DataStore)
+      → selectedGroupId = targetGroupId (re-filter hub)
+```
+
+```
+User taps delete in popover / inspector
+  → characterToDelete = char
+  → UniversalDestructiveConfirmDialog (single instance)
+  → onConfirm → vm.removeAssistant(char) → optimistic settings removal
+      → deferred tombstone on Dispatchers.IO after undo window
+      → toaster shows "Deleted X" with Undo action
+```
+
+Architectural boundaries per AGENTS.md: UI layer only renders state + emits intents; ViewModel (`AssistantVM`) exposes `settings` StateFlow and manages coroutines in `viewModelScope`; Repository/DataStore is single source of truth. Group persistence routes through `settingsStore.update { current.copy(assistants = ...) }` — same path as all assistant mutations.
 
 ## Recomposition & Memory Safety
 
-- All `Surface` and `Dialog` composables are stateless — zero recomposition impact.
-- `Color(0xFF000000)` constants are compile-time literals — no allocation.
-- `LiquidGlassTokens.SpecularBorderSubtle` is a `Brush` — created once, reused across recompositions.
-- `RoundedCornerShape(20.dp)` is a value class — no allocation overhead.
-- No `SnapshotStateList` passed directly to `items()`. No naked objects in Compose.
-- Zero `!!` force-unwraps introduced.
+- `GroupTabsRow` spacing change is stateless Modifier geometry; no state captured, zero recomposition side effects.
+- `.align(Alignment.CenterStart)` on upload button is a stateless Modifier; no allocation per frame beyond the modifier chain itself.
+- `groupFiltered` is computed inside `LaunchedEffect` on `Dispatchers.Default`, then assigned to `filteredAssistants` (a `mutableStateOf`) on `Dispatchers.Main`. Snapshot rule followed: value computed off-main, then `withContext(Dispatchers.Main) { filteredAssistants = distinctSorted }`.
+- `filteredAssistants` read via `remember { mutableStateOf(...) }`; Lazy grids/columns use `items(..., key = { it.id.toString() })` for stable item identity — no `SnapshotStateList` passed directly to `items()`.
+- `selectedGroupId` is `remember { mutableStateOf<String?>(null) }` — remembered, lifecycle-aware UI state.
+- Group tabs use `.wrapContentWidth()` — no full-width distortion; tabs size to content, eliminating wasted space when no extra groups exist.
+- `NewGroupDialog` now `Alignment.TopCenter` — content anchored to top, no bottom cut-off; dialog Surface has `.widthIn(max = 420.dp)` capped width.
+- No `!!` force-unwraps anywhere; all nullable access uses safe calls, Elvis, or defensive guards.
+- No naked objects in Compose — all state `remember`ed or collected via `collectAsStateWithLifecycle`.
 
 ## Threading & Dispatchers
 
-- All UI rendering: `Dispatchers.Main` (correct — Compose UI layer).
-- No background threading introduced in any of the 3 modified files.
-- Button click handlers delegate to existing ViewModel methods which run in viewModelScope.
-- No `Dispatchers.Main` violations introduced.
+- All Compose UI/layout edits execute on `Dispatchers.Main` (correct for UI layer).
+- Group filter computation (`tagFilter` → `groupFilter` → `sorted`) runs on `Dispatchers.Default` inside `LaunchedEffect`, then results posted to Main — no Main-thread blocking on hundreds of characters.
+- `vm.updateAssistant(updated)` launches on `viewModelScope` → `settingsStore.update` (DataStore, IO-bound) — not on Main.
+- `vm.removeAssistant(char)` optimistic removal on `viewModelScope`; deferred Room/database tombstone on `appScope.launch` → `Dispatchers.IO` (per `loadDeleteImpact`/`removeAssistant` in AssistantVM).
+- Import/export parsers use `withContext(Dispatchers.IO)` — unchanged, no Main-thread disk access.
+- No `Dispatchers.Main` violations introduced; no background work on Main dispatcher.
 
 ## Offline & Error State Handling
 
-- **Offline:** All changes are purely local UI theming — no network dependency.
-- **Loading:** No loading states needed — button/dialog theme changes are instant.
-- **Success:** Button taps provide haptic feedback via `rememberPremiumHaptics()`.
-- **Exception:** No new error paths introduced. Existing error handling in confirmation dialogs (try/catch in ViewModel calls) remains intact.
-- **Edge cases:** Disabled state of `DomChatGlassPillButton` uses `Color(0xFF000000).copy(alpha = 0.05f)` for subtle disabled appearance.
+- **Offline:** Groups, assistants, and settings live entirely in local DataStore/Room — no network dependency for group filtering, tab rendering, or delete. File import uses local document picker (`OpenDocument`) and local `AssistantExportImport.parseImport` — fully offline-capable.
+- **Loading:** `loadError` state is captured; `CharacterHubErrorCard` renders when `loadError != null` (isolates per-load failure without taking down the gallery).
+- **Success:** Toaster confirms create/move/delete via `toaster?.show(...)`; undo available for delete via `vm.undoRemoveAssistant`.
+- **Exception:** `LaunchedEffect` catch block sets `loadError = e` and `filteredAssistants = emptyList()` on Main. `vm.updateAssistant`/`vm.removeAssistant` catch exceptions internally and log via `PlatformLog.e` — no crash propagation.
+- **Empty state:** `allCount = settings.assistants.size` is stable (not filtered), so the "All" tab label doesn't shrink/distort when a group is selected and has no members. Group tabs width-collapse via `.wrapContentWidth()` when only "All" exists.

@@ -319,7 +319,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var filteredAssistants by remember { mutableStateOf(settings.assistants) }
 
     // Fast indexed background search: searches name, creator without scanning multi-KB prompt blobs
-    LaunchedEffect(settings.assistants, debouncedQuery, sortOption, selectedTagIds) {
+    LaunchedEffect(settings.assistants, debouncedQuery, sortOption, selectedTagIds, selectedGroupId) {
         try {
             withContext(Dispatchers.Default) {
                 val base = if (debouncedQuery.isEmpty()) {
@@ -335,12 +335,18 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 } else {
                     base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId.toString()) } }
                 }
+                // Group isolation: only show characters belonging to the selected group (null = "All")
+                val groupFiltered = if (selectedGroupId == null) {
+                    tagFiltered
+                } else {
+                    tagFiltered.filter { char -> char.groupId == selectedGroupId }
+                }
                 val sorted = when (sortOption) {
-                    CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
-                    CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
+                    CharacterSortOption.NAME -> groupFiltered.sortedBy { it.name.lowercase() }
+                    CharacterSortOption.CREATOR -> groupFiltered.sortedBy { it.creator?.lowercase() ?: "" }
                     CharacterSortOption.RECENT -> {
-                        val activityMap = tagFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
-                        tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
+                        val activityMap = groupFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
+                        groupFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
                     }
                 }
                 val distinctSorted = sorted.distinctBy { it.id }
@@ -655,7 +661,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
                                     .wrapContentWidth()
-                                    .align(Alignment.CenterVertically)
+                                    .align(Alignment.CenterStart)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Row(
@@ -709,7 +715,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         GroupTabsRow(
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
-                            allCount = filteredAssistants.size,
+                            allCount = settings.assistants.size,
                             onGroupSelected = { groupId ->
                                 selectedGroupId = groupId
                             },
@@ -990,7 +996,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
                                     .wrapContentWidth()
-                                    .align(Alignment.CenterVertically)
+                                    .align(Alignment.CenterStart)
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Row(
@@ -1044,7 +1050,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         GroupTabsRow(
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
-                            allCount = filteredAssistants.size,
+                            allCount = settings.assistants.size,
                             onGroupSelected = { groupId ->
                                 selectedGroupId = groupId
                             },
@@ -1229,58 +1235,6 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         )
     }
 
-    // Delete confirmation dialog
-    characterToDelete?.let { char ->
-        AlertDialog(
-            onDismissRequest = { characterToDelete = null },
-            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
-            title = {
-                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-                Text(
-                    text = "Delete ${char.name}?",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            },
-            text = {
-                Text(
-                    text = "This will permanently remove this character from your library. Associated chat sessions will be preserved in your history.",
-                    fontSize = 13.5.sp,
-                    color = Color(0xFFAAAAAA)
-                )
-            },
-            confirmButton = {
-                DomChatGlassPillButton(
-                    text = "Delete",
-                    destructive = true,
-                    onClick = {
-                        val toDelete = char
-                        characterToDelete = null
-                        if (inspectingAssistant?.id == toDelete.id) {
-                            inspectingAssistant = null
-                        }
-                        vm.removeAssistant(toDelete)
-                        toaster?.show(
-                            message = "Deleted ${toDelete.name}",
-                            action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                label = "Undo",
-                                onClick = { vm.undoRemoveAssistant(toDelete) }
-                            )
-                        )
-                    }
-                )
-            },
-            dismissButton = {
-                DomChatGlassPillButton(
-                    text = "Cancel",
-                    onClick = { characterToDelete = null }
-                )
-            }
-        )
-    }
-
     // Export options dialog
     showExportDialogFor?.let { char ->
         AlertDialog(
@@ -1390,10 +1344,13 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 showMoveToGroupDialog = false
             },
             onMoveToGroup = { groupId ->
-                // Group assignment stored in-memory for session
+                // Persist group assignment on the assistant
+                val targetGroupId = if (groupId.isBlank()) null else groupId
+                val updated = char.copy(groupId = targetGroupId)
+                scope.launch { vm.updateAssistant(updated) }
                 showMoveToGroupDialog = false
                 characterToMove = null
-                selectedGroupId = if (groupId.isBlank()) null else groupId
+                selectedGroupId = targetGroupId
                 toaster?.show("Moved '${char.effectiveDisplayName}' to group", ToastType.Success)
             }
         )
@@ -1404,7 +1361,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         UniversalDestructiveConfirmDialog(
             visible = true,
             title = "Delete character?",
-            message = "This will permanently remove \"${char.effectiveDisplayName}\" from your library.",
+            message = "This will permanently remove \"${char.effectiveDisplayName}\" from your library. Associated chat sessions will be preserved in your history.",
             onConfirm = {
                 vm.removeAssistant(char)
                 characterToDelete = null
@@ -2922,7 +2879,7 @@ private fun GroupTabsRow(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // "All" tab
         val allLabel = "All ($allCount)"
@@ -2931,7 +2888,7 @@ private fun GroupTabsRow(
             shape = RoundedCornerShape(20.dp),
             color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier.wrapContentWidth().padding(horizontal = 4.dp)
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -2954,7 +2911,7 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.padding(horizontal = 4.dp)
+                modifier = Modifier.wrapContentWidth().padding(horizontal = 4.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -2976,7 +2933,7 @@ private fun GroupTabsRow(
             shape = RoundedCornerShape(20.dp),
             color = Color.Transparent,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier.wrapContentWidth().padding(horizontal = 4.dp)
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -3020,7 +2977,7 @@ private fun NewGroupDialog(
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.65f))
                 .padding(20.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.TopCenter
         ) {
             Surface(
                 modifier = Modifier

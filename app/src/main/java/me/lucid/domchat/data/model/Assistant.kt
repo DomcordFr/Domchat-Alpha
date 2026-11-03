@@ -42,6 +42,7 @@ data class AssistantUISettings(
 data class Assistant(
     val id: Uuid = Uuid.random(),
     val workspaceId: Uuid? = null,
+    val groupId: String? = null, // Character group/folder association (null = "All")
     val chatModelId: Uuid? = null, // 如果为null, 使用全局默认模型
     val ttsVoiceId: Uuid? = null,
     val ttsAutoplayMode: me.lucid.domchat.data.datastore.TtsAutoplayMode? = null,
