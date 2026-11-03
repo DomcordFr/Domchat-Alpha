@@ -141,6 +141,7 @@ import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
 import me.lucid.domchat.ui.components.chat.NewChatContent
 import me.lucid.domchat.ui.components.nav.DomChatMenuButton
 
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.UpdateDialog
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.Tooltip
@@ -2394,89 +2395,98 @@ private fun CustomGreetingDialog(
     if (!visible) return
     val haptics = rememberPremiumHaptics()
     var greetingText by remember(visible) { mutableStateOf("") }
-    Dialog(onDismissRequest = onDismissRequest) {
-        Surface(
-            shape = AppShapes.Dialog,
-            color = Color(0xFF000000),
-            tonalElevation = 12.dp,
+    // Vertically centered, wraps its height, with screen margins so it is never
+    // cut off at the top or bottom by the keyboard or screen edges.
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = androidx.compose.ui.window.DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
+    ) {
+        Box(
             modifier = Modifier
-                .widthIn(max = 420.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .imePadding(),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFF000000),
+                tonalElevation = 12.dp,
                 modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.chat_custom_greeting_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
-                OutlinedTextField(
-                    value = greetingText,
-                    onValueChange = { greetingText = it },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.chat_custom_greeting_placeholder),
-                            color = Color.White.copy(alpha = 0.5f),
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 120.dp),
-                    maxLines = Int.MAX_VALUE,
-                    minLines = 6,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF000000),
-                        unfocusedContainerColor = Color(0xFF000000),
-                        disabledContainerColor = Color(0xFF000000),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color.White.copy(alpha = 0.35f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
-                        cursorColor = Color.White,
+                    .wrapContentHeight()
+                    .widthIn(max = 420.dp)
+                    .border(
+                        0.5.dp,
+                        LiquidGlassTokens.SpecularBorderSubtle,
+                        RoundedCornerShape(16.dp)
                     ),
-                    shape = AppShapes.CardMedium,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    TextButton(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            onDismissRequest()
+                    Text(
+                        text = stringResource(R.string.chat_custom_greeting_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                    OutlinedTextField(
+                        value = greetingText,
+                        onValueChange = { greetingText = it },
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.chat_custom_greeting_placeholder),
+                                color = Color.White.copy(alpha = 0.5f),
+                            )
                         },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 120.dp),
+                        maxLines = Int.MAX_VALUE,
+                        minLines = 6,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF000000),
+                            unfocusedContainerColor = Color(0xFF000000),
+                            disabledContainerColor = Color(0xFF000000),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                            cursorColor = Color.White,
                         ),
+                        shape = AppShapes.CardMedium,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(text = stringResource(R.string.cancel))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            onSave(greetingText)
-                        },
-                        enabled = greetingText.trim().isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF000000),
-                            contentColor = Color.White,
-                            disabledContainerColor = Color(0xFF000000).copy(alpha = 0.4f),
-                            disabledContentColor = Color.White.copy(alpha = 0.4f),
-                        ),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    ) {
-                        Text(
+                        TextButton(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onDismissRequest()
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White.copy(alpha = 0.7f),
+                            ),
+                        ) {
+                            Text(text = stringResource(R.string.cancel))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        DomChatGlassPillButton(
                             text = stringResource(R.string.save),
-                            fontWeight = FontWeight.SemiBold,
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onSave(greetingText)
+                            },
+                            enabled = greetingText.trim().isNotBlank(),
                         )
                     }
                 }

@@ -44,6 +44,8 @@ fun DomChatGlassPillButton(
     destructive: Boolean = false,
     accent: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 7.dp),
+    containerColor: Color? = null,
+    contentColor: Color? = null,
     content: (@Composable RowScope.() -> Unit)? = null,
 ) {
     val haptics = rememberPremiumHaptics()
@@ -58,11 +60,19 @@ fun DomChatGlassPillButton(
         accent = accent,
         enabled = enabled,
         contentPadding = contentPadding,
+        containerColor = containerColor,
+        contentColor = contentColor,
         content = content,
         text = text,
     )
 }
 
+/**
+ * Dark glassy pill button.
+ * Default (no containerColor) is a translucent frosted glass surface for chat pages
+ * (no solid white, no solid black). Settings pages can pass `containerColor = Color(0xFF000000)`
+ * for a black glass + specular border variant.
+ */
 @Composable
 private fun DomChatGlassPillButtonContent(
     onClick: () -> Unit,
@@ -72,19 +82,32 @@ private fun DomChatGlassPillButtonContent(
     destructive: Boolean = false,
     accent: Boolean = false,
     contentPadding: PaddingValues,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
     text: String,
     content: (@Composable RowScope.() -> Unit)? = null,
 ) {
+    // Default chat-page style: translucent frosted glass (never white, never opaque black)
+    val bgColor = containerColor.takeIf { it != null } ?: Color(0xFF000000).copy(alpha = 0.15f)
+    // Default text/icons are white on dark glass; destructive overrides to red.
+    val resolvedTextColor = contentColor.takeIf { it != null } ?: when {
+        destructive -> Color(DOMCHAT_DESTRUCTIVE)
+        else -> Color.White
+    }
+    val resolvedIconTint = when {
+        destructive -> Color(DOMCHAT_DESTRUCTIVE)
+        else -> resolvedTextColor
+    }
+    val borderBrush = when {
+        destructive -> BorderStroke(0.5.dp, Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.6f)).brush
+        else -> LiquidGlassTokens.SpecularBorderSubtle
+    }
     Surface(
         onClick = onClick,
         enabled = enabled,
         shape = AppShapes.ButtonPill,
-        color = if (enabled) Color(0xFFFFFFFF) else Color(0xFFFFFFFF).copy(alpha = 0.45f),
-        border = BorderStroke(
-            0.5.dp,
-            if (destructive) BorderStroke(0.5.dp, Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.6f)).brush
-            else LiquidGlassTokens.SpecularBorderSubtle
-        ),
+        color = if (enabled) bgColor else bgColor.copy(alpha = 0.45f),
+        border = BorderStroke(0.5.dp, borderBrush),
         tonalElevation = 0.dp,
         modifier = modifier,
     ) {
@@ -98,10 +121,7 @@ private fun DomChatGlassPillButtonContent(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
-                    tint = when {
-                        destructive -> Color(DOMCHAT_DESTRUCTIVE)
-                        else -> Color(0xFF000000)
-                    }
+                    tint = resolvedIconTint
                 )
             }
             Text(
@@ -110,9 +130,8 @@ private fun DomChatGlassPillButtonContent(
                     fontWeight = FontWeight.SemiBold
                 ),
                 color = when {
-                    !enabled -> Color(0xFF000000).copy(alpha = 0.4f)
-                    destructive -> Color(DOMCHAT_DESTRUCTIVE)
-                    else -> Color(0xFF000000)
+                    !enabled -> resolvedTextColor.copy(alpha = 0.4f)
+                    else -> resolvedTextColor
                 },
                 maxLines = 1,
             )
