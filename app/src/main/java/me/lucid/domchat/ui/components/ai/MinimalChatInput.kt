@@ -2426,7 +2426,7 @@ fun MinimalChatInput(
                         ) {
                             Surface(
                                 onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
-                                modifier = Modifier.fillMaxWidth()),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
@@ -2442,7 +2442,7 @@ fun MinimalChatInput(
 
                             Surface(
                                 onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
-                                modifier = Modifier.fillMaxWidth()),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
