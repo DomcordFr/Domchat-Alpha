@@ -858,6 +858,8 @@
     <string name="setting_provider_page_stream_options">Stream options</string>
     <string name="setting_provider_page_image_modalities">Image response modalities</string>
     <string name="setting_provider_page_reasoning_replay">Reasoning replay</string>
+    <string name="setting_provider_page_generation_params_title">Generation parameters</string>
+    <string name="setting_provider_page_generation_params_desc">Override sampling parameters for this model. Leave defaults unless the model needs specific values.</string>
     <string name="setting_provider_page_custom_reasoning_payload">Custom reasoning payload</string>
     <string name="setting_provider_page_compatibility_auto">Auto</string>
     <string name="setting_provider_page_compatibility_on">On</string>

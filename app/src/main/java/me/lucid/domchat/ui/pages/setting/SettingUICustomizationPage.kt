@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
 import me.lucid.domchat.data.datastore.DisplaySetting
+import me.lucid.domchat.data.datastore.getCurrentAssistant
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
@@ -521,8 +522,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                 }
 
                 SettingsGroup(
-                    title = "Text Styling",
-                    shape = RoundedCornerShape(12.dp)
+                    title = "Text Styling"
                 ) {
                     Column(
                         modifier = Modifier

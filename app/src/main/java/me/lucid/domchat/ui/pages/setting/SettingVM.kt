@@ -96,6 +96,16 @@ class SettingVM(
     /**
      * Clean up icons that are no longer used by any model/provider.
      */
+    fun updateAssistant(assistant: Assistant) {
+        viewModelScope.launch {
+            settingsStore.update { current ->
+                current.copy(
+                    assistants = current.assistants.map { if (it.id == assistant.id) assistant else it }
+                )
+            }
+        }
+    }
+
     private fun cleanupUnusedIcons(settings: Settings) {
         val iconManager = IconStorageManager.getInstance(context, platformHttpClient)
         
