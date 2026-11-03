@@ -163,7 +163,7 @@ private fun RegexEditorCard(
                     text = regex.name,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth()).widthIn(max = 200.dp)
+                    modifier = Modifier.weight(1f).widthIn(max = 200.dp)
                 )
                 HapticSwitch(
                     checked = regex.enabled,

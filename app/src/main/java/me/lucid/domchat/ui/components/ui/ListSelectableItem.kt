@@ -110,7 +110,7 @@ fun ListSelectableItem(
                 )
             }
             Box(
-                modifier = Modifier.fillMaxWidth())
+                modifier = Modifier.weight(1f)
             ) {
                 content()
             }

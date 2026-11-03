@@ -127,7 +127,7 @@ fun ShareSheet(
                                 currentQrIndex = (currentQrIndex - 1).coerceAtLeast(0)
                             },
                             enabled = currentQrIndex > 0,
-                            modifier = Modifier.fillMaxWidth()),
+                            modifier = Modifier.weight(1f),
                             shape = MaterialTheme.shapes.large
                         ) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
@@ -139,7 +139,7 @@ fun ShareSheet(
                                 currentQrIndex = (currentQrIndex + 1).coerceAtMost(qrValues.lastIndex)
                             },
                             enabled = currentQrIndex < qrValues.lastIndex,
-                            modifier = Modifier.fillMaxWidth()),
+                            modifier = Modifier.weight(1f),
                             shape = MaterialTheme.shapes.large
                         ) {
                             Text(stringResource(R.string.provider_share_qr_next))

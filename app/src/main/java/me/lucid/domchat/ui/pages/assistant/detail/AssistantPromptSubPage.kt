@@ -233,7 +233,7 @@ fun AssistantPromptSubPage(
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Spacer(Modifier.fillMaxWidth())
+                            Spacer(Modifier.weight(1f))
                             Icon(
                                 if (introsExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
                                 contentDescription = null
@@ -269,7 +269,7 @@ fun AssistantPromptSubPage(
                                                         style = MaterialTheme.typography.labelMedium,
                                                         color = MaterialTheme.colorScheme.primary
                                                     )
-                                                    Spacer(Modifier.fillMaxWidth())
+                                                    Spacer(Modifier.weight(1f))
                                                     IconButton(
                                                         onClick = {
                                                             haptics.perform(HapticPattern.Tick)
@@ -407,7 +407,7 @@ fun AssistantPromptSubPage(
                             )
                         }
                         val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-                        Spacer(Modifier.fillMaxWidth())
+                        Spacer(Modifier.weight(1f))
                         IconButton(
                             onClick = {
                                 focusManager.clearFocus()

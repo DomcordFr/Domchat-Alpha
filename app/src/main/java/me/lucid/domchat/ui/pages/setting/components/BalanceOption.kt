@@ -56,7 +56,7 @@ fun SettingProviderBalanceOption(
         ) {
             Text(
                 text = stringResource(R.string.setting_provider_page_balance_info),
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
             )
             IconButton(
                 onClick = {

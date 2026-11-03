@@ -332,7 +332,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
 
                             Spacer(modifier = Modifier.width(14.dp))
 
-                            Column(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)

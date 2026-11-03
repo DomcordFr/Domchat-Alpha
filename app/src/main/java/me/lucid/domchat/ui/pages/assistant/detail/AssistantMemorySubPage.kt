@@ -587,7 +587,7 @@ private fun MemorySettingsItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth()).padding(end = 8.dp),
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
@@ -1246,7 +1246,7 @@ private fun MemoryItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Show type and embedding badges only when needed
@@ -1357,7 +1357,7 @@ private fun MemoryDebugger(
                     value = query,
                     onValueChange = setQuery,
                     placeholder = { Text(stringResource(R.string.assistant_memory_test_query_placeholder)) },
-                    modifier = Modifier.fillMaxWidth()),
+                    modifier = Modifier.weight(1f),
                     singleLine = true,
                     shape = RoundedCornerShape(10.dp),
                     colors = TextFieldDefaults.colors(

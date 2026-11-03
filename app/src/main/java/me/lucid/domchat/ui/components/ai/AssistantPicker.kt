@@ -117,7 +117,7 @@ fun AssistantPicker(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(Modifier.fillMaxWidth())
+                Spacer(Modifier.weight(1f))
 
                 UIAvatar(
                     name = state.currentAssistant.name.ifEmpty { defaultAssistantName },
@@ -345,8 +345,9 @@ fun AssistantPickerSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f)
                         .padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = if (searchQuery.isNotBlank()) "No characters found for \"$searchQuery\"" else "No characters available",
@@ -357,6 +358,7 @@ fun AssistantPickerSheet(
             } else {
                 LazyColumn(
                     modifier = Modifier
+                        .weight(1f)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -405,7 +407,7 @@ fun AssistantPickerSheet(
                         }
 
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(

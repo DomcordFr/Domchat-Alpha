@@ -575,7 +575,7 @@ private fun PreviewCard(
                             rowActions.forEachIndexed { colIndex, action ->
                                 val isLastOdd = rowIndex == rows.lastIndex && rowActions.size == 1
                                 PreviewActionButton(
-                                    modifier = Modifier.fillMaxWidth()if (isLastOdd) 2f else 1f),
+                                    modifier = Modifier.weight(if (isLastOdd) 2f else 1f),
                                     action = action,
                                     shape = quickAskGroupedButtonShape(rowIndex, colIndex, rows.size, rowActions.size),
                                     isBlack = amoledMode && isDarkMode,
@@ -635,7 +635,7 @@ private fun PreviewActionButton(
                 color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth())
+                modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Rounded.Edit,
@@ -691,7 +691,7 @@ private fun ActionCard(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(

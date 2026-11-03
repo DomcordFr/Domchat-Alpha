@@ -175,7 +175,7 @@ fun ExportContentSelectionDialog(
                             allKeys.forEach { selectedKeyMap[it.entry.id] = true }
                         },
                         shape = AppShapes.ButtonPill,
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text(stringResource(R.string.backup_export_select_all))
                     }
@@ -195,7 +195,7 @@ fun ExportContentSelectionDialog(
                             allKeys.forEach { selectedKeyMap[it.entry.id] = false }
                         },
                         shape = AppShapes.ButtonPill,
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text(stringResource(R.string.backup_export_deselect_all))
                     }
@@ -258,7 +258,7 @@ fun ExportContentSelectionDialog(
                                         modifier = Modifier.size(22.dp),
                                     )
 
-                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = stringResource(option.titleRes),
                                             style = MaterialTheme.typography.bodyMedium,
@@ -371,7 +371,7 @@ fun ExportContentSelectionDialog(
                                                             style = MaterialTheme.typography.bodySmall,
                                                             maxLines = 1,
                                                             overflow = TextOverflow.Ellipsis,
-                                                            modifier = Modifier.fillMaxWidth()),
+                                                            modifier = Modifier.weight(1f),
                                                         )
                                                         Checkbox(
                                                             checked = keyChecked,

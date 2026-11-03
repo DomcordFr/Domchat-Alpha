@@ -83,7 +83,7 @@ fun SherpaInstalledModelCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(modifier = Modifier.fillMaxWidth()), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     text = model.displayName,
                     style = MaterialTheme.typography.titleMedium,
@@ -142,7 +142,7 @@ fun SherpaDownloadableModelCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         model.name,
                         style = MaterialTheme.typography.titleMedium,

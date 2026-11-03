@@ -87,7 +87,7 @@ fun CustomHeaders(headers: List<CustomHeader>, onUpdate: (List<CustomHeader>) ->
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(12.dp),
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
                         OutlinedTextField(
                             value = headerName,
                             onValueChange = {
@@ -198,7 +198,7 @@ fun CustomBodies(customBodies: List<CustomBody>, onUpdate: (List<CustomBody>) ->
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(12.dp)
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
                         OutlinedTextField(
                             value = bodyKey,
                             onValueChange = {

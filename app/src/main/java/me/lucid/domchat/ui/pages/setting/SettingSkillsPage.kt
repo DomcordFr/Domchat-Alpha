@@ -644,7 +644,7 @@ private fun SkillCard(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
@@ -694,7 +694,7 @@ private fun SkillAssistantToggleRow(
         Text(
             text = assistant.name.ifBlank { stringResource(R.string.text_selection_assistant) },
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth()),
+            modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -817,7 +817,7 @@ fun SkillEditorSheet(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -871,7 +871,7 @@ fun SkillEditorSheet(
                                 }
                             },
                             stateKey = "skill_name_${skill?.id ?: "new"}",
-                            modifier = Modifier.fillMaxWidth()),
+                            modifier = Modifier.weight(1f),
                             placeholder = stringResource(R.string.skills_page_name_placeholder),
                             singleLine = true,
                             onPendingChange = { namePending = it },
@@ -1347,7 +1347,7 @@ private fun SkillPackageFilesCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Package files", style = MaterialTheme.typography.titleMedium)
                     Text(
                         "${skill.name.ifBlank { "skill" }}/ · ${entries.count { !it.isDirectory }} files",

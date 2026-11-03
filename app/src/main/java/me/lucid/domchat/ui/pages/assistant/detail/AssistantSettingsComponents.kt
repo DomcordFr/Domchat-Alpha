@@ -165,7 +165,7 @@ fun AssistantSettingsItem(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth())
+                    .weight(1f)
                     .padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {

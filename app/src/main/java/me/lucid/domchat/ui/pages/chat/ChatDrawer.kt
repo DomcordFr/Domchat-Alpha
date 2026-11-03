@@ -238,7 +238,7 @@ fun ChatDrawerContent(
                     )
 
                     Column(
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         Row(
@@ -331,7 +331,7 @@ fun ChatDrawerContent(
                 onSearchExpandedChange = { isSearchExpanded = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxWidth()),
+                    .weight(1f),
                 onClick = {
                     completedGenerationIds = completedGenerationIds - it.id
                     // Only pass search query if the match was from message content (not title)
@@ -486,7 +486,7 @@ fun ChatDrawerContent(
                             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                             border = pillBorder,
                             modifier = Modifier
-                                .fillMaxWidth())
+                                .weight(1f)
                                 .height(actionButtonSize)
                                 .domChatBlurEffect(itemColor, me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
                                 .clip(me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
@@ -505,7 +505,7 @@ fun ChatDrawerContent(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth())
+                                        .weight(1f)
                                         .fillMaxHeight(),
                                     contentAlignment = Alignment.CenterStart,
                                 ) {
@@ -696,7 +696,7 @@ fun CollapsedChatSideRail(
                 )
             }
 
-            Spacer(Modifier.fillMaxWidth())
+            Spacer(Modifier.weight(1f))
 
             Surface(
                 onClick = onOpenAssistant,

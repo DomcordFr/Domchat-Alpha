@@ -149,7 +149,7 @@ fun ChatInfoBottomSheet(
 
                 Spacer(modifier = Modifier.width(14.dp))
 
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = assistant.name,
                         style = MaterialTheme.typography.titleLarge.copy(
@@ -248,14 +248,14 @@ fun ChatInfoBottomSheet(
                     title = "Input Tokens",
                     value = numberFormatter.format(estimatedInputTokens),
                     subtitle = "Prompts & History",
-                    modifier = Modifier.fillMaxWidth()),
+                    modifier = Modifier.weight(1f),
                     isAmoled = amoledMode
                 )
                 MetricCard(
                     title = "Output Tokens",
                     value = numberFormatter.format(estimatedOutputTokens),
                     subtitle = "AI Generations",
-                    modifier = Modifier.fillMaxWidth()),
+                    modifier = Modifier.weight(1f),
                     isAmoled = amoledMode
                 )
             }
@@ -270,14 +270,14 @@ fun ChatInfoBottomSheet(
                     title = "Messages",
                     value = "${currentMessages.size}",
                     subtitle = "${conversation.messageNodes.size} total nodes",
-                    modifier = Modifier.fillMaxWidth()),
+                    modifier = Modifier.weight(1f),
                     isAmoled = amoledMode
                 )
                 MetricCard(
                     title = "Active Persona",
                     value = activePersona.name,
                     subtitle = if (activePersona.description.isNotBlank()) "Lore active" else "Default",
-                    modifier = Modifier.fillMaxWidth()),
+                    modifier = Modifier.weight(1f),
                     isAmoled = amoledMode
                 )
             }

@@ -388,7 +388,7 @@ private fun SettingsPaneItem(
                     Icon(entry.icon, null, modifier = Modifier.size(if (isChild) 16.dp else 19.dp))
                 }
             }
-            Column(Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
                 Text(
                     text = entry.title,
                     style = if (isChild) {

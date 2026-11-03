@@ -118,7 +118,7 @@ fun AssistantSkillsSubPage(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         Text(
@@ -225,7 +225,7 @@ private fun SkillSelectionCard(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(

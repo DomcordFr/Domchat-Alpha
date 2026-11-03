@@ -281,7 +281,7 @@ private fun RenderList(
                                 color = LocalContentColor.current,
                                 textDirection = itemDirection.toComposeTextDirection()
                             ),
-                            modifier = Modifier.fillMaxWidth())
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }

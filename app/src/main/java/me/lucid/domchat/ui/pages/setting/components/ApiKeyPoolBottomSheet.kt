@@ -458,7 +458,7 @@ private fun ApiKeyCard(
 
             // 2. Middle Content (Name, Masked Key / Plain Key, Auth Warning)
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Row(

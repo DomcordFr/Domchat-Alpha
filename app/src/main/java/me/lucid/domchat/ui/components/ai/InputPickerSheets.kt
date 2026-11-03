@@ -197,7 +197,7 @@ internal fun SkillsPickerSheet(
                                     tint = if (isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
-                                Column(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = skill.name.ifEmpty { stringResource(R.string.skills_page_unnamed) },
                                         style = MaterialTheme.typography.bodyLarge
@@ -412,7 +412,7 @@ internal fun LorebooksPickerSheet(
                                 }
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
@@ -504,7 +504,7 @@ internal fun PluginsPickerSheet(
                 onUpdateAssistant = onUpdateAssistant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxWidth()
+                    .weight(1f),
             )
         }
     }

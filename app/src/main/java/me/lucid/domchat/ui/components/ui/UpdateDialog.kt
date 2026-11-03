@@ -239,7 +239,7 @@ fun UpdateDialog(
                                 },
                                 shape = buttonShape,
                                 modifier = Modifier
-                                    .fillMaxWidth())
+                                    .weight(1f)
                                     .height(48.dp)
                             ) {
                                 Text("Ignore")
@@ -251,7 +251,7 @@ fun UpdateDialog(
                                 },
                                 shape = buttonShape,
                                 modifier = Modifier
-                                    .fillMaxWidth())
+                                    .weight(1f)
                                     .height(48.dp)
                             ) {
                                 Text("Later")

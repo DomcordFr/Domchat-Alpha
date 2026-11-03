@@ -580,7 +580,7 @@ private fun McpConnectionsSheet(
             )
             Spacer(Modifier.height(16.dp))
             LazyColumn(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
@@ -605,7 +605,7 @@ private fun McpConnectionsSheet(
                             Icon(Icons.Rounded.Add, null, modifier = Modifier.size(40.dp), tint = customServerContentColor)
                             Text(
                                 "Custom MCP server",
-                                modifier = Modifier.fillMaxWidth()),
+                                modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = customServerContentColor,
                             )
@@ -646,7 +646,7 @@ private fun McpConnectionsSheet(
                                 contentColor = itemTextColor,
                             )
                             Column(
-                                modifier = Modifier.fillMaxWidth()),
+                                modifier = Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 Text(
@@ -795,7 +795,7 @@ private fun McpServerItem(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
@@ -932,7 +932,7 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
-                        .fillMaxWidth())
+                        .weight(1f)
                         .fillMaxWidth()
                 ) { page ->
                     when (page) {
@@ -998,7 +998,7 @@ private fun McpCommonOptionsConfigure(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(stringResource(R.string.setting_mcp_page_enable))
-                Spacer(Modifier.fillMaxWidth())
+                Spacer(Modifier.weight(1f))
                 HapticSwitch(
                     checked = config.commonOptions.enable,
                     onCheckedChange = { enabled ->
@@ -1179,7 +1179,7 @@ private fun McpCommonOptionsConfigure(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(1f)) {
                             OutlinedTextField(
                                 value = headerName,
                                 onValueChange = {
@@ -1318,7 +1318,7 @@ private fun McpToolsConfigure(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
@@ -1438,7 +1438,7 @@ private fun McpImportModal(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxWidth()),
+                    .weight(1f),
                 placeholder = {
                     Text(stringResource(R.string.setting_mcp_import_placeholder))
                 },

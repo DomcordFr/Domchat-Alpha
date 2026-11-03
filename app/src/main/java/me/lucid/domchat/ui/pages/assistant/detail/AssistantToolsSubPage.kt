@@ -559,7 +559,7 @@ private fun WorkspaceBindingOption(
                 }
             }
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(

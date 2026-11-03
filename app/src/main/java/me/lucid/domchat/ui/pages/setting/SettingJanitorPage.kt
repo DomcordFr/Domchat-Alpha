@@ -1364,7 +1364,7 @@ private fun JanitorCharacterInspectorSheet(
                             val isSelected = sheetSelectedTab == index
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth())
+                                    .weight(1f)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
                                         if (isSelected) {

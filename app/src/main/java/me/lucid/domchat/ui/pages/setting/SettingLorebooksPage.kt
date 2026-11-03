@@ -556,7 +556,7 @@ private fun LorebookCard(
 
             // Book info
             Column(
-                modifier = Modifier.fillMaxWidth()),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
@@ -700,7 +700,7 @@ internal fun LorebookCreatorSheet(
                 }
                 
                 // Name input
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.lorebooks_page_name),
                         style = MaterialTheme.typography.labelMedium,

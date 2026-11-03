@@ -201,19 +201,19 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             Row(modifier = Modifier.fillMaxSize()) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()systemPercent.toFloat())
+                                        .weight(systemPercent.toFloat())
                                         .fillMaxHeight()
                                         .background(Color(0xFF8B5CF6))
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()historyPercent.toFloat())
+                                        .weight(historyPercent.toFloat())
                                         .fillMaxHeight()
                                         .background(Color(0xFF10B981))
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()memoryPercent.toFloat())
+                                        .weight(memoryPercent.toFloat())
                                         .fillMaxHeight()
                                         .background(Color(0xFFF59E0B))
                                 )
@@ -284,7 +284,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             presets.take(3).forEach { tokens ->
                                 val selected = maxContextTokens == tokens
                                 Surface(
-                                    modifier = Modifier.fillMaxWidth()),
+                                    modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) {
                                         Color.White.copy(alpha = 0.18f)
@@ -328,7 +328,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             presets.drop(3).forEach { tokens ->
                                 val selected = maxContextTokens == tokens
                                 Surface(
-                                    modifier = Modifier.fillMaxWidth()),
+                                    modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) {
                                         Color.White.copy(alpha = 0.18f)
@@ -546,7 +546,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Auto-Prune Overflow Turns",
                                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
@@ -598,7 +598,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Enable Compaction",
                                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)

@@ -189,7 +189,7 @@ private fun AssistantCard(
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = assistant.name.ifEmpty { defaultName },
                     style = MaterialTheme.typography.titleMedium,

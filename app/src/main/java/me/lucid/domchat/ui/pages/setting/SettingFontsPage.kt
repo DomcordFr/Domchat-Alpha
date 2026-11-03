@@ -354,7 +354,7 @@ private fun FontConfigSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = getFontSourceLabel(config),
                             style = MaterialTheme.typography.titleMedium
@@ -430,7 +430,7 @@ private fun FontConfigSection(
                                     shape = RoundedCornerShape(12.dp),
                                     color = bg,
                                     border = border,
-                                    modifier = Modifier.fillMaxWidth())
+                                    modifier = Modifier.weight(1f)
                                 ) {
                                     Box(
                                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
@@ -475,7 +475,7 @@ private fun FontConfigSection(
                                     .background(Color(0xFF000000))
                                     .padding(12.dp)
                             ) {
-                                Column(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = config.customFontName,
                                         style = MaterialTheme.typography.bodyMedium,
@@ -604,7 +604,7 @@ private fun FontConfigSection(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = feature.name,
                                             style = MaterialTheme.typography.bodyMedium
@@ -727,7 +727,7 @@ private fun FontAxisSlider(
             onValueChangeFinished = onValueChangeFinished,
             valueRange = valueRange,
             steps = steps,
-            modifier = Modifier.fillMaxWidth())
+            modifier = Modifier.weight(1f)
         )
         Text(
             text = formatValue(localValue),

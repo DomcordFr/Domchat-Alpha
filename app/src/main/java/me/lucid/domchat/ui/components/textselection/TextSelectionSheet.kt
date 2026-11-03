@@ -282,7 +282,7 @@ private fun ActionSelectionContent(
                     rowActions.forEachIndexed { colIndex, (icon, label, action) ->
                         val isLastOdd = rowIndex == rows.lastIndex && rowActions.size == 1
                         QuickActionButton(
-                            modifier = Modifier.fillMaxWidth()if (isLastOdd) 2f else 1f),
+                            modifier = Modifier.weight(if (isLastOdd) 2f else 1f),
                             icon = icon,
                             label = label,
                             shape = quickAskGroupedButtonShape(rowIndex, colIndex, rows.size, rowActions.size),
@@ -544,7 +544,7 @@ private fun ResultContent(
             ) {
                 // Copy button
                 TactileActionSurface(
-                    modifier = Modifier.fillMaxWidth()),
+                    modifier = Modifier.weight(1f),
                     shape = QuickAskInnerShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
                     onClick = {
@@ -575,7 +575,7 @@ private fun ResultContent(
                 // Continue in app button - hide for translate action
                 if (!isTranslate) {
                     TactileActionSurface(
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                         shape = QuickAskInnerShape,
                         color = MaterialTheme.colorScheme.secondaryContainer,
                         onClick = onContinueInApp

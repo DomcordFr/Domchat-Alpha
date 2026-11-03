@@ -294,7 +294,7 @@ private fun LobeHubIconPickerSheet(
                 isLoading -> {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth())
+                            .weight(1f)
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -305,7 +305,7 @@ private fun LobeHubIconPickerSheet(
                 loadError != null -> {
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth())
+                            .weight(1f)
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
@@ -331,7 +331,7 @@ private fun LobeHubIconPickerSheet(
                 else -> {
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 112.dp),
-                        modifier = Modifier.fillMaxWidth()),
+                        modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(bottom = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),

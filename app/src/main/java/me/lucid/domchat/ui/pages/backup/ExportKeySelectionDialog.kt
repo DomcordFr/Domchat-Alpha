@@ -140,7 +140,7 @@ fun ExportKeySelectionDialog(
                                 allKeys.forEach { selectedMap[it.entry.id] = true }
                             },
                             shape = AppShapes.ButtonPill,
-                            modifier = Modifier.fillMaxWidth())
+                            modifier = Modifier.weight(1f)
                         ) {
                             Text(stringResource(R.string.backup_export_select_all))
                         }
@@ -159,7 +159,7 @@ fun ExportKeySelectionDialog(
                                 allKeys.forEach { selectedMap[it.entry.id] = false }
                             },
                             shape = AppShapes.ButtonPill,
-                            modifier = Modifier.fillMaxWidth())
+                            modifier = Modifier.weight(1f)
                         ) {
                             Text(stringResource(R.string.backup_export_deselect_all))
                         }
@@ -209,7 +209,7 @@ fun ExportKeySelectionDialog(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 text = item.entry.name.ifBlank { "API Key" },
                                                 style = MaterialTheme.typography.bodyMedium,

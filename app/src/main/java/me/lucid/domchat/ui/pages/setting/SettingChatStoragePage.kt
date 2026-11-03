@@ -841,7 +841,7 @@ fun SettingChatStoragePage(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Column(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = stat.modelId.substringAfterLast("/"),
                                         style = MaterialTheme.typography.titleMedium,
