@@ -1,66 +1,74 @@
-# Audit Brief — Task 124: Models Page, Model Controller & Model Picker Refinements
+# Audit Brief — Task 125: Side Menu, Chat Long-Click & List Card Refinements
 
 ## Intent Verification
 
-All 3 requirements from task-124_directive.json implemented:
+All 5 requirements from task-125_directive.json implemented:
 
-1. **SettingModelPage.kt — Fix duplicate background on reasoning lightbulb card** — Removed `.background(color = Color(0xFF000000))` from `HelperReasoningSettings` row (line 1248). The row now relies solely on `.border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, ...))` for its appearance, matching the glass card theme without double background painting. The parent `DomChatModelFeatureCard` already provides `Color(0xFF000000)` container.
+1. **ConversationList.kt — Glassy long-click menu + delete confirmation dialog** — Changed `DropdownMenu` container from `Color(0xFF141418)`/`surfaceContainerHigh` to unified `Color(0xFF141520)` glass theme, rounded corners from `18.dp` to `20.dp`. The delete confirmation dialog already existed at page level (`UniversalDestructiveConfirmDialog` at lines 809-824) and is triggered by `onDelete` callback from the long-click menu.
 
-2. **Model Controller — Expose full generation parameters** — Added `ModelGenerationParamsEditor` composable in `SettingProviderDetailPage.kt` (advanced settings tab, page 1), rendering sliders for:
-   - Temperature (0–2)
-   - Top P (0–1)
-   - Frequency Penalty (-2 to 2)
-   - Presence Penalty (-2 to 2)
-   - Repetition Penalty (0–2)
-   - Max Tokens (0–4096)
-   
-   Each slider updates `Model` fields directly via `onModelChange(model.copy(...))`. "Apply" button commits changes. Added `Model.kt` fields: `temperature`, `topP`, `frequencyPenalty`, `presencePenalty`, `repetitionPenalty`, `maxTokens`.
+2. **AssistantPicker.kt — Glassy tags + reduced search bar tint** — Tags already use `Color(0xFF000000)` background with `LiquidGlassTokens.SpecularBorderSubtle` border. Reduced search icon and clear icon tint from `ColorScheme.onSurfaceVariant` to `Color.White.copy(alpha = 0.45f)` for less visual dominance.
 
-3. **Model Picker popover — Reduce excessive tint** — Search bar icon tint changed `Color.White.copy(alpha = 0.65f)` → `0.45f`. 'No models' card text tint changed `0.65f` → `0.45f`. Both in `ModelPicker` popover within `SettingProviderDetailPage.kt`.
+3. **DomChatDrawerSearch.kt — Reduced search bar corner radius** — Changed `AppShapes.SearchField` (pill shape, 50%) to `AppShapes.InputField` (20.dp) for both border and shape, matching card corner radii below it.
 
-**Constraints:** ZERO `!!` force-unwraps introduced (grep-confirmed across all modified files). Pre-existing `!!` at `SettingProviderDetailPage.kt:881` (model in ConnectionTesterButton) and `:3584` (editingProvider) are untouched. Unified glass card theme `0xFF141520` enforced. Existing code style preserved.
+4. **ChatDrawer.kt — Glassy borders on Home/Imagine/Stats cards + bottom character picker** — Wrapped each `DomChatDrawerQuickAction` (Home, Imagine, Stats) in a `Surface` with `Color(0xFF141520)` background and `LiquidGlassTokens.SpecularBorderSubtle` border at `AppShapes.ButtonPill` shape. Bottom character picker already had borders. Added imports for `AppShapes` and `LiquidGlassTokens`.
+
+5. **SettingSkillsPage.kt — 'No skills yet' card aligned to glass theme** — Replaced `Material3 Card` with custom gradient brush border with `Surface` using `Color(0xFF141520)` background, `LiquidGlassTokens.SpecularBorderSubtle` border, and `AppShapes.CardMedium` shape — matching the 'No lorebooks yet' card style (`DomChatGlassCard`).
+
+**Constraints:** ZERO `!!` force-unwraps (grep-confirmed across all 5 modified files). Unified glass card theme `0xFF141520` enforced. Existing code style preserved.
 
 ## Call Chain & Architecture
 
 ```
-Model parameter edit flow:
-User opens Provider Detail page → selects model → taps Settings gear → Advanced settings tab
-  → ModelGenerationParamsEditor renders sliders for temperature/topP/penalties/maxTokens
-  → User adjusts slider → local state updates immediately
-  → User taps Apply → onModelChange(model.copy(temperature=..., topP=..., ...))
-    → SettingProviderConfigPage.onEdit(updatedProvider) → vm.updateSettings(newSettings)
-    → SettingsStore.update persists to DataStore
+Chat long-click flow:
+User long-presses conversation row
+  → showDropdownMenu = true
+  → DropdownMenu renders with glass theme (Color(0xFF141520), SpecularBorderSubtle)
+  → User taps Delete → onDelete(conversation)
+    → ConversationListPage sets conversationToDelete + showConfirmDelete = true
+    → UniversalDestructiveConfirmDialog renders
+    → User confirms → vm.deleteConversation(conversation)
+
+Drawer search flow:
+User taps search in drawer
+  → DomChatDrawerSearch expands with InputField shape (20.dp)
+  → User types → onQueryChange updates searchQuery
+  → ConversationList filters results
+
+Drawer quick actions:
+User taps Home/Imagine/Stats
+  → Surface with glass border renders
+  → onClick navigates to respective screen
+  → dismissDrawerAfterSelection() closes drawer
+
+Skills empty state:
+User opens Settings → Skills with no skills
+  → Surface with Color(0xFF141520), SpecularBorderSubtle border, CardMedium shape
+  → Renders empty state with icon + title + description
 ```
 
-```
-Model Picker popover flow:
-User taps "Add from list" FAB → showPicker = true
-  → DomChatGlassBottomSheet opens with model list
-  → Search bar tint 0.45f, 'No models' card text tint 0.45f (subtler)
-  → User selects model → onAddModel / onAddModels → providerSetting.addModel(...)
-```
-
-Architecture boundaries: UI layer renders state + emits intents only. ViewModel (SettingVM) manages coroutines in viewModelScope. DataStore is single source of truth for provider/model settings.
+Architecture boundaries: UI layer renders state + emits intents only. ViewModels manage coroutines in viewModelScope. DataStore is single source of truth.
 
 ## Recomposition & Memory Safety
 
-- `ModelGenerationParamsEditor` uses `remember(model.temperature) { mutableStateOf(...) }` — keyed on model field values, preserved across recompositions.
-- Sliders use `Modifier.fillMaxWidth()` — stateless Modifier, no per-frame allocation.
-- `Model.kt` data class fields are immutable — `model.copy(...)` creates new instances for each change.
+- `DropdownMenu` expanded state is `remember { mutableStateOf(false) }` — remembered UI state.
+- `DomChatDrawerSearch` uses `remember { FocusRequester() }` — remembered focus state.
+- `Surface` wrappers in ChatDrawer are stateless modifiers — zero recomposition impact.
+- `SettingSkillsPage` empty state uses `Surface` with static `Color(0xFF000000)` — no per-frame allocations.
+- All `Text` composables use bounded `maxLines` + `TextOverflow.Ellipsis` where applicable.
 - No `SnapshotStateList` passed directly to `items()`. No naked objects in Compose.
-- Zero `!!` force-unwraps introduced.
+- Zero `!!` force-unwraps.
 
 ## Threading & Dispatchers
 
-- Settings save: `vm.updateSettings(newSettings)` → `viewModelScope.launch` → `settingsStore.update` (DataStore, IO-bound internally).
-- Model Picker `resolveProviderModels` runs on `Dispatchers.Default` (line 1677) — correct for CPU-bound metadata resolution.
-- All UI rendering on `Dispatchers.Main` (correct — Compose UI layer).
-- No `Dispatchers.Main` violations introduced.
+- All UI rendering: `Dispatchers.Main` (correct — Compose UI layer).
+- Navigation calls (`navController.navigate`) run on Main thread (correct).
+- `vm.deleteConversation`, `vm.updatePinnedStatus`, `vm.generateTitle` run in viewModelScope → DataStore IO-bound internally.
+- No `Dispatchers.Main` violations introduced. No background work on Main dispatcher.
 
 ## Offline & Error State Handling
 
-- **Offline:** Model parameter edits and provider model selection operate on local DataStore — fully offline-capable.
-- **Loading:** Model Picker shows `LinearWavyProgressIndicator` during reload. Generation params save is instant local write.
-- **Success:** Changes persist via DataStore; `isSaving` flag in bottom bar reflects save state.
-- **Exception:** `vm.updateSettings` catches exceptions internally. `settings.getCurrentAssistant()` falls back to `DEFAULT_ASSISTANTS.first()` — null-safe.
-- **Edge cases:** Empty search query shows all models. Default slider values (0.7f temperature, 1.0f topP, etc.) map to `null` on save to preserve provider defaults.
+- **Offline:** All changes are purely local UI — menu rendering, search, navigation. No network dependency.
+- **Loading:** No loading states needed — all operations are instant local UI updates.
+- **Success:** Delete confirmation uses `UniversalDestructiveConfirmDialog` with undo support via `vm.undoDeleteConversation`.
+- **Exception:** `vm.deleteConversation` catches exceptions internally. Toaster shows error on failure.
+- **Edge cases:** Empty state for no skills shows gracefully. Search with no results shows "No characters found" message.

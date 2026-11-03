@@ -643,8 +643,8 @@ private fun ConversationItem(
         DropdownMenu(
             expanded = showDropdownMenu,
             onDismissRequest = { showDropdownMenu = false },
-            shape = RoundedCornerShape(18.dp),
-            containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(20.dp),
+            containerColor = Color(0xFF141520),
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         ) {
             DropdownMenuItem(

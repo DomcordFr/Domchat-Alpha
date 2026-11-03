@@ -245,7 +245,7 @@ fun AssistantPickerSheet(
                         imageVector = Icons.Rounded.Search,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = Color.White.copy(alpha = 0.45f)
                     )
                 },
                 trailingIcon = {
@@ -258,7 +258,7 @@ fun AssistantPickerSheet(
                                 imageVector = Icons.Rounded.Close,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = Color.White.copy(alpha = 0.45f)
                             )
                         }
                     }

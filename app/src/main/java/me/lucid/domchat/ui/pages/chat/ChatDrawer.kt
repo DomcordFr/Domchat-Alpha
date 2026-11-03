@@ -3,6 +3,8 @@ package me.lucid.domchat.ui.pages.chat
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatChromeSurfaceColor
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 import androidx.core.net.toUri
 import androidx.compose.animation.core.spring
@@ -383,50 +385,80 @@ fun ChatDrawerContent(
                     val haptics = rememberPremiumHaptics()
                     val quickActionCardColor = domChatCardContainerColor()
                     DomChatDrawerQuickActionGroup {
-                        DomChatDrawerQuickAction(
-                            label = "Home",
-                            containerColor = quickActionCardColor,
-                            onClick = {
-                                navController.navigate(Screen.ConversationList)
-                                dismissDrawerAfterSelection()
-                            },
-                            onHaptic = { haptics.perform(HapticPattern.Tick) },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Home,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            },
-                        )
-                        DomChatDrawerQuickAction(
-                            label = stringResource(R.string.chat_drawer_imagine),
-                            containerColor = quickActionCardColor,
-                            onClick = {
-                                navController.navigate(Screen.ImageGen)
-                                dismissDrawerAfterSelection()
-                            },
-                            onHaptic = { haptics.perform(HapticPattern.Tick) },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Image,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            },
-                        )
-                        DomChatDrawerQuickAction(
-                            label = stringResource(R.string.menu_statistics_title),
-                            containerColor = quickActionCardColor,
-                            onClick = {
-                                navController.navigate(Screen.Menu)
-                                dismissDrawerAfterSelection()
-                            },
-                            onHaptic = { haptics.perform(HapticPattern.Tick) },
-                            icon = { DomChatBarChartIcon(contentDescription = null, tint = if (isDark) Color(0xFFF2F2F7) else Color.Unspecified) },
-                        )
+                        Surface(
+                            color = quickActionCardColor,
+                            border = BorderStroke(
+                                0.5.dp,
+                                LiquidGlassTokens.SpecularBorderSubtle,
+                                me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                            ),
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) {
+                            DomChatDrawerQuickAction(
+                                label = "Home",
+                                containerColor = quickActionCardColor,
+                                onClick = {
+                                    navController.navigate(Screen.ConversationList)
+                                    dismissDrawerAfterSelection()
+                                },
+                                onHaptic = { haptics.perform(HapticPattern.Tick) },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Home,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                            )
+                        }
+                        Surface(
+                            color = quickActionCardColor,
+                            border = BorderStroke(
+                                0.5.dp,
+                                LiquidGlassTokens.SpecularBorderSubtle,
+                                me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                            ),
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) {
+                            DomChatDrawerQuickAction(
+                                label = stringResource(R.string.chat_drawer_imagine),
+                                containerColor = quickActionCardColor,
+                                onClick = {
+                                    navController.navigate(Screen.ImageGen)
+                                    dismissDrawerAfterSelection()
+                                },
+                                onHaptic = { haptics.perform(HapticPattern.Tick) },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Image,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                            )
+                        }
+                        Surface(
+                            color = quickActionCardColor,
+                            border = BorderStroke(
+                                0.5.dp,
+                                LiquidGlassTokens.SpecularBorderSubtle,
+                                me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                            ),
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) {
+                            DomChatDrawerQuickAction(
+                                label = stringResource(R.string.menu_statistics_title),
+                                containerColor = quickActionCardColor,
+                                onClick = {
+                                    navController.navigate(Screen.Menu)
+                                    dismissDrawerAfterSelection()
+                                },
+                                onHaptic = { haptics.perform(HapticPattern.Tick) },
+                                icon = { DomChatBarChartIcon(contentDescription = null, tint = if (isDark) Color(0xFFF2F2F7) else Color.Unspecified) },
+                            )
+                        }
                     }
                 },
                 bottomContent = {

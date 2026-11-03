@@ -117,8 +117,8 @@ fun DomChatDrawerSearch(
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused && !expanded) onExpandedChange(true)
                         }
-                        .border(searchBorderStroke, AppShapes.SearchField),
-                    shape = AppShapes.SearchField,
+                        .border(searchBorderStroke, AppShapes.InputField),
+                    shape = AppShapes.InputField,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = searchContainerColor,
                         unfocusedContainerColor = searchContainerColor,

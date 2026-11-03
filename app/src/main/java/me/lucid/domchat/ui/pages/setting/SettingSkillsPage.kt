@@ -362,22 +362,18 @@ fun SkillsPageContent(
             if (orderedSkills.isEmpty()) {
                 item(key = "empty") {
                     val isDark = LocalDarkMode.current
-                    val emptyShape = RoundedCornerShape(20.dp)
-                    val borderBrush = Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = if (isDark) 0.22f else 0.12f),
-                            Color.White.copy(alpha = if (isDark) 0.06f else 0.03f)
-                        )
-                    )
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
-                        shape = emptyShape,
-                        border = BorderStroke(0.5.dp, borderBrush)
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        color = Color(0xFF000000),
+                        shape = AppShapes.CardMedium,
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(32.dp),
+                                .padding(24.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
