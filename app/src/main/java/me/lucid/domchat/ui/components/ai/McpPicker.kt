@@ -175,9 +175,7 @@ fun McpPickerButton(
                     onUpdateAssistant = {
                         onUpdateAssistant(it)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxWidth())
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -244,7 +242,7 @@ fun McpPicker(
                             modifier = Modifier.size(32.dp),
                         )
                         Column(
-                            modifier = Modifier.fillMaxWidth()),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
