@@ -1835,7 +1835,7 @@ private fun ListItemNode(
                 ) {
                     val contentColumn: @Composable () -> Unit = {
                         Column(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxWidth()1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             directContent.fastForEach { contentChild ->

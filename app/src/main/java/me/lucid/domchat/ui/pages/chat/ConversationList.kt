@@ -568,7 +568,7 @@ private fun ConversationItem(
 
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .padding(end = if (assistant != null) 48.dp else 0.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {

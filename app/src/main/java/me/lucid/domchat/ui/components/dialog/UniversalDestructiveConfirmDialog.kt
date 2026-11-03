@@ -143,7 +143,7 @@ fun UniversalDestructiveConfirmDialog(
                                 // Cancel button - glassy border, semi-transparent background
                                 OutlinedButton(
                                     onClick = { onDismiss() },
-                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    modifier = Modifier.fillMaxWidth()1f).height(48.dp),
                                     shape = dialogShape,
                                     border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f)),
                                     colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
@@ -162,7 +162,7 @@ fun UniversalDestructiveConfirmDialog(
                                         onConfirm()
                                         onDismiss()
                                     },
-                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    modifier = Modifier.fillMaxWidth()1f).height(48.dp),
                                     shape = dialogShape,
                                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF000000),

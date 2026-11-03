@@ -485,7 +485,7 @@ fun SettingUICustomizationPage(vm: SettingVM = koinViewModel()) {
                             },
                             valueRange = 0.5f..2f,
                             steps = 11,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.fillMaxWidth()1f)
                         )
                         Text(
                             text = "${(displaySetting.fontSizeRatio * 100).toInt()}%",
@@ -718,7 +718,7 @@ private fun StylePillButton(
         color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color.Transparent,
         border = BorderStroke(0.5.dp, if (isSelected) Color.White else Color.White.copy(alpha = 0.12f)),
         modifier = Modifier
-            .weight(1f)
+            .fillMaxWidth()1f)
             .padding(vertical = 8.dp),
     ) {
         Text(

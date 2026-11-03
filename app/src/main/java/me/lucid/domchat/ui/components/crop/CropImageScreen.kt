@@ -178,7 +178,7 @@ fun CropImageScreen(
                 // Image preview with crop overlay
                 Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .onSizeChanged { size ->
@@ -263,7 +263,7 @@ fun CropImageScreen(
                     FilledTonalButton(
                         onClick = onCancel,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .graphicsLayer {
                                 scaleX = cancelScale
                                 scaleY = cancelScale
@@ -362,7 +362,7 @@ fun CropImageScreen(
                         },
                         enabled = displayBitmap != null && hasValidCropGeometry && !isCropping,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .graphicsLayer {
                                 scaleX = doneScale
                                 scaleY = doneScale

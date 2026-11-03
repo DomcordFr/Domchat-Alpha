@@ -72,7 +72,7 @@ fun SummarizerModelTipBanner(
                 text = stringResource(R.string.summarizer_model_tip_banner),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isDark) Color(0xFFEEEEEE) else Color.White,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()1f)
             )
         }
     }

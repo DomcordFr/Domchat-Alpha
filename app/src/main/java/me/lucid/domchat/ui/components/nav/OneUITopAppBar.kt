@@ -124,7 +124,7 @@ fun OneUITopAppBar(
             navigationIcon()
             
             // Collapsed title (appears when scrolled)
-            Box(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+            Box(modifier = Modifier.fillMaxWidth()1f).padding(horizontal = 8.dp)) {
                 if (collapsedTitleAlpha > 0f) {
                     Text(
                         text = title,

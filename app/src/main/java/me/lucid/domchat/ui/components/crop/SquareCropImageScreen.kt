@@ -135,7 +135,7 @@ fun SquareCropImageScreen(
                 // Image preview with square crop overlay
                 Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .onSizeChanged { size ->
@@ -208,7 +208,7 @@ fun SquareCropImageScreen(
                     FilledTonalButton(
                         onClick = onCancel,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .graphicsLayer {
                                 scaleX = cancelScale
                                 scaleY = cancelScale
@@ -255,7 +255,7 @@ fun SquareCropImageScreen(
                         },
                         enabled = bitmap != null,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .graphicsLayer {
                                 scaleX = doneScale
                                 scaleY = doneScale

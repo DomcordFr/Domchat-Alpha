@@ -729,7 +729,7 @@ fun MinimalChatInput(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.fillMaxWidth()1f))
                     androidx.compose.animation.AnimatedVisibility(
                         visible = showScrollToBottom,
                         enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
@@ -899,7 +899,7 @@ fun MinimalChatInput(
                 DomChatComposerCapsule(
                     containerColor = composerBg,
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .heightIn(min = AppSize.ChromePill)
                         .liquidGlassSurface(
                             shape = inputShape,
@@ -1369,7 +1369,7 @@ fun MinimalChatInput(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f)
+                                .fillMaxWidth()1f)
                         ) {
                             TextField(
                                 state = activeTextState,
@@ -1760,7 +1760,7 @@ fun MinimalChatInput(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = Color.White
                     )
-                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.fillMaxWidth()1f))
                     IconButton(
                         onClick = { showTextStylingDialog = false }
                     ) {
@@ -2047,7 +2047,7 @@ fun MinimalChatInput(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.fillMaxWidth()1f)) {
                         Text("Smooth Fade-in Animation", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
                         Text("Fade text smoothly from transparency", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
                     }
@@ -2063,7 +2063,7 @@ fun MinimalChatInput(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.fillMaxWidth()1f)) {
                             Text("Continuous Fluid Stream", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
                             Text("Flow text continuously rather than waiting for word chunks", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
                         }
@@ -2427,7 +2427,7 @@ fun MinimalChatInput(
                         ) {
                             Surface(
                                 onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth()1f),
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
@@ -2443,7 +2443,7 @@ fun MinimalChatInput(
 
                             Surface(
                                 onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth()1f),
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (mode == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
@@ -2700,7 +2700,7 @@ private fun WorkspaceRequiredCard(
                 )
             }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth()1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
@@ -2938,7 +2938,7 @@ private fun ToolApprovalCard(
                         )
                     }
                 }
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth()1f)) {
                     Text(
                         text = stringResource(R.string.tool_approval_title),
                         style = MaterialTheme.typography.labelMedium,
@@ -3324,7 +3324,7 @@ private fun MinimalPickerContent(
                     val selected = pagerState.currentPage == index
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(if (selected) Color.White.copy(alpha = 0.16f) else Color.Transparent)
                             .clickable {
@@ -4023,7 +4023,7 @@ private fun MinimalPickerItem(
             ) {
                 icon()
             }
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.fillMaxWidth()1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -4251,7 +4251,7 @@ private fun RowScope.StyleGridButton(
             if (isSelected) Color.White else Color.White.copy(alpha = 0.12f)
         ),
         modifier = Modifier
-            .weight(1f)
+            .fillMaxWidth()1f)
             .height(72.dp),
     ) {
         Row(

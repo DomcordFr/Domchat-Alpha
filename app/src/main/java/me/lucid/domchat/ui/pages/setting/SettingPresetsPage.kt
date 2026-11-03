@@ -323,7 +323,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                             tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.fillMaxWidth()1f)) {
                             Text(
                                 text = "System & Formatting Locks",
                                 style = MaterialTheme.typography.titleSmall,
@@ -373,7 +373,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()1f)) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -625,14 +625,14 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 label = "System",
                                 position = PresetInjectionPosition.SYSTEM_PROMPT,
                                 selected = draftPosition == PresetInjectionPosition.SYSTEM_PROMPT,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth()1f),
                                 onClick = { draftPosition = PresetInjectionPosition.SYSTEM_PROMPT }
                             )
                             PositionButton(
                                 label = "Post-History",
                                 position = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS,
                                 selected = draftPosition == PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth()1f),
                                 onClick = { draftPosition = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS }
                             )
                         }
@@ -644,14 +644,14 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                                 label = "Before User",
                                 position = PresetInjectionPosition.BEFORE_LAST_USER,
                                 selected = draftPosition == PresetInjectionPosition.BEFORE_LAST_USER,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth()1f),
                                 onClick = { draftPosition = PresetInjectionPosition.BEFORE_LAST_USER }
                             )
                             PositionButton(
                                 label = "At Depth",
                                 position = PresetInjectionPosition.AT_DEPTH,
                                 selected = draftPosition == PresetInjectionPosition.AT_DEPTH,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth()1f),
                                 onClick = { draftPosition = PresetInjectionPosition.AT_DEPTH }
                             )
                         }

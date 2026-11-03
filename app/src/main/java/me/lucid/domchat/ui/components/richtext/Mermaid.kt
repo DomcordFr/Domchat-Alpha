@@ -254,7 +254,7 @@ fun Mermaid(
                 ) {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .fillMaxWidth(),
                         contentAlignment = Alignment.CenterStart
                     ) {

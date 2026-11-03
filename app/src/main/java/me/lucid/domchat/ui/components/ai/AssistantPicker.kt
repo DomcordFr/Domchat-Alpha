@@ -117,7 +117,7 @@ fun AssistantPicker(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.fillMaxWidth()1f))
 
                 UIAvatar(
                     name = state.currentAssistant.name.ifEmpty { defaultAssistantName },
@@ -345,7 +345,7 @@ fun AssistantPickerSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -358,7 +358,7 @@ fun AssistantPickerSheet(
             } else {
                 LazyColumn(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -407,7 +407,7 @@ fun AssistantPickerSheet(
                         }
 
                         Column(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxWidth()1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(

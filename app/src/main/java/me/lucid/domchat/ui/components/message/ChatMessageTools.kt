@@ -380,7 +380,7 @@ private fun ToolCallPreviewSheet(
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
+                                    .fillMaxWidth()1f),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 if (answer != null) {
@@ -476,7 +476,7 @@ private fun ToolCallPreviewSheet(
                                                             model = imageUrl,
                                                             contentDescription = imageTitle.ifBlank { null },
                                                             modifier = Modifier
-                                                                .weight(1f)
+                                                                .fillMaxWidth()1f)
                                                                 .fillMaxWidth()
                                                                 .clip(AppShapes.CardSmall),
                                                             contentScale = ContentScale.Crop,
@@ -519,7 +519,7 @@ private fun ToolCallPreviewSheet(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .fillMaxWidth()1f),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(urls.size, key = { index -> "scrape_url_$index" }) { index ->
@@ -697,7 +697,7 @@ private fun ToolCallPreviewSheet(
                                             text = path,
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.fillMaxWidth()1f)
                                         )
                                     }
                                     

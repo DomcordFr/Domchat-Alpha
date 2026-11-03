@@ -385,7 +385,7 @@ private fun ToastContent(
                 text = toast.message,
                 style = MaterialTheme.typography.bodySmall,
                 color = contentColor,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth()1f),
                 maxLines = if (isExpanded) Int.MAX_VALUE else 2,
                 overflow = TextOverflow.Ellipsis
             )

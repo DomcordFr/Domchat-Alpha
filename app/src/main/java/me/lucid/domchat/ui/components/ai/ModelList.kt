@@ -544,7 +544,7 @@ internal fun ColumnScope.ModelList(
 
     Box(
         modifier = Modifier
-            .weight(1f)
+            .fillMaxWidth()1f)
             .fillMaxWidth()
     ) {
             // 1. Scrollable List of Models
@@ -1083,7 +1083,7 @@ private fun ModelSectionHeader(
             color = Color.White.copy(alpha = 0.65f),
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.fillMaxWidth()1f))
 
         trailingContent()
     }
@@ -1161,7 +1161,7 @@ private fun ModelItem(
             ) {
                 Row(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .combinedClickable(
                             enabled = true,
                             onLongClick = {
@@ -1187,7 +1187,7 @@ private fun ModelItem(
                         contentColor = Color.White
                     )
                     Column(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth()1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         Text(

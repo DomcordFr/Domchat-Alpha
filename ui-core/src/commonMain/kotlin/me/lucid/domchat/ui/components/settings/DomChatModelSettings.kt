@@ -165,7 +165,7 @@ fun DomChatGroupedModelRow(
     ) {
         Row(
             modifier = Modifier
-                .weight(1f)
+                .fillMaxWidth()1f)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -177,7 +177,7 @@ fun DomChatGroupedModelRow(
         ) {
             icon()
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth()1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(

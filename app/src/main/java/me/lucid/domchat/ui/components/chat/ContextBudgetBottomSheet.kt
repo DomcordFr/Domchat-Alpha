@@ -193,7 +193,7 @@ fun ContextBudgetBottomSheet(
 
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()1f)
                     .verticalScroll(rememberScrollState())
             ) {
                 // Per-chat inheritance toggle
@@ -211,7 +211,7 @@ fun ContextBudgetBottomSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()1f)) {
                                 Text(
                                     text = "Inherit Global Context Settings",
                                     fontSize = 14.sp,
@@ -257,19 +257,19 @@ fun ContextBudgetBottomSheet(
                             Row(modifier = Modifier.fillMaxSize()) {
                                 Box(
                                     modifier = Modifier
-                                        .weight(systemPercent.toFloat())
+                                        .fillMaxWidth()systemPercent.toFloat())
                                         .fillMaxHeight()
                                         .background(Color(0xFF3B82F6))
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .weight(historyPercent.toFloat())
+                                        .fillMaxWidth()historyPercent.toFloat())
                                         .fillMaxHeight()
                                         .background(Color(0xFF10B981))
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .weight(memoryPercent.toFloat())
+                                        .fillMaxWidth()memoryPercent.toFloat())
                                         .fillMaxHeight()
                                         .background(Color(0xFF8B5CF6))
                                 )
@@ -554,7 +554,7 @@ fun ContextBudgetBottomSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.fillMaxWidth()1f)) {
                                     Text(
                                         text = "Smart Overflow Auto-Pruning",
                                         fontSize = 14.sp,

@@ -595,7 +595,7 @@ private fun TtsVoiceRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(voice.name.ifBlank { voice.providerVoiceId.ifBlank { "Voice" } }, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     val locale = voice.locale
@@ -730,8 +730,8 @@ private fun VoiceEditorSheet(
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
-                    TextButton(onClick = { onSave(current) }, modifier = Modifier.weight(1f)) { Text("Save") }
+                    TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()1f)) { Text("Cancel") }
+                    TextButton(onClick = { onSave(current) }, modifier = Modifier.fillMaxWidth()1f)) { Text("Save") }
                 }
             }
         }
@@ -839,9 +839,9 @@ private fun ProviderVoicesFab(
                     Text(if (allFilteredSelected) "Deselect all" else "Select all")
                 }
                 if (isFetching) {
-                    LinearWavyProgressIndicator(modifier = Modifier.weight(1f))
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth()1f))
                 } else {
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.fillMaxWidth()1f))
                 }
                 Button(
                     onClick = {
@@ -857,7 +857,7 @@ private fun ProviderVoicesFab(
                 }
             }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()1f)) {
                 if (filteredVoices.isEmpty()) {
                     item {
                         Column(
@@ -921,7 +921,7 @@ private fun ProviderVoicesFab(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(modifier = Modifier.fillMaxWidth()1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
                                     text = voice.name.ifBlank { voice.providerVoiceId },
                                     style = MaterialTheme.typography.titleSmall,
@@ -1052,14 +1052,14 @@ private fun ManualVoiceSheet(
                 colors = appFieldColors(),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
+                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()1f)) { Text("Cancel") }
                 TextButton(
                     enabled = voiceId.isNotBlank(),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onAddVoice(manualVoiceForProvider(provider, voiceName, voiceId))
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth()1f),
                 ) {
                     Text("Add")
                 }

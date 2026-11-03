@@ -60,7 +60,7 @@ fun DependentToggle(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth()1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(

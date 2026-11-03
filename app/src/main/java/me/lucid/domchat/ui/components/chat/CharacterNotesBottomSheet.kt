@@ -149,7 +149,7 @@ fun CharacterNotesBottomSheet(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth()1f)) {
                     Text(
                         text = characterName,
                         fontSize = 18.sp,

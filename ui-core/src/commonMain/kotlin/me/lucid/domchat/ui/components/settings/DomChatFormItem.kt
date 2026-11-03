@@ -31,7 +31,7 @@ fun DomChatFormItem(
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = modifier.weight(1f),
+            modifier = modifier.fillMaxWidth()1f),
         ) {
             ProvideTextStyle(
                 MaterialTheme.typography.labelMedium.copy(

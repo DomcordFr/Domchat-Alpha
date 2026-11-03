@@ -249,7 +249,7 @@ fun ChatExportSheet(
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth()1f),
                         containerColor = optionContainerColor,
                         contentColor = sheetContentColor,
                         supportingColor = sheetSupportingColor
@@ -283,7 +283,7 @@ fun ChatExportSheet(
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth()1f),
                         containerColor = optionContainerColor,
                         contentColor = sheetContentColor,
                         supportingColor = sheetSupportingColor
@@ -306,7 +306,7 @@ fun ChatExportSheet(
                             toaster.show(copySuccessMessage, type = ToastType.Success)
                             onDismissRequest()
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth()1f),
                         containerColor = optionContainerColor,
                         contentColor = sheetContentColor,
                         supportingColor = sheetSupportingColor
@@ -802,7 +802,7 @@ private fun ExportHeader(conversation: Conversation) {
                 contentDescription = stringResource(R.string.a11y_logo),
                 modifier = Modifier.size(44.dp)
             )
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.fillMaxWidth()1f)) {
                 Text(
                     text = conversation.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -955,7 +955,7 @@ private fun ExportTimelineEntryCard(
                     text = getTimelineLabel(entry),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()1f)
                 )
                 (entry as? TimelineEntry.Reasoning)?.durationMs?.takeIf { it > 0 }?.let { duration ->
                     Text(

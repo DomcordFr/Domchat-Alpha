@@ -762,12 +762,12 @@ private fun SharedTransitionScope.ChatListNormal(
                                     .padding(vertical = 8.dp)
                                     .fillMaxWidth()
                             ) {
-                                HorizontalDivider(modifier = Modifier.weight(1f))
+                                HorizontalDivider(modifier = Modifier.fillMaxWidth()1f))
                                 Text(
                                     text = stringResource(R.string.chat_page_clear_context),
                                     style = MaterialTheme.typography.bodySmall
                                 )
-                                HorizontalDivider(modifier = Modifier.weight(1f))
+                                HorizontalDivider(modifier = Modifier.fillMaxWidth()1f))
                             }
                         }
                     }

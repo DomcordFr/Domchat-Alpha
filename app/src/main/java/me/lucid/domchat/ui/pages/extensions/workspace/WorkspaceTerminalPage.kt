@@ -178,7 +178,7 @@ private fun WorkspaceTerminalContent(
         Column(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()1f)
                     .fillMaxWidth(),
             ) {
                 AndroidView(

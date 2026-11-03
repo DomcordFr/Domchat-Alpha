@@ -673,7 +673,7 @@ private fun TranscriptPanel(
                     assistantAvatar(Modifier.size(32.dp))
                     Spacer(Modifier.width(10.dp))
                     // Weighted box fills the leftover width so the button sits at the far right.
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    Box(modifier = Modifier.fillMaxWidth()1f), contentAlignment = Alignment.CenterStart) {
                         CompactActivityPill(state = activityState)
                     }
                     Spacer(Modifier.width(8.dp))

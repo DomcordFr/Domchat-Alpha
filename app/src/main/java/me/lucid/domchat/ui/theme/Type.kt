@@ -18,6 +18,7 @@ import me.lucid.domchat.data.datastore.FontConfig
 import me.lucid.domchat.data.datastore.FontSettings
 import me.lucid.domchat.data.datastore.FontSource
 import me.lucid.domchat.data.datastore.normalize
+import androidx.compose.foundation.layout.fillMaxWidth
 
 /**
  * Material 3 Expressive Typography using Google Sans Flex variable font.

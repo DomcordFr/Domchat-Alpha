@@ -605,7 +605,7 @@ private fun SearchBarWithToggle(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth()1f),
             shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -771,7 +771,7 @@ private fun ProviderListView(
                                     contentColor = Color.White,
                                 )
                             }
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()1f)) {
                                 Text(
                                     text = matchingPreset.name,
                                     style = MaterialTheme.typography.titleMedium,
@@ -1495,7 +1495,7 @@ private fun AddButton(
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .clipToBounds()
                             .nestedScroll(nestedScrollConnection),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -1529,7 +1529,7 @@ private fun AddButton(
                                         modifier = Modifier.size(40.dp),
                                         tint = Color.White,
                                     )
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.fillMaxWidth()1f)) {
                                         Text(text = preset.name, style = MaterialTheme.typography.titleMedium, color = Color.White)
                                         Text(
                                             text = preset.description,
@@ -1572,7 +1572,7 @@ private fun AddButton(
                                     modifier = Modifier.size(40.dp),
                                     tint = Color.White
                                 )
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.fillMaxWidth()1f)) {
                                     Text(
                                         text = stringResource(R.string.setting_provider_page_add_custom_provider),
                                         style = MaterialTheme.typography.titleMedium,
@@ -1621,7 +1621,7 @@ private fun AddButton(
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.fillMaxWidth()1f)) {
                                     Text(
                                         text = "NanoGPT",
                                         style = MaterialTheme.typography.titleMedium,
@@ -1676,7 +1676,7 @@ private fun AddButton(
                                     modifier = Modifier.size(40.dp),
                                     contentColor = Color.White,
                                 )
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.fillMaxWidth()1f)) {
                                     Text(
                                         text = preset.name,
                                         style = MaterialTheme.typography.titleMedium,
@@ -1738,7 +1738,7 @@ private fun AddButton(
                 // Scrollable Provider Settings Form
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()1f)
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -1763,14 +1763,14 @@ private fun AddButton(
                 ) {
                     androidx.compose.material3.OutlinedButton(
                         onClick = { customDialogState.dismiss() },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth()1f),
                         shape = AppShapes.CardLarge
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
                     Button(
                         onClick = { customDialogState.confirm() },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth()1f),
                         shape = AppShapes.CardLarge
                     ) {
                         Text(stringResource(R.string.setting_provider_page_add))
@@ -1855,7 +1855,7 @@ private fun ProviderItemContent(
                 .then(grayscaleModifier)
         )
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth()1f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(

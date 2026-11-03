@@ -505,7 +505,7 @@ contentColor = Color(0xFFF2F2F7),
                     onValueChange = { newState ->
                         currentProvider = newState
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()1f)
                 )
 
                 Row(
@@ -516,7 +516,7 @@ contentColor = Color(0xFFF2F2F7),
                         onClick = {
                             editingProvider = null
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()1f)
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
@@ -529,7 +529,7 @@ contentColor = Color(0xFFF2F2F7),
                             vm.updateSettings(settings.copy(ttsProviders = newProviders))
                             editingProvider = null
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()1f)
                     ) {
                         Text(stringResource(R.string.chat_page_save))
                     }
@@ -878,7 +878,7 @@ private fun TtsProviderEditorSheet(
             TTSProviderConfigure(
                 setting = currentProvider,
                 onValueChange = { currentProvider = it },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()1f)
             )
 
             Row(
@@ -887,14 +887,14 @@ private fun TtsProviderEditorSheet(
             ) {
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()1f)
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
 
                 TextButton(
                     onClick = { onSave(provider, currentProvider) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()1f)
                 ) {
                     Text(stringResource(R.string.chat_page_save))
                 }
@@ -929,7 +929,7 @@ internal fun TtsTextFilterSettingsDialog(
                 Text(
                     text = stringResource(R.string.setting_tts_filter_title),
                     style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()1f)
                 )
                 IconButton(onClick = { showAddDialog = true }) {
                     Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.setting_tts_filter_add_rule))
@@ -1160,7 +1160,7 @@ private fun TtsFilterRuleEditDialog(
                         label = { Text(stringResource(R.string.setting_tts_filter_skip)) },
                         colors = appFilterChipColors(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.SKIP),
                         border = appFilterChipBorder(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.SKIP),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()1f)
                     )
                     androidx.compose.material3.FilterChip(
                         selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ,
@@ -1168,7 +1168,7 @@ private fun TtsFilterRuleEditDialog(
                         label = { Text(stringResource(R.string.setting_tts_filter_only_read)) },
                         colors = appFilterChipColors(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ),
                         border = appFilterChipBorder(selected = mode == me.lucid.domchat.data.datastore.TtsFilterMode.ONLY_READ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()1f)
                     )
                 }
                 
@@ -1353,7 +1353,7 @@ contentColor = Color(0xFFF2F2F7),
                             modifier = Modifier.size(40.dp),
                             tint = Color(0xFFFFFFFF)
                         )
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.fillMaxWidth()1f)) {
                             Text(
                                 text = "Custom OpenAI-compatible TTS",
                                 style = MaterialTheme.typography.titleMedium,
@@ -1381,7 +1381,7 @@ contentColor = Color(0xFFF2F2F7),
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()1f)
                             .clipToBounds()
                             .nestedScroll(nestedScrollConnection),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -1437,7 +1437,7 @@ contentColor = Color(0xFFF2F2F7),
                                         )
                                     }
 
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.fillMaxWidth()1f)) {
                                         Text(
                                             text = preset.name,
                                             style = MaterialTheme.typography.titleMedium,
@@ -1517,7 +1517,7 @@ private fun TTSProviderItemContent(
         )
 
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth()1f),
             verticalArrangement = Arrangement.Center,
         ) {
             Text(

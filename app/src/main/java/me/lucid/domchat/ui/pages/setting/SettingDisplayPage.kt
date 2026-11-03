@@ -588,7 +588,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.fillMaxWidth()1f)) {
                                 Text("Connect Side Menu & Popovers", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                 Text(
                                     "Side menu and chat popovers follow the opacity, blur, and tone sliders. Off keeps them a fixed charcoal glass.",

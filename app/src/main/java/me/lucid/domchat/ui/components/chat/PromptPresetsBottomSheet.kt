@@ -385,7 +385,7 @@ fun PromptPresetsBottomSheet(
                             ),
                             color = Color.White,
                         )
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.fillMaxWidth()1f))
                         IconButton(
                             onClick = onDismissRequest,
                             modifier = Modifier.size(36.dp)
@@ -654,7 +654,7 @@ fun PromptPresetsBottomSheet(
                                         haptics.perform(HapticPattern.Pop)
                                         formPosition = PresetInjectionPosition.SYSTEM_PROMPT
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()1f)
                                 )
                                 PositionButton(
                                     label = "Post-History",
@@ -664,7 +664,7 @@ fun PromptPresetsBottomSheet(
                                         haptics.perform(HapticPattern.Pop)
                                         formPosition = PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()1f)
                                 )
                             }
                             Row(
@@ -679,7 +679,7 @@ fun PromptPresetsBottomSheet(
                                         haptics.perform(HapticPattern.Pop)
                                         formPosition = PresetInjectionPosition.BEFORE_LAST_USER
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()1f)
                                 )
                                 PositionButton(
                                     label = "At Depth",
@@ -689,7 +689,7 @@ fun PromptPresetsBottomSheet(
                                         haptics.perform(HapticPattern.Pop)
                                         formPosition = PresetInjectionPosition.AT_DEPTH
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()1f)
                                 )
                             }
                         }
@@ -770,7 +770,7 @@ fun PromptPresetsBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = false)
+                    .fillMaxWidth()1f, fill = false)
                     .nestedScroll(overscrollAbsorber)
             ) {
                 itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
@@ -800,7 +800,7 @@ fun PromptPresetsBottomSheet(
                             ) {
                                 Text(
                                 text = preset.name,
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.fillMaxWidth()1f),
                                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                                     color = Color.White,
                                     maxLines = 1,

@@ -236,7 +236,7 @@ private fun DomChatAboutItem(
                 Icon(icon, null, tint = Color.White)
             }
             Column(
-                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                modifier = Modifier.fillMaxWidth()1f).padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(

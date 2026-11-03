@@ -309,7 +309,7 @@ private fun FontSizeSettingItem(
                     onValueChange = { onValueChange(it) },
                     valueRange = 0.5f..2f,
                     steps = 11,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()1f)
                 )
                 Text(
                     text = "${(value * 100).toInt()}%",

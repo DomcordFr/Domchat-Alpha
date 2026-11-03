@@ -454,7 +454,7 @@ singleLine = true,
                         ) {
                             MultiChoiceSegmentedButtonRow(
                                 modifier = Modifier
-                                    .weight(1f)
+                                    .fillMaxWidth()1f)
                                     .height(48.dp),
                             ) {
                                 WebDavConfig.BackupItem.entries.forEachIndexed { index, item ->

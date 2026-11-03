@@ -146,7 +146,7 @@ fun ProviderConfigure(
         // 1. Enable/Disable Toggle with text
         if (showEnabledToggle) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth()1f)) {
                     Text(
                         text = if (provider.enabled) {
                             stringResource(id = R.string.setting_provider_page_enabled)
@@ -231,7 +231,7 @@ fun ProviderConfigure(
                 enabled = true,
                 stateKey = "provider_name_${provider.id}",
                 label = stringResource(id = R.string.setting_provider_page_name),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth()1f),
             )
         }
 
@@ -299,7 +299,7 @@ private fun ProviderTypeSelector(
             )
             Surface(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()1f)
                     .zIndex(if (selected) 1f else 0f)
                     .graphicsLayer {
                         scaleX = scale
@@ -634,7 +634,7 @@ private fun ColumnScope.ProviderConfigureComfyUI(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.fillMaxWidth()1f)) {
             Text(
                 text = stringResource(R.string.setting_provider_page_comfyui_advanced_mapping),
                 style = MaterialTheme.typography.bodyMedium,
@@ -725,7 +725,7 @@ private fun ColumnScope.ProviderConfigureOpenAI(
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(id = R.string.setting_provider_page_response_api), modifier = Modifier.weight(1f))
+        Text(stringResource(id = R.string.setting_provider_page_response_api), modifier = Modifier.fillMaxWidth()1f))
         val responseAPIWarning = stringResource(id = R.string.setting_provider_page_response_api_warning)
         Checkbox(
             checked = provider.useResponseApi,
@@ -791,7 +791,7 @@ private fun OpenAICompatibilityModeSetting(
                         haptics.perform(HapticPattern.Pop)
                         onSelected(mode)
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth()1f),
                     shape = AppShapes.ButtonPill,
                     color = if (isSel) Color.White.copy(alpha = 0.18f) else Color(0xFF000000),
                     contentColor = if (isSel) Color.White else Color(0xFFF2F2F7).copy(alpha = 0.70f),
@@ -902,7 +902,7 @@ private fun ColumnScope.ProviderConfigureGoogle(
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(id = R.string.setting_provider_page_vertex_ai), modifier = Modifier.weight(1f))
+        Text(stringResource(id = R.string.setting_provider_page_vertex_ai), modifier = Modifier.fillMaxWidth()1f))
         Checkbox(
             checked = provider.vertexAI,
             onCheckedChange = {

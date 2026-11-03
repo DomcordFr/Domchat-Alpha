@@ -152,7 +152,7 @@ fun WaveOriginPickerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(onClick = { ox = 0.5f; oy = 1f }) { Text("Reset") }
-                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.fillMaxWidth()1f))
                     TextButton(onClick = onDismiss) { Text("Cancel") }
                     Spacer(Modifier.width(4.dp))
                     Button(onClick = { onSave(ox, oy) }) { Text("Save") }

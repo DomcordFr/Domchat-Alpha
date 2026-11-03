@@ -671,7 +671,7 @@ private fun AssistantItemContent(
                 }
         )
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth()1f),
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
