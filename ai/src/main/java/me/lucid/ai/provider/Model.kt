@@ -48,6 +48,13 @@ data class Model(
     // subagent, suggestions, translate, OCR). Non-chat models are always selected from their
     // feature-specific settings, so this flag is intentionally ignored for them.
     val backend: Boolean = false,
+    // Generation parameters override for this model. Null means use provider defaults.
+    val temperature: Float? = null,
+    val topP: Float? = null,
+    val frequencyPenalty: Float? = null,
+    val presencePenalty: Float? = null,
+    val repetitionPenalty: Float? = null,
+    val maxTokens: Int? = null,
 )
 
 /** Best raw provider/runtime-backed capacity available for context management and display. */

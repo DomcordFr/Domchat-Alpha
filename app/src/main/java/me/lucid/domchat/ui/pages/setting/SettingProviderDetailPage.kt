@@ -1021,7 +1021,7 @@ private fun ModelList(
                         onValueChange = { searchQuery = it },
                         placeholder = { Text("Search provider models...") },
                         leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.65f))
+                            Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.45f))
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -1607,8 +1607,164 @@ private fun ModelSettingsForm(
                                 onModelChange = onModelChange,
                             )
                         }
+
+                        if (model.type == ModelType.CHAT) {
+                            ModelGenerationParamsEditor(
+                                model = model,
+                                onModelChange = onModelChange,
+                            )
+                        }
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Editor for full generation parameters: temperature, topP, frequency penalty,
+ * presence penalty, repetition penalty, max tokens, etc.
+ */
+@Composable
+private fun ModelGenerationParamsEditor(
+    model: Model,
+    onModelChange: (Model) -> Unit,
+) {
+    val temperature by remember(model.temperature) { mutableStateOf(model.temperature ?: 0.7f) }
+    val topP by remember(model.topP) { mutableStateOf(model.topP ?: 1.0f) }
+    val frequencyPenalty by remember(model.frequencyPenalty) { mutableStateOf(model.frequencyPenalty ?: 0.0f) }
+    val presencePenalty by remember(model.presencePenalty) { mutableStateOf(model.presencePenalty ?: 0.0f) }
+    val repetitionPenalty by remember(model.repetitionPenalty) { mutableStateOf(model.repetitionPenalty ?: 1.0f) }
+    val maxTokens by remember(model.maxTokens) { mutableStateOf(model.maxTokens ?: 0) }
+
+    FormItem(
+        label = { Text(stringResource(R.string.setting_provider_page_generation_params_title)) },
+        description = { Text(stringResource(R.string.setting_provider_page_generation_params_desc)) },
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Temperature
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Temperature", style = MaterialTheme.typography.bodyMedium)
+                Text("${temperature.toString().takeWhile { it != '.' || it == '.' }}${temperature.toString().dropWhile { it != '.' }.take(2)}", style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+            Slider(
+                value = temperature,
+                onValueChange = { temperature = it },
+                valueRange = 0f..2f,
+                steps = 20,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Top P
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Top P", style = MaterialTheme.typography.bodyMedium)
+                Text("${topP.toString().takeWhile { it != '.' || it == '.' }}${topP.toString().dropWhile { it != '.' }.take(2)}", style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+            Slider(
+                value = topP,
+                onValueChange = { topP = it },
+                valueRange = 0f..1f,
+                steps = 10,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Frequency Penalty
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Frequency Penalty", style = MaterialTheme.typography.bodyMedium)
+                Text("${frequencyPenalty.toString().takeWhile { it != '.' || it == '.' }}${frequencyPenalty.toString().dropWhile { it != '.' }.take(2)}", style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+            Slider(
+                value = frequencyPenalty,
+                onValueChange = { frequencyPenalty = it },
+                valueRange = -2f..2f,
+                steps = 20,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Presence Penalty
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Presence Penalty", style = MaterialTheme.typography.bodyMedium)
+                Text("${presencePenalty.toString().takeWhile { it != '.' || it == '.' }}${presencePenalty.toString().dropWhile { it != '.' }.take(2)}", style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+            Slider(
+                value = presencePenalty,
+                onValueChange = { presencePenalty = it },
+                valueRange = -2f..2f,
+                steps = 20,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Repetition Penalty
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Repetition Penalty", style = MaterialTheme.typography.bodyMedium)
+                Text("${repetitionPenalty.toString().takeWhile { it != '.' || it == '.' }}${repetitionPenalty.toString().dropWhile { it != '.' }.take(2)}", style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+            Slider(
+                value = repetitionPenalty,
+                onValueChange = { repetitionPenalty = it },
+                valueRange = 0f..2f,
+                steps = 20,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Max Tokens
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Max Tokens", style = MaterialTheme.typography.bodyMedium)
+                Text(maxTokens.toString(), style = MaterialTheme.typography.labelMedium, color = Color.White)
+            }
+            Slider(
+                value = maxTokens.toFloat(),
+                onValueChange = { maxTokens = it.toInt() },
+                valueRange = 0f..4096f,
+                steps = 40,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                onClick = {
+                    onModelChange(model.copy(
+                        temperature = if (temperature == 0.7f) null else temperature,
+                        topP = if (topP == 1.0f) null else topP,
+                        frequencyPenalty = if (frequencyPenalty == 0.0f) null else frequencyPenalty,
+                        presencePenalty = if (presencePenalty == 0.0f) null else presencePenalty,
+                        repetitionPenalty = if (repetitionPenalty == 1.0f) null else repetitionPenalty,
+                        maxTokens = if (maxTokens == 0) null else maxTokens,
+                    ))
+                }
+            ) {
+                Text("Apply")
             }
         }
     }
@@ -1743,7 +1899,7 @@ private fun ModelPickerFab(
                     onValueChange = { filterText = it },
                     placeholder = { Text("Search models...") },
                     leadingIcon = {
-                        Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.65f))
+                        Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.45f))
                     },
                     trailingIcon = {
                         if (filterText.isNotBlank()) {
@@ -1830,7 +1986,7 @@ private fun ModelPickerFab(
                                         else R.string.setting_provider_page_no_models_no_api_key
                                     ),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.65f),
+                                    color = Color.White.copy(alpha = 0.45f),
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
@@ -1918,7 +2074,7 @@ private fun ModelPickerFab(
                                     Text(
                                         text = model.modelId,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.65f),
+                                        color = Color.White.copy(alpha = 0.45f),
                                     )
                                     FlowRow(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -2198,7 +2354,7 @@ private fun ModelPicker(
                                         else R.string.setting_provider_page_no_models_no_api_key
                                     ),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.65f),
+                                    color = Color.White.copy(alpha = 0.45f),
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
@@ -2239,7 +2395,7 @@ private fun ModelPicker(
                                     Text(
                                         text = it.modelId,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.65f),
+                                        color = Color.White.copy(alpha = 0.45f),
                                     )
 
                                     FlowRow(
@@ -2658,7 +2814,7 @@ private fun ModelCapabilityProbeButton(
                 Text(
                     text = stringResource(R.string.setting_provider_page_probe_capabilities_progress),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.65f),
+                    color = Color.White.copy(alpha = 0.45f),
                 )
             }
         }
@@ -2739,7 +2895,7 @@ private fun BackendModelToggle(
             Text(
                 stringResource(R.string.setting_provider_page_backend_model_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.65f)
+                color = Color.White.copy(alpha = 0.45f)
             )
         }
         HapticSwitch(
@@ -3267,7 +3423,7 @@ private fun BuiltInToolsSettings(
         Text(
             text = stringResource(R.string.setting_page_built_in_tools_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.65f)
+            color = Color.White.copy(alpha = 0.45f)
         )
 
         val availableTools = listOf(
@@ -3308,7 +3464,7 @@ private fun BuiltInToolsSettings(
                         Text(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.65f)
+                            color = Color.White.copy(alpha = 0.45f)
                         )
                     }
                     HapticSwitch(
@@ -3347,7 +3503,7 @@ private fun ProviderOverrideSettings(
         Text(
             text = stringResource(R.string.setting_provider_page_provider_override_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.65f)
+            color = Color.White.copy(alpha = 0.45f)
         )
 
         if (providerOverride != null) {

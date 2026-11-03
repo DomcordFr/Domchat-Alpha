@@ -1245,7 +1245,6 @@ private fun HelperReasoningSettings(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(color = Color(0xFF000000))
                 .border(
                     width = 0.5.dp,
                     brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
