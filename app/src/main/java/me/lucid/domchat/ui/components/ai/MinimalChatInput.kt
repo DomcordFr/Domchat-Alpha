@@ -35,7 +35,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.animateContentSize
+import androidx.compose.animation.animateContentSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.ui.SearchProviderIcon
 import me.lucid.search.SearchServiceOptions
@@ -1700,7 +1700,7 @@ fun MinimalChatInput(
             "#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}"
 
         // Resolve the active rule for the selected style (built-in or custom)
-        val activeRule: me.lucid.domchat.data.datastore.RpStyleRule? by remember {
+        val activeRule = remember(selectedStyleIndex, customSymbols, rules) {
             selectedStyleIndex?.let { idx ->
                 val (label, pattern) = styleDefs[idx]
                 val effectivePattern = if (idx == 3) customSymbols.takeIf { it.isNotBlank() } else pattern

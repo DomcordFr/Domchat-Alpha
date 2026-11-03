@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
@@ -41,6 +41,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
@@ -483,7 +484,7 @@ fun PromptPresetsBottomSheet(
                     if (presetSearchQuery.isNotEmpty()) {
                         IconButton(onClick = { presetSearchQuery = "" }) {
                             Icon(
-                                imageVector = Icons.Rounded.Clear,
+                                imageVector = Icons.Rounded.Close,
                                 contentDescription = "Clear",
                                 tint = Color.White.copy(alpha = 0.5f),
                                 modifier = Modifier.size(18.dp)
