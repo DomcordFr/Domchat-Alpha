@@ -18,6 +18,7 @@ import me.lucid.domchat.data.ai.models.ModelMetadataResolver
 import me.lucid.domchat.data.ai.models.mergeCatalogIntoSettings
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
+import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.ai.mcp.McpManager
 import me.lucid.domchat.data.repository.AppStorageRepository
 import me.lucid.domchat.data.repository.MemoryRepository

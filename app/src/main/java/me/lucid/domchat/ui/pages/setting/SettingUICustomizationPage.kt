@@ -718,7 +718,6 @@ private fun StylePillButton(
         color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color.Transparent,
         border = BorderStroke(0.5.dp, if (isSelected) Color.White else Color.White.copy(alpha = 0.12f)),
         modifier = Modifier
-            .weight(1f)
             .padding(vertical = 8.dp),
     ) {
         Text(
