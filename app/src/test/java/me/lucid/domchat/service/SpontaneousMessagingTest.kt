@@ -85,7 +85,7 @@ class SpontaneousMessagingTest {
         )
 
         assertNotNull(selected)
-        assertEquals(otherId, selected!!.assistantId)
+        assertEquals(otherId, requireNotNull(selected).assistantId)
     }
 
     @Test
@@ -101,7 +101,7 @@ class SpontaneousMessagingTest {
         )
 
         assertNotNull(selected)
-        assertEquals(onlyId, selected!!.assistantId)
+        assertEquals(onlyId, requireNotNull(selected).assistantId)
     }
 
     @Test
@@ -131,7 +131,7 @@ class SpontaneousMessagingTest {
         )
 
         assertNotNull(parsed)
-        assertTrue(parsed!!.shouldSend)
+        assertTrue(requireNotNull(parsed).shouldSend)
         assertEquals("timely", parsed.reason)
         assertEquals(SpontaneousMessageRelation.RECENT_CHAT, parsed.relation)
         assertEquals("Checking in", parsed.title)
@@ -145,7 +145,7 @@ class SpontaneousMessagingTest {
         )
 
         assertNotNull(parsed)
-        assertNull(parsed!!.relation)
+        assertNull(requireNotNull(parsed).relation)
     }
 
     @Test

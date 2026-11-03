@@ -46,7 +46,7 @@ class ProviderTokenCountTest {
 
         assertEquals(321, count)
         assertTrue(client.request.url.contains("models/gemini-2.5-pro:countTokens"))
-        val body = Json.parseToJsonElement(client.request.body!!.decodeToString()).jsonObject
+        val body = Json.parseToJsonElement(requireNotNull(client.request.body).decodeToString()).jsonObject
         assertTrue(body.containsKey("generateContentRequest"))
     }
 
@@ -66,7 +66,7 @@ class ProviderTokenCountTest {
 
         assertEquals(654, count)
         assertTrue(client.request.url.endsWith("/messages/count_tokens"))
-        val body = Json.parseToJsonElement(client.request.body!!.decodeToString()).jsonObject
+        val body = Json.parseToJsonElement(requireNotNull(client.request.body).decodeToString()).jsonObject
         assertFalse(body.containsKey("max_tokens"))
         assertFalse(body.containsKey("temperature"))
         assertTrue(body.containsKey("messages"))

@@ -490,7 +490,7 @@ class ChatServiceTest {
         }
 
         assertNotNull(fork)
-        assertEquals(assistantId, fork!!.assistantId)
+        assertEquals(assistantId, requireNotNull(fork).assistantId)
         assertEquals(Uuid.parse("00000000-0000-0000-0000-000000000404"), fork.id)
         assertEquals(now, fork.createAt)
         assertEquals(now, fork.updateAt)

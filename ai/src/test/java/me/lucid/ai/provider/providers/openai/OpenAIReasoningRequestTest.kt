@@ -411,7 +411,7 @@ class OpenAIReasoningRequestTest {
 
         val header = recordingClient.lastRequest?.headers?.get("x-opencode-session")
         assertNotNull(header)
-        assertTrue(header!!.isNotBlank())
+        assertTrue(requireNotNull(header).isNotBlank())
     }
 
     @Test

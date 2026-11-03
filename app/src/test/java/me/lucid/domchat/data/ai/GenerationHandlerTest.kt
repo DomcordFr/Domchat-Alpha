@@ -171,12 +171,12 @@ class GenerationHandlerTest {
         assertFalse(visionContent.containsKey(TOOL_RESULT_INJECT_USER_IMAGE_PARTS_KEY))
         val inspectedArray = visionContent["inspected_images"] as? JsonArray
         assertNotNull(inspectedArray)
-        assertEquals(1, inspectedArray!!.size)
+        assertEquals(1, requireNotNull(inspectedArray).size)
         val meta = inspectedArray[0] as JsonObject
         assertEquals("KMP Diagram", (meta["title"] as JsonPrimitive).content)
         val notice = visionContent["_notice_to_assistant"] as? JsonPrimitive
         assertNotNull(notice)
-        assertTrue(notice!!.content.contains("private visual inspection only"))
+        assertTrue(requireNotNull(notice).content.contains("private visual inspection only"))
 
         // When vision is NOT supported
         val nonVisionResults = extractInjectedImagePayloads(listOf(toolResult), supportsVision = false)

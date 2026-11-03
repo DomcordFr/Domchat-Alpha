@@ -36,7 +36,7 @@ class ActivityTimelineInlineScrollHandoffTest {
         composeRule.setContent {
             outerState = rememberLazyListState(initialFirstVisibleItemIndex = PANEL_ITEM_INDEX)
             TimelineScrollHandoffHost(
-                outerState = outerState!!,
+                outerState = requireNotNull(outerState),
                 innerState = rememberLazyListState(),
             )
         }
@@ -66,7 +66,7 @@ class ActivityTimelineInlineScrollHandoffTest {
         composeRule.setContent {
             outerState = rememberLazyListState(initialFirstVisibleItemIndex = PANEL_ITEM_INDEX)
             TimelineScrollHandoffHost(
-                outerState = outerState!!,
+                outerState = requireNotNull(outerState),
                 innerState = rememberLazyListState(initialFirstVisibleItemIndex = timelineEntries().lastIndex),
             )
         }

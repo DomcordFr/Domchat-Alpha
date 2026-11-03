@@ -237,7 +237,7 @@ class ModelCatalogTest {
         assertNotNull("NVIDIA NIM provider should exist", nvidiaProvider)
         val rb = nvidiaProvider?.reasoningBehavior
         assertNotNull("NVIDIA NIM should have reasoning behavior defined", rb)
-        assertTrue("NVIDIA NIM reasoning behavior off should have chat_template_kwargs", rb!!.off.any { it.key == "chat_template_kwargs" })
+        assertTrue("NVIDIA NIM reasoning behavior off should have chat_template_kwargs", requireNotNull(rb).off.any { it.key == "chat_template_kwargs" })
         val offTemplate = rb.off.single { it.key == "chat_template_kwargs" }.value.jsonObject
         assertEquals("false", offTemplate["enable_thinking"]?.jsonPrimitive?.contentOrNull)
         assertEquals("false", offTemplate["thinking"]?.jsonPrimitive?.contentOrNull)

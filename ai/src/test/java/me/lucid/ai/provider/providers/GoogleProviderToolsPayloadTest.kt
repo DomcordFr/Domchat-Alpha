@@ -46,13 +46,14 @@ class GoogleProviderToolsPayloadTest {
         val payload = buildGoogleToolsPayload(params)
         assertNotNull(payload)
 
-        val tools = payload!!
+        val tools = requireNotNull(payload)
         assertEquals(3, tools.size)
         assertEquals(
             "search_web",
-            tools[0].jsonObject["functionDeclarations"]!!
+            requireNotNull(tools[0].jsonObject["functionDeclarations"])
                 .jsonArray[0]
-                .jsonObject["name"]!!
+                .jsonObject
+                .let { requireNotNull(it["name"]) }
                 .jsonPrimitive
                 .content
         )

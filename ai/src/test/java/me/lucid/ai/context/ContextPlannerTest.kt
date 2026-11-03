@@ -134,7 +134,7 @@ class ContextPlannerTest {
         )
 
         assertNotNull(slice)
-        assertEquals(0, slice!!.startIndex)
+        assertEquals(0, requireNotNull(slice).startIndex)
         assertEquals(16, slice.groupsSummarized)
         // Groups 0..15 summarized, ending at TurnGroup 15's endIndex
         assertEquals(turnGroups[15].endIndex, slice.lastIndexToSummarize)
@@ -163,7 +163,7 @@ class ContextPlannerTest {
         )
 
         assertNotNull(slice)
-        assertEquals(nextStartIndex, slice!!.startIndex)
+        assertEquals(nextStartIndex, requireNotNull(slice).startIndex)
         assertEquals(16, slice.groupsSummarized)
         // Milestone 2 covers TurnGroups 16..31 (Turns 17..32)
         assertEquals(turnGroups[31].endIndex, slice.lastIndexToSummarize)
@@ -187,7 +187,7 @@ class ContextPlannerTest {
         )
 
         assertNotNull(slice)
-        assertEquals(8, slice!!.groupsSummarized)
+        assertEquals(8, requireNotNull(slice).groupsSummarized)
         assertEquals(turnGroups[7].endIndex, slice.lastIndexToSummarize)
     }
 
@@ -210,7 +210,7 @@ class ContextPlannerTest {
 
         assertNotNull(slice)
         // 5 unsummarized groups: retains 2 at tail, summarizes 3
-        assertEquals(3, slice!!.groupsSummarized)
+        assertEquals(3, requireNotNull(slice).groupsSummarized)
         assertEquals(turnGroups[2].endIndex, slice.lastIndexToSummarize)
     }
 
@@ -233,7 +233,7 @@ class ContextPlannerTest {
 
         assertNotNull(slice)
         // Under CRITICAL pressure, retains only 1 active tail group, summarizes 14
-        assertEquals(14, slice!!.groupsSummarized)
+        assertEquals(14, requireNotNull(slice).groupsSummarized)
         assertEquals(turnGroups[13].endIndex, slice.lastIndexToSummarize)
     }
 
@@ -299,7 +299,7 @@ class ContextPlannerTest {
             targetRemainingTokens = 0, // disabled
         )
         assertNotNull(sliceNoTarget)
-        assertEquals(8, sliceNoTarget!!.groupsSummarized)
+        assertEquals(8, requireNotNull(sliceNoTarget).groupsSummarized)
 
         // With expansion: set target so tight the slicer must absorb more than 8 groups
         val tinyTarget = 10 // Only 10 tokens allowed in tail — forces max absorption
@@ -315,7 +315,7 @@ class ContextPlannerTest {
         assertNotNull(sliceWithTarget)
         // Budget expansion must have pushed past the 8-group baseline
         assertTrue(
-            "Expected expansion beyond heuristic 8 groups, got ${sliceWithTarget!!.groupsSummarized}",
+            "Expected expansion beyond heuristic 8 groups, got ${requireNotNull(sliceWithTarget).groupsSummarized}",
             sliceWithTarget.groupsSummarized > 8
         )
         // Must always keep at least 1 tail group (maxGroups = 12 - 1 = 11)

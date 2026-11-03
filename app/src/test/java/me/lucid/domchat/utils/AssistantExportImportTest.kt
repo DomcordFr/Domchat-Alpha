@@ -51,7 +51,7 @@ class AssistantExportImportTest {
 
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        val assistant = result!!.first
+        val assistant = requireNotNull(result).first
 
         assertEquals("V1 Character", assistant.name)
         assertTrue(assistant.presetMessages.isNotEmpty())
@@ -86,7 +86,7 @@ class AssistantExportImportTest {
             throw e
         }
         assertNotNull(result)
-        val assistant = result!!.first
+        val assistant = requireNotNull(result).first
 
         assertEquals("V2 Character", assistant.name)
         assertEquals("Initial greeting", assistant.presetMessages.first().parts.first().let { if (it is me.lucid.ai.ui.UIMessagePart.Text) it.text else "" })
@@ -107,7 +107,7 @@ class AssistantExportImportTest {
 
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        val assistant = result!!.first
+        val assistant = requireNotNull(result).first
 
         assertEquals("Chub Character", assistant.name)
         assertTrue(assistant.systemPrompt.contains("Nested character description"))
@@ -128,7 +128,7 @@ class AssistantExportImportTest {
 
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        val assistant = result!!.first
+        val assistant = requireNotNull(result).first
 
         assertEquals("Deep Chub Character", assistant.name)
         assertTrue(assistant.systemPrompt.contains("Deeply nested"))
@@ -144,7 +144,7 @@ class AssistantExportImportTest {
 
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        val assistant = result!!.first
+        val assistant = requireNotNull(result).first
 
         assertEquals("Stringified Character", assistant.name)
         assertTrue(assistant.systemPrompt.contains("Parsed from string"))
@@ -167,7 +167,7 @@ class AssistantExportImportTest {
 
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        val assistant = result!!.first
+        val assistant = requireNotNull(result).first
 
         assertEquals("Array Character", assistant.name)
         assertTrue(assistant.systemPrompt.contains("First in array"))
@@ -187,7 +187,7 @@ class AssistantExportImportTest {
         """
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        assertEquals("Yuko", result!!.first.name)
+        assertEquals("Yuko", requireNotNull(result).first.name)
         assertEquals("Hello", result.first.presetMessages.first().parts.first().let { if (it is me.lucid.ai.ui.UIMessagePart.Text) it.text else "" })
     }
 
@@ -225,14 +225,14 @@ class AssistantExportImportTest {
         """
         val result = invokeParseCharacterCard(jsonContent)
         assertNotNull(result)
-        assertEquals("Tilly", result!!.first.name)
+        assertEquals("Tilly", requireNotNull(result).first.name)
         assertEquals(2, result.first.alternateGreetings.size)
         assertEquals("Alt 1", result.first.alternateGreetings[0])
         assertEquals("Alt 2", result.first.alternateGreetings[1])
         assertNotNull(result.second)
         val lorebooks = (result.second as? AssistantExportV1)?.lorebooks
         assertNotNull(lorebooks)
-        assertEquals(1, lorebooks!!.size)
+        assertEquals(1, requireNotNull(lorebooks).size)
         assertEquals(1, lorebooks[0].lorebook.entries.size)
         assertEquals("Lore content here", lorebooks[0].lorebook.entries[0].prompt)
     }
@@ -258,12 +258,12 @@ class AssistantExportImportTest {
             val charData = chunks["chara"] ?: chunks["Chara"] ?: chunks["card"]
             assertNotNull("Chunk chara not found in ${file.name}", charData)
 
-            val decodedBytes = decodeBase64OrNull(charData!!)
+            val decodedBytes = decodeBase64OrNull(requireNotNull(charData))
             val jsonStr = if (decodedBytes != null) String(decodedBytes, Charsets.UTF_8) else charData
 
             val result = invokeParseCharacterCard(jsonStr)
             assertNotNull("Failed to parse card from ${file.name}", result)
-            assertTrue("Assistant name is blank in ${file.name}", result!!.first.name.isNotBlank())
+            assertTrue("Assistant name is blank in ${file.name}", requireNotNull(result).first.name.isNotBlank())
             assertTrue("System prompt is blank in ${file.name}", result.first.systemPrompt.isNotBlank())
         }
     }

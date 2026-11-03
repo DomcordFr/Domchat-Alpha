@@ -27,7 +27,7 @@ class PdfParserIntegrationTest {
         assertEquals(1, pages.size)
         assertTrue(shouldUsePdfPageOcr(pages.single().text))
 
-        val renderedFile = pdfFile.parentFile!!.resolve("rendered-page-1.png")
+        val renderedFile = requireNotNull(pdfFile.parentFile).resolve("rendered-page-1.png")
         PdfParser.renderPageAsPng(pdfFile, 0, renderedFile)
         assertTrue(renderedFile.exists())
         assertTrue(renderedFile.length() > 0L)
@@ -41,7 +41,7 @@ class PdfParserIntegrationTest {
                 )
             },
             renderPage = { pageIndex ->
-                pdfFile.parentFile!!.resolve("ocr-page-${pageIndex + 1}.png").also { file ->
+                requireNotNull(pdfFile.parentFile).resolve("ocr-page-${pageIndex + 1}.png").also { file ->
                     PdfParser.renderPageAsPng(pdfFile, pageIndex, file)
                 }.absolutePath
             },
@@ -78,7 +78,7 @@ class PdfParserIntegrationTest {
                 )
             },
             renderPage = { pageIndex ->
-                pdfFile.parentFile!!.resolve("mixed-ocr-page-${pageIndex + 1}.png").also { file ->
+                requireNotNull(pdfFile.parentFile).resolve("mixed-ocr-page-${pageIndex + 1}.png").also { file ->
                     PdfParser.renderPageAsPng(pdfFile, pageIndex, file)
                 }.absolutePath
             },

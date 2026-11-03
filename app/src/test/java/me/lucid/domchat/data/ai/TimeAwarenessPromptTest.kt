@@ -41,7 +41,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("Local timestamp: 2026-03-06 12:01 CET"))
+        assertTrue(requireNotNull(block).contains("Local timestamp: 2026-03-06 12:01 CET"))
         assertTrue(block.contains("Weekday: Friday"))
         assertTrue(block.contains("Month: March"))
         assertTrue(block.contains("Year: 2026"))
@@ -63,7 +63,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertFalse(block!!.contains("since the last message"))
+        assertFalse(requireNotNull(block).contains("since the last message"))
     }
 
     @Test
@@ -81,7 +81,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("About 30 minutes have passed since the last message."))
+        assertTrue(requireNotNull(block).contains("About 30 minutes have passed since the last message."))
     }
 
     @Test
@@ -99,7 +99,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("About 1 hour has passed since the last message."))
+        assertTrue(requireNotNull(block).contains("About 1 hour has passed since the last message."))
     }
 
     @Test
@@ -117,7 +117,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("About 1 hour and 30 minutes have passed since the last message."))
+        assertTrue(requireNotNull(block).contains("About 1 hour and 30 minutes have passed since the last message."))
     }
 
     @Test
@@ -135,7 +135,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("About 40 minutes have passed since the last message."))
+        assertTrue(requireNotNull(block).contains("About 40 minutes have passed since the last message."))
         assertFalse(block.contains("About 1 hour and 50 minutes have passed since the last message."))
     }
 
@@ -156,7 +156,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("About 40 minutes have passed since the last message."))
+        assertTrue(requireNotNull(block).contains("About 40 minutes have passed since the last message."))
         assertFalse(block.contains("About 20 minutes have passed since the last message."))
     }
 
@@ -175,7 +175,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("Local day changed since the previous message."))
+        assertTrue(requireNotNull(block).contains("Local day changed since the previous message."))
         assertTrue(block.contains("Local month changed since the previous message."))
         assertTrue(block.contains("Local year changed since the previous message."))
     }
@@ -209,10 +209,10 @@ class TimeAwarenessPromptTest {
             runtimeInfo = now
         )
 
-        assertTrue(fiveDays!!.contains("About 5 days have passed since the last message."))
-        assertTrue(twoWeeks!!.contains("About 2 weeks have passed since the last message."))
-        assertTrue(threeMonths!!.contains("About 3 months have passed since the last message."))
-        assertTrue(oneYear!!.contains("About 1 year has passed since the last message."))
+        assertTrue(requireNotNull(fiveDays).contains("About 5 days have passed since the last message."))
+        assertTrue(requireNotNull(twoWeeks).contains("About 2 weeks have passed since the last message."))
+        assertTrue(requireNotNull(threeMonths).contains("About 3 months have passed since the last message."))
+        assertTrue(requireNotNull(oneYear).contains("About 1 year has passed since the last message."))
     }
 
     @Test
@@ -234,7 +234,7 @@ class TimeAwarenessPromptTest {
         )
 
         assertNotNull(block)
-        assertTrue(block!!.contains("Recent retained timeline notes:"))
+        assertTrue(requireNotNull(block).contains("Recent retained timeline notes:"))
         assertEquals(3, "- Before".toRegex().findAll(block).count())
         assertFalse(block.contains("Before 2026-03-06 09:00 CET"))
         assertTrue(block.contains("Before 2026-03-06 10:00 CET"))

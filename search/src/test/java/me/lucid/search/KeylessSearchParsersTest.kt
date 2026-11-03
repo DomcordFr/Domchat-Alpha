@@ -285,7 +285,7 @@ class KeylessRouterTest {
             bingSearch = { emptyList() },
         )
         assertEquals("weather", result.intent)
-        assertTrue(result.answer!!.contains("18°C") || result.answer!!.contains("18.0°C"))
+        assertTrue(requireNotNull(result.answer).contains("18°C") || requireNotNull(result.answer).contains("18.0°C"))
         assertTrue(result.items.first().url.contains("open-meteo.com"))
         assertTrue(result.usedBackends.contains("Open-Meteo"))
         assertFalse(result.usedBackends.contains("Wikipedia"))
