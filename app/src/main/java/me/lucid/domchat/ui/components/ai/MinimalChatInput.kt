@@ -71,7 +71,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -899,14 +898,14 @@ fun MinimalChatInput(
                 DomChatComposerCapsule(
                     containerColor = composerBg,
                     modifier = Modifier
-                        .fillMaxWidth())
+                        .fillMaxWidth()
                         .heightIn(min = AppSize.ChromePill)
                         .liquidGlassSurface(
                             shape = inputShape,
                             glassMode = settings.displaySetting.liquidGlassMode,
                             isFloatingControl = true
                         )
-                        .domChatBlurEffect(composerBg, inputShape),
+                        .domChatBlurEffect(composerBg, inputShape)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth()
@@ -1369,7 +1368,7 @@ fun MinimalChatInput(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .fillMaxWidth())
+                                .fillMaxWidth()
                         ) {
                             TextField(
                                 state = activeTextState,
@@ -3324,7 +3323,7 @@ private fun MinimalPickerContent(
                     val selected = pagerState.currentPage == index
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth())
+                            .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(if (selected) Color.White.copy(alpha = 0.16f) else Color.Transparent)
                             .clickable {
@@ -4251,7 +4250,7 @@ private fun RowScope.StyleGridButton(
             if (isSelected) Color.White else Color.White.copy(alpha = 0.12f)
         ),
         modifier = Modifier
-            .fillMaxWidth())
+            .fillMaxWidth()
             .height(72.dp),
     ) {
         Row(
