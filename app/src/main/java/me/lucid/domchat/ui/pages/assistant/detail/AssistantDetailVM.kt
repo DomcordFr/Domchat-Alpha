@@ -290,6 +290,12 @@ class AssistantDetailVM(
         }
     }
 
+    fun updateSettings(settings: Settings) {
+        viewModelScope.launch {
+            settingsStore.update(settings = settings)
+        }
+    }
+
     fun addNewAssistant(assistant: Assistant) {
         viewModelScope.launch {
             val currentSettings = settingsStore.settingsFlow.value

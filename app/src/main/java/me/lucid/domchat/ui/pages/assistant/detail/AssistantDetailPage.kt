@@ -443,10 +443,10 @@ fun AssistantDetailPage(
                 }
             }
 
-            // Example Dialogues & SillyTavern settings
-            composable(AssistantDetailRoutes.EXAMPLE_DIALOGUES) {
+            // Creator Notes (markdown)
+            composable(AssistantDetailRoutes.CREATOR_NOTES) {
                 AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantExampleDialoguesSubPage(
+                    AssistantCreatorNotesSubPage(
                         assistant = assistant,
                         onUpdate = { onUpdate(it) }
                     )
