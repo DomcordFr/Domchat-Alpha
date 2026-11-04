@@ -48,6 +48,7 @@ fun AssistantCreatorNotesSubPage(
 ) {
     val haptics = rememberPremiumHaptics()
     var showMarkdownPreview by remember { mutableStateOf(false) }
+    var creatorNotesEditorText by remember(assistant.creatorNotes) { mutableStateOf(assistant.creatorNotes ?: "") }
     var showImageInsertDialog by remember { mutableStateOf(false) }
     var imageUrlInput by remember { mutableStateOf("") }
 

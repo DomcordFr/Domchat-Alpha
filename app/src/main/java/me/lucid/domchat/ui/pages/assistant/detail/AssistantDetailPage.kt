@@ -672,10 +672,10 @@ private fun AssistantDetailHome(
             )
 
             NavigationCard(
-                icon = Icons.Rounded.Upload,
-                title = stringResource(R.string.assistant_page_preset_messages),
-                description = stringResource(R.string.assistant_page_preset_messages_desc),
-                onClick = { navController.navigate(AssistantDetailRoutes.EXAMPLE_DIALOGUES) }
+                icon = Icons.Rounded.Edit,
+                title = stringResource(R.string.assistant_detail_section_creator_notes),
+                description = stringResource(R.string.assistant_detail_creator_notes_desc),
+                onClick = { navController.navigate(AssistantDetailRoutes.CREATOR_NOTES) }
             )
         }
 
