@@ -77,6 +77,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
 import me.lucid.domchat.data.datastore.DisplaySetting
+import me.lucid.domchat.data.datastore.TwoPresetGlassMode
 import me.lucid.domchat.data.ai.models.ModelCatalogSource
 import me.lucid.domchat.data.ai.models.ModelCatalogStatus
 import me.lucid.domchat.ui.components.nav.BackButton
@@ -145,11 +146,17 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            OneUITopAppBar(
-                title = stringResource(R.string.setting_display_page_title),
-                scrollBehavior = scrollBehavior,
-                navigationIcon = {
-                    BackButton()
+            ProgressiveBlurHeader(
+                modifier = Modifier.fillMaxWidth(),
+                height = 56.dp,
+                content = {
+                    OneUITopAppBar(
+                        title = stringResource(R.string.setting_display_page_title),
+                        scrollBehavior = scrollBehavior,
+                        navigationIcon = {
+                            BackButton()
+                        }
+                    )
                 }
             )
         },
@@ -488,6 +495,9 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         var localBarGradient by remember(settings.displaySetting.barBlackGradientIntensity) {
                             mutableFloatStateOf(settings.displaySetting.barBlackGradientIntensity)
                         }
+                        var localBarBlurIntensity by remember(settings.displaySetting.barBlackBlurIntensity) {
+                            mutableFloatStateOf(settings.displaySetting.barBlackBlurIntensity)
+                        }
 
                         // --- SECTION 1: PANELS & SHEETS ---
                         Text(
@@ -781,6 +791,44 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                             valueRange = 0f..1.0f
                                         )
                                     }
+                                }
+
+                                // Advanced UI Glass Settings
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Advanced UI Glass Settings", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Blur, refraction, specular, tint dials", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.advancedUiGlassSettings,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(advancedUiGlassSettings = it))
+                                        },
+                                        glassMode = settings.displaySetting.twoPresetGlassMode.name
+                                    )
+                                }
+
+                                // Advanced Chat Glass Settings
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Advanced Chat Glass Settings", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Bubble blur, alpha, tone, tint dials", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.advancedChatGlassSettings,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(advancedChatGlassSettings = it))
+                                        },
+                                        glassMode = settings.displaySetting.twoPresetGlassMode.name
+                                    )
                                 }
 
                                 // Liquid Press Ripples

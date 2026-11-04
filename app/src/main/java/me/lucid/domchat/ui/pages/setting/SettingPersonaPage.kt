@@ -189,6 +189,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         pronouns = formPronouns.trim(),
                         description = formDescription.trim(),
                         avatar = formAvatar,
+                        enabledLorebookIds = formLorebookIds,
                         isDefault = existing.isEmpty()
                     )
                     existing + newP
@@ -199,7 +200,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 name = nameToSave,
                                 pronouns = formPronouns.trim(),
                                 description = formDescription.trim(),
-                                avatar = formAvatar
+                                avatar = formAvatar,
+                                enabledLorebookIds = formLorebookIds
                             )
                         } else p
                     }
@@ -264,7 +266,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             FloatingActionButton(
                 onClick = { openCreate() },
                 containerColor = Color(0xFFFFFFFF),
-                contentColor = Color(0xFF000000),
+                contentColor = MaterialTheme.colorScheme.surface,
                 shape = CircleShape
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "New Persona")
@@ -317,7 +319,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     color = if (isActive) {
                         if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)
                     } else {
-                        Color(0xFF000000)
+                        MaterialTheme.colorScheme.surface
                     },
                     shape = cardShape,
                     border = BorderStroke(
@@ -378,7 +380,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                                 text = "ACTIVE",
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF000000)
+                                                color = MaterialTheme.colorScheme.surface
                                             )
                                         }
                                     }
@@ -466,7 +468,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 .padding(horizontal = 12.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,
-            containerColor = Color(0xFF000000),
+            containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = {
@@ -500,7 +502,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         Surface(
                             onClick = { imagePickerLauncher.launch("image/*") },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF000000),
+                            color = MaterialTheme.colorScheme.surface,
                             border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f))
                         ) {
                             Row(
@@ -544,6 +546,98 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         shape = inputShape,
                         colors = appFieldColors(),
                     )
+                    
+                    // Lorebook Assignment Section
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Lorebook Assignment",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Assign lorebooks to this persona",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Compact search bar
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                        ) {
+                            OutlinedTextField(
+                                value = lorebookSearchQuery,
+                                onValueChange = { lorebookSearchQuery = it },
+                                placeholder = { Text("Search lorebooks...") },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White.copy(alpha = 0.5f))
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = AppShapes.InputField,
+                                colors = appFieldColors(),
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Selectable lorebook chips
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            settings.lorebooks.forEach { lorebook ->
+                                val isSelected = formLorebookIds.contains(lorebook.id)
+                                val lorebookColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                } else {
+                                    Color.Transparent
+                                }
+                                val lorebookBorderColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                } else {
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.12f)
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = lorebookColor,
+                                    border = BorderStroke(0.5.dp, lorebookBorderColor),
+                                    modifier = Modifier
+                                        .clickable(
+                                            enabled = true,
+                                            onClick = {
+                                                val newIds = formLorebookIds.toMutableList()
+                                                if (isSelected) {
+                                                    newIds.remove(lorebook.id)
+                                                } else {
+                                                    newIds.add(lorebook.id)
+                                                }
+                                                formLorebookIds = newIds.toSet()
+                                            }
+                                        ),
+                                        modifier = Modifier.wrapContentWidth().padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = lorebook.name,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -552,7 +646,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        contentColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
                     Text("Save")

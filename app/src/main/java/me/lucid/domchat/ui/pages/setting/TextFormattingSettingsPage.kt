@@ -1,7 +1,9 @@
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -63,7 +65,7 @@ fun TextFormattingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM =
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Surface(
-                            color = Color(0xFF141520),
+                            color = MaterialTheme.colorScheme.surface,
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             shape = AppShapes.CardMedium,
                             modifier = Modifier.fillMaxWidth()
@@ -87,9 +89,9 @@ fun TextFormattingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM =
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Card(
-                                    shape = AppShapes.CardMedium,
+                                    shape = RoundedCornerShape(16.dp),
                                     colors = androidx.compose.material3.CardDefaults.cardColors(
-                                        containerColor = Color(0xFF0A0A0A)
+                                        containerColor = MaterialTheme.colorScheme.surface,
                                     ),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {

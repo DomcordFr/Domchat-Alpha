@@ -375,6 +375,9 @@ data class DisplaySetting(
     // Navigation hold-move and shared-axis transitions
     val enableNavHoldMove: Boolean = true,
     val enableSharedAxisTransitions: Boolean = true,
+    // Mock data toggle for testing
+    val mockLorebooks: Boolean = false,
+    val mockCards: Boolean = false,
 )
 
 @Serializable
