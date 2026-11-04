@@ -633,7 +633,214 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             color = Color.White.copy(alpha = 0.08f)
                         )
 
-                        // --- SECTION 2: CHAT BUBBLES & REASONING BADGES ---
+                        // Dual-Preset Glass Engine
+                        SettingsGroup(
+                            title = "Dual-Preset Glass Engine",
+                            subtitle = "Choose between AMOLED Black Glass and Original Blur modes"
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Glass Mode",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                )
+                                Select(
+                                    value = settings.displaySetting.twoPresetGlassMode,
+                                    onValueChange = {
+                                        updateDisplaySetting(
+                                            settings.displaySetting.copy(twoPresetGlassMode = it)
+                                        )
+                                    },
+                                    options = listOf(
+                                        TwoPresetGlassMode.LIQUID_GLASS,
+                                        TwoPresetGlassMode.OG_BLUR
+                                    ),
+                                    optionToString = { it.name }
+                                )
+                            }
+                        }
+
+                        // Bar Black Gradient & Blur
+                        SettingsGroup(
+                            title = "Bar Black Gradient & Blur",
+                            subtitle = "Control top/bottom bar appearance"
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Bar Gradient Intensity", style = MaterialTheme.typography.bodyMedium)
+                                    Text("${(localBarGradient * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                }
+                                DomChatSlider(
+                                    value = localBarGradient,
+                                    onValueChange = {
+                                        val rounded = (it * 100f).roundToInt() / 100f
+                                        if (rounded != localBarGradient) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localBarGradient = rounded
+                                        }
+                                    },
+                                    onValueChangeFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(barBlackGradientIntensity = localBarGradient))
+                                    },
+                                    valueRange = 0f..1.0f
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Bar Blur Intensity", style = MaterialTheme.typography.bodyMedium)
+                                    Text("${(localBarBlurIntensity * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                }
+                                DomChatSlider(
+                                    value = localBarBlurIntensity,
+                                    onValueChange = {
+                                        val rounded = (it * 100f).roundToInt() / 100f
+                                        if (rounded != localBarBlurIntensity) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localBarBlurIntensity = rounded
+                                        }
+                                    },
+                                    onValueChangeFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(barBlackBlurIntensity = localBarBlurIntensity))
+                                    },
+                                    valueRange = 0f..1.0f
+                                )
+                            }
+                        }
+
+                        // Animation & Motion
+                        SettingsGroup(
+                            title = "Animation & Motion",
+                            subtitle = "Essential motion effects for the UI"
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                // Velocity Motion Blur
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Velocity Motion Blur", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Blur while scrolling", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.enableVelocityMotionBlur,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(enableVelocityMotionBlur = it))
+                                        },
+                                        glassMode = settings.displaySetting.twoPresetGlassMode.name
+                                    )
+                                }
+
+                                var localMotionBlurIntensity by remember(settings.displaySetting.velocityMotionBlurIntensity) {
+                                    mutableFloatStateOf(settings.displaySetting.velocityMotionBlurIntensity)
+                                }
+
+                                if (settings.displaySetting.enableVelocityMotionBlur) {
+                                    AnimatedVisibility(
+                                        visible = settings.displaySetting.enableVelocityMotionBlur,
+                                        enter = fadeIn(),
+                                        exit = fadeOut()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("Motion Blur Intensity", style = MaterialTheme.typography.bodyMedium)
+                                            Text("${(localMotionBlurIntensity * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                        }
+                                        DomChatSlider(
+                                            value = localMotionBlurIntensity,
+                                            onValueChange = {
+                                                val rounded = (it * 100f).roundToInt() / 100f
+                                                if (rounded != localMotionBlurIntensity) {
+                                                    haptics.perform(HapticPattern.Tick)
+                                                    localMotionBlurIntensity = rounded
+                                                }
+                                            },
+                                            onValueChangeFinished = {
+                                                updateDisplaySetting(settings.displaySetting.copy(velocityMotionBlurIntensity = localMotionBlurIntensity))
+                                            },
+                                            valueRange = 0f..1.0f
+                                        )
+                                    }
+                                }
+
+                                // Liquid Press Ripples
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Liquid Press Ripples", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Ripple effect on buttons", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.enableLiquidPressRipple,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(enableLiquidPressRipple = it))
+                                        },
+                                        glassMode = settings.displaySetting.twoPresetGlassMode.name
+                                    )
+                                }
+
+                                // Nav Hold-and-Move
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Nav Hold-and-Move", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Hold to move chat items", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.enableNavHoldMove,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(enableNavHoldMove = it))
+                                        },
+                                        glassMode = settings.displaySetting.twoPresetGlassMode.name
+                                    )
+                                }
+
+                                // Shared-Axis Transitions
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Shared-Axis Transitions", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Shared-axis page transitions", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.enableSharedAxisTransitions,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(enableSharedAxisTransitions = it))
+                                        },
+                                        glassMode = settings.displaySetting.twoPresetGlassMode.name
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = "Chat Bubbles & Reasoning Glass",
                             style = MaterialTheme.typography.titleSmall,

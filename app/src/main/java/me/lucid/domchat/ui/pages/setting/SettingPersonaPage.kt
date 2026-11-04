@@ -133,6 +133,15 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     var formPronouns by remember { mutableStateOf("") }
     var formDescription by remember { mutableStateOf("") }
     var formAvatar by remember { mutableStateOf<Avatar>(Avatar.Dummy) }
+    var formLorebookIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var lorebookSearchQuery by remember { mutableStateOf("") }
+    var fullLorebooks by remember(settings.lorebooks) { mutableStateOf(settings.lorebooks) }
+    var filteredLorebooks by remember(settings.lorebooks, lorebookSearchQuery) {
+        settings.lorebooks.filter {
+            it.name.contains(lorebookSearchQuery, ignoreCase = true) ||
+                it.description.contains(lorebookSearchQuery, ignoreCase = true)
+        }
+    }
 
     // Built-in cropper state
     var showCropper by remember { mutableStateOf(false) }
@@ -407,8 +416,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             Surface(
                                 onClick = { openEdit(persona) },
                                 shape = RoundedCornerShape(12.dp),
-                                color = Color(0xFF000000),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.15f))
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),

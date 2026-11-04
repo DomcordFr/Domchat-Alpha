@@ -40,7 +40,6 @@ private data class ProgressiveBlurModifierElement(
             end = Offset(0f, height.toPx()),
         )
 
-        // Draw the gradient scrim on all API levels
         drawRect(
             brush = gradientBrush,
             topLeft = Offset(0f, 0f),

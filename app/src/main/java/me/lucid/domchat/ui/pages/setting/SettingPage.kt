@@ -68,6 +68,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material.icons.rounded.Science
 import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.datastore.isNotConfigured
@@ -276,6 +277,14 @@ fun SettingPage(
                 icon = Icons.Rounded.Info,
                 target = Screen.SettingAbout,
                 keywords = listOf("about", "version", "update", "github", "license")
+            ),
+            SettingNavItem(
+                title = "Testing",
+                subtitle = "Mock data, test flags, and developer tools",
+                category = "System & About",
+                icon = Icons.Rounded.Science,
+                target = Screen.SettingTesting,
+                keywords = listOf("testing", "mock", "debug", "test", "flags", "lorebooks", "cards")
             )
         )
     }

@@ -25,7 +25,7 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
  * [me.lucid.domchat.data.datastore.Settings.displaySetting.enableLiquidPressRipple].
  */
 fun Modifier.liquidRipple(
-    rippleColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+    rippleColor: Color = Color.White.copy(alpha = 0.2f),
     maxRadius: Float = 40f,
 ): Modifier = this.then(LiquidRippleModifierElement(rippleColor, maxRadius))
 

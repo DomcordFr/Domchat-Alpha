@@ -105,6 +105,7 @@ import me.lucid.domchat.ui.pages.setting.SettingLorebooksPage
 import me.lucid.domchat.ui.pages.setting.SettingLorebookDetailPage
 import me.lucid.domchat.ui.pages.setting.SettingJanitorPage
 import me.lucid.domchat.ui.pages.setting.SettingSkillsPage
+import me.lucid.domchat.ui.pages.setting.TestingSettingsPage
 import me.lucid.domchat.ui.pages.share.handler.ShareHandlerPage
 import me.lucid.domchat.ui.pages.webview.WebViewPage
 import me.lucid.domchat.ui.pages.setting.SettingAndroidIntegrationPage
@@ -1349,6 +1350,10 @@ class RouteActivity : ComponentActivity() {
                         SettingJanitorPage()
                     }
 
+                    composable<Screen.SettingTesting> {
+                        TestingSettingsPage()
+                    }
+
                     composable<Screen.Developer> {
                         DeveloperPage()
                     }
@@ -1520,6 +1525,9 @@ sealed interface Screen {
 
     @Serializable
     data object SettingJanitor : Screen
+
+    @Serializable
+    data object SettingTesting : Screen
 
     @Serializable
     data object SettingAndroidIntegration : Screen
