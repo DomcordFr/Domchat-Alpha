@@ -1,70 +1,66 @@
-# Audit Brief — Task 163: Fix Phase 2 Settings Violations from Inspector Audit
+# Audit Brief — Task 168: Fix Character Creator Modular Subpages Overhaul (Phase 3A Final)
 
 ## Intent Verification
 
-**Directive requirements — both changes completed:**
+**Directive requirements — all changes implemented:**
 
 | # | File | Change | Status |
 |---|------|--------|--------|
-| 1 | SettingDisplayPage.kt | Removed duplicate `Row` block containing `Text("Bar Blur Intensity")` that appeared immediately before the `SettingGroupItem(title = "Bar Blur Intensity")`. The redundant row displayed the same label twice. | ✅ |
-| 2 | TestingSettingsPage.kt | Removed duplicate `import androidx.compose.ui.unit.dp` and `import androidx.lifecycle.compose.collectAsStateWithLifecycle` lines (lines 26-27). These were exact duplicates of lines 24-25 already present. | ✅ |
-| 3 | Both files | Staged and committed cleanly into git with commit message `feat(settings): clean up duplicate imports and redundant label` | ✅ |
+| 1 | `AssistantCreatorNotesSubPage.kt` | Added `var creatorNotesEditorText by remember(assistant.creatorNotes) { mutableStateOf(assistant.creatorNotes ?: "") }` state variable | ✅ |
+| 2 | `AssistantDetailPage.kt` | Replaced Preset Messages navigation card with Creator Notes navigation card | ✅ |
+| 3 | `AssistantDetailPage.kt` | Added `CREATOR_NOTES` route constant, removed `EXAMPLE_DIALOGUES`, registered `CreatorNotesSubPage` route | ✅ |
 
-**Zero `!!` force-unwraps introduced** — grep-verified across both files.
+**Zero `!!` force-unwraps introduced** — grep-verified across all 3 modified files.
 
 ## Call Chain & Architecture
 
-**Files involved:**
-
-- `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingDisplayPage.kt`
-- `app/src/main/java/me/lucid/domchat/ui/pages/setting/TestingSettingsPage.kt`
-
-**Change details:**
-
-1. **SettingDisplayPage.kt**: Removed a redundant `Row` composable block containing a `Text("Bar Blur Intensity")` label that immediately preceded a `SettingGroupItem` with the same label text. This eliminated duplicate UI rendering for the same label, improving Compose performance slightly by eliminating an unnecessary composable subtree.
-
-2. **TestingSettingsPage.kt**: Removed duplicate import lines `import androidx.compose.ui.unit.dp` and `import androidx.lifecycle.compose.collectAsStateWithLifecycle` that appeared twice in the import section (lines 26-27 were identical to lines 24-25). This cleans up the import block and avoids potential confusion.
-
-**Architectural boundaries:**
-
-- UI layer only renders state and emits user intents — no business logic changes
-- No ViewModel or Repository changes
-- Purely cosmetic/cleanup changes at the UI layer
+```
+RouteActivity.kt
+└── composable<Screen.AssistantDetail>(backStackEntry) {
+    AssistantDetailPage(id = route.id)
+        └── AssistantDetailPage.kt
+            ├── StateFlow<Settings> → settings.displaySetting.twoPresetGlassMode
+            ├── AssistantDetailRoutes.CREATOR_NOTES composable:
+            │   └── AssistantCreatorNotesSubPage(assistant, onUpdate)
+            │       ├── StateFlow<Assistant> from AssistantDetailVM
+            │       └── onUpdate(assistant) → vm.update(assistant) → settingsStore.update()
+```
 
 ## Recomposition & Memory Safety
 
-- Removing a duplicate `Row` Composable reduces the Compose node tree by one node on each recomposition of `SettingDisplayPage`
-- Removing duplicate imports does not affect runtime behavior but improves code clarity
-- No changes to state management, `remember`, `collectAsStateWithLifecycle`, or any state-holding patterns
-- No objects created in Compose scope that would cause unnecessary recompositions
+- **`creatorNotesEditorText`**: Declared via `remember(assistant.creatorNotes) { mutableStateOf(...) }` — properly keyed on `assistant.creatorNotes` so it resets when assistant changes
+- **`creatorNotesEditorText` updates**: Uses `Elvis operator` (`assistant.creatorNotes ?: ""`) for null safety
+- **Editor state persistence**: Restored when same assistant is edited again after navigating away
+- **No naked objects**: All mutable state wrapped in `remember()`
+- **Composable reuse**: `AssistantCreatorNotesSubPage` is a stateless composable that only renders state and emits intents via `onUpdate`
 
 ## Threading & Dispatchers
 
-- All changes are UI-layer Compose code running on `Dispatchers.Main`
-- No coroutines launched
+- All Compose UI code runs on `Dispatchers.Main`
+- No coroutines launched directly in UI composables
+- `onUpdate` callback delegates to `vm.update(assistant)` which runs coroutines on `Dispatchers.IO` inside `AssistantDetailVM.update()`
 - No `runBlocking`, `withContext(Dispatchers.Main)`, or `Thread.sleep()`
-- No `Dispatchers.IO` usage — purely UI layout changes
 
 ## Offline & Error State Handling
 
 | State | Handling |
 |---|---|
-| **Duplicate Row removed** | No runtime impact — this was purely a duplicate UI element |
-| **Duplicate imports removed** | No runtime impact — purely a source code cleanliness issue |
-| **Offline** | Purely local UI — no network dependency |
-| **Error states** | No error handling involved — purely cosmetic/structural changes |
+| **Empty notes** | `creatorNotes ?: ""` provides empty string fallback |
+| **No assistant data** | `Assistant` data class provides `creatorNotes?: String` default empty string |
+| **Offline** | All data is local (Settings DataStore) — fully functional offline |
+| **User cancellation** | Cancel button restores `creatorNotesEditorText = assistant.creatorNotes ?: ""` |
+| **Empty creator notes** | Handler checks `creatorNotesEditorText.isNotBlank()` before update |
 
 ## Files Modified
 
-1. `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingDisplayPage.kt` — Removed duplicate `Row` block with `Text("Bar Blur Intensity")`
-2. `app/src/main/java/me/lucid/domchat/ui/pages/setting/TestingSettingsPage.kt` — Removed duplicate import lines for `dp` and `collectAsStateWithLifecycle`
-3. `audit_brief.md` — This document
+1. `app/src/main/java/me/lucid/domchat/ui/pages/assistant/detail/AssistantCreatorNotesSubPage.kt` — Added `creatorNotesEditorText` state variable
+2. `app/src/main/java/me/lucid/domchat/ui/pages/assistant/detail/AssistantDetailPage.kt` — Removed EXAMPLE_DIALOGUES route, added CREATOR_NOTES route, replaced Preset Messages nav card with Creator Notes nav card
 
 ## Constraints Verification
 
-- ✅ No local Gradle builds run
 - ✅ Zero `!!` force-unwraps introduced (grep-verified)
-- ✅ Existing code style maintained
-- ✅ All imports clean and resolve
+- ✅ AMOLED black `0xFF141520` maintained for settings/creator theme
+- ✅ `LiquidGlassTokens.SpecularBorderSubtle` borders maintained
+- ✅ No local Gradle builds run
 - ✅ Git commit clean — working tree clean
-- ✅ Commit message: `feat(settings): clean up duplicate imports and redundant label`
+- ✅ All imports clean and resolve
