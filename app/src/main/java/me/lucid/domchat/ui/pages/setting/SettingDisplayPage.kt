@@ -114,6 +114,9 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
+import me.lucid.domchat.ui.modifier.ProgressiveBlurHeader
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 
 @Composable
 fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
@@ -716,16 +719,13 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 DomChatSlider(
                                     value = localBarBlurIntensity,
                                     onValueChange = {
-                                        val rounded = (it * 100f).roundToInt() / 100f
-                                        if (rounded != localBarBlurIntensity) {
-                                            haptics.perform(HapticPattern.Tick)
-                                            localBarBlurIntensity = rounded
-                                        }
+                                        localBarBlurIntensity = it
+                                        updateDisplaySetting(settings.displaySetting.copy(barBlackBlurIntensity = it))
                                     },
-                                    onValueChangeFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(barBlackBlurIntensity = localBarBlurIntensity))
-                                    },
-                                    valueRange = 0f..1.0f
+                                    valueRange = 0f..1f,
+                                    steps = 100,
+                                    title = "Bar Blur Intensity",
+                                    subtitle = "Adjust blur strength behind top and bottom bars"
                                 )
                             }
                         }
