@@ -29,6 +29,7 @@ object LiquidGlassTokens {
     val CardShape = RoundedCornerShape(20.dp)
     val BubbleShape = RoundedCornerShape(18.dp)
     val PillShape = RoundedCornerShape(100.dp)
+    val Squircle = RoundedCornerShape(16.dp)
 
     // Specular border gradients - light reflects from top, disperses cleanly towards bottom
     val SpecularBorderBrush = Brush.verticalGradient(

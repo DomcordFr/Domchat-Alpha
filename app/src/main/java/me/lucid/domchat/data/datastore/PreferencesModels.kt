@@ -351,7 +351,9 @@ data class DisplaySetting(
     val backgroundBlurMode: me.lucid.domchat.data.model.BackgroundBlurMode = me.lucid.domchat.data.model.BackgroundBlurMode.FULL,
     val globalBackgroundBlurHeightFraction: Float = 0.75f,
     // Bar black gradient intensity (0f = none, 1f = full black gradient on top/bottom bars)
-    val barBlackGradientIntensity: Float = 0f,
+    val barBlackGradientIntensity: Float = 1.0f,
+    // Bar black blur intensity (0f = none, 1f = full blur on top/bottom bars)
+    val barBlackBlurIntensity: Float = 0.5f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
     // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the
@@ -359,6 +361,20 @@ data class DisplaySetting(
     val glassPreset: GlassPreset = GlassPreset.CUSTOM,
     // When true, reveals per-channel opacity/tint/tone/blur sliders in the display settings.
     val isAdvancedGlassEnabled: Boolean = false,
+    // Dual-preset glass engine mode: LIQUID_GLASS (default) or OG_BLUR
+    val twoPresetGlassMode: TwoPresetGlassMode = TwoPresetGlassMode.LIQUID_GLASS,
+    // Advanced UI glass settings toggle
+    val advancedUiGlassSettings: Boolean = false,
+    // Advanced chat glass settings toggle
+    val advancedChatGlassSettings: Boolean = false,
+    // Motion blur settings
+    val enableVelocityMotionBlur: Boolean = true,
+    val velocityMotionBlurIntensity: Float = 1.0f,
+    // Liquid press ripple settings
+    val enableLiquidPressRipple: Boolean = true,
+    // Navigation hold-move and shared-axis transitions
+    val enableNavHoldMove: Boolean = true,
+    val enableSharedAxisTransitions: Boolean = true,
 )
 
 @Serializable
@@ -374,6 +390,12 @@ enum class AnimationSpeedLevel(val title: String, val subtitle: String, val scal
     FAST("Snappy", "0.5x duration · Instant responses", 0.5f),
     NORMAL("Balanced", "1.0x duration · Natural motion", 1.0f),
     CINEMATIC("Fluid", "1.5x duration · Smooth liquid transitions", 1.5f);
+}
+
+@Serializable
+enum class TwoPresetGlassMode {
+    LIQUID_GLASS,
+    OG_BLUR
 }
 
 @Serializable

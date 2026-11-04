@@ -2,11 +2,15 @@ package me.lucid.domchat.ui.components.nav
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -17,6 +21,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /** The production DomChat top-app-bar back control shared by Android and iOS. */
 @Composable
@@ -25,6 +30,8 @@ fun DomChatBackButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
     onHaptic: () -> Unit = {},
+    glassMode: String = "LIQUID_GLASS",
+    enabled: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -34,23 +41,60 @@ fun DomChatBackButton(
         label = "back_button_scale",
     )
     val iconColor = MaterialTheme.colorScheme.onSurface
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val isLiquidGlass = glassMode == "LIQUID_GLASS"
 
-    IconButton(
-        onClick = {
-            onHaptic()
-            onClick()
-        },
-        modifier = modifier.graphicsLayer {
+    val combinedModifier = modifier
+        .graphicsLayer {
             scaleX = scale
             scaleY = scale
-        },
-        interactionSource = interactionSource,
-    ) {
-        Icon(
-            imageVector = RoundedArrowBackIcon,
-            contentDescription = contentDescription,
-            tint = iconColor,
-        )
+        }
+
+    if (isLiquidGlass) {
+        // Apple glass circle with specular rim for LIQUID_GLASS mode
+        Surface(
+            shape = CircleShape,
+            color = surfaceColor,
+            border = BorderStroke(
+                0.5.dp,
+                LiquidGlassTokens.SpecularBorderSubtle,
+            ),
+            modifier = combinedModifier
+                .clickable(
+                    enabled = enabled,
+                    onClick = {
+                        if (enabled) {
+                            onHaptic()
+                            onClick()
+                        }
+                    },
+                ),
+        ) {
+            Icon(
+                imageVector = RoundedArrowBackIcon,
+                contentDescription = contentDescription,
+                tint = iconColor,
+                modifier = androidx.compose.ui.Modifier.size(24.dp).padding(4.dp),
+            )
+        }
+    } else {
+        IconButton(
+            onClick = {
+                if (enabled) {
+                    onHaptic()
+                    onClick()
+                }
+            },
+            modifier = combinedModifier,
+            interactionSource = interactionSource,
+            enabled = enabled,
+        ) {
+            Icon(
+                imageVector = RoundedArrowBackIcon,
+                contentDescription = contentDescription,
+                tint = iconColor,
+            )
+        }
     }
 }
 
