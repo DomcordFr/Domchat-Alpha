@@ -708,14 +708,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..1.0f
                                 )
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("Bar Blur Intensity", style = MaterialTheme.typography.bodyMedium)
-                                    Text("${(localBarBlurIntensity * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                                }
                                 SettingGroupItem(
                                     title = "Bar Blur Intensity",
                                     subtitle = "Adjust blur strength behind top and bottom bars"
