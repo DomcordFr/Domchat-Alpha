@@ -716,17 +716,20 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     Text("Bar Blur Intensity", style = MaterialTheme.typography.bodyMedium)
                                     Text("${(localBarBlurIntensity * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
                                 }
-                                DomChatSlider(
-                                    value = localBarBlurIntensity,
-                                    onValueChange = {
-                                        localBarBlurIntensity = it
-                                        updateDisplaySetting(settings.displaySetting.copy(barBlackBlurIntensity = it))
-                                    },
-                                    valueRange = 0f..1f,
-                                    steps = 100,
+                                SettingGroupItem(
                                     title = "Bar Blur Intensity",
                                     subtitle = "Adjust blur strength behind top and bottom bars"
-                                )
+                                ) {
+                                    DomChatSlider(
+                                        value = localBarBlurIntensity,
+                                        onValueChange = {
+                                            localBarBlurIntensity = it
+                                            updateDisplaySetting(settings.displaySetting.copy(barBlackBlurIntensity = it))
+                                        },
+                                        valueRange = 0f..1f,
+                                        steps = 100
+                                    )
+                                }
                             }
                         }
 
