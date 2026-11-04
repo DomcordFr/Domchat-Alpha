@@ -254,6 +254,82 @@ fun AssistantGreetingsSubPage(
             }
         }
     }
+
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            modifier = Modifier.widthIn(max = 420.dp),
+            title = { Text("Manage Greeting") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (selectedGreetingIndex > 0) {
+                        DomChatGlassPillButton(text = "Move Forward", onClick = {
+                            val list = allGreetings.toMutableList()
+                            val item = list.removeAt(selectedGreetingIndex)
+                            list.add(selectedGreetingIndex - 1, item)
+                            onUpdate(
+                                assistant.copy(
+                                    presetMessages = list.map {
+                                        UIMessage(
+                                            role = MessageRole.ASSISTANT,
+                                            parts = listOf(UIMessagePart.Text(it))
+                                        )
+                                    }
+                                )
+                            )
+                            selectedGreetingIndex -= 1
+                            showEditDialog = false
+                        })
+                    }
+                    if (selectedGreetingIndex < allGreetings.size - 1) {
+                        DomChatGlassPillButton(text = "Move Backward", onClick = {
+                            val list = allGreetings.toMutableList()
+                            val item = list.removeAt(selectedGreetingIndex)
+                            list.add(selectedGreetingIndex + 1, item)
+                            onUpdate(
+                                assistant.copy(
+                                    presetMessages = list.map {
+                                        UIMessage(
+                                            role = MessageRole.ASSISTANT,
+                                            parts = listOf(UIMessagePart.Text(it))
+                                        )
+                                    }
+                                )
+                            )
+                            selectedGreetingIndex += 1
+                            showEditDialog = false
+                        })
+                    }
+                    if (allGreetings.size > 1) {
+                        DomChatGlassPillButton(text = "Delete Greeting", onClick = {
+                            val list = allGreetings.toMutableList()
+                            list.removeAt(selectedGreetingIndex)
+                            onUpdate(
+                                assistant.copy(
+                                    presetMessages = list.map {
+                                        UIMessage(
+                                            role = MessageRole.ASSISTANT,
+                                            parts = listOf(UIMessagePart.Text(it))
+                                        )
+                                    }
+                                )
+                            )
+                            selectedGreetingIndex = selectedGreetingIndex.coerceAtMost(list.size - 1)
+                            showEditDialog = false
+                        })
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 /**
