@@ -29,8 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -123,42 +121,6 @@ fun AssistantProfileSubPage(
             )
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // CREATOR NOTES (black glass card)
-        // ════════════════════════════════════════════════════════════════════
-        SettingsGroup(title = stringResource(R.string.assistant_detail_section_creator_notes)) {
-            SettingGroupInputItem(
-                title = "Creator Notes",
-                subtitle = "Creator notes",
-                content = {
-                    Surface(
-                        color = Color(0xFF141520),
-                        border = androidx.compose.foundation.BorderStroke(
-                            0.5.dp,
-                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                        ),
-                        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        DebouncedTextField(
-                            value = assistant.creatorNotes ?: "",
-                            onValueChange = { onUpdate(assistant.copy(creatorNotes = it)) },
-                            stateKey = "${assistant.id}_notes",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 120.dp),
-                            minLines = 6,
-                            maxLines = 10,
-                            placeholder = "Write creator notes...",
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = FontFamily.Monospace,
-                                lineHeight = 20.sp
-                            )
-                        )
-                    }
-                }
-            )
-        }
 
         // ═══════════════════════════════════════════════════════════════════
         // TAGS
