@@ -76,6 +76,7 @@ import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.ui.UIAvatar
+import me.lucid.domchat.ui.components.ui.AssistantCreatorNotesSubPage
 import me.lucid.domchat.ui.hooks.heroAnimation
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.hierarchicalEnterTransition

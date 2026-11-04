@@ -8,21 +8,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +34,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +48,7 @@ import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.ui.DebouncedTextField
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
@@ -60,6 +66,21 @@ fun AssistantGreetingsSubPage(
 ) {
     val haptics = rememberPremiumHaptics()
 
+    // Build greetings list from presetMessages (assistant role) + alternateGreetings
+    val allGreetings = remember(assistant.presetMessages, assistant.alternateGreetings) {
+        val list = mutableListOf<String>()
+        assistant.presetMessages.filter { it.role == MessageRole.ASSISTANT }.forEach { list.add(it.toText()) }
+        list.addAll(assistant.alternateGreetings)
+        list
+    }
+
+    var selectedGreetingIndex by remember { mutableStateOf(0) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newGreetingInput by remember { mutableStateOf("") }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editIndex by remember { mutableStateOf(-1) }
+    var editText by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -67,191 +88,221 @@ fun AssistantGreetingsSubPage(
             .imePadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Tab row section
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_initial_messages)) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val intros = remember(assistant.presetMessages, assistant.alternateGreetings) {
-                    val list = mutableListOf<String>()
-                    assistant.presetMessages.filter { it.role == MessageRole.ASSISTANT }.forEach { list.add(it.toText()) }
-                    list.addAll(assistant.alternateGreetings)
-                    list
-                }
+                // Greeting tabs row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    allGreetings.forEachIndexed { index, greeting ->
+                        val isSelected = index == selectedGreetingIndex
+                        val tabLabel = "Initial #${index + 1}"
 
-                val updateIntros = { newIntros: List<String> ->
-                    if (newIntros.isEmpty()) {
-                        onUpdate(assistant.copy(presetMessages = emptyList(), alternateGreetings = emptyList()))
-                    } else {
-                        onUpdate(
-                            assistant.copy(
-                                presetMessages = listOf(UIMessage(role = MessageRole.ASSISTANT, parts = listOf(UIMessagePart.Text(newIntros.first())))),
-                                alternateGreetings = newIntros.drop(1)
-                            )
+                        GlassGreetingTab(
+                            label = tabLabel,
+                            isSelected = isSelected,
+                            preview = greeting.ifEmpty { "(empty)" },
+                            onClick = {
+                                haptics.perform(HapticPattern.Tick)
+                                selectedGreetingIndex = index
+                            },
+                            onLongPress = {
+                                haptics.perform(HapticPattern.Pop)
+                                editIndex = index
+                                editText = greeting
+                                showEditDialog = true
+                            }
                         )
                     }
-                }
 
-                if (intros.isEmpty()) {
+                    // Add new greeting button
                     DomChatGlassPillButton(
-                        text = stringResource(R.string.assistant_detail_add_intro),
+                        text = "+ Add",
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
-                            updateIntros(listOf(""))
+                            showAddDialog = true
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.size(60.dp, 40.dp)
                     )
-                } else {
-                    Surface(
-                        color = Color(0xFF141520),
-                        border = androidx.compose.foundation.BorderStroke(
-                            0.5.dp,
-                            LiquidGlassTokens.SpecularBorderSubtle
-                        ),
-                        shape = AppShapes.CardMedium,
-                        modifier = Modifier.fillMaxWidth()
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Expandable input with markdown preview toggle for selected greeting
+            if (allGreetings.isNotEmpty() && selectedGreetingIndex in allGreetings.indices) {
+                val currentGreeting = allGreetings[selectedGreetingIndex]
+                var editorText by remember { mutableStateOf(currentGreeting) }
+                var showPreview by remember { mutableStateOf(false) }
+
+                Surface(
+                    color = Color(0xFF141520),
+                    border = BorderStroke(
+                        0.5.dp,
+                        LiquidGlassTokens.SpecularBorderSubtle
+                    ),
+                    shape = AppShapes.CardMedium,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        // Title row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            for ((index, intro) in intros.withIndex()) {
-                                var isEditing by remember { mutableStateOf(false) }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Surface(
-                                        color = Color(0xFF141520),
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            0.5.dp,
-                                            LiquidGlassTokens.SpecularBorderSubtle
-                                        ),
-                                        shape = AppShapes.CardSmall,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable {
-                                                haptics.perform(HapticPattern.Pop)
-                                                isEditing = true
-                                            }
-                                    ) {
-                                        Column(modifier = Modifier.padding(12.dp)) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(
-                                                    text = "Intro #${index + 1}",
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                                Spacer(modifier = Modifier.weight(1f))
-                                                IconButton(
-                                                    onClick = {
-                                                        haptics.perform(HapticPattern.Tick)
-                                                        val newList = intros.toMutableList()
-                                                        if (index in newList.indices) {
-                                                            newList.removeAt(index)
-                                                            updateIntros(newList)
-                                                        }
-                                                    },
-                                                    modifier = Modifier.size(24.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Rounded.Delete,
-                                                        contentDescription = null,
-                                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                }
-                                            }
-                                            Spacer(Modifier.height(4.dp))
-                                            Text(
-                                                text = intro.ifEmpty { "Tap to write intro..." },
-                                                style = MaterialTheme.typography.bodySmall,
-                                                maxLines = 4,
-                                                overflow = TextOverflow.Ellipsis,
-                                                color = if (intro.isEmpty())
-                                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                                else
-                                                    MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-                                    }
+                            Text(
+                                text = "Initial #${selectedGreetingIndex + 1}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "${currentGreeting.length} chars",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
 
-                                    if (isEditing) {
-                                        var editorText by remember { mutableStateOf(intro) }
-                                        Surface(
-                                            color = Color(0xFF141520),
-                                            border = androidx.compose.foundation.BorderStroke(
-                                                0.5.dp,
-                                                LiquidGlassTokens.SpecularBorderSubtle
-                                            ),
-                                            shape = AppShapes.CardMedium,
-                                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                                        ) {
-                                            Column(
-                                                modifier = Modifier.padding(16.dp),
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Edit Intro #${index + 1}",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = Color.White
-                                                )
-                                                DebouncedTextField(
-                                                    value = editorText,
-                                                    onValueChange = { editorText = it },
-                                                    stateKey = "${assistant.id}_intro_$index",
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .heightIn(min = 160.dp),
-                                                    minLines = 8,
-                                                    maxLines = 12,
-                                                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                                        lineHeight = 20.sp
-                                                    )
-                                                )
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    DomChatGlassPillButton(
-                                                        text = stringResource(R.string.cancel),
-                                                        onClick = { isEditing = false },
-                                                        modifier = Modifier.width(80.dp)
-                                                    )
-                                                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(8.dp))
-                                                    DomChatGlassPillButton(
-                                                        text = stringResource(R.string.save),
-                                                        accent = true,
-                                                        onClick = {
-                                                            val newList = intros.toMutableList()
-                                                            newList[index] = editorText
-                                                            updateIntros(newList)
-                                                            isEditing = false
-                                                        },
-                                                        modifier = Modifier.width(80.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                                DomChatGlassPillButton(
-                                    text = stringResource(R.string.assistant_detail_add_intro),
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        updateIntros(intros + "")
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
+                        // Markdown preview toggle and editor
+                        if (showPreview) {
+                            MarkdownBlock(
+                                content = editorText,
+                                modifier = Modifier.fillMaxWidth().padding(12.dp)
+                            )
+                        } else {
+                            DebouncedTextField(
+                                value = editorText,
+                                onValueChange = { editorText = it },
+                                stateKey = "${assistant.id}_greeting_editor_$selectedGreetingIndex",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 160.dp),
+                                minLines = 6,
+                                maxLines = 20,
+                                placeholder = "Write greeting in markdown...",
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    lineHeight = 20.sp
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Preview toggle + save row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                onClick = { showPreview = !showPreview }
+                            ) {
+                                Text(
+                                    text = if (showPreview) "Hide Markdown" else "Show Markdown"
                                 )
                             }
+                            DomChatGlassPillButton(
+                                text = stringResource(R.string.cancel),
+                                onClick = {
+                                    editorText = currentGreeting
+                                },
+                                modifier = Modifier.width(80.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            DomChatGlassPillButton(
+                                text = stringResource(R.string.save),
+                                accent = true,
+                                onClick = {
+                                    val newGreetings = allGreetings.toMutableList()
+                                    newGreetings[selectedGreetingIndex] = editorText
+                                    onUpdate(
+                                        assistant.copy(
+                                            presetMessages = listOf(
+                                                UIMessage(
+                                                    role = MessageRole.ASSISTANT,
+                                                    parts = listOf(UIMessagePart.Text(newGreetings.first()))
+                                                )
+                                            ) + newGreetings.drop(1).mapIndexed { index, text ->
+                                                UIMessage(
+                                                    role = MessageRole.ASSISTANT,
+                                                    parts = listOf(UIMessagePart.Text(text))
+                                                )
+                                            }
+                                        )
+                                    )
+                                    showEditDialog = false
+                                },
+                                modifier = Modifier.width(80.dp)
+                            )
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Glassy greeting tab for the horizontal tab row.
+ */
+@Composable
+private fun GlassyGreetingTab(
+    label: String,
+    isSelected: Boolean,
+    preview: String,
+    onClick: () -> Unit,
+    onLongPress: () -> Unit
+) {
+    val haptics = rememberPremiumHaptics()
+
+    Surface(
+        color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color(0xFF141520),
+        border = BorderStroke(
+            0.5.dp,
+            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else LiquidGlassTokens.SpecularBorderSubtle
+        ),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .size(70.dp, 64.dp)
+            .clickable(onClick = onClick)
+            .pointerInput(Unit) {
+                detectLongPressGesture(onLongPress = { onLongPress() })
+            }
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.9f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = preview.take(28),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
