@@ -1,13 +1,13 @@
 package me.lucid.domchat.ui.components.ui
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
@@ -52,8 +52,8 @@ fun HapticSwitch(
     val thumbOffset by animateDpAsState(
         targetValue = if (checked) 20.dp else 0.dp,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatio.MediumBouncy,
-            stiffness = Spring.Stiffness.Medium,
+            dampingRatio = 0.6f,
+            stiffness = 300f,
         ),
         label = "switch_thumb_offset",
     )
