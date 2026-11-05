@@ -640,7 +640,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 }
                             }
                         }
-                    },
+                    }
             },
             confirmButton = {
                 Button(
