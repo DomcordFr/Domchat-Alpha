@@ -94,7 +94,7 @@ fun LiquidRippleContent(
                     val alpha = (1f - currentRadius / maxRadius) * 0.3f
                     drawCircle(
                         color = rippleColor.copy(alpha = alpha.coerceAtLeast(0f).coerceAtMost(1f)),
-                        center = androidx.compose.ui.geometry.Offset(size.width / 2, size.height / 2),
+                        center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f),
                         radius = currentRadius,
                     )
                 }

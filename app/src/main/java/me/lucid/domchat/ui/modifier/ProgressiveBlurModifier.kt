@@ -44,7 +44,7 @@ private data class ProgressiveBlurModifierElement(
         drawRect(
             brush = gradientBrush,
             topLeft = Offset(0f, 0f),
-            size = size.copy(height = height.toPx()),
+            size = size.copy(height = height.toPx().roundToInt()),
         )
     }
 }
