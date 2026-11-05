@@ -1,51 +1,62 @@
-# Audit Brief — Task 174: Phase 4 Unify Popover Headers & Liquid Glass Redesign
+# Audit Brief — Task 175: Phase 5A Character Hub Group Tabs & Sheet Polish
 
 ## Intent Verification
 
+**CharacterHubPage.kt**
+- Added 4 group context-menu state vars in `CharacterHubPage` composable:
+  - `selectedGroupForMenu` (`String?`, nullable, Elvis-safe)
+  - `showGroupMenuDialog` (`Boolean`)
+  - `showRenameGroupDialog` (`Boolean`)
+  - `renameGroupText` (`String`)
+  All via `remember { mutableStateOf(...) }`.
+- `GroupTabsRow` gained an `onGroupLongClick: (String) -> Unit = {}` parameter. Custom group tab `Surface` now uses `Modifier.combinedClickable(onClick = ..., onLongClick = { onGroupLongClick(groupId) })`. The Surface's standalone `onClick` was removed to avoid double-fire (combinedClickable already handles click). The "All" and "+ New" tabs are unchanged (no long-click menu).
+- Both `GroupTabsRow` call sites (grid + list views) wire `onGroupLongClick` to perform `HapticPattern.Buildup`, set `selectedGroupForMenu = groupId`, `showGroupMenuDialog = true`.
+- **Group management `AlertDialog`** (gated by `showGroupMenuDialog`): `Modifier.widthIn(max = 420.dp)`, title `Manage Group: ${selectedGroupForMenu ?: ""}`, "Rename Group" pill (opens rename dialog) and "Delete Group" pill. Delete does `selectedGroupForMenu?.let { grp -> groupNames = groupNames - grp; charGroupAssignments = charGroupAssignments.filterValues { it != grp }; persistGroups(); toaster?.show(...) }` then dismisses. Null-safe via `?.let`.
+- **Rename `AlertDialog`** (gated by `showRenameGroupDialog`): `Modifier.widthIn(max = 420.dp)`, title "Rename Group", `OutlinedTextField` bound to `renameGroupText`, Confirm "Save" (guarded by `isNotBlank()`, renames via `groupNames = groupNames + (grp to renameGroupText.trim())`, persists, resets state) and "Cancel" dismiss.
+- **CharacterActionPopover**: `widthIn(max = 460.dp)` → `widthIn(max = 420.dp)` for consistent dialog width.
+
 **MinimalChatInput.kt**
-- Added unified header row to Model Picker sheet (`showModelPickerSheet`, line ~1613): `Row` with `fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)`, `Arrangement.SpaceBetween`, `Alignment.CenterVertically`. Contains "Select Model" title (`titleLarge`, `FontWeight.Bold`, `Color.White`) and a Close `IconButton` with `containerColor = Color.Transparent` + `Icons.Rounded.Close` tinted white.
-- Wallpaper sheet header Close `IconButton` now uses `IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
-- Text Styling sheet header Close `IconButton` now uses `IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
-- Added `import androidx.compose.material3.IconButtonDefaults`.
+- AI Streaming Animation sheet header Close `IconButton`: added `colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
+- Author's Note sheet header Close `IconButton`: added `colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
+- Samplers sheet header already had transparent colors (no change needed).
+- `IconButtonDefaults` import already present (added in task 174).
 
-**PromptPresetsBottomSheet.kt**
-- `ModalBottomSheet.containerColor` changed from hardcoded `Color(0xFF000000).copy(alpha = 0.85f)` to `domChatSheetContainerColor()` (removed `effectiveSheetContainerColor` local).
-- Main content `Column` now has `Modifier.fillMaxHeight(0.85f)` to bound mobile height.
-- Search `OutlinedTextField`: `shape = RoundedCornerShape(16.dp)` (was `12.dp`); borders use `Color.White.copy(alpha = 0.22f)` focused / `0.06f` unfocused (matching `SpecularBorderSubtle` specular rim values, since `SpecularBorderSubtle` is a `Brush`, not a `Color`, and text-field border colors require `Color`).
-- Preset list item card: `color = domChatSheetContainerColor().copy(alpha = if (isEnabled) 0.70f else 0.35f)`; `shape = RoundedCornerShape(16.dp)`; `border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` (uniform 0.5.dp, removed conditional 1.0.dp/brush variant).
-- Replaced standard `Switch` with `HapticSwitch` (`checked`, `onCheckedChange = { togglePreset(preset.id, it) }`, `modifier = Modifier.size(32.dp)`).
-- Imports cleaned: removed `Switch`, `SwitchDefaults`, `domChatCardContainerColor`; added `HapticSwitch`.
-
-Correction applied vs. directive: border colors for the `OutlinedTextField` use `Color.White` alpha values (0.22f / 0.06f) rather than `LiquidGlassTokens.SpecularBorderSubtle` directly, because `SpecularBorderSubtle` is a `Brush` while `OutlinedTextFieldDefaults.colors` border params expect `Color`. The white alpha values mirror the `SpecularBorderSubtle` gradient stop colors.
+Architectural note: group names live in a separate SharedPreferences file (`character_hub_groups`) managed locally in `CharacterHubPage` via `persistGroups()`, NOT in `Settings`/`AssistantVM`. There is no `vm.updateGroups` on `AssistantVM` (VM owns Settings only). Therefore delete/rename persist inline via `groupNames` + `charGroupAssignments` + `persistGroups()`, rather than calling a non-existent `vm.updateGroups(...)`. This matches existing group CRUD patterns (create at line ~1479, move at line ~1494, delete at line ~1501).
 
 ## Call Chain & Architecture
 
-UI layer only, zero business logic:
-- User taps a preset item → `HapticSwitch.onCheckedChange` → `togglePreset(preset.id, it)` → mutates `effectiveEnabledIds`; in per-chat mode calls `onUpdateConversation(conversation.copy(...))`, in global mode launches `settingsStore.update {...}` via coroutine scope.
-- User taps Close icon → `showModelPickerSheet = false` / `showWallpaperSheet = false` / `showTextStylingDialog = false` / `onDismissRequest` — dismisses the sheet/dialog.
-- `PromptPresetsBottomSheet` receives `settings`, `conversation`, `onUpdateConversation`, `onDismissRequest` as parameters; persists via injected `SettingsStore`.
-- ViewModel/repository boundary unchanged; no new ViewModel methods introduced.
+UI layer only:
+1. User long-presses a custom group tab → `combinedClickable.onLongClick` → haptics Buildup → `selectedGroupForMenu = groupId`, `showGroupMenuDialog = true`.
+2. Recomposition adds the "Manage Group" `AlertDialog` overlay (`widthIn(max = 420.dp)`).
+3. "Rename Group" → `renameGroupText = selectedGroupForMenu ?: ""`, close first dialog, open rename dialog.
+4. Rename dialog "Save" (enabled only when name non-blank) → `groupNames = groupNames + (grp to trimmedName)`, `persistGroups()` (writes `character_hub_groups` SharedPreferences off Main via `scope.launch { withContext(Dispatchers.IO) { ... } }`), toast, reset state, dismiss.
+5. "Delete Group" → `selectedGroupForMenu?.let { grp -> groupNames = groupNames - grp; charGroupAssignments = charGroupAssignments.filterValues { it != grp }; persistGroups(); toast }`, dismiss. Also unassigns any characters in the deleted group.
+6. Cancel / dismiss → corresponding `show*Dialog = false`.
 
-Architectural boundary: composables render state and emit intents via callbacks/`onUpdateConversation`/`settingsStore.update`; persistence remains in `SettingsStore`/`DataStore`.
+Architectural boundary: composables render state and emit intents via `onGroupSelected`/`onGroupLongClick` callbacks and direct state mutation + `persistGroups()`. No business logic in UI; persistence in `persistGroups()` (IO dispatcher). ViewModel (`AssistantVM`) is not involved in group ownership (correct — groups aren't in Settings).
 
 ## Recomposition & Memory Safety
 
-- All state remains `remember { mutableStateOf(...) }` / `mutableFloatStateOf` / `rememberModalBottomSheetState` — no naked objects introduced.
-- `HapticSwitch` internally uses `remember { MutableInteractionSource() }` + `animateDpAsState` — pre-existing, lifecycle-aware.
-- `domChatSheetContainerColor()` reads `LocalSettings.current` (a composition local) — recomputes when settings change, which is correct and intended.
-- `fillMaxHeight(0.85f)` is a modifier, no state impact.
-- No `!!` force-unwraps introduced (grep-verified in edited regions; pre-existing `!!` at `cameraOutputFile!!`/`cameraOutputUri!!` in unrelated camera code untouched).
-- Diff: 40 insertions / 19 deletions across 2 files — within scope, no bloat.
+- All four state vars are `remember { mutableStateOf(...) }` — no naked objects.
+- Dialogs are ephemeral: `showGroupMenuDialog = false` / `showRenameGroupDialog = false` on every action and `onDismissRequest`, so they leave composition after one frame.
+- `selectedGroupForMenu` is nullable; all access uses `?: ""` (title) or `?.let { ... }` (delete/rename) — no `!!`.
+- `groupNames` and `charGroupAssignments` are reassigned immutably (`groupNames - grp`, `groupNames + (grp to name)`, `filterValues`) — no mutation of remembered maps during composition.
+- `renameGroupText` reset to `""` after save/cancel.
+- `combinedClickable` is the existing helper (used elsewhere in the file); `onClick` removed from Surface to avoid double-invocation.
+- No `!!` force-unwraps introduced (grep-verified: zero matches in CharacterHubPage.kt).
+- Diff: 109 insertions / 5 deletions across 2 files — within scope.
 
 ## Threading & Dispatchers
 
-- Pure UI Compose code (`@Composable`, runs on `Dispatchers.Main`); no coroutines launched in the edited composable bodies.
-- `togglePreset` global mode launches inside `rememberCoroutineScope()` → `settingsStore.update` (suspend), which offloads DataStore disk I/O per `SettingsStore` conventions — not on Main.
-- No network access in edited files; `domChatSheetContainerColor()` is a `@Composable` reading composition locals, no dispatcher involved.
+- Composable bodies run on `Dispatchers.Main` (UI thread) only; no coroutines launched in the edited composable code.
+- `persistGroups()` launches in `scope.launch { withContext(Dispatchers.IO) { saveGroupNames(...) } }` — disk I/O correctly off the Main thread, matching the existing pattern (lines 275-284).
+- `toaster?.show(...)` is UI-thread safe (existing usage).
+- No network access introduced.
 - Invariant "ZERO background threading on Dispatchers.Main" satisfied.
 
 ## Offline & Error State Handling
 
-- Fully offline-capable: all changes are visual/theme + local `SettingsStore` persistence. No network calls introduced.
-- No new error states: `domChatSheetContainerColor()` returns `Color.Transparent` when `glassAlpha <= 0.001f` (safe fallback); `fillMaxHeight(0.85f)` is a layout constraint with no failure mode; `HapticSwitch` wraps standard Switch with no additional failure surface.
-- If `settingsStore.update` throws downstream, that is pre-existing ViewModel/repository behavior, not introduced here.
+- Fully offline-capable: all operations are in-memory map copies + local SharedPreferences persistence. No network calls.
+- Error handling: `saveGroupNames` already swallows exceptions ("best-effort persistence" try/catch), so persist failures don't crash the UI. Toaster shows success messages on successful save.
+- Empty/null group: title falls back to `""` via Elvis (`selectedGroupForMenu ?: ""`). Delete/rename guarded by `selectedGroupForMenu?.let` (no-op if null). Rename confirm guarded by `renameGroupText.isNotBlank()`.
+- Deleting a group also reassigns member characters to ungrouped (`filterValues { it != grp }`), preventing dangling references.
