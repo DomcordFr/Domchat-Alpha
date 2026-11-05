@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.modifier
 
 import android.os.Build
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +44,7 @@ fun Modifier.scrollMotionBlur(
                 detectDragGestures(
                     onDragStart = { },
                     onDrag = { change, _ ->
-                        scrollVelocity = (change.position - change.previousPosition).distance
+                        scrollVelocity = (change.position - change.previousPosition).distanceTo(Offset.Zero)
                         change.consume()
                     },
                     onDragEnd = {
@@ -65,7 +66,6 @@ fun Modifier.scrollMotionBlur(
                 drawContent()
             }
     }
-}
 
 /**
  * Composable wrapper for scroll motion blur.
