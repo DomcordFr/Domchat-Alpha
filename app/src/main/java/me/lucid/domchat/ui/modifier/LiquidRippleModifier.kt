@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -27,9 +26,9 @@ import me.lucid.domchat.ui.context.LocalSettings
 fun Modifier.liquidRipple(
     rippleColor: Color = Color.White.copy(alpha = 0.2f),
     maxRadius: Float = 40f,
-): Modifier = composed {
+): Modifier {
     val enabled = LocalSettings.current.displaySetting.enableLiquidPressRipple
-    then(LiquidRippleModifierElement(rippleColor, maxRadius, enabled))
+    return then(LiquidRippleModifierElement(rippleColor, maxRadius, enabled))
 }
 
 private data class LiquidRippleModifierElement(

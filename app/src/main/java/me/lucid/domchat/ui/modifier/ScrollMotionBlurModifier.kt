@@ -22,21 +22,23 @@ import me.lucid.domchat.ui.context.LocalSettings
  * [me.lucid.domchat.data.datastore.Settings.displaySetting.enableVelocityMotionBlur].
  * The blur intensity scales with [velocityMotionBlurIntensity].
  */
+@Composable
 fun Modifier.scrollMotionBlur(
     maxBlur: Float = 8f,
-): Modifier = composed {
+): Modifier {
     val settings = me.lucid.domchat.ui.context.LocalSettings.current
     val display = settings.displaySetting
     val enabled = display.enableVelocityMotionBlur
     val intensity = display.velocityMotionBlurIntensity.coerceIn(0f, 1f)
 
     if (!enabled || intensity <= 0f) {
-        this
-    } else {
-        var scrollVelocity by remember { mutableStateOf(0f) }
+        return this
+    }
 
-        this
-            .pointerInput(Unit) {
+    var scrollVelocity by remember { mutableStateOf(0f) }
+
+    return this
+        .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { change, offset ->
                         change.consumed
@@ -80,6 +82,6 @@ fun ScrollMotionBlurContent(
         modifier = modifier
             .fillMaxSize()
             .scrollMotionBlur(maxBlur),
-        content = content,
+        content = { content() },
     )
 }

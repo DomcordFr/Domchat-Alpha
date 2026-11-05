@@ -82,6 +82,6 @@ fun ProgressiveBlurHeader(
             }
             .progressiveBlur(height),
         contentAlignment = Alignment.Center,
-        content = content,
+        content = { content() },
     )
 }
