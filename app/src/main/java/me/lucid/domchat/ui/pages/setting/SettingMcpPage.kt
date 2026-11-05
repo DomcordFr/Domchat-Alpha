@@ -143,7 +143,7 @@ import me.lucid.domchat.utils.JsonInstant
 import me.lucid.domchat.utils.openUrl
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 
 @Composable
 fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
@@ -486,7 +486,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             properties = DialogProperties(usePlatformDefaultWidth = false),
                         containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             icon = { Icon(Icons.Rounded.Info, null) },

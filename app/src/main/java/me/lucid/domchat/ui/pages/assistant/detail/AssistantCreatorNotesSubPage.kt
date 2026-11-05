@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.constrainHeight
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -130,7 +130,7 @@ fun AssistantCreatorNotesSubPage(
                         stateKey = "${assistant.id}_creator_notes",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 200.dp),
+                            .constrainHeight(min = 200.dp),
                         minLines = 8,
                         maxLines = 20,
                         placeholder = stringResource(R.string.assistant_page_creator_notes_placeholder),

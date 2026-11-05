@@ -13,12 +13,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -485,7 +484,7 @@ fun PersonaPickerBottomSheet(
             onDismissRequest = { personaToDelete = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .widthIn(max = 320.dp)
+                .constrainWidth(max = 320.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             shape = AppShapes.Dialog,
             containerColor = domChatDialogContainerColor(),

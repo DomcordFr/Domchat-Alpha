@@ -87,7 +87,7 @@ import me.lucid.domchat.utils.FontFileManager
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 
 
@@ -152,7 +152,7 @@ fun SettingFontsPage(vm: SettingVM = koinViewModel()) {
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
 
@@ -663,7 +663,7 @@ private fun FontConfigSection(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
 

@@ -25,7 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -530,7 +530,7 @@ fun ChatDrawerContent(
                 drawerShape = drawerShape,
                 drawerContainerColor = Color.Transparent,
                 modifier = Modifier
-                    .widthIn(max = drawerWidth)
+                    .constrainWidth(max = drawerWidth)
                     .domChatBlurEffect(containerColor = drawerBg, shape = drawerShape),
             ) {
                 drawerContent()

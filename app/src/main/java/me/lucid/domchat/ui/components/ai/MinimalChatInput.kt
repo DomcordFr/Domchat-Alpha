@@ -63,8 +63,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -893,7 +893,7 @@ fun MinimalChatInput(
                     containerColor = composerBg,
                     modifier = Modifier
                         .weight(1f)
-                        .heightIn(min = AppSize.ChromePill)
+                        .constrainHeight(min = AppSize.ChromePill)
                         .liquidGlassSurface(
                             shape = inputShape,
                             glassMode = settings.displaySetting.liquidGlassMode,
@@ -2374,7 +2374,7 @@ fun MinimalChatInput(
                     placeholder = { Text("[Writing style: vivid, slow-burn, emotional]") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 100.dp, max = 220.dp),
+                        .constrainHeight(min = 100.dp, max = 220.dp),
                     shape = RoundedCornerShape(16.dp)
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -2632,7 +2632,7 @@ fun MinimalChatInput(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
                         },
-                        modifier = Modifier.widthIn(max = 200.dp)
+                        modifier = Modifier.constrainWidth(max = 200.dp)
                     )
                     if (chatBgDraft != null) {
                         DomChatGlassPillButton(
@@ -4015,7 +4015,7 @@ private fun MinimalPickerContent(
                     onValueChange = { editableContextSummary = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 180.dp),
+                        .constrainHeight(min = 180.dp),
                     placeholder = {
                         Text(stringResource(R.string.context_refresh_edit_summary_placeholder))
                     }

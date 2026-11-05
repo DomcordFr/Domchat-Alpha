@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.constrainSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -404,7 +404,7 @@ private fun ShareFormatCard(
             contentColor = contentColor
         ),
         modifier = modifier
-            .widthIn(min = 108.dp)
+            .constrainWidth(min = 108.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -874,7 +874,7 @@ private fun ExportedChatTurn(
                     state = activityState,
                     onClick = {},
                     connectsToBubbleBelow = false,
-                    modifier = Modifier.widthIn(max = (EXPORT_WIDTH_DP * 0.82f).dp),
+                    modifier = Modifier.constrainWidth(max = (EXPORT_WIDTH_DP * 0.82f).dp),
                     reasoningPreviewEnabled = false,
                     maxBubbleWidth = (EXPORT_WIDTH_DP * 0.82f).dp
                 )
@@ -890,7 +890,7 @@ private fun ExportedChatTurn(
                     .build(),
                 contentDescription = stringResource(R.string.a11y_image),
                 modifier = Modifier
-                    .sizeIn(maxHeight = 300.dp)
+                    .constrainSize(maxHeight = 300.dp)
                     .clip(AppShapes.MessageBubbleInner),
             )
         }
@@ -899,7 +899,7 @@ private fun ExportedChatTurn(
             GroupedMessageBubble(
                 position = getBubblePosition(index, textParts.size),
                 role = if (isUser) BubbleRole.USER else BubbleRole.ASSISTANT,
-                modifier = Modifier.widthIn(max = (EXPORT_WIDTH_DP * 0.82f).dp)
+                modifier = Modifier.constrainWidth(max = (EXPORT_WIDTH_DP * 0.82f).dp)
             ) {
                 ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
                     MarkdownBlock(
@@ -935,7 +935,7 @@ private fun ExportTimelineEntryCard(
         shape = if (expanded) AppShapes.CardMedium else AppShapes.ButtonPill,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.widthIn(max = (EXPORT_WIDTH_DP * 0.82f).dp)
+        modifier = Modifier.constrainWidth(max = (EXPORT_WIDTH_DP * 0.82f).dp)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -1035,7 +1035,7 @@ private fun ExportTroubleshootingCard(diagnostics: List<ExportDiagnostic>) {
         shape = AppShapes.CardMedium,
         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.42f),
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        modifier = Modifier.widthIn(max = (EXPORT_WIDTH_DP * 0.82f).dp)
+        modifier = Modifier.constrainWidth(max = (EXPORT_WIDTH_DP * 0.82f).dp)
     ) {
         Column(
             modifier = Modifier.padding(14.dp),

@@ -112,7 +112,6 @@ import me.lucid.domchat.ui.theme.ColorMode
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.ProgressiveBlurHeader
 import androidx.compose.animation.fadeIn

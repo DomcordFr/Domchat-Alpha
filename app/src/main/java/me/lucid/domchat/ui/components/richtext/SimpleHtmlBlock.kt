@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.constrainHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
@@ -262,7 +262,7 @@ private fun RenderList(
                 ) {
                     val markerText = if (isOrdered) "${index + 1}." else "\u2022"
                     Box(
-                        modifier = Modifier.widthIn(min = markerSlotWidth),
+                        modifier = Modifier.constrainWidth(min = markerSlotWidth),
                         contentAlignment = Alignment.TopEnd,
                     ) {
                         Text(
@@ -384,7 +384,7 @@ private fun RenderImage(
                 contentDescription = alt.takeIf { it.isNotEmpty() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 400.dp)
+                    .constrainHeight(max = 400.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Fit,
             )

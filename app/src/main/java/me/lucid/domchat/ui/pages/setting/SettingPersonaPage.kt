@@ -93,7 +93,7 @@ import androidx.compose.ui.graphics.Brush
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.foundation.layout.statusBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -464,7 +464,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             onDismissRequest = { showEditor = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .widthIn(max = 420.dp)
+                .constrainWidth(max = 420.dp)
                 .padding(horizontal = 12.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,

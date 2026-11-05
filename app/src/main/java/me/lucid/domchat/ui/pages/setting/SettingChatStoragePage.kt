@@ -24,7 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.constrainHeight
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -149,7 +149,7 @@ import me.lucid.domchat.utils.openAttachmentUri
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 
 private const val CATEGORY_CHAT = "chat_attachments"
@@ -619,7 +619,7 @@ fun SettingChatStoragePage(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = {
@@ -668,7 +668,7 @@ fun SettingChatStoragePage(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_untracked_file_title)) },
@@ -721,7 +721,7 @@ fun SettingChatStoragePage(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = { Text(stringResource(R.string.setting_chat_storage_delete_orphaned_title)) },
@@ -825,7 +825,7 @@ fun SettingChatStoragePage(
                 )
                 
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
+                    modifier = Modifier.fillMaxWidth().constrainHeight(max = 400.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(embeddingCacheStats) { stat ->
@@ -1530,7 +1530,7 @@ private fun OtherUploadsSheet(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp)
-            .heightIn(max = 720.dp),
+            .constrainHeight(max = 720.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text(
@@ -1590,7 +1590,7 @@ private fun OtherUploadsSheet(
                 columns = StaggeredGridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 520.dp),
+                    .constrainHeight(max = 520.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalItemSpacing = 12.dp,
                 contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 24.dp),

@@ -46,7 +46,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
@@ -1447,7 +1447,7 @@ private fun UserMessageTurn(
                     largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
-                        .widthIn(max = maxWidth)
+                        .constrainWidth(max = maxWidth)
                         .then(swipeModifier),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
@@ -1845,7 +1845,7 @@ private fun AssistantMessageTurn(
                         },
                         connectsToBubbleBelow = false,  // Bubbles are separate - fully rounded
                         modifier = Modifier
-                            .widthIn(max = maxWidth),
+                            .constrainWidth(max = maxWidth),
                         reasoningPreviewEnabled = effectiveDisplay.reasoningPreviewEnabled,
                         maxBubbleWidth = maxWidth,
                         timelineOpen = timelineOpen,
@@ -1949,7 +1949,7 @@ private fun AssistantMessageTurn(
                     largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
-                        .widthIn(max = maxWidth)
+                        .constrainWidth(max = maxWidth)
                         .then(assistantSwipeModifier),
                     onClick = handleBubbleClick,
                     bubbleModifier = { m, shape, color ->
@@ -2048,7 +2048,7 @@ private fun AssistantMessageTurn(
                     },
                     connectsToBubbleBelow = false,
                     modifier = Modifier
-                        .widthIn(max = maxWidth),
+                        .constrainWidth(max = maxWidth),
                     reasoningPreviewEnabled = effectiveDisplay.reasoningPreviewEnabled,
                     maxBubbleWidth = maxWidth,
                     timelineOpen = timelineOpen,
@@ -2343,7 +2343,7 @@ private fun AssistantThinkingDropdown(
 
     Column(
         modifier = modifier
-            .widthIn(max = maxWidth)
+            .constrainWidth(max = maxWidth)
             .clip(shape)
             .then(
                 if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {

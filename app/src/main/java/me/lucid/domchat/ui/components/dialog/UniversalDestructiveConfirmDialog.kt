@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -98,7 +98,7 @@ fun UniversalDestructiveConfirmDialog(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 420.dp)
+                        .constrainWidth(max = 420.dp)
                         .background(Color(0xFF000000))
                         .border(
                             0.5.dp,

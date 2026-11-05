@@ -79,7 +79,7 @@ import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 @Composable
@@ -499,7 +499,7 @@ private fun RpStyleRuleDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
-            .widthIn(max = 360.dp)
+            .constrainWidth(max = 360.dp)
             .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog),
         shape = AppShapes.SettingDialog,
         containerColor = Color(0xFF000000),

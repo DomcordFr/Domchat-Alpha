@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.constrainHeight
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -78,7 +78,7 @@ fun UpdateDialog(
             shape = AppShapes.CardLarge,
             color = Color(0xFF000000),
             tonalElevation = 6.dp,
-            modifier = Modifier.widthIn(max = 420.dp)
+            modifier = Modifier.constrainWidth(max = 420.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -174,7 +174,7 @@ fun UpdateDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 220.dp)
+                        .constrainHeight(max = 220.dp)
                         .clip(AppShapes.CardMedium)
                         .background(Color(0xFF000000))
                         .verticalScroll(rememberScrollState())

@@ -111,8 +111,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.uuid.Uuid
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.constrainWidth
 
 private enum class ChatSortOrder {
     RECENTLY_UPDATED,
@@ -470,7 +470,7 @@ fun SettingChatsPage(
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 68.dp, max = 82.dp)
+                                .constrainHeight(min = 68.dp, max = 82.dp)
                                 .clip(cardShape)
                                 .domChatBlurEffect(containerColor = cardBg, shape = cardShape)
                                 .combinedClickable(
@@ -605,7 +605,7 @@ fun SettingChatsPage(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
             containerColor = Color(0xFF000000),
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },
