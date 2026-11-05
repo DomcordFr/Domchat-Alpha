@@ -83,6 +83,6 @@ fun LiquidRippleContent(
                     )
                 }
             },
-        content = content,
+        content = { content() },
     )
 }
