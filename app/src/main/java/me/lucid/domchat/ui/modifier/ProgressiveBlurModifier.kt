@@ -4,16 +4,18 @@ import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.DrawModifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /**
@@ -46,7 +48,7 @@ private data class ProgressiveBlurModifierElement(
         drawRect(
             brush = gradientBrush,
             topLeft = Offset(0f, 0f),
-            size = size.copy(height = height.toPx().roundToInt()),
+            size = size.copy(height = height.toPx()),
         )
     }
 }
@@ -63,14 +65,17 @@ fun ProgressiveBlurHeader(
     height: Dp = 56.dp,
     content: @Composable () -> Unit,
 ) {
+    val density = LocalDensity.current
+    val blurRadius = with(density) { (height.toPx() * 0.3f).coerceAtLeast(1f) }
+
     androidx.compose.foundation.layout.Box(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     renderEffect = android.graphics.RenderEffect.createBlurEffect(
-                        (height.toPx() * 0.3f).coerceAtLeast(1f),
-                        (height.toPx() * 0.3f).coerceAtLeast(1f),
+                        blurRadius,
+                        blurRadius,
                         android.graphics.Shader.TileMode.CLAMP
                     ).asComposeRenderEffect()
                 }

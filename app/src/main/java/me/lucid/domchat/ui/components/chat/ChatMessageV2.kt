@@ -74,6 +74,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -1500,6 +1501,7 @@ private fun UserMessageTurn(
                             )
                         )
                     }
+                    val entranceOffsetY = with(LocalDensity.current) { 8.dp.toPx() }
                     MarkdownBlock(
                         workspaceId = assistant?.workspaceId?.toString(),
                         content = displayContent,
@@ -1509,7 +1511,7 @@ private fun UserMessageTurn(
                         freshReveal = !isHistoryTurn,
                         modifier = Modifier
                             .alpha(userEntrance)
-                            .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },
+                            .graphicsLayer { translationY = (1f - userEntrance) * entranceOffsetY },
                         onClickCitation = {}
                     )
                 }

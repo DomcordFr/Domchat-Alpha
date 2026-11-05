@@ -339,13 +339,15 @@ fun AssistantOverlayScreen(
             // via its own imePadding) and, when the panel is tall, the panel overflows off the
             // TOP of the screen. We must NOT use unbounded height here — MinimalChatInput has an
             // internal verticalScroll and an infinite height constraint crashes it.
+            val appearOffsetY = with(LocalDensity.current) { 48.dp.toPx() }
+            val dismissOffsetY = with(LocalDensity.current) { 80.dp.toPx() }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
                         alpha = appear.value
-                        translationY = (1f - appear.value) * 48.dp.toPx() +
-                            dismiss.value * 80.dp.toPx()
+                        translationY = (1f - appear.value) * appearOffsetY +
+                            dismiss.value * dismissOffsetY
                     },
                 verticalArrangement = Arrangement.Bottom,
             ) {

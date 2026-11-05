@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
@@ -111,8 +112,8 @@ fun AssistantBackground(
                         .fillMaxSize()
                         .then(
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && resolvedBlur > 0f && blurMode == BackgroundBlurMode.FULL) {
+                                val blurPx = with(LocalDensity.current) { resolvedBlur.dp.toPx().coerceAtLeast(1f) }
                                 Modifier.graphicsLayer {
-                                    val blurPx = resolvedBlur.dp.toPx().coerceAtLeast(1f)
                                     renderEffect = try {
                                         RenderEffect
                                             .createBlurEffect(blurPx, blurPx, Shader.TileMode.CLAMP)
@@ -135,10 +136,10 @@ fun AssistantBackground(
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         alignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.4f),
+                        val blurPx = with(LocalDensity.current) { resolvedBlur.dp.toPx().coerceAtLeast(1f) }
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
-                                val blurPx = resolvedBlur.dp.toPx().coerceAtLeast(1f)
                                 renderEffect = try {
                                     RenderEffect
                                         .createBlurEffect(blurPx, blurPx, Shader.TileMode.CLAMP)

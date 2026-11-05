@@ -615,15 +615,17 @@ private fun IntroRipple(progress: Float) {
         lerp(MaterialTheme.colorScheme.secondary, blendColor, 0.42f),
         lerp(MaterialTheme.colorScheme.tertiary, blendColor, 0.38f),
     )
+    val baseRippleY = with(LocalDensity.current) { 18.dp.toPx() }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer { translationY = 18.dp.toPx() },
+            .graphicsLayer { translationY = baseRippleY },
         contentAlignment = Alignment.Center,
     ) {
         colors.forEachIndexed { index, color ->
             val localProgress = (progress - index * 0.06f).coerceIn(0f, 1f)
             val visibleAlpha = if (localProgress <= 0.01f) 0f else (1f - localProgress).coerceIn(0f, 1f)
+            val rippleY = with(LocalDensity.current) { (34 + index * 3).dp.toPx() }
             Box(
                 modifier = Modifier
                     .size((72 + index * 18).dp)
@@ -632,7 +634,7 @@ private fun IntroRipple(progress: Float) {
                         scaleY = 0.34f + localProgress * (1.28f + index * 0.22f)
                         rotationZ = (index * 17f) - 12f + localProgress * (8f - index * 3f)
                         alpha = visibleAlpha * (0.28f - index * 0.035f)
-                        translationY = (34 + index * 3).dp.toPx()
+                        translationY = rippleY
                     }
                     .blur((18 + index * 5).dp)
                     .clip(RoundedCornerShape(percent = 46 - index * 5))
