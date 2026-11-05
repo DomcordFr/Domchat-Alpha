@@ -11,6 +11,7 @@ import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -586,9 +587,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
 
                         // Selectable lorebook chips
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             settings.lorebooks.forEach { lorebook ->
                                 val isSelected = formLorebookIds.contains(lorebook.id)
@@ -608,6 +611,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     color = lorebookColor,
                                     border = BorderStroke(0.5.dp, lorebookBorderColor),
                                     modifier = Modifier
+                                        .wrapContentWidth()
+                                        .padding(4.dp)
                                         .clickable(
                                             enabled = true,
                                             onClick = {
@@ -619,9 +624,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                                 }
                                                 formLorebookIds = newIds.toSet()
                                             }
-                                        ),
-                                        modifier = Modifier.wrapContentWidth().padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
-                                    ) {
+                                        )
+                                ) {
                                         Text(
                                             text = lorebook.name,
                                             style = MaterialTheme.typography.labelMedium,
