@@ -6,6 +6,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -89,7 +91,7 @@ fun HapticSwitch(
             Surface(
                 shape = CircleShape,
                 color = Color.White,
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .size(28.dp)
                     .offset(x = thumbOffset),
             )
