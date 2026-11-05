@@ -48,7 +48,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -464,7 +463,6 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         val dialogShape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
                 .widthIn(max = 420.dp)
                 .padding(horizontal = 12.dp)
