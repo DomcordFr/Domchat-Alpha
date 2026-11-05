@@ -610,7 +610,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                             .clickable(onClick = { accordionExpanded = !accordionExpanded }),
-                        contentAlignment = Alignment.CenterVertically,
+                        contentAlignment = Alignment.CenterStart,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
@@ -671,11 +671,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 value = localBarGradientDensity,
                                 onValueChange = { localBarGradientDensity = it },
                                 onValueChangeFinished = {
-                                    val rounded = (it * 100f).roundToInt() / 100f
-                                    if (rounded != localBarGradientDensity) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localBarGradientDensity = rounded
-                                    }
+                                    val rounded = (localBarGradientDensity * 100f).roundToInt() / 100f
+                                    localBarGradientDensity = rounded
                                     updateDisplaySetting(settings.displaySetting.copy(barGradientDensity = localBarGradientDensity))
                                 },
                                 valueRange = 0f..1.0f,
@@ -695,11 +692,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 value = localBarGradientBlur,
                                 onValueChange = { localBarGradientBlur = it },
                                 onValueChangeFinished = {
-                                    val rounded = it.roundToInt().toFloat()
-                                    if (rounded != localBarGradientBlur) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localBarGradientBlur = rounded
-                                    }
+                                    val rounded = (localBarGradientBlur * 100f).roundToInt() / 100f
+                                    localBarGradientBlur = rounded
                                     updateDisplaySetting(settings.displaySetting.copy(barGradientBlur = localBarGradientBlur))
                                 },
                                 valueRange = 0f..60f,
@@ -846,8 +840,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                                 modifier = Modifier
                                                     .size(14.dp)
                                                     .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color(color)),
-                                                contentAlignment = Alignment.Center
+                                                    .background(Color(color))
                                             )
                                         },
                                         onClick = {
@@ -877,11 +870,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 value = localDepthScale,
                                 onValueChange = { localDepthScale = it },
                                 onValueChangeFinished = {
-                                    val rounded = (it * 10f).roundToInt() / 10f
-                                    if (rounded != localDepthScale) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localDepthScale = rounded
-                                    }
+                                    val rounded = (localDepthScale * 10f).roundToInt() / 10f
+                                    localDepthScale = rounded
                                     updateDisplaySetting(settings.displaySetting.copy(glassDepthScale = localDepthScale))
                                 },
                                 valueRange = 0f..2.5f,
@@ -889,7 +879,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             )
 
                             // Specular Highlight Intensity slider (0%..100%)
-                            var localSpecularIntensity by remember(settings.displaySetting.glassSpecularIntensity) {
+                            var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
                                 mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
                             }
                             Row(
@@ -898,18 +888,15 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text("Specular Highlight Intensity", style = MaterialTheme.typography.bodyMedium)
-                                Text("${(localSpecularIntensity * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                Text("${(localGlassSpecular * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
                             }
                             DomChatSlider(
-                                value = localSpecularIntensity,
-                                onValueChange = { localSpecularIntensity = it },
+                                value = localGlassSpecular,
+                                onValueChange = { localGlassSpecular = it },
                                 onValueChangeFinished = {
-                                    val rounded = (it * 100f).roundToInt() / 100f
-                                    if (rounded != localSpecularIntensity) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localSpecularIntensity = rounded
-                                    }
-                                    updateDisplaySetting(settings.displaySetting.copy(glassSpecularIntensity = localSpecularIntensity))
+                                    val rounded = (localGlassSpecular * 100f).roundToInt() / 100f
+                                    localGlassSpecular = rounded
+                                    updateDisplaySetting(settings.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
                                 },
                                 valueRange = 0f..1.0f,
                                 steps = 100,
@@ -1021,7 +1008,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 }
 
 @Composable
-private fun InterfaceStyleCard(
+private fun androidx.compose.foundation.layout.RowScope.InterfaceStyleCard(
     selected: Boolean,
     label: String,
     subtitle: String,

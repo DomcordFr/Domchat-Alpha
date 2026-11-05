@@ -207,8 +207,7 @@ fun Modifier.convxFluidTouch(
                     touchX = offset.x
                     touchY = offset.y
                     bloomAlphaAnim = bloomAlpha
-                },
-                onRelease = {
+                    tryAwaitRelease()
                     bloomAlphaAnim = 0f
                 }
             )

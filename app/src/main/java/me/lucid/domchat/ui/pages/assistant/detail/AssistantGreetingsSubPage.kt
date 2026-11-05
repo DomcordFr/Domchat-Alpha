@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Delete
@@ -45,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -156,7 +158,7 @@ fun AssistantGreetingsSubPage(
                                 )
                                 .border(
                                     if (isSelected) BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-                                    else BorderStroke(0.5.dp, Color.White.copy(alpha = 0.14f)),
+                                    else BorderStroke(0.5.dp, SolidColor(Color.White.copy(alpha = 0.14f))),
                                     shape = AppShapes.ButtonPill
                                 ),
                             contentAlignment = Alignment.Center

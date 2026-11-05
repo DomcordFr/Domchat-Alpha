@@ -3084,9 +3084,9 @@ private fun GroupTabsRow(
     allCount: Int,
     onGroupSelected: (String?) -> Unit,
     onNewGroup: () -> Unit,
-    onGroupRenamed: (String, String) -> Unit = {},
-    onGroupMoved: (String, Int) -> Unit = {},
-    onGroupDeleted: (String) -> Unit = {},
+    onGroupRenamed: (String, String) -> Unit = { _, _ -> },
+    onGroupMoved: (String, Int) -> Unit = { _, _ -> },
+    onGroupDeleted: (String) -> Unit = { _ -> },
 ) {
     // Stable display order: persisted order first, then any groups not yet recorded.
     val orderedGroups = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
