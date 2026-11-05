@@ -15,10 +15,10 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1556,7 +1556,7 @@ private fun MarkdownNode(
                 val reservedModifier = if (info != null && info.widthPx > 0 && info.heightPx > 0) {
                     val intrinsicWidthDp = with(density) { info.widthPx.toDp() }
                     Modifier
-                        .constrainWidth(min = 120.dp, max = intrinsicWidthDp)
+                        .widthIn(min = 120.dp, max = intrinsicWidthDp)
                         .fillMaxWidth()
                         .aspectRatio(info.aspectRatio)
                 } else {
@@ -1567,7 +1567,7 @@ private fun MarkdownNode(
                     // horizontal gap. The real aspect box is applied onSizeResolved below.
                     Modifier
                         .fillMaxWidth()
-                        .constrainHeight(min = 120.dp)
+                        .heightIn(min = 120.dp)
                 }
                 // 这里可以使用Coil等图片加载库加载图片
                 ZoomableAsyncImage(
@@ -1886,7 +1886,7 @@ private fun ListMarker(
     markerSlotWidth: androidx.compose.ui.unit.Dp,
 ) {
     Box(
-        modifier = Modifier.constrainWidth(min = markerSlotWidth),
+        modifier = Modifier.widthIn(min = markerSlotWidth),
         contentAlignment = Alignment.TopEnd,
     ) {
         Text(

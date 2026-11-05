@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -107,7 +107,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.plus
 import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 
 private val COMMON_LANGUAGES = listOf(
     "English", "Spanish", "French", "German", "Italian", "Portuguese",
@@ -457,7 +457,7 @@ fun SettingAndroidIntegrationPage(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
 
@@ -608,7 +608,7 @@ private fun PreviewActionButton(
 
     Surface(
         modifier = modifier
-            .constrainHeight(min = 64.dp)
+            .heightIn(min = 64.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -772,7 +772,7 @@ private fun EditActionDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         containerColor = Color(0xFF000000),
-        modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
         titleContentColor = Color(0xFFF2F2F7),
         textContentColor = Color(0xFFF2F2F7),
 
@@ -794,7 +794,7 @@ private fun EditActionDialog(
                     label = { Text(stringResource(R.string.text_selection_action_prompt)) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .constrainHeight(min = 150.dp),
+                        .heightIn(min = 150.dp),
                     minLines = 5,
                     shape = RoundedCornerShape(16.dp),
                     colors = appFieldColors(),

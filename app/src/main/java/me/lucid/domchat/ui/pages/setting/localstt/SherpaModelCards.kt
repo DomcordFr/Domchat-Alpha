@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -266,7 +266,7 @@ fun SherpaModelSettingsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .constrainHeight(max = 680.dp)
+                .heightIn(max = 680.dp)
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
@@ -332,7 +332,7 @@ fun SherpaModelSettingsSheet(
                 onClick = { showDeleteConfirmation = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .constrainWidth(max = 360.dp),
+                    .widthIn(max = 360.dp),
             ) {
                 Text("Delete downloaded model", color = Color(0xFFFF453A))
             }

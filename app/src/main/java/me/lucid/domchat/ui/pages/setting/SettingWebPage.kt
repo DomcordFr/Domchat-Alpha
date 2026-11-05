@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -390,7 +390,7 @@ fun SettingWebPage(
                             onPendingChange = { portPending = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .constrainHeight(min = 58.dp),
+                                .heightIn(min = 58.dp),
                         )
                     }
 
@@ -439,7 +439,7 @@ fun SettingWebPage(
                             onPendingChange = { passwordPending = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .constrainHeight(min = 58.dp),
+                                .heightIn(min = 58.dp),
                         )
                     }
                 }

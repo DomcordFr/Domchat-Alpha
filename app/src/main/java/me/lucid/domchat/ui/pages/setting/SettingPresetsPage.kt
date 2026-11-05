@@ -91,7 +91,7 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 
 /**
@@ -568,7 +568,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
             onDismissRequest = { showEditDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .constrainWidth(max = 420.dp)
+                .widthIn(max = 420.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog)
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             shape = AppShapes.SettingDialog,
@@ -759,7 +759,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
             onDismissRequest = { presetToDelete = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .constrainWidth(max = 420.dp)
+                .widthIn(max = 420.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             shape = AppShapes.Dialog,
             containerColor = domChatDialogContainerColor(),

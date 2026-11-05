@@ -34,7 +34,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
@@ -648,7 +648,7 @@ private fun SharedTransitionScope.ChatListNormal(
                     .then(
                         if (contentMaxWidth != Dp.Unspecified) {
                             Modifier
-                                .constrainWidth(max = contentMaxWidth)
+                                .widthIn(max = contentMaxWidth)
                                 .fillMaxWidth()
                                 .fillMaxHeight()
                         } else {
@@ -912,7 +912,7 @@ private fun SharedTransitionScope.ChatListPreview(
             .then(
                 if (contentMaxWidth != Dp.Unspecified) {
                     Modifier
-                        .constrainWidth(max = contentMaxWidth)
+                        .widthIn(max = contentMaxWidth)
                         .fillMaxWidth()
                         .fillMaxHeight()
                 } else {

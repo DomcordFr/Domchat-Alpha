@@ -3,7 +3,7 @@ package me.lucid.domchat.ui.pages.chat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -35,7 +35,7 @@ fun ExportOptionsDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        modifier = Modifier.constrainWidth(max = 420.dp),
+        modifier = Modifier.widthIn(max = 420.dp),
         containerColor = Color(0xFF000000),
         title = { Text(title) },
         text = {

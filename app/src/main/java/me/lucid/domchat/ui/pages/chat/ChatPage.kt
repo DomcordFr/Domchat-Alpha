@@ -42,12 +42,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -2045,7 +2045,7 @@ private fun ChatPageContent(
                             .align(Alignment.BottomCenter)
                             .then(
                                 if (inputMaxWidth != Dp.Unspecified) {
-                                    Modifier.constrainWidth(max = inputMaxWidth)
+                                    Modifier.widthIn(max = inputMaxWidth)
                                 } else {
                                     Modifier
                                 }
@@ -2082,7 +2082,7 @@ private fun ChatPageContent(
                         .align(Alignment.BottomCenter)
                         .then(
                             if (inputMaxWidth != Dp.Unspecified) {
-                                Modifier.constrainWidth(max = inputMaxWidth)
+                                Modifier.widthIn(max = inputMaxWidth)
                             } else {
                                 Modifier
                             }
@@ -2418,7 +2418,7 @@ private fun CustomGreetingDialog(
                 tonalElevation = 12.dp,
                 modifier = Modifier
                     .wrapContentHeight()
-                    .constrainWidth(max = 420.dp)
+                    .widthIn(max = 420.dp)
                     .border(
                         0.5.dp,
                         LiquidGlassTokens.SpecularBorderSubtle,
@@ -2448,7 +2448,7 @@ private fun CustomGreetingDialog(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .constrainHeight(min = 120.dp),
+                            .heightIn(min = 120.dp),
                         maxLines = Int.MAX_VALUE,
                         minLines = 6,
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
@@ -2620,7 +2620,7 @@ private fun ChatSearchModeBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .constrainHeight(min = AppSize.ChromeBar)
+            .heightIn(min = AppSize.ChromeBar)
             .domChatBlurEffect(containerColor, searchFieldShape),
         shape = searchFieldShape,
         color = blurredContainerColor(containerColor),
@@ -2834,7 +2834,7 @@ private fun ChatToolbarOverflowMenu(
                         }
                     )
                     .padding(top = menuTopPadding, bottom = menuBottomPadding, end = 16.dp)
-                    .constrainWidth(min = 196.dp, max = 260.dp)
+                    .widthIn(min = 196.dp, max = 260.dp)
                     .graphicsLayer {
                         scaleX = 1f
                         scaleY = menuScale

@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -195,7 +195,7 @@ fun AssistantGreetingsSubPage(
                                 stateKey = "${assistant.id}_greeting_editor_$selectedGreetingIndex",
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .constrainHeight(min = 160.dp),
+                                    .heightIn(min = 160.dp),
                                 minLines = 6,
                                 maxLines = 20,
                                 placeholder = "Write greeting in markdown...",
@@ -264,7 +264,7 @@ fun AssistantGreetingsSubPage(
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            modifier = Modifier.constrainWidth(max = 420.dp),
+            modifier = Modifier.widthIn(max = 420.dp),
             title = { Text("Manage Greeting") },
             text = {
                 Column(

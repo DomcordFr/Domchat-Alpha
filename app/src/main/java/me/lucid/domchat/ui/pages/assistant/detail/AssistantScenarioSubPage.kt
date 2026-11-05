@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -70,7 +70,7 @@ fun AssistantScenarioSubPage(
                             stateKey = "${assistant.id}_scenario",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .constrainHeight(min = 160.dp),
+                                .heightIn(min = 160.dp),
                             minLines = 6,
                             maxLines = 12,
                             placeholder = stringResource(R.string.assistant_page_scenario_placeholder),

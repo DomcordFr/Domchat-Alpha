@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -204,7 +204,7 @@ fun ExportContentSelectionDialog(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .constrainHeight(max = 380.dp),
+                        .heightIn(max = 380.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     items(BackupContentOption.entries, key = { it.name }) { option ->

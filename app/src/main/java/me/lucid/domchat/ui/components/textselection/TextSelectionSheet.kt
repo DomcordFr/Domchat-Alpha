@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -253,7 +253,7 @@ private fun ActionSelectionContent(
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .constrainHeight(max = 180.dp)
+                            .heightIn(max = 180.dp)
                     )
                 }
             } else {
@@ -317,7 +317,7 @@ private fun QuickActionButton(
     CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
         Surface(
             modifier = modifier
-                .constrainHeight(min = 64.dp)
+                .heightIn(min = 64.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -512,7 +512,7 @@ private fun ResultContent(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .constrainHeight(min = 80.dp, max = 300.dp),
+                .heightIn(min = 80.dp, max = 300.dp),
             shape = QuickAskInnerShape,
             color = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {

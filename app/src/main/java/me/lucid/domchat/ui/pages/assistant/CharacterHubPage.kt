@@ -19,7 +19,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -1342,7 +1342,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             modifier = Modifier
                 .wrapContentHeight()
-                .constrainWidth(max = 420.dp)
+                .widthIn(max = 420.dp)
                 .padding(horizontal = 28.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             title = {
@@ -1396,7 +1396,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     showExportDialogFor?.let { char ->
         AlertDialog(
             onDismissRequest = { showExportDialogFor = null },
-            modifier = Modifier.constrainWidth(max = 420.dp),
+            modifier = Modifier.widthIn(max = 420.dp),
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {
@@ -1489,7 +1489,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     if (showGroupMenuDialog) {
         AlertDialog(
             onDismissRequest = { showGroupMenuDialog = false },
-            modifier = Modifier.constrainWidth(max = 420.dp),
+            modifier = Modifier.widthIn(max = 420.dp),
             title = { Text("Manage Group: ${selectedGroupForMenu ?: ""}") },
             text = {
                 Column(
@@ -1524,7 +1524,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     if (showRenameGroupDialog) {
         AlertDialog(
             onDismissRequest = { showRenameGroupDialog = false },
-            modifier = Modifier.constrainWidth(max = 420.dp),
+            modifier = Modifier.widthIn(max = 420.dp),
             title = { Text("Rename Group") },
             text = {
                 Column(
@@ -2737,7 +2737,7 @@ fun CharacterInspectorSheet(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .constrainWidth(max = 420.dp)
+                        .widthIn(max = 420.dp)
                         .background(Color(0xFF000000))
                         .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
                         .padding(20.dp)
@@ -2866,7 +2866,7 @@ fun CharacterInspectorSheet(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .constrainWidth(max = 420.dp)
+                        .widthIn(max = 420.dp)
                         .background(Color(0xFF000000))
                         .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
                         .padding(20.dp)
@@ -3233,7 +3233,7 @@ private fun NewGroupDialog(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .constrainWidth(max = 420.dp)
+                    .widthIn(max = 420.dp)
                     .background(Color(0xFF000000))
                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
                     .padding(20.dp)
@@ -3319,7 +3319,7 @@ private fun CharacterActionPopover(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .constrainWidth(max = 420.dp)
+                    .widthIn(max = 420.dp)
                     .wrapContentHeight()
                     .background(Color(0xFF000000))
                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))

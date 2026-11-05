@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -360,13 +360,13 @@ private fun ChatHeatmapSkeletonCard(modifier: Modifier = Modifier) {
             contentColor = contentColor
         ),
         shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-        modifier = modifier.constrainHeight(min = HeatmapCardMinHeight)
+        modifier = modifier.heightIn(min = HeatmapCardMinHeight)
     ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
-                .constrainHeight(min = HeatmapCardMinHeight - 32.dp),
+                .heightIn(min = HeatmapCardMinHeight - 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SkeletonBlock(
@@ -545,7 +545,7 @@ private fun StatCardSkeleton(modifier: Modifier = Modifier) {
     val contentColor = MaterialTheme.colorScheme.onSurface
 
     Card(
-        modifier = modifier.constrainHeight(min = StatCardMinHeight),
+        modifier = modifier.heightIn(min = StatCardMinHeight),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = contentColor

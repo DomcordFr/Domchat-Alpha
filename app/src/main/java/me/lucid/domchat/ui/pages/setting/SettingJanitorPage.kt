@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -852,7 +852,7 @@ fun SettingJanitorPage() {
                             ) {
                                 Surface(
                                     modifier = Modifier
-                                        .constrainWidth(max = 200.dp)
+                                        .widthIn(max = 200.dp)
                                         .clip(RoundedCornerShape(20.dp))
                                         .background(Color(0xFF000000))
                                         .border(

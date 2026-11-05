@@ -34,11 +34,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -643,7 +643,7 @@ private fun AnimatedSinglePill(
             )
             .then(
                 if (surfaceExpanded) {
-                    Modifier.constrainWidth(max = maxBubbleWidth)
+                    Modifier.widthIn(max = maxBubbleWidth)
                 } else {
                     Modifier.height(PILL_HEIGHT)
                 }
@@ -1059,7 +1059,7 @@ private fun ReasoningPreviewCard(
                     bottomProgress = bottomFadeProgress,
                     fadeHeight = 64f
                 )
-                .constrainHeight(max = if (active && isLive && onHeaderClick == null) 120.dp else 280.dp)
+                .heightIn(max = if (active && isLive && onHeaderClick == null) 120.dp else 280.dp)
                 .verticalScroll(scrollState),
             style = MaterialTheme.typography.bodySmall.copy(
                 color = LocalContentColor.current

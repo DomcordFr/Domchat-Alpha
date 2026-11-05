@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -101,7 +101,7 @@ fun ShareHandlerPage(text: String, files: List<String>) {
                                     contentDescription = null,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .constrainHeight(max = 240.dp)
+                                        .heightIn(max = 240.dp)
                                 )
                             } else {
                                 DocumentChip(

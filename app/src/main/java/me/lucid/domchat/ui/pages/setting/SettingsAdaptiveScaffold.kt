@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
@@ -123,7 +123,7 @@ fun AdaptiveSettingsScaffold(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxHeight()
-                    .constrainWidth(max = 900.dp)
+                    .widthIn(max = 900.dp)
                     .fillMaxWidth()
             ) {
                 CompositionLocalProvider(

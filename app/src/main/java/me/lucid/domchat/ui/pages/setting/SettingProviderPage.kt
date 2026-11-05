@@ -201,7 +201,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import me.lucid.domchat.data.model.Tag as DataTag
 import kotlin.uuid.Uuid
-import androidx.compose.foundation.layout.constrainWidth
+import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 
@@ -969,7 +969,7 @@ private fun ImportProviderButton(
             onDismissRequest = { showImportDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .constrainWidth(max = 360.dp)
+                .widthIn(max = 360.dp)
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.SettingDialog),
             shape = AppShapes.SettingDialog,
             containerColor = Color(0xFF000000),
@@ -1095,7 +1095,7 @@ private fun ImportProviderButton(
             onDismissRequest = {},
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.constrainWidth(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = {
