@@ -2206,7 +2206,8 @@ fun MinimalChatInput(
                     )
                     Spacer(Modifier.weight(1f))
                     IconButton(
-                        onClick = { showStreamingAnimationSheet = false }
+                        onClick = { showStreamingAnimationSheet = false },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
@@ -2344,7 +2345,8 @@ fun MinimalChatInput(
                     )
                     Spacer(Modifier.weight(1f))
                     IconButton(
-                        onClick = { showAuthorsNoteSheet = false }
+                        onClick = { showAuthorsNoteSheet = false },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,

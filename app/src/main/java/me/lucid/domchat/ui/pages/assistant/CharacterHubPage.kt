@@ -263,6 +263,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var showMoveToGroupDialog by remember { mutableStateOf(false) }
     var groupSearchQuery by remember { mutableStateOf("") }
 
+    // Group context menu state (long-click on group tabs)
+    var selectedGroupForMenu by remember { mutableStateOf<String?>(null) }
+    var showGroupMenuDialog by remember { mutableStateOf(false) }
+    var showRenameGroupDialog by remember { mutableStateOf(false) }
+    var renameGroupText by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val toaster: AppToasterState? = LocalToaster.current
@@ -806,6 +812,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onNewGroup = {
                                 showNewGroupDialog = true
                                 newGroupName = ""
+                            },
+                            onGroupLongClick = { groupId ->
+                                haptics.perform(HapticPattern.Buildup)
+                                selectedGroupForMenu = groupId
+                                showGroupMenuDialog = true
                             }
                         )
                     }
@@ -1140,6 +1151,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onNewGroup = {
                                 showNewGroupDialog = true
                                 newGroupName = ""
+                            },
+                            onGroupLongClick = { groupId ->
+                                haptics.perform(HapticPattern.Buildup)
+                                selectedGroupForMenu = groupId
+                                showGroupMenuDialog = true
                             }
                         )
                     }
@@ -1466,6 +1482,86 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             toaster?.show("Created group '$groupName'", ToastType.Success)
         }
     )
+
+    // Group context menu dialog (long-click on group tab)
+    if (showGroupMenuDialog) {
+        AlertDialog(
+            onDismissRequest = { showGroupMenuDialog = false },
+            modifier = Modifier.widthIn(max = 420.dp),
+            title = { Text("Manage Group: ${selectedGroupForMenu ?: ""}") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DomChatGlassPillButton(text = "Rename Group", onClick = {
+                        renameGroupText = selectedGroupForMenu ?: ""
+                        showGroupMenuDialog = false
+                        showRenameGroupDialog = true
+                    })
+                    DomChatGlassPillButton(text = "Delete Group", onClick = {
+                        selectedGroupForMenu?.let { grp ->
+                            groupNames = groupNames - grp
+                            charGroupAssignments = charGroupAssignments.filterValues { it != grp }
+                            persistGroups()
+                            toaster?.show("Deleted group '$grp'", ToastType.Success)
+                        }
+                        showGroupMenuDialog = false
+                    })
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showGroupMenuDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Rename group dialog
+    if (showRenameGroupDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameGroupDialog = false },
+            modifier = Modifier.widthIn(max = 420.dp),
+            title = { Text("Rename Group") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = renameGroupText,
+                        onValueChange = { renameGroupText = it },
+                        label = { Text("New name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (renameGroupText.isNotBlank()) {
+                        selectedGroupForMenu?.let { grp ->
+                            groupNames = groupNames + (grp to renameGroupText.trim())
+                            persistGroups()
+                            toaster?.show("Renamed group", ToastType.Success)
+                        }
+                        renameGroupText = ""
+                        showRenameGroupDialog = false
+                    }
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    renameGroupText = ""
+                    showRenameGroupDialog = false
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     // Character Action Popover (long-click)
     characterToMove?.let { char ->
@@ -3017,7 +3113,8 @@ private fun GroupTabsRow(
     groupNames: Map<String, String>,
     allCount: Int,
     onGroupSelected: (String?) -> Unit,
-    onNewGroup: () -> Unit
+    onNewGroup: () -> Unit,
+    onGroupLongClick: (String) -> Unit = {}
 ) {
     val groups = groupNames.keys.toList()
     Row(
@@ -3053,11 +3150,16 @@ private fun GroupTabsRow(
         groups.forEach { groupId ->
             val label = groupNames[groupId] ?: "Group"
             Surface(
-                onClick = { onGroupSelected(groupId) },
                 shape = RoundedCornerShape(20.dp),
                 color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
+                    .combinedClickable(
+                        onClick = { onGroupSelected(groupId) },
+                        onLongClick = {
+                            onGroupLongClick(groupId)
+                        }
+                    )
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
@@ -3215,7 +3317,7 @@ private fun CharacterActionPopover(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 460.dp)
+                    .widthIn(max = 420.dp)
                     .wrapContentHeight()
                     .background(Color(0xFF000000))
                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
