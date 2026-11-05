@@ -647,8 +647,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         // Dual-Preset Glass Engine
                         SettingsGroup(
-                            title = "Dual-Preset Glass Engine",
-                            subtitle = "Choose between AMOLED Black Glass and Original Blur modes"
+                            title = "Dual-Preset Glass Engine"
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -660,8 +659,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                 )
                                 Select(
-                                    value = settings.displaySetting.twoPresetGlassMode,
-                                    onValueChange = {
+                                    selectedOption = settings.displaySetting.twoPresetGlassMode,
+                                    onOptionSelected = {
                                         updateDisplaySetting(
                                             settings.displaySetting.copy(twoPresetGlassMode = it)
                                         )
@@ -677,8 +676,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         // Bar Black Gradient & Blur
                         SettingsGroup(
-                            title = "Bar Black Gradient & Blur",
-                            subtitle = "Control top/bottom bar appearance"
+                            title = "Bar Black Gradient & Blur"
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -726,8 +724,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         // Animation & Motion
                         SettingsGroup(
-                            title = "Animation & Motion",
-                            subtitle = "Essential motion effects for the UI"
+                            title = "Animation & Motion"
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
