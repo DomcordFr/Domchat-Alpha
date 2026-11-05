@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.R
@@ -24,6 +25,8 @@ fun ExportDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
+        modifier = Modifier.widthIn(max = 420.dp),
+        containerColor = Color(0xFF000000),
         title = { Text(title) },
         text = {
             Column {

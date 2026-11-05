@@ -1342,6 +1342,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             modifier = Modifier
                 .wrapContentHeight()
+                .widthIn(max = 420.dp)
                 .padding(horizontal = 28.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             title = {
@@ -1395,6 +1396,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     showExportDialogFor?.let { char ->
         AlertDialog(
             onDismissRequest = { showExportDialogFor = null },
+            modifier = Modifier.widthIn(max = 420.dp),
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
             title = {

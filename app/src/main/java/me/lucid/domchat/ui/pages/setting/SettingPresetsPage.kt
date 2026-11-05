@@ -568,7 +568,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
             onDismissRequest = { showEditDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .widthIn(max = 360.dp)
+                .widthIn(max = 420.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, AppShapes.SettingDialog)
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
             shape = AppShapes.SettingDialog,
@@ -759,7 +759,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
             onDismissRequest = { presetToDelete = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .widthIn(max = 320.dp)
+                .widthIn(max = 420.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             shape = AppShapes.Dialog,
             containerColor = domChatDialogContainerColor(),

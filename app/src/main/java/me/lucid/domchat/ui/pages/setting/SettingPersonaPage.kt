@@ -464,11 +464,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             onDismissRequest = { showEditor = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
-                .widthIn(max = 360.dp)
+                .widthIn(max = 420.dp)
                 .padding(horizontal = 12.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color(0xFF000000),
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = {
