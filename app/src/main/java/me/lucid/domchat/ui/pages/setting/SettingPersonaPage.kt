@@ -137,10 +137,12 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     var lorebookSearchQuery by remember { mutableStateOf("") }
     var fullLorebooks by remember(settings.lorebooks) { mutableStateOf(settings.lorebooks) }
     var filteredLorebooks by remember(settings.lorebooks, lorebookSearchQuery) {
-        settings.lorebooks.filter {
-            it.name.contains(lorebookSearchQuery, ignoreCase = true) ||
-                it.description.contains(lorebookSearchQuery, ignoreCase = true)
-        }
+        mutableStateOf(
+            settings.lorebooks.filter {
+                it.name.contains(lorebookSearchQuery, ignoreCase = true) ||
+                    it.description.contains(lorebookSearchQuery, ignoreCase = true)
+            }
+        )
     }
 
     // Built-in cropper state

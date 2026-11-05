@@ -705,7 +705,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..1.0f
                                 )
 
-                                SettingGroupItem(
+                                SettingGroupInputItem(
                                     title = "Bar Blur Intensity",
                                     subtitle = "Adjust blur strength behind top and bottom bars"
                                 ) {
