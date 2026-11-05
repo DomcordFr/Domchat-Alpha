@@ -142,6 +142,7 @@ import coil3.request.crossfade
 import androidx.compose.ui.graphics.SolidColor
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
+import kotlin.regex.RegexOption
 import kotlin.text.Regex
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
@@ -484,14 +485,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         AnimatedContent<Pair<Boolean, String?>>(
             targetState = isGridView to selectedGroupId,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
-                    animationSpec = tween(220, easing = FastOutSlowInEasing)
-                ) { width -> width / 4 })
-                    .togetherWith(
-                        fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
-                            animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> -width / 4 }
-                    )
+                fadeIn(animationSpec = tween(180)) togetherWith fadeOut(animationSpec = tween(140))
             },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
@@ -510,27 +504,39 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
-                            placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
-                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Characters",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 4.dp, top = 2.dp)
+                            )
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                                placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
+                                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                                        }
                                     }
-                                }
-                            },
-                            singleLine = true,
-                            shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                            colors = me.lucid.domchat.ui.theme.appFieldColors()
-                        )
+                                },
+                                singleLine = true,
+                                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                                colors = me.lucid.domchat.ui.theme.appFieldColors()
+                            )
+                        }
                     }
 
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
@@ -735,7 +741,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 4.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Surface(
                                 onClick = {
@@ -799,6 +805,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         GroupTabsRow(
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
+                            groupOrder = groupOrder,
                             allCount = settings.assistants.size,
                             onGroupSelected = { groupId ->
                                 selectedGroupId = groupId
@@ -806,6 +813,27 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onNewGroup = {
                                 showNewGroupDialog = true
                                 newGroupName = ""
+                            },
+                            onGroupRenamed = { groupId, newName ->
+                                groupNames = groupNames + (groupId to newName)
+                                persistGroups()
+                            },
+                            onGroupMoved = { groupId, newIndex ->
+                                val list = groupOrder.toMutableList()
+                                val item = list.removeAt(list.indexOf(groupId))
+                                list.add(newIndex.coerceIn(0, list.lastIndex), item)
+                                groupOrder = list
+                                persistGroups()
+                            },
+                            onGroupDeleted = { groupId ->
+                                charGroupAssignments = charGroupAssignments.filterValues { it != groupId }
+                                groupNames = groupNames - groupId
+                                groupOrder = groupOrder.filter { it != groupId }
+                                if (selectedGroupId == groupId) {
+                                    selectedGroupId = null
+                                }
+                                persistGroups()
+                                toaster?.show("Group deleted — characters moved to All", ToastType.Info)
                             }
                         )
                     }
@@ -844,27 +872,39 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
                     item {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
-                            placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
-                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { searchQuery = "" }) {
-                                        Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Characters",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 4.dp, top = 2.dp)
+                            )
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                                placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
+                                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                                        }
                                     }
-                                }
-                            },
-                            singleLine = true,
-                            shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                            colors = me.lucid.domchat.ui.theme.appFieldColors()
-                        )
+                                },
+                                singleLine = true,
+                                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                                colors = me.lucid.domchat.ui.theme.appFieldColors()
+                            )
+                        }
                     }
 
                     item {
@@ -1069,7 +1109,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Surface(
                                 onClick = {
@@ -1133,6 +1173,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         GroupTabsRow(
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
+                            groupOrder = groupOrder,
                             allCount = settings.assistants.size,
                             onGroupSelected = { groupId ->
                                 selectedGroupId = groupId
@@ -1140,6 +1181,27 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onNewGroup = {
                                 showNewGroupDialog = true
                                 newGroupName = ""
+                            },
+                            onGroupRenamed = { groupId, newName ->
+                                groupNames = groupNames + (groupId to newName)
+                                persistGroups()
+                            },
+                            onGroupMoved = { groupId, newIndex ->
+                                val list = groupOrder.toMutableList()
+                                val item = list.removeAt(list.indexOf(groupId))
+                                list.add(newIndex.coerceIn(0, list.lastIndex), item)
+                                groupOrder = list
+                                persistGroups()
+                            },
+                            onGroupDeleted = { groupId ->
+                                charGroupAssignments = charGroupAssignments.filterValues { it != groupId }
+                                groupNames = groupNames - groupId
+                                groupOrder = groupOrder.filter { it != groupId }
+                                if (selectedGroupId == groupId) {
+                                    selectedGroupId = null
+                                }
+                                persistGroups()
+                                toaster?.show("Group deleted — characters moved to All", ToastType.Info)
                             }
                         )
                     }
@@ -2898,12 +2960,17 @@ fun CharacterInspectorSheet(
  * Strips raw HTML tags and decodes common HTML entities so creator notes display as clean text.
  * Handles <p>, </p>, <br>, <span>, &nbsp; and numeric/named entities without external dependencies.
  */
+/**
+ * JAI-safe HTML cleanup: preserves Markdown and inline images instead of stripping them.
+ * `` tags and raw image URLs are converted to Markdown image syntax so they render
+ * in-place via MarkdownBlock. Other HTML/entity content is left intact for the renderer.
+ */
 private fun sanitizeHtml(html: String?): String {
     val text = html ?: return ""
     var result = text
-        // Remove opening/closing tags (<p>, </p>, <br>, <span>, </span>, <div>, etc.)
-        .replace(Regex("<[^>]*>"), "")
-        // Decode named entities
+        .replace(Regex("<img[^>]+src=['"]([^'"]+)['"][^>]*>", RegexOption.IGNORE_CASE)) { match ->
+            "\n![Image](${match.groupValues[1]})\n"
+        }
         .replace("&nbsp;", " ")
         .replace("&amp;", "&")
         .replace("&lt;", "<")
@@ -2912,26 +2979,20 @@ private fun sanitizeHtml(html: String?): String {
         .replace("&apos;", "'")
         .replace("&#39;", "'")
         .replace("&#x27;", "'")
-        // Decode decimal numeric entities (&#NNN;)
         .replace(Regex("&#(\\d+);")) { match ->
             match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
         }
-        // Decode hex numeric entities (&#xHH;)
         .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
             match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
         }
-        // Strip raw URLs (http/https) to remove JAI links
-        .replace(Regex("https?://[^\\s<>\"]+"), "")
-        // Collapse multiple whitespace introduced by tag removal
-        .replace(Regex("\\s+"), " ")
+        .replace(Regex("https?://[^\\s<>"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)) { match ->
+            "\n![Image](${match.value})\n"
+        }
+        .replace(Regex("[ \\t]+"), " ")
         .trim()
     return result
 }
 
-/**
- * Represents a segment of content that can be either plain text or an embedded image URL.
- * Used to render text with inline images at their exact positions in the flow.
- */
 private sealed interface ContentSegment {
     data class Text(val text: String) : ContentSegment
     data class Image(val url: String) : ContentSegment
@@ -3010,29 +3071,42 @@ private fun isDummyGreeting(text: String?): Boolean {
 
 /**
  * Horizontally scrollable row of glassy group tabs: 'All (count)', custom groups, and '+ New'.
+ * Custom group tabs support long-press (combinedClickable) to open a glassy menu with
+ * Rename, Move Forward, Move Backward and Delete Group. Deleting a group never deletes
+ * characters — they are unassigned and stay in 'All'.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GroupTabsRow(
     selectedGroupId: String?,
     groupNames: Map<String, String>,
+    groupOrder: List<String>,
     allCount: Int,
     onGroupSelected: (String?) -> Unit,
-    onNewGroup: () -> Unit
+    onNewGroup: () -> Unit,
+    onGroupRenamed: (String, String) -> Unit = {},
+    onGroupMoved: (String, Int) -> Unit = {},
+    onGroupDeleted: (String) -> Unit = {},
 ) {
-    val groups = groupNames.keys.toList()
+    // Stable display order: persisted order first, then any groups not yet recorded.
+    val orderedGroups = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
+    var longPressedGroupId by remember { mutableStateOf<String?>(null) }
+    var renameDraft by remember { mutableStateOf("") }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // "All" tab
         val allLabel = "All ($allCount)"
+        val isAllSelected = selectedGroupId == null
         Surface(
             onClick = { onGroupSelected(null) },
             shape = RoundedCornerShape(20.dp),
-            color = if (selectedGroupId == null) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+            color = if (isAllSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             modifier = Modifier
         ) {
@@ -3043,21 +3117,29 @@ private fun GroupTabsRow(
                 Text(
                     text = allLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (selectedGroupId == null) FontWeight.Bold else FontWeight.Normal,
+                    fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal,
                     color = Color.White
                 )
             }
         }
 
-        // Custom group tabs
-        groups.forEach { groupId ->
+        // Custom group tabs (long-press opens the group action menu)
+        orderedGroups.forEach { groupId ->
             val label = groupNames[groupId] ?: "Group"
+            val isSelected = selectedGroupId == groupId
+            val idx = orderedGroups.indexOf(groupId)
             Surface(
-                onClick = { onGroupSelected(groupId) },
                 shape = RoundedCornerShape(20.dp),
-                color = if (selectedGroupId == groupId) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
+                    .combinedClickable(
+                        onClick = { onGroupSelected(groupId) },
+                        onLongClick = {
+                            longPressedGroupId = groupId
+                            renameDraft = label
+                        }
+                    )
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
@@ -3066,7 +3148,7 @@ private fun GroupTabsRow(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (selectedGroupId == groupId) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = Color.White
                     )
                 }
@@ -3100,7 +3182,132 @@ private fun GroupTabsRow(
             }
         }
     }
+
+    // Group action menu (long-press): Rename / Move Forward / Move Backward / Delete Group.
+    longPressedGroupId?.let { groupId ->
+        val label = groupNames[groupId] ?: "Group"
+        val idx = orderedGroups.indexOf(groupId)
+        Dialog(
+            onDismissRequest = { longPressedGroupId = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .imePadding(),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 420.dp)
+                        .wrapContentHeight()
+                        .background(Color(0xFF000000))
+                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
+                        .padding(20.dp),
+                    color = Color.Transparent,
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Manage group",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+
+                        // Rename
+                        OutlinedTextField(
+                            value = renameDraft,
+                            onValueChange = { renameDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text("Group name") },
+                            shape = AppShapes.InputField,
+                            colors = me.lucid.domchat.ui.theme.appFieldColors()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            DomChatGlassPillButton(
+                                text = "Cancel",
+                                onClick = { longPressedGroupId = null; renameDraft = label },
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            DomChatGlassPillButton(
+                                text = "Save Rename",
+                                accent = true,
+                                enabled = renameDraft.isNotBlank() && renameDraft != label,
+                                onClick = {
+                                    if (renameDraft.isNotBlank() && renameDraft != label) {
+                                        onGroupRenamed(groupId, renameDraft)
+                                        longPressedGroupId = null
+                                    }
+                                },
+                            )
+                        }
+
+                        HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.08f))
+
+                        // Move Forward / Move Backward
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            DomChatGlassPillButton(
+                                text = "Move Backward",
+                                onClick = {
+                                    if (idx > 0) {
+                                        onGroupMoved(groupId, idx - 1)
+                                        longPressedGroupId = null
+                                    }
+                                },
+                                enabled = idx > 0,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            DomChatGlassPillButton(
+                                text = "Move Forward",
+                                onClick = {
+                                    if (idx < orderedGroups.lastIndex) {
+                                        onGroupMoved(groupId, idx + 1)
+                                        longPressedGroupId = null
+                                    }
+                                },
+                                enabled = idx < orderedGroups.lastIndex,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        // Delete group (does NOT delete characters)
+                        DomChatGlassPillButton(
+                            text = "Delete Group",
+                            destructive = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onGroupDeleted(groupId)
+                                longPressedGroupId = null
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 /**
  * Glassy dialog to create a new group/folder.

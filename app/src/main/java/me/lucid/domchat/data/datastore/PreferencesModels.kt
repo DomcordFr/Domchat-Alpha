@@ -352,6 +352,20 @@ data class DisplaySetting(
     val globalBackgroundBlurHeightFraction: Float = 0.75f,
     // Bar black gradient intensity (0f = none, 1f = full black gradient on top/bottom bars)
     val barBlackGradientIntensity: Float = 0f,
+    // Bar Gradient Density: 0% (transparent) to 100% (opaque bar). Default 100%.
+    val barGradientDensity: Float = 1.0f,
+    // Bar Gradient Blur: blur radius in dp applied to the bar gradient. 0dp..60dp. Default 0dp.
+    val barGradientBlur: Float = 0f,
+    // When true, UI and bubble glass styles are linked (changing one changes both).
+    val linkUiAndBubbleStyle: Boolean = true,
+    // Bubble interface style: Glass (refractive) or Frosted (soft blur). Independent of UI style when unlinked.
+    val bubbleInterfaceStyle: InterfaceStyle = InterfaceStyle.GLASS,
+    // Glass depth / refraction scale multiplier (0.0x..2.5x).
+    val glassDepthScale: Float = 1.0f,
+    // Specular highlight intensity (0.0f..1.0f).
+    val glassSpecularIntensity: Float = 1.0f,
+    // Glass tint color as ARGB Long (0L = Clear). Non-zero applies a tint wash to glass surfaces.
+    val glassTintColor: Long = 0x00FFFFFFL,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
     // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the
@@ -360,6 +374,13 @@ data class DisplaySetting(
     // When true, reveals per-channel opacity/tint/tone/blur sliders in the display settings.
     val isAdvancedGlassEnabled: Boolean = false,
 )
+
+/** Interface glass style: refractive liquid glass or soft frosted blur. */
+@Serializable
+enum class InterfaceStyle {
+    GLASS,
+    FROSTED
+}
 
 @Serializable
 enum class GlassPreset {

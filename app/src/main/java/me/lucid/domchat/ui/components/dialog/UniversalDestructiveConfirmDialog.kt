@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
@@ -44,12 +43,14 @@ import androidx.compose.material.icons.rounded.Delete
  * A reusable, smooth-opening destructive action confirmation dialog.
  *
  * Features:
- * - AMOLED black background [Color(0xFF000000)]
- * - Glassy border [LiquidGlassTokens.SpecularBorderSubtle]
- * - Smooth scale + fade entry/exit animations
- * - Title and body message
- * - Cancel button: glassy border, semi-transparent background
- * - Delete button: AMOLED black with red accent border and red text [Color(0xFFEF4444)]
+ * - Centered on screen, capped at [widthIn(max = 420.dp)] so it never clips at the
+ *   edges or gets cut off at the bottom on small screens.
+ * - Single AMOLED black glass surface ([Color(0xFF000000)]) with a 0.5dp specular
+ *   border ([LiquidGlassTokens.SpecularBorderSubtle]) — no nested/dual backgrounds.
+ * - Smooth scale + fade entry/exit animations.
+ * - Title and body message.
+ * - Cancel button: glassy outlined, muted white text.
+ * - Delete button: prominent glassy button with pure white text + icon and a specular border.
  *
  * @param visible Whether the dialog is currently shown.
  * @param title The dialog title (e.g. "Delete conversation?").
@@ -70,7 +71,6 @@ fun UniversalDestructiveConfirmDialog(
     cancelLabel: String = "Cancel",
 ) {
     val dialogShape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
-    val destructiveRed = Color(0xFFEF4444)
 
     AnimatedVisibility(
         visible = visible,
@@ -90,107 +90,104 @@ fun UniversalDestructiveConfirmDialog(
                 decorFitsSystemWindows = false
             )
         ) {
+            // Center the dialog both vertically and horizontally with generous padding
+            // so it is never cut off at the bottom on small screens.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Surface(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .widthIn(max = 420.dp)
-                        .background(Color(0xFF000000))
+                        .padding(vertical = 28.dp, horizontal = 24.dp)
+                        .background(Color(0xFF000000), shape = dialogShape)
                         .border(
                             0.5.dp,
                             LiquidGlassTokens.SpecularBorderSubtle,
                             dialogShape
                         )
-                        .padding(20.dp)
+                        .clip(dialogShape),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Title
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Body message
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.85f),
+                        maxLines = 3,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Action buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        // Cancel button - glassy outlined, muted white text
+                        OutlinedButton(
+                            onClick = { onDismiss() },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = dialogShape,
+                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f)),
+                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color.White.copy(alpha = 0.85f),
+                                disabledContentColor = Color.White.copy(alpha = 0.3f)
+                            )
                         ) {
-                            // Title
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            Text(text = cancelLabel)
+                        }
 
-                            // Divider
-                            androidx.compose.foundation.layout.Spacer(
-                                modifier = Modifier.height(8.dp)
-                            )
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                            // Body message
-                            Text(
-                                text = message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.85f),
-                                maxLines = 3,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
-
-                            Spacer(Modifier.height(20.dp))
-
-                            // Action buttons
+                        // Delete button - prominent glassy, pure white text + icon, specular border
+                        Button(
+                            onClick = {
+                                onConfirm()
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = dialogShape,
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.White,
+                                disabledContainerColor = Color.Transparent.copy(alpha = 0.2f),
+                                disabledContentColor = Color.White.copy(alpha = 0.3f)
+                            ),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                             ) {
-                                // Cancel button - glassy border, semi-transparent background
-                                OutlinedButton(
-                                    onClick = { onDismiss() },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    shape = dialogShape,
-                                    border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f)),
-                                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color.White.copy(alpha = 0.85f),
-                                        disabledContentColor = Color.White.copy(alpha = 0.3f)
-                                    )
-                                ) {
-                                    Text(text = cancelLabel)
-                                }
-
-                                Spacer(Modifier.width(8.dp))
-
-                                // Delete button - AMOLED black with red accent border and red text
-                                Button(
-                                    onClick = {
-                                        onConfirm()
-                                        onDismiss()
-                                    },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    shape = dialogShape,
-                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF000000),
-                                        contentColor = destructiveRed,
-                                        disabledContainerColor = Color(0xFF000000).copy(alpha = 0.3f),
-                                        disabledContentColor = destructiveRed.copy(alpha = 0.3f)
-                                    ),
-                                    border = BorderStroke(0.5.dp, destructiveRed.copy(alpha = 0.6f))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Delete,
-                                            contentDescription = null,
-                                            tint = destructiveRed,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(Modifier.width(6.dp))
-                                        Text(
-                                            text = confirmLabel,
-                                            fontWeight = FontWeight.Bold,
-                                            color = destructiveRed
-                                        )
-                                    }
-                                }
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = confirmLabel,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
                             }
                         }
                     }
@@ -198,3 +195,4 @@ fun UniversalDestructiveConfirmDialog(
             }
         }
     }
+}

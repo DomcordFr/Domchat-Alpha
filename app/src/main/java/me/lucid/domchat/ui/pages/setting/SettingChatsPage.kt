@@ -4,8 +4,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -361,8 +365,16 @@ fun SettingChatsPage(
             // Selection Mode Action Bar
             AnimatedVisibility(
                 visible = isSelectionMode,
-                enter = fadeIn(),
-                exit = fadeOut()
+                enter = slideInVertically(
+                    animationSpec = tween(durationMillis = 220, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ) { height -> height / 2 } + fadeIn(
+                    animationSpec = tween(durationMillis = 220, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ),
+                exit = slideOutVertically(
+                    animationSpec = tween(durationMillis = 220, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ) { height -> height / 2 } + fadeOut(
+                    animationSpec = tween(durationMillis = 220, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ),
             ) {
                 Surface(
                     color = Color(0xFF000000),
@@ -550,7 +562,7 @@ fun SettingChatsPage(
                                                 fontWeight = FontWeight.SemiBold
                                             ),
                                             color = Color.White,
-                                            maxLines = 1,
+                                            maxLines = 2,
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }

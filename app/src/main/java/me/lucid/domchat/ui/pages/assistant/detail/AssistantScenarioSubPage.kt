@@ -50,10 +50,10 @@ fun AssistantScenarioSubPage(
             .imePadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SettingsGroup(title = stringResource(R.string.assistant_detail_section_scenario)) {
+        SettingsGroup(title = "Author's Notes") {
             SettingGroupInputItem(
                 title = stringResource(R.string.assistant_page_authors_note),
-                subtitle = stringResource(R.string.assistant_detail_scenario_desc),
+                subtitle = "SillyTavern-style author's note. Free-form text injected to steer the character's behavior, scene tone, and writing style throughout the chat. Supports Markdown.",
                 content = {
                     Surface(
                         color = Color(0xFF141520),

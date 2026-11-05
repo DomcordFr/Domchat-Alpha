@@ -2371,11 +2371,11 @@ private fun ChatPageContent(
                     hasConversationContent = conversation.messageNodes.isNotEmpty(),
                     chatListState = chatListState,
                     onDismissRequest = { showToolbarOverflowMenu = false },
-                    onSearchClick = {
-                        showToolbarOverflowMenu = false
-                        previewMode = !previewMode
-                    },
-                    onShareClick = { startChatShareSelection() },
+                    onCreatorNotesClick = { showToolbarOverflowMenu = false },
+                    onPromptPresetsClick = { showToolbarOverflowMenu = false },
+                    onAuthorsNotesClick = { showToolbarOverflowMenu = false },
+                    onWallpaperClick = { showToolbarOverflowMenu = false },
+                    onTextStylingClick = { showToolbarOverflowMenu = false },
                 )
             }
             TTSController()
@@ -2763,8 +2763,11 @@ private fun ChatToolbarOverflowMenu(
     hasConversationContent: Boolean,
     chatListState: LazyListState,
     onDismissRequest: () -> Unit,
-    onSearchClick: () -> Unit,
-    onShareClick: () -> Unit,
+    onCreatorNotesClick: () -> Unit,
+    onPromptPresetsClick: () -> Unit,
+    onAuthorsNotesClick: () -> Unit,
+    onWallpaperClick: () -> Unit,
+    onTextStylingClick: () -> Unit,
 ) {
     BackHandler(onBack = onDismissRequest)
 
@@ -2852,15 +2855,29 @@ private fun ChatToolbarOverflowMenu(
                     verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(2.dp)
                 ) {
                     ChatToolbarOverflowMenuItem(
-                        label = stringResource(R.string.search_ability_search),
-                        icon = if (previewMode) Icons.Rounded.Close else Icons.Rounded.Search,
-                        onClick = onSearchClick
+                        label = "Creator Notes",
+                        icon = Icons.Rounded.AutoAwesome,
+                        onClick = onCreatorNotesClick
                     )
                     ChatToolbarOverflowMenuItem(
-                        label = stringResource(R.string.share),
-                        icon = Icons.Rounded.Share,
-                        enabled = hasConversationContent,
-                        onClick = onShareClick
+                        label = "Prompt Presets",
+                        icon = Icons.Rounded.Tune,
+                        onClick = onPromptPresetsClick
+                    )
+                    ChatToolbarOverflowMenuItem(
+                        label = "Author's Notes",
+                        icon = Icons.Rounded.Edit,
+                        onClick = onAuthorsNotesClick
+                    )
+                    ChatToolbarOverflowMenuItem(
+                        label = "Wallpaper",
+                        icon = Icons.Rounded.Image,
+                        onClick = onWallpaperClick
+                    )
+                    ChatToolbarOverflowMenuItem(
+                        label = "Text Styling",
+                        icon = Icons.Rounded.FormatItalic,
+                        onClick = onTextStylingClick
                     )
                 }
             }
@@ -3363,33 +3380,37 @@ private fun ChatToolbar(
             }
 
 
-            // Centered Character Name with click for Creator Notes - Clean transparent floating text (no background)
+            // Centered Character Name with click for Creator Notes - Glassy pill tag
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable {
-                            haptics.perform(HapticPattern.Pop)
-                            showCharacterNotesSheet = true
-                        }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                Surface(
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        showCharacterNotesSheet = true
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF000000).copy(alpha = 0.60f),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                 ) {
-                    Text(
-                        text = currentAssistant.effectiveChatName,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (LocalDarkMode.current) Color.White else Color.Black
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            text = currentAssistant.effectiveChatName,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
             

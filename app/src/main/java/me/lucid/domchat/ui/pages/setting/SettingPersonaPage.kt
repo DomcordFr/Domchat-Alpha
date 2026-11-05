@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -73,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.data.model.Lorebook
 import me.lucid.domchat.data.model.UserPersona
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.domchat.data.datastore.withActivePersona
@@ -133,6 +135,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     var formPronouns by remember { mutableStateOf("") }
     var formDescription by remember { mutableStateOf("") }
     var formAvatar by remember { mutableStateOf<Avatar>(Avatar.Dummy) }
+    var formLorebookIds by remember { mutableStateOf(emptySet<String>()) }
 
     // Built-in cropper state
     var showCropper by remember { mutableStateOf(false) }
@@ -164,6 +167,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         formPronouns = persona.pronouns
         formDescription = persona.description
         formAvatar = persona.avatar
+        formLorebookIds = persona.enabledLorebookIds
         showEditor = true
     }
 
@@ -180,6 +184,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         pronouns = formPronouns.trim(),
                         description = formDescription.trim(),
                         avatar = formAvatar,
+                        enabledLorebookIds = formLorebookIds,
                         isDefault = existing.isEmpty()
                     )
                     existing + newP
@@ -190,7 +195,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 name = nameToSave,
                                 pronouns = formPronouns.trim(),
                                 description = formDescription.trim(),
-                                avatar = formAvatar
+                                avatar = formAvatar,
+                                enabledLorebookIds = formLorebookIds
                             )
                         } else p
                     }
@@ -408,7 +414,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 onClick = { openEdit(persona) },
                                 shape = RoundedCornerShape(12.dp),
                                 color = Color(0xFF000000),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.15f))
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -535,6 +541,72 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         shape = inputShape,
                         colors = appFieldColors(),
                     )
+
+                    // Lorebook assignment — compact selectable chips (mobile-friendly)
+                    Text(
+                        text = "Lorebooks",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                    val allLorebooks = settings.lorebooks
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        allLorebooks.forEach { lorebook ->
+                            val isSelected = lorebook.id.toString() in formLorebookIds
+                            Box(
+                                modifier = Modifier
+                                    .clip(AppShapes.Tag)
+                                    .background(if (isSelected) Color.White.copy(alpha = 0.10f) else Color.Transparent)
+                                    .border(
+                                        BorderStroke(
+                                            if (isSelected) 0.5.dp else 0.5.dp,
+                                            if (isSelected) LiquidGlassTokens.SpecularBorderSubtle else Color.White.copy(alpha = 0.14f)
+                                        ),
+                                        AppShapes.Tag
+                                    )
+                                    .clickable {
+                                        haptics.perform(HapticPattern.Pop)
+                                        val idStr = lorebook.id.toString()
+                                        formLorebookIds = if (isSelected) {
+                                            formLorebookIds - idStr
+                                        } else {
+                                            formLorebookIds + idStr
+                                        }
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.75f)
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Check,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {

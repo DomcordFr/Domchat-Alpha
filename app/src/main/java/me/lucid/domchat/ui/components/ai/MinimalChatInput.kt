@@ -865,7 +865,7 @@ fun MinimalChatInput(
                                 keyboardController?.hide()
                             }
                         },
-                        containerColor = Color(0xFF000000).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.10f, 0.75f)),
+                        containerColor = Color.Transparent,
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .size(AppSize.ChromePill)
@@ -1120,6 +1120,12 @@ fun MinimalChatInput(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
+                                        .background(Color.Transparent)
+                                        .border(
+                                            width = 0.5.dp,
+                                            brush = LiquidGlassTokens.SpecularBorderSubtle,
+                                            shape = CircleShape
+                                        )
                                         .clickable {
                                             haptics.perform(HapticPattern.Pop)
                                             onShowChatInfo()
@@ -1130,11 +1136,7 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .border(
-                                                width = 1.2.dp,
-                                                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                                                shape = CircleShape
-                                            )
+                                            .background(Color.Transparent)
                                     )
                                 }
 
@@ -1185,12 +1187,31 @@ fun MinimalChatInput(
                                 ) { action ->
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
-                                            Icon(
-                                                imageVector = RoundedStopIcon,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp),
-                                                tint = Color(0xFFFF453A),
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .background(Color.Transparent, shape = RoundedCornerShape(12.dp))
+                                                    .border(
+                                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(14.dp)
+                                                        .clip(RoundedCornerShape(4.dp))
+                                                        .background(Color(0xFFFF453A)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = RoundedStopIcon,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(10.dp),
+                                                        tint = Color.White
+                                                    )
+                                                }
+                                            }
                                         }
                                         DomChatComposerAction.Send,
                                         DomChatComposerAction.QuestionnaireSubmit -> {
@@ -1466,12 +1487,31 @@ fun MinimalChatInput(
                                 ) { action ->
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
-                                            Icon(
-                                                imageVector = RoundedStopIcon,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(24.dp),
-                                                tint = Color(0xFFFF453A),
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .background(Color.Transparent, shape = RoundedCornerShape(12.dp))
+                                                    .border(
+                                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(14.dp)
+                                                        .clip(RoundedCornerShape(4.dp))
+                                                        .background(Color(0xFFFF453A)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = RoundedStopIcon,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(10.dp),
+                                                        tint = Color.White
+                                                    )
+                                                }
+                                            }
                                         }
                                         DomChatComposerAction.Send,
                                         DomChatComposerAction.QuestionnaireSubmit -> {

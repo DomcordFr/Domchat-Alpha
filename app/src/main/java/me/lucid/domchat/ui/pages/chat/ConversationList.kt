@@ -487,7 +487,7 @@ private fun ConversationItem(
                     shape = RoundedCornerShape(16.dp)
                 )
                 .background(
-                    if (selected) Color.White.copy(alpha = 0.06f) else Color.Transparent
+                    if (selected) Color(0xFF000000) else Color.Transparent
                 )
         ) {
             // Edge-to-edge character pfp on the right, showing 35% of the image smoothly blending into the left

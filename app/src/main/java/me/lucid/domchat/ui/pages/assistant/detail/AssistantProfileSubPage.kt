@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.Spacer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
@@ -30,17 +33,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Assistant
+import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.DebouncedTextField
 import me.lucid.domchat.ui.components.ui.TagsInput
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.ui.motion.ExpandableContent
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupInputItem
@@ -74,14 +82,26 @@ fun AssistantProfileSubPage(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            UIAvatar(
-                value = assistant.avatar,
-                name = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-                onUpdate = { avatar ->
-                    onUpdate(assistant.copy(avatar = avatar))
-                },
-                modifier = Modifier.size(96.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(104.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF000000))
+                    .border(
+                        BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                UIAvatar(
+                    value = assistant.avatar,
+                    name = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
+                    onUpdate = { avatar ->
+                        onUpdate(assistant.copy(avatar = avatar))
+                    },
+                    modifier = Modifier.size(96.dp)
+                )
+            }
 
             Text(
                 text = stringResource(R.string.assistant_profile_tap_change_avatar),
@@ -94,10 +114,10 @@ fun AssistantProfileSubPage(
         // IDENTITY GROUP (display name, chat name)
         // ═════════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_profile_identity)) {
-            SettingGroupItem(
+            SettingGroupInputItem(
                 title = stringResource(R.string.assistant_page_name),
                 subtitle = stringResource(R.string.assistant_profile_name_desc),
-                trailing = {
+                content = {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -127,37 +147,68 @@ fun AssistantProfileSubPage(
         // CREATOR NOTES (black glass card)
         // ════════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_creator_notes)) {
-            SettingGroupInputItem(
-                title = "Creator Notes",
-                subtitle = "Creator notes",
-                content = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                var notesExpanded by remember { mutableStateOf(false) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.assistant_detail_section_creator_notes),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = Color.White
+                    )
+                    IconButton(
+                        onClick = { notesExpanded = !notesExpanded },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (notesExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                ExpandableContent(visible = notesExpanded) {
                     Surface(
                         color = Color(0xFF141520),
-                        border = androidx.compose.foundation.BorderStroke(
+                        border = BorderStroke(
                             0.5.dp,
                             me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                         ),
                         shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        DebouncedTextField(
-                            value = assistant.creatorNotes ?: "",
-                            onValueChange = { onUpdate(assistant.copy(creatorNotes = it)) },
-                            stateKey = "${assistant.id}_notes",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 120.dp),
-                            minLines = 6,
-                            maxLines = 10,
-                            placeholder = "Write creator notes...",
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = FontFamily.Monospace,
-                                lineHeight = 20.sp
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            MarkdownBlock(
+                                content = assistant.creatorNotes ?: "",
+                                modifier = Modifier.fillMaxWidth()
                             )
-                        )
+                            Spacer(Modifier.height(8.dp))
+                            DebouncedTextField(
+                                value = assistant.creatorNotes ?: "",
+                                onValueChange = { onUpdate(assistant.copy(creatorNotes = it)) },
+                                stateKey = "${assistant.id}_notes",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 120.dp),
+                                minLines = 6,
+                                maxLines = 10,
+                                placeholder = "Write creator notes...",
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    lineHeight = 20.sp
+                                )
+                            )
+                        }
                     }
                 }
-            )
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -166,8 +217,12 @@ fun AssistantProfileSubPage(
         SettingsGroup(title = stringResource(R.string.assistant_page_tags)) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = androidx.compose.ui.graphics.Color.Transparent,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+                color = Color(0xFF000000),
+                border = BorderStroke(
+                    0.5.dp,
+                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),

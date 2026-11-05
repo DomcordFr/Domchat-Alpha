@@ -388,7 +388,7 @@ fun PromptPresetsBottomSheet(
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .navigationBarsPadding()
         ) {
-            // Header with close button
+            // Header with grab handle, clean title, transparent icon buttons, and close button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -405,16 +405,13 @@ fun PromptPresetsBottomSheet(
                             color = Color.White,
                         )
                         Spacer(modifier = Modifier.weight(1f))
-                        IconButton(
-                            onClick = onDismissRequest,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Close",
-                                tint = Color.White.copy(alpha = 0.7f),
-                            )
-                        }
+                        // Grab handle
+                        Box(
+                            modifier = Modifier
+                                .size(width = 32.dp, height = 4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(alpha = 0.30f))
+                        )
                         if (conversation != null) {
                             Spacer(modifier = Modifier.width(8.dp))
                             DomChatGlassChip(
@@ -431,31 +428,47 @@ fun PromptPresetsBottomSheet(
                     )
                 }
 
-                if (!isEditingOrCreating) {
-                    Surface(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            openCreate()
-                        },
-                        shape = CircleShape,
-                        color = Color(0xFF141520).copy(alpha = 0.60f),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = "New Preset",
-                            tint = Color.White.copy(alpha = 0.92f),
-                            modifier = Modifier.padding(8.dp).size(20.dp)
-                        )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!isEditingOrCreating) {
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                openCreate()
+                            },
+                            shape = CircleShape,
+                            color = Color.Transparent,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = "New Preset",
+                                tint = Color.White.copy(alpha = 0.92f),
+                                modifier = Modifier.padding(8.dp).size(20.dp)
+                            )
+                        }
+                    } else {
+                        IconButton(
+                            onClick = { isEditingOrCreating = false },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Cancel",
+                                tint = Color.White.copy(alpha = 0.7f),
+                            )
+                        }
                     }
-                } else {
                     IconButton(
-                        onClick = { isEditingOrCreating = false },
+                        onClick = onDismissRequest,
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = "Cancel",
+                            contentDescription = "Close",
                             tint = Color.White.copy(alpha = 0.7f),
                         )
                     }
@@ -493,7 +506,7 @@ fun PromptPresetsBottomSheet(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -788,117 +801,49 @@ fun PromptPresetsBottomSheet(
             } // end if (visible)
         }
 
-            // Presets list - full-width glassy cards with 16.dp horizontal margin
+            // Presets list - single-column mobile list (no horizontal compression)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
                     .padding(horizontal = 16.dp)
                     .nestedScroll(overscrollAbsorber),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
+                    val snippet = preset.description.ifBlank { preset.content.take(56) }
 
                     Surface(
-                        color = if (isEnabled) Color(0xFF141520).copy(alpha = 0.80f) else Color(0xFF141520).copy(alpha = 0.45f),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(
-                            width = if (isEnabled) 1.0.dp else 0.5.dp,
-                            brush = LiquidGlassTokens.SpecularBorderSubtle,
-                        ),
+                        color = Color(0xFF000000),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(130.dp),
+                            .heightIn(min = 76.dp, max = 82.dp),
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                text = preset.name,
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Switch(
-                                    checked = isEnabled,
-                                    onCheckedChange = { togglePreset(preset.id, it) },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                    ),
-                                    modifier = Modifier.size(32.dp),
-                                )
-                            }
-
-                            if (preset.description.isNotBlank()) {
-                                Text(
-                                    text = preset.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.55f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
                             Text(
-                                text = preset.content,
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                color = Color.White.copy(alpha = 0.45f),
-                                maxLines = 2,
+                                text = preset.name,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White,
+                                maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 2.dp),
                             )
 
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.weight(1f))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        openEdit(preset)
-                                    },
-                                    modifier = Modifier.size(32.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Edit,
-                                        contentDescription = "Edit",
-                                        tint = Color.White.copy(alpha = 0.6f),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-
-                                if (!preset.isSystem && allPresets.size > 1) {
-                                    IconButton(
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Pop)
-                                            presetToDelete = preset
-                                        },
-                                        modifier = Modifier.size(32.dp),
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Delete,
-                                            contentDescription = "Delete",
-                                            tint = Color.White.copy(alpha = 0.5f),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                            }
+                            Text(
+                                text = snippet,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.6f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
@@ -917,20 +862,20 @@ fun PromptPresetsBottomSheet(
                 .widthIn(max = 320.dp)
                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
             shape = AppShapes.Dialog,
-            containerColor = domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
             title = {
                 ApplyDialogWindowBlur()
                 Text(
                     text = "Delete ${preset.name}?",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
             },
             text = {
                 Text(
                     text = "This preset will be permanently removed from your presets list.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.85f)
                 )
             },
             confirmButton = {
@@ -941,17 +886,33 @@ fun PromptPresetsBottomSheet(
                         presetToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.Transparent.copy(alpha = 0.2f),
+                        disabledContentColor = Color.White.copy(alpha = 0.3f)
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
-                    Text("Delete")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "Delete", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { presetToDelete = null }) {
-                    Text("Cancel")
+                    Text(text = "Cancel", color = Color.White.copy(alpha = 0.85f))
                 }
             }
         )

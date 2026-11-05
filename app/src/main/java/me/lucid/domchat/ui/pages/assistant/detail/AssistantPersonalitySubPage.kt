@@ -66,8 +66,8 @@ fun AssistantPersonalitySubPage(
     ) {
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_personality)) {
             SettingGroupInputItem(
-                title = stringResource(R.string.assistant_page_system_prompt),
-                subtitle = stringResource(R.string.assistant_detail_personality_desc),
+                title = "Character Personality",
+                subtitle = "Defines how your character speaks, acts, and responds in roleplay. Written as plain text or Markdown, this is injected into every chat as the character's core definition.",
                 content = {
                     Surface(
                         color = Color(0xFF141520),
@@ -78,7 +78,7 @@ fun AssistantPersonalitySubPage(
                         shape = AppShapes.CardMedium,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        val systemPromptValue = androidx.compose.runtime.key(assistant.id) {
+                        val personalityValue = androidx.compose.runtime.key(assistant.id) {
                             androidx.compose.foundation.text.input.rememberTextFieldState(
                                 initialText = assistant.systemPrompt
                             )
@@ -90,7 +90,7 @@ fun AssistantPersonalitySubPage(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             OutlinedTextField(
-                                state = systemPromptValue,
+                                state = personalityValue,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(min = 240.dp)
@@ -107,6 +107,15 @@ fun AssistantPersonalitySubPage(
                                     lineHeight = 20.sp
                                 ),
                                 shape = AppShapes.InputField,
+                                placeholder = {
+                                    Text(
+                                        text = "Describe your character's personality, speech quirks, motivations, and how they behave in roleplay.",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontFamily = FontFamily.Monospace,
+                                            color = Color.White.copy(alpha = 0.45f)
+                                        )
+                                    )
+                                },
                                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
@@ -120,15 +129,15 @@ fun AssistantPersonalitySubPage(
                         }
 
                         androidx.compose.runtime.LaunchedEffect(assistant.systemPrompt, isFocused) {
-                            if (!isFocused && systemPromptValue.text.toString() != assistant.systemPrompt) {
-                                systemPromptValue.edit {
+                            if (!isFocused && personalityValue.text.toString() != assistant.systemPrompt) {
+                                personalityValue.edit {
                                     replace(0, length, assistant.systemPrompt)
                                 }
                             }
                         }
 
                         androidx.compose.runtime.LaunchedEffect(assistant.id) {
-                            androidx.compose.runtime.snapshotFlow { systemPromptValue.text }
+                            androidx.compose.runtime.snapshotFlow { personalityValue.text }
                                 .drop(1)
                                 .debounce(150L)
                                 .collect {

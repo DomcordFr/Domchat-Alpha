@@ -3,6 +3,7 @@ package me.lucid.domchat.ui.pages.assistant.detail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,20 +13,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Book
-import androidx.compose.material3.Card
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.foundation.layout.Alignment
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.rounded.Book
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -114,49 +115,110 @@ fun AssistantLorebooksSubPage(
 
             Spacer(Modifier.height(12.dp))
 
-            // Section header for lorebook list
-            Text(
-                text = stringResource(R.string.lorebooks_section_available),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp)
-                    .fillMaxWidth()
+            // Search bar
+            var lorebookSearch by remember { mutableStateOf("") }
+            OutlinedTextField(
+                value = lorebookSearch,
+                onValueChange = { lorebookSearch = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search lorebooks...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                trailingIcon = {
+                    if (lorebookSearch.isNotEmpty()) {
+                        IconButton(onClick = { lorebookSearch = "" }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Clear",
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = AppShapes.InputField,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color.White.copy(alpha = 0.9f),
+                )
             )
 
-            Column(
+            Spacer(Modifier.height(12.dp))
+
+            // Compact selectable chips (uses lorebook.id directly, Set<Uuid>)
+            val filtered = lorebooks.filter { it.name.contains(lorebookSearch, ignoreCase = true) }
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                lorebooks.forEachIndexed { index, lorebook ->
+                filtered.forEach { lorebook ->
                     val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
-
-                    val position = when {
-                        lorebooks.size == 1 -> me.lucid.domchat.ui.components.ui.ItemPosition.ONLY
-                        index == 0 -> me.lucid.domchat.ui.components.ui.ItemPosition.FIRST
-                        index == lorebooks.lastIndex -> me.lucid.domchat.ui.components.ui.ItemPosition.LAST
-                        else -> me.lucid.domchat.ui.components.ui.ItemPosition.MIDDLE
-                    }
-
-                    LorebookSelectionCard(
-                        lorebook = lorebook,
-                        isEnabled = isEnabled,
-                        position = position,
-                        onClick = { navController.navigate(Screen.SettingLorebookDetail(lorebook.id.toString())) },
-                        onToggle = { enabled ->
-                            val newIds = if (enabled) {
-                                assistant.enabledLorebookIds + lorebook.id
-                            } else {
+                    val selected = isEnabled
+                    Surface(
+                        onClick = {
+                            haptics.perform(HapticPattern.Tick)
+                            val newIds = if (selected) {
                                 assistant.enabledLorebookIds - lorebook.id
+                            } else {
+                                assistant.enabledLorebookIds + lorebook.id
                             }
                             onUpdate(assistant.copy(enabledLorebookIds = newIds))
+                        },
+                        color = if (selected) Color(0xFF000000) else Color.Transparent,
+                        border = BorderStroke(
+                            if (selected) 0.5.dp else 0.5.dp,
+                            if (selected) LiquidGlassTokens.SpecularBorderSubtle else Color.White.copy(alpha = 0.14f)
+                        ),
+                        shape = AppShapes.Tag,
+                        modifier = Modifier
+                            .widthIn(min = 88.dp)
+                            .height(36.dp)
+                            .clickable { /* handled by onClick above */ }
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (selected) Color.White else Color.White.copy(alpha = 0.75f)
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (selected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
-                    )
+                    }
                 }
             }
         }
     }
 }
 
+// Lorebook detail navigation kept (card tap opens detail)
 @Composable
 private fun LorebookSelectionCard(
     lorebook: Lorebook,

@@ -67,6 +67,7 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Warning
 import me.lucid.domchat.R
 import me.lucid.domchat.Screen
@@ -276,6 +277,14 @@ fun SettingPage(
                 icon = Icons.Rounded.Info,
                 target = Screen.SettingAbout,
                 keywords = listOf("about", "version", "update", "github", "license")
+            ),
+            SettingNavItem(
+                title = "Testing",
+                subtitle = "Inject mock lorebooks and character cards for QA flows",
+                category = "System & About",
+                icon = Icons.Rounded.BugReport,
+                target = Screen.SettingTesting,
+                keywords = listOf("testing", "mock", "qa", "debug")
             )
         )
     }

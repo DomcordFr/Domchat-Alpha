@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,23 +52,6 @@ fun AssistantContextManagementSubPage(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        // ═══════════════════════════════════════════════════════════════════
-        // LOREBOOKS
-        // ═══════════════════════════════════════════════════════════════════
-        SettingsGroup(title = stringResource(R.string.context_lorebooks_title)) {
-            SettingGroupItem(
-                title = stringResource(R.string.assistant_lorebooks_title),
-                subtitle = stringResource(R.string.context_lorebooks_desc),
-                icon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Book,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                onClick = onNavigateToLorebooks
-            )
-        }
 
         SettingsGroup(title = stringResource(R.string.context_time_awareness_title)) {
             SettingGroupItem(
