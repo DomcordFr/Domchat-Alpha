@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -14,16 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.model.Assistant
@@ -54,7 +55,7 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
     Scaffold(
         topBar = {
             OneUITopAppBar(
-                title = stringResource(R.string.setting_testing_title),
+                title = "Testing & Mock Data",
                 scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
                 navigationIcon = { BackButton() }
             )
@@ -69,14 +70,14 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
             // Mock Data Section
             item {
                 SettingsGroup(
-                    title = stringResource(R.string.setting_testing_mock_data_title)
+                    title = "Enable Mock Data",
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.setting_testing_mock_data_desc),
+                            text = "Inject synthetic lorebooks and character cards into settings store",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -84,8 +85,8 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
 
                         // Mock Lorebooks toggle
                         SettingGroupItem(
-                            title = stringResource(R.string.setting_testing_mock_lorebooks_title),
-                            subtitle = stringResource(R.string.setting_testing_mock_lorebooks_desc),
+                            title = "Mock Lorebooks",
+                            subtitle = "Inject 5 global lorebooks with 25 keyword-activated entries",
                             trailing = {
                                 HapticSwitch(
                                     checked = mockLorebooks,
@@ -103,8 +104,8 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
 
                         // Mock Cards toggle
                         SettingGroupItem(
-                            title = stringResource(R.string.setting_testing_mock_cards_title),
-                            subtitle = stringResource(R.string.setting_testing_mock_cards_desc),
+                            title = "Mock Character Cards",
+                            subtitle = "Inject 5 rich character cards with diverse system prompts and tags",
                             trailing = {
                                 HapticSwitch(
                                     checked = mockCards,
@@ -134,7 +135,7 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.setting_testing_status),
+                                    text = "Development Only",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary

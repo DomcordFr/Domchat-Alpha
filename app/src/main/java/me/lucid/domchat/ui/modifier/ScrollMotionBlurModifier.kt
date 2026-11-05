@@ -44,7 +44,8 @@ fun Modifier.scrollMotionBlur(
                 detectDragGestures(
                     onDragStart = { },
                     onDrag = { change, _ ->
-                        scrollVelocity = (change.position - change.previousPosition).distanceTo(Offset.Zero)
+                        val delta = change.position - change.previousPosition
+                        scrollVelocity = kotlin.math.sqrt(delta.x * delta.x + delta.y * delta.y)
                         change.consume()
                     },
                     onDragEnd = {

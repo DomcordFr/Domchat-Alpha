@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -19,10 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.lucid.domchat.R
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
@@ -42,7 +41,7 @@ fun TextFormattingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM =
     Scaffold(
         topBar = {
             OneUITopAppBar(
-                title = stringResource(R.string.setting_page_text_formatting),
+                title = "Text Formatting",
                 scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(),
                 navigationIcon = { BackButton() }
             )
@@ -57,8 +56,8 @@ fun TextFormattingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM =
             // Active Rule Card
             item {
                 SettingsGroup(
-                    title = stringResource(R.string.setting_text_formatting_title),
-                    subtitle = stringResource(R.string.setting_text_formatting_desc)
+                    title = "Roleplay Text Styling",
+                    subtitle = "Configure formatting rules, font styling, and text decorators",
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -75,7 +74,7 @@ fun TextFormattingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM =
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.setting_text_formatting_active_rule),
+                                    text = "Active Formatting Rule",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color.White
                                 )
@@ -96,7 +95,7 @@ fun TextFormattingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM =
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.setting_text_formatting_active_rule_preview),
+                                        text = "Preview active typography and glass card layout",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.White,
                                         modifier = Modifier.padding(16.dp)

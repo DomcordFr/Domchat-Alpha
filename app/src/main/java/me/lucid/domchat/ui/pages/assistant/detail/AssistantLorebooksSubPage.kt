@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.pages.assistant.detail
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -104,7 +105,7 @@ fun AssistantLorebooksSubPage(
             // Description card header
             Surface(
                 color = Color(0xFF141520),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     0.5.dp,
                     me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 ),
@@ -296,7 +297,7 @@ private fun LorebookSelectionCard(
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF141520)),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             0.5.dp,
             me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
         ),
