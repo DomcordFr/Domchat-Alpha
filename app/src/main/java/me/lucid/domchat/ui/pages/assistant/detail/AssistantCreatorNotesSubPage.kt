@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.assistant.detail
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -245,7 +247,7 @@ private fun GlassyFormattingChip(
         color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color(0xFF141520),
         border = BorderStroke(
             0.5.dp,
-            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else LiquidGlassTokens.SpecularBorderSubtle
+            if (isSelected) Brush.solidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)) else LiquidGlassTokens.SpecularBorderSubtle
         ),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.clickable(onClick = onClick)

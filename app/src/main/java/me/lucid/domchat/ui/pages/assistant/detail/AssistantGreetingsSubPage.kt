@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -107,7 +107,7 @@ fun AssistantGreetingsSubPage(
                         val isSelected = index == selectedGreetingIndex
                         val tabLabel = "Initial #${index + 1}"
 
-                        GlassGreetingTab(
+                        GlassyGreetingTab(
                             label = tabLabel,
                             isSelected = isSelected,
                             preview = greeting.ifEmpty { "(empty)" },
