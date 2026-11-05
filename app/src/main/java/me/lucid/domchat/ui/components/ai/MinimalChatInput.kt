@@ -2455,7 +2455,8 @@ fun MinimalChatInput(
                     )
                     Spacer(Modifier.weight(1f))
                     IconButton(
-                        onClick = { showSamplersSheet = false }
+                        onClick = { showSamplersSheet = false },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,

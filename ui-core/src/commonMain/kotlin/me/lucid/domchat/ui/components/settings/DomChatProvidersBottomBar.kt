@@ -1,5 +1,10 @@
 package me.lucid.domchat.ui.components.settings
 
+import androidx.compose.animation.core.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.padding
 
 import androidx.compose.foundation.background
@@ -49,6 +54,15 @@ fun DomChatProvidersBottomBar(
             .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
         if (!useWideLayout) {
+            val selectedIndex = tabs.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
+            val targetOffsetDp = (selectedIndex * 52).dp // 48dp item size + 4dp space
+            val animatedIndicatorOffset by animateDpAsState(
+                targetValue = targetOffsetDp,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
             Surface(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 shape = RoundedCornerShape(28.dp),
@@ -63,36 +77,48 @@ fun DomChatProvidersBottomBar(
                 ),
                 shadowElevation = 8.dp,
             ) {
-                Row(
-                    modifier = Modifier.padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    tabs.forEach { tab ->
-                        val selected = tab.id == selectedId
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .then(
-                                    if (selected) {
-                                        Modifier
-                                            .background(Color.White.copy(alpha = 0.18f))
-                                            .border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape)
-                                    } else {
-                                        Modifier.clickable {
-                                            onHaptic()
-                                            onSelect(tab.id)
-                                        }
-                                    },
-                                )
-                                .padding(12.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = null,
-                                tint = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
-                                modifier = Modifier.size(24.dp),
+                Box {
+                    // Animated sliding puck behind icons
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .offset(x = animatedIndicatorOffset)
+                            .size(48.dp)
+                            .background(Color.White.copy(alpha = 0.18f), CircleShape)
+                            .border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+                    )
+                    Row(
+                        modifier = Modifier.padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        tabs.forEach { tab ->
+                            val selected = tab.id == selectedId
+                            val iconTint by animateColorAsState(
+                                targetValue = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
+                                animationSpec = tween(200)
                             )
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = {
+                                            if (tab.id != selectedId) {
+                                                onHaptic()
+                                                onSelect(tab.id)
+                                            }
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = null,
+                                    tint = iconTint,
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
                         }
                     }
                 }
