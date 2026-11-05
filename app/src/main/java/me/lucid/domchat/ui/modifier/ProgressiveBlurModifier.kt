@@ -4,7 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LocalDensity
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.DrawModifier
@@ -38,8 +38,8 @@ private data class ProgressiveBlurModifierElement(
     override fun ContentDrawScope.draw() {
         val gradientBrush = Brush.linearGradient(
             colors = listOf(
-                Color(0xFF000000).copy(alpha = startAlpha),
-                Color(0xFF000000).copy(alpha = endAlpha),
+                Color(0xFF141520).copy(alpha = startAlpha),
+                Color(0xFF141520).copy(alpha = endAlpha),
             ),
             start = Offset(0f, 0f),
             end = Offset(0f, height.toPx()),
