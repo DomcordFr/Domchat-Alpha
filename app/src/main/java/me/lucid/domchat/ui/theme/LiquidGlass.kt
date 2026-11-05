@@ -17,53 +17,6 @@ import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.data.model.LiquidGlassMode
 
-/**
- * Liquid Glass Material Tokens.
- * Optical characteristics:
- * 1. Razor-sharp 0.5dp precision specular edge highlight catching ambient bounce light.
- * 2. Translucent surface luminance diffusion (children are kept razor-sharp).
- * 3. Gradient sheen simulating glass refraction and depth.
- * 4. Ambient ground occlusion.
- */
-object LiquidGlassTokens {
-    val CardShape = RoundedCornerShape(20.dp)
-    val BubbleShape = RoundedCornerShape(18.dp)
-    val PillShape = RoundedCornerShape(100.dp)
-    val Squircle = RoundedCornerShape(16.dp)
-
-    // Specular border gradients - light reflects from top, disperses cleanly towards bottom
-    val SpecularBorderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = 0.40f), // Top specular rim catch
-            Color.White.copy(alpha = 0.12f), // Mid-body glass refraction
-            Color.White.copy(alpha = 0.03f), // Lower falloff
-            Color.Transparent               // Clean ground falloff
-        )
-    )
-
-    val SpecularBorderSubtle = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = 0.22f),
-            Color.White.copy(alpha = 0.06f),
-            Color.Transparent
-        )
-    )
-
-    val LightSpecularBorder = Brush.verticalGradient(
-        listOf(
-            Color.Black.copy(alpha = 0.12f),
-            Color.Black.copy(alpha = 0.04f),
-            Color.Transparent
-        )
-    )
-
-    // Legacy static fallbacks (used when no settings composition local is available,
-    // e.g. preview or unit composition). Clear glass anchor: unified DomChat glass card 0xFF141520.
-    val GlassSurfaceDark = Color(0xFF141520).copy(alpha = 0.22f)
-    val GlassSurfaceLight = Color(0xFFFFFFFF).copy(alpha = 0.45f)
-    val BubbleGlassDark = Color(0xFFFFFFFF).copy(alpha = 0.06f)
-    val BubbleGlassLight = Color(0xFF000000).copy(alpha = 0.03f)
-}
 
 /**
  * Dynamic liquid glass surface color derived from glassAlpha and glassBaseLuminance.
