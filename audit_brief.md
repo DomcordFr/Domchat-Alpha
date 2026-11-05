@@ -1,39 +1,50 @@
-# Audit Brief — Task 180: Fix Duplicate Modifier & Row Parameter Compilation Errors in SettingPersonaPage
+# Audit Brief — Task 181: Fix All Compilation Errors in SettingPersonaPage, TestingSettingsPage, TextFormattingSettingsPage
 
 ## Intent Verification
 
-Fixed two compile errors in `app/src/main/java/me/lucid/domchat/ui/pages/setting/SettingPersonaPage.kt`:
+Fixed compilation errors across 3 setting pages:
 
-1. **Lorebook chips Row (line ~588)** — Removed the invalid `verticalArrangement = Arrangement.spacedBy(8.dp)` parameter (Compose `Row` only accepts `horizontalArrangement` and `verticalAlignment`). Replaced with `verticalAlignment = Alignment.CenterVertically` and made the Row horizontally scrollable via `Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())`. Added `import androidx.compose.foundation.horizontalScroll`.
+**SettingPersonaPage.kt**
+- Added missing imports: `rememberScrollState`, `wrapContentWidth`, `AppShapes`.
+- Lorebook chips section: `lorebook.id` is `Uuid`, `formLorebookIds` is `Set<String>` — changed all 3 references to `lorebook.id.toString()` (`isSelected` check, `newIds.remove`, `newIds.add`).
+- Fixed closing braces around `text = { ... }` in the Persona Editor `AlertDialog`: removed 2 extra closing braces so `confirmButton = { ... }` and `dismissButton = { ... }` remain named arguments inside `AlertDialog(...)`.
 
-2. **Lorebook chip Surface (line ~606)** — Removed the duplicate `modifier` argument (the Surface had `modifier = Modifier.clickable(...)` followed by a second `modifier = Modifier.wrapContentWidth().padding(...)`). Chained all modifiers into a single `modifier` parameter: `.wrapContentWidth().padding(4.dp).clickable(...)`.
+**TestingSettingsPage.kt**
+- Updated 4 top-level function signatures (`injectMockLorebooks`, `removeMockLorebooks`, `injectMockCards`, `removeMockCards`) to accept a `settings: Settings` parameter.
+- Passed `settings` at all 4 call sites inside the composable. This resolves the unresolved `settings` reference inside those functions.
 
-Both changes preserve existing behavior (toggle lorebook selection via `formLorebookIds`) while resolving the compile errors.
+**TextFormattingSettingsPage.kt**
+- Added missing imports: `nestedScroll`, `Surface`, `Card`, `Spacer`.
+- Removed `subtitle` parameter from `SettingsGroup` (only takes `title`, `padding`, and `content`).
+- Wrapped trailing `Spacer` inside `item { Spacer(modifier = Modifier.height(32.dp)) }` so `LazyColumn` accepts it.
 
 ## Call Chain & Architecture
 
-- The lorebook chips Row is inside the Persona Editor `AlertDialog`'s `text` content. Users tap a chip to toggle `formLorebookIds` (a `MutableState`/`remember`-backed set in the enclosing `SettingPersonaPage` composable).
-- `rememberScrollState()` is used for the horizontal scroll of the Row; it's a Compose-remembered scroll state, lifecycle-aware.
-- No ViewModel/repository changes; `savePersona()` (confirm button) persists the selected lorebook IDs elsewhere. This edit only fixes UI composition.
-- Architectural boundary preserved: UI layer only, renders state and emits intents via `formLorebookIds` mutation.
+All changes are within UI-layer composables and top-level private helper functions. No cross-file call chains altered:
+
+- `SettingPersonaPage`: lorebook chip toggling mutates `formLorebookIds` (remember-backed state); `confirmButton`/`dismissButton` now correctly belong to `AlertDialog`, preserving `savePersona()` / `showEditor = false` dismissal flow.
+- `TestingSettingsPage`: mock lorebook/card injection functions now receive `settings` explicitly, calling `vm.updateSettings(settings.copy(...))`. Callers pass the composable's collected `settings` state.
+- `TextFormattingSettingsPage`: pure presentational fixes (missing imports, invalid `subtitle` param removal, `LazyColumn` item wrapping). No behavioral change.
+
+Architectural boundary preserved: UI layer renders state and emits intents via callbacks; no ViewModel/repository changes.
 
 ## Recomposition & Memory Safety
 
-- `rememberScrollState()` returns a remembered `ScrollState` — lifecycle-aware, not a naked object.
-- `formLorebookIds` is reassigned immutably (`toMutableList()` → add/remove → `toSet()`) inside the click handler; no mutation during composition.
-- `Surface` now has a single `modifier` chain — no duplicate-parameter compile error.
-- No `!!` force-unwraps introduced (grep-verified: only pre-existing `selectedImageUri!!` at line 666 remains untouched).
-- Diff: 9 insertions / 5 deletions — minimal, within scope.
+- No new state introduced; all `remember { mutableStateOf(...) }` usages were pre-existing.
+- `rememberScrollState()` returns a remembered `ScrollState` — lifecycle-aware.
+- `lorebook.id.toString()` is a pure conversion; no allocation during composition beyond the existing `.toMutableList()` / `.toSet()` pattern for `formLorebookIds` updates (already present).
+- No `!!` force-unwraps introduced (grep-verified: only pre-existing `selectedImageUri!!` at SettingPersonaPage.kt:667 remains).
+- Diff: 22 insertions / 16 deletions — minimal, within scope.
 
 ## Threading & Dispatchers
 
-- Pure UI Compose code (`@Composable`, `Dispatchers.Main`); no coroutines launched, no `withContext`, no disk/network access.
-- `rememberScrollState()` and the click handler run on Main thread; no blocking work.
+- Pure UI Compose code on `Dispatchers.Main`; no coroutines launched, no `withContext`, no disk/network access.
+- `vm.updateSettings` calls (inside TestingSettingsPage helpers) launch via `viewModelScope` per existing convention; disk I/O offloaded by `SettingsStore`.
 - Invariant "ZERO background threading on Dispatchers.Main" satisfied.
 
 ## Offline & Error State Handling
 
-- Fully offline-capable: purely compositional/layout changes. No network calls, no resource lookups that can fail.
-- No new error states introduced. `horizontalScroll` requires no permissions or resources; `rememberScrollState()` always succeeds.
-- The removed `verticalArrangement` parameter was invalid (would not compile); its removal fixes the build without runtime impact.
+- Fully offline-capable: purely compositional fixes + inline string literals already in use. No network calls, no remote resource lookups.
+- Removing `subtitle` from `SettingsGroup` fixes a compile error (parameter doesn't exist); no runtime impact.
+- Wrapping `Spacer` in `LazyColumn` `item {}` fixes composition type error; no runtime impact.
 - Error matrices unchanged from pre-existing behavior.
