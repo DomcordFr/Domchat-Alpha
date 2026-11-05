@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -83,6 +85,7 @@ import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
+import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
@@ -594,7 +597,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             settings.lorebooks.forEach { lorebook ->
-                                val isSelected = formLorebookIds.contains(lorebook.id)
+                                val isSelected = formLorebookIds.contains(lorebook.id.toString())
                                 val lorebookColor = if (isSelected) {
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                                 } else {
@@ -618,9 +621,9 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                             onClick = {
                                                 val newIds = formLorebookIds.toMutableList()
                                                 if (isSelected) {
-                                                    newIds.remove(lorebook.id)
+                                                    newIds.remove(lorebook.id.toString())
                                                 } else {
-                                                    newIds.add(lorebook.id)
+                                                    newIds.add(lorebook.id.toString())
                                                 }
                                                 formLorebookIds = newIds.toSet()
                                             }
@@ -637,9 +640,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 }
                             }
                         }
-                    }
-                }
-            },
+                    },
             confirmButton = {
                 Button(
                     onClick = { savePersona() },

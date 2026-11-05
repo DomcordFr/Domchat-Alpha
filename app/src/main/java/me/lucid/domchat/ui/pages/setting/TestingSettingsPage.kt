@@ -93,9 +93,9 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                                     onCheckedChange = { checked ->
                                         mockLorebooks = checked
                                         if (checked) {
-                                            injectMockLorebooks(vm)
+                                            injectMockLorebooks(vm, settings)
                                         } else {
-                                            removeMockLorebooks(vm)
+                                            removeMockLorebooks(vm, settings)
                                         }
                                     }
                                 )
@@ -112,9 +112,9 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                                     onCheckedChange = { checked ->
                                         mockCards = checked
                                         if (checked) {
-                                            injectMockCards(vm)
+                                            injectMockCards(vm, settings)
                                         } else {
-                                            removeMockCards(vm)
+                                            removeMockCards(vm, settings)
                                         }
                                     }
                                 )
@@ -157,7 +157,7 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
     }
 }
 
-private fun injectMockLorebooks(vm: me.lucid.domchat.ui.pages.setting.SettingVM) {
+private fun injectMockLorebooks(vm: me.lucid.domchat.ui.pages.setting.SettingVM, settings: me.lucid.domchat.data.datastore.Settings) {
     val mockLorebooks = listOf(
         Lorebook(
             name = "Cyberpunk 2077 Lore",
@@ -346,7 +346,7 @@ private fun injectMockLorebooks(vm: me.lucid.domchat.ui.pages.setting.SettingVM)
     )
 }
 
-private fun removeMockLorebooks(vm: me.lucid.domchat.ui.pages.setting.SettingVM) {
+private fun removeMockLorebooks(vm: me.lucid.domchat.ui.pages.setting.SettingVM, settings: me.lucid.domchat.data.datastore.Settings) {
     val mockNames = listOf(
         "Cyberpunk 2077 Lore",
         "Cyberpunk Edgerunners",
@@ -359,7 +359,7 @@ private fun removeMockLorebooks(vm: me.lucid.domchat.ui.pages.setting.SettingVM)
     )
 }
 
-private fun injectMockCards(vm: me.lucid.domchat.ui.pages.setting.SettingVM) {
+private fun injectMockCards(vm: me.lucid.domchat.ui.pages.setting.SettingVM, settings: me.lucid.domchat.data.datastore.Settings) {
     val mockAssistants = listOf(
         Assistant(
             name = "Cyberpunk Edgerunner",
@@ -424,7 +424,7 @@ private fun injectMockCards(vm: me.lucid.domchat.ui.pages.setting.SettingVM) {
     )
 }
 
-private fun removeMockCards(vm: me.lucid.domchat.ui.pages.setting.SettingVM) {
+private fun removeMockCards(vm: me.lucid.domchat.ui.pages.setting.SettingVM, settings: me.lucid.domchat.data.datastore.Settings) {
     val mockNames = listOf(
         "Cyberpunk Edgerunner",
         "Corpo Executive",
