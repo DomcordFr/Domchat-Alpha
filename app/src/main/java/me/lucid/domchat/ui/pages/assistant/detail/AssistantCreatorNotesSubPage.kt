@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -247,7 +248,7 @@ private fun GlassyFormattingChip(
         color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color(0xFF141520),
         border = BorderStroke(
             0.5.dp,
-            if (isSelected) Brush.solidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)) else LiquidGlassTokens.SpecularBorderSubtle
+            if (isSelected) SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)) else LiquidGlassTokens.SpecularBorderSubtle
         ),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.clickable(onClick = onClick)
