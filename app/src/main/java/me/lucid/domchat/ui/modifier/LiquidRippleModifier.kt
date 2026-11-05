@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.modifier
 
-import androidx.compose.animation.Animatable
+import androidx.compose.animation.animateFloatAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -18,7 +19,7 @@ import me.lucid.domchat.ui.context.LocalSettings
 
 /**
  * Liquid press ripple modifier.
- * Tracks press state with Animatable(0f), expands a viscous specular ripple ring on press
+ * Tracks press state, expands a viscous specular ripple ring on press
  * and springs back on release. Gated by
  * [me.lucid.domchat.data.datastore.Settings.displaySetting.enableLiquidPressRipple].
  */
@@ -60,29 +61,13 @@ fun LiquidRippleContent(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    val rippleAnimatable = remember { Animatable(0f) }
-
-    androidx.compose.runtime.LaunchedEffect(isPressed) {
-        if (isPressed) {
-            rippleAnimatable.animateTo(
-                targetValue = maxRadius,
-                animationSpec = spring(
-                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-                    stiffness = androidx.compose.animation.core.Spring.StiffnessLow,
-                ),
-            )
-        } else {
-            rippleAnimatable.animateTo(
-                targetValue = 0f,
-                animationSpec = spring(
-                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-                    stiffness = androidx.compose.animation.core.Spring.StiffnessLow,
-                ),
-            )
-        }
-    }
-
-    val currentRadius by rippleAnimatable.value
+    val currentRadius by animateFloatAsState(
+        targetValue = if (isPressed) maxRadius else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow,
+        ),
+    )
 
     androidx.compose.foundation.layout.Box(
         modifier = modifier
