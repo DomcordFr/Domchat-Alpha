@@ -463,10 +463,6 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         val dialogShape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
-            modifier = Modifier
-                .widthIn(max = 420.dp)
-                .padding(horizontal = 12.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, dialogShape),
             shape = dialogShape,
             containerColor = Color(0xFF000000),
             titleContentColor = Color(0xFFF2F2F7),
