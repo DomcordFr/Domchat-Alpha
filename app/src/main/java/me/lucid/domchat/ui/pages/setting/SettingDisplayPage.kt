@@ -496,7 +496,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = (0.dp, 8.dp)),
+                            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         InterfaceStyleCard(
@@ -578,7 +578,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = (0.dp, 12.dp)),
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -636,7 +636,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = (0.dp, 16.dp)),
+                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             var localBarGradientDensity by remember(settings.displaySetting.barGradientDensity) {
@@ -921,7 +921,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = (0.dp, 12.dp)),
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

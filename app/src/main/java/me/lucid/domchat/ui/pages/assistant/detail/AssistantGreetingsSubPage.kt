@@ -2,8 +2,10 @@ package me.lucid.domchat.ui.pages.assistant.detail
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -39,6 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -112,6 +117,7 @@ fun AssistantGreetingsSubPage(
 
                 var selectedIndex by remember(intros.size) { mutableStateOf(if (intros.isEmpty()) -1 else 0) }
                 var menuIndex by remember { mutableStateOf<Int?>(null) }
+                var renameDraft by remember { mutableStateOf("") }
 
                 // ═══════════════════════════════════════════════════════════
                 // TAB ROW — Initial #1, Initial #2, ..., + Add
@@ -141,7 +147,7 @@ fun AssistantGreetingsSubPage(
                                         menuIndex = index
                                         renameDraft = tabLabel
                                     },
-                                    role = androidx.compose.foundation.selection.SelectableRole
+                                    role = Role.Tab
                                 )
                                 .clip(AppShapes.ButtonPill)
                                 .background(

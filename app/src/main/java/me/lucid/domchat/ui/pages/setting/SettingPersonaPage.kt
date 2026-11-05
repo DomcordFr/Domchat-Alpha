@@ -64,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +89,9 @@ import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.AppShapes
+import androidx.compose.ui.res.stringResource
+import me.lucid.domchat.R
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
@@ -564,8 +568,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     .background(if (isSelected) Color.White.copy(alpha = 0.10f) else Color.Transparent)
                                     .border(
                                         BorderStroke(
-                                            if (isSelected) 0.5.dp else 0.5.dp,
-                                            if (isSelected) LiquidGlassTokens.SpecularBorderSubtle else Color.White.copy(alpha = 0.14f)
+                                            0.5.dp,
+                                            if (isSelected) LiquidGlassTokens.SpecularBorderSubtle else SolidColor(Color.White.copy(alpha = 0.14f))
                                         ),
                                         AppShapes.Tag
                                     )

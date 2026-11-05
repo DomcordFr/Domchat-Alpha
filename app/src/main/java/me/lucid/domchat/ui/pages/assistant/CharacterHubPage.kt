@@ -142,7 +142,6 @@ import coil3.request.crossfade
 import androidx.compose.ui.graphics.SolidColor
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
-import kotlin.regex.RegexOption
 import kotlin.text.Regex
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
@@ -257,6 +256,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     // Group / folder state
     var selectedGroupId by remember { mutableStateOf<String?>(null) } // null = "All"
     var groupNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var groupOrder by remember { mutableStateOf<List<String>>(emptyList()) }
     var charGroupAssignments by remember { mutableStateOf<Map<String, String>>(emptyMap()) } // characterId -> groupId
     var newGroupName by remember { mutableStateOf("") }
     var showNewGroupDialog by remember { mutableStateOf(false) }
@@ -513,7 +513,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                modifier = Modifier.padding(horizontal = 4.dp, top = 2.dp)
+                                modifier = Modifier.padding(horizontal = 4.dp).padding(top = 2.dp)
                             )
                             OutlinedTextField(
                                 value = searchQuery,
@@ -881,7 +881,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                modifier = Modifier.padding(horizontal = 4.dp, top = 2.dp)
+                                modifier = Modifier.padding(horizontal = 4.dp).padding(top = 2.dp)
                             )
                             OutlinedTextField(
                                 value = searchQuery,
@@ -2968,7 +2968,7 @@ fun CharacterInspectorSheet(
 private fun sanitizeHtml(html: String?): String {
     val text = html ?: return ""
     var result = text
-        .replace(Regex("<img[^>]+src=['"]([^'"]+)['"][^>]*>", RegexOption.IGNORE_CASE)) { match ->
+        .replace(Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)) { match ->
             "\n![Image](${match.groupValues[1]})\n"
         }
         .replace("&nbsp;", " ")
@@ -2985,7 +2985,7 @@ private fun sanitizeHtml(html: String?): String {
         .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
             match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
         }
-        .replace(Regex("https?://[^\\s<>"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)) { match ->
+        .replace(Regex("""https?://[^\s<>"]+\.(?:png|jpg|jpeg|webp|gif)""", RegexOption.IGNORE_CASE)) { match ->
             "\n![Image](${match.value})\n"
         }
         .replace(Regex("[ \\t]+"), " ")

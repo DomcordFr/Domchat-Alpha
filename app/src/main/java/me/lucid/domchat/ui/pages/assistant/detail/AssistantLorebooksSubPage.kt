@@ -19,7 +19,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.foundation.layout.Alignment
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Close
@@ -31,6 +31,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +49,8 @@ import me.lucid.domchat.data.model.Lorebook
 import me.lucid.domchat.ui.components.ui.EmptyStateCard
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.context.LocalNavController
+import me.lucid.domchat.ui.hooks.HapticPattern
+import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.Screen

@@ -106,7 +106,6 @@ import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
 import coil3.compose.AsyncImage
 import kotlin.text.Charsets
-import kotlin.regex.RegexOption
 import kotlin.text.Regex
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CancellationException
@@ -212,7 +211,7 @@ private fun extractJanitorUuidFromUrl(url: String): String? {
 private fun sanitizeHtml(html: String?): String {
     val text = html ?: return ""
     var result = text
-        .replace(Regex("<img[^>]+src=['"]([^'"]+)['"][^>]*>", RegexOption.IGNORE_CASE)) { match ->
+        .replace(Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)) { match ->
             "\n![Image](${match.groupValues[1]})\n"
         }
         .replace("&nbsp;", " ")
@@ -229,7 +228,7 @@ private fun sanitizeHtml(html: String?): String {
         .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
             match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
         }
-        .replace(Regex("https?://[^\\s<>"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)) { match ->
+        .replace(Regex("""https?://[^\s<>"]+\.(?:png|jpg|jpeg|webp|gif)""", RegexOption.IGNORE_CASE)) { match ->
             "\n![Image](${match.value})\n"
         }
         .replace(Regex("[ \\t]+"), " ")

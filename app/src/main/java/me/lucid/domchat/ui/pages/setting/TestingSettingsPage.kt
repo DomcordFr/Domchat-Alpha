@@ -16,11 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 
 import me.lucid.domchat.data.model.Lorebook
 import me.lucid.domchat.data.datastore.SettingsStore
@@ -29,8 +32,8 @@ import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import org.koin.androidx.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 /**
  * Temporary testing page for QA / development.
@@ -42,6 +45,7 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
     val settingsStore: SettingsStore = koinInject()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val haptics = rememberPremiumHaptics()
+    val coroutineScope = rememberCoroutineScope()
 
     var mockLorebooks by remember { mutableStateOf(false) }
     var mockCards by remember { mutableStateOf(false) }
@@ -62,8 +66,10 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                 entries = emptyList()
             )
         )
-        settingsStore.update {
-            it.copy(lorebooks = it.lorebooks + mock)
+        coroutineScope.launch {
+            settingsStore.update {
+                it.copy(lorebooks = it.lorebooks + mock)
+            }
         }
     }
 
@@ -80,8 +86,10 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                 creatorNotes = "Second mock assistant for hub and chat flows."
             )
         )
-        settingsStore.update {
-            it.copy(assistants = it.assistants + mock)
+        coroutineScope.launch {
+            settingsStore.update {
+                it.copy(assistants = it.assistants + mock)
+            }
         }
     }
 
@@ -130,19 +138,12 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                         color = Color.White.copy(alpha = 0.65f)
                     )
 
-                    HapticSwitch(
-                        checked = mockLorebooks,
-                        onCheckedChange = { checked ->
-                            haptics.perform(HapticPattern.Pop)
-                            mockLorebooks = checked
-                            if (checked) injectMockLorebooks()
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Inject Mock Lorebooks",
                                 style = MaterialTheme.typography.titleMedium,
@@ -154,21 +155,22 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                                 color = Color.White.copy(alpha = 0.6f)
                             )
                         }
+                        HapticSwitch(
+                            checked = mockLorebooks,
+                            onCheckedChange = { checked ->
+                                haptics.perform(HapticPattern.Pop)
+                                mockLorebooks = checked
+                                if (checked) injectMockLorebooks()
+                            }
+                        )
                     }
 
-                    HapticSwitch(
-                        checked = mockCards,
-                        onCheckedChange = { checked ->
-                            haptics.perform(HapticPattern.Pop)
-                            mockCards = checked
-                            if (checked) injectMockCharacterCards()
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Inject Mock Character Cards",
                                 style = MaterialTheme.typography.titleMedium,
@@ -180,6 +182,14 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                                 color = Color.White.copy(alpha = 0.6f)
                             )
                         }
+                        HapticSwitch(
+                            checked = mockCards,
+                            onCheckedChange = { checked ->
+                                haptics.perform(HapticPattern.Pop)
+                                mockCards = checked
+                                if (checked) injectMockCharacterCards()
+                            }
+                        )
                     }
                 }
             }

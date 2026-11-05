@@ -126,6 +126,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.FormatItalic
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
@@ -135,8 +137,10 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.HistoryToggleOff
+import androidx.compose.material.icons.rounded.Image
 
 import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
 import me.lucid.domchat.ui.components.chat.NewChatContent

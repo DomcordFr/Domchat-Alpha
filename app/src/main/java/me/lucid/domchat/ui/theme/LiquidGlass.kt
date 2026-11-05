@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,22 +11,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.composed
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.DrawScope
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawCircle
-import androidx.compose.ui.graphics.linearGradient
-import androidx.compose.ui.graphics.radialGradient
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.layoutDirection
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.data.model.LiquidGlassMode
 
@@ -202,37 +200,36 @@ fun Modifier.convxFluidTouch(
     var touchY by remember { mutableFloatStateOf(-1f) }
     var bloomAlphaAnim by remember { mutableFloatStateOf(0f) }
 
-    pointerInput(Unit) {
-        detectTapGestures(
-            onPress = { offset ->
-                touchX = offset.x
-                touchY = offset.y
-                bloomAlphaAnim = bloomAlpha
-            },
-            onRelease = {
-                bloomAlphaAnim = 0f
-            }
-        )
-    }
-
-    this.drawWithContent {
-        // Content first so the bloom sits behind the interactive surface.
-        drawContent()
-        if (touchX >= 0f && touchY >= 0f && bloomAlphaAnim > 0f) {
-            val bloomBrush = radialGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = bloomAlphaAnim),
-                    Color.White.copy(alpha = bloomAlphaAnim * 0.3f),
-                    Color.Transparent
-                ),
-                center = Offset(touchX, touchY),
-                radius = bloomRadiusPx
-            )
-            drawCircle(
-                brush = bloomBrush,
-                center = Offset(touchX, touchY),
-                radius = bloomRadiusPx
+    this
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onPress = { offset ->
+                    touchX = offset.x
+                    touchY = offset.y
+                    bloomAlphaAnim = bloomAlpha
+                },
+                onRelease = {
+                    bloomAlphaAnim = 0f
+                }
             )
         }
-    }
+        .drawWithContent {
+            drawContent()
+            if (touchX >= 0f && touchY >= 0f && bloomAlphaAnim > 0f) {
+                val bloomBrush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = bloomAlphaAnim),
+                        Color.White.copy(alpha = bloomAlphaAnim * 0.3f),
+                        Color.Transparent
+                    ),
+                    center = Offset(touchX, touchY),
+                    radius = bloomRadiusPx
+                )
+                drawCircle(
+                    brush = bloomBrush,
+                    center = Offset(touchX, touchY),
+                    radius = bloomRadiusPx
+                )
+            }
+        }
 }
