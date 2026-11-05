@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.context.LocalSettings
@@ -40,12 +41,10 @@ fun Modifier.scrollMotionBlur(
     return this
         .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragStart = { change, offset ->
-                        change.consumed
-                    },
-                    onDrag = { change, offset ->
+                    onDragStart = { },
+                    onDrag = { change, _ ->
                         scrollVelocity = change.positionChange.magnitude
-                        change.consumed
+                        change.consume()
                     },
                     onDragEnd = { change ->
                         scrollVelocity = 0f
