@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectLongPressGesture
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -352,7 +355,7 @@ private fun GlassyGreetingTab(
         color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color(0xFF141520),
         border = BorderStroke(
             0.5.dp,
-            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else LiquidGlassTokens.SpecularBorderSubtle
+            if (isSelected) Brush.solidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)) else LiquidGlassTokens.SpecularBorderSubtle
         ),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier

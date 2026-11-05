@@ -131,12 +131,12 @@ fun AssistantBackground(
                 // Optional Bottom Fade Blur Layer (blurs bottom, fades out near top)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && resolvedBlur > 0f && blurMode == BackgroundBlurMode.BOTTOM_FADE) {
                     val fadeStart = (1f - blurHeightFraction).coerceIn(0.01f, 0.95f)
+                    val blurPx = with(LocalDensity.current) { resolvedBlur.dp.toPx().coerceAtLeast(1f) }
                     AsyncImage(
                         model = bgUrl,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         alignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.4f),
-                        val blurPx = with(LocalDensity.current) { resolvedBlur.dp.toPx().coerceAtLeast(1f) }
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
