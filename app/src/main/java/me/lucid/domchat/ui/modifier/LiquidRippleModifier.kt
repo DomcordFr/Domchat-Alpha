@@ -1,7 +1,7 @@
 package me.lucid.domchat.ui.modifier
 
-import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -72,7 +72,6 @@ fun LiquidRippleContent(
     androidx.compose.foundation.layout.Box(
         modifier = modifier
             .fillMaxSize()
-            .interactionSource(interactionSource)
             .drawWithContent {
                 drawContent()
                 if (currentRadius > 0f) {
