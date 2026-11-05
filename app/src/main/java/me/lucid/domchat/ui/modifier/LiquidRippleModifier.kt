@@ -8,16 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
-import androidx.compose.ui.platform.LocalContext
 import me.lucid.domchat.ui.context.LocalSettings
-import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /**
  * Liquid press ripple modifier.
@@ -25,20 +22,23 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
  * and springs back on release. Gated by
  * [me.lucid.domchat.data.datastore.Settings.displaySetting.enableLiquidPressRipple].
  */
+@Composable
 fun Modifier.liquidRipple(
     rippleColor: Color = Color.White.copy(alpha = 0.2f),
     maxRadius: Float = 40f,
-): Modifier = this.then(LiquidRippleModifierElement(rippleColor, maxRadius))
+): Modifier = composed {
+    val enabled = LocalSettings.current.displaySetting.enableLiquidPressRipple
+    then(LiquidRippleModifierElement(rippleColor, maxRadius, enabled))
+}
 
 private data class LiquidRippleModifierElement(
     val rippleColor: Color,
     val maxRadius: Float,
+    val enabled: Boolean,
 ) : androidx.compose.ui.draw.DrawModifier {
 
     override fun ContentDrawScope.draw() {
-        val settings = me.lucid.domchat.ui.context.LocalSettings.current
-        val display = settings.displaySetting
-        if (!display.enableLiquidPressRipple) {
+        if (!enabled) {
             drawContent()
             return
         }
