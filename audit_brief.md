@@ -1,55 +1,51 @@
-# Audit Brief — Task 173: Wire Greetings Route + Search & Direct Add in Lorebooks
+# Audit Brief — Task 174: Phase 4 Unify Popover Headers & Liquid Glass Redesign
 
 ## Intent Verification
 
-**AssistantDetailPage.kt**
-- `composable(AssistantDetailRoutes.GREETINGS) { AssistantGreetingsSubPage(assistant = assistant, onUpdate = { onUpdate(it) }) }` — present and unchanged (lines 437-444).
-- `composable(AssistantDetailRoutes.CREATOR_NOTES) { AssistantCreatorNotesSubPage(assistant = assistant, onUpdate = { onUpdate(it) }) }` — added (lines 446-454). Import `me.lucid.domchat.ui.components.ui.AssistantCreatorNotesSubPage` already present at line 79.
-- Orphaned `composable(AssistantDetailRoutes.EXAMPLE_DIALOGUES) { ... }` block — removed (previously lines 446-454).
-- `AssistantDetailRoutes.CREATOR_NOTES = "creator_notes"` constant already exists in the routes object (line 108).
+**MinimalChatInput.kt**
+- Added unified header row to Model Picker sheet (`showModelPickerSheet`, line ~1613): `Row` with `fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)`, `Arrangement.SpaceBetween`, `Alignment.CenterVertically`. Contains "Select Model" title (`titleLarge`, `FontWeight.Bold`, `Color.White`) and a Close `IconButton` with `containerColor = Color.Transparent` + `Icons.Rounded.Close` tinted white.
+- Wallpaper sheet header Close `IconButton` now uses `IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
+- Text Styling sheet header Close `IconButton` now uses `IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
+- Added `import androidx.compose.material3.IconButtonDefaults`.
 
-**AssistantLorebooksSubPage.kt**
-- Added state: `searchQuery`, `showAddDialog`, `newLorebookName`, `newLorebookDesc` — all `remember { mutableStateOf(...) }`.
-- Added `filteredLorebooks = remember(lorebooks, searchQuery) { ... }` filtering by `name` or `description` containing `searchQuery` (ignoreCase).
-- List now renders `filteredLorebooks` instead of `lorebooks`.
-- Added search row (`OutlinedTextField` with leading search icon, trailing clear icon, placeholder "Search lorebooks...") + `DomChatGlassPillButton("+ Create Lorebook")` opening `showAddDialog`, above the lorebooks list inside the non-empty branch.
-- Added centered `AlertDialog` (`widthIn(max = 420.dp)`, title "Create Lorebook", Name + Description optional fields) gated by `showAddDialog`. Confirm button "Create & Attach" (enabled only when `newLorebookName.isNotBlank()`) builds a `Lorebook`, calls `vm.updateSettings(settings.copy(lorebooks = settings.lorebooks + newBook))` then `onUpdate(assistant.copy(enabledLorebookIds = assistant.enabledLorebookIds + newBook.id))`, resets fields and dismisses. Dismiss button "Cancel".
+**PromptPresetsBottomSheet.kt**
+- `ModalBottomSheet.containerColor` changed from hardcoded `Color(0xFF000000).copy(alpha = 0.85f)` to `domChatSheetContainerColor()` (removed `effectiveSheetContainerColor` local).
+- Main content `Column` now has `Modifier.fillMaxHeight(0.85f)` to bound mobile height.
+- Search `OutlinedTextField`: `shape = RoundedCornerShape(16.dp)` (was `12.dp`); borders use `Color.White.copy(alpha = 0.22f)` focused / `0.06f` unfocused (matching `SpecularBorderSubtle` specular rim values, since `SpecularBorderSubtle` is a `Brush`, not a `Color`, and text-field border colors require `Color`).
+- Preset list item card: `color = domChatSheetContainerColor().copy(alpha = if (isEnabled) 0.70f else 0.35f)`; `shape = RoundedCornerShape(16.dp)`; `border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)` (uniform 0.5.dp, removed conditional 1.0.dp/brush variant).
+- Replaced standard `Switch` with `HapticSwitch` (`checked`, `onCheckedChange = { togglePreset(preset.id, it) }`, `modifier = Modifier.size(32.dp)`).
+- Imports cleaned: removed `Switch`, `SwitchDefaults`, `domChatCardContainerColor`; added `HapticSwitch`.
 
-**AssistantDetailVM.kt**
-- Added `fun updateSettings(settings: Settings)` wrapping `settingsStore.update(settings = settings)` so `vm.updateSettings(...)` referenced in the dialog resolves. Follows the existing `settingsStore.update(settings = ...)` pattern used by `update(assistant)`, `updateTags`, etc.
+Correction applied vs. directive: border colors for the `OutlinedTextField` use `Color.White` alpha values (0.22f / 0.06f) rather than `LiquidGlassTokens.SpecularBorderSubtle` directly, because `SpecularBorderSubtle` is a `Brush` while `OutlinedTextFieldDefaults.colors` border params expect `Color`. The white alpha values mirror the `SpecularBorderSubtle` gradient stop colors.
 
 ## Call Chain & Architecture
 
-UI layer (AssistantLorebooksSubPage):
-1. User taps "+ Create Lorebook" → `showAddDialog = true`.
-2. Recomposition adds the `AlertDialog` overlay (sibling of the `Column`, not inside the scrollable body).
-3. User edits Name/Description → `newLorebookName`/`newLorebookDesc` state. Confirm button enables only when name non-blank.
-4. User taps "Create & Attach" → builds `Lorebook(name, description)` (id defaults to `Uuid.random()`), calls `vm.updateSettings(settings.copy(lorebooks = settings.lorebooks + newBook))` (persists to settings via `SettingsStore`), then `onUpdate(assistant.copy(enabledLorebookIds = assistant.enabledLorebookIds + newBook.id))` (attaches to the assistant). Resets fields, `showAddDialog = false`.
-5. `onUpdate` → `AssistantDetailVM.update(assistant)` → `settingsStore.update(...)` persists the assistant.
-6. Cancel / dismiss → `showAddDialog = false`.
+UI layer only, zero business logic:
+- User taps a preset item → `HapticSwitch.onCheckedChange` → `togglePreset(preset.id, it)` → mutates `effectiveEnabledIds`; in per-chat mode calls `onUpdateConversation(conversation.copy(...))`, in global mode launches `settingsStore.update {...}` via coroutine scope.
+- User taps Close icon → `showModelPickerSheet = false` / `showWallpaperSheet = false` / `showTextStylingDialog = false` / `onDismissRequest` — dismisses the sheet/dialog.
+- `PromptPresetsBottomSheet` receives `settings`, `conversation`, `onUpdateConversation`, `onDismissRequest` as parameters; persists via injected `SettingsStore`.
+- ViewModel/repository boundary unchanged; no new ViewModel methods introduced.
 
-Architectural boundary: UI renders state and emits intents via `onUpdate` + `vm.updateSettings`; persistence lives in the ViewModel (`viewModelScope`) and `SettingsStore`. No business logic in the composable.
+Architectural boundary: composables render state and emit intents via callbacks/`onUpdateConversation`/`settingsStore.update`; persistence remains in `SettingsStore`/`DataStore`.
 
 ## Recomposition & Memory Safety
 
-- All four state vars are `remember { mutableStateOf(...) }` — no naked objects.
-- `filteredLorebooks` uses `remember(lorebooks, searchQuery)`; derives an immutable filtered list each recomposition; never mutates `lorebooks`/`settings.lorebooks`.
-- `.toMutableList()` not used here (no list mutation in composition); `settings.lorebooks + newBook` creates a new list.
-- `newLorebookName = ""`, `newLorebookDesc = ""`, `showAddDialog = false` reset after create, so dialog leaves composition cleanly.
-- Confirm button `enabled = newLorebookName.isNotBlank()` guards empty-name submits; inner `if (newLorebookName.isNotBlank())` is a redundant defensive guard.
-- No `!!` force-unwraps (grep-verified: zero matches in all three edited files).
-- Diff: 120 insertions / 4 deletions across 3 files — within scope, no bloat.
+- All state remains `remember { mutableStateOf(...) }` / `mutableFloatStateOf` / `rememberModalBottomSheetState` — no naked objects introduced.
+- `HapticSwitch` internally uses `remember { MutableInteractionSource() }` + `animateDpAsState` — pre-existing, lifecycle-aware.
+- `domChatSheetContainerColor()` reads `LocalSettings.current` (a composition local) — recomputes when settings change, which is correct and intended.
+- `fillMaxHeight(0.85f)` is a modifier, no state impact.
+- No `!!` force-unwraps introduced (grep-verified in edited regions; pre-existing `!!` at `cameraOutputFile!!`/`cameraOutputUri!!` in unrelated camera code untouched).
+- Diff: 40 insertions / 19 deletions across 2 files — within scope, no bloat.
 
 ## Threading & Dispatchers
 
-- Composable code runs on `Dispatchers.Main` (UI thread) only; no coroutines launched in the UI.
-- `vm.updateSettings(...)` launches inside `viewModelScope` (Dispatcher default for ViewModel = Main; the `settingsStore.update` suspending call is responsible for offloading disk I/O per `SettingsStore`/`DataStore` internals, which dispatch to `Dispatchers.IO`).
-- No network or direct disk access in the edited files; `onUpdate` → `vm.update` → `settingsStore.update` follows existing offloading conventions.
-- Invariant "ZERO background threading on Dispatchers.Main" satisfied: no `withContext(Dispatchers.IO)` / `launch` on Main in the UI layer.
+- Pure UI Compose code (`@Composable`, runs on `Dispatchers.Main`); no coroutines launched in the edited composable bodies.
+- `togglePreset` global mode launches inside `rememberCoroutineScope()` → `settingsStore.update` (suspend), which offloads DataStore disk I/O per `SettingsStore` conventions — not on Main.
+- No network access in edited files; `domChatSheetContainerColor()` is a `@Composable` reading composition locals, no dispatcher involved.
+- Invariant "ZERO background threading on Dispatchers.Main" satisfied.
 
 ## Offline & Error State Handling
 
-- Fully offline-capable: all operations are in-memory list copies + local `SettingsStore`/`DataStore` persistence. No network calls.
-- Error states: none introduced at this layer. If `settingsStore.update` throws downstream, that is the ViewModel/repository's responsibility; the dialog performs no fallible I/O itself.
-- Empty lorebooks list: the `else` branch (with search + create) only renders when `lorebooks` is non-empty; when empty, the `EmptyStateCard` shows. The create dialog is still reachable only via the "+ Create Lorebook" button in the non-empty branch per the directive's placement ("above the lorebooks list").
-- `newBook.id` defaults to `Uuid.random()` via the `Lorebook` data class default, so no null id risk.
+- Fully offline-capable: all changes are visual/theme + local `SettingsStore` persistence. No network calls introduced.
+- No new error states: `domChatSheetContainerColor()` returns `Color.Transparent` when `glassAlpha <= 0.001f` (safe fallback); `fillMaxHeight(0.85f)` is a layout constraint with no failure mode; `HapticSwitch` wraps standard Switch with no additional failure surface.
+- If `settingsStore.update` throws downstream, that is pre-existing ViewModel/repository behavior, not introduced here.
