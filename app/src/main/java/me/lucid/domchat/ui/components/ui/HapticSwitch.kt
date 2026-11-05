@@ -94,7 +94,8 @@ fun HapticSwitch(
                 modifier = Modifier
                     .size(28.dp)
                     .offset(x = thumbOffset),
-            )
+            ) {
+            }
         }
     } else {
         Switch(
