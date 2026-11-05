@@ -136,6 +136,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -1619,6 +1620,31 @@ fun MinimalChatInput(
                     .fillMaxHeight(0.85f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                // Unified header row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Select Model",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White
+                    )
+                    IconButton(
+                        onClick = { showModelPickerSheet = false },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White
+                        )
+                    }
+                }
+
                 ModelList(
                     currentModel = assistant.chatModelId ?: settings.chatModelId,
                     providers = filteredProviders,
@@ -1768,7 +1794,8 @@ fun MinimalChatInput(
                     )
                     Spacer(Modifier.weight(1f))
                     IconButton(
-                        onClick = { showTextStylingDialog = false }
+                        onClick = { showTextStylingDialog = false },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
@@ -2574,7 +2601,8 @@ fun MinimalChatInput(
                     )
                     Spacer(Modifier.weight(1f))
                     IconButton(
-                        onClick = { showWallpaperSheet = false }
+                        onClick = { showWallpaperSheet = false },
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,

@@ -63,8 +63,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -103,9 +101,9 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip
 import me.lucid.domchat.ui.components.ui.DomChatSlider
+import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import org.koin.compose.koinInject
@@ -357,14 +355,12 @@ fun PromptPresetsBottomSheet(
     }
 
     ApplyDialogWindowBlur()
-    val effectiveSheetContainerColor = Color(0xFF000000).copy(alpha = 0.85f)
-
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         sheetGesturesEnabled = false,
-        containerColor = effectiveSheetContainerColor,
+        containerColor = domChatSheetContainerColor(),
         shape = sheetShape,
         dragHandle = {
             Box(
@@ -385,6 +381,7 @@ fun PromptPresetsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.85f)
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .navigationBarsPadding()
         ) {
@@ -493,12 +490,12 @@ fun PromptPresetsBottomSheet(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
-                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedBorderColor = Color.White.copy(alpha = 0.22f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.06f),
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     cursorColor = Color.White.copy(alpha = 0.9f),
@@ -801,11 +798,11 @@ fun PromptPresetsBottomSheet(
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
 
                     Surface(
-                        color = if (isEnabled) Color(0xFF141520).copy(alpha = 0.80f) else Color(0xFF141520).copy(alpha = 0.45f),
+                        color = domChatSheetContainerColor().copy(alpha = if (isEnabled) 0.70f else 0.35f),
                         shape = RoundedCornerShape(16.dp),
                         border = BorderStroke(
-                            width = if (isEnabled) 1.0.dp else 0.5.dp,
-                            brush = LiquidGlassTokens.SpecularBorderSubtle,
+                            0.5.dp,
+                            LiquidGlassTokens.SpecularBorderSubtle,
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -830,13 +827,9 @@ fun PromptPresetsBottomSheet(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                Switch(
+                                HapticSwitch(
                                     checked = isEnabled,
                                     onCheckedChange = { togglePreset(preset.id, it) },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                    ),
                                     modifier = Modifier.size(32.dp),
                                 )
                             }
