@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +31,7 @@ import me.lucid.domchat.Screen
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Lorebook
+import me.lucid.domchat.data.model.LorebookActivationType
 import me.lucid.domchat.data.model.LorebookEntry
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.nav.BackButton
@@ -152,7 +155,9 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+            }
         }
     }
 }
