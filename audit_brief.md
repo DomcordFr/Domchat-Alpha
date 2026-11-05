@@ -1,62 +1,52 @@
-# Audit Brief — Task 175: Phase 5A Character Hub Group Tabs & Sheet Polish
+# Audit Brief — Task 176: Phase 5B Spring-Animated Sliding Indicator & Samplers Close Button
 
 ## Intent Verification
 
-**CharacterHubPage.kt**
-- Added 4 group context-menu state vars in `CharacterHubPage` composable:
-  - `selectedGroupForMenu` (`String?`, nullable, Elvis-safe)
-  - `showGroupMenuDialog` (`Boolean`)
-  - `showRenameGroupDialog` (`Boolean`)
-  - `renameGroupText` (`String`)
-  All via `remember { mutableStateOf(...) }`.
-- `GroupTabsRow` gained an `onGroupLongClick: (String) -> Unit = {}` parameter. Custom group tab `Surface` now uses `Modifier.combinedClickable(onClick = ..., onLongClick = { onGroupLongClick(groupId) })`. The Surface's standalone `onClick` was removed to avoid double-fire (combinedClickable already handles click). The "All" and "+ New" tabs are unchanged (no long-click menu).
-- Both `GroupTabsRow` call sites (grid + list views) wire `onGroupLongClick` to perform `HapticPattern.Buildup`, set `selectedGroupForMenu = groupId`, `showGroupMenuDialog = true`.
-- **Group management `AlertDialog`** (gated by `showGroupMenuDialog`): `Modifier.widthIn(max = 420.dp)`, title `Manage Group: ${selectedGroupForMenu ?: ""}`, "Rename Group" pill (opens rename dialog) and "Delete Group" pill. Delete does `selectedGroupForMenu?.let { grp -> groupNames = groupNames - grp; charGroupAssignments = charGroupAssignments.filterValues { it != grp }; persistGroups(); toaster?.show(...) }` then dismisses. Null-safe via `?.let`.
-- **Rename `AlertDialog`** (gated by `showRenameGroupDialog`): `Modifier.widthIn(max = 420.dp)`, title "Rename Group", `OutlinedTextField` bound to `renameGroupText`, Confirm "Save" (guarded by `isNotBlank()`, renames via `groupNames = groupNames + (grp to renameGroupText.trim())`, persists, resets state) and "Cancel" dismiss.
-- **CharacterActionPopover**: `widthIn(max = 460.dp)` → `widthIn(max = 420.dp)` for consistent dialog width.
-
 **MinimalChatInput.kt**
-- AI Streaming Animation sheet header Close `IconButton`: added `colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
-- Author's Note sheet header Close `IconButton`: added `colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`.
-- Samplers sheet header already had transparent colors (no change needed).
+- Samplers & Generation sheet header Close `IconButton` now uses `colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)`. This completes transparent close-button styling across all sheets in MinimalChatInput.kt (Model Picker, Wallpaper, Text Styling, AI Streaming Animation, Author's Note, Samplers).
 - `IconButtonDefaults` import already present (added in task 174).
 
-Architectural note: group names live in a separate SharedPreferences file (`character_hub_groups`) managed locally in `CharacterHubPage` via `persistGroups()`, NOT in `Settings`/`AssistantVM`. There is no `vm.updateGroups` on `AssistantVM` (VM owns Settings only). Therefore delete/rename persist inline via `groupNames` + `charGroupAssignments` + `persistGroups()`, rather than calling a non-existent `vm.updateGroups(...)`. This matches existing group CRUD patterns (create at line ~1479, move at line ~1494, delete at line ~1501).
+**DomChatProvidersBottomBar.kt** (ui-core KMP commonMain)
+- Added `selectedIndex = tabs.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)` — null-safe, defaults to 0 when `selectedId` not found.
+- Added `targetOffsetDp = (selectedIndex * 52).dp` (48dp item + 4dp space).
+- Added `animatedIndicatorOffset by animateDpAsState(...)` with `spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)`.
+- Wrapped the tab `Row` inside a `Box` containing the animated sliding puck behind the icons:
+  - Puck `Box`: `.padding(4.dp).offset(x = animatedIndicatorOffset).size(48.dp).background(Color.White.copy(alpha = 0.18f), CircleShape).border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape)`.
+- Each tab `Box` now `size(48.dp)` and `clickable(interactionSource = remember { MutableInteractionSource() }, indication = null)` invoking `onHaptic()` + `onSelect(tab.id)` only when `tab.id != selectedId`.
+- Icon tint via `val iconTint by animateColorAsState(targetValue = if (selected) Color.White else Color.White.copy(alpha = 0.65f), animationSpec = tween(200))`.
+- Added imports: `animateColorAsState`, `animateDpAsState`, `spring`, `tween`, `MutableInteractionSource`.
+
+`Spring.DampingRatioMediumBouncy` and `Spring.StiffnessLow` are accessed via the `Spring` object (no separate import needed). `animateDpAsState`/`animateColorAsState`/`spring`/`tween` are in `androidx.compose.animation.core` (Compose Multiplatform common). `MutableInteractionSource` is in `androidx.compose.foundation.interaction` (common). All available in ui-core `:commonMain`.
 
 ## Call Chain & Architecture
 
-UI layer only:
-1. User long-presses a custom group tab → `combinedClickable.onLongClick` → haptics Buildup → `selectedGroupForMenu = groupId`, `showGroupMenuDialog = true`.
-2. Recomposition adds the "Manage Group" `AlertDialog` overlay (`widthIn(max = 420.dp)`).
-3. "Rename Group" → `renameGroupText = selectedGroupForMenu ?: ""`, close first dialog, open rename dialog.
-4. Rename dialog "Save" (enabled only when name non-blank) → `groupNames = groupNames + (grp to trimmedName)`, `persistGroups()` (writes `character_hub_groups` SharedPreferences off Main via `scope.launch { withContext(Dispatchers.IO) { ... } }`), toast, reset state, dismiss.
-5. "Delete Group" → `selectedGroupForMenu?.let { grp -> groupNames = groupNames - grp; charGroupAssignments = charGroupAssignments.filterValues { it != grp }; persistGroups(); toast }`, dismiss. Also unassigns any characters in the deleted group.
-6. Cancel / dismiss → corresponding `show*Dialog = false`.
+UI layer only, zero business logic:
+- User taps a non-selected provider tab → `clickable.onClick` → `onHaptic()` + `onSelect(tab.id)`. The selected tab does nothing (guard `tab.id != selectedId`).
+- `selectedId` changes → `selectedIndex` recomputes → `animateDpAsState` springs the puck offset to the new target; `animateColorAsState` tweens each icon's tint between selected/unselected.
+- `DomChatProvidersBottomBar` is a pure stateless composable receiving `tabs`, `selectedId`, `onSelect`, `onHaptic`, `actions`, `modifier`. Caller owns state and navigation.
 
-Architectural boundary: composables render state and emit intents via `onGroupSelected`/`onGroupLongClick` callbacks and direct state mutation + `persistGroups()`. No business logic in UI; persistence in `persistGroups()` (IO dispatcher). ViewModel (`AssistantVM`) is not involved in group ownership (correct — groups aren't in Settings).
+Architectural boundary: composable renders state and emits intents via callbacks; no ViewModel/repository involvement. This matches the existing bottom-bar contract (used by settings screens).
 
 ## Recomposition & Memory Safety
 
-- All four state vars are `remember { mutableStateOf(...) }` — no naked objects.
-- Dialogs are ephemeral: `showGroupMenuDialog = false` / `showRenameGroupDialog = false` on every action and `onDismissRequest`, so they leave composition after one frame.
-- `selectedGroupForMenu` is nullable; all access uses `?: ""` (title) or `?.let { ... }` (delete/rename) — no `!!`.
-- `groupNames` and `charGroupAssignments` are reassigned immutably (`groupNames - grp`, `groupNames + (grp to name)`, `filterValues`) — no mutation of remembered maps during composition.
-- `renameGroupText` reset to `""` after save/cancel.
-- `combinedClickable` is the existing helper (used elsewhere in the file); `onClick` removed from Surface to avoid double-invocation.
-- No `!!` force-unwraps introduced (grep-verified: zero matches in CharacterHubPage.kt).
-- Diff: 109 insertions / 5 deletions across 2 files — within scope.
+- `selectedIndex`, `targetOffsetDp`, `animatedIndicatorOffset` derived per recomposition; `animateDpAsState` returns a remembered `State<Dp>` — lifecycle-aware animation state, not a naked object.
+- `iconTint` per tab via `animateColorAsState` — each tab owns its own remembered color animation state; safe inside the loop since each call sites a distinct tab.
+- `remember { MutableInteractionSource() }` per tab — correct, stable across recompositions.
+- `indication = null` disables the default clickable ripple indication (custom haptic instead).
+- `coerceAtLeast(0)` guards against `indexOfFirst` returning -1 when `selectedId` absent — no negative offset.
+- No `!!` force-unwraps introduced (grep-verified: zero matches in both edited files).
+- Diff: 56 insertions / 29 deletions across 2 files — within scope, no bloat.
 
 ## Threading & Dispatchers
 
-- Composable bodies run on `Dispatchers.Main` (UI thread) only; no coroutines launched in the edited composable code.
-- `persistGroups()` launches in `scope.launch { withContext(Dispatchers.IO) { saveGroupNames(...) } }` — disk I/O correctly off the Main thread, matching the existing pattern (lines 275-284).
-- `toaster?.show(...)` is UI-thread safe (existing usage).
-- No network access introduced.
-- Invariant "ZERO background threading on Dispatchers.Main" satisfied.
+- Pure UI Compose code (`@Composable`, runs on `Dispatchers.Main`); no coroutines launched in the edited composable.
+- Animation (`animateDpAsState`, `animateColorAsState`) is frame-based, driven by Compose's animation clock on the Main thread — this is the intended, supported usage; no blocking work.
+- No network or disk access. No `withContext`, no `launch`, no dispatcher misuse.
+- Invariant "ZERO background threading on Dispatchers.Main" satisfied (no background work at all in these files).
 
 ## Offline & Error State Handling
 
-- Fully offline-capable: all operations are in-memory map copies + local SharedPreferences persistence. No network calls.
-- Error handling: `saveGroupNames` already swallows exceptions ("best-effort persistence" try/catch), so persist failures don't crash the UI. Toaster shows success messages on successful save.
-- Empty/null group: title falls back to `""` via Elvis (`selectedGroupForMenu ?: ""`). Delete/rename guarded by `selectedGroupForMenu?.let` (no-op if null). Rename confirm guarded by `renameGroupText.isNotBlank()`.
-- Deleting a group also reassigns member characters to ungrouped (`filterValues { it != grp }`), preventing dangling references.
+- Fully offline-capable: purely visual/motion changes + local callback invocation. No network calls.
+- Error states: none introduced. `indexOfFirst` returns -1 if `selectedId` missing; `coerceAtLeast(0)` prevents negative offset. `animateDpAsState`/`animateColorAsState` have no failure modes for valid target values.
+- Empty `tabs` list: `indexOfFirst` returns -1 → `coerceAtLeast(0)` → offset 0; Row renders nothing; puck sits at x=4. No crash.
+- Single tab: offset 0 always; puck under the only tab; tint reflects selection.
