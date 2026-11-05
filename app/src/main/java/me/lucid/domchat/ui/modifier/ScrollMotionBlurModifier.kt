@@ -43,10 +43,10 @@ fun Modifier.scrollMotionBlur(
                 detectDragGestures(
                     onDragStart = { },
                     onDrag = { change, _ ->
-                        scrollVelocity = change.positionChange.magnitude
+                        scrollVelocity = (change.position - change.previousPosition).distance
                         change.consume()
                     },
-                    onDragEnd = { change ->
+                    onDragEnd = {
                         scrollVelocity = 0f
                     },
                 )
