@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.chat
 
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
+import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterExitState
@@ -238,6 +239,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.EntranceDirection
 import me.lucid.domchat.ui.motion.entrance
@@ -2553,6 +2555,7 @@ private fun ChatToolbarIconButton(
         label = "chat_toolbar_icon_scale"
     )
     val isDark = LocalDarkMode.current
+    val settings = LocalSettings.current
     val iconColor = if (isDark) Color.White else Color.Black
 
     Box(
@@ -2664,17 +2667,18 @@ private fun ChatSearchModeBar(
 ) {
     val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
     val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val settings = LocalSettings.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AppSize.ChromeBar)
             .then(
-                if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                     Modifier.frostedGlassSurface(shape = searchFieldShape)
                 } else {
                     Modifier.liquidGlassSurface(
                         shape = searchFieldShape,
-                        glassMode = setting.displaySetting.liquidGlassMode,
+                        glassMode = settings.displaySetting.liquidGlassMode,
                     )
                 }
             ),
@@ -2731,6 +2735,7 @@ private fun ChatShareSelectionModeBar(
     val haptics = rememberPremiumHaptics()
     val shape = AppShapes.ButtonPill
     val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val settings = LocalSettings.current
     Surface(
         shape = shape,
         color = blurredContainerColor(containerColor),
@@ -2739,10 +2744,10 @@ private fun ChatShareSelectionModeBar(
             .fillMaxWidth()
             .height(AppSize.ChromeBar)
             .then(
-                if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                     Modifier.frostedGlassSurface(shape = shape)
                 } else {
-                    Modifier.liquidGlassSurface(shape = shape, glassMode = setting.displaySetting.liquidGlassMode)
+                    Modifier.liquidGlassSurface(shape = shape, glassMode = settings.displaySetting.liquidGlassMode)
                 }
             )
     ) {
@@ -2838,6 +2843,7 @@ private fun ChatToolbarOverflowMenu(
     val menuShape = AppShapes.CardMedium
     val containerColor = domChatSheetContainerColor()
     val border = domChatSoftEdgeBorder()
+    val settings = LocalSettings.current
     val menuTopPadding = chatToolbarPopupTopPadding(placement)
     val menuBottomPadding = chatToolbarPopupBottomPadding(placement)
     val scrimAlpha by androidx.compose.animation.core.animateFloatAsState(
@@ -2906,10 +2912,10 @@ private fun ChatToolbarOverflowMenu(
                         transformOrigin = chatToolbarPopupTransformOrigin(placement)
                     }
                     .then(
-                        if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                             Modifier.frostedGlassSurface(shape = menuShape)
                         } else {
-                            Modifier.liquidGlassSurface(shape = menuShape, glassMode = setting.displaySetting.liquidGlassMode)
+                            Modifier.liquidGlassSurface(shape = menuShape, glassMode = settings.displaySetting.liquidGlassMode)
                         }
                     )
                     .clickable(
@@ -3094,6 +3100,7 @@ private fun ChatToolbarActionPill(
         label = "top_pill_in_chat_alpha"
     )
 
+    val settings = LocalSettings.current
     Surface(
         shape = buttonShape,
         color = blurredContainerColor(containerColor),
@@ -3295,6 +3302,7 @@ fun UpdatePill(
     val containerColor = MaterialTheme.colorScheme.primaryContainer
     val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     val pillShape = RoundedCornerShape(999.dp)
+    val settings = LocalSettings.current
 
     Surface(
         onClick = {
@@ -4082,11 +4090,12 @@ private fun ContextUsageOverlay(
                     scaleY = popupScale
                     transformOrigin = chatToolbarPopupTransformOrigin(placement)
                 }
+                val settings = LocalSettings.current
                 .then(
-                    if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                         Modifier.frostedGlassSurface(shape = shape)
                     } else {
-                        Modifier.liquidGlassSurface(shape = shape, glassMode = setting.displaySetting.liquidGlassMode)
+                        Modifier.liquidGlassSurface(shape = shape, glassMode = settings.displaySetting.liquidGlassMode)
                     }
                 )
                 .clickable(
@@ -4184,6 +4193,7 @@ private fun ContextMeterButton(
     )
     val containerColor = domChatIconPillContainerColor()
     val shape = AppShapes.ButtonPill
+    val settings = LocalSettings.current
     Surface(
         modifier = Modifier
             .size(AppSize.ChromePill)
