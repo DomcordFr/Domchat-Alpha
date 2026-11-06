@@ -607,6 +607,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localGlassAlpha by remember(settings.displaySetting.glassAlpha) {
                                     mutableFloatStateOf(settings.displaySetting.glassAlpha)
                                 }
+                                if (!uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Opacity",
                                     valueText = "${(localGlassAlpha * 100).roundToInt()}%",
@@ -642,10 +643,12 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     },
                                     valueRange = 0f..100f,
                                 )
+                                }
 
                                 var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.glassDepthScale)
                                 }
+                                if (uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Depth / Refraction",
                                     valueText = "${localDepthScale.roundToInt()}x",
@@ -659,10 +662,12 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..2.5f,
                                     steps = 25,
                                 )
+                                }
 
                                 var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
                                 }
+                                if (uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Specular Highlight",
                                     valueText = "${(localGlassSpecular * 100).roundToInt()}%",
@@ -676,6 +681,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..1.0f,
                                     steps = 100,
                                 )
+                                }
 
                                 var localTint by remember(settings.displaySetting.glassTintColor) {
                                     mutableStateOf(settings.displaySetting.glassTintColor)
@@ -949,6 +955,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) {
                                     mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha)
                                 }
+                                if (!bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Opacity",
                                     valueText = "${(localBubbleAlpha * 100).roundToInt()}%",
@@ -1005,10 +1012,12 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..1.0f,
                                     steps = 100,
                                 )
+                                }
 
                                 var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)
                                 }
+                                if (bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Depth / Refraction",
                                     valueText = "${localBubbleDepth.roundToInt()}x",
@@ -1022,10 +1031,12 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..2.5f,
                                     steps = 25,
                                 )
+                                }
 
                                 var localBubbleSpecular by remember(settings.displaySetting.bubbleSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleSpecularIntensity)
                                 }
+                                if (bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Specular Intensity",
                                     valueText = "${(localBubbleSpecular * 100).roundToInt()}%",
@@ -1039,6 +1050,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..1.0f,
                                     steps = 100,
                                 )
+                                }
 
                                 var localBubbleTint by remember(settings.displaySetting.chatBubbleTintHue) {
                                     mutableStateOf(settings.displaySetting.chatBubbleTintHue)

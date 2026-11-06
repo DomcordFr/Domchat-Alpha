@@ -317,6 +317,64 @@ fun Modifier.liquidGlassSurface(
 }
 
 /**
+ * Frosted glass surface: pure Haze blur + alpha + tone + border.
+ * No AGSL backdrop refraction or lens effects. Uses Haze ultraThin blur
+ * for a soft, diffused frosted look suitable for API < 33 or when
+ * runtime shaders are unavailable.
+ *
+ * @param shape bubble/card outline.
+ * @param borderWidth specular rim width in dp (0 disables).
+ * @param specularBrush specular rim brush.
+ * @param fillColor opaque surface fill painted beneath the blur.
+ * @param shadowElevation drop shadow elevation in dp.
+ */
+@Composable
+fun Modifier.frostedGlassSurface(
+    shape: Shape = LiquidGlassTokens.CardShape,
+    borderWidth: Dp = 0.5.dp,
+    specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
+    fillColor: Color = Color.Transparent,
+    shadowElevation: Dp = 0.dp,
+): Modifier {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+
+    val effectiveAlpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
+    val effectiveTone = display.chatBubbleTone.coerceIn(0f, 1f)
+    val effectiveBlur = display.chatBubbleBlur.coerceIn(0f, 100f)
+
+    val tonedColor = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, effectiveTone)
+    val containerColor = if (effectiveAlpha <= 0.02f) Color.Transparent else tonedColor.copy(alpha = effectiveAlpha)
+
+    var m: Modifier = this
+
+    if (effectiveBlur > 0f) {
+        m = m.domChatBlurEffect(
+            containerColor = containerColor,
+            shape = shape,
+            blurRadius = effectiveBlur.dp,
+        )
+    } else if (containerColor != Color.Transparent && containerColor.alpha > 0f) {
+        m = m.background(containerColor, shape = shape)
+    }
+
+    if (borderWidth > 0.dp) {
+        m = m.border(width = borderWidth, brush = specularBrush, shape = shape)
+    }
+
+    if (shadowElevation > 0.dp) {
+        m = m.shadow(
+            elevation = shadowElevation,
+            shape = shape,
+            ambientColor = Color.Black.copy(alpha = 0.25f),
+            spotColor = Color.Black.copy(alpha = 0.35f),
+        )
+    }
+
+    return m
+}
+
+/**
  * Liquid Glass Card Container. Keeps content, avatars, and text razor-sharp while providing optical glass depth.
  */
 @Composable

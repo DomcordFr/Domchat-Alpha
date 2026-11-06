@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.chat
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatChromeSurfaceColor
@@ -530,25 +531,42 @@ fun ChatDrawerContent(
 
     when (presentation) {
         ChatDrawerPresentation.Modal -> {
+            val drawerModifier = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                Modifier
+                    .widthIn(max = drawerWidth)
+                    .frostedGlassSurface(shape = drawerShape)
+            } else {
+                Modifier
+                    .widthIn(max = drawerWidth)
+                    .liquidGlassSurface(shape = drawerShape)
+            }
             DomChatModalDrawerSheet(
                 drawerShape = drawerShape,
                 drawerContainerColor = Color.Transparent,
-                modifier = Modifier
-                    .widthIn(max = drawerWidth)
-                    .liquidGlassSurface(shape = drawerShape),
+                modifier = drawerModifier,
             ) {
                 drawerContent()
             }
         }
 
         ChatDrawerPresentation.PermanentPane -> {
-            Surface(
-                modifier = Modifier
+            val drawerModifier = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                Modifier
                     .fillMaxHeight()
                     .width(drawerWidth)
                     .statusBarsPadding()
                     .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
-                    .liquidGlassSurface(shape = drawerShape),
+                    .frostedGlassSurface(shape = drawerShape)
+            } else {
+                Modifier
+                    .fillMaxHeight()
+                    .width(drawerWidth)
+                    .statusBarsPadding()
+                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+                    .liquidGlassSurface(shape = drawerShape)
+            }
+            Surface(
+                modifier = drawerModifier,
                 shape = drawerShape,
                 color = Color.Transparent,
                 tonalElevation = 1.dp,

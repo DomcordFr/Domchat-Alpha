@@ -2,13 +2,13 @@ package me.lucid.domchat.ui.components.chat
 
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatFrostedContainerColor
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.font.FontWeight
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
@@ -1471,10 +1471,10 @@ private fun UserMessageTurn(
                                 m
                             }
                         } else when (bubbleInterfaceStyle) {
-                            InterfaceStyle.FROSTED -> m.domChatBlurEffect(
-                                containerColor = domChatFrostedContainerColor(color),
+                            InterfaceStyle.FROSTED -> m.frostedGlassSurface(
                                 shape = shape,
-                                blurRadius = bubbleBlur.dp
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                             )
                             InterfaceStyle.GLASS -> {
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
@@ -1991,10 +1991,10 @@ private fun AssistantMessageTurn(
                                 m
                             }
                         } else when (bubbleInterfaceStyle) {
-                            InterfaceStyle.FROSTED -> m.domChatBlurEffect(
-                                containerColor = domChatFrostedContainerColor(color),
+                            InterfaceStyle.FROSTED -> m.frostedGlassSurface(
                                 shape = shape,
-                                blurRadius = bubbleBlur.dp
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                             )
                             InterfaceStyle.GLASS -> {
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
@@ -2406,10 +2406,10 @@ private fun AssistantThinkingDropdown(
                         Modifier.background(defaultContainerColor, shape)
                     }
                 } else when (bubbleInterfaceStyle) {
-                    InterfaceStyle.FROSTED -> Modifier.domChatBlurEffect(
-                        containerColor = domChatFrostedContainerColor(defaultContainerColor),
+                    InterfaceStyle.FROSTED -> Modifier.frostedGlassSurface(
                         shape = shape,
-                        blurRadius = bubbleBlur.dp
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                     )
                     InterfaceStyle.GLASS -> {
                         Modifier.liquidGlassSurface(

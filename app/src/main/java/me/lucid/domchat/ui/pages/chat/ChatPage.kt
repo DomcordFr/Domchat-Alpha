@@ -229,8 +229,6 @@ import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.draw.clipToBounds
 import me.lucid.domchat.ui.modifier.DomChatBlur
 import me.lucid.domchat.ui.modifier.LocalDomChatBlur
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatBlurSource
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.modifier.domChatSoftEdgeBorder
@@ -239,6 +237,7 @@ import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.EntranceDirection
 import me.lucid.domchat.ui.motion.entrance
@@ -2563,21 +2562,31 @@ private fun ChatToolbarIconButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(RoundedCornerShape(999.dp))
-            .let { modifier ->
-                if (enabled) {
-                    modifier.clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            onClick()
-                        }
+            .then(
+                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Modifier.frostedGlassSurface(
+                        shape = RoundedCornerShape(999.dp),
+                        fillColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                     )
                 } else {
-                    modifier
+                    Modifier.liquidGlassSurface(
+                        shape = RoundedCornerShape(999.dp),
+                        glassMode = settings.displaySetting.liquidGlassMode,
+                        isFloatingControl = true,
+                    )
                 }
-            },
+            )
+            .clickable(
+                enabled = enabled,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    onClick()
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(icon, contentDescription = contentDescription, tint = iconColor)
@@ -2659,7 +2668,16 @@ private fun ChatSearchModeBar(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AppSize.ChromeBar)
-            .domChatBlurEffect(containerColor, searchFieldShape),
+            .then(
+                if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Modifier.frostedGlassSurface(shape = searchFieldShape)
+                } else {
+                    Modifier.liquidGlassSurface(
+                        shape = searchFieldShape,
+                        glassMode = setting.displaySetting.liquidGlassMode,
+                    )
+                }
+            ),
         shape = searchFieldShape,
         color = blurredContainerColor(containerColor),
         border = domChatSoftEdgeBorder()
@@ -2720,7 +2738,13 @@ private fun ChatShareSelectionModeBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(AppSize.ChromeBar)
-            .domChatBlurEffect(containerColor, shape)
+            .then(
+                if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Modifier.frostedGlassSurface(shape = shape)
+                } else {
+                    Modifier.liquidGlassSurface(shape = shape, glassMode = setting.displaySetting.liquidGlassMode)
+                }
+            )
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp),
@@ -2881,7 +2905,13 @@ private fun ChatToolbarOverflowMenu(
                         scaleY = menuScale
                         transformOrigin = chatToolbarPopupTransformOrigin(placement)
                     }
-                    .domChatBlurEffect(containerColor, menuShape)
+                    .then(
+                        if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                            Modifier.frostedGlassSurface(shape = menuShape)
+                        } else {
+                            Modifier.liquidGlassSurface(shape = menuShape, glassMode = setting.displaySetting.liquidGlassMode)
+                        }
+                    )
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -3071,7 +3101,13 @@ private fun ChatToolbarActionPill(
         modifier = Modifier
             .size(width = pillWidth, height = topPillSize)
             .clip(buttonShape)
-            .domChatBlurEffect(containerColor, buttonShape)
+            .then(
+                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Modifier.frostedGlassSurface(shape = buttonShape)
+                } else {
+                    Modifier.liquidGlassSurface(shape = buttonShape, glassMode = settings.displaySetting.liquidGlassMode)
+                }
+            )
     ) {
         Box(Modifier.fillMaxSize()) {
             if (compactAlpha > 0f) {
@@ -3271,7 +3307,13 @@ fun UpdatePill(
         border = domChatSoftEdgeBorder(),
         modifier = Modifier
             .height(height)
-            .domChatBlurEffect(containerColor, pillShape)
+            .then(
+                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Modifier.frostedGlassSurface(shape = pillShape)
+                } else {
+                    Modifier.liquidGlassSurface(shape = pillShape, glassMode = settings.displaySetting.liquidGlassMode)
+                }
+            )
     ) {
         Row(
             modifier = Modifier.padding(start = 16.dp, end = 4.dp),
@@ -3413,8 +3455,14 @@ private fun ChatToolbar(
                     modifier = Modifier
                         .size(topPillSize)
                         .zIndex(2f)
-                        .domChatBlurEffect(topContainerColor, buttonShape),
-                    size = topPillSize,
+                        .then(
+                            if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                Modifier.frostedGlassSurface(shape = buttonShape)
+                            } else {
+                                Modifier.liquidGlassSurface(shape = buttonShape, glassMode = settings.displaySetting.liquidGlassMode)
+                            }
+                        )
+                        .size(topPillSize),
                 )
             }
 
@@ -4034,7 +4082,13 @@ private fun ContextUsageOverlay(
                     scaleY = popupScale
                     transformOrigin = chatToolbarPopupTransformOrigin(placement)
                 }
-                .domChatBlurEffect(sheetColor, shape)
+                .then(
+                    if (setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                        Modifier.frostedGlassSurface(shape = shape)
+                    } else {
+                        Modifier.liquidGlassSurface(shape = shape, glassMode = setting.displaySetting.liquidGlassMode)
+                    }
+                )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -4133,7 +4187,13 @@ private fun ContextMeterButton(
     Surface(
         modifier = Modifier
             .size(AppSize.ChromePill)
-            .domChatBlurEffect(containerColor, shape)
+            .then(
+                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Modifier.frostedGlassSurface(shape = shape)
+                } else {
+                    Modifier.liquidGlassSurface(shape = shape, glassMode = settings.displaySetting.liquidGlassMode)
+                }
+            )
             .clickable(onClick = onClick),
         shape = shape,
         color = blurredContainerColor(containerColor),

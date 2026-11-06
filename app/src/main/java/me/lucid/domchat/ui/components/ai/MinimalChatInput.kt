@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.ai
 
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.motion.pressScale
 import androidx.compose.foundation.border
 import android.net.Uri
@@ -110,7 +111,6 @@ import me.lucid.domchat.data.datastore.ConversationWallpaperConfig
 import me.lucid.domchat.data.model.BackgroundBlurMode
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
@@ -246,7 +246,6 @@ import me.lucid.domchat.ui.hooks.mergeCommittedSttTranscript
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.shouldApplyPendingSttTranscript
 import me.lucid.domchat.ui.modifier.blurredContainerColor
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.data.ai.tools.LocalToolOption
 import me.lucid.domchat.data.ai.tools.AskUserAnswer
 import me.lucid.domchat.data.ai.tools.AskUserAnswerPayload
@@ -871,12 +870,19 @@ fun MinimalChatInput(
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .size(AppSize.ChromePill)
-                            .liquidGlassSurface(
-                                shape = CircleShape,
-                                glassMode = settings.displaySetting.liquidGlassMode,
-                                isFloatingControl = true
-                            )
-                            .domChatBlurEffect(domChatFloatingSurfaceColor(), CircleShape),
+                            .then(
+                                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                    Modifier.frostedGlassSurface(
+                                        shape = CircleShape,
+                                    )
+                                } else {
+                                    Modifier.liquidGlassSurface(
+                                        shape = CircleShape,
+                                        glassMode = settings.displaySetting.liquidGlassMode,
+                                        isFloatingControl = true
+                                    )
+                                }
+                            ),
                     ) {
                         Icon(
                             imageVector = if (sttRecording) RoundedStopIcon else Icons.Rounded.Add,
@@ -895,12 +901,19 @@ fun MinimalChatInput(
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = AppSize.ChromePill)
-                        .liquidGlassSurface(
-                            shape = inputShape,
-                            glassMode = settings.displaySetting.liquidGlassMode,
-                            isFloatingControl = true
-                        )
-                        .domChatBlurEffect(composerBg, inputShape),
+                        .then(
+                            if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                Modifier.frostedGlassSurface(
+                                    shape = inputShape,
+                                )
+                            } else {
+                                Modifier.liquidGlassSurface(
+                                    shape = inputShape,
+                                    glassMode = settings.displaySetting.liquidGlassMode,
+                                    isFloatingControl = true
+                                )
+                            }
+                        ),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth()
@@ -985,7 +998,18 @@ fun MinimalChatInput(
                                     color = blurredContainerColor(Color(0xFF000000)),
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .domChatBlurEffect(Color(0xFF000000), inputShape)
+                                        .then(
+                                            if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                Modifier.frostedGlassSurface(
+                                                    shape = inputShape,
+                                                )
+                                            } else {
+                                                Modifier.liquidGlassSurface(
+                                                    shape = inputShape,
+                                                    glassMode = settings.displaySetting.liquidGlassMode,
+                                                )
+                                            }
+                                        )
                                         .clickable(
                                             interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                                             indication = null
