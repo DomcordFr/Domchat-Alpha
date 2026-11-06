@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.drawscope.drawRect
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -24,8 +25,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import me.lucid.domchat.ui.component.backdrop.BackdropEffectScope
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.drawBackdrop
+import me.lucid.domchat.ui.component.backdrop.effects.blur
+import me.lucid.domchat.ui.component.backdrop.effects.lens
+import me.lucid.domchat.ui.component.backdrop.highlight.Highlight
+import me.lucid.domchat.ui.component.backdrop.highlight.HighlightStyle
+import me.lucid.domchat.ui.component.backdrop.isRenderEffectSupported
+import me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.data.model.LiquidGlassMode
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 
 /**
  * Liquid Glass Material Tokens.
@@ -140,8 +151,145 @@ fun liquidBubbleSurfaceColor(): Color {
 val LiquidGlassSpecularRimAlpha = 0.18f
 
 /**
- * Modifier that applies clean liquid glass surface optics without blurring foreground children.
+ * True liquid glass surface: captures the chat wallpaper + content backdrop via
+ * [LocalAppBackdrop], then blurs and refracts it with a true AGSL lens shader so
+ * bubbles and cards physically distort what lies beneath them.
+ *
+ * Falls back cleanly to [domChatBlurEffect] (Haze ultraThin) with tint and specular
+ * border when the backdrop is unavailable or runtime shaders are unsupported (API < 33).
+ *
+ * @param shape bubble/card outline (must be a CornerBasedShape such as RoundedCornerShape for lens).
+ * @param blurRadius backdrop blur radius in dp.
+ * @param refractionHeight lens refraction height in dp.
+ * @param refractionAmount lens refraction amount in dp.
+ * @param depthEffect whether to add the centerward depth gradient to refraction.
+ * @param tintColor surface tint wash ([Color.Unspecified] = none).
+ * @param specularIntensity specular rim strength 0..1.
+ * @param borderWidth specular rim width in dp (0 disables).
+ * @param specularBrush specular rim brush.
+ * @param fillColor opaque surface fill painted beneath the refraction.
+ * @param shadowElevation drop shadow elevation in dp.
  */
+@Composable
+fun Modifier.liquidGlass(
+    shape: Shape = LiquidGlassTokens.CardShape,
+    blurRadius: Dp = 20.dp,
+    refractionHeight: Dp = 16.dp,
+    refractionAmount: Dp = 32.dp,
+    depthEffect: Boolean = true,
+    tintColor: Color = Color.Unspecified,
+    specularIntensity: Float = 1f,
+    borderWidth: Dp = 0.5.dp,
+    specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
+    fillColor: Color = Color.Transparent,
+    shadowElevation: Dp = 0.dp,
+): Modifier {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    val density = LocalDensity.current
+    val backdrop = LocalAppBackdrop.current
+    val useGlass = backdrop != null && isRuntimeShaderSupported()
+
+    val blurPx = with(density) { blurRadius.toPx() }
+    val heightPx = with(density) { refractionHeight.toPx() }
+    val amountPx = with(density) { refractionAmount.toPx() }
+    val specular = specularIntensity.coerceIn(0f, 1f)
+
+    val tint = if (tintColor == Color.Unspecified) Color.Transparent else tintColor
+    val blurContainer = if (tint.alpha > 0.02f) tint else fillColor
+
+    val highlight: (() -> Highlight?)? = if (useGlass && borderWidth > 0.dp && specular > 0f) {
+        {
+            Highlight(
+                width = borderWidth,
+                alpha = specular,
+                style = HighlightStyle.Default(
+                    color = Color.White.copy(alpha = 0.5f * specular),
+                    angle = 45f,
+                    falloff = 1f
+                )
+            )
+        }
+    } else {
+        null
+    }
+
+    val effects: BackdropEffectScope.() -> Unit = {
+        if (blurPx > 0f) {
+            blur(blurPx)
+        }
+        if (useGlass && heightPx > 0f && amountPx > 0f) {
+            lens(
+                refractionHeight = heightPx,
+                refractionAmount = amountPx,
+                depthEffect = depthEffect,
+            )
+        }
+    }
+
+    val surfaceBlock: DrawScope.() -> Unit = {
+        val base = if (fillColor != Color.Transparent && fillColor != Color.Unspecified) fillColor else Color.Transparent
+        if (base.alpha > 0f) {
+            drawRect(color = base, size = size)
+        }
+        val tintResolved = if (tint != Color.Transparent) tint else Color.Transparent
+        if (tintResolved.alpha > 0f) {
+            drawRect(color = tintResolved, size = size)
+        }
+    }
+
+    return if (useGlass) {
+        this
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { shape },
+                effects = effects,
+                highlight = highlight,
+                onDrawSurface = surfaceBlock,
+                backdropScale = 1f
+            )
+            .then(
+                if (shadowElevation > 0.dp) {
+                    this.shadow(
+                        elevation = shadowElevation,
+                        shape = shape,
+                        ambientColor = Color.Black.copy(alpha = 0.25f),
+                        spotColor = Color.Black.copy(alpha = 0.35f)
+                    )
+                } else {
+                    this
+                }
+            )
+    } else {
+        // API < 33 or no backdrop: clean Haze ultraThin blur fallback with tint + specular rim.
+        var m: Modifier = this
+        if (blurContainer != Color.Transparent && blurContainer != Color.Unspecified) {
+            m = m.background(blurContainer, shape = shape)
+        }
+        m = m.domChatBlurEffect(containerColor = blurContainer, shape = shape, blurRadius = blurRadius)
+        if (borderWidth > 0.dp && specular > 0f) {
+            m = m.border(width = borderWidth, brush = specularBrush, shape = shape)
+        }
+        if (shadowElevation > 0.dp) {
+            m = m.shadow(
+                elevation = shadowElevation,
+                shape = shape,
+                ambientColor = Color.Black.copy(alpha = 0.25f),
+                spotColor = Color.Black.copy(alpha = 0.35f)
+            )
+        }
+        m
+    }
+}
+
+/**
+ * Settings-driven liquid glass surface. Maps [me.lucid.domchat.data.datastore.DisplaySetting]
+ * glass optics onto [liquidGlass]. Kept as the stable API used by chat bubbles and cards.
+ *
+ * Falls back cleanly to [domChatBlurEffect] (Haze ultraThin) with tint and specular border
+ * when the backdrop is unavailable or runtime shaders are unsupported (API < 33).
+ */
+@Composable
 fun Modifier.liquidGlassSurface(
     shape: Shape = LiquidGlassTokens.CardShape,
     borderWidth: Dp = 0.5.dp,
@@ -151,31 +299,21 @@ fun Modifier.liquidGlassSurface(
     glassMode: LiquidGlassMode = LiquidGlassMode.BALANCED_BLEND,
     isFloatingControl: Boolean = false
 ): Modifier {
-    val withShadow = if (shadowElevation > 0.dp) {
-        this.shadow(
-            elevation = shadowElevation,
-            shape = shape,
-            ambientColor = Color.Black.copy(alpha = 0.25f),
-            spotColor = Color.Black.copy(alpha = 0.35f)
-        )
-    } else {
-        this
-    }
-    val withBg = if (fillColor != Color.Transparent && fillColor != Color.Unspecified) {
-        withShadow.background(
-            color = fillColor,
-            shape = shape
-        )
-    } else {
-        withShadow
-    }
-    return withBg
-        .border(
-            width = borderWidth,
-            brush = specularBrush,
-            shape = shape
-        )
-        .clip(shape)
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    return this.liquidGlass(
+        shape = shape,
+        blurRadius = display.glassBlur.dp,
+        refractionHeight = (display.glassDepthScale * 16f).dp,
+        refractionAmount = (display.glassDepthScale * 32f).dp,
+        depthEffect = true,
+        tintColor = Color(display.glassTintColor),
+        specularIntensity = display.glassSpecularIntensity,
+        borderWidth = borderWidth,
+        specularBrush = specularBrush,
+        fillColor = fillColor,
+        shadowElevation = shadowElevation,
+    )
 }
 
 /**

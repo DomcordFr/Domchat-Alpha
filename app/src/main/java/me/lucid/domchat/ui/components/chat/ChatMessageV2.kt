@@ -8,9 +8,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.font.FontWeight
 import me.lucid.domchat.ui.theme.LocalDarkMode
-import me.lucid.domchat.ui.theme.liquidBubbleSurfaceColor
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import androidx.compose.ui.graphics.lerp
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -1478,23 +1477,13 @@ private fun UserMessageTurn(
                                 blurRadius = bubbleBlur.dp
                             )
                             InterfaceStyle.GLASS -> {
-                                val depth = settings.displaySetting.bubbleDepthScale.coerceIn(0f, 2.5f)
-                                val specular = settings.displaySetting.bubbleSpecularIntensity.coerceIn(0f, 1f)
-                                val baseColor = liquidBubbleSurfaceColor()
-                                val tintColor = Color(settings.displaySetting.glassTintColor)
-                                val tintStrength = tintColor.alpha.coerceIn(0f, 1f)
-                                val tinted = if (tintStrength > 0.02f) {
-                                    lerp(baseColor, tintColor, tintStrength)
-                                } else {
-                                    baseColor
+                                val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                                    settings.displaySetting.bubbleSpecularIntensity > 0f
                                 }
-                                val specularLift = lerp(tinted, Color.White, 0.15f * specular)
                                 m.liquidGlassSurface(
                                     shape = shape,
-                                    borderWidth = 0.dp,
-                                    fillColor = specularLift.copy(
-                                        alpha = (specularLift.alpha * depth).coerceIn(0f, 1f)
-                                    ),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
                                     glassMode = settings.displaySetting.liquidGlassMode,
                                 )
                             }
@@ -2008,23 +1997,13 @@ private fun AssistantMessageTurn(
                                 blurRadius = bubbleBlur.dp
                             )
                             InterfaceStyle.GLASS -> {
-                                val depth = settings.displaySetting.bubbleDepthScale.coerceIn(0f, 2.5f)
-                                val specular = settings.displaySetting.bubbleSpecularIntensity.coerceIn(0f, 1f)
-                                val baseColor = liquidBubbleSurfaceColor()
-                                val tintColor = Color(settings.displaySetting.glassTintColor)
-                                val tintStrength = tintColor.alpha.coerceIn(0f, 1f)
-                                val tinted = if (tintStrength > 0.02f) {
-                                    lerp(baseColor, tintColor, tintStrength)
-                                } else {
-                                    baseColor
+                                val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                                    settings.displaySetting.bubbleSpecularIntensity > 0f
                                 }
-                                val specularLift = lerp(tinted, Color.White, 0.15f * specular)
                                 m.liquidGlassSurface(
                                     shape = shape,
-                                    borderWidth = 0.dp,
-                                    fillColor = specularLift.copy(
-                                        alpha = (specularLift.alpha * depth).coerceIn(0f, 1f)
-                                    ),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
                                     glassMode = settings.displaySetting.liquidGlassMode,
                                 )
                             }
@@ -2433,30 +2412,17 @@ private fun AssistantThinkingDropdown(
                         blurRadius = bubbleBlur.dp
                     )
                     InterfaceStyle.GLASS -> {
-                        val depth = settings.displaySetting.bubbleDepthScale.coerceIn(0f, 2.5f)
-                        val specular = settings.displaySetting.bubbleSpecularIntensity.coerceIn(0f, 1f)
-                        val baseColor = liquidBubbleSurfaceColor()
-                        val tintColor = Color(settings.displaySetting.glassTintColor)
-                        val tintStrength = tintColor.alpha.coerceIn(0f, 1f)
-                        val tinted = if (tintStrength > 0.02f) {
-                            lerp(baseColor, tintColor, tintStrength)
-                        } else {
-                            baseColor
-                        }
-                        val specularLift = lerp(tinted, Color.White, 0.15f * specular)
                         Modifier.liquidGlassSurface(
                             shape = shape,
-                            borderWidth = 0.dp,
-                            fillColor = specularLift.copy(
-                                alpha = (specularLift.alpha * depth).coerceIn(0f, 1f)
-                            ),
+                            borderWidth = 0.5.dp,
+                            specularBrush = specularBorder?.brush ?: LiquidGlassTokens.SpecularBorderSubtle,
                             glassMode = settings.displaySetting.liquidGlassMode,
                         )
                     }
                 }
             )
             .then(
-                if (specularBorder != null) {
+                if (specularBorder != null && bubbleInterfaceStyle != InterfaceStyle.GLASS) {
                     Modifier.border(specularBorder, shape)
                 } else {
                     Modifier

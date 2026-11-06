@@ -151,6 +151,9 @@ import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.UpdateDialog
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.Tooltip
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -1353,6 +1356,7 @@ private fun ChatPageContent(
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     val haptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)
+    val chatBackdrop = rememberLayerBackdrop()
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (isActiveConversation) {
@@ -1501,23 +1505,24 @@ private fun ChatPageContent(
 
     AssistantChatTheme(assistant = currentAssistant) {
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
-            Surface(
-                color = if (renderBackground) {
-                    Color.Transparent
-                } else {
-                    MaterialTheme.colorScheme.background
-                },
-                contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (renderBackground) {
-                        AssistantBackground(
-                            assistant = currentAssistant,
-                            conversationId = conversation.id.toString(),
-                            modifier = Modifier.domChatBlurSource()
-                        )
-                    }
+            CompositionLocalProvider(LocalAppBackdrop provides chatBackdrop) {
+                Surface(
+                    color = if (renderBackground) {
+                        Color.Transparent
+                    } else {
+                        MaterialTheme.colorScheme.background
+                    },
+                    contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (renderBackground) {
+                            AssistantBackground(
+                                assistant = currentAssistant,
+                                conversationId = conversation.id.toString(),
+                                modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
+                            )
+                        }
 
                     Scaffold(
                 topBar = if (toolbarPlacement == ChatToolbarPlacement.Top) {
@@ -2397,6 +2402,7 @@ private fun ChatPageContent(
                 )
             }
             TTSController()
+        }
         }
         }
     }
