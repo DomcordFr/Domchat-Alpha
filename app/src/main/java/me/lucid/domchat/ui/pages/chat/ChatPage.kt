@@ -235,6 +235,7 @@ import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.modifier.domChatSoftEdgeBorder
 import me.lucid.domchat.ui.modifier.blurredContainerColor
 import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
+import me.lucid.domchat.ui.modifier.domChatBlurSource
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
@@ -4043,6 +4044,7 @@ private fun ContextUsageOverlay(
     onDismissRequest: () -> Unit,
 ) {
     BackHandler(onBack = onDismissRequest)
+    val settings = LocalSettings.current
     val interactionSource = remember { MutableInteractionSource() }
     val shape = AppShapes.CardMedium
     val sheetColor = domChatSheetContainerColor()
@@ -4090,7 +4092,6 @@ private fun ContextUsageOverlay(
                     scaleY = popupScale
                     transformOrigin = chatToolbarPopupTransformOrigin(placement)
                 }
-                val settings = LocalSettings.current
                 .then(
                     if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                         Modifier.frostedGlassSurface(shape = shape)
