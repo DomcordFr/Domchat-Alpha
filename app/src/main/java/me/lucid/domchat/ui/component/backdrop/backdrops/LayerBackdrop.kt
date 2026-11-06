@@ -27,6 +27,25 @@ import me.lucid.domchat.ui.component.backdrop.Backdrop
 
 private val DefaultOnDraw: ContentDrawScope.() -> Unit = { drawContent() }
 
+private fun DrawScope.withTransform(
+    offset: Offset,
+    sourceOrigin: Offset,
+    sourceScale: Float,
+    block: DrawScope.() -> Unit
+) {
+    if (sourceScale != 1f) {
+        scale(1f / sourceScale, 1f / sourceScale, Offset.Zero) {
+            translate(sourceOrigin.x - offset.x, sourceOrigin.y - offset.y) {
+                block()
+            }
+        }
+    } else {
+        translate(sourceOrigin.x - offset.x, sourceOrigin.y - offset.y) {
+            block()
+        }
+    }
+}
+
 @Composable
 fun rememberLayerBackdrop(
     graphicsLayer: GraphicsLayer = rememberGraphicsLayer(),
@@ -97,16 +116,8 @@ class LayerBackdrop internal constructor(
                 coordinates.positionInWindow() - layerCoordinates.positionInWindow()
             }
         val origin = sourceOrigin
-        if (sourceScale != 1f) {
-            scale(1f / sourceScale, 1f / sourceScale, Offset.Zero) {
-                translate(origin.x - offset.x, origin.y - offset.y) {
-                    drawLayer(graphicsLayer)
-                }
-            }
-        } else {
-            translate(origin.x - offset.x, origin.y - offset.y) {
-                drawLayer(graphicsLayer)
-            }
+        withTransform(offset, origin, sourceScale) {
+            drawLayer(graphicsLayer)
         }
     }
 }

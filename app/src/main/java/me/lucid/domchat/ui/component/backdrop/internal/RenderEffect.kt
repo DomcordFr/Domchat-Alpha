@@ -12,7 +12,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.asAndroidColorFilter
-import androidx.compose.ui.graphics.asAndroidRenderEffect
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import me.lucid.domchat.ui.component.backdrop.RuntimeShader
 import me.lucid.domchat.ui.component.backdrop.asAndroidRuntimeShader
@@ -21,8 +20,8 @@ import me.lucid.domchat.ui.component.backdrop.asAndroidRuntimeShader
 internal fun RenderEffect?.chain(other: RenderEffect): RenderEffect {
     return if (this != null) {
         android.graphics.RenderEffect.createChainEffect(
-            other.asAndroidRenderEffect(),
-            this.asAndroidRenderEffect()
+            other.toAndroidRenderEffect(),
+            this.toAndroidRenderEffect()
         ).asComposeRenderEffect()
     } else {
         other
@@ -48,7 +47,7 @@ internal fun colorFilterEffect(
     return if (renderEffect != null) {
         android.graphics.RenderEffect.createColorFilterEffect(
             colorFilter.asAndroidColorFilter(),
-            renderEffect.asAndroidRenderEffect()
+            renderEffect.toAndroidRenderEffect()
         ).asComposeRenderEffect()
     } else {
         android.graphics.RenderEffect.createColorFilterEffect(

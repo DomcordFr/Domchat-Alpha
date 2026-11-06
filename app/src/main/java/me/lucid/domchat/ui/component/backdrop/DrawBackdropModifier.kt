@@ -320,11 +320,13 @@ private class DrawBackdropNode(
             canvas.scale(scale, scale)
         }
         onDrawBackdrop {
-            backdrop.drawBackdrop(
-                density = effectScope,
-                coordinates = layoutCoordinates,
-                layerBlock = layerBlock
-            )
+            with(backdrop) {
+                drawBackdrop(
+                    density = effectScope,
+                    coordinates = layoutCoordinates,
+                    layerBlock = layerBlock
+                )
+            }
         }
         if (scale != 1f) {
             canvas.scale(1f / scale, 1f / scale)
