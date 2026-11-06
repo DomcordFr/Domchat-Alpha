@@ -52,6 +52,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
@@ -1114,6 +1118,81 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
 
 
+            // Basic Settings
+            item {
+                var createNewConversationOnStart by rememberSharedPreferenceBoolean(
+                    "create_new_conversation_on_start",
+                    true
+                )
+                SettingsGroup(
+                    title = stringResource(R.string.setting_page_basic_settings)
+                ) {
+                    SettingGroupItem(
+                        title = stringResource(R.string.setting_display_page_create_new_conversation_on_start_title),
+                        subtitle = stringResource(R.string.setting_display_page_create_new_conversation_on_start_desc),
+                        trailing = {
+                            HapticSwitch(
+                                checked = createNewConversationOnStart,
+                                onCheckedChange = {
+                                    createNewConversationOnStart = it
+                                }
+                            )
+                        }
+                    )
+                    SettingGroupItem(
+                        title = stringResource(R.string.setting_display_page_notification_message_generated),
+                        subtitle = stringResource(R.string.setting_display_page_notification_message_generated_desc),
+                        trailing = {
+                            HapticSwitch(
+                                checked = displaySetting.enableNotificationOnMessageGeneration,
+                                onCheckedChange = {
+                                    if (it && !permissionState.allPermissionsGranted) {
+                                        permissionState.requestPermissions()
+                                    }
+                                    updateDisplaySetting(displaySetting.copy(enableNotificationOnMessageGeneration = it))
+                                }
+                            )
+                        }
+                    )
+                    SettingGroupItem(
+                        title = stringResource(R.string.setting_display_check_updates_title),
+                        subtitle = stringResource(R.string.setting_display_check_updates_desc),
+                        trailing = {
+                            HapticSwitch(
+                                checked = displaySetting.checkForUpdates,
+                                onCheckedChange = {
+                                    updateDisplaySetting(displaySetting.copy(checkForUpdates = it))
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+
+//            item {
+//                ListItem(
+//                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+//                    headlineContent = {
+//                        Text(stringResource(R.string.setting_display_page_developer_mode))
+//                    },
+//                    supportingContent = {
+//                        Text(stringResource(R.string.setting_display_page_developer_mode_desc))
+//                    },
+//                    trailingContent = {
+//                        HapticSwitch(
+//                            checked = settings.developerMode,
+//                            onCheckedChange = {
+//                                vm.updateSettings(settings.copy(developerMode = it))
+//                            }
+//                        )
+//                    },
+//                )
+//            }
+
+        }
+    }
+}
+
 /**
  * Segmented tab for Liquid / Frosted glass mode with a small centered "glass" subtext.
  * 48dp minimum touch target; never cramps horizontally on mobile.
@@ -1352,84 +1431,6 @@ private fun tintSliderRow(
         valueRange = valueRange,
         steps = steps,
     )
-}
-
-
-
-
-            // Basic Settings
-            item {
-                var createNewConversationOnStart by rememberSharedPreferenceBoolean(
-                    "create_new_conversation_on_start",
-                    true
-                )
-                SettingsGroup(
-                    title = stringResource(R.string.setting_page_basic_settings)
-                ) {
-                    SettingGroupItem(
-                        title = stringResource(R.string.setting_display_page_create_new_conversation_on_start_title),
-                        subtitle = stringResource(R.string.setting_display_page_create_new_conversation_on_start_desc),
-                        trailing = {
-                            HapticSwitch(
-                                checked = createNewConversationOnStart,
-                                onCheckedChange = {
-                                    createNewConversationOnStart = it
-                                }
-                            )
-                        }
-                    )
-                    SettingGroupItem(
-                        title = stringResource(R.string.setting_display_page_notification_message_generated),
-                        subtitle = stringResource(R.string.setting_display_page_notification_message_generated_desc),
-                        trailing = {
-                            HapticSwitch(
-                                checked = displaySetting.enableNotificationOnMessageGeneration,
-                                onCheckedChange = {
-                                    if (it && !permissionState.allPermissionsGranted) {
-                                        permissionState.requestPermissions()
-                                    }
-                                    updateDisplaySetting(displaySetting.copy(enableNotificationOnMessageGeneration = it))
-                                }
-                            )
-                        }
-                    )
-                    SettingGroupItem(
-                        title = stringResource(R.string.setting_display_check_updates_title),
-                        subtitle = stringResource(R.string.setting_display_check_updates_desc),
-                        trailing = {
-                            HapticSwitch(
-                                checked = displaySetting.checkForUpdates,
-                                onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(checkForUpdates = it))
-                                }
-                            )
-                        }
-                    )
-                }
-            }
-
-//            item {
-//                ListItem(
-//                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-//                    headlineContent = {
-//                        Text(stringResource(R.string.setting_display_page_developer_mode))
-//                    },
-//                    supportingContent = {
-//                        Text(stringResource(R.string.setting_display_page_developer_mode_desc))
-//                    },
-//                    trailingContent = {
-//                        HapticSwitch(
-//                            checked = settings.developerMode,
-//                            onCheckedChange = {
-//                                vm.updateSettings(settings.copy(developerMode = it))
-//                            }
-//                        )
-//                    },
-//                )
-//            }
-
-        }
-    }
 }
 
 @Composable
