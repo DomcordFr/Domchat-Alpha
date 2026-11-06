@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.nav
 
 import androidx.compose.foundation.BorderStroke
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -8,8 +9,9 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -23,7 +25,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /** The production drawer action Surface and press motion shared by Android and iOS. */
 @Composable
@@ -49,27 +50,21 @@ fun DomChatDrawerAction(
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
         label = "drawer_alpha",
     )
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.alpha = alpha
-            }
-            .liquidGlassSurface(
-                shape = shape,
-                fillColor = containerColor,
-                borderWidth = 0.5.dp,
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            )
-            .clickable(
-                enabled = true,
-                onClick = {
-                    onHaptic()
-                    onClick()
-                }
-            ),
-        contentAlignment = Alignment.Center,
+    Surface(
+        onClick = {
+            onHaptic()
+            onClick()
+        },
+        modifier = modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+            this.alpha = alpha
+        },
+        interactionSource = interactionSource,
+        color = containerColor,
+        shape = shape,
+        border = border,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         content(size, 22.dp)
     }

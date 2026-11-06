@@ -388,6 +388,7 @@ fun ChatDrawerContent(
                     DomChatDrawerQuickActionGroup {
                         DomChatDrawerQuickAction(
                             label = "Home",
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp),
                             containerColor = quickActionCardColor,
                             onClick = {
                                 navigateToChatPage(navController)
@@ -405,6 +406,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp),
                             containerColor = quickActionCardColor,
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
@@ -422,6 +424,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp),
                             containerColor = quickActionCardColor,
                             onClick = {
                                 navController.navigate(Screen.Menu)
@@ -710,7 +713,11 @@ private fun DrawerAction(
     DomChatDrawerAction(
         onClick = onClick,
         onHaptic = { haptics.perform(HapticPattern.Pop) },
-        modifier = modifier,
+        modifier = modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+        ),
         containerColor = containerColor,
         border = border,
         shape = shape,
