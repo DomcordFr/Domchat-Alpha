@@ -1,5 +1,7 @@
 package me.lucid.domchat.ui.components.nav
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,11 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 /** Exact grouped container used by the production drawer quick actions. */
 @Composable
@@ -54,19 +55,23 @@ fun DomChatDrawerQuickAction(
     val defaultBg = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else Color.White.copy(alpha = 0.70f)
     val cardBg = if (containerColor != Color.Unspecified) containerColor else defaultBg
     val cardShape = RoundedCornerShape(12.dp)
-    Surface(
-        onClick = {
-            onHaptic()
-            onClick()
-        },
-        color = cardBg,
-        contentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-        shape = cardShape,
-        border = BorderStroke(
-            0.5.dp,
-            if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
-        ),
-        modifier = modifier.fillMaxWidth(),
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .liquidGlassSurface(
+                shape = cardShape,
+                fillColor = cardBg,
+                borderWidth = 0.5.dp,
+                specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+            )
+            .clickable(
+                enabled = true,
+                onClick = {
+                    onHaptic()
+                    onClick()
+                }
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

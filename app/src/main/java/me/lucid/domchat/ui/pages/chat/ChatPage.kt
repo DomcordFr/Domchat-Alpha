@@ -152,6 +152,7 @@ import me.lucid.domchat.ui.components.ui.UpdateDialog
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.LayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.Job
@@ -788,6 +789,7 @@ fun ChatPage(
     }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val chatBackdrop = rememberLayerBackdrop()
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
     // Handle back press when drawer is open
@@ -1181,6 +1183,7 @@ fun ChatPage(
                                     inputMaxWidth = inputMaxWidth,
                                     initialSearchQuery = searchQuery,
                                     renderBackground = false,
+                                    chatBackdrop = chatBackdrop,
                                     inheritedBlur = wideBlur,
                                 )
                             }
@@ -1216,7 +1219,8 @@ fun ChatPage(
                 )
             }
             CompositionLocalProvider(LocalDomChatBlur provides modalBlur) {
-                ModalNavigationDrawer(
+                CompositionLocalProvider(LocalAppBackdrop provides chatBackdrop) {
+                    ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
                         ChatDrawerContent(
@@ -1234,6 +1238,7 @@ fun ChatPage(
                 ) {
                     ChatPageContent(
                         inheritedBlur = modalBlur,
+                        chatBackdrop = chatBackdrop,
                         inputState = inputState,
                         loadingJob = loadingJob,
                         setting = setting,
@@ -1257,6 +1262,7 @@ fun ChatPage(
                         inputMaxWidth = Dp.Unspecified,
                         initialSearchQuery = searchQuery,
                     )
+                }
                 }
             }
 
@@ -1334,6 +1340,7 @@ private fun ChatPageContent(
     initialSearchQuery: String? = null,
     renderBackground: Boolean = true,
     inheritedBlur: DomChatBlur? = null,
+    chatBackdrop: LayerBackdrop,
 ) {
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
@@ -1356,7 +1363,6 @@ private fun ChatPageContent(
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     val haptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)
-    val chatBackdrop = rememberLayerBackdrop()
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (isActiveConversation) {

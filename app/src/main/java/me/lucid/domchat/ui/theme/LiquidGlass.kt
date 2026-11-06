@@ -173,7 +173,7 @@ val LiquidGlassSpecularRimAlpha = 0.18f
 @Composable
 fun Modifier.liquidGlass(
     shape: Shape = LiquidGlassTokens.CardShape,
-    blurRadius: Dp = 20.dp,
+    blurRadius: Dp = 8.dp,
     refractionHeight: Dp = 16.dp,
     refractionAmount: Dp = 32.dp,
     depthEffect: Boolean = true,

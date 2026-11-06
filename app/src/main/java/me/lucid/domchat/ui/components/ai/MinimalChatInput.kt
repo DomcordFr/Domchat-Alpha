@@ -172,6 +172,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -3168,14 +3169,14 @@ private fun ToolApprovalCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color(0xFF000000).copy(alpha = 0.15f),
+                Box(
                     modifier = Modifier
                         .size(34.dp)
-                        .domChatBlurEffect(
-                            containerColor = Color(0xFF000000).copy(alpha = 0.10f),
-                            shape = CircleShape
+                        .liquidGlassSurface(
+                            shape = CircleShape,
+                            fillColor = Color(0xFF000000).copy(alpha = 0.10f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                         )
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -3205,15 +3206,15 @@ private fun ToolApprovalCard(
 
             val summary = approval.summary()
             if (summary.isNotBlank()) {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color(0xFF000000).copy(alpha = 0.15f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .domChatBlurEffect(
-                            containerColor = Color(0xFF000000).copy(alpha = 0.10f),
-                            shape = RoundedCornerShape(18.dp)
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(18.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.10f),
+                            borderWidth = 1.dp,
+                            specularBrush = Brush.solid(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
                         )
                 ) {
                     Text(
@@ -3553,16 +3554,15 @@ private fun MinimalPickerContent(
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF000000).copy(alpha = 0.12f),
-            border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 2.dp)
-                .domChatBlurEffect(
-                    containerColor = Color(0xFF000000).copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(16.dp)
+                .liquidGlassSurface(
+                    shape = RoundedCornerShape(16.dp),
+                    fillColor = Color(0xFF000000).copy(alpha = 0.08f),
+                    borderWidth = 0.5.dp,
+                    specularBrush = Brush.solid(Color.White.copy(alpha = 0.08f)),
                 )
         ) {
             Row(
@@ -4416,14 +4416,16 @@ private fun ChatScrollToBottomButton(
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
 
-    Surface(
-        shape = CircleShape,
-        color = blurredContainerColor(Color(0xFF000000)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+    Box(
         modifier = modifier
             .size(36.dp)
             .pressScale(interactionSource)
-            .domChatBlurEffect(Color(0xFF000000), CircleShape)
+            .liquidGlassSurface(
+                shape = CircleShape,
+                fillColor = blurredContainerColor(Color(0xFF000000)),
+                borderWidth = 1.dp,
+                specularBrush = Brush.solid(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+            )
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,

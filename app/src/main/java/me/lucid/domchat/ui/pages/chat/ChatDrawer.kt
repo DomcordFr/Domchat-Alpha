@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.chat
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatChromeSurfaceColor
 
@@ -531,7 +532,7 @@ fun ChatDrawerContent(
                 drawerContainerColor = Color.Transparent,
                 modifier = Modifier
                     .widthIn(max = drawerWidth)
-                    .domChatBlurEffect(containerColor = drawerBg, shape = drawerShape),
+                    .liquidGlassSurface(shape = drawerShape),
             ) {
                 drawerContent()
             }
@@ -544,8 +545,8 @@ fun ChatDrawerContent(
                     .width(drawerWidth)
                     .statusBarsPadding()
                     .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
-                    .domChatBlurEffect(containerColor = drawerBg, shape = RoundedCornerShape(32.dp)),
-                shape = RoundedCornerShape(32.dp),
+                    .liquidGlassSurface(shape = drawerShape),
+                shape = drawerShape,
                 color = Color.Transparent,
                 tonalElevation = 1.dp,
             ) {
