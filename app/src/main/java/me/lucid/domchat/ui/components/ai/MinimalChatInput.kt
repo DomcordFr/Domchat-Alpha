@@ -174,6 +174,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -3214,7 +3215,7 @@ private fun ToolApprovalCard(
                             shape = RoundedCornerShape(18.dp),
                             fillColor = Color(0xFF000000).copy(alpha = 0.10f),
                             borderWidth = 1.dp,
-                            specularBrush = Brush.solid(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                            specularBrush = SolidColor(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
                         )
                 ) {
                     Text(
@@ -3562,7 +3563,7 @@ private fun MinimalPickerContent(
                     shape = RoundedCornerShape(16.dp),
                     fillColor = Color(0xFF000000).copy(alpha = 0.08f),
                     borderWidth = 0.5.dp,
-                    specularBrush = Brush.solid(Color.White.copy(alpha = 0.08f)),
+                    specularBrush = SolidColor(Color.White.copy(alpha = 0.08f)),
                 )
         ) {
             Row(
@@ -4424,7 +4425,7 @@ private fun ChatScrollToBottomButton(
                 shape = CircleShape,
                 fillColor = blurredContainerColor(Color(0xFF000000)),
                 borderWidth = 1.dp,
-                specularBrush = Brush.solid(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                specularBrush = SolidColor(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
             )
             .clip(CircleShape)
             .clickable(
