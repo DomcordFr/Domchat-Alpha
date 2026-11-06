@@ -98,7 +98,7 @@ half4 main(float2 coord) {
     }
     float2 refractedCoord = coord + d * grad;
     return content.eval(refractedCoord);
-}*/
+}"""
 
 /** Upper bound of glass surfaces [MultiRefractionShaderString] refracts in one pass. */
 internal const val MultiRefractionMaxShapes = 8
@@ -200,7 +200,7 @@ half4 main(float2 coord) {
     half4 refrRed = content.eval(refractedCoord + dispersedCoord);
     half4 refrBlue = content.eval(refractedCoord - dispersedCoord);
     return half4(refrRed.r, refr.g, refrBlue.b, refr.a);
-}*/
+}"""
 
 @Language("AGSL")
 internal const val DefaultHighlightShaderString = """
@@ -223,7 +223,7 @@ half4 main(float2 coord) {
     float d = dot(grad, lightDir);
     float intensity = pow(abs(d), falloff);
     return color * intensity;
-}*/
+}"""
 
 @Language("AGSL")
 internal const val AmbientHighlightShaderString = """
@@ -246,4 +246,4 @@ half4 main(float2 coord) {
     float intensity = pow(abs(d), falloff);
     float t = step(0.0, d);
     return half4(t, t, t, 1.0) * intensity;
-}*/
+}"""

@@ -75,7 +75,7 @@ internal class HighlightElement(
 internal class HighlightNode(
     var shapeProvider: ShapeProvider,
     var highlight: () -> Highlight?
-) : DrawModifierNode {
+) : Modifier.Node(), DrawModifierNode {
 
     override val shouldAutoInvalidate: Boolean = false
 

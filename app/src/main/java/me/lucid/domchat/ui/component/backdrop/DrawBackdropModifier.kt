@@ -276,7 +276,7 @@ private class DrawBackdropNode(
     var onDrawFront: (DrawScope.() -> Unit)?,
     var backdropScale: Float,
     var frozen: () -> Boolean
-) : LayoutModifierNode, DrawModifierNode, GlobalPositionAwareModifierNode, ObserverModifierNode {
+) : Modifier.Node(), LayoutModifierNode, DrawModifierNode, GlobalPositionAwareModifierNode, ObserverModifierNode {
 
     private val effectScope =
         object : BackdropEffectScopeImpl() {

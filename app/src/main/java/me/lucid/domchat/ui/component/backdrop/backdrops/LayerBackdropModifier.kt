@@ -68,7 +68,7 @@ private class LayerBackdropElement(
 private class LayerBackdropNode(
     var backdrop: LayerBackdrop,
     var frozen: () -> Boolean
-) : DrawModifierNode, GlobalPositionAwareModifierNode {
+) : Modifier.Node(), DrawModifierNode, GlobalPositionAwareModifierNode {
 
     override fun ContentDrawScope.draw() {
         // Record once and composite to the screen; glass samplers reuse this layer.

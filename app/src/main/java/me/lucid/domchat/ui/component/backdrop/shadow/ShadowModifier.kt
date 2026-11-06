@@ -71,7 +71,7 @@ internal class ShadowElement(
 internal class ShadowNode(
     var shapeProvider: ShapeProvider,
     var shadow: () -> Shadow?
-) : DrawModifierNode {
+) : Modifier.Node(), DrawModifierNode {
 
     override val shouldAutoInvalidate: Boolean = false
 

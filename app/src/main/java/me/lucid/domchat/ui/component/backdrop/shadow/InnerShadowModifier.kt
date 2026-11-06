@@ -71,7 +71,7 @@ internal class InnerShadowElement(
 internal class InnerShadowNode(
     var shapeProvider: ShapeProvider,
     var shadow: () -> InnerShadow?
-) : DrawModifierNode {
+) : Modifier.Node(), DrawModifierNode {
 
     override val shouldAutoInvalidate: Boolean = false
 
