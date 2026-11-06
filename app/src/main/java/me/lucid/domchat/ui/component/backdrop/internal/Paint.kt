@@ -13,11 +13,11 @@ import me.lucid.domchat.ui.component.backdrop.RuntimeShader
 import me.lucid.domchat.ui.component.backdrop.asAndroidRuntimeShader
 
 internal fun Paint.blur(radius: Float) {
-    this.toFrameworkPaint().maskFilter =
+    this.asFrameworkPaint().maskFilter =
         if (radius > 0f) BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL)
         else null
 }
 
 internal fun Paint.setRuntimeShader(runtimeShader: RuntimeShader?) {
-    this.toFrameworkPaint().shader = runtimeShader?.asAndroidRuntimeShader()
+    this.asFrameworkPaint().shader = runtimeShader?.asAndroidRuntimeShader()
 }

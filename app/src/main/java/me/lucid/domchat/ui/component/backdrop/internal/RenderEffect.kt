@@ -20,8 +20,8 @@ import me.lucid.domchat.ui.component.backdrop.asAndroidRuntimeShader
 internal fun RenderEffect?.chain(other: RenderEffect): RenderEffect {
     return if (this != null) {
         android.graphics.RenderEffect.createChainEffect(
-            other.toAndroidRenderEffect(),
-            this.toAndroidRenderEffect()
+            other.asAndroidRenderEffect(),
+            this.asAndroidRenderEffect()
         ).asComposeRenderEffect()
     } else {
         other
@@ -47,7 +47,7 @@ internal fun colorFilterEffect(
     return if (renderEffect != null) {
         android.graphics.RenderEffect.createColorFilterEffect(
             colorFilter.asAndroidColorFilter(),
-            renderEffect.toAndroidRenderEffect()
+            renderEffect.asAndroidRenderEffect()
         ).asComposeRenderEffect()
     } else {
         android.graphics.RenderEffect.createColorFilterEffect(

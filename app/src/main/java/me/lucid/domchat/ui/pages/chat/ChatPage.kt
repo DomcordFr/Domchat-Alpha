@@ -1522,6 +1522,14 @@ private fun ChatPageContent(
                                 conversationId = conversation.id.toString(),
                                 modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
                             )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .domChatBlurSource()
+                                    .layerBackdrop(chatBackdrop)
+                            )
                         }
 
                     Scaffold(

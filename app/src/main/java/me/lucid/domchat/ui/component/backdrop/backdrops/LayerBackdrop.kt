@@ -17,6 +17,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -26,25 +27,6 @@ import androidx.compose.ui.unit.Density
 import me.lucid.domchat.ui.component.backdrop.Backdrop
 
 private val DefaultOnDraw: ContentDrawScope.() -> Unit = { drawContent() }
-
-private fun DrawScope.withTransform(
-    offset: Offset,
-    sourceOrigin: Offset,
-    sourceScale: Float,
-    block: DrawScope.() -> Unit
-) {
-    if (sourceScale != 1f) {
-        scale(1f / sourceScale, 1f / sourceScale, Offset.Zero) {
-            translate(sourceOrigin.x - offset.x, sourceOrigin.y - offset.y) {
-                block()
-            }
-        }
-    } else {
-        translate(sourceOrigin.x - offset.x, sourceOrigin.y - offset.y) {
-            block()
-        }
-    }
-}
 
 @Composable
 fun rememberLayerBackdrop(
@@ -116,7 +98,12 @@ class LayerBackdrop internal constructor(
                 coordinates.positionInWindow() - layerCoordinates.positionInWindow()
             }
         val origin = sourceOrigin
-        withTransform(offset, origin, sourceScale) {
+        withTransform({
+            translate(origin.x - offset.x, origin.y - offset.y)
+            if (sourceScale != 1f) {
+                scale(1f / sourceScale, 1f / sourceScale, Offset.Zero)
+            }
+        }) {
             drawLayer(graphicsLayer)
         }
     }
