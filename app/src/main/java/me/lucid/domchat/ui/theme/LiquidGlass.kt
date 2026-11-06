@@ -84,8 +84,18 @@ fun liquidGlassSurfaceColor(): Color {
     val display = settings.displaySetting
     val alpha = display.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
-    val base = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, display.glassBaseLuminance.coerceIn(0f, 1f))
-    return base.copy(alpha = alpha)
+    var base = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, display.glassBaseLuminance.coerceIn(0f, 1f))
+    // Depth / refraction scale modulates how much of the background the glass surface retains.
+    val depth = display.glassDepthScale.coerceIn(0f, 2.5f)
+    base = base.copy(alpha = (alpha * depth).coerceIn(0f, 1f))
+    // Non-clear tint applies a wash over the glass surface (tint alpha = wash strength).
+    val tint = display.glassTintColor
+    val tintColor = Color(tint)
+    val strength = tintColor.alpha.coerceIn(0f, 1f)
+    if (strength > 0.02f) {
+        base = androidx.compose.ui.graphics.lerp(base, tintColor, strength)
+    }
+    return base
 }
 
 /**
@@ -94,7 +104,20 @@ fun liquidGlassSurfaceColor(): Color {
  */
 @Composable
 fun liquidGlassBorderBrush(): Brush {
-    return LiquidGlassTokens.SpecularBorderBrush
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    // Specular rim catch and depth scale jointly drive rim brightness.
+    val specular = display.glassSpecularIntensity.coerceIn(0f, 1f)
+    val depth = display.glassDepthScale.coerceIn(0f, 2.5f)
+    val intensity = (specular * depth).coerceIn(0f, 1f)
+    return Brush.verticalGradient(
+        listOf(
+            Color.White.copy(alpha = 0.40f * intensity),
+            Color.White.copy(alpha = 0.12f * intensity),
+            Color.White.copy(alpha = 0.03f * intensity),
+            Color.Transparent
+        )
+    )
 }
 
 /**

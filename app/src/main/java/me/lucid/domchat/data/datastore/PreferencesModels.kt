@@ -366,6 +366,10 @@ data class DisplaySetting(
     val glassSpecularIntensity: Float = 1.0f,
     // Glass tint color as ARGB Long (0L = Clear). Non-zero applies a tint wash to glass surfaces.
     val glassTintColor: Long = 0x00FFFFFFL,
+    // Bubble glass depth / refraction scale multiplier (0.0x..2.5x). Independent of UI glass depth.
+    val bubbleDepthScale: Float = 1.0f,
+    // Bubble specular highlight intensity (0.0f..1.0f). Independent of UI glass specular intensity.
+    val bubbleSpecularIntensity: Float = 1.0f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
     // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the

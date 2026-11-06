@@ -1115,17 +1115,12 @@ fun MinimalChatInput(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                // Small optical liquid glass hollow circle for smooth Chat info and Token usage popup
+                                // Compact liquid glass context ring for Chat info and Token usage popup
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(28.dp)
                                         .clip(CircleShape)
                                         .background(Color.Transparent)
-                                        .border(
-                                            width = 0.5.dp,
-                                            brush = LiquidGlassTokens.SpecularBorderSubtle,
-                                            shape = CircleShape
-                                        )
                                         .clickable {
                                             haptics.perform(HapticPattern.Pop)
                                             onShowChatInfo()
@@ -1137,6 +1132,11 @@ fun MinimalChatInput(
                                             .size(16.dp)
                                             .clip(CircleShape)
                                             .background(Color.Transparent)
+                                            .border(
+                                                width = 0.8.dp,
+                                                brush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                shape = CircleShape
+                                            )
                                     )
                                 }
 
@@ -1425,7 +1425,7 @@ fun MinimalChatInput(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(28.dp)
                                         .clip(CircleShape)
                                         .clickable {
                                             haptics.perform(HapticPattern.Pop)
@@ -1437,10 +1437,10 @@ fun MinimalChatInput(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xFF141520))
+                                            .background(Color.Transparent)
                                             .border(
-                                                width = 1.2.dp,
-                                                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                                                width = 0.8.dp,
+                                                brush = LiquidGlassTokens.SpecularBorderSubtle,
                                                 shape = CircleShape
                                             )
                                     )

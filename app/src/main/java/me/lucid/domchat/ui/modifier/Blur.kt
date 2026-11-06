@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -313,6 +314,23 @@ fun domChatSheetContentColor(): Color {
 /** Glassy cards throughout the app follow user glass transparency and base luminance tone. */
 @Composable
 fun domChatCardContainerColor(): Color = liquidGlassSurfaceColor()
+
+/**
+ * Frosted surface color for chat bubbles: gentle tinted base over [base].
+ * When [DisplaySetting.glassTintColor] is non-clear, the tint wash is layered over [base]
+ * using the tint color's alpha as wash strength.
+ */
+@Composable
+fun domChatFrostedContainerColor(base: Color): Color {
+    val settings = LocalSettings.current
+    val tintColor = Color(settings.displaySetting.glassTintColor)
+    val strength = tintColor.alpha.coerceIn(0f, 1f)
+    return if (strength > 0.02f) {
+        lerp(base, tintColor, strength)
+    } else {
+        base
+    }
+}
 
 @Composable
 fun domChatCardContentColor(): Color {

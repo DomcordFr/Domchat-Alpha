@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material.icons.Icons
@@ -49,8 +50,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
+import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
@@ -77,6 +82,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -84,11 +90,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.R
 import me.lucid.domchat.data.datastore.DisplaySetting
+import me.lucid.domchat.data.datastore.InterfaceStyle
 import me.lucid.domchat.data.ai.models.ModelCatalogSource
 import me.lucid.domchat.data.ai.models.ModelCatalogStatus
 import me.lucid.domchat.ui.components.nav.BackButton
 import androidx.compose.ui.text.font.FontWeight
 import kotlin.math.roundToInt
+import kotlin.ranges.ClosedFloatingPointRange
 import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.data.model.BackgroundBlurMode
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
@@ -126,6 +134,33 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val modelCatalogStatus by vm.modelCatalogStatus.collectAsStateWithLifecycle()
     var displaySetting by remember(settings) { mutableStateOf(settings.displaySetting) }
+    var uiIsGlass by remember(settings.displaySetting) {
+        mutableStateOf(
+            settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
+        )
+    }
+    var bubbleIsGlass by remember(settings.displaySetting) {
+        mutableStateOf(
+            settings.displaySetting.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
+        )
+    }
+    var linkedStyles by remember(settings.displaySetting) {
+        mutableStateOf(settings.displaySetting.linkUiAndBubbleStyle)
+    }
+
+    // Keep linked styles consistent with persisted settings (e.g. after a catalog merge).
+    if (linkedStyles && bubbleIsGlass != uiIsGlass) {
+        bubbleIsGlass = uiIsGlass
+        updateDisplaySetting(
+            settings.displaySetting.copy(
+                liquidGlassMode = if (uiIsGlass) me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND
+                else me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
+                bubbleInterfaceStyle = if (uiIsGlass) InterfaceStyle.GLASS
+                else InterfaceStyle.FROSTED,
+            )
+        )
+    }
+
     var amoledDarkMode by rememberAmoledDarkMode()
     val context = LocalContext.current
     val toaster = LocalToaster.current
@@ -445,10 +480,10 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
-            // Appearance: Animation Speed Controls
+            // Animation Speed
             item {
                 SettingsGroup(
-                    title = "Interface Appearance & Transparency"
+                    title = "Animation Speed"
                 ) {
                     SettingGroupItem(
                         title = "Animation Speed",
@@ -466,54 +501,28 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             )
                         }
                     )
+                }
+            }
 
-                    // Decoupled UI & Bubble glass style toggles (directly below Animation Speed)
-                    var uiIsGlass by remember(settings.displaySetting) {
-                        mutableStateOf(
-                            settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
-                        )
-                    }
-                    var bubbleIsGlass by remember(settings.displaySetting) {
-                        mutableStateOf(
-                            settings.displaySetting.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
-                        )
-                    }
-                    var linkedStyles by remember(settings.displaySetting) {
-                        mutableStateOf(settings.displaySetting.linkUiAndBubbleStyle)
-                    }
-
-                    // When linked, bubble mirrors UI style.
-                    if (linkedStyles && bubbleIsGlass != uiIsGlass) {
-                        bubbleIsGlass = uiIsGlass
-                        updateDisplaySetting(
-                            settings.displaySetting.copy(
-                                bubbleInterfaceStyle = if (uiIsGlass) me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
-                                else me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
-                            )
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        InterfaceStyleCard(
-                            selected = uiIsGlass,
-                            label = "UI Style",
-                            subtitle = if (uiIsGlass) "Refractive liquid surface" else "Soft frosted blur",
-                            icon = {
-                                Icon(
-                                    imageVector = if (uiIsGlass) Icons.Rounded.AutoAwesome else Icons.Rounded.BlurOn,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = Color.White
-                                )
-                            },
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                if (!uiIsGlass) {
+            // =====================================================================
+            // Section 1: UI Appearance
+            // =====================================================================
+            item {
+                SettingsGroup(
+                    title = "UI Appearance"
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Glass mode segmented tabs: Liquid / Frosted, each showing a "glass" subtext.
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            GlassModeTab(
+                                selected = uiIsGlass,
+                                label = "Liquid",
+                                subtitle = "glass",
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
                                     uiIsGlass = true
                                     updateDisplaySetting(
                                         settings.displaySetting.copy(
@@ -528,7 +537,14 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                             )
                                         )
                                     }
-                                } else {
+                                },
+                            )
+                            GlassModeTab(
+                                selected = !uiIsGlass,
+                                label = "Frosted",
+                                subtitle = "glass",
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
                                     uiIsGlass = false
                                     updateDisplaySetting(
                                         settings.displaySetting.copy(
@@ -543,392 +559,801 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                             )
                                         )
                                     }
-                                }
-                            },
-                        )
-                        InterfaceStyleCard(
-                            selected = bubbleIsGlass,
-                            label = "Bubble Style",
-                            subtitle = if (bubbleIsGlass) "Refractive liquid bubbles" else "Soft frosted bubbles",
-                            icon = {
-                                Icon(
-                                    imageVector = if (bubbleIsGlass) Icons.Rounded.AutoAwesome else Icons.Rounded.BlurOn,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = Color.White
-                                )
-                            },
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                if (!linkedStyles) {
-                                    val newBubbleIsGlass = !bubbleIsGlass
-                                    bubbleIsGlass = newBubbleIsGlass
-                                    updateDisplaySetting(
-                                        settings.displaySetting.copy(
-                                            bubbleInterfaceStyle = if (newBubbleIsGlass) me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
-                                            else me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
-                                        )
-                                    )
-                                }
-                            },
-                        )
-                    }
-
-                    // Link UI & Bubbles switch
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Link UI & Bubbles", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "When on, changing UI or Bubble glass style applies to both.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.65f)
+                                },
                             )
                         }
-                        HapticSwitch(
-                            checked = linkedStyles,
-                            onCheckedChange = {
-                                linkedStyles = it
-                                updateDisplaySetting(settings.displaySetting.copy(linkUiAndBubbleStyle = it))
-                            }
-                        )
-                    }
 
-                    // Fine-tune sliders accordion                    }
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    // Fine-tune sliders accordion
-                    var accordionExpanded by remember(settings.displaySetting) {
-                        mutableStateOf(false)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .clickable(onClick = { accordionExpanded = !accordionExpanded }),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Fine-tune Sliders",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color.White,
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = if (accordionExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.6f),
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-
-                    AnimatedVisibility(
-                        visible = accordionExpanded,
-                        enter = expandVertically(animationSpec = tween(durationMillis = 220)) + fadeIn(animationSpec = tween(durationMillis = 220)),
-                        exit = shrinkVertically(animationSpec = tween(durationMillis = 220)) + fadeOut(animationSpec = tween(durationMillis = 220)),
-                    ) {
-                        Column(
+                        var uiAdvanced by remember { mutableStateOf(false) }
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                                .padding(vertical = 12.dp)
+                                .clickable(onClick = { uiAdvanced = !uiAdvanced }),
+                            contentAlignment = Alignment.CenterStart,
                         ) {
-                            var localBarGradientDensity by remember(settings.displaySetting.barGradientDensity) {
-                                mutableFloatStateOf(settings.displaySetting.barGradientDensity)
-                            }
-                            var localBarGradientBlur by remember(settings.displaySetting.barGradientBlur) {
-                                mutableFloatStateOf(settings.displaySetting.barGradientBlur)
-                            }
-                            var localGlassAlpha by remember(settings.displaySetting.glassAlpha) {
-                                mutableFloatStateOf(settings.displaySetting.glassAlpha)
-                            }
-                            var localGlassBlur by remember(settings.displaySetting.glassBlur) {
-                                mutableFloatStateOf(settings.displaySetting.glassBlur)
-                            }
-                            var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) {
-                                mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha)
-                            }
-                            var localBubbleBlur by remember(settings.displaySetting.chatBubbleBlur) {
-                                mutableFloatStateOf(settings.displaySetting.chatBubbleBlur)
-                            }
-
-                            // Bar Gradient Density (0% to 100%, default 100%, step 0.01f)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Bar Gradient Density", style = MaterialTheme.typography.bodyMedium)
-                                Text("${(localBarGradientDensity * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localBarGradientDensity,
-                                onValueChange = { localBarGradientDensity = it },
-                                onValueChangeFinished = {
-                                    val rounded = (localBarGradientDensity * 100f).roundToInt() / 100f
-                                    localBarGradientDensity = rounded
-                                    updateDisplaySetting(settings.displaySetting.copy(barGradientDensity = localBarGradientDensity))
-                                },
-                                valueRange = 0f..1.0f,
-                                steps = 100,
-                            )
-
-                            // Bar Gradient Blur (0dp to 60dp, default 0dp)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Bar Gradient Blur", style = MaterialTheme.typography.bodyMedium)
-                                Text("${localBarGradientBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localBarGradientBlur,
-                                onValueChange = { localBarGradientBlur = it },
-                                onValueChangeFinished = {
-                                    val rounded = (localBarGradientBlur * 100f).roundToInt() / 100f
-                                    localBarGradientBlur = rounded
-                                    updateDisplaySetting(settings.displaySetting.copy(barGradientBlur = localBarGradientBlur))
-                                },
-                                valueRange = 0f..60f,
-                            )
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                color = Color.White.copy(alpha = 0.08f)
-                            )
-
-                            // UI Glass Opacity & Blur Radius
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("UI Glass Opacity", style = MaterialTheme.typography.bodyMedium)
-                                Text("${(localGlassAlpha * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localGlassAlpha,
-                                onValueChange = {
-                                    val rounded = (it * 100f).roundToInt() / 100f
-                                    if (rounded != localGlassAlpha) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localGlassAlpha = rounded
-                                    }
-                                },
-                                onValueChangeFinished = {
-                                    updateDisplaySetting(settings.displaySetting.copy(glassAlpha = localGlassAlpha))
-                                },
-                                valueRange = 0f..1.0f,
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("UI Glass Blur Radius", style = MaterialTheme.typography.bodyMedium)
-                                Text("${localGlassBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localGlassBlur,
-                                onValueChange = {
-                                    val rounded = it.roundToInt().toFloat()
-                                    if (rounded != localGlassBlur) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localGlassBlur = rounded
-                                    }
-                                },
-                                onValueChangeFinished = {
-                                    updateDisplaySetting(settings.displaySetting.copy(glassBlur = localGlassBlur))
-                                },
-                                valueRange = 0f..100f,
-                            )
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                color = Color.White.copy(alpha = 0.08f)
-                            )
-
-                            // Chat Bubble Opacity & Blur Radius
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Chat Bubble Opacity", style = MaterialTheme.typography.bodyMedium)
-                                Text("${(localBubbleAlpha * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localBubbleAlpha,
-                                onValueChange = {
-                                    val rounded = (it * 100f).roundToInt() / 100f
-                                    if (rounded != localBubbleAlpha) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localBubbleAlpha = rounded
-                                    }
-                                },
-                                onValueChangeFinished = {
-                                    updateDisplaySetting(settings.displaySetting.copy(chatBubbleAlpha = localBubbleAlpha))
-                                },
-                                valueRange = 0f..1.0f,
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Chat Bubble Blur Radius", style = MaterialTheme.typography.bodyMedium)
-                                Text("${localBubbleBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localBubbleBlur,
-                                onValueChange = {
-                                    val rounded = it.roundToInt().toFloat()
-                                    if (rounded != localBubbleBlur) {
-                                        haptics.perform(HapticPattern.Tick)
-                                        localBubbleBlur = rounded
-                                    }
-                                },
-                                onValueChangeFinished = {
-                                    updateDisplaySetting(settings.displaySetting.copy(chatBubbleBlur = localBubbleBlur))
-                                },
-                                valueRange = 0f..100f,
-                            )
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                color = Color.White.copy(alpha = 0.08f)
-                            )
-
-                            // Glass Tint Color presets
-                            Text(
-                                text = "Glass Tint Color",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val tintPresets = listOf(
-                                    Pair("Pure Clear", 0x00FFFFFFL),
-                                    Pair("Ice Blue", 0xFFB7E4FFL),
-                                    Pair("Emerald", 0xFF7FD6A4L),
-                                    Pair("Rose Gold", 0xFFE8B7C4L),
-                                    Pair("Sunset Amber", 0xFFFFCC80L),
-                                    Pair("Violet", 0xFFC39BD3L)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Advanced Appearance",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White,
                                 )
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(
+                                    imageVector = if (uiAdvanced) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = Color.White.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(
+                            visible = uiAdvanced,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut(),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                var localGlassAlpha by remember(settings.displaySetting.glassAlpha) {
+                                    mutableFloatStateOf(settings.displaySetting.glassAlpha)
+                                }
+                                glassSliderRow(
+                                    label = "UI Glass Opacity",
+                                    valueText = "${(localGlassAlpha * 100).roundToInt()}%",
+                                    value = localGlassAlpha,
+                                    onValueChange = {
+                                        val rounded = (it * 100f).roundToInt() / 100f
+                                        if (rounded != localGlassAlpha) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localGlassAlpha = rounded
+                                        }
+                                    },
+                                    onFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(glassAlpha = localGlassAlpha))
+                                    },
+                                )
+
+                                var localGlassBlur by remember(settings.displaySetting.glassBlur) {
+                                    mutableFloatStateOf(settings.displaySetting.glassBlur)
+                                }
+                                glassSliderRow(
+                                    label = "UI Glass Blur Radius",
+                                    valueText = "${localGlassBlur.roundToInt()} dp",
+                                    value = localGlassBlur,
+                                    onValueChange = {
+                                        val rounded = it.roundToInt().toFloat()
+                                        if (rounded != localGlassBlur) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localGlassBlur = rounded
+                                        }
+                                    },
+                                    onFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(glassBlur = localGlassBlur))
+                                    },
+                                    valueRange = 0f..100f,
+                                )
+
+                                var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
+                                    mutableFloatStateOf(settings.displaySetting.glassDepthScale)
+                                }
+                                glassSliderRow(
+                                    label = "UI Glass Depth / Refraction",
+                                    valueText = "${localDepthScale.roundToInt()}x",
+                                    value = localDepthScale,
+                                    onValueChange = { localDepthScale = it },
+                                    onFinished = {
+                                        val rounded = (localDepthScale * 10f).roundToInt() / 10f
+                                        localDepthScale = rounded
+                                        updateDisplaySetting(settings.displaySetting.copy(glassDepthScale = localDepthScale))
+                                    },
+                                    valueRange = 0f..2.5f,
+                                    steps = 25,
+                                )
+
+                                var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
+                                    mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
+                                }
+                                glassSliderRow(
+                                    label = "UI Glass Specular Highlight",
+                                    valueText = "${(localGlassSpecular * 100).roundToInt()}%",
+                                    value = localGlassSpecular,
+                                    onValueChange = { localGlassSpecular = it },
+                                    onFinished = {
+                                        val rounded = (localGlassSpecular * 100f).roundToInt() / 100f
+                                        localGlassSpecular = rounded
+                                        updateDisplaySetting(settings.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
+                                    },
+                                    valueRange = 0f..1.0f,
+                                    steps = 100,
+                                )
+
                                 var localTint by remember(settings.displaySetting.glassTintColor) {
                                     mutableStateOf(settings.displaySetting.glassTintColor)
                                 }
-                                val isTintClear = localTint == 0x00FFFFFFL
-                                tintPresets.forEachIndexed { index, (label, color) ->
-                                    val selected = localTint == color || (index == 0 && isTintClear)
-                                    InterfaceStyleCard(
-                                        selected = selected,
-                                        label = label,
-                                        subtitle = "",
-                                        icon = {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(14.dp)
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color(color))
+                                var uiTintPickerOpen by remember { mutableStateOf(false) }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Glass Tint Color",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = "Tint wash over glass surfaces",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    Row(
+                                        modifier = Modifier.wrapContentWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(Color(localTint))
+                                        )
+                                        Text(
+                                            text = "Pick color",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                        IconButton(
+                                            onClick = { uiTintPickerOpen = true }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Edit,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = Color.White.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (uiTintPickerOpen) {
+                                    TintColorPickerDialog(
+                                        open = true,
+                                        onDismiss = { uiTintPickerOpen = false },
+                                        initialColor = localTint,
+                                        onPick = { picked ->
+                                            uiTintPickerOpen = false
+                                            localTint = picked
+                                            updateDisplaySetting(
+                                                settings.displaySetting.copy(glassTintColor = picked)
                                             )
                                         },
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Pop)
-                                            localTint = color
+                                    )
+                                }
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = Color.White.copy(alpha = 0.08f)
+                                )
+
+                                var localBarGradientDensity by remember(settings.displaySetting.barGradientDensity) {
+                                    mutableFloatStateOf(settings.displaySetting.barGradientDensity)
+                                }
+                                glassSliderRow(
+                                    label = "Bar Gradient Density",
+                                    valueText = "${(localBarGradientDensity * 100).roundToInt()}%",
+                                    value = localBarGradientDensity,
+                                    onValueChange = { localBarGradientDensity = it },
+                                    onFinished = {
+                                        val rounded = (localBarGradientDensity * 100f).roundToInt() / 100f
+                                        localBarGradientDensity = rounded
+                                        updateDisplaySetting(settings.displaySetting.copy(barGradientDensity = localBarGradientDensity))
+                                    },
+                                    valueRange = 0f..1.0f,
+                                    steps = 100,
+                                )
+
+                                var localBarGradientBlur by remember(settings.displaySetting.barGradientBlur) {
+                                    mutableFloatStateOf(settings.displaySetting.barGradientBlur)
+                                }
+                                glassSliderRow(
+                                    label = "Bar Gradient Blur",
+                                    valueText = "${localBarGradientBlur.roundToInt()} dp",
+                                    value = localBarGradientBlur,
+                                    onValueChange = { localBarGradientBlur = it },
+                                    onFinished = {
+                                        val rounded = (localBarGradientBlur * 100f).roundToInt() / 100f
+                                        localBarGradientBlur = rounded
+                                        updateDisplaySetting(settings.displaySetting.copy(barGradientBlur = localBarGradientBlur))
+                                    },
+                                    valueRange = 0f..60f,
+                                )
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = Color.White.copy(alpha = 0.08f)
+                                )
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Link Chrome to Glass",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        Text(
+                                            text = "Side menu and popovers follow glass opacity, blur, and tone.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.linkChromeToGlass,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(settings.displaySetting.copy(linkChromeToGlass = it))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Link UI & Bubbles switch (placed between the two appearance sections)
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Link UI & Bubbles", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "When on, changing UI or Bubble glass style applies to both.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                    }
+                    HapticSwitch(
+                        checked = linkedStyles,
+                        onCheckedChange = {
+                            linkedStyles = it
+                            updateDisplaySetting(settings.displaySetting.copy(linkUiAndBubbleStyle = it))
+                        }
+                    )
+                }
+            }
+
+            // =====================================================================
+            // Section 2: Chat Bubbles Appearance
+            // =====================================================================
+            item {
+                SettingsGroup(
+                    title = "Chat Bubbles Appearance"
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Glass mode segmented tabs: Liquid / Frosted, each showing a "glass" subtext.
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            GlassModeTab(
+                                selected = bubbleIsGlass,
+                                label = "Liquid",
+                                subtitle = "glass",
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
+                                    if (linkedStyles) {
+                                        uiIsGlass = true
+                                        bubbleIsGlass = true
+                                        updateDisplaySetting(
+                                            settings.displaySetting.copy(
+                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
+                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS,
+                                            )
+                                        )
+                                    } else {
+                                        bubbleIsGlass = true
+                                        updateDisplaySetting(
+                                            settings.displaySetting.copy(
+                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
+                                            )
+                                        )
+                                    }
+                                },
+                            )
+                            GlassModeTab(
+                                selected = !bubbleIsGlass,
+                                label = "Frosted",
+                                subtitle = "glass",
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
+                                    if (linkedStyles) {
+                                        uiIsGlass = false
+                                        bubbleIsGlass = false
+                                        updateDisplaySetting(
+                                            settings.displaySetting.copy(
+                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
+                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED,
+                                            )
+                                        )
+                                    } else {
+                                        bubbleIsGlass = false
+                                        updateDisplaySetting(
+                                            settings.displaySetting.copy(
+                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
+                                            )
+                                        )
+                                    }
+                                },
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        var bubbleAdvanced by remember { mutableStateOf(false) }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp)
+                                .clickable(onClick = { bubbleAdvanced = !bubbleAdvanced }),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Advanced Appearance",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White,
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(
+                                    imageVector = if (bubbleAdvanced) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = Color.White.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(
+                            visible = bubbleAdvanced,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut(),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) {
+                                    mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha)
+                                }
+                                glassSliderRow(
+                                    label = "Bubble Opacity",
+                                    valueText = "${(localBubbleAlpha * 100).roundToInt()}%",
+                                    value = localBubbleAlpha,
+                                    onValueChange = {
+                                        val rounded = (it * 100f).roundToInt() / 100f
+                                        if (rounded != localBubbleAlpha) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localBubbleAlpha = rounded
+                                        }
+                                    },
+                                    onFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(chatBubbleAlpha = localBubbleAlpha))
+                                    },
+                                )
+
+                                var localBubbleBlur by remember(settings.displaySetting.chatBubbleBlur) {
+                                    mutableFloatStateOf(settings.displaySetting.chatBubbleBlur)
+                                }
+                                glassSliderRow(
+                                    label = "Bubble Blur Radius",
+                                    valueText = "${localBubbleBlur.roundToInt()} dp",
+                                    value = localBubbleBlur,
+                                    onValueChange = {
+                                        val rounded = it.roundToInt().toFloat()
+                                        if (rounded != localBubbleBlur) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localBubbleBlur = rounded
+                                        }
+                                    },
+                                    onFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(chatBubbleBlur = localBubbleBlur))
+                                    },
+                                    valueRange = 0f..100f,
+                                )
+
+                                var localBubbleTone by remember(settings.displaySetting.chatBubbleTone) {
+                                    mutableFloatStateOf(settings.displaySetting.chatBubbleTone)
+                                }
+                                glassSliderRow(
+                                    label = "Bubble Tone / Luminance",
+                                    valueText = "${(localBubbleTone * 100).roundToInt()}%",
+                                    value = localBubbleTone,
+                                    onValueChange = {
+                                        val rounded = (it * 100f).roundToInt() / 100f
+                                        if (rounded != localBubbleTone) {
+                                            haptics.perform(HapticPattern.Tick)
+                                            localBubbleTone = rounded
+                                        }
+                                    },
+                                    onFinished = {
+                                        updateDisplaySetting(settings.displaySetting.copy(chatBubbleTone = localBubbleTone))
+                                    },
+                                    valueRange = 0f..1.0f,
+                                    steps = 100,
+                                )
+
+                                var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
+                                    mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)
+                                }
+                                glassSliderRow(
+                                    label = "Bubble Depth / Refraction",
+                                    valueText = "${localBubbleDepth.roundToInt()}x",
+                                    value = localBubbleDepth,
+                                    onValueChange = { localBubbleDepth = it },
+                                    onFinished = {
+                                        val rounded = (localBubbleDepth * 10f).roundToInt() / 10f
+                                        localBubbleDepth = rounded
+                                        updateDisplaySetting(settings.displaySetting.copy(bubbleDepthScale = localBubbleDepth))
+                                    },
+                                    valueRange = 0f..2.5f,
+                                    steps = 25,
+                                )
+
+                                var localBubbleSpecular by remember(settings.displaySetting.bubbleSpecularIntensity) {
+                                    mutableFloatStateOf(settings.displaySetting.bubbleSpecularIntensity)
+                                }
+                                glassSliderRow(
+                                    label = "Bubble Specular Intensity",
+                                    valueText = "${(localBubbleSpecular * 100).roundToInt()}%",
+                                    value = localBubbleSpecular,
+                                    onValueChange = { localBubbleSpecular = it },
+                                    onFinished = {
+                                        val rounded = (localBubbleSpecular * 100f).roundToInt() / 100f
+                                        localBubbleSpecular = rounded
+                                        updateDisplaySetting(settings.displaySetting.copy(bubbleSpecularIntensity = localBubbleSpecular))
+                                    },
+                                    valueRange = 0f..1.0f,
+                                    steps = 100,
+                                )
+
+                                var localBubbleTint by remember(settings.displaySetting.chatBubbleTintHue) {
+                                    mutableStateOf(settings.displaySetting.chatBubbleTintHue)
+                                }
+                                var bubbleTintPickerOpen by remember { mutableStateOf(false) }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Bubble Tint Color",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = "Tint wash over chat bubbles",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    Row(
+                                        modifier = Modifier.wrapContentWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val tintColor = Color.hsv(localBubbleTint.coerceIn(0f, 360f), 0.75f, 1.0f)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(tintColor)
+                                        )
+                                        Text(
+                                            text = "Pick color",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                        IconButton(
+                                            onClick = { bubbleTintPickerOpen = true }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Edit,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = Color.White.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (bubbleTintPickerOpen) {
+                                    TintColorPickerDialog(
+                                        open = true,
+                                        onDismiss = { bubbleTintPickerOpen = false },
+                                        initialColor = Color.hsv(localBubbleTint.coerceIn(0f, 360f), 0.75f, 1.0f).toArgb().toLong(),
+                                        onPick = { picked ->
+                                            bubbleTintPickerOpen = false
+                                            val hsv = FloatArray(3)
+                                            android.graphics.Color.colorToHSV(picked.toInt(), hsv)
+                                            localBubbleTint = hsv[0]
                                             updateDisplaySetting(
-                                                settings.displaySetting.copy(glassTintColor = color)
+                                                settings.displaySetting.copy(
+                                                    chatBubbleTintHue = localBubbleTint,
+                                                    chatBubbleTintAmount = 1.0f
+                                                )
                                             )
                                         },
                                     )
                                 }
                             }
-
-                            // Glass Depth / Refraction Scale slider (0.0x..2.5x)
-                            var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
-                                mutableFloatStateOf(settings.displaySetting.glassDepthScale)
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Glass Depth / Refraction", style = MaterialTheme.typography.bodyMedium)
-                                Text("${localDepthScale.roundToInt()}x", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localDepthScale,
-                                onValueChange = { localDepthScale = it },
-                                onValueChangeFinished = {
-                                    val rounded = (localDepthScale * 10f).roundToInt() / 10f
-                                    localDepthScale = rounded
-                                    updateDisplaySetting(settings.displaySetting.copy(glassDepthScale = localDepthScale))
-                                },
-                                valueRange = 0f..2.5f,
-                                steps = 25,
-                            )
-
-                            // Specular Highlight Intensity slider (0%..100%)
-                            var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
-                                mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Specular Highlight Intensity", style = MaterialTheme.typography.bodyMedium)
-                                Text("${(localGlassSpecular * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localGlassSpecular,
-                                onValueChange = { localGlassSpecular = it },
-                                onValueChangeFinished = {
-                                    val rounded = (localGlassSpecular * 100f).roundToInt() / 100f
-                                    localGlassSpecular = rounded
-                                    updateDisplaySetting(settings.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
-                                },
-                                valueRange = 0f..1.0f,
-                                steps = 100,
-                            )
                         }
-                    }
-
-                    // Connect side menu + chat popovers to the glass sliders
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Connect Side Menu & Popovers", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "Side menu and chat popovers follow the opacity, blur, and tone sliders. Off keeps them a fixed charcoal glass.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.65f)
-                            )
-                        }
-                        HapticSwitch(
-                            checked = settings.displaySetting.linkChromeToGlass,
-                            onCheckedChange = {
-                                updateDisplaySetting(settings.displaySetting.copy(linkChromeToGlass = it))
-                            }
-                        )
                     }
                 }
             }
+
+
+
+/**
+ * Segmented tab for Liquid / Frosted glass mode with a small centered "glass" subtext.
+ * 48dp minimum touch target; never cramps horizontally on mobile.
+ */
+@Composable
+private fun RowScope.GlassModeTab(
+    selected: Boolean,
+    label: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    val fill = if (selected) Color(0xFF000000) else Color.White.copy(alpha = 0.04f)
+    val border: BorderStroke = if (selected) {
+        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+    } else {
+        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.14f))
+    }
+    Surface(
+        modifier = Modifier
+            .weight(1f)
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick),
+        shape = AppShapes.CardMedium,
+        color = fill,
+        border = border,
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = if (selected) Color.White else Color.White.copy(alpha = 0.66f),
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = if (selected) 0.85f else 0.45f),
+            )
+        }
+    }
+}
+
+/**
+ * Label + value row paired with [DomChatSlider] for glass appearance controls.
+ */
+@Composable
+private fun glassSliderRow(
+    label: String,
+    valueText: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    onFinished: () -> Unit,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    steps: Int = 0,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White)
+    }
+    DomChatSlider(
+        value = value,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onFinished,
+        valueRange = valueRange,
+        steps = steps,
+    )
+}
+
+/**
+ * HSV / Hex color picker dialog for glass and bubble tint washes
+ * (Convx-style color wheel replacement: sliders + hex input + preview swatch).
+ */
+@Composable
+private fun TintColorPickerDialog(
+    open: Boolean,
+    onDismiss: () -> Unit,
+    initialColor: Long,
+    onPick: (Long) -> Unit,
+) {
+    if (!open) return
+    var pickerColor by remember { mutableStateOf(initialColor) }
+    LaunchedEffect(initialColor) { pickerColor = initialColor }
+
+    val hsv = FloatArray(3)
+    fun syncSliders() {
+        android.graphics.Color.colorToHSV(pickerColor.toInt(), hsv)
+    }
+    syncSliders()
+    var hue by remember { mutableFloatStateOf(hsv[0]) }
+    var saturation by remember { mutableFloatStateOf(hsv[1] * 100f) }
+    var brightness by remember { mutableFloatStateOf(hsv[2] * 100f) }
+    var alpha by remember { mutableFloatStateOf(Color(pickerColor).alpha * 100f) }
+    var hex by remember { mutableStateOf(String.format("%08X", pickerColor.toInt())) }
+
+    fun derive() {
+        val argb = android.graphics.Color.HSVToColor(floatArrayOf(hue, saturation / 100f, brightness / 100f))
+        val a = (alpha / 100f * 255f).toInt().coerceIn(0, 255)
+        val r = android.graphics.Color.red(argb)
+        val g = android.graphics.Color.green(argb)
+        val b = android.graphics.Color.blue(argb)
+        pickerColor = (android.graphics.Color.argb(a, r, g, b).toLong() and 0xFFFFFFFFL)
+        hex = String.format("%08X", pickerColor.toInt())
+    }
+
+    Dialog(
+        onDismissRequest = { onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            shape = AppShapes.CardMedium,
+            color = Color(0xFF141520),
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            modifier = Modifier.padding(16.dp),
+        ) {
+            Column(modifier = Modifier.padding(20.dp).width(340.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(pickerColor))
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Preview",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = hex,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            tintSliderRow("Hue", "${hue.roundToInt()}°", hue, 0f..360f, 360) {
+                hue = it
+                derive()
+            }
+            tintSliderRow("Saturation", "${saturation.roundToInt()}%", saturation, 0f..100f, 100) {
+                saturation = it
+                derive()
+            }
+            tintSliderRow("Brightness", "${brightness.roundToInt()}%", brightness, 0f..100f, 100) {
+                brightness = it
+                derive()
+            }
+            tintSliderRow("Alpha", "${alpha.roundToInt()}%", alpha, 0f..100f, 100) {
+                alpha = it
+                derive()
+            }
+
+            OutlinedTextField(
+                value = hex,
+                onValueChange = { input ->
+                    hex = input
+                    try {
+                        val raw = input.trimStart()
+                        val parsed = android.graphics.Color.parseColor(if (raw.startsWith("#")) raw else "#$raw")
+                        pickerColor = parsed.toLong()
+                        val hsv = FloatArray(3)
+                        android.graphics.Color.colorToHSV(parsed, hsv)
+                        hue = hsv[0]
+                        saturation = hsv[1] * 100f
+                        brightness = hsv[2] * 100f
+                        alpha = Color(parsed).alpha * 100f
+                    } catch (_: IllegalArgumentException) {
+                    }
+                },
+                singleLine = true,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Hex") },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(
+                    onClick = { onDismiss() },
+                ) {
+                    Text(text = "Cancel")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        onPick(pickerColor)
+                        onDismiss()
+                    },
+                ) {
+                    Text(text = "Apply")
+                }
+            }
+        }
+        }
+    }
+}
+
+/**
+ * Label + value row paired with [DomChatSlider] inside the tint picker dialog.
+ */
+@Composable
+private fun tintSliderRow(
+    label: String,
+    valueText: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onChange: (Float) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White)
+    }
+    DomChatSlider(
+        value = value,
+        onValueChange = onChange,
+        valueRange = valueRange,
+        steps = steps,
+    )
+}
+
 
 
 

@@ -2,11 +2,14 @@ package me.lucid.domchat.ui.components.chat
 
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
+import me.lucid.domchat.ui.modifier.domChatFrostedContainerColor
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.font.FontWeight
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.liquidBubbleSurfaceColor
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -95,6 +98,7 @@ import me.lucid.ai.ui.UIMessagePart
 import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Assistant
+import me.lucid.domchat.data.datastore.InterfaceStyle
 import me.lucid.domchat.data.model.AssistantAffectScope
 import me.lucid.domchat.data.model.ChatAttachmentState
 import me.lucid.ai.ui.MessageNode
@@ -1421,6 +1425,7 @@ private fun UserMessageTurn(
                 val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
                 val isMessengerStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
                 val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+                val bubbleInterfaceStyle = settings.displaySetting.bubbleInterfaceStyle
                 val glassAlpha = settings.displaySetting.chatBubbleAlpha
                 val bubbleBlur = settings.displaySetting.chatBubbleBlur
                 val bubbleTone = settings.displaySetting.chatBubbleTone
@@ -1453,14 +1458,45 @@ private fun UserMessageTurn(
                         onToggleToolbar()
                     },
                     bubbleModifier = { m, shape, color ->
-                        if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                            m.domChatBlurEffect(
-                                containerColor = color,
+                        if (isTransparentStyle) {
+                            m
+                        } else if (!isGlassy) {
+                            if (bubbleBlur > 0f) {
+                                m.domChatBlurEffect(
+                                    containerColor = color,
+                                    shape = shape,
+                                    blurRadius = bubbleBlur.dp
+                                )
+                            } else {
+                                m
+                            }
+                        } else when (bubbleInterfaceStyle) {
+                            InterfaceStyle.FROSTED -> m.domChatBlurEffect(
+                                containerColor = domChatFrostedContainerColor(color),
                                 shape = shape,
                                 blurRadius = bubbleBlur.dp
                             )
-                        } else {
-                            m
+                            InterfaceStyle.GLASS -> {
+                                val depth = settings.displaySetting.bubbleDepthScale.coerceIn(0f, 2.5f)
+                                val specular = settings.displaySetting.bubbleSpecularIntensity.coerceIn(0f, 1f)
+                                val baseColor = liquidBubbleSurfaceColor()
+                                val tintColor = Color(settings.displaySetting.glassTintColor)
+                                val tintStrength = tintColor.alpha.coerceIn(0f, 1f)
+                                val tinted = if (tintStrength > 0.02f) {
+                                    lerp(baseColor, tintColor, tintStrength)
+                                } else {
+                                    baseColor
+                                }
+                                val specularLift = lerp(tinted, Color.White, 0.15f * specular)
+                                m.liquidGlassSurface(
+                                    shape = shape,
+                                    borderWidth = 0.dp,
+                                    fillColor = specularLift.copy(
+                                        alpha = (specularLift.alpha * depth).coerceIn(0f, 1f)
+                                    ),
+                                    glassMode = settings.displaySetting.liquidGlassMode,
+                                )
+                            }
                         }
                     }
                 ) {
@@ -1926,6 +1962,7 @@ private fun AssistantMessageTurn(
                 val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
                 val isMessengerStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
                 val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+                val bubbleInterfaceStyle = settings.displaySetting.bubbleInterfaceStyle
                 val glassAlpha = settings.displaySetting.chatBubbleAlpha
                 val bubbleBlur = settings.displaySetting.chatBubbleBlur
                 val bubbleTone = settings.displaySetting.chatBubbleTone
@@ -1951,14 +1988,45 @@ private fun AssistantMessageTurn(
                         .then(assistantSwipeModifier),
                     onClick = handleBubbleClick,
                     bubbleModifier = { m, shape, color ->
-                        if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                            m.domChatBlurEffect(
-                                containerColor = color,
+                        if (isTransparentStyle) {
+                            m
+                        } else if (!isGlassy) {
+                            if (bubbleBlur > 0f) {
+                                m.domChatBlurEffect(
+                                    containerColor = color,
+                                    shape = shape,
+                                    blurRadius = bubbleBlur.dp
+                                )
+                            } else {
+                                m
+                            }
+                        } else when (bubbleInterfaceStyle) {
+                            InterfaceStyle.FROSTED -> m.domChatBlurEffect(
+                                containerColor = domChatFrostedContainerColor(color),
                                 shape = shape,
                                 blurRadius = bubbleBlur.dp
                             )
-                        } else {
-                            m
+                            InterfaceStyle.GLASS -> {
+                                val depth = settings.displaySetting.bubbleDepthScale.coerceIn(0f, 2.5f)
+                                val specular = settings.displaySetting.bubbleSpecularIntensity.coerceIn(0f, 1f)
+                                val baseColor = liquidBubbleSurfaceColor()
+                                val tintColor = Color(settings.displaySetting.glassTintColor)
+                                val tintStrength = tintColor.alpha.coerceIn(0f, 1f)
+                                val tinted = if (tintStrength > 0.02f) {
+                                    lerp(baseColor, tintColor, tintStrength)
+                                } else {
+                                    baseColor
+                                }
+                                val specularLift = lerp(tinted, Color.White, 0.15f * specular)
+                                m.liquidGlassSurface(
+                                    shape = shape,
+                                    borderWidth = 0.dp,
+                                    fillColor = specularLift.copy(
+                                        alpha = (specularLift.alpha * depth).coerceIn(0f, 1f)
+                                    ),
+                                    glassMode = settings.displaySetting.liquidGlassMode,
+                                )
+                            }
                         }
                     }
                 ) {
@@ -2295,6 +2363,7 @@ private fun AssistantThinkingDropdown(
     val settings = LocalSettings.current
     val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
     val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+    val bubbleInterfaceStyle = settings.displaySetting.bubbleInterfaceStyle
     val glassAlpha = settings.displaySetting.chatBubbleAlpha
     val bubbleBlur = settings.displaySetting.chatBubbleBlur
     val bubbleTone = settings.displaySetting.chatBubbleTone
@@ -2344,16 +2413,45 @@ private fun AssistantThinkingDropdown(
             .widthIn(max = maxWidth)
             .clip(shape)
             .then(
-                if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                    Modifier.domChatBlurEffect(
-                        containerColor = defaultContainerColor,
+                if (isTransparentStyle) {
+                    Modifier
+                } else if (!isGlassy) {
+                    if (bubbleBlur > 0f) {
+                        Modifier.domChatBlurEffect(
+                            containerColor = defaultContainerColor,
+                            shape = shape,
+                            blurRadius = bubbleBlur.dp
+                        )
+                    } else {
+                        Modifier.background(defaultContainerColor, shape)
+                    }
+                } else when (bubbleInterfaceStyle) {
+                    InterfaceStyle.FROSTED -> Modifier.domChatBlurEffect(
+                        containerColor = domChatFrostedContainerColor(defaultContainerColor),
                         shape = shape,
                         blurRadius = bubbleBlur.dp
                     )
-                } else if (!isTransparentStyle) {
-                    Modifier.background(defaultContainerColor, shape)
-                } else {
-                    Modifier
+                    InterfaceStyle.GLASS -> {
+                        val depth = settings.displaySetting.bubbleDepthScale.coerceIn(0f, 2.5f)
+                        val specular = settings.displaySetting.bubbleSpecularIntensity.coerceIn(0f, 1f)
+                        val baseColor = liquidBubbleSurfaceColor()
+                        val tintColor = Color(settings.displaySetting.glassTintColor)
+                        val tintStrength = tintColor.alpha.coerceIn(0f, 1f)
+                        val tinted = if (tintStrength > 0.02f) {
+                            lerp(baseColor, tintColor, tintStrength)
+                        } else {
+                            baseColor
+                        }
+                        val specularLift = lerp(tinted, Color.White, 0.15f * specular)
+                        liquidGlassSurface(
+                            shape = shape,
+                            borderWidth = 0.dp,
+                            fillColor = specularLift.copy(
+                                alpha = (specularLift.alpha * depth).coerceIn(0f, 1f)
+                            ),
+                            glassMode = settings.displaySetting.liquidGlassMode,
+                        )
+                    }
                 }
             )
             .then(
