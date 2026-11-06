@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.liquidBubbleSurfaceColor
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import androidx.compose.ui.graphics.lerp
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -2443,7 +2444,7 @@ private fun AssistantThinkingDropdown(
                             baseColor
                         }
                         val specularLift = lerp(tinted, Color.White, 0.15f * specular)
-                        liquidGlassSurface(
+                        Modifier.liquidGlassSurface(
                             shape = shape,
                             borderWidth = 0.dp,
                             fillColor = specularLift.copy(

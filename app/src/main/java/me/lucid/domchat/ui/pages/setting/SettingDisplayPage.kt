@@ -138,6 +138,15 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val modelCatalogStatus by vm.modelCatalogStatus.collectAsStateWithLifecycle()
     var displaySetting by remember(settings) { mutableStateOf(settings.displaySetting) }
+
+    fun updateDisplaySetting(setting: DisplaySetting) {
+        displaySetting = setting
+        vm.updateSettings(
+            settings.copy(
+                displaySetting = setting
+            )
+        )
+    }
     var uiIsGlass by remember(settings.displaySetting) {
         mutableStateOf(
             settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
@@ -169,15 +178,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     val context = LocalContext.current
     val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
-
-    fun updateDisplaySetting(setting: DisplaySetting) {
-        displaySetting = setting
-        vm.updateSettings(
-            settings.copy(
-                displaySetting = setting
-            )
-        )
-    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()

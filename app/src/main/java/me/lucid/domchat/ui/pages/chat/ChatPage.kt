@@ -93,9 +93,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.ExperimentalBlurApi
 import androidx.compose.ui.draw.blur
-import androidx.compose.runtime.OptIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -293,7 +291,6 @@ internal fun completedGenerationIdsAfterDone(
     }
 }
 
-@OptIn(ExperimentalBlurApi::class)
 @Composable
 private fun ChatTopFadeOverlay(
     fadeHeight: Dp,
@@ -330,7 +327,6 @@ private fun ChatTopFadeOverlay(
     }
 }
 
-@OptIn(ExperimentalBlurApi::class)
 @Composable
 private fun ChatWidePanelEdgeFadeOverlay(
     width: Dp,
@@ -3364,6 +3360,7 @@ private fun ChatToolbar(
         if (placement == ChatToolbarPlacement.Top && showTopFade) {
             ChatTopFadeOverlay(
                 fadeHeight = chatTopToolbarFadeHeight,
+                settings = settings,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
         }
