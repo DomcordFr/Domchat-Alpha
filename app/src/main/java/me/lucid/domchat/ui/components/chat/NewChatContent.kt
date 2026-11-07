@@ -54,6 +54,8 @@ import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.modifier.blurredContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -284,16 +286,22 @@ private fun TemplateCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.50f)
+    val isDark = LocalDarkMode.current
+    val cardShape = AppShapes.CardMedium
+    val cardFill = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
 
     Card(
         onClick = onClick,
         modifier = modifier
             .wrapContentHeight()
-            .domChatBlurEffect(cardColor, AppShapes.CardMedium),
-        shape = AppShapes.CardMedium,
-        colors = CardDefaults.cardColors(containerColor = blurredContainerColor(cardColor)),
-        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+            .liquidGlassSurface(
+                shape = cardShape,
+                fillColor = cardFill,
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            ),
+        shape = cardShape,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -331,23 +339,21 @@ private fun ActionPill(
     modifier: Modifier = Modifier
 ) {
     val pillShape = RoundedCornerShape(24.dp)
-    val cardColor = domChatCardContainerColor().copy(alpha = 0.35f)
     val isDark = LocalDarkMode.current
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (isDark) 0.25f else 0.15f),
-            Color.White.copy(alpha = if (isDark) 0.08f else 0.04f)
-        )
-    )
+    val pillFill = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
             onClick = onClick,
             modifier = modifier
-                .domChatBlurEffect(cardColor, pillShape)
-                .border(0.5.dp, borderBrush, pillShape),
+                .liquidGlassSurface(
+                    shape = pillShape,
+                    fillColor = pillFill,
+                    borderWidth = 0.5.dp,
+                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                ),
             shape = pillShape,
-            color = cardColor
+            color = Color.Transparent
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
