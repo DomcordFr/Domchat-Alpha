@@ -1525,7 +1525,7 @@ private fun ChatPageContent(
                     contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop)) {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         if (renderBackground) {
                             AssistantBackground(
                                 assistant = currentAssistant,
