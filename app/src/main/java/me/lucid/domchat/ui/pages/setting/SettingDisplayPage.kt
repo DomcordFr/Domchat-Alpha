@@ -140,9 +140,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     var displaySetting by remember(settings) { mutableStateOf(settings.displaySetting) }
 
     fun updateDisplaySetting(setting: DisplaySetting) {
-        displaySetting = setting
         vm.updateSettings(
-            settings.copy(
+            vm.settings.value.copy(
                 displaySetting = setting
             )
         )
@@ -165,7 +164,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     if (linkedStyles && bubbleIsGlass != uiIsGlass) {
         bubbleIsGlass = uiIsGlass
         updateDisplaySetting(
-            settings.displaySetting.copy(
+            vm.settings.value.displaySetting.copy(
                 liquidGlassMode = if (uiIsGlass) me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND
                 else me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
                 bubbleInterfaceStyle = if (uiIsGlass) InterfaceStyle.GLASS
@@ -218,7 +217,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             onStyleSelected = { newStyle ->
                                 vm.updateSettings(
                                     settings.copy(
-                                        displaySetting = settings.displaySetting.copy(chatMessageStyle = newStyle)
+                                        displaySetting = vm.settings.value.displaySetting.copy(chatMessageStyle = newStyle)
                                     )
                                 )
                             }
@@ -273,7 +272,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         if (localPath != null) {
                             haptics.perform(HapticPattern.Pop)
                             updateDisplaySetting(
-                                settings.displaySetting.copy(globalBackground = localPath)
+                                vm.settings.value.displaySetting.copy(globalBackground = localPath)
                             )
                         }
                     }
@@ -295,7 +294,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         onClick = {
                                             haptics.perform(HapticPattern.Pop)
                                             updateDisplaySetting(
-                                                settings.displaySetting.copy(globalBackground = null)
+                                                vm.settings.value.displaySetting.copy(globalBackground = null)
                                             )
                                         }
                                     ) {
@@ -404,7 +403,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     localDim = it
                                 },
                                 onValueChangeFinished = {
-                                    updateDisplaySetting(settings.displaySetting.copy(globalBackgroundDim = localDim))
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundDim = localDim))
                                 },
                                 valueRange = 0f..0.95f
                             )
@@ -426,7 +425,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     localBlur = it
                                 },
                                 onValueChangeFinished = {
-                                    updateDisplaySetting(settings.displaySetting.copy(globalBackgroundBlur = localBlur))
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlur = localBlur))
                                 },
                                 valueRange = 0f..100f
                             )
@@ -442,7 +441,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     selectedOption = settings.displaySetting.backgroundBlurMode,
                                     onOptionSelected = {
                                         haptics.perform(HapticPattern.Tick)
-                                        updateDisplaySetting(settings.displaySetting.copy(backgroundBlurMode = it))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(backgroundBlurMode = it))
                                     },
                                     optionToString = { mode ->
                                         when (mode) {
@@ -473,7 +472,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                             localFadeHeight = it
                                         },
                                         onValueChangeFinished = {
-                                            updateDisplaySetting(settings.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
                                         },
                                         valueRange = 0.10f..1.0f
                                     )
@@ -498,7 +497,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 selectedOption = settings.displaySetting.animationSpeed,
                                 onOptionSelected = {
                                     haptics.perform(HapticPattern.Tick)
-                                    updateDisplaySetting(settings.displaySetting.copy(animationSpeed = it))
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(animationSpeed = it))
                                 },
                                 optionToString = { it.title },
                                 modifier = Modifier.wrapContentWidth()
@@ -529,14 +528,14 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     haptics.perform(HapticPattern.Pop)
                                     uiIsGlass = true
                                     updateDisplaySetting(
-                                        settings.displaySetting.copy(
+                                        vm.settings.value.displaySetting.copy(
                                             liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND
                                         )
                                     )
                                     if (linkedStyles) {
                                         bubbleIsGlass = true
                                         updateDisplaySetting(
-                                            settings.displaySetting.copy(
+                                            vm.settings.value.displaySetting.copy(
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
                                             )
                                         )
@@ -551,14 +550,14 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     haptics.perform(HapticPattern.Pop)
                                     uiIsGlass = false
                                     updateDisplaySetting(
-                                        settings.displaySetting.copy(
+                                        vm.settings.value.displaySetting.copy(
                                             liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
                                         )
                                     )
                                     if (linkedStyles) {
                                         bubbleIsGlass = false
                                         updateDisplaySetting(
-                                            settings.displaySetting.copy(
+                                            vm.settings.value.displaySetting.copy(
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
                                             )
                                         )
@@ -569,32 +568,34 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        var uiAdvanced by remember { mutableStateOf(false) }
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp)
-                                .clickable(onClick = { uiAdvanced = !uiAdvanced }),
-                            contentAlignment = Alignment.CenterStart,
+                                .padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Advanced Appearance",
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                     color = Color.White,
                                 )
-                                Spacer(modifier = Modifier.weight(1f))
-                                Icon(
-                                    imageVector = if (uiAdvanced) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = Color.White.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(20.dp),
-                                )
                             }
+                            HapticSwitch(
+                                checked = settings.displaySetting.isAdvancedGlassEnabled,
+                                onCheckedChange = {
+                                    updateDisplaySetting(
+                                        vm.settings.value.displaySetting.copy(
+                                            isAdvancedGlassEnabled = it
+                                        )
+                                    )
+                                }
+                            )
                         }
 
                         AnimatedVisibility(
-                            visible = uiAdvanced,
+                            visible = settings.displaySetting.isAdvancedGlassEnabled,
                             enter = expandVertically() + fadeIn(),
                             exit = shrinkVertically() + fadeOut(),
                         ) {
@@ -619,7 +620,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     onFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(glassAlpha = localGlassAlpha))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(glassAlpha = localGlassAlpha))
                                     },
                                 )
 
@@ -638,7 +639,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     onFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(glassBlur = localGlassBlur))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(glassBlur = localGlassBlur))
                                     },
                                     valueRange = 0f..100f,
                                 )
@@ -646,7 +647,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.glassDepthScale)
                                 }
-                                if (uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Depth / Refraction",
                                     valueText = "${localDepthScale.roundToInt()}x",
@@ -655,17 +655,15 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     onFinished = {
                                         val rounded = (localDepthScale * 10f).roundToInt() / 10f
                                         localDepthScale = rounded
-                                        updateDisplaySetting(settings.displaySetting.copy(glassDepthScale = localDepthScale))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(glassDepthScale = localDepthScale))
                                     },
                                     valueRange = 0f..2.5f,
                                     steps = 25,
                                 )
-                                }
 
                                 var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
                                 }
-                                if (uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Specular Highlight",
                                     valueText = "${(localGlassSpecular * 100).roundToInt()}%",
@@ -674,12 +672,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     onFinished = {
                                         val rounded = (localGlassSpecular * 100f).roundToInt() / 100f
                                         localGlassSpecular = rounded
-                                        updateDisplaySetting(settings.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
                                     },
                                     valueRange = 0f..1.0f,
                                     steps = 100,
                                 )
-                                }
 
                                 var localTint by remember(settings.displaySetting.glassTintColor) {
                                     mutableStateOf(settings.displaySetting.glassTintColor)
@@ -740,7 +737,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                             uiTintPickerOpen = false
                                             localTint = picked
                                             updateDisplaySetting(
-                                                settings.displaySetting.copy(glassTintColor = picked)
+                                                vm.settings.value.displaySetting.copy(glassTintColor = picked)
                                             )
                                         },
                                     )
@@ -762,7 +759,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     onFinished = {
                                         val rounded = (localBarGradientDensity * 100f).roundToInt() / 100f
                                         localBarGradientDensity = rounded
-                                        updateDisplaySetting(settings.displaySetting.copy(barGradientDensity = localBarGradientDensity))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(barGradientDensity = localBarGradientDensity))
                                     },
                                     valueRange = 0f..1.0f,
                                     steps = 100,
@@ -779,7 +776,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     onFinished = {
                                         val rounded = (localBarGradientBlur * 100f).roundToInt() / 100f
                                         localBarGradientBlur = rounded
-                                        updateDisplaySetting(settings.displaySetting.copy(barGradientBlur = localBarGradientBlur))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(barGradientBlur = localBarGradientBlur))
                                     },
                                     valueRange = 0f..60f,
                                 )
@@ -811,7 +808,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     HapticSwitch(
                                         checked = settings.displaySetting.linkChromeToGlass,
                                         onCheckedChange = {
-                                            updateDisplaySetting(settings.displaySetting.copy(linkChromeToGlass = it))
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(linkChromeToGlass = it))
                                         }
                                     )
                                 }
@@ -842,7 +839,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         checked = linkedStyles,
                         onCheckedChange = {
                             linkedStyles = it
-                            updateDisplaySetting(settings.displaySetting.copy(linkUiAndBubbleStyle = it))
+                            updateDisplaySetting(vm.settings.value.displaySetting.copy(linkUiAndBubbleStyle = it))
                         }
                     )
                 }
@@ -871,7 +868,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         uiIsGlass = true
                                         bubbleIsGlass = true
                                         updateDisplaySetting(
-                                            settings.displaySetting.copy(
+                                            vm.settings.value.displaySetting.copy(
                                                 liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS,
                                             )
@@ -879,7 +876,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     } else {
                                         bubbleIsGlass = true
                                         updateDisplaySetting(
-                                            settings.displaySetting.copy(
+                                            vm.settings.value.displaySetting.copy(
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
                                             )
                                         )
@@ -896,7 +893,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         uiIsGlass = false
                                         bubbleIsGlass = false
                                         updateDisplaySetting(
-                                            settings.displaySetting.copy(
+                                            vm.settings.value.displaySetting.copy(
                                                 liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED,
                                             )
@@ -904,7 +901,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     } else {
                                         bubbleIsGlass = false
                                         updateDisplaySetting(
-                                            settings.displaySetting.copy(
+                                            vm.settings.value.displaySetting.copy(
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
                                             )
                                         )
@@ -915,32 +912,34 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        var bubbleAdvanced by remember { mutableStateOf(false) }
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp)
-                                .clickable(onClick = { bubbleAdvanced = !bubbleAdvanced }),
-                            contentAlignment = Alignment.CenterStart,
+                                .padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Advanced Appearance",
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                     color = Color.White,
                                 )
-                                Spacer(modifier = Modifier.weight(1f))
-                                Icon(
-                                    imageVector = if (bubbleAdvanced) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = Color.White.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(20.dp),
-                                )
                             }
+                            HapticSwitch(
+                                checked = settings.displaySetting.isAdvancedGlassEnabled,
+                                onCheckedChange = {
+                                    updateDisplaySetting(
+                                        vm.settings.value.displaySetting.copy(
+                                            isAdvancedGlassEnabled = it
+                                        )
+                                    )
+                                }
+                            )
                         }
 
                         AnimatedVisibility(
-                            visible = bubbleAdvanced,
+                            visible = settings.displaySetting.isAdvancedGlassEnabled,
                             enter = expandVertically() + fadeIn(),
                             exit = shrinkVertically() + fadeOut(),
                         ) {
@@ -965,7 +964,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     onFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(chatBubbleAlpha = localBubbleAlpha))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(chatBubbleAlpha = localBubbleAlpha))
                                     },
                                 )
 
@@ -984,7 +983,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     onFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(chatBubbleBlur = localBubbleBlur))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(chatBubbleBlur = localBubbleBlur))
                                     },
                                     valueRange = 0f..100f,
                                 )
@@ -1004,7 +1003,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     },
                                     onFinished = {
-                                        updateDisplaySetting(settings.displaySetting.copy(chatBubbleTone = localBubbleTone))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(chatBubbleTone = localBubbleTone))
                                     },
                                     valueRange = 0f..1.0f,
                                     steps = 100,
@@ -1013,7 +1012,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)
                                 }
-                                if (bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Depth / Refraction",
                                     valueText = "${localBubbleDepth.roundToInt()}x",
@@ -1022,17 +1020,15 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     onFinished = {
                                         val rounded = (localBubbleDepth * 10f).roundToInt() / 10f
                                         localBubbleDepth = rounded
-                                        updateDisplaySetting(settings.displaySetting.copy(bubbleDepthScale = localBubbleDepth))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleDepthScale = localBubbleDepth))
                                     },
                                     valueRange = 0f..2.5f,
                                     steps = 25,
                                 )
-                                }
 
                                 var localBubbleSpecular by remember(settings.displaySetting.bubbleSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleSpecularIntensity)
                                 }
-                                if (bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Specular Intensity",
                                     valueText = "${(localBubbleSpecular * 100).roundToInt()}%",
@@ -1041,12 +1037,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     onFinished = {
                                         val rounded = (localBubbleSpecular * 100f).roundToInt() / 100f
                                         localBubbleSpecular = rounded
-                                        updateDisplaySetting(settings.displaySetting.copy(bubbleSpecularIntensity = localBubbleSpecular))
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleSpecularIntensity = localBubbleSpecular))
                                     },
                                     valueRange = 0f..1.0f,
                                     steps = 100,
                                 )
-                                }
 
                                 var localBubbleTint by remember(settings.displaySetting.chatBubbleTintHue) {
                                     mutableStateOf(settings.displaySetting.chatBubbleTintHue)
@@ -1110,7 +1105,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                             android.graphics.Color.colorToHSV(picked.toInt(), hsv)
                                             localBubbleTint = hsv[0]
                                             updateDisplaySetting(
-                                                settings.displaySetting.copy(
+                                                vm.settings.value.displaySetting.copy(
                                                     chatBubbleTintHue = localBubbleTint,
                                                     chatBubbleTintAmount = 1.0f
                                                 )
