@@ -364,7 +364,9 @@ fun Modifier.liquidGlassBubbleSurface(
     val amountPx = with(density) { refractionAmount.toPx() }
     val specular = specularIntensity.coerceIn(0f, 1f)
 
-    val tintColor = if (display.chatBubbleTintHue > 0f) Color.hsv(display.chatBubbleTintHue.coerceIn(0f, 360f), 0.75f, 1.0f) else Color.Transparent
+    val tintColor = if (display.chatBubbleTintAmount > 0.02f) {
+        Color.hsv(display.chatBubbleTintHue.coerceIn(0f, 360f), 0.75f, 1.0f).copy(alpha = (display.chatBubbleTintAmount * 0.40f).coerceIn(0f, 1f))
+    } else Color.Transparent
     val blurContainer = if (tintColor.alpha > 0.02f) tintColor else fillColor
 
     val highlight: (() -> Highlight?)? = if (useGlass && borderWidth > 0.dp && specular > 0f) {

@@ -2380,7 +2380,13 @@ private fun AssistantThinkingDropdown(
                     Modifier.liquidGlassSurface(
                         shape = shape,
                         borderWidth = 0.5.dp,
-                        fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
+                        fillColor = if (tintAmount > 0.02f) {
+                            Color.hsv(tintHue.coerceIn(0f, 360f), 0.75f, 1.0f).copy(alpha = (tintAmount * 0.40f).coerceIn(0f, 1f))
+                        } else if (isDark) {
+                            Color.White.copy(alpha = 0.05f)
+                        } else {
+                            Color.White.copy(alpha = 0.25f)
+                        },
                     )
                 }
             )

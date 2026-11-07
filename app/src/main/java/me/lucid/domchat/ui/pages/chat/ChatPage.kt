@@ -794,6 +794,8 @@ fun ChatPage(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val chatBackdrop = rememberLayerBackdrop()
     val pageBackdrop = rememberLayerBackdrop()
+    val wallpaperBackdrop = rememberLayerBackdrop()
+    val contentBackdrop = rememberLayerBackdrop()
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
     // Handle back press when drawer is open
@@ -1538,7 +1540,7 @@ private fun ChatPageContent(
                             AssistantBackground(
                                 assistant = currentAssistant,
                                 conversationId = conversation.id.toString(),
-                                modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
+                                modifier = Modifier.domChatBlurSource().layerBackdrop(wallpaperBackdrop)
                             )
                         } else {
                             Box(
@@ -1546,7 +1548,7 @@ private fun ChatPageContent(
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                                     .domChatBlurSource()
-                                    .layerBackdrop(chatBackdrop))
+                                    .layerBackdrop(wallpaperBackdrop))
                         }
 
                     Scaffold(
@@ -1559,6 +1561,7 @@ private fun ChatPageContent(
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.DOWN,
                         ) {
+                        CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
                         ChatToolbar(
                             placement = ChatToolbarPlacement.Top,
                             settings = setting,
@@ -1605,6 +1608,7 @@ private fun ChatPageContent(
                         )
                         }
                     }
+                }
                 } else {
                     {
                         ChatTopFadeOverlay(
@@ -1709,53 +1713,61 @@ private fun ChatPageContent(
                                             }
                                         }
                                     }
-                                    ChatList(
-                                        innerPadding = PaddingValues(
-                                            top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
-                                            bottom = chatListBottomPadding(toolbarPlacement)
-                                        ),
-                                    conversation = frameConversation,
-                                    state = frameListState,
-                                    loading = targetConversationId == conversation.id && loadingJob != null,
-                                    previewMode = previewMode,
-                                    settings = setting,
-                                    recentlyRestoredNodeIds = recentlyRestoredNodeIds,
-                                    initialSearchQuery = frameInitialSearchQuery,
-                                    searchQuery = chatSearchQuery,
-                                    onSearchQueryChange = { chatSearchQuery = it },
-                                    shareSelecting = isChatShareSelecting,
-                                    selectedShareItems = selectedChatShareItems,
-                                    onSelectedShareItemsChange = { selectedChatShareItems = it },
-                                    contentMaxWidth = contentMaxWidth,
-                                    onJumpToMessage = { index ->
-                                        previewMode = false
-                                        scope.launch {
-                                            // Wait for AnimatedContent transition to complete before scrolling
-                                            delay(350)
-                                            frameListState.animateScrollToItem(index)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .layerBackdrop(contentBackdrop)
+                                    ) {
+                                        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
+                                            ChatList(
+                                                innerPadding = PaddingValues(
+                                                    top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
+                                                    bottom = chatListBottomPadding(toolbarPlacement)
+                                                ),
+                                                conversation = frameConversation,
+                                                state = frameListState,
+                                                loading = targetConversationId == conversation.id && loadingJob != null,
+                                                previewMode = previewMode,
+                                                settings = setting,
+                                                recentlyRestoredNodeIds = recentlyRestoredNodeIds,
+                                                initialSearchQuery = frameInitialSearchQuery,
+                                                searchQuery = chatSearchQuery,
+                                                onSearchQueryChange = { chatSearchQuery = it },
+                                                shareSelecting = isChatShareSelecting,
+                                                selectedShareItems = selectedChatShareItems,
+                                                onSelectedShareItemsChange = { selectedChatShareItems = it },
+                                                contentMaxWidth = contentMaxWidth,
+                                                onJumpToMessage = { index ->
+                                                    previewMode = false
+                                                    scope.launch {
+                                                        // Wait for AnimatedContent transition to complete before scrolling
+                                                        delay(350)
+                                                        frameListState.animateScrollToItem(index)
+                                                    }
+                                                },
+                                                onRegenerate = { message ->
+                                                    vm.regenerateAtMessage(message)
+                                                },
+                                                onEdit = {
+                                                    inputState.editingMessage = it.id
+                                                    inputState.setContents(it.parts)
+                                                },
+                                                onDelete = { message ->
+                                                    pendingDeleteMessage = message
+                                                },
+                                                onUpdateMessage = onUpdateMessage,
+                                                onForkMessage = {
+                                                    scope.launch {
+                                                        val forkConversation = vm.forkMessage(it)
+                                                        if (forkConversation != null) {
+                                                            navigateToChatPage(navController, forkConversation.id)
+                                                        }
+                                                    }
+                                                },
+                                                onAddCustomGreeting = { showCustomGreetingDialog = true },
+                                            )
                                         }
-                                    },
-                                    onRegenerate = { message ->
-                                        vm.regenerateAtMessage(message)
-                                    },
-                                    onEdit = {
-                                        inputState.editingMessage = it.id
-                                        inputState.setContents(it.parts)
-                                    },
-                                    onDelete = { message ->
-                                        pendingDeleteMessage = message
-                                    },
-                                    onUpdateMessage = onUpdateMessage,
-                                    onForkMessage = {
-                                        scope.launch {
-                                            val forkConversation = vm.forkMessage(it)
-                                            if (forkConversation != null) {
-                                                navigateToChatPage(navController, forkConversation.id)
-                                            }
-                                        }
-                                    },
-                                    onAddCustomGreeting = { showCustomGreetingDialog = true },
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -2126,6 +2138,7 @@ private fun ChatPageContent(
                         bottomPadding = if (toolbarPlacement == ChatToolbarPlacement.Bottom) 12.dp else 24.dp,
                     )
                 } else {
+                    CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
                     MinimalChatInput(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -2413,6 +2426,7 @@ private fun ChatPageContent(
                 ) { state ->
                     if (state == EnterExitState.Visible) 1f else 0.96f
                 }
+                CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
                 ChatToolbarOverflowMenu(
                     placement = toolbarPlacement,
                     menuScale = menuScale,
@@ -2572,6 +2586,7 @@ private fun ChatToolbarIconButton(
     Box(
         modifier = Modifier
             .size(size)
+            .liquidGlassSurface(shape = CircleShape, borderWidth = 0.5.dp, isFloatingControl = true)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -3457,7 +3472,8 @@ private fun ChatToolbar(
                     border = topContainerBorder,
                     modifier = Modifier
                         .size(topPillSize)
-                        .zIndex(2f),
+                        .zIndex(2f)
+                        .liquidGlassSurface(shape = CircleShape, borderWidth = 0.5.dp, isFloatingControl = true),
                 )
             }
 

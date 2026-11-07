@@ -299,10 +299,17 @@ private class DrawBackdropNode(
     private fun currentBackdropVersion(): Int? = (backdrop as? LayerBackdrop)?.geometryVersion
 
     private fun currentBackdropOffset(): Offset? {
-        val source = backdrop as? LayerBackdrop ?: return null
-        val sourceCoordinates = source.layerCoordinates ?: return null
-        val selfCoordinates = layoutCoordinates ?: return null
-        return selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
+        return try {
+            val source = backdrop as? LayerBackdrop ?: return null
+            val sourceCoordinates = source.layerCoordinates ?: return null
+            val selfCoordinates = layoutCoordinates ?: return null
+            if (!sourceCoordinates.isAttached || !selfCoordinates.isAttached) {
+                return recordedBackdropOffset
+            }
+            selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
+        } catch (_: Exception) {
+            recordedBackdropOffset
+        }
     }
 
     private val recordBackdropBlock: (DrawScope.() -> Unit) = {
@@ -344,14 +351,29 @@ private class DrawBackdropNode(
             ((size.height * scale).toInt() + padding.toInt() * 2).coerceAtLeast(1)
         )
         val offset = currentBackdropOffset()
+        val version = currentBackdropVersion()
+
+        // If offset is null during fast-scroll fling (coordinates detaching/remeasuring),
+        // still draw the last recorded layer so the bubble never blinks transparent.
         if (offset == null) {
+            val layer = graphicsLayer
+            if (layer != null && recordedBackdropSize != IntSize.Zero) {
+                layer.topLeft = if (padding != 0f) IntOffset(-padding.toInt(), -padding.toInt()) else IntOffset.Zero
+                if (scale != 1f) {
+                    scale(1f / scale, pivot = Offset.Zero) {
+                        drawLayer(layer)
+                    }
+                } else {
+                    drawLayer(layer)
+                }
+            }
             surfaceDirty = true
             return false
         }
-        val version = currentBackdropVersion()
 
+        // Do not trigger expensive shader re-record on pure translation jitter;
+        // only re-record when size or source version actually changed.
         val geometryChanged = surfaceDirty ||
-            offset != recordedBackdropOffset ||
             recordSize != recordedBackdropSize
         val versionChanged = version == null || version != recordedBackdropVersion
         val hasRecording = recordedBackdropSize != IntSize.Zero

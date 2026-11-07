@@ -454,28 +454,41 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             }
 
                             if (settings.displaySetting.backgroundBlurMode == BackgroundBlurMode.BOTTOM_FADE) {
-                                AnimatedContent<BackgroundBlurMode>(targetState = settings.displaySetting.backgroundBlurMode) {
-                                    Row(
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut(),
+                                ) {
+                                    Column(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
-                                        Text("Fade Blur Height", style = MaterialTheme.typography.bodyMedium)
-                                        Text("${(localFadeHeight * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Fade Blur Height",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Text("${(localFadeHeight * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                                        }
+                                        DomChatSlider(
+                                            value = localFadeHeight,
+                                            onValueChange = {
+                                                if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
+                                                    haptics.perform(HapticPattern.Tick)
+                                                }
+                                                localFadeHeight = it
+                                            },
+                                            onValueChangeFinished = {
+                                                updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
+                                            },
+                                            valueRange = 0.10f..1.0f
+                                        )
                                     }
-                                    DomChatSlider(
-                                        value = localFadeHeight,
-                                        onValueChange = {
-                                            if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
-                                                haptics.perform(HapticPattern.Tick)
-                                            }
-                                            localFadeHeight = it
-                                        },
-                                        onValueChangeFinished = {
-                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
-                                        },
-                                        valueRange = 0.10f..1.0f
-                                    )
                                 }
                             }
                         }
@@ -818,6 +831,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.08f),
+            )
+
             // Link UI & Bubbles switch (placed between the two appearance sections)
             item {
                 Row(
@@ -844,6 +862,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                     )
                 }
             }
+
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.08f),
+            )
 
             // =====================================================================
             // Section 2: Chat Bubbles Appearance
