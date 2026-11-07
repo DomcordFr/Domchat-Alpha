@@ -867,7 +867,6 @@ fun MinimalChatInput(
                             }
                         },
                         containerColor = Color.Transparent,
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .size(AppSize.ChromePill)
                             .then(
@@ -4447,9 +4446,9 @@ private fun ChatScrollToBottomButton(
             .pressScale(interactionSource)
             .liquidGlassSurface(
                 shape = CircleShape,
-                fillColor = blurredContainerColor(Color(0xFF000000)),
-                borderWidth = 1.dp,
-                specularBrush = SolidColor(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                fillColor = Color.Black.copy(alpha = 0.35f),
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
             )
             .clip(CircleShape)
             .clickable(

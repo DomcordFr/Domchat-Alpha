@@ -1657,6 +1657,7 @@ private fun ChatPageContent(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
+                                    .domChatBlurSource()
                                     .graphicsLayer {
                                         alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
                                     }
@@ -2568,22 +2569,6 @@ private fun ChatToolbarIconButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .then(
-                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                    Modifier.frostedGlassSurface(
-                        shape = RoundedCornerShape(999.dp),
-                        fillColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f),
-                        borderWidth = 0.5.dp,
-                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                    )
-                } else {
-                    Modifier.liquidGlassSurface(
-                        shape = RoundedCornerShape(999.dp),
-                        glassMode = settings.displaySetting.liquidGlassMode,
-                        isFloatingControl = true,
-                    )
-                }
-            )
             .clickable(
                 enabled = enabled,
                 interactionSource = interactionSource,

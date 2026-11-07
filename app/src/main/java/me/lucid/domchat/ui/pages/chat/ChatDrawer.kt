@@ -546,7 +546,7 @@ fun ChatDrawerContent(
             }
             DomChatModalDrawerSheet(
                 drawerShape = drawerShape,
-                drawerContainerColor = Color(0xE6101014),
+                drawerContainerColor = Color(0xFF101014).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.15f, 0.85f)),
                 modifier = drawerModifier,
             ) {
                 drawerContent()
