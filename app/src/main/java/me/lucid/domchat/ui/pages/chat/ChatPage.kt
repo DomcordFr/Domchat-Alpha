@@ -1538,7 +1538,7 @@ private fun ChatPageContent(
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                                     .domChatBlurSource()
-                                    .layerBackdrop(chatBackdrop)
+                                    .layerBackdrop(chatBackdrop))
                         }
 
                     Scaffold(
