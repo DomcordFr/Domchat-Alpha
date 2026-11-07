@@ -640,6 +640,7 @@ private fun SharedTransitionScope.ChatListNormal(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
+                    .domChatBlurSource()
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "conversation_list"),
                         animatedVisibilityScope = animatedVisibilityScope

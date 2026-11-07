@@ -1530,7 +1530,7 @@ private fun ChatPageContent(
                             AssistantBackground(
                                 assistant = currentAssistant,
                                 conversationId = conversation.id.toString(),
-                                modifier = Modifier.domChatBlurSource()
+                                modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
                             )
                         } else {
                             Box(
@@ -1538,7 +1538,7 @@ private fun ChatPageContent(
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                                     .domChatBlurSource()
-                            )
+                                    .layerBackdrop(chatBackdrop)
                         }
 
                     Scaffold(
@@ -2875,7 +2875,7 @@ private fun ChatToolbarOverflowMenu(
             Surface(
                 shape = menuShape,
                 color = Color.Transparent,
-                border = border,
+                border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,
                 modifier = Modifier
                     .align(
                         if (placement == ChatToolbarPlacement.Top) {

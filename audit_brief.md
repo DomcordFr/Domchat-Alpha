@@ -1,68 +1,84 @@
-# Audit Brief — Task 185: Fix Cyclic GraphicsLayer Render Recursion Crash
+# Audit Brief — Task 187: Dual-Tier Backdrop & Brace Balancing (ChatPage.kt)
 
 ## Intent Verification
 
-Fixed a cyclic render loop crash in `AssistantChatTheme` composable inside `ChatPage.kt`.
+Task 187 (commit context: `7e2a38e` — feat(chat): add spring-animated sliding indicator to ProvidersBottomBar) requested four changes to `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt`:
 
-**Root cause**: At line 1528, `Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop))` wrapped both the `AssistantBackground` composable and its fallback `Box`. The `AssistantBackground` (line 1533) calls `.domChatBlurSource()` which internally calls `layerBackdrop(chatBackdrop)` — recording into `chatBackdrop.graphicsLayer`. Because the parent `Box` already had `layerBackdrop(chatBackdrop)` applied, the parent graphicsLayer and child graphicsLayer were the **same RenderTexture**. When `drawBackdrop` ran inside the parent Box, it sampled `chatBackdrop.graphicsLayer` — the same RenderTexture currently being drawn — causing an infinite HWUI recursion and `RenderThread SIGSEGV` stack overflow crash.
+1. **Remove redundant `wallpaperBackdrop` and `pageBackdrop` declarations inside `ChatPageContent`** — REMOVED.
+   - Deleted `pageBackdrop: LayerBackdrop` parameter (was line 1347).
+   - Deleted `val wallpaperBackdrop = rememberLayerBackdrop()` (was line 1350).
+   - Deleted `val pageBackdrop = rememberLayerBackdrop()` (was line 1351).
+   - `chatBackdrop` (created at line 795 via `rememberLayerBackdrop()`) remains as the single backdrop source.
+   - Zero `!!` force-unwraps introduced. `grep` verified no `!!` in edited regions.
 
-**Fix applied**: Changed line 1528 from:
-```kotlin
-Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop)) {
-```
-to:
-```kotlin
-Box(modifier = Modifier.fillMaxSize()) {
-```
+2. **Parent Box of Scaffold is plain `Box(modifier = Modifier.fillMaxSize())`; `.layerBackdrop(chatBackdrop)` attached directly to `AssistantBackground` and fallback Box** — VERIFIED / NO CHANGE NEEDED.
+   - Line 1528: `Box(modifier = Modifier.fillMaxSize())` — already plain, no wrapping `.layerBackdrop()`.
+   - Line 1533: `AssistantBackground(... modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop))` — already correct.
+   - Lines 1538-1541: fallback `Box(... .fillMaxSize() .background(...) .domChatBlurSource() .layerBackdrop(chatBackdrop))` — already correct.
 
-This removes the parent graphicsLayer that was sampling itself. The `AssistantBackground` at line 1533 still has `.domChatBlurSource()` (which calls `layerBackdrop(chatBackdrop)` internally), so the backdrop is still captured correctly — just without the recursive parent-child graphicsLayer dependency.
+3. **Balance braces around `Box(modifier = Modifier.fillMaxSize().layerBackdrop(pageBackdrop))` wrapping `ChatPageContent` in `ModalNavigationDrawer`** — VERIFIED / NO CHANGE NEEDED.
+   - No `Box(modifier = Modifier.fillMaxSize().layerBackdrop(pageBackdrop))` wrapping exists in the `ModalNavigationDrawer` path (lines 1226-1270). `pageBackdrop` parameter and locals were removed, and neither call site (lines 1165, 1242) passed `pageBackdrop`.
+   - Brace structure at lines 1224-1270 verified balanced: `CompositionLocalProvider` ×2, `ModalNavigationDrawer(`/`)`/`{`/`}`, drawerContent `{`/`}`, content `{`/`}` all matched.
+   - No cyclic graphics layers introduced.
+
+4. **`ChatToolbarOverflowMenu`: `border = null` when `liquidGlassSurface` is active** — APPLIED.
+   - Changed `border = border,` → `border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,` (was line 2881).
+   - Matches existing pattern at lines 2677, 2732, 3097 in the same file.
 
 ## Call Chain & Architecture
 
-**Call chain (before fix)**:
-1. `ChatPage.kt` → `Compose UI frame`
-2. `Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop))` → registers parent `GraphicsLayer`
-3. Inside this Box, `AssistantBackground(...).modifier = Modifier.domChatBlurSource()` → calls `layerBackdrop(chatBackdrop)` → calls `drawBackdrop()`
-4. `drawBackdrop()` calls `drawLayer(backdrop.graphicsLayer)` — samples the SAME graphicsLayer being drawn in step 2
-5. HWUI detects render recursion → `RenderThread SIGSEGV`
+```
+ChatPage (Composable, @Composable)
+├─ CompositionLocalProvider(LocalDomChatBlur provides blur)
+│  └─ CompositionLocalProvider(LocalAppBackdrop provides chatBackdrop)
+│     └─ Surface(modifier = Modifier.fillMaxSize())
+│        ├─ Box(modifier = Modifier.fillMaxSize())        ← plain, no backdrop wrapper
+│        │   ├─ AssistantBackground(modifier = ...layerBackdrop(chatBackdrop))
+│        │   └─ Box(... .layerBackdrop(chatBackdrop))     ← fallback background
+│        └─ Scaffold(...)
+│           ├─ topBar: ChatToolbar
+│           └─ content: chat messages + input
+└─ ChatToolbarOverflowMenu (inside ChatToolbar)
+   └─ Surface(shape, color = Transparent, border = conditional, modifier = ... .liquidGlassSurface / .frostedGlassSurface)
+```
 
-**After fix**:
-1. `ChatPage.kt` → `Compose UI frame`
-2. `Box(modifier = Modifier.fillMaxSize())` — NO graphicsLayer registered for parent
-3. Inside Box, `AssistantBackground(...).modifier = Modifier.domChatBlurSource()` → calls `layerBackdrop(chatBackdrop)` → records into `chatBackdrop.graphicsLayer`
-4. `drawBackdrop()` samples `chatBackdrop.graphicsLayer` — a SEPARATE graphicsLayer, no recursion
-
-**Architecture boundary**: `DomChatMenuButton` in `ui-core` module remains unchanged — it correctly uses `containerColor` and `border` parameters without referencing `LiquidGlassMode` (previously fixed in commit `a4b04b9`). All UI composition boundaries are respected: `ChatPage` owns the `chatBackdrop` `LocalAppBackdrop`, child composables consume it via `LocalAppBackdrop.current`.
+- `ChatPageContent` is called from two sites:
+  - Wide-screen path (line ~1165): inside `Box(modifier = Modifier.weight(1f).fillMaxHeight())`.
+  - Modal drawer path (line ~1242): inside `ModalNavigationDrawer(...) { ChatPageContent(...) }`.
+- Neither call site passed `pageBackdrop`; removing the parameter resolves the dangling required parameter.
+- `chatBackdrop: LayerBackdrop` is created once at line 795 via `rememberLayerBackdrop()` and provided via `LocalAppBackdrop`.
 
 ## Recomposition & Memory Safety
 
-- **No new state introduced**: Only removed a `.layerBackdrop(chatBackdrop)` modifier call from the parent Box. No new state objects allocated.
-- **`chatBackdrop` is a `rememberLayerBackdrop()`**: Creates a single `LayerBackdrop` instance per `ChatPage` composition. The `LayerBackdropNode` holds a reference to this single instance — no new allocations per frame.
-- **`surfaceDirty` flag**: `LayerBackdropNode` uses `surfaceDirty` flag to track when re-recording is needed. The parent no longer redundantly calls `layerBackdrop`, so `recordLayer` is called once per frame instead of twice (parent + child).
-- **No `!!` force-unwraps introduced**: grep-verified zero new `!!` matches.
+- `rememberLayerBackdrop()` is called once for `chatBackdrop` at line 795 — retained, not duplicated.
+- Removed `wallpaperBackdrop` and `pageBackdrop` locals eliminated two redundant `rememberLayerBackdrop()` calls per recomposition.
+- `Box(modifier = Modifier.fillMaxSize())` (line 1528) is plain — no `.layerBackdrop()` on the Box itself, avoiding double backdrop application and unnecessary graphics layer creation.
+- `.layerBackdrop(chatBackdrop)` is applied directly to `AssistantBackground` and the fallback `Box`, keeping backdrop recording localized to the background layer without wrapping `Scaffold`.
+- No `SnapshotStateList` or mutable collections passed to `items(...)`; `derivedStateOf` rule not applicable here.
+- No `!!` force-unwraps introduced; nullable `DomChatBlur?` handled via `CompositionLocalProvider` with `provides`.
 
 ## Threading & Dispatchers
 
-- **Pure UI thread Compose code**: `ChartPage.kt` composable functions run on `Dispatchers.Main`. All Compose drawing happens on the main thread during the draw phase.
-- **No coroutines introduced**: No `launch`, `withContext`, or `async` calls added.
-- **No blocking calls**: The `layerBackdrop` call happens within Compose's draw phase, which is designed for synchronous GPU command recording.
-- **Thread safety**: `LayerBackdropNode` uses `mutableStateOf(null)` for `layoutCoordinates` with `neverEqualPolicy()` — this is the standard Compose pattern for tracking layout coordinates safely.
+- All changes are UI-layer Compose modifications; no coroutines, dispatchers, or threading introduced.
+- `val scope = rememberCoroutineScope()` retained for UI event dispatch (already existed, unchanged).
+- No `Dispatchers.Main` violations; no `Dispatchers.IO` needed for this UI-only change.
+- `LayerBackdrop` is a Compose graphics-layer modifier, executed on the main thread during composition/render — correct per Compose threading model.
 
 ## Offline & Error State Handling
 
-- **Fully offline-capable**: Purely graphical composition changes. No network calls, no remote resource lookups.
-- **No new error states introduced**: The fix removes a crash path (RenderThread SIGSEGV) rather than introducing new ones.
-- **Graceful degradation**: If `chatBackdrop` is `null` (when `LocalAppBackdrop.current` is null, e.g. on API < 33), `drawBackdrop` handles it gracefully — `LayerBackdropNode.draw()` calls `backdrop.graphicsLayer` which would be null, but this is pre-existing behavior not affected by this change.
-- **Memory safety**: No memory leaks introduced. `LayerBackdrop` is `rememberLayerBackdrop()` — created once per composition and garbage-collected when the composable leaves composition.
+- Backdrop rendering is purely visual/local; no network or disk I/O involved.
+- `renderBackground: Boolean = true` flag controls whether `AssistantBackground` or a solid-color fallback `Box` is rendered — both paths apply `.layerBackdrop(chatBackdrop)` identically.
+- No error states, loading states, or offline handling affected by this change.
+- `border = null` when `liquidGlassSurface` is active prevents drawing a soft edge border on top of the glass surface modifier, avoiding visual layering conflicts (not an error condition — a styling guard).
 
-## Files Modified
+## Summary of Edits
 
-| File | Change |
-|------|--------|
-| `ChatPage.kt` | Line 1528: Removed `.layerBackdrop(chatBackdrop)` from parent Box modifier, leaving `Modifier.fillMaxSize()` |
+| Location | Change |
+|----------|--------|
+| Line 1346-1347 | Removed `pageBackdrop: LayerBackdrop,` parameter |
+| Line 1349-1350 | Removed `val wallpaperBackdrop = rememberLayerBackdrop()` and `val pageBackdrop = rememberLayerBackdrop()` |
+| Line ~2878 | `border = border` → conditional `border = if (...SOFT_FROSTED) border else null` |
+| Lines 1528-1541 | Verified: plain Box + `.layerBackdrop(chatBackdrop)` on AssistantBackground and fallback Box |
+| Lines 1224-1270 | Verified: balanced braces in ModalNavigationDrawer wrapping |
 
-**Diff**: 1 file changed, 1 insertion(+), 1 deletion(-)
-
-**Commit**: `0e83afc` fix(ui): break graphicsLayer render cycle in ChatPage.kt
-
-**Status**: Pushed to `origin/main`
+No local Gradle build performed (per constraints). File changes are syntactically consistent with surrounding Kotlin/Compose style.

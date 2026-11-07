@@ -390,7 +390,7 @@ fun ChatDrawerContent(
                     DomChatDrawerQuickActionGroup {
                         DomChatDrawerQuickAction(
                             label = "Home",
-                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp)),
+                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.dp),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navigateToChatPage(navController)
@@ -408,7 +408,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
-                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp)),
+                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.dp),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
@@ -426,7 +426,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
-                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp)),
+                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.dp),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.Menu)
@@ -546,7 +546,11 @@ fun ChatDrawerContent(
             }
             DomChatModalDrawerSheet(
                 drawerShape = drawerShape,
-                drawerContainerColor = Color(0xFF101014).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.15f, 0.85f)),
+                drawerContainerColor = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                    Color(0xFF101014).copy(alpha = settings.displaySetting.glassAlpha.coerceIn(0.15f, 0.85f))
+                } else {
+                    Color.Transparent
+                },
                 modifier = drawerModifier,
             ) {
                 drawerContent()
