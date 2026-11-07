@@ -303,8 +303,10 @@ private fun ChatTopFadeOverlay(
     settings: Settings,
     modifier: Modifier = Modifier,
 ) {
-    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val density = settings.displaySetting.barGradientDensity.coerceIn(0f, 1f)
+    if (density <= 0.001f) return
+
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val blur = settings.displaySetting.barGradientBlur
 
     Column(
@@ -314,7 +316,7 @@ private fun ChatTopFadeOverlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(statusBarHeight)
-                .background(MaterialTheme.colorScheme.background)
+                .background(Color.Black.copy(alpha = 0.98f * density))
         )
         Box(
             modifier = Modifier
