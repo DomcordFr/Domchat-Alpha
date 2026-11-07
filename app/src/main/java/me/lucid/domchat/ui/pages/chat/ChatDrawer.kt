@@ -211,6 +211,7 @@ fun ChatDrawerContent(
 
             // Glassy User Profile Header (Static display, non-interactive)
             val profileCardShape = RoundedCornerShape(20.dp)
+            val profileCardBg = domChatChromeSurfaceColor()
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -221,7 +222,8 @@ fun ChatDrawerContent(
                         borderWidth = 0.5.dp,
                         specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
                     ),
-                modifier = Modifier.fillMaxWidth(),
+                color = Color.Transparent,
+                shape = profileCardShape,
             ) {
                 Row(
                     modifier = Modifier
@@ -384,12 +386,12 @@ fun ChatDrawerContent(
                 // Imagine + Stats buttons (visibility handled by ConversationList)
                 quickActions = {
                     val haptics = rememberPremiumHaptics()
-                    val quickActionCardColor = domChatCardContainerColor()
+                    val qaGlassFill = if (isDark) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
                     DomChatDrawerQuickActionGroup {
                         DomChatDrawerQuickAction(
                             label = "Home",
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp),
-                            containerColor = quickActionCardColor,
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), fillColor = qaGlassFill, borderWidth = 0.5.dp),
+                            containerColor = Color.Transparent,
                             onClick = {
                                 navigateToChatPage(navController)
                                 dismissDrawerAfterSelection()
@@ -406,8 +408,8 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp),
-                            containerColor = quickActionCardColor,
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), fillColor = qaGlassFill, borderWidth = 0.5.dp),
+                            containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
                                 dismissDrawerAfterSelection()
@@ -424,8 +426,8 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp),
-                            containerColor = quickActionCardColor,
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), fillColor = qaGlassFill, borderWidth = 0.5.dp),
+                            containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.Menu)
                                 dismissDrawerAfterSelection()
@@ -466,7 +468,9 @@ fun ChatDrawerContent(
                                     navController.navigate(Screen.ConversationList)
                                     dismissDrawerAfterSelection()
                                 },
-                            ) {
+                            color = Color.Transparent,
+                            shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxSize()

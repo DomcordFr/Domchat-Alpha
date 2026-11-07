@@ -4,6 +4,7 @@ import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -192,13 +193,19 @@ fun ConversationList(
             }
             if (conversations.itemCount == 0) {
                 item {
+                    val emptyGlassFill = if (LocalDarkMode.current) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 20.dp),
+                            .padding(horizontal = 16.dp, vertical = 20.dp)
+                            .liquidGlassSurface(
+                                shape = RoundedCornerShape(20.dp),
+                                fillColor = emptyGlassFill,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                            ),
                         shape = RoundedCornerShape(20.dp),
-                        color = domChatCardContainerColor(),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                        color = Color.Transparent,
                     ) {
                         Column(
                             modifier = Modifier
