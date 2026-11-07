@@ -867,6 +867,11 @@ fun MinimalChatInput(
                             }
                         },
                         containerColor = Color.Transparent,
+                        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                            null
+                        } else {
+                            BorderStroke(0.dp, Color.Transparent)
+                        },
                         modifier = Modifier
                             .size(AppSize.ChromePill)
                             .then(
@@ -894,9 +899,13 @@ fun MinimalChatInput(
                 // Text field capsule with embedded action button
                 // Corner radius = 24dp (user confirmed this was correct)
                 val inputShape = DomChatComposerInputShape
-                val composerBg = domChatFloatingSurfaceColor()
                 DomChatComposerCapsule(
-                    containerColor = composerBg,
+                    containerColor = Color.Transparent,
+                    border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                    } else {
+                        null
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = AppSize.ChromePill)
@@ -994,7 +1003,11 @@ fun MinimalChatInput(
                                     .zIndex(10f)
                             ) {
                                 Surface(
-                                    color = blurredContainerColor(Color(0xFF000000)),
+                                    color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                        blurredContainerColor(Color(0xFF000000))
+                                    } else {
+                                        Color.Transparent
+                                    },
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .then(
