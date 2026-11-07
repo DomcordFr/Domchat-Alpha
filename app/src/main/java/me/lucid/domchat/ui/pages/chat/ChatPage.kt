@@ -794,8 +794,6 @@ fun ChatPage(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val chatBackdrop = rememberLayerBackdrop()
     val pageBackdrop = rememberLayerBackdrop()
-    val wallpaperBackdrop = rememberLayerBackdrop()
-    val contentBackdrop = rememberLayerBackdrop()
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
     // Handle back press when drawer is open
@@ -1524,6 +1522,8 @@ private fun ChatPageContent(
     }
 
     AssistantChatTheme(assistant = currentAssistant) {
+        val wallpaperBackdrop = rememberLayerBackdrop()
+        val contentBackdrop = rememberLayerBackdrop()
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
             CompositionLocalProvider(LocalAppBackdrop provides chatBackdrop) {
                 Surface(
@@ -1609,9 +1609,9 @@ private fun ChatPageContent(
                         }
                     }
                 }
-                } else {
-                    {
-                        ChatTopFadeOverlay(
+            else {
+                {
+                    ChatTopFadeOverlay(
                             fadeHeight = chatBottomToolbarTopFadeHeight,
                             settings = setting,
                         )
