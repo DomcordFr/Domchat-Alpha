@@ -301,11 +301,7 @@ private class DrawBackdropNode(
         val source = backdrop as? LayerBackdrop ?: return null
         val sourceCoordinates = source.layerCoordinates ?: return null
         val selfCoordinates = layoutCoordinates ?: return null
-        return try {
-            sourceCoordinates.localPositionOf(selfCoordinates)
-        } catch (_: Exception) {
-            null
-        }
+        return selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
     }
 
     private val recordBackdropBlock: (DrawScope.() -> Unit) = {
@@ -347,6 +343,10 @@ private class DrawBackdropNode(
             ((size.height * scale).toInt() + padding.toInt() * 2).coerceAtLeast(1)
         )
         val offset = currentBackdropOffset()
+        if (offset == null) {
+            surfaceDirty = true
+            return false
+        }
         val version = currentBackdropVersion()
 
         val geometryChanged = surfaceDirty ||

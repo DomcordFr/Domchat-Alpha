@@ -211,14 +211,13 @@ fun ChatDrawerContent(
 
             // Glassy User Profile Header (Static display, non-interactive)
             val profileCardShape = RoundedCornerShape(20.dp)
-            val profileCardBg = domChatChromeSurfaceColor()
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp, vertical = 4.dp)
                     .liquidGlassSurface(
                         shape = profileCardShape,
-                        fillColor = profileCardBg.copy(alpha = 0.35f),
+                        fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
                         borderWidth = 0.5.dp,
                         specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
                     ),
@@ -390,7 +389,7 @@ fun ChatDrawerContent(
                     DomChatDrawerQuickActionGroup {
                         DomChatDrawerQuickAction(
                             label = "Home",
-                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.dp),
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navigateToChatPage(navController)
@@ -408,7 +407,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
-                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.dp),
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
@@ -426,7 +425,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
-                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.dp),
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.Menu)
@@ -459,7 +458,7 @@ fun ChatDrawerContent(
                                 .height(actionButtonSize)
                                 .liquidGlassSurface(
                                     shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                                    fillColor = itemColor.copy(alpha = 0.35f),
+                                    fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
                                     borderWidth = 0.5.dp,
                                     specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
                                 )
