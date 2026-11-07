@@ -793,6 +793,7 @@ fun ChatPage(
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val chatBackdrop = rememberLayerBackdrop()
+    val pageBackdrop = rememberLayerBackdrop()
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
     // Handle back press when drawer is open
@@ -1187,6 +1188,7 @@ fun ChatPage(
                                     initialSearchQuery = searchQuery,
                                     renderBackground = false,
                                     chatBackdrop = chatBackdrop,
+                                    pageBackdrop = pageBackdrop,
                                     inheritedBlur = wideBlur,
                                 )
                             }
@@ -1226,45 +1228,50 @@ fun ChatPage(
                     ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
-                        ChatDrawerContent(
-                            navController = navController,
-                            current = conversation,
-                            vm = vm,
-                            settings = setting,
-                            inputState = inputState,
-                            activePersistenceMode = activePersistenceMode,
-                            drawerState = drawerState,
-                            presentation = ChatDrawerPresentation.Modal,
-                            onOpenAssistantPicker = { showModalAssistantPicker = true },
-                        )
+                        CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                            ChatDrawerContent(
+                                navController = navController,
+                                current = conversation,
+                                vm = vm,
+                                settings = setting,
+                                inputState = inputState,
+                                activePersistenceMode = activePersistenceMode,
+                                drawerState = drawerState,
+                                presentation = ChatDrawerPresentation.Modal,
+                                onOpenAssistantPicker = { showModalAssistantPicker = true },
+                            )
+                        }
                     }
                 ) {
-                    ChatPageContent(
-                        inheritedBlur = modalBlur,
-                        chatBackdrop = chatBackdrop,
-                        inputState = inputState,
-                        loadingJob = loadingJob,
-                        setting = setting,
-                        currentAssistant = conversationAssistant,
-                        conversationInitialized = conversationInitialized,
-                        conversation = conversation,
-                        drawerState = drawerState,
-                        navController = navController,
-                        vm = vm,
-                        chatListState = chatListState,
-                        chatListReady = chatListReady,
-                        chatAnimationsEnabled = chatAnimationsEnabled,
-                        enableWebSearch = enableWebSearch,
-                        currentSearchMode = currentSearchMode,
-                        currentChatModel = currentChatModel,
-                        conversationPersistenceMode = conversationPersistenceMode,
-                        manualTemporaryChat = manualTemporaryChat,
-                        onManualTemporaryChatChange = { manualTemporaryChat = it },
-                        bigScreen = false,
-                        contentMaxWidth = Dp.Unspecified,
-                        inputMaxWidth = Dp.Unspecified,
-                        initialSearchQuery = searchQuery,
-                    )
+                    Box(modifier = Modifier.fillMaxSize().layerBackdrop(pageBackdrop)) {
+                        ChatPageContent(
+                            inheritedBlur = modalBlur,
+                            chatBackdrop = chatBackdrop,
+                            pageBackdrop = pageBackdrop,
+                            inputState = inputState,
+                            loadingJob = loadingJob,
+                            setting = setting,
+                            currentAssistant = conversationAssistant,
+                            conversationInitialized = conversationInitialized,
+                            conversation = conversation,
+                            drawerState = drawerState,
+                            navController = navController,
+                            vm = vm,
+                            chatListState = chatListState,
+                            chatListReady = chatListReady,
+                            chatAnimationsEnabled = chatAnimationsEnabled,
+                            enableWebSearch = enableWebSearch,
+                            currentSearchMode = currentSearchMode,
+                            currentChatModel = currentChatModel,
+                            conversationPersistenceMode = conversationPersistenceMode,
+                            manualTemporaryChat = manualTemporaryChat,
+                            onManualTemporaryChatChange = { manualTemporaryChat = it },
+                            bigScreen = false,
+                            contentMaxWidth = Dp.Unspecified,
+                            inputMaxWidth = Dp.Unspecified,
+                            initialSearchQuery = searchQuery,
+                        )
+                    }
                 }
                 }
             }
@@ -1344,6 +1351,7 @@ private fun ChatPageContent(
     renderBackground: Boolean = true,
     inheritedBlur: DomChatBlur? = null,
     chatBackdrop: LayerBackdrop,
+    pageBackdrop: LayerBackdrop,
 ) {
     val settings = setting
     val scope = rememberCoroutineScope()

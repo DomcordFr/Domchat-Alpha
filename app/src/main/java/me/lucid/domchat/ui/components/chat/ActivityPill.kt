@@ -84,6 +84,7 @@ import kotlinx.coroutines.isActive
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.compose.ui.graphics.luminance
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.richtext.updatePreviewAutoFollowPaused
@@ -650,18 +651,18 @@ private fun AnimatedSinglePill(
             )
             .then(
                 if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                    Modifier.domChatBlurEffect(
-                        containerColor = pillContainerColor,
+                    Modifier.liquidGlassSurface(
                         shape = pillShape,
-                        blurRadius = bubbleBlur.dp
+                        borderWidth = 0.5.dp,
+                        fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
                     )
                 } else Modifier
             )
             .clip(pillShape)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         shape = pillShape,
-        color = pillColor,
-        border = pillSpecularBorder,
+        color = if (isGlassyPill) Color.Transparent else pillColor,
+        border = if (isGlassyPill) null else pillSpecularBorder,
         contentColor = resolvedContentColor,
         onClick = {
             val clickType = when (state) {

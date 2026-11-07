@@ -2343,8 +2343,6 @@ private fun AssistantThinkingDropdown(
 
     val settings = LocalSettings.current
     val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-    val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
-    val bubbleInterfaceStyle = settings.displaySetting.bubbleInterfaceStyle
     val glassAlpha = settings.displaySetting.chatBubbleAlpha
     val bubbleBlur = settings.displaySetting.chatBubbleBlur
     val bubbleTone = settings.displaySetting.chatBubbleTone
@@ -2361,25 +2359,7 @@ private fun AssistantThinkingDropdown(
         neutralTone
     }
 
-    val defaultContainerColor = if (isTransparentStyle) {
-        Color.Transparent
-    } else if (isGlassy) {
-        if (effectiveAlpha <= 0.02f) Color.Transparent else baseTone.copy(alpha = effectiveAlpha)
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    }
-
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-    val specularBorder = if (isTransparentStyle) null else androidx.compose.foundation.BorderStroke(
-        if (effectiveAlpha <= 0.05f) 0.75.dp else 0.5.dp,
-        androidx.compose.ui.graphics.Brush.verticalGradient(
-            listOf(
-                androidx.compose.ui.graphics.Color.White.copy(alpha = if (effectiveAlpha <= 0.05f) 0.40f else if (isGlassy) 0.35f else 0.25f),
-                androidx.compose.ui.graphics.Color.White.copy(alpha = if (effectiveAlpha <= 0.05f) 0.18f else if (isGlassy) 0.12f else 0.06f),
-                androidx.compose.ui.graphics.Color.White.copy(alpha = if (effectiveAlpha <= 0.05f) 0.08f else 0f)
-            )
-        )
-    )
 
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val resolvedContentColor = when {
@@ -2396,37 +2376,12 @@ private fun AssistantThinkingDropdown(
             .then(
                 if (isTransparentStyle) {
                     Modifier
-                } else if (!isGlassy) {
-                    if (bubbleBlur > 0f) {
-                        Modifier.domChatBlurEffect(
-                            containerColor = defaultContainerColor,
-                            shape = shape,
-                            blurRadius = bubbleBlur.dp
-                        )
-                    } else {
-                        Modifier.background(defaultContainerColor, shape)
-                    }
-                } else when (bubbleInterfaceStyle) {
-                    InterfaceStyle.FROSTED -> Modifier.frostedGlassSurface(
+                } else {
+                    Modifier.liquidGlassSurface(
                         shape = shape,
                         borderWidth = 0.5.dp,
-                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
                     )
-                    InterfaceStyle.GLASS -> {
-                        Modifier.liquidGlassBubbleSurface(
-                            shape = shape,
-                            borderWidth = 0.5.dp,
-                            specularBrush = specularBorder?.brush ?: LiquidGlassTokens.SpecularBorderSubtle,
-                            glassMode = settings.displaySetting.liquidGlassMode,
-                        )
-                    }
-                }
-            )
-            .then(
-                if (specularBorder != null && bubbleInterfaceStyle != InterfaceStyle.GLASS) {
-                    Modifier.border(specularBorder, shape)
-                } else {
-                    Modifier
                 }
             )
             .padding(horizontal = if (isTransparentStyle) 4.dp else 12.dp, vertical = if (isTransparentStyle) 4.dp else 10.dp)
