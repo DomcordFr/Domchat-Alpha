@@ -1525,12 +1525,12 @@ private fun ChatPageContent(
                     contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop)) {
                         if (renderBackground) {
                             AssistantBackground(
                                 assistant = currentAssistant,
                                 conversationId = conversation.id.toString(),
-                                modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
+                                modifier = Modifier.domChatBlurSource()
                             )
                         } else {
                             Box(
@@ -1538,7 +1538,6 @@ private fun ChatPageContent(
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                                     .domChatBlurSource()
-                                    .layerBackdrop(chatBackdrop)
                             )
                         }
 

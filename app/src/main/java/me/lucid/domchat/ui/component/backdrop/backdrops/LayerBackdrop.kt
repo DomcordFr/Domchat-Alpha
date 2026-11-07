@@ -90,13 +90,7 @@ class LayerBackdrop internal constructor(
     ) {
         val coordinates = coordinates ?: return
         val layerCoordinates = layerCoordinates ?: return
-        val offset =
-            try {
-                layerCoordinates.localPositionOf(coordinates)
-            } catch (_: Exception) {
-                // TODO: Account for outer transforms in this fallback calculation.
-                coordinates.positionInWindow() - layerCoordinates.positionInWindow()
-            }
+        val offset = coordinates.positionInWindow() - layerCoordinates.positionInWindow()
         val origin = sourceOrigin
         withTransform({
             translate(origin.x - offset.x, origin.y - offset.y)

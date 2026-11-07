@@ -520,7 +520,7 @@ fun ChatDrawerContent(
                                 dismissDrawerAfterSelection()
                             },
                             containerColor = itemColor,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            border = null,
                             size = actionButtonSize,
                         )
                     }

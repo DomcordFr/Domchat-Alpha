@@ -288,7 +288,7 @@ private fun TemplateCard(
 ) {
     val isDark = LocalDarkMode.current
     val cardShape = AppShapes.CardMedium
-    val cardFill = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
+    val cardFill = if (isDark) Color(0xFF1E1E24).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
 
     Card(
         onClick = onClick,
@@ -340,7 +340,7 @@ private fun ActionPill(
 ) {
     val pillShape = RoundedCornerShape(24.dp)
     val isDark = LocalDarkMode.current
-    val pillFill = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
+    val pillFill = if (isDark) Color(0xFF1E1E24).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
