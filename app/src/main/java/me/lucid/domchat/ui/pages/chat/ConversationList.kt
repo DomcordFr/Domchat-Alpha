@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -757,6 +759,7 @@ fun ConversationListPage() {
     val navController = LocalNavController.current
     val context = LocalContext.current
     val haptics = rememberPremiumHaptics()
+    val homeBackdrop = rememberLayerBackdrop()
 
     val conversations = vm.conversations.collectAsLazyPagingItems()
     val conversationJobs by vm.conversationJobsSet.collectAsStateWithLifecycle(emptySet())
@@ -780,9 +783,10 @@ fun ConversationListPage() {
                 navigationIcon = { BackButton() },
             )
         },
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().layerBackdrop(homeBackdrop),
     ) { padding ->
-        ConversationList(
+        CompositionLocalProvider(LocalAppBackdrop provides homeBackdrop) {
+            ConversationList(
             current = current,
             conversations = conversations,
             conversationJobs = conversationJobs,
@@ -812,6 +816,7 @@ fun ConversationListPage() {
             },
             getAssistant = { assistantMap[it] },
         )
+        }
     }
 
     conversationToDelete?.let { conversation ->

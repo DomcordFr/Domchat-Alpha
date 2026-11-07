@@ -4462,6 +4462,7 @@ private fun ChatScrollToBottomButton(
                 fillColor = Color.Black.copy(alpha = 0.35f),
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                isFloatingControl = true,
             )
             .clip(CircleShape)
             .clickable(

@@ -314,15 +314,13 @@ fun Modifier.liquidGlassSurface(
     val settings = LocalSettings.current
     val display = settings.displaySetting
     val activeMode = if (glassMode != LiquidGlassMode.BALANCED_BLEND) glassMode else display.liquidGlassMode
-    if (activeMode == LiquidGlassMode.SOFT_FROSTED) {
-        return this.frostedGlassSurface(shape = shape, borderWidth = borderWidth, specularBrush = specularBrush, fillColor = fillColor, shadowElevation = shadowElevation)
-    }
+    val isFrostedMode = activeMode == LiquidGlassMode.SOFT_FROSTED
     return this.liquidGlass(
         shape = shape,
         blurRadius = display.glassBlur.dp,
-        refractionHeight = (display.glassDepthScale * 8f).dp,
-        refractionAmount = (display.glassDepthScale * 12f).dp,
-        depthEffect = true,
+        refractionHeight = if (isFrostedMode) 0f.dp else (display.glassDepthScale * 8f).dp,
+        refractionAmount = if (isFrostedMode) 0f.dp else (display.glassDepthScale * 12f).dp,
+        depthEffect = if (isFrostedMode) false else true,
         tintColor = Color(display.glassTintColor),
         specularIntensity = display.glassSpecularIntensity,
         borderWidth = borderWidth,
@@ -363,14 +361,11 @@ fun Modifier.liquidGlassBubbleSurface(
     val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
     val tone = display.chatBubbleTone.coerceIn(0f, 1f)
 
-    if (display.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED || (display.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED && glassMode == LiquidGlassMode.SOFT_FROSTED)) {
-        return this.frostedGlassSurface(shape = shape, borderWidth = borderWidth, specularBrush = specularBrush, fillColor = fillColor, shadowElevation = shadowElevation)
-    }
+    val bubbleFrostedMode = display.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED || (display.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED && glassMode == LiquidGlassMode.SOFT_FROSTED)
 
     val blurPx = with(density) { blurRadius.toPx() }
-    val heightPx = with(density) { refractionHeight.toPx() }
-    val amountPx = with(density) { refractionAmount.toPx() }
-    val specular = specularIntensity.coerceIn(0f, 1f)
+    val heightPx = if (bubbleFrostedMode) 0f.dp else (depthScale * 8f).dp
+    val amountPx = if (bubbleFrostedMode) 0f.dp else (depthScale * 12f).dp
 
     val tintColor = if (display.chatBubbleTintColor != 0L) {
         Color(display.chatBubbleTintColor)

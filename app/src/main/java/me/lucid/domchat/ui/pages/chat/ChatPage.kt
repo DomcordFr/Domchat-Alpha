@@ -1671,6 +1671,7 @@ private fun ChatPageContent(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .domChatBlurSource()
+                                    .layerBackdrop(contentBackdrop)
                                     .graphicsLayer {
                                         alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
                                     }
@@ -1718,7 +1719,6 @@ private fun ChatPageContent(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .layerBackdrop(contentBackdrop)
                                     ) {
                                         CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
                                             ChatList(
@@ -1890,11 +1890,6 @@ private fun ChatPageContent(
                             distance = 30.dp,
                         ),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .layerBackdrop(contentBackdrop)
-                    ) {
                         CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
                             NewChatContent(
                                 assistant = currentAssistant,
@@ -1915,7 +1910,6 @@ private fun ChatPageContent(
                             )
                         }
                     }
-                }
                 
                 // Assistant picker sheet triggered from header avatar
                 if (showHeaderAssistantPicker) {
