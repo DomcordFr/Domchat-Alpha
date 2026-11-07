@@ -1888,23 +1888,31 @@ private fun ChatPageContent(
                             distance = 30.dp,
                         ),
                 ) {
-                    NewChatContent(
-                        assistant = currentAssistant,
-                        headerStyle = headerStyle,
-                        contentStyle = contentStyle,
-                        showAvatarInHeader = effectiveDisplaySetting.newChatShowAvatar,
-                        hasBackgroundImage = currentAssistant.background != null,
-                        onTemplateClick = { prompt ->
-                            // Set text and focus the input field to show keyboard
-                            inputState.setMessageTextAndFocus(prompt, scope)
-                        },
-                        onNavigateToImageGen = {
-                            navController.navigate(Screen.ImageGen)
-                        },
-                        onAvatarClick = {
-                            showHeaderAssistantPicker = true
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .layerBackdrop(contentBackdrop)
+                    ) {
+                        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
+                            NewChatContent(
+                                assistant = currentAssistant,
+                                headerStyle = headerStyle,
+                                contentStyle = contentStyle,
+                                showAvatarInHeader = effectiveDisplaySetting.newChatShowAvatar,
+                                hasBackgroundImage = currentAssistant.background != null,
+                                onTemplateClick = { prompt ->
+                                    // Set text and focus the input field to show keyboard
+                                    inputState.setMessageTextAndFocus(prompt, scope)
+                                },
+                                onNavigateToImageGen = {
+                                    navController.navigate(Screen.ImageGen)
+                                },
+                                onAvatarClick = {
+                                    showHeaderAssistantPicker = true
+                                }
+                            )
                         }
-                    )
+                    }
                 }
                 
                 // Assistant picker sheet triggered from header avatar
@@ -2298,19 +2306,21 @@ private fun ChatPageContent(
                     if (reduceMotion || state == EnterExitState.Visible) 1f else 0.96f
                 }
                 contextMeterUsage?.let { usage ->
-                    ContextUsageOverlay(
-                        usage = usage,
-                        activity = contextManagementActivity,
-                        placement = toolbarPlacement,
-                        popupScale = popupScale,
-                        model = currentChatModel,
-                        onUpdateModelLimit = { newLimit ->
-                            currentChatModel?.let { model ->
-                                vm.updateModelContextLimit(model.id, newLimit)
-                            }
-                        },
-                        onDismissRequest = { showContextUsagePopup = false },
-                    )
+                    CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                        ContextUsageOverlay(
+                            usage = usage,
+                            activity = contextManagementActivity,
+                            placement = toolbarPlacement,
+                            popupScale = popupScale,
+                            model = currentChatModel,
+                            onUpdateModelLimit = { newLimit ->
+                                currentChatModel?.let { model ->
+                                    vm.updateModelContextLimit(model.id, newLimit)
+                                }
+                            },
+                            onDismissRequest = { showContextUsagePopup = false },
+                        )
+                    }
                 }
             }
 
@@ -2570,6 +2580,7 @@ private fun ChatToolbarIconButton(
     size: Dp,
     enabled: Boolean = true,
     onClick: () -> Unit,
+    isInsidePill: Boolean = false,
 ) {
     val haptics = rememberPremiumHaptics()
     val interactionSource = remember { MutableInteractionSource() }
@@ -2589,7 +2600,11 @@ private fun ChatToolbarIconButton(
     Box(
         modifier = Modifier
             .size(size)
-            .liquidGlassSurface(shape = CircleShape, borderWidth = 0.5.dp, isFloatingControl = true)
+            .then(
+                if (!isInsidePill) {
+                    Modifier.liquidGlassSurface(shape = CircleShape, borderWidth = 0.5.dp, isFloatingControl = true)
+                } else Modifier
+            )
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -3202,7 +3217,8 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarCompactLayer(
             contentDescription = "Temporary Chat",
             size = topPillSize,
             enabled = enabled,
-            onClick = onToggleTemporaryChat
+            onClick = onToggleTemporaryChat,
+            isInsidePill = true,
         )
     }
 }
@@ -3235,7 +3251,8 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarNewChatLayer(
             contentDescription = if (temporary) "Make Normal Chat" else "Temporary Chat",
             size = topPillSize,
             enabled = enabled,
-            onClick = onToggleTemporaryChat
+            onClick = onToggleTemporaryChat,
+            isInsidePill = true,
         )
         val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
         Box(
@@ -3289,7 +3306,8 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarInChatLayer(
             contentDescription = "New Message",
             size = topPillSize,
             enabled = enabled,
-            onClick = onNewChat
+            onClick = onNewChat,
+            isInsidePill = true,
         )
         if (showCloseAction) {
             ChatToolbarIconButton(
@@ -3297,7 +3315,8 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarInChatLayer(
                 contentDescription = stringResource(R.string.banner_dismiss),
                 size = topPillSize,
                 enabled = enabled,
-                onClick = onCloseAction
+                onClick = onCloseAction,
+                isInsidePill = true,
             )
         }
     }
