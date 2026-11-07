@@ -332,6 +332,7 @@ fun Modifier.liquidGlassBubbleSurface(
     specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
     fillColor: Color = Color.Transparent,
     shadowElevation: Dp = 0.dp,
+    glassMode: LiquidGlassMode = LiquidGlassMode.BALANCED_BLEND,
 ): Modifier {
     val settings = LocalSettings.current
     val display = settings.displaySetting

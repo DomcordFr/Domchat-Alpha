@@ -1345,6 +1345,7 @@ private fun ChatPageContent(
     inheritedBlur: DomChatBlur? = null,
     chatBackdrop: LayerBackdrop,
 ) {
+    val settings = setting
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     // Nodes already in the conversation when it opens: they never animate.
