@@ -353,8 +353,8 @@ fun Modifier.liquidGlassBubbleSurface(
     // Bubble-specific settings
     val blurRadius = display.chatBubbleBlur.coerceIn(0f, 100f).dp
     val depthScale = display.bubbleDepthScale.coerceIn(0f, 2.5f)
-    val refractionHeight = (depthScale * 16f).dp
-    val refractionAmount = (depthScale * 32f).dp
+    val refractionHeight = (depthScale * 8f).dp
+    val refractionAmount = (depthScale * 12f).dp
     val specularIntensity = display.bubbleSpecularIntensity.coerceIn(0f, 1f)
     val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
     val tone = display.chatBubbleTone.coerceIn(0f, 1f)

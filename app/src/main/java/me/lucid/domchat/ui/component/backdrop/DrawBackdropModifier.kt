@@ -436,6 +436,8 @@ private class DrawBackdropNode(
                 }
             }
             exportedBackdrop?.layerCoordinates = coordinates
+            surfaceDirty = true
+            invalidateDrawCache()
         }
     }
 
@@ -471,6 +473,7 @@ private class DrawBackdropNode(
 
         surfaceDirty = true
         observeEffects()
+        invalidateDrawCache()
     }
 
     override fun onDetach() {

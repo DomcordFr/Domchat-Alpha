@@ -390,7 +390,7 @@ fun ChatDrawerContent(
                     DomChatDrawerQuickActionGroup {
                         DomChatDrawerQuickAction(
                             label = "Home",
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), fillColor = qaGlassFill, borderWidth = 0.5.dp),
+                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp)),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navigateToChatPage(navController)
@@ -408,7 +408,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.chat_drawer_imagine),
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), fillColor = qaGlassFill, borderWidth = 0.5.dp),
+                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp)),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.ImageGen)
@@ -426,7 +426,7 @@ fun ChatDrawerContent(
                         )
                         DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), fillColor = qaGlassFill, borderWidth = 0.5.dp),
+                            modifier = Modifier.frostedGlassSurface(shape = RoundedCornerShape(12.dp)),
                             containerColor = Color.Transparent,
                             onClick = {
                                 navController.navigate(Screen.Menu)
@@ -546,7 +546,7 @@ fun ChatDrawerContent(
             }
             DomChatModalDrawerSheet(
                 drawerShape = drawerShape,
-                drawerContainerColor = Color.Transparent,
+                drawerContainerColor = Color(0xE6101014),
                 modifier = drawerModifier,
             ) {
                 drawerContent()
