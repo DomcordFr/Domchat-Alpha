@@ -1555,14 +1555,12 @@ private fun ChatPageContent(
 
                     Scaffold(
                 topBar = if (toolbarPlacement == ChatToolbarPlacement.Top) {
-                    {
-                        // Top chrome drops in from above, position-respectful.
-                        StartupChromeReveal(
-                            key = "${conversation.id}:topbar",
-                            delayMs = startupWallpaperPauseMs,
-                            motionPolicy = motionPolicy,
-                            from = EntranceDirection.DOWN,
-                        ) {
+                    StartupChromeReveal(
+                        key = "${conversation.id}:topbar",
+                        delayMs = startupWallpaperPauseMs,
+                        motionPolicy = motionPolicy,
+                        from = EntranceDirection.DOWN,
+                    ) {
                         ChatToolbar(
                             placement = ChatToolbarPlacement.Top,
                             settings = setting,
@@ -1607,16 +1605,12 @@ private fun ChatPageContent(
                             },
                             onNewChat = onNewChat
                         )
-                        }
                     }
-                }
-            } else {
-                {
+                } else {
                     ChatTopFadeOverlay(
-                            fadeHeight = chatBottomToolbarTopFadeHeight,
-                            settings = setting,
-                        )
-                    }
+                        fadeHeight = chatBottomToolbarTopFadeHeight,
+                        settings = setting,
+                    )
                 },
                 // Input is rendered manually at the bottom of the screen
                 containerColor = Color.Transparent,
