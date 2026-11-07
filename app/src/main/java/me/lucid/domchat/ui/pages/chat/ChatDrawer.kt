@@ -211,18 +211,17 @@ fun ChatDrawerContent(
 
             // Glassy User Profile Header (Static display, non-interactive)
             val profileCardShape = RoundedCornerShape(20.dp)
-            val profileCardBg = domChatChromeSurfaceColor()
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp, vertical = 4.dp)
-                    .domChatBlurEffect(containerColor = profileCardBg, shape = profileCardShape),
-                color = profileCardBg,
-                shape = profileCardShape,
-                border = androidx.compose.foundation.BorderStroke(
-                    0.5.dp,
-                    if (isDark) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle else me.lucid.domchat.ui.theme.LiquidGlassTokens.LightSpecularBorder
-                )
+                    .liquidGlassSurface(
+                        shape = profileCardShape,
+                        fillColor = profileCardBg.copy(alpha = 0.35f),
+                        borderWidth = 0.5.dp,
+                        specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
                     modifier = Modifier
@@ -453,20 +452,21 @@ fun ChatDrawerContent(
                         val assistantName = currentAssistant.name.ifEmpty { defaultAssistantName }
 
                         Surface(
-                            color = itemColor,
-                            shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(actionButtonSize)
-                                .domChatBlurEffect(itemColor, me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
-                                .clip(me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
+                                .liquidGlassSurface(
+                                    shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
+                                    fillColor = itemColor.copy(alpha = 0.35f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+                                )
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
                                     navController.navigate(Screen.ConversationList)
                                     dismissDrawerAfterSelection()
                                 },
-                        ) {
+                            ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxSize()

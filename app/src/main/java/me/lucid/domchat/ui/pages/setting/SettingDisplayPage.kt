@@ -607,7 +607,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localGlassAlpha by remember(settings.displaySetting.glassAlpha) {
                                     mutableFloatStateOf(settings.displaySetting.glassAlpha)
                                 }
-                                if (!uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Opacity",
                                     valueText = "${(localGlassAlpha * 100).roundToInt()}%",
@@ -643,7 +642,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     },
                                     valueRange = 0f..100f,
                                 )
-                                }
 
                                 var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.glassDepthScale)
@@ -955,7 +953,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localBubbleAlpha by remember(settings.displaySetting.chatBubbleAlpha) {
                                     mutableFloatStateOf(settings.displaySetting.chatBubbleAlpha)
                                 }
-                                if (!bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Opacity",
                                     valueText = "${(localBubbleAlpha * 100).roundToInt()}%",
@@ -1012,7 +1009,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..1.0f,
                                     steps = 100,
                                 )
-                                }
 
                                 var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)

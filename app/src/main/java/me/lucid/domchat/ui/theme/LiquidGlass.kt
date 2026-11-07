@@ -198,6 +198,12 @@ fun Modifier.liquidGlass(
     val tint = if (tintColor == Color.Unspecified) Color.Transparent else tintColor
     val blurContainer = if (tint.alpha > 0.02f) tint else fillColor
 
+    val baseTint = if (fillColor == Color.Transparent && display.glassAlpha > 0.02f) {
+        Color.White.copy(alpha = display.glassAlpha.coerceIn(0f, 1f) * 0.25f)
+    } else {
+        Color.Transparent
+    }
+
     val highlight: (() -> Highlight?)? = if (useGlass && borderWidth > 0.dp && specular > 0f) {
         {
             Highlight(
@@ -228,7 +234,12 @@ fun Modifier.liquidGlass(
     }
 
     val surfaceBlock: DrawScope.() -> Unit = {
-        val base = if (fillColor != Color.Transparent && fillColor != Color.Unspecified) fillColor else Color.Transparent
+        val base = when {
+            fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
+            baseTint != Color.Transparent && baseTint.alpha > 0f -> baseTint
+            effectiveContainerColor != Color.Transparent -> effectiveContainerColor
+            else -> Color.Transparent
+        }
         if (base.alpha > 0f) {
             drawRect(color = base, size = size)
         }
@@ -387,7 +398,11 @@ fun Modifier.liquidGlassBubbleSurface(
     }
 
     val surfaceBlock: DrawScope.() -> Unit = {
-        val base = if (fillColor != Color.Transparent && fillColor != Color.Unspecified) fillColor else Color.Transparent
+        val base = when {
+            fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
+            effectiveContainerColor != Color.Transparent -> effectiveContainerColor
+            else -> Color.Transparent
+        }
         if (base.alpha > 0f) {
             drawRect(color = base, size = size)
         }
