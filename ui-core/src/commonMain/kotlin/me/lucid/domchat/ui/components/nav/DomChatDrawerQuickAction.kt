@@ -54,11 +54,16 @@ fun DomChatDrawerQuickAction(
     val defaultBg = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else Color.White.copy(alpha = 0.70f)
     val cardBg = if (containerColor != Color.Unspecified) containerColor else defaultBg
     val cardShape = RoundedCornerShape(12.dp)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .frostedGlassSurface(shape = cardShape),
+    Surface(
+        onClick = {
+            onHaptic()
+            onClick()
+        },
+        color = cardBg,
         contentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+        shape = cardShape,
+        border = null,
+        modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

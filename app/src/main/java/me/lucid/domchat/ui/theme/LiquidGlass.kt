@@ -316,8 +316,8 @@ fun Modifier.liquidGlassSurface(
     return this.liquidGlass(
         shape = shape,
         blurRadius = display.glassBlur.dp,
-        refractionHeight = (display.glassDepthScale * 16f).dp,
-        refractionAmount = (display.glassDepthScale * 32f).dp,
+        refractionHeight = (display.glassDepthScale * 8f).dp,
+        refractionAmount = (display.glassDepthScale * 12f).dp,
         depthEffect = true,
         tintColor = Color(display.glassTintColor),
         specularIntensity = display.glassSpecularIntensity,
