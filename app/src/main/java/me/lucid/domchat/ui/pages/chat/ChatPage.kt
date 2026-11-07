@@ -2256,6 +2256,7 @@ private fun ChatPageContent(
 
                 }
             }
+            }
 
             // Popups are siblings placed after Scaffold so its top fade can never draw over them.
             androidx.compose.animation.AnimatedVisibility(
