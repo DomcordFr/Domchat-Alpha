@@ -1609,7 +1609,7 @@ private fun ChatPageContent(
                         }
                     }
                 }
-            else {
+            } else {
                 {
                     ChatTopFadeOverlay(
                             fadeHeight = chatBottomToolbarTopFadeHeight,
@@ -2446,6 +2446,8 @@ private fun ChatPageContent(
         }
         }
     }
+
+}
 
 }
 
