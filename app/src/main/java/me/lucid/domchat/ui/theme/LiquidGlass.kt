@@ -364,8 +364,9 @@ fun Modifier.liquidGlassBubbleSurface(
     val bubbleFrostedMode = display.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED || (display.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED && glassMode == LiquidGlassMode.SOFT_FROSTED)
 
     val blurPx = with(density) { blurRadius.toPx() }
-    val heightPx = if (bubbleFrostedMode) 0f.dp else (depthScale * 8f).dp
-    val amountPx = if (bubbleFrostedMode) 0f.dp else (depthScale * 12f).dp
+    val specular = specularIntensity.coerceIn(0f, 1f)
+    val heightPx = if (bubbleFrostedMode) 0f else with(density) { (depthScale * 8f).dp.toPx() }
+    val amountPx = if (bubbleFrostedMode) 0f else with(density) { (depthScale * 12f).dp.toPx() }
 
     val tintColor = if (display.chatBubbleTintColor != 0L) {
         Color(display.chatBubbleTintColor)
