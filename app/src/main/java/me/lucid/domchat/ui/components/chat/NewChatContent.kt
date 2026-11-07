@@ -340,7 +340,7 @@ private fun ActionPill(
 ) {
     val pillShape = RoundedCornerShape(24.dp)
     val isDark = LocalDarkMode.current
-    val pillFill = if (isDark) Color(0xFF1E1E24).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
+    val pillFill = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.25f)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(

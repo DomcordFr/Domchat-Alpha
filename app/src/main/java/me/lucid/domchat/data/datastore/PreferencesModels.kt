@@ -342,6 +342,7 @@ data class DisplaySetting(
     val chatBubbleTone: Float = 0.50f,
     val chatBubbleTintHue: Float = 0f,
     val chatBubbleTintAmount: Float = 0f,
+    val chatBubbleTintColor: Long = 0x00FFFFFFL,
     val glassAlpha: Float = 0.40f,
     val glassBlur: Float = 20f,
     val glassBaseLuminance: Float = 0f,

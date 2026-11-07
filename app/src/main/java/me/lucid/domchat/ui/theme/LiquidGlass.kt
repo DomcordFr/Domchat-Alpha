@@ -313,6 +313,10 @@ fun Modifier.liquidGlassSurface(
 ): Modifier {
     val settings = LocalSettings.current
     val display = settings.displaySetting
+    val activeMode = if (glassMode != LiquidGlassMode.BALANCED_BLEND) glassMode else display.liquidGlassMode
+    if (activeMode == LiquidGlassMode.SOFT_FROSTED) {
+        return this.frostedGlassSurface(shape = shape, borderWidth = borderWidth, specularBrush = specularBrush, fillColor = fillColor, shadowElevation = shadowElevation)
+    }
     return this.liquidGlass(
         shape = shape,
         blurRadius = display.glassBlur.dp,
@@ -359,12 +363,18 @@ fun Modifier.liquidGlassBubbleSurface(
     val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
     val tone = display.chatBubbleTone.coerceIn(0f, 1f)
 
+    if (display.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED || (display.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED && glassMode == LiquidGlassMode.SOFT_FROSTED)) {
+        return this.frostedGlassSurface(shape = shape, borderWidth = borderWidth, specularBrush = specularBrush, fillColor = fillColor, shadowElevation = shadowElevation)
+    }
+
     val blurPx = with(density) { blurRadius.toPx() }
     val heightPx = with(density) { refractionHeight.toPx() }
     val amountPx = with(density) { refractionAmount.toPx() }
     val specular = specularIntensity.coerceIn(0f, 1f)
 
-    val tintColor = if (display.chatBubbleTintAmount > 0.02f) {
+    val tintColor = if (display.chatBubbleTintColor != 0L) {
+        Color(display.chatBubbleTintColor)
+    } else if (display.chatBubbleTintAmount > 0.02f) {
         Color.hsv(display.chatBubbleTintHue.coerceIn(0f, 360f), 0.75f, 1.0f).copy(alpha = (display.chatBubbleTintAmount * 0.40f).coerceIn(0f, 1f))
     } else Color.Transparent
     val blurContainer = if (tintColor.alpha > 0.02f) tintColor else fillColor

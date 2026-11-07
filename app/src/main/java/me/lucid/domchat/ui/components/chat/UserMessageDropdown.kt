@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.SelectAll
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 /**
  * Actions available for user messages via long-press.
@@ -52,10 +53,11 @@ fun UserMessageDropdown(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        modifier = modifier
+            .liquidGlassSurface(shape = RoundedCornerShape(18.dp)),
         offset = offset,
         shape = RoundedCornerShape(18.dp),
-        containerColor = if (isDark) Color(0xFF141418).copy(alpha = 0.94f) else me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        containerColor = Color.Transparent,
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         DropdownMenuItem(

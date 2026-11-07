@@ -660,6 +660,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.glassDepthScale)
                                 }
+                                if (uiIsGlass) {
                                 glassSliderRow(
                                     label = "UI Glass Depth / Refraction",
                                     valueText = "${localDepthScale.roundToInt()}x",
@@ -673,6 +674,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..2.5f,
                                     steps = 25,
                                 )
+                                }
 
                                 var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
@@ -1039,6 +1041,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)
                                 }
+                                if (bubbleIsGlass) {
                                 glassSliderRow(
                                     label = "Bubble Depth / Refraction",
                                     valueText = "${localBubbleDepth.roundToInt()}x",
@@ -1052,6 +1055,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..2.5f,
                                     steps = 25,
                                 )
+                                }
 
                                 var localBubbleSpecular by remember(settings.displaySetting.bubbleSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleSpecularIntensity)
@@ -1070,8 +1074,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     steps = 100,
                                 )
 
-                                var localBubbleTint by remember(settings.displaySetting.chatBubbleTintHue) {
-                                    mutableStateOf(settings.displaySetting.chatBubbleTintHue)
+                                var localBubbleTintColor by remember(settings.displaySetting.chatBubbleTintColor) {
+                                    mutableStateOf(settings.displaySetting.chatBubbleTintColor)
                                 }
                                 var bubbleTintPickerOpen by remember { mutableStateOf(false) }
                                 Row(
@@ -1096,12 +1100,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        val tintColor = Color.hsv(localBubbleTint.coerceIn(0f, 360f), 0.75f, 1.0f)
                                         Box(
                                             modifier = Modifier
                                                 .size(24.dp)
                                                 .clip(RoundedCornerShape(6.dp))
-                                                .background(tintColor)
+                                                .background(Color(localBubbleTintColor))
                                         )
                                         Text(
                                             text = "Pick color",
@@ -1125,16 +1128,13 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     TintColorPickerDialog(
                                         open = true,
                                         onDismiss = { bubbleTintPickerOpen = false },
-                                        initialColor = Color.hsv(localBubbleTint.coerceIn(0f, 360f), 0.75f, 1.0f).toArgb().toLong(),
+                                        initialColor = localBubbleTintColor,
                                         onPick = { picked ->
                                             bubbleTintPickerOpen = false
-                                            val hsv = FloatArray(3)
-                                            android.graphics.Color.colorToHSV(picked.toInt(), hsv)
-                                            localBubbleTint = hsv[0]
+                                            localBubbleTintColor = picked
                                             updateDisplaySetting(
                                                 vm.settings.value.displaySetting.copy(
-                                                    chatBubbleTintHue = localBubbleTint,
-                                                    chatBubbleTintAmount = 1.0f
+                                                    chatBubbleTintColor = localBubbleTintColor
                                                 )
                                             )
                                         },
