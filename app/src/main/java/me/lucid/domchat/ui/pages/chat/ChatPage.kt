@@ -745,6 +745,7 @@ fun ChatPage(
     }
 
     val setting by vm.settings.collectAsStateWithLifecycle()
+    val settings = setting
     val conversation by vm.conversation.collectAsStateWithLifecycle()
     val conversationInitialized by vm.conversationInitialized.collectAsStateWithLifecycle()
     val conversationAssistant by vm.conversationAssistant.collectAsStateWithLifecycle()

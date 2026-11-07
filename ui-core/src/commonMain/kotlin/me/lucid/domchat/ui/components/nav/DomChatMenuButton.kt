@@ -38,7 +38,7 @@ fun DomChatMenuButton(
     size: Dp = AppSize.ChromePill,
     shape: Shape = AppShapes.ButtonPill,
     containerColor: Color = Color(0xFF000000).copy(alpha = 0.65f),
-    border: BorderStroke = BorderStroke(0.5.dp, SpecularBorderSubtle),
+    border: BorderStroke? = BorderStroke(0.5.dp, SpecularBorderSubtle),
 ) {
     Surface(
         onClick = onClick,
