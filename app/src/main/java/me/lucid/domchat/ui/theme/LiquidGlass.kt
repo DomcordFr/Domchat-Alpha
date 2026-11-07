@@ -397,7 +397,6 @@ fun Modifier.liquidGlassBubbleSurface(
     }
 
     val neutralTone = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, tone)
-    val neutralTone = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, tone)
     val effectiveContainerColor = if (alpha <= 0.02f) Color.Transparent else neutralTone.copy(alpha = alpha)
 
     return if (useGlass) {
@@ -445,7 +444,6 @@ fun Modifier.liquidGlassBubbleSurface(
     }
 }
 
-/
 /**
  * Frosted glass surface: pure Haze blur + alpha + tone + border.
  * No AGSL backdrop refraction or lens effects. Uses Haze ultraThin blur
