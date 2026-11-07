@@ -831,10 +831,12 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White.copy(alpha = 0.08f),
-            )
+            item {
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    color = Color.White.copy(alpha = 0.08f),
+                )
+            }
 
             // Link UI & Bubbles switch (placed between the two appearance sections)
             item {
@@ -863,10 +865,12 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White.copy(alpha = 0.08f),
-            )
+            item {
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    color = Color.White.copy(alpha = 0.08f),
+                )
+            }
 
             // =====================================================================
             // Section 2: Chat Bubbles Appearance
