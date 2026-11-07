@@ -49,6 +49,7 @@ import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 /**
  * Unified sleek drag handle pill for all bottom sheets and popovers across DomChat.
@@ -213,10 +214,9 @@ fun DomChatInWindowBottomSheet(
                         indication = null,
                         onClick = {}
                     )
-                    .domChatBlurEffect(containerColor = sheetBg, shape = shape),
+                    .liquidGlassSurface(shape = shape, fillColor = sheetBg, borderWidth = 0.5.dp, specularBrush = borderBrush),
                 shape = shape,
                 color = Color.Transparent,
-                border = BorderStroke(0.5.dp, borderBrush)
             ) {
                 Column(
                     modifier = Modifier

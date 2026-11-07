@@ -1481,9 +1481,11 @@ private fun UserMessageTurn(
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
                                     settings.displaySetting.bubbleSpecularIntensity > 0f
                                 }
+                                val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
                                 m.liquidGlassBubbleSurface(
                                     shape = shape,
                                     borderWidth = 0.5.dp,
+                                    fillColor = bubbleFillColor,
                                     specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
                                     glassMode = settings.displaySetting.liquidGlassMode,
                                 )
@@ -2001,9 +2003,11 @@ private fun AssistantMessageTurn(
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
                                     settings.displaySetting.bubbleSpecularIntensity > 0f
                                 }
+                                val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
                                 m.liquidGlassBubbleSurface(
                                     shape = shape,
                                     borderWidth = 0.5.dp,
+                                    fillColor = bubbleFillColor,
                                     specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
                                     glassMode = settings.displaySetting.liquidGlassMode,
                                 )

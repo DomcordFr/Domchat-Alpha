@@ -1542,7 +1542,7 @@ private fun ChatPageContent(
                             AssistantBackground(
                                 assistant = currentAssistant,
                                 conversationId = conversation.id.toString(),
-                                modifier = Modifier.domChatBlurSource().layerBackdrop(wallpaperBackdrop)
+                                modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
                             )
                         } else {
                             Box(
@@ -1550,7 +1550,7 @@ private fun ChatPageContent(
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                                     .domChatBlurSource()
-                                    .layerBackdrop(wallpaperBackdrop))
+                                    .layerBackdrop(chatBackdrop))
                         }
 
                     Scaffold(
@@ -1563,7 +1563,6 @@ private fun ChatPageContent(
                             motionPolicy = motionPolicy,
                             from = EntranceDirection.DOWN,
                         ) {
-                        CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
                         ChatToolbar(
                             placement = ChatToolbarPlacement.Top,
                             settings = setting,
@@ -1671,7 +1670,7 @@ private fun ChatPageContent(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .domChatBlurSource()
-                                    .layerBackdrop(contentBackdrop)
+                                    .layerBackdrop(chatBackdrop)
                                     .graphicsLayer {
                                         alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
                                     }
@@ -3467,14 +3466,14 @@ private fun ChatToolbar(
             modifier = Modifier
                 .then(
                     if (placement == ChatToolbarPlacement.Top) {
-                        Modifier.statusBarsPadding()
+                        Modifier.padding(top = 20.dp)
                     } else {
                         Modifier
                     }
                 )
                 .fillMaxWidth()
                 .padding(
-                    vertical = if (placement == ChatToolbarPlacement.Top) 8.dp else 0.dp,
+                    vertical = if (placement == ChatToolbarPlacement.Top) 4.dp else 0.dp,
                     horizontal = if (placement == ChatToolbarPlacement.Top) 16.dp else 0.dp
                 ),
             verticalAlignment = Alignment.CenterVertically

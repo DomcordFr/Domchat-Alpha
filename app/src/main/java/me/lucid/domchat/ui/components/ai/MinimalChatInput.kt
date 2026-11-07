@@ -4459,7 +4459,7 @@ private fun ChatScrollToBottomButton(
             .pressScale(interactionSource)
             .liquidGlassSurface(
                 shape = CircleShape,
-                fillColor = Color.Black.copy(alpha = 0.35f),
+                fillColor = Color.Transparent,
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                 isFloatingControl = true,
