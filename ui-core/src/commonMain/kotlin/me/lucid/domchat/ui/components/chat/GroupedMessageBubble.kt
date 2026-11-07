@@ -159,6 +159,7 @@ fun GroupedMessageBubble(
     val finalContainerColor = if (isTransparent) Color.Transparent else (containerColor ?: defaultContainerColor)
     val appliedModifier = bubbleModifier(modifier, shape, finalContainerColor)
     val surfaceColor = if (isGlassy) Color.Transparent else finalContainerColor
+    val surfaceBorder = if (isGlassy) null else specularBorder
 
     if (onClick != null) {
         Surface(
@@ -166,7 +167,7 @@ fun GroupedMessageBubble(
             shape = shape,
             color = surfaceColor,
             contentColor = contentColor ?: defaultContentColor,
-            border = specularBorder,
+            border = surfaceBorder,
             onClick = onClick,
             content = bubbleContent,
         )
@@ -176,7 +177,7 @@ fun GroupedMessageBubble(
             shape = shape,
             color = surfaceColor,
             contentColor = contentColor ?: defaultContentColor,
-            border = specularBorder,
+            border = surfaceBorder,
             content = bubbleContent,
         )
     }

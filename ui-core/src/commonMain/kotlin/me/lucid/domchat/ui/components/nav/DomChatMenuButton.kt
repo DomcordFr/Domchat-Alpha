@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.AppSize
 import me.lucid.domchat.ui.theme.AppSurface
+import me.lucid.domchat.data.model.LiquidGlassMode
 
 private val SpecularBorderSubtle =
     Brush.verticalGradient(
@@ -39,12 +40,13 @@ fun DomChatMenuButton(
     shape: Shape = AppShapes.ButtonPill,
     containerColor: Color = Color(0xFF000000).copy(alpha = 0.65f),
     border: BorderStroke = BorderStroke(0.5.dp, SpecularBorderSubtle),
+    liquidGlassMode: LiquidGlassMode = LiquidGlassMode.BALANCED_BLEND,
 ) {
     Surface(
         onClick = onClick,
         shape = shape,
-        color = containerColor,
-        border = border,
+        color = if (liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) containerColor else Color.Transparent,
+        border = if (liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) border else null,
         modifier = modifier,
         contentColor = Color.White,
     ) {

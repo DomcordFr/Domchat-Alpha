@@ -1013,9 +1013,9 @@ fun ChatPage(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     val wideHazeState = rememberHazeState()
-                    val wideBlur = remember(setting.displaySetting.enableBlurEffect, wideHazeState) {
+                    val wideBlur = remember(settings.displaySetting.enableBlurEffect, wideHazeState) {
                         DomChatBlur(
-                            enabled = setting.displaySetting.enableBlurEffect,
+                            enabled = settings.displaySetting.enableBlurEffect,
                             hazeState = wideHazeState,
                         )
                     }
@@ -1027,9 +1027,9 @@ fun ChatPage(
                         ),
                         label = "chat_wide_panel_width"
                     )
-                    val widePanelHaptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)
+                    val widePanelHaptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
                     var widePanelDragX by remember { mutableStateOf(0f) }
-                    val wideEffectiveDisplaySetting = setting.getEffectiveDisplaySetting(conversationAssistant)
+                    val wideEffectiveDisplaySetting = settings.getEffectiveDisplaySetting(conversationAssistant)
                     val wideShowsNewChatContent =
                         wideEffectiveDisplaySetting.newChatHeaderStyle != me.lucid.domchat.data.datastore.NewChatHeaderStyle.NONE ||
                             wideEffectiveDisplaySetting.newChatContentStyle != me.lucid.domchat.data.datastore.NewChatContentStyle.NONE
@@ -1214,9 +1214,9 @@ fun ChatPage(
 
         else -> {
             val modalHazeState = rememberHazeState()
-            val modalBlur = remember(setting.displaySetting.enableBlurEffect, modalHazeState) {
+            val modalBlur = remember(settings.displaySetting.enableBlurEffect, modalHazeState) {
                 DomChatBlur(
-                    enabled = setting.displaySetting.enableBlurEffect,
+                    enabled = settings.displaySetting.enableBlurEffect,
                     hazeState = modalHazeState,
                 )
             }
@@ -1364,7 +1364,7 @@ private fun ChatPageContent(
     var showUserRegenerateConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
-    val haptics = rememberPremiumHaptics(enabled = setting.displaySetting.enableUIHaptics)
+    val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (isActiveConversation) {
@@ -1391,7 +1391,7 @@ private fun ChatPageContent(
     val density = LocalDensity.current
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val hazeState = rememberHazeState()
-    val blurActive = setting.displaySetting.enableBlurEffect || setting.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
+    val blurActive = settings.displaySetting.enableBlurEffect || settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
     val localBlur = remember(blurActive, hazeState) {
         DomChatBlur(
             enabled = blurActive,
@@ -1403,7 +1403,7 @@ private fun ChatPageContent(
     val contextManagementActivity by vm.contextManagementActivity.collectAsStateWithLifecycle()
     val assistantMemories by vm.assistantMemories.collectAsStateWithLifecycle()
     val contextMeterUsage = rememberContextMeterUsage(
-        enabled = setting.displaySetting.showContextTokenSummary,
+        enabled = settings.displaySetting.showContextTokenSummary,
         model = currentChatModel,
         conversation = conversation,
         assistant = currentAssistant,
@@ -1664,7 +1664,7 @@ private fun ChatPageContent(
                                 ) {
                                     // Compaction badge: shows when older turns have been summarized into contextSummary
                                     conversation.contextSummary?.let { summary ->
-                                        if (summary.isNotBlank() && setting.displaySetting.contextBudgetConfig.enableCompaction) {
+                                        if (summary.isNotBlank() && settings.displaySetting.contextBudgetConfig.enableCompaction) {
                                             CompactionBadge(
                                                 summary = summary,
                                                 summarizedUpToIndex = conversation.contextSummaryUpToIndex,
@@ -1765,7 +1765,7 @@ private fun ChatPageContent(
 
                 val hasConversationContent = hasConversationMessages(conversation)
                 val hasAnyPresetMessages = hasConversationPresetMessages(conversation, currentAssistant)
-                val effectiveDisplaySetting = setting.getEffectiveDisplaySetting(currentAssistant)
+                val effectiveDisplaySetting = settings.getEffectiveDisplaySetting(currentAssistant)
                 val scrollToBottomRevealThresholdPx = with(density) { 72.dp.roundToPx() }
                 val showScrollToBottomButton by remember(
                     chatListState,
@@ -1993,15 +1993,15 @@ private fun ChatPageContent(
                 }
 
                 // Gradient behind floating toolbar - hidden when showing new chat content or in transparent immersive mode
-                val isTransparentStyle = setting.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+                val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
                 androidx.compose.animation.AnimatedVisibility(
                     visible = !isTransparentStyle && (hasConversationContent || hasAnyPresetMessages || isTemporaryChat || !showNewChatContent),
                     enter = androidx.compose.animation.fadeIn(),
                     exit = androidx.compose.animation.fadeOut(),
                     modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
-                    val barDensity = setting.displaySetting.barGradientDensity.coerceIn(0f, 1f)
-                    val barBlur = setting.displaySetting.barGradientBlur
+                    val barDensity = settings.displaySetting.barGradientDensity.coerceIn(0f, 1f)
+                    val barBlur = settings.displaySetting.barGradientBlur
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2147,8 +2147,8 @@ private fun ChatPageContent(
                         if (enableWebSearch) {
                             vm.updateAssistantSearchMode(me.lucid.domchat.data.model.AssistantSearchMode.Off)
                         } else {
-                            if (setting.searchServices.isNotEmpty()) {
-                                val validIndex = lastProviderIndex.coerceIn(0, setting.searchServices.lastIndex)
+                            if (settings.searchServices.isNotEmpty()) {
+                                val validIndex = lastProviderIndex.coerceIn(0, settings.searchServices.lastIndex)
                                 vm.updateAssistantSearchMode(me.lucid.domchat.data.model.AssistantSearchMode.Provider(validIndex))
                             }
                         }
@@ -2684,8 +2684,8 @@ private fun ChatSearchModeBar(
                 }
             ),
         shape = searchFieldShape,
-        color = blurredContainerColor(containerColor),
-        border = domChatSoftEdgeBorder()
+        color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) blurredContainerColor(containerColor) else Color.Transparent,
+        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) domChatSoftEdgeBorder() else null,
     ) {
         OutlinedTextField(
             value = query,
@@ -2739,8 +2739,8 @@ private fun ChatShareSelectionModeBar(
     val settings = LocalSettings.current
     Surface(
         shape = shape,
-        color = blurredContainerColor(containerColor),
-        border = domChatSoftEdgeBorder(),
+        color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) blurredContainerColor(containerColor) else Color.Transparent,
+        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) domChatSoftEdgeBorder() else null,
         modifier = Modifier
             .fillMaxWidth()
             .height(AppSize.ChromeBar)
@@ -3104,8 +3104,8 @@ private fun ChatToolbarActionPill(
     val settings = LocalSettings.current
     Surface(
         shape = buttonShape,
-        color = blurredContainerColor(containerColor),
-        border = border,
+        color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) blurredContainerColor(containerColor) else Color.Transparent,
+        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,
         modifier = Modifier
             .size(width = pillWidth, height = topPillSize)
             .clip(buttonShape)
@@ -3311,9 +3311,9 @@ fun UpdatePill(
             onClick()
         },
         shape = pillShape,
-        color = blurredContainerColor(containerColor),
+        color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) blurredContainerColor(containerColor) else Color.Transparent,
         contentColor = contentColor,
-        border = domChatSoftEdgeBorder(),
+        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) domChatSoftEdgeBorder() else null,
         modifier = Modifier
             .height(height)
             .then(
@@ -3472,6 +3472,7 @@ private fun ChatToolbar(
                             }
                         )
                         .size(topPillSize),
+                    liquidGlassMode = settings.displaySetting.liquidGlassMode,
                 )
             }
 
@@ -4207,8 +4208,8 @@ private fun ContextMeterButton(
             )
             .clickable(onClick = onClick),
         shape = shape,
-        color = blurredContainerColor(containerColor),
-        border = domChatSoftEdgeBorder(),
+        color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) blurredContainerColor(containerColor) else Color.Transparent,
+        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) domChatSoftEdgeBorder() else null,
     ) {
         Box(contentAlignment = Alignment.Center) {
             val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest

@@ -10,6 +10,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -1480,7 +1481,7 @@ private fun UserMessageTurn(
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
                                     settings.displaySetting.bubbleSpecularIntensity > 0f
                                 }
-                                m.liquidGlassSurface(
+                                m.liquidGlassBubbleSurface(
                                     shape = shape,
                                     borderWidth = 0.5.dp,
                                     specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
@@ -2000,7 +2001,7 @@ private fun AssistantMessageTurn(
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
                                     settings.displaySetting.bubbleSpecularIntensity > 0f
                                 }
-                                m.liquidGlassSurface(
+                                m.liquidGlassBubbleSurface(
                                     shape = shape,
                                     borderWidth = 0.5.dp,
                                     specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
@@ -2412,7 +2413,7 @@ private fun AssistantThinkingDropdown(
                         specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                     )
                     InterfaceStyle.GLASS -> {
-                        Modifier.liquidGlassSurface(
+                        Modifier.liquidGlassBubbleSurface(
                             shape = shape,
                             borderWidth = 0.5.dp,
                             specularBrush = specularBorder?.brush ?: LiquidGlassTokens.SpecularBorderSubtle,

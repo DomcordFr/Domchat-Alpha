@@ -173,7 +173,7 @@ val LiquidGlassSpecularRimAlpha = 0.18f
 @Composable
 fun Modifier.liquidGlass(
     shape: Shape = LiquidGlassTokens.CardShape,
-    blurRadius: Dp = 8.dp,
+    blurRadius: Dp = 3.dp,
     refractionHeight: Dp = 16.dp,
     refractionAmount: Dp = 32.dp,
     depthEffect: Boolean = true,
@@ -261,12 +261,14 @@ fun Modifier.liquidGlass(
                 }
             )
     } else {
-        // API < 33 or no backdrop: clean Haze ultraThin blur fallback with tint + specular rim.
+        // API < 33 or no backdrop: clean solid fill with tint and specular rim.
+        // No Haze blur - liquid glass is pure AGSL backdrop refraction only.
         var m: Modifier = this
         if (blurContainer != Color.Transparent && blurContainer != Color.Unspecified) {
             m = m.background(blurContainer, shape = shape)
+        } else {
+            m = m.background(Color.Transparent, shape = shape)
         }
-        m = m.domChatBlurEffect(containerColor = blurContainer, shape = shape, blurRadius = blurRadius)
         if (borderWidth > 0.dp && specular > 0f) {
             m = m.border(width = borderWidth, brush = specularBrush, shape = shape)
         }
@@ -316,6 +318,140 @@ fun Modifier.liquidGlassSurface(
     )
 }
 
+/**
+ * Liquid glass surface dedicated to chat bubbles.
+ * Reads bubble-specific settings (chatBubbleBlur, bubbleDepthScale, bubbleSpecularIntensity,
+ * chatBubbleTintHue, chatBubbleAlpha) instead of the global UI glass settings.
+ *
+ * Falls back cleanly to a solid fill when backdrop/runtime shaders are unavailable.
+ */
+@Composable
+fun Modifier.liquidGlassBubbleSurface(
+    shape: Shape = LiquidGlassTokens.BubbleShape,
+    borderWidth: Dp = 0.5.dp,
+    specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
+    fillColor: Color = Color.Transparent,
+    shadowElevation: Dp = 0.dp,
+): Modifier {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+    val density = LocalDensity.current
+    val backdrop = LocalAppBackdrop.current
+    val useGlass = backdrop != null && isRuntimeShaderSupported()
+
+    // Bubble-specific settings
+    val blurRadius = display.chatBubbleBlur.coerceIn(0f, 100f).dp
+    val depthScale = display.bubbleDepthScale.coerceIn(0f, 2.5f)
+    val refractionHeight = (depthScale * 16f).dp
+    val refractionAmount = (depthScale * 32f).dp
+    val specularIntensity = display.bubbleSpecularIntensity.coerceIn(0f, 1f)
+    val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
+    val tone = display.chatBubbleTone.coerceIn(0f, 1f)
+
+    val blurPx = with(density) { blurRadius.toPx() }
+    val heightPx = with(density) { refractionHeight.toPx() }
+    val amountPx = with(density) { refractionAmount.toPx() }
+    val specular = specularIntensity.coerceIn(0f, 1f)
+
+    val tint = Color(display.chatBubbleTintHue)
+    val tintColor = if (tint == Color.Unspecified) Color.Transparent else tint
+    val blurContainer = if (tintColor.alpha > 0.02f) tintColor else fillColor
+
+    val highlight: (() -> Highlight?)? = if (useGlass && borderWidth > 0.dp && specular > 0f) {
+        {
+            Highlight(
+                width = borderWidth,
+                alpha = specular,
+                style = HighlightStyle.Default(
+                    color = Color.White.copy(alpha = 0.5f * specular),
+                    angle = 45f,
+                    falloff = 1f
+                )
+            )
+        }
+    } else {
+        null
+    }
+
+    val effects: BackdropEffectScope.() -> Unit = {
+        if (blurPx > 0f) {
+            blur(blurPx)
+        }
+        if (useGlass && heightPx > 0f && amountPx > 0f) {
+            lens(
+                refractionHeight = heightPx,
+                refractionAmount = amountPx,
+                depthEffect = true,
+            )
+        }
+    }
+
+    val surfaceBlock: DrawScope.() -> Unit = {
+        val base = if (fillColor != Color.Transparent && fillColor != Color.Unspecified) fillColor else Color.Transparent
+        if (base.alpha > 0f) {
+            drawRect(color = base, size = size)
+        }
+        val tintResolved = if (tintColor != Color.Transparent) tintColor else Color.Transparent
+        if (tintResolved.alpha > 0f) {
+            drawRect(color = tintResolved, size = size)
+        }
+    }
+
+    val neutralTone = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, tone)
+    val baseTone = if (tintAmount > 0.02f) {
+        val hsvTint = Color.hsv(tintHue.coerceIn(0f, 360f), 0.75f, 1.0f)
+        androidx.compose.ui.graphics.lerp(neutralTone, hsvTint, tintAmount.coerceIn(0f, 1f))
+    } else {
+        neutralTone
+    }
+    val effectiveContainerColor = if (alpha <= 0.02f) Color.Transparent else baseTone.copy(alpha = alpha)
+
+    return if (useGlass) {
+        this
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { shape },
+                effects = effects,
+                highlight = highlight,
+                onDrawSurface = surfaceBlock,
+                backdropScale = 1f
+            )
+            .then(
+                if (shadowElevation > 0.dp) {
+                    this.shadow(
+                        elevation = shadowElevation,
+                        shape = shape,
+                        ambientColor = Color.Black.copy(alpha = 0.25f),
+                        spotColor = Color.Black.copy(alpha = 0.35f)
+                    )
+                } else {
+                    this
+                }
+            )
+    } else {
+        // API < 33 or no backdrop: clean solid fill with tint and specular rim.
+        var m: Modifier = this
+        if (blurContainer != Color.Transparent && blurContainer != Color.Unspecified) {
+            m = m.background(blurContainer, shape = shape)
+        } else {
+            m = m.background(Color.Transparent, shape = shape)
+        }
+        if (borderWidth > 0.dp && specular > 0f) {
+            m = m.border(width = borderWidth, brush = specularBrush, shape = shape)
+        }
+        if (shadowElevation > 0.dp) {
+            m = m.shadow(
+                elevation = shadowElevation,
+                shape = shape,
+                ambientColor = Color.Black.copy(alpha = 0.25f),
+                spotColor = Color.Black.copy(alpha = 0.35f)
+            )
+        }
+        m
+    }
+}
+
+/
 /**
  * Frosted glass surface: pure Haze blur + alpha + tone + border.
  * No AGSL backdrop refraction or lens effects. Uses Haze ultraThin blur
