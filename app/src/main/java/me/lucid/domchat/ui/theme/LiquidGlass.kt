@@ -400,7 +400,6 @@ fun Modifier.liquidGlassBubbleSurface(
     val surfaceBlock: DrawScope.() -> Unit = {
         val base = when {
             fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
-            effectiveContainerColor != Color.Transparent -> effectiveContainerColor
             else -> Color.Transparent
         }
         if (base.alpha > 0f) {
