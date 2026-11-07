@@ -3459,20 +3459,11 @@ private fun ChatToolbar(
                     },
                     contentDescription = "Messages",
                     shape = buttonShape,
-                    containerColor = topContainerColor,
-                    border = topContainerBorder,
+                    containerColor = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) topContainerColor else Color.Transparent,
+                    border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) topContainerBorder else null,
                     modifier = Modifier
                         .size(topPillSize)
-                        .zIndex(2f)
-                        .then(
-                            if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                                Modifier.frostedGlassSurface(shape = buttonShape)
-                            } else {
-                                Modifier.liquidGlassSurface(shape = buttonShape, glassMode = settings.displaySetting.liquidGlassMode)
-                            }
-                        )
-                        .size(topPillSize),
-                    liquidGlassMode = settings.displaySetting.liquidGlassMode,
+                        .zIndex(2f),
                 )
             }
 
