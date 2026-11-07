@@ -237,7 +237,6 @@ fun Modifier.liquidGlass(
         val base = when {
             fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
             baseTint != Color.Transparent && baseTint.alpha > 0f -> baseTint
-            effectiveContainerColor != Color.Transparent -> effectiveContainerColor
             else -> Color.Transparent
         }
         if (base.alpha > 0f) {
@@ -397,9 +396,13 @@ fun Modifier.liquidGlassBubbleSurface(
         }
     }
 
+    val neutralTone = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, tone)
+    val effectiveContainerColor = if (alpha <= 0.02f) Color.Transparent else neutralTone.copy(alpha = alpha)
+
     val surfaceBlock: DrawScope.() -> Unit = {
         val base = when {
             fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
+            effectiveContainerColor != Color.Transparent -> effectiveContainerColor
             else -> Color.Transparent
         }
         if (base.alpha > 0f) {
@@ -410,9 +413,6 @@ fun Modifier.liquidGlassBubbleSurface(
             drawRect(color = tintResolved, size = size)
         }
     }
-
-    val neutralTone = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, tone)
-    val effectiveContainerColor = if (alpha <= 0.02f) Color.Transparent else neutralTone.copy(alpha = alpha)
 
     return if (useGlass) {
         this
