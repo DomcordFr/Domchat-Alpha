@@ -636,7 +636,6 @@ private fun SharedTransitionScope.ChatListNormal(
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             LazyColumn(
                 state = state,
-                clipToPadding = false,
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp) + PaddingValues(bottom = 32.dp) + innerPadding + androidx.compose.foundation.layout.WindowInsets.ime.asPaddingValues(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -926,7 +925,6 @@ private fun SharedTransitionScope.ChatListPreview(
         // 消息预览
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             LazyColumn(
-                clipToPadding = false,
                 contentPadding = PaddingValues(start = 16.dp, top = 64.dp, end = 16.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
