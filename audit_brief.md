@@ -1,53 +1,68 @@
-# Audit Brief — Task 184: Decouple Frosted Glass and Liquid Glass into Standalone Pipelines
+# Audit Brief — Task 185: Fix Cyclic GraphicsLayer Render Recursion Crash
 
 ## Intent Verification
 
-Decoupled Convx-style liquid glass and frosted glass into two distinct, standalone modifier pipelines across 6 files:
+Fixed a cyclic render loop crash in `AssistantChatTheme` composable inside `ChatPage.kt`.
 
-1. **LiquidGlass.kt** — Added `Modifier.frostedGlassSurface()` as a standalone modifier separate from `Modifier.liquidGlassSurface()`:
-   - `frostedGlassSurface`: Pure Haze blur (`domChatBlurEffect`) + alpha + tone + border. No AGSL backdrop refraction or lens effects.
-   - `liquidGlassSurface`: Pure Convx AGSL backdrop refraction + lens + specular rim + depth (existing, unchanged).
-   - Both share the same parameter shape (shape, borderWidth, specularBrush, fillColor, shadowElevation) for API consistency.
+**Root cause**: At line 1528, `Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop))` wrapped both the `AssistantBackground` composable and its fallback `Box`. The `AssistantBackground` (line 1533) calls `.domChatBlurSource()` which internally calls `layerBackdrop(chatBackdrop)` — recording into `chatBackdrop.graphicsLayer`. Because the parent `Box` already had `layerBackdrop(chatBackdrop)` applied, the parent graphicsLayer and child graphicsLayer were the **same RenderTexture**. When `drawBackdrop` ran inside the parent Box, it sampled `chatBackdrop.graphicsLayer` — the same RenderTexture currently being drawn — causing an infinite HWUI recursion and `RenderThread SIGSEGV` stack overflow crash.
 
-2. **ChatMessageV2.kt** — Routed `InterfaceStyle.FROSTED` → `frostedGlassSurface()` and `InterfaceStyle.GLASS` → `liquidGlassSurface()` in all 3 bubble rendering sites (user message turn, assistant message turn, assistant thinking dropdown). Removed `domChatFrostedContainerColor` import (no longer needed).
+**Fix applied**: Changed line 1528 from:
+```kotlin
+Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop)) {
+```
+to:
+```kotlin
+Box(modifier = Modifier.fillMaxSize()) {
+```
 
-3. **ChatDrawer.kt** — Modal drawer sheet and Permanent pane now conditionally render `frostedGlassSurface(shape = drawerShape)` when `liquidGlassMode == SOFT_FROSTED`, otherwise `liquidGlassSurface(shape = drawerShape, glassMode = ...)`.
-
-4. **MinimalChatInput.kt** — Plus button, composer capsule, STT overlay surface, think surface, think summary box, picker tabs, and scroll-to-bottom button all conditionally route to `frostedGlassSurface` (SOFT_FROSTED) or `liquidGlassSurface` (BALANCED_BLEND/FULL_WATER_LENS).
-
-5. **ChatPage.kt** — Toolbar icon button, search mode bar, share mode bar, overflow menu, action pill, update pill, menu button, and context meter button all conditionally route based on `liquidGlassMode`. Removed unused `domChatBlurEffect`/`domChatBlurSource` imports.
-
-6. **SettingDisplayPage.kt** — Cleanly decoupled Liquid vs Frosted settings:
-   - UI Appearance card: Liquid shows Depth/Specular/Tint/BarDensity/BarBlur; Frosted shows Opacity/BlurRadius/Tint/BarDensity/BarBlur
-   - Chat Bubbles Appearance card: Liquid shows Depth/Specular/Tint; Frosted shows Opacity/BlurRadius/Tone/Tint
-   - Tint color, Bar Gradient Density, and Bar Gradient Blur are shared between both modes
+This removes the parent graphicsLayer that was sampling itself. The `AssistantBackground` at line 1533 still has `.domChatBlurSource()` (which calls `layerBackdrop(chatBackdrop)` internally), so the backdrop is still captured correctly — just without the recursive parent-child graphicsLayer dependency.
 
 ## Call Chain & Architecture
 
-- `frostedGlassSurface` and `liquidGlassSurface` are both `Modifier` extension functions in `LiquidGlass.kt`, called from UI composables.
-- `frostedGlassSurface` reads `LocalSettings.current` for `chatBubbleAlpha`, `chatBubbleTone`, `chatBubbleBlur` — uses Haze `domChatBlurEffect` for blur.
-- `liquidGlassSurface` reads `LocalSettings.current` for `glassBlur`, `glassDepthScale`, `glassTintColor`, `glassSpecularIntensity`, `liquidGlassMode` — uses `Modifier.drawBackdrop` with AGSL lens shader via `LocalAppBackdrop`.
-- `SettingDisplayPage.kt` maintains two independent `remember` states (`uiIsGlass` from `liquidGlassMode`, `bubbleIsGlass` from `bubbleInterfaceStyle`) with a `linkUiAndBubbleStyle` toggle that syncs them when enabled.
-- Architectural boundary preserved: UI layer only; no ViewModel/repository/business-logic changes.
+**Call chain (before fix)**:
+1. `ChatPage.kt` → `Compose UI frame`
+2. `Box(modifier = Modifier.fillMaxSize().layerBackdrop(chatBackdrop))` → registers parent `GraphicsLayer`
+3. Inside this Box, `AssistantBackground(...).modifier = Modifier.domChatBlurSource()` → calls `layerBackdrop(chatBackdrop)` → calls `drawBackdrop()`
+4. `drawBackdrop()` calls `drawLayer(backdrop.graphicsLayer)` — samples the SAME graphicsLayer being drawn in step 2
+5. HWUI detects render recursion → `RenderThread SIGSEGV`
+
+**After fix**:
+1. `ChatPage.kt` → `Compose UI frame`
+2. `Box(modifier = Modifier.fillMaxSize())` — NO graphicsLayer registered for parent
+3. Inside Box, `AssistantBackground(...).modifier = Modifier.domChatBlurSource()` → calls `layerBackdrop(chatBackdrop)` → records into `chatBackdrop.graphicsLayer`
+4. `drawBackdrop()` samples `chatBackdrop.graphicsLayer` — a SEPARATE graphicsLayer, no recursion
+
+**Architecture boundary**: `DomChatMenuButton` in `ui-core` module remains unchanged — it correctly uses `containerColor` and `border` parameters without referencing `LiquidGlassMode` (previously fixed in commit `a4b04b9`). All UI composition boundaries are respected: `ChatPage` owns the `chatBackdrop` `LocalAppBackdrop`, child composables consume it via `LocalAppBackdrop.current`.
 
 ## Recomposition & Memory Safety
 
-- `frostedGlassSurface` and `liquidGlassSurface` are stateless modifiers — no allocations beyond existing Compose pattern.
-- All `remember` blocks in SettingDisplayPage.kt are keyed on their respective `Settings.displaySetting` values — stable across recompositions.
-- No new remembered objects introduced beyond existing patterns.
-- No `!!` force-unwraps introduced (grep-verified: zero matches across all 6 edited files).
-- Diff: 226 insertions / 54 deletions across 6 files — minimal, within scope.
+- **No new state introduced**: Only removed a `.layerBackdrop(chatBackdrop)` modifier call from the parent Box. No new state objects allocated.
+- **`chatBackdrop` is a `rememberLayerBackdrop()`**: Creates a single `LayerBackdrop` instance per `ChatPage` composition. The `LayerBackdropNode` holds a reference to this single instance — no new allocations per frame.
+- **`surfaceDirty` flag**: `LayerBackdropNode` uses `surfaceDirty` flag to track when re-recording is needed. The parent no longer redundantly calls `layerBackdrop`, so `recordLayer` is called once per frame instead of twice (parent + child).
+- **No `!!` force-unwraps introduced**: grep-verified zero new `!!` matches.
 
 ## Threading & Dispatchers
 
-- Pure UI/Compose drawing code on `Dispatchers.Main`; no coroutines, no `launch`, no `withContext`, no disk/network access.
-- `domChatBlurEffect` (Haze) and `drawBackdrop` (AGSL) are frame-based composition modifiers running during the draw phase.
-- Invariant "ZERO background threading on Dispatchers.Main" satisfied.
+- **Pure UI thread Compose code**: `ChartPage.kt` composable functions run on `Dispatchers.Main`. All Compose drawing happens on the main thread during the draw phase.
+- **No coroutines introduced**: No `launch`, `withContext`, or `async` calls added.
+- **No blocking calls**: The `layerBackdrop` call happens within Compose's draw phase, which is designed for synchronous GPU command recording.
+- **Thread safety**: `LayerBackdropNode` uses `mutableStateOf(null)` for `layoutCoordinates` with `neverEqualPolicy()` — this is the standard Compose pattern for tracking layout coordinates safely.
 
 ## Offline & Error State Handling
 
-- Fully offline-capable: purely graphical composition changes. No network calls, no remote resource lookups.
-- `frostedGlassSurface` gracefully degrades when `glassBlur <= 0f` — falls back to solid `background()` color without blur.
-- `liquidGlassSurface` gracefully falls back to `domChatBlurEffect` when `LocalAppBackdrop.current == null` or runtime shaders unsupported (API < 33) — no crash path.
-- `frostedGlassSurface` gracefully degrades when `effectiveBlur <= 0f` — falls back to solid `background()` color.
-- Error matrices unchanged from pre-existing behavior.
+- **Fully offline-capable**: Purely graphical composition changes. No network calls, no remote resource lookups.
+- **No new error states introduced**: The fix removes a crash path (RenderThread SIGSEGV) rather than introducing new ones.
+- **Graceful degradation**: If `chatBackdrop` is `null` (when `LocalAppBackdrop.current` is null, e.g. on API < 33), `drawBackdrop` handles it gracefully — `LayerBackdropNode.draw()` calls `backdrop.graphicsLayer` which would be null, but this is pre-existing behavior not affected by this change.
+- **Memory safety**: No memory leaks introduced. `LayerBackdrop` is `rememberLayerBackdrop()` — created once per composition and garbage-collected when the composable leaves composition.
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `ChatPage.kt` | Line 1528: Removed `.layerBackdrop(chatBackdrop)` from parent Box modifier, leaving `Modifier.fillMaxSize()` |
+
+**Diff**: 1 file changed, 1 insertion(+), 1 deletion(-)
+
+**Commit**: `0e83afc` fix(ui): break graphicsLayer render cycle in ChatPage.kt
+
+**Status**: Pushed to `origin/main`
