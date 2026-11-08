@@ -264,7 +264,7 @@ internal fun LorebooksPickerSheet(
         settings.lorebooks.filter {
             lorebookSearchQuery.isEmpty() ||
                 it.name.contains(lorebookSearchQuery, ignoreCase = true) ||
-                it.id.contains(lorebookSearchQuery, ignoreCase = true)
+                it.id.toString().contains(lorebookSearchQuery, ignoreCase = true)
         }
     }
 
@@ -302,7 +302,7 @@ internal fun LorebooksPickerSheet(
         sheetState = sheetState,
         shape = sheetShape,
         sheetGesturesEnabled = true,
-        modifier = lorebookGlassSurface(sheetShape),
+        modifier = Modifier.lorebookGlassSurface(sheetShape),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
