@@ -1962,58 +1962,83 @@ private fun ChatPageContent(
                     )
                 }
 
-                // Message deletion confirmation dialog
-                pendingDeleteMessage?.let { messageToDelete ->
-                    AlertDialog(
-                        onDismissRequest = {
-                            pendingDeleteMessage = null
-                        },
-                        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-                        title = {
-                            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-                            Text("Delete message?")
-                        },
-                        text = {
-                            Text("Are you sure you want to delete this message?")
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Error)
-                                    val toDelete = messageToDelete
-                                    pendingDeleteMessage = null
-                                    scope.launch {
-                                        val backup = conversation
-                                        val removedIds = vm.deleteMessage(toDelete)
-                                        toaster.show(
-                                            message = context.getString(R.string.message_deleted),
-                                            action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                                label = context.getString(R.string.undo),
-                                                onClick = {
-                                                    vm.updateConversation(backup)
-                                                    vm.markNodesAsRestored(removedIds)
-                                                }
-                                            )
-                                        )
-                                    }
-                                }
+                // Message deletion confirmation dialog (liquid glass).
+                // Shared by the message action row delete button and the message actions popover delete button.
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = pendingDeleteMessage != null,
+                    enter = fadeIn(animationSpec = tween(180)) +
+                        scaleIn(initialScale = 0.92f, animationSpec = tween(180)),
+                    exit = fadeOut(animationSpec = tween(120)) +
+                        scaleOut(targetScale = 0.92f, animationSpec = tween(120)),
+                    modifier = Modifier.fillMaxSize().zIndex(50f),
+                ) {
+                    pendingDeleteMessage?.let { messageToDelete ->
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .widthIn(min = 240.dp, max = 300.dp)
+                                .liquidGlassSurface(
+                                    shape = RoundedCornerShape(28.dp),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    fillColor = Color.Transparent,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
                                 Text(
-                                    text = stringResource(R.string.delete),
-                                    color = MaterialTheme.colorScheme.error
+                                    text = stringResource(R.string.chat_message_delete_title),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                    ),
                                 )
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    pendingDeleteMessage = null
+                                Text(
+                                    text = stringResource(R.string.chat_message_delete_confirm),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    LiquidGlassDialogTextButton(
+                                        onClick = {
+                                            pendingDeleteMessage = null
+                                        },
+                                        text = stringResource(R.string.cancel),
+                                    )
+                                    LiquidGlassDialogTextButton(
+                                        onClick = {
+                                            haptics.perform(HapticPattern.Error)
+                                            val toDelete = messageToDelete
+                                            pendingDeleteMessage = null
+                                            scope.launch {
+                                                val backup = conversation
+                                                val removedIds = vm.deleteMessage(toDelete)
+                                                toaster.show(
+                                                    message = context.getString(R.string.message_deleted),
+                                                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                                                        label = context.getString(R.string.undo),
+                                                        onClick = {
+                                                            vm.updateConversation(backup)
+                                                            vm.markNodesAsRestored(removedIds)
+                                                        }
+                                                    )
+                                                )
+                                            }
+                                        },
+                                        text = stringResource(R.string.delete),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
                                 }
-                            ) {
-                                Text(stringResource(R.string.cancel))
                             }
                         }
-                    )
+                    }
                 }
 
                 // Gradient behind floating toolbar - hidden when showing new chat content or in transparent immersive mode
@@ -3063,6 +3088,7 @@ private val DefaultTopBarActionState = TopBarActionState(
 private fun ChatToolbarActionPill(
     actionState: TopBarActionState,
     currentAssistant: Assistant,
+    conversationTitle: String,
     topPillSize: Dp,
     buttonShape: RoundedCornerShape,
     containerColor: Color,
@@ -3073,6 +3099,7 @@ private fun ChatToolbarActionPill(
     onToggleTemporaryChat: () -> Unit,
     onOpenAssistantPicker: () -> Unit,
 ) {
+    val chatTitle = conversationTitle.takeIf { it.isNotBlank() } ?: currentAssistant.effectiveChatName
     val fullPillWidth = topPillSize * 2f
     val targetWidth = when (actionState.mode) {
         TopBarActionMode.CompactNewChat -> topPillSize
@@ -3316,6 +3343,39 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarInChatLayer(
 
 
 @Composable
+private fun LiquidGlassDialogTextButton(
+    onClick: () -> Unit,
+    text: String,
+    color: Color = Color.Unspecified,
+) {
+    val haptics = rememberPremiumHaptics()
+    TextButton(
+        onClick = {
+            haptics.perform(HapticPattern.Pop)
+            onClick()
+        },
+        modifier = Modifier
+            .liquidGlassSurface(
+                shape = RoundedCornerShape(16.dp),
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = Color.Transparent,
+            )
+            .padding(vertical = 10.dp)
+            .width(112.dp),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.Medium,
+            ),
+            color = if (color == Color.Unspecified) MaterialTheme.colorScheme.onSurface else color,
+        )
+    }
+}
+
+
+@Composable
 fun UpdatePill(
     bigScreen: Boolean,
     height: Dp,
@@ -3514,7 +3574,7 @@ private fun ChatToolbar(
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         Text(
-                            text = conversation.title.takeIf { it.isNotBlank() } ?: currentAssistant.name,
+                            text = conversation.title.takeIf { it.isNotBlank() } ?: currentAssistant.effectiveChatName,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White

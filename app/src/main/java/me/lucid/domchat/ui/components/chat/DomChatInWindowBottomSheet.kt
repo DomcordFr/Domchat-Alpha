@@ -180,14 +180,12 @@ fun DomChatInWindowBottomSheet(
             .fillMaxSize()
             .zIndex(200f)
     ) {
-        // Scrim with interactive fade
+        // Scrim with interactive fade - stays static, only alpha fades as sheet moves
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .offset { IntOffset(0, offsetY.value.roundToInt().coerceAtLeast(0)) }
                 .graphicsLayer {
-                    val dragProgress = (1f - (offsetY.value / sheetHeightPx).coerceIn(0f, 1f))
-                    this.alpha = scrimAlpha.value * dragProgress
+                    this.alpha = scrimAlpha.value * (1f - (offsetY.value / sheetHeightPx).coerceIn(0f, 1f))
                 }
                 .background(Color.Black.copy(alpha = 0.45f))
                 .clickable(

@@ -962,8 +962,8 @@ class ChatService(
         val conversation = Conversation.ofId(
             id = Uuid.random(),
             assistantId = assistant.id,
-            messages = initialNodes
-        )
+            messages = initialNodes,
+        ).copy(title = assistant.effectiveChatName)
         setConversationPersistenceMode(conversation.id, ChatPersistenceMode.NORMAL)
         saveConversation(conversation.id, conversation)
         return conversation

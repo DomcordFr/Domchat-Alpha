@@ -491,11 +491,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             label = "CharacterGallery",
             modifier = Modifier.fillMaxSize().padding(padding)
         ) { (targetGrid, targetGroup) ->
-            if (isGridView) {
+            if (targetGrid) {
                 LazyVerticalGrid(
                     state = gridState,
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 96.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier
@@ -504,17 +504,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "Characters",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 4.dp).padding(top = 2.dp)
-                            )
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
@@ -864,7 +854,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             } else {
                 LazyColumn(
                     state = listState,
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 96.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxSize()
@@ -872,17 +862,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
                     item {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "Characters",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 4.dp).padding(top = 2.dp)
-                            )
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
@@ -911,7 +891,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 22.dp, vertical = 8.dp),
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
@@ -1107,7 +1087,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
+                                .padding(horizontal = 4.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -1784,7 +1764,6 @@ fun CharacterListRow(
                 shape = RoundedCornerShape(16.dp)
             )
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -2971,7 +2950,7 @@ private fun sanitizeHtml(html: String?): String {
     val text = html ?: return ""
     var result = text
         .replace(Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)) { match ->
-            "\n![Image](${match.groupValues[1]})\n"
+            "![Image](${match.groupValues[1]})"
         }
         .replace("&nbsp;", " ")
         .replace("&amp;", "&")
@@ -2988,7 +2967,7 @@ private fun sanitizeHtml(html: String?): String {
             match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
         }
         .replace(Regex("""https?://[^\s<>"]+\.(?:png|jpg|jpeg|webp|gif)""", RegexOption.IGNORE_CASE)) { match ->
-            "\n![Image](${match.value})\n"
+            "![Image](${match.value})"
         }
         .replace(Regex("[ \\t]+"), " ")
         .trim()

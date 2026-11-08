@@ -1160,22 +1160,18 @@ object AssistantExportImport : KoinComponent {
                 else -> emptyList()
             }
 
-            val systemPromptBuilder = StringBuilder()
-            if (systemPrompt.isNotBlank()) {
-                systemPromptBuilder.append(systemPrompt.trim()).append("\n\n")
-            }
-            if (personality.isNotBlank()) {
-                systemPromptBuilder.append("Personality:\n").append(personality.trim()).append("\n\n")
-            }
-            if (scenario.isNotBlank()) {
-                systemPromptBuilder.append("Scenario:\n").append(scenario.trim()).append("\n\n")
-            }
-            if (mesExample.isNotBlank()) {
-                systemPromptBuilder.append("Examples:\n").append(mesExample.trim()).append("\n\n")
-            }
-            if (postHistory.isNotBlank()) {
-                systemPromptBuilder.append("Instructions:\n").append(postHistory.trim()).append("\n\n")
-            }
+            // Build systemPrompt - ONLY use the card's systemPrompt, not everything
+            val systemPromptText = systemPrompt.trim()
+
+            // Extract short blurb from description (first paragraph, max 150 chars)
+            val blurb = if (description.isNotBlank()) {
+                val firstPara = description.trim().split("\n\n").first()
+                if (firstPara.length > 150) {
+                    firstPara.take(150).trimEnd { it == ' ' }.plus("...")
+                } else {
+                    firstPara
+                }
+            } else ""
 
             val presetMessages = if (firstMes.isNotBlank() && firstMes.lowercase() != "none" && firstMes.lowercase() != "null") {
                 listOf(me.lucid.ai.ui.UIMessage(
@@ -1188,10 +1184,10 @@ object AssistantExportImport : KoinComponent {
 
             var assistant = Assistant(
                 name = name.ifBlank { "Imported Character" },
-                systemPrompt = systemPromptBuilder.toString().trim(),
+                systemPrompt = systemPromptText,
                 presetMessages = presetMessages,
                 alternateGreetings = alternateGreetings,
-                creatorNotes = creatorNotes,
+                creatorNotes = if (creatorNotes.isNotBlank()) creatorNotes else blurb,
                 creator = creator,
                 characterVersion = characterVersion
             )

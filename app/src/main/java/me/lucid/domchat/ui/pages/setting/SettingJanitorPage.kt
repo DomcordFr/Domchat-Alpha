@@ -1410,10 +1410,11 @@ private fun JanitorCharacterInspectorSheet(
                             0 -> {
                                 // Notes Tab — creator notes / bio (with in-place embedded images)
                                 val rawNotes = when {
+                                    !character.description.isNullOrBlank() -> character.description
                                     !character.bio.isNullOrBlank() -> character.bio
                                     !fullExtract?.bio.isNullOrBlank() -> fullExtract?.bio
                                     !fullExtract?.description.isNullOrBlank() -> fullExtract?.description
-                                    else -> character.description
+                                    else -> ""
                                 }.orEmpty()
 
                                 Box(
@@ -1424,24 +1425,14 @@ private fun JanitorCharacterInspectorSheet(
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
-                                    // Embedded images referenced by the extract but not already
-                                    // present in the note text are rendered as in-place markdown
-                                    // images instead of being stripped or dumped as raw URLs.
-                                    val embeddedImageUrls = (fullExtract?.embeddedImages ?: emptyList())
-                                        .filter { it.isNotBlank() }
-                                        .filter { url -> rawNotes.contains(url) == false }
-                                    val notesContent = when {
-                                        embeddedImageUrls.isNotEmpty() && rawNotes.isNotBlank() ->
-                                            "$rawNotes\n\n${embeddedImageUrls.joinToString("\n") { "![Image]($it)" }}"
-                                        embeddedImageUrls.isNotEmpty() ->
-                                            embeddedImageUrls.joinToString("\n") { "![Image]($it)" }
-                                        else -> rawNotes
-                                    }
+                                    // rawNotes already contains real raw HTML with inline
+                                    // <img src="...">, colors, and styles. Pass it straight to
+                                    // MarkdownBlock — SimpleHtmlBlock natively renders  tags,
+                                    // and converting  to ![Image] inside HTML breaks parsing.
+                                    val notesContent = rawNotes
                                     if (notesContent.isNotBlank()) {
                                         MarkdownBlock(
-                                            content = formatRoleplayTextWithCdnImages(
-                                                cleanHtmlImgToMarkdown(notesContent)
-                                            )
+                                            content = notesContent
                                         )
                                     } else {
                                         Text(
@@ -1811,22 +1802,20 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
     val creator = extract.creator ?: extract.creatorName
     val avatarUrl = resolveAvatarUrl(extract.avatarHash ?: extract.avatarHash2)
     val systemPrompt = extract.systemPrompt ?: ""
-    val rawNotes = when {
+    // Full bio / description stays in the extract (shown in the sheet's Notes / Personality
+    // tabs). creatorNotes keeps only a short blurb: first paragraph, max 150 chars — never the
+    // whole long bio dumped into notes, and never any appended embedded image URLs.
+    val fullNotes = when {
         !extract.description.isNullOrBlank() -> extract.description
         !extract.bio.isNullOrBlank() -> extract.bio
         else -> ""
     }
-
-    // Append any embedded images from extract.embeddedImages that are not already in text
-    val missingEmbedded = extract.embeddedImages.filter { imgUrl ->
-        imgUrl.isNotBlank() && !rawNotes.contains(imgUrl) && !(extract.systemPrompt ?: "").contains(imgUrl) && !(extract.firstMessage ?: "").contains(imgUrl)
-    }
-    val creatorNotes = if (missingEmbedded.isNotEmpty()) {
-        val extraMarkdown = missingEmbedded.joinToString("\n") { "![Image]($it)" }
-        if (rawNotes.isNotBlank()) "$rawNotes\n\n$extraMarkdown" else extraMarkdown
-    } else {
-        rawNotes
-    }
+    val creatorNotes = fullNotes.takeIf { it.isNotBlank() }?.let { text ->
+        // description may carry rich HTML (<img>, <span style>, colors). Strip tags so the
+        // short creatorNotes blurb stays clean plain text instead of a truncated, broken
+        // HTML fragment. The full raw HTML stays in the sheet's Notes tab.
+        stripHtmlTags(text).substringBefore("\n\n").trim().take(150)
+    }.orEmpty()
 
     // Map firstMessage to presetMessages as an assistant greeting
     val presetMessages = extract.firstMessage?.takeIf { it.isNotBlank() }?.let { message ->
@@ -1868,6 +1857,29 @@ private fun extractCleanChatName(name: String): String {
     val cutIndex = delimiters.map { name.indexOf(it) }.filter { it > 0 }.minOrNull() ?: name.length
     val clean = name.substring(0, cutIndex.coerceAtLeast(0).coerceAtMost(name.length)).trim()
     return clean.ifBlank { name.trim() }
+}
+
+/**
+ * Strips HTML tags and unescapes common entities, returning plain text. Used for short
+ * blurbs (creatorNotes) so rich HTML descriptions don't get truncated mid-tag.
+ */
+private fun stripHtmlTags(html: String): String {
+    return html
+        .replace(Regex("<[^>]*>"), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace(Regex("&#(\\d+);")) { match ->
+            match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
+        }
+        .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
+        }
+        .trim()
 }
 
 /**
