@@ -1,6 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URI
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 import java.security.MessageDigest
 
 plugins {
@@ -36,14 +38,51 @@ val downloadSherpaOnnxAar by tasks.registering {
         target.parentFile.mkdirs()
         val partial = File(target.parentFile, "${target.name}.part")
         partial.delete()
-        URI(
-            "https://github.com/k2-fsa/sherpa-onnx/releases/download/" +
-                "v$sherpaOnnxVersion/sherpa-onnx-$sherpaOnnxVersion.aar"
-        ).toURL().openStream().buffered().use { input ->
-            partial.outputStream().buffered().use(input::copyTo)
+        val downloadUrl =
+            URL("https://github.com/k2-fsa/sherpa-onnx/releases/download/" +
+                "v$sherpaOnnxVersion/sherpa-onnx-$sherpaOnnxVersion.aar")
+        val maxAttempts = 5
+        val backoffMillis = 3_000L
+        var lastError: Throwable? = null
+        for (attempt in 1..maxAttempts) {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = downloadUrl.openConnection() as HttpURLConnection
+                connection.instanceFollowRedirects = true
+                connection.useCaches = false
+                connection.connectTimeout = 30_000
+                connection.readTimeout = 60_000
+                connection.requestMethod = "GET"
+                connection.connect()
+
+                when (connection.responseCode) {
+                    HttpURLConnection.HTTP_OK -> {
+                        connection.inputStream.buffered().use { input ->
+                            partial.outputStream().buffered().use(input::copyTo)
+                        }
+                        check(sha256(partial) == sherpaOnnxSha256) {
+                            "Downloaded sherpa-onnx AAR checksum mismatch"
+                        }
+                        check(partial.renameTo(target)) {
+                            "Unable to install sherpa-onnx AAR at $target"
+                        }
+                        return@doLast
+                    }
+                    503, 504 -> throw IOException(
+                        "HTTP ${connection.responseCode}: transient GitHub Release error"
+                    )
+                    else -> throw IOException(
+                        "Unexpected HTTP ${connection.responseCode} downloading sherpa-onnx AAR"
+                    )
+                }
+            } catch (e: Throwable) {
+                lastError = e
+                if (attempt < maxAttempts) Thread.sleep(backoffMillis)
+            } finally {
+                connection?.disconnect()
+            }
         }
-        check(sha256(partial) == sherpaOnnxSha256) { "Downloaded sherpa-onnx AAR checksum mismatch" }
-        check(partial.renameTo(target)) { "Unable to install sherpa-onnx AAR at $target" }
+        throw lastError ?: IOException("Failed to download sherpa-onnx AAR after $maxAttempts attempts")
     }
 }
 
