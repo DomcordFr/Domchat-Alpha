@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -40,8 +41,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
@@ -198,31 +201,30 @@ fun DomChatInWindowBottomSheet(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
-                Surface(
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .onSizeChanged {
-                            if (it.height > 0) {
-                                sheetHeightPx = it.height.toFloat()
-                            }
+            Surface(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .onSizeChanged {
+                        if (it.height > 0) {
+                            sheetHeightPx = it.height.toFloat()
                         }
-                        .offset { IntOffset(0, offsetY.value.roundToInt().coerceAtLeast(0)) }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {}
-                        )
-                        .liquidGlassSurface(
-                            shape = shape,
-                            fillColor = sheetBg,
-                            borderWidth = 0.5.dp,
-                            specularBrush = borderBrush,
-                            isFloatingControl = true,
-                        ),
-                    shape = shape,
-                    color = Color.Transparent,
-                ) {
+                    }
+                    .offset { IntOffset(0, offsetY.value.roundToInt().coerceAtLeast(0)) }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    )
+                    .liquidGlassSurface(
+                        shape = shape,
+                        fillColor = sheetBg,
+                        borderWidth = 0.5.dp,
+                        specularBrush = borderBrush,
+                        isFloatingControl = true,
+                    ),
+                shape = shape,
+                color = Color.Transparent,
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -244,7 +246,6 @@ fun DomChatInWindowBottomSheet(
                 }
             }
         }
-    }
 }
 
 /**
