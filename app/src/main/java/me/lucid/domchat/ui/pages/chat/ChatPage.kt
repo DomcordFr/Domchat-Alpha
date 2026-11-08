@@ -3570,7 +3570,7 @@ private fun ChatToolbar(
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         Text(
-                            text = currentAssistant.effectiveChatName,
+                            text = conversation.title.takeIf { it.isNotBlank() } ?: currentAssistant.name,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White

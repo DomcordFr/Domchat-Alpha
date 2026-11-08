@@ -1804,7 +1804,9 @@ fun CharacterListRow(
                 text = assistant.effectiveDisplayName,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = Color.White
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             if (!assistant.creator.isNullOrBlank()) {
                 Text(
@@ -2043,7 +2045,7 @@ fun CharacterInspectorSheet(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     val introsCount = assistant.alternateGreetings.size + 1
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -2135,7 +2137,7 @@ fun CharacterInspectorSheet(
                         Spacer(modifier = Modifier.height(12.dp))
                         MarkdownBlock(
                             content = formatRoleplayTextWithCdnImages(
-                                cleanHtmlImgToMarkdown(creatorNotesBlurb)
+                                sanitizeHtml(creatorNotesBlurb)
                             )
                         )
                     }
@@ -2348,7 +2350,7 @@ fun CharacterInspectorSheet(
                                     if (notes.isNotBlank()) {
                                         MarkdownBlock(
                                             content = formatRoleplayTextWithCdnImages(
-                                                cleanHtmlImgToMarkdown(notes)
+                                                sanitizeHtml(notes)
                                             )
                                         )
                                     } else {
@@ -2502,7 +2504,7 @@ fun CharacterInspectorSheet(
                                                 if (greetingText.isNotBlank()) {
                                                     MarkdownBlock(
                                                         content = formatRoleplayTextWithCdnImages(
-                                                            cleanHtmlImgToMarkdown(greetingText)
+                                                            sanitizeHtml(greetingText)
                                                         )
                                                     )
                                                 } else {

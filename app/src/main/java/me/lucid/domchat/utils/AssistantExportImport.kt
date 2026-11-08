@@ -1164,9 +1164,6 @@ object AssistantExportImport : KoinComponent {
             if (systemPrompt.isNotBlank()) {
                 systemPromptBuilder.append(systemPrompt.trim()).append("\n\n")
             }
-            if (description.isNotBlank()) {
-                systemPromptBuilder.append("Description:\n").append(description.trim()).append("\n\n")
-            }
             if (personality.isNotBlank()) {
                 systemPromptBuilder.append("Personality:\n").append(personality.trim()).append("\n\n")
             }
@@ -1180,10 +1177,10 @@ object AssistantExportImport : KoinComponent {
                 systemPromptBuilder.append("Instructions:\n").append(postHistory.trim()).append("\n\n")
             }
 
-            val presetMessages = if (firstMes.isNotBlank()) {
+            val presetMessages = if (firstMes.isNotBlank() && firstMes.lowercase() != "none" && firstMes.lowercase() != "null") {
                 listOf(me.lucid.ai.ui.UIMessage(
                     role = me.lucid.ai.core.MessageRole.ASSISTANT,
-                    parts = listOf(me.lucid.ai.ui.UIMessagePart.Text(text = firstMes))
+                    parts = listOf(me.lucid.ai.ui.UIMessagePart.Text(text = firstMes.trim()))
                 ))
             } else {
                 emptyList()
