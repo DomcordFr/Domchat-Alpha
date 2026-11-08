@@ -36,15 +36,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -80,6 +74,8 @@ import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.components.ai.DomChatAssistantPickerItem
 import me.lucid.domchat.ui.components.ai.DomChatAssistantPickerTag
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSearchBar
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
@@ -203,103 +199,24 @@ fun AssistantPickerSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
+        dragHandle = null,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.65f)
+                .fillMaxHeight(0.6f)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.assistant_page_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = "${filteredAssistants.size} characters",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                )
-            }
+            DomChatSheetHeader(
+                title = stringResource(R.string.assistant_page_title),
+                badge = { Text("${filteredAssistants.size}") },
+            )
 
-            OutlinedTextField(
+            DomChatSearchBar(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = {
-                    Text(
-                        "Search characters...",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = { searchQuery = "" },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    disabledTextColor = Color(0xFF8A8A96),
-                    cursorColor = Color(0xFFF2F2F7),
-                    errorCursorColor = Color(0xFFEF4444),
-                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    disabledBorderColor = Color.White.copy(alpha = 0.06f),
-                    errorBorderColor = Color(0xFFEF4444),
-                    focusedLabelColor = Color(0xFFF2F2F7),
-                    unfocusedLabelColor = Color(0xFF8A8A96),
-                    focusedPlaceholderColor = Color(0xFF8A8A96),
-                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                    disabledPlaceholderColor = Color(0xFF8A8A96),
-                    focusedLeadingIconColor = Color(0xFF8A8A96),
-                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                    focusedTrailingIconColor = Color(0xFF8A8A96),
-                    unfocusedTrailingIconColor = Color(0xFF8A8A96),
-                    focusedSupportingTextColor = Color(0xFF8A8A96),
-                    unfocusedSupportingTextColor = Color(0xFF8A8A96),
-                    errorSupportingTextColor = Color(0xFFEF4444),
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 14.dp)
-                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                    .domChatBlurEffect(
-                        containerColor = Color(0xFF000000).copy(alpha = 0.12f),
-                        shape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-                    )
+                placeholder = "Search characters...",
+                modifier = Modifier.padding(bottom = 14.dp),
             )
 
             if (distinctTags.isNotEmpty()) {

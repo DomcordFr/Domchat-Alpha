@@ -1163,16 +1163,6 @@ object AssistantExportImport : KoinComponent {
             // Build systemPrompt - ONLY use the card's systemPrompt, not everything
             val systemPromptText = systemPrompt.trim()
 
-            // Extract short blurb from description (first paragraph, max 150 chars)
-            val blurb = if (description.isNotBlank()) {
-                val firstPara = description.trim().split("\n\n").first()
-                if (firstPara.length > 150) {
-                    firstPara.take(150).trimEnd { it == ' ' }.plus("...")
-                } else {
-                    firstPara
-                }
-            } else ""
-
             val presetMessages = if (firstMes.isNotBlank() && firstMes.lowercase() != "none" && firstMes.lowercase() != "null") {
                 listOf(me.lucid.ai.ui.UIMessage(
                     role = me.lucid.ai.core.MessageRole.ASSISTANT,
@@ -1187,7 +1177,7 @@ object AssistantExportImport : KoinComponent {
                 systemPrompt = systemPromptText,
                 presetMessages = presetMessages,
                 alternateGreetings = alternateGreetings,
-                creatorNotes = if (!creatorNotes.isNullOrBlank()) creatorNotes else blurb,
+                creatorNotes = if (!creatorNotes.isNullOrBlank()) creatorNotes else description.orEmpty(),
                 creator = creator,
                 characterVersion = characterVersion
             )

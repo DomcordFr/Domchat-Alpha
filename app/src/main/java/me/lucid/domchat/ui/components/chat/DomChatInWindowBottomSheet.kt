@@ -25,7 +25,9 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,9 +43,23 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.context.LocalSettings
@@ -73,6 +89,125 @@ fun DomChatSheetDragHandle(
 }
 
 /**
+ * CompositionLocal exposing the sheet's dismiss-with-animation callback so
+ * header close buttons and sheet-level actions can dismiss consistently.
+ */
+val LocalSheetDismiss = compositionLocalOf<(() -> Unit)?> { null }
+
+/**
+ * Unified sheet header: drag handle pill, title row with optional subtitle/badge/actions,
+ * and a borderless close icon button on the far right, finished with a centered specular divider.
+ */
+@Composable
+fun DomChatSheetHeader(
+    title: String,
+    subtitle: String? = null,
+    badge: @Composable (() -> Unit)? = null,
+    actions: @Composable (() -> Unit)? = null,
+    onCloseClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val dismiss = LocalSheetDismiss.current
+    Column(modifier = modifier) {
+        DomChatSheetDragHandle()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp
+                    ),
+                    color = Color.White,
+                )
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f),
+                    )
+                }
+            }
+            badge?.invoke()
+            Spacer(modifier = Modifier.weight(1f))
+            actions?.invoke()
+            IconButton(
+                onClick = onCloseClick ?: dismiss ?: {},
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = "Close",
+                    tint = Color.White.copy(0.7f),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp),
+            thickness = 0.5.dp,
+            color = Color.White.copy(alpha = 0.12f),
+        )
+    }
+}
+
+/**
+ * Unified sheet search bar: glass OutlinedTextField with specular border, leading search icon,
+ * and trailing clear icon when non-empty.
+ */
+@Composable
+fun DomChatSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String = "Search...",
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = { Text(placeholder) },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.5f),
+                modifier = Modifier.size(18.dp),
+            )
+        },
+        trailingIcon = {
+            if (value.isNotEmpty()) {
+                IconButton(onClick = { onValueChange("") }) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Clear",
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        shape = CircleShape,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedBorderColor = Color.White.copy(0.12f),
+            unfocusedBorderColor = Color.White.copy(0.12f),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            cursorColor = Color.White.copy(alpha = 0.9f),
+            focusedLabelColor = Color.White.copy(alpha = 0.8f),
+            unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+        )
+    )
+}
+
+/**
  * An in-window bottom sheet that shares the main Activity Compose canvas.
  * Inherits full hardware Haze blur over chat messages and wallpaper.
  * Supports smooth 120Hz entry/exit spring animations and interactive drag-down-to-dismiss.
@@ -96,6 +231,7 @@ fun DomChatInWindowBottomSheet(
     val motionPolicy = me.lucid.domchat.ui.motion.LocalMotionPolicy.current
     val isDark = LocalDarkMode.current
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.60f).dp
 
     var sheetHeightPx by remember { mutableFloatStateOf(1000f) }
     val offsetY = remember { Animatable(1200f) }
@@ -202,6 +338,7 @@ fun DomChatInWindowBottomSheet(
             Surface(
                 modifier = modifier
                     .fillMaxWidth()
+                    .heightIn(max = maxSheetHeight)
                     .onSizeChanged {
                         if (it.height > 0) {
                             sheetHeightPx = it.height.toFloat()
@@ -230,18 +367,21 @@ fun DomChatInWindowBottomSheet(
                         .navigationBarsPadding(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (dragHandle != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .then(dragModifier)
-                                .padding(vertical = 4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            dragHandle()
+                    val sheetScope = this
+                    CompositionLocalProvider(LocalSheetDismiss provides { dismissWithAnimation() }) {
+                        if (dragHandle != null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(dragModifier)
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                dragHandle()
+                            }
                         }
+                        sheetScope.content()
                     }
-                    content()
                 }
             }
         }

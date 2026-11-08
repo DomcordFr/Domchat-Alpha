@@ -1810,12 +1810,7 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         !extract.bio.isNullOrBlank() -> extract.bio
         else -> ""
     }
-    val creatorNotes = fullNotes.takeIf { it.isNotBlank() }?.let { text ->
-        // description may carry rich HTML (<img>, <span style>, colors). Strip tags so the
-        // short creatorNotes blurb stays clean plain text instead of a truncated, broken
-        // HTML fragment. The full raw HTML stays in the sheet's Notes tab.
-        stripHtmlTags(text).substringBefore("\n\n").trim().take(150)
-    }.orEmpty()
+    val creatorNotes = fullNotes
 
     // Map firstMessage to presetMessages as an assistant greeting
     val presetMessages = extract.firstMessage?.takeIf { it.isNotBlank() }?.let { message ->

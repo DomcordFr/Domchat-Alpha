@@ -123,23 +123,39 @@ private fun RenderNode(
         is SimpleHtmlElement -> {
             when (node.tagName) {
                 "p" -> {
-                    val annotatedString = buildAnnotatedStringFromElement(node, onLinkClick)
-                    if (annotatedString.text.isNotBlank()) {
-                        val direction = rememberElementDirection(annotatedString.text)
-                        // Parse inline styles for <p> element
-                        val style = node.attr("style")
-                        val inlineStyle = if (style.isNotEmpty()) parseInlineStyle(style) else null
-
+                    // If the <p> wraps an  (directly or nested), render children via
+                    // RenderNode so <p><img src="..."></p> produces RenderImage instead
+                    // of dropping the image.
+                    val hasImgChild = node.children.any { child ->
+                        child is SimpleHtmlElement &&
+                            (child.tagName == "img" || child.descendantElementsByTags("img").isNotEmpty())
+                    }
+                    if (hasImgChild) {
+                        val direction = rememberElementDirection(node.text)
                         CompositionLocalProvider(LocalLayoutDirection provides direction.toLayoutDirection()) {
-                            Text(
-                                text = annotatedString,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = inlineStyle?.color ?: LocalContentColor.current,
-                                    fontWeight = inlineStyle?.fontWeight ?: FontWeight.Normal,
-                                    textDirection = direction.toComposeTextDirection()
-                                ),
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
+                            node.children.forEach { childNode ->
+                                RenderNode(childNode, onLinkClick)
+                            }
+                        }
+                    } else {
+                        val annotatedString = buildAnnotatedStringFromElement(node, onLinkClick)
+                        if (annotatedString.text.isNotBlank()) {
+                            val direction = rememberElementDirection(annotatedString.text)
+                            // Parse inline styles for <p> element
+                            val style = node.attr("style")
+                            val inlineStyle = if (style.isNotEmpty()) parseInlineStyle(style) else null
+
+                            CompositionLocalProvider(LocalLayoutDirection provides direction.toLayoutDirection()) {
+                                Text(
+                                    text = annotatedString,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = inlineStyle?.color ?: LocalContentColor.current,
+                                        fontWeight = inlineStyle?.fontWeight ?: FontWeight.Normal,
+                                        textDirection = direction.toComposeTextDirection()
+                                    ),
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -202,6 +218,17 @@ private fun RenderNode(
 
                 "div" -> {
                     Column(modifier = Modifier.fillMaxWidth()) {
+                        node.children.forEach { childNode ->
+                            RenderNode(childNode, onLinkClick)
+                        }
+                    }
+                }
+
+                "center" -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         node.children.forEach { childNode ->
                             RenderNode(childNode, onLinkClick)
                         }

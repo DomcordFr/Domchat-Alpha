@@ -2354,13 +2354,15 @@ private fun ChatPageContent(
             }
 
             if (showChatInfoSheet) {
-                ChatInfoBottomSheet(
-                    settings = setting,
-                    conversation = conversation,
-                    assistant = currentAssistant,
-                    model = currentChatModel,
-                    onDismissRequest = { showChatInfoSheet = false }
-                )
+                CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                    ChatInfoBottomSheet(
+                        settings = setting,
+                        conversation = conversation,
+                        assistant = currentAssistant,
+                        model = currentChatModel,
+                        onDismissRequest = { showChatInfoSheet = false }
+                    )
+                }
             }
 
             activeChatMessageAction?.let { action ->

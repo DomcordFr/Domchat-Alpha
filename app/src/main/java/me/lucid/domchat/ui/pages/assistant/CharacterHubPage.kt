@@ -2109,15 +2109,25 @@ fun CharacterInspectorSheet(
                         }
                     }
 
-                    // Creator notes blurb — MarkdownBlock so images and markdown
-                    // in creator notes are not stripped.
+                    // Creator notes blurb excerpt above the Start Chat button:
+                    // first paragraph/sentence of creatorNotes, max 200 chars, ellipsis.
                     val creatorNotesBlurb = assistant.creatorNotes.orEmpty()
                     if (creatorNotesBlurb.isNotBlank()) {
+                        val firstPara = creatorNotesBlurb.trim().split("\n\n").first()
+                        val sentenceEnd = listOf('.', '!', '?').map { firstPara.indexOf(it) }.filter { it >= 0 }.minOrNull()
+                        val excerpt = if (sentenceEnd != null && sentenceEnd < firstPara.length - 1) {
+                            firstPara.substring(0, sentenceEnd + 1)
+                        } else {
+                            firstPara
+                        }
+                        val blurbText = if (excerpt.length > 200) excerpt.take(200).trimEnd() + "..." else excerpt
                         Spacer(modifier = Modifier.height(12.dp))
-                        MarkdownBlock(
-                            content = formatRoleplayTextWithCdnImages(
-                                sanitizeHtml(creatorNotesBlurb)
-                            )
+                        Text(
+                            text = blurbText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.85f),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
 
@@ -2328,9 +2338,7 @@ fun CharacterInspectorSheet(
                                     val notes = assistant.creatorNotes?.trim().orEmpty()
                                     if (notes.isNotBlank()) {
                                         MarkdownBlock(
-                                            content = formatRoleplayTextWithCdnImages(
-                                                sanitizeHtml(notes)
-                                            )
+                                            content = notes
                                         )
                                     } else {
                                         Text(
@@ -3311,19 +3319,22 @@ private fun NewGroupDialog(
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.65f))
                 .padding(20.dp)
-                .imePadding(),
+                .imePadding()
+                .navigationBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
+                color = Color(0xFF141520),
+                shape = RoundedCornerShape(28.dp),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = 420.dp)
-                    .background(Color(0xFF000000))
-                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
-                    .padding(20.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(

@@ -19,11 +19,16 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Velocity
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import java.util.Locale
+import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -41,8 +46,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -58,16 +61,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -100,6 +99,7 @@ import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip
 import me.lucid.domchat.ui.components.ui.DomChatSlider
@@ -170,8 +170,8 @@ fun PromptPresetsBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val settingsStore: SettingsStore = koinInject()
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val amoledMode by rememberAmoledDarkMode()
@@ -357,81 +357,31 @@ fun PromptPresetsBottomSheet(
     }
 
     ApplyDialogWindowBlur()
-    val effectiveSheetContainerColor = Color(0xFF000000).copy(alpha = 0.85f)
 
-    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ModalBottomSheet(
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        sheetGesturesEnabled = false,
-        containerColor = effectiveSheetContainerColor,
-        shape = sheetShape,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 32.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.White.copy(alpha = 0.30f))
-                )
-            }
-        },
-        modifier = modifier
-            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, sheetShape)
+        dragHandle = null,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.6f)
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .navigationBarsPadding()
         ) {
-            // Header with grab handle, clean title, transparent icon buttons, and close button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Prompt Presets",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            ),
-                            color = Color.White,
+            DomChatSheetHeader(
+                title = "Prompt Presets",
+                subtitle = "Toggle & inject multiple roleplay instruction cards",
+                badge = {
+                    if (conversation != null) {
+                        DomChatGlassChip(
+                            text = if (isChatSpecific) "Chat Specific" else "Using Global",
+                            accent = isChatSpecific
                         )
-                        Spacer(modifier = Modifier.weight(1f))
-                        // Grab handle
-                        Box(
-                            modifier = Modifier
-                                .size(width = 32.dp, height = 4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(Color.White.copy(alpha = 0.30f))
-                        )
-                        if (conversation != null) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            DomChatGlassChip(
-                                text = if (isChatSpecific) "Chat Specific" else "Using Global",
-                                accent = isChatSpecific
-                            )
-                        }
                     }
-
-                    Text(
-                        text = "Toggle & inject multiple roleplay instruction cards",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.6f),
-                    )
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                },
+                actions = {
                     if (!isEditingOrCreating) {
                         Surface(
                             onClick = {
@@ -462,62 +412,15 @@ fun PromptPresetsBottomSheet(
                             )
                         }
                     }
-                    IconButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White.copy(alpha = 0.7f),
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
+                },
+            )
 
             // Search bar at top
-            OutlinedTextField(
+            DomChatSearchBar(
                 value = presetSearchQuery,
                 onValueChange = { presetSearchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                placeholder = { Text("Search presets...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.5f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                },
-                trailingIcon = {
-                    if (presetSearchQuery.isNotEmpty()) {
-                        IconButton(onClick = { presetSearchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Clear",
-                                tint = Color.White.copy(alpha = 0.5f),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = Color.White.copy(alpha = 0.9f),
-                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
-                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-                )
+                placeholder = "Search presets...",
+                modifier = Modifier.padding(bottom = 8.dp),
             )
 
             // Action row: Enable All / Disable All / Reset to Global
@@ -813,37 +716,112 @@ fun PromptPresetsBottomSheet(
                 itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
                     val snippet = preset.description.ifBlank { preset.content.take(56) }
+                    val estTokens = (preset.content.length / 3.8).roundToInt()
+                    val positionLabel = preset.injectionPosition.name.replace("_", " ").titlecase(Locale.getDefault())
 
-                    Surface(
-                        color = Color(0xFF000000),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 76.dp, max = 82.dp),
+                            .heightIn(min = 82.dp, max = 110.dp)
+                            .liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                fillColor = Color.Transparent,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                isFloatingControl = true,
+                            ),
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = preset.name,
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = preset.name,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Row(
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    // Token estimate pill
+                                    Surface(
+                                        color = Color.White.copy(alpha = 0.08f),
+                                        shape = RoundedCornerShape(6.dp),
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.5.dp),
+                                    ) {
+                                        Text(
+                                            text = "~$estTokens tokens",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                            color = Color.White.copy(alpha = 0.8f),
+                                        )
+                                    }
+                                    // Injection position tag
+                                    Text(
+                                        text = positionLabel,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                        color = Color.White.copy(alpha = 0.6f),
+                                        maxLines = 1,
+                                    )
+                                }
+                                Text(
+                                    text = snippet,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(0.65f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
 
                             Spacer(modifier = Modifier.weight(1f))
 
-                            Text(
-                                text = snippet,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.6f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                HapticSwitch(
+                                    checked = isEnabled,
+                                    onCheckedChange = { enabled ->
+                                        haptics.perform(HapticPattern.Tick)
+                                        togglePreset(preset.id, enabled)
+                                        Toast.makeText(
+                                            context,
+                                            if (enabled) "Enabled: ${preset.name}" else "Disabled: ${preset.name}",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    },
+                                )
+
+                                IconButton(
+                                    onClick = { openEdit(preset) },
+                                    modifier = Modifier.size(36.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Edit,
+                                        contentDescription = "Edit",
+                                        tint = Color.White.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = { presetToDelete = preset },
+                                    modifier = Modifier.size(36.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = "Delete",
+                                        tint = Color.White.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

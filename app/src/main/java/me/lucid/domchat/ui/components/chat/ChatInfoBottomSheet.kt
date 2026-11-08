@@ -56,6 +56,7 @@ import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -127,6 +128,7 @@ fun ChatInfoBottomSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
+        dragHandle = null,
         modifier = modifier
     ) {
         Column(
@@ -134,6 +136,8 @@ fun ChatInfoBottomSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 22.dp, vertical = 8.dp)
         ) {
+            DomChatSheetHeader(title = "Context & Stats")
+
             // Header: Character + Model overview
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -169,11 +173,14 @@ fun ChatInfoBottomSheet(
             Spacer(modifier = Modifier.height(18.dp))
 
             // Liquid Glass Context Window Card
-            Surface(
-                color = cardBg,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlassSurface(
+                        shape = RoundedCornerShape(20.dp),
+                        fillColor = Color.Transparent,
+                        isFloatingControl = true,
+                    )
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(

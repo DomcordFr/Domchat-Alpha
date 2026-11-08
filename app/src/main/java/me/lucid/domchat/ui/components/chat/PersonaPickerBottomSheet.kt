@@ -38,13 +38,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,7 +91,6 @@ fun PersonaPickerBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val settingsStore: SettingsStore = koinInject()
     val scope = rememberCoroutineScope()
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
@@ -161,7 +156,6 @@ fun PersonaPickerBottomSheet(
                     displaySetting = cur.displaySetting.withActivePersona(id)
                 )
             }
-            sheetState.hide()
             onDismissRequest()
         }
     }
@@ -178,137 +172,82 @@ fun PersonaPickerBottomSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
+        dragHandle = null,
         modifier = modifier
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.48f)
+                .fillMaxHeight(0.6f)
                 .padding(horizontal = 16.dp, vertical = 6.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "User Personas",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Switch active identity for {{user}} context",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                val isDark = LocalDarkMode.current
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            onDismissRequest()
-                            navController.navigate(Screen.SettingPersonas)
-                        },
-                        shape = CircleShape,
-                        color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        modifier = Modifier.size(38.dp)
+            DomChatSheetHeader(
+                title = "Select Persona",
+                subtitle = "Switch active identity for {{user}} context",
+                actions = {
+                    val isDark = LocalDarkMode.current
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Edit,
-                                contentDescription = "Manage Personas",
-                                tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    Surface(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            onDismissRequest()
-                            navController.navigate(Screen.SettingPersonas)
-                        },
-                        shape = CircleShape,
-                        color = if (isDark) Color.White.copy(alpha = 0.14f) else Color.Black.copy(alpha = 0.08f),
-                        border = BorderStroke(
-                            0.75.dp,
-                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                listOf(
-                                    Color.White.copy(alpha = if (isDark) 0.40f else 0.50f),
-                                    Color.White.copy(alpha = if (isDark) 0.12f else 0.18f)
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onDismissRequest()
+                                navController.navigate(Screen.SettingPersonas)
+                            },
+                            shape = CircleShape,
+                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Edit,
+                                    contentDescription = "Manage Personas",
+                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                            )
-                        ),
-                        modifier = Modifier.size(38.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = "New Persona",
-                                tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            }
+                        }
+
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onDismissRequest()
+                                navController.navigate(Screen.SettingPersonas)
+                            },
+                            shape = CircleShape,
+                            color = if (isDark) Color.White.copy(alpha = 0.14f) else Color.Black.copy(alpha = 0.08f),
+                            border = BorderStroke(
+                                0.75.dp,
+                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    listOf(
+                                        Color.White.copy(alpha = if (isDark) 0.40f else 0.50f),
+                                        Color.White.copy(alpha = if (isDark) 0.12f else 0.18f)
+                                    )
+                                )
+                            ),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = "New Persona",
+                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
-                }
-            }
+                },
+            )
 
-            OutlinedTextField(
+            DomChatSearchBar(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = {
-                    Text(
-                        "Search personas...",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = { searchQuery = "" },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = domChatCardContainerColor(),
-                    unfocusedContainerColor = domChatCardContainerColor(),
-                    focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 4.dp)
+                placeholder = "Search personas...",
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
             )
 
             Spacer(modifier = Modifier.height(10.dp))
