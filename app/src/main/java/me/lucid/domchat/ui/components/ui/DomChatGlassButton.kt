@@ -88,20 +88,15 @@ private fun DomChatGlassPillButtonContent(
     content: (@Composable RowScope.() -> Unit)? = null,
 ) {
     // Default chat-page style: translucent frosted glass (never white, never opaque black)
-    val bgColor = containerColor.takeIf { it != null } ?: Color(0xFF000000).copy(alpha = 0.15f)
-    // Default text/icons are white on dark glass; destructive overrides to red.
-    val resolvedTextColor = contentColor.takeIf { it != null } ?: when {
-        destructive -> Color(DOMCHAT_DESTRUCTIVE)
-        else -> Color.White
+    val bgColor = containerColor.takeIf { it != null } ?: when {
+        destructive -> Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.10f) // subtle destructive tint, never harsh red
+        else -> Color(0xFF000000).copy(alpha = 0.15f)
     }
-    val resolvedIconTint = when {
-        destructive -> Color(DOMCHAT_DESTRUCTIVE)
-        else -> resolvedTextColor
-    }
-    val borderBrush = when {
-        destructive -> BorderStroke(0.5.dp, Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.6f)).brush
-        else -> LiquidGlassTokens.SpecularBorderSubtle
-    }
+    // Text and icons stay white on glass; destructive is conveyed by the subtle red tint
+    // and specular rim — never a harsh red border or red foreground.
+    val resolvedTextColor = contentColor.takeIf { it != null } ?: Color.White
+    val resolvedIconTint = resolvedTextColor
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     Surface(
         onClick = onClick,
         enabled = enabled,

@@ -450,7 +450,10 @@ fun ChatDrawerContent(
                         val assistantAvatarSize = 30.dp
                         val itemColor = domChatChromeSurfaceColor()
                         val haptics = rememberPremiumHaptics()
-                        val assistantName = currentAssistant.name.ifEmpty { defaultAssistantName }
+                        // Guard against a missing assistant/persona so the bottom character
+                        // chip never crashes the drawer composition or navigation.
+                        val assistant = currentAssistant
+                        val assistantName = (assistant?.name.ifEmpty { defaultAssistantName } ?: defaultAssistantName)
 
                         Surface(
                             modifier = Modifier
@@ -464,7 +467,13 @@ fun ChatDrawerContent(
                                 )
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
-                                    navController.navigate(Screen.ConversationList)
+                                    if (assistant != null) {
+                                        navController.navigate(Screen.ConversationList)
+                                    } else {
+                                        // No assistant/persona exists yet: route to the picker
+                                        // instead of navigating on a null reference.
+                                        onOpenAssistantPicker()
+                                    }
                                     dismissDrawerAfterSelection()
                                 },
                             color = Color.Transparent,

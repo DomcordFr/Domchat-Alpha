@@ -130,7 +130,8 @@ fun DomChatSheetHeader(
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = Color.White.copy(alpha = 0.65f),
+                        modifier = Modifier.padding(top = 2.dp),
                     )
                 }
             }
@@ -195,12 +196,13 @@ fun DomChatSearchBar(
         shape = CircleShape,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .height(46.dp)
+            .padding(horizontal = 16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
-            focusedBorderColor = Color.White.copy(0.12f),
-            unfocusedBorderColor = Color.White.copy(0.12f),
+            focusedBorderColor = Color.White.copy(alpha = 0.35f),
+            unfocusedBorderColor = Color.White.copy(alpha = 0.18f),
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
             cursorColor = Color.White.copy(alpha = 0.9f),

@@ -145,7 +145,6 @@ fun UniversalDestructiveConfirmDialog(
                                 text = cancelLabel,
                                 onClick = onDismiss,
                                 modifier = Modifier.weight(1f).height(48.dp),
-                                containerColor = Color(0xFF000000),
                                 contentColor = Color.White,
                             )
 
@@ -156,7 +155,6 @@ fun UniversalDestructiveConfirmDialog(
                                     onDismiss()
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
-                                containerColor = Color(0xFF000000),
                                 contentColor = Color.White,
                                 destructive = true,
                             )
@@ -367,16 +365,15 @@ fun SettingsDestructiveConfirmDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Cancel button - black glassy pill, white text
+                            // Cancel button - glassy pill, white text
                             DomChatGlassPillButton(
                                 text = cancelLabel,
                                 onClick = onDismiss,
                                 modifier = Modifier.weight(1f).height(48.dp),
-                                containerColor = Color(0xFF000000),
                                 contentColor = Color.White,
                             )
 
-                            // Confirm button - black glassy pill, destructive accent
+                            // Confirm button - subtle destructive glass tint, white text, specular border
                             DomChatGlassPillButton(
                                 text = confirmLabel,
                                 onClick = {
@@ -384,7 +381,6 @@ fun SettingsDestructiveConfirmDialog(
                                     onDismiss()
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
-                                containerColor = Color(0xFF000000),
                                 contentColor = Color.White,
                                 destructive = true,
                             )

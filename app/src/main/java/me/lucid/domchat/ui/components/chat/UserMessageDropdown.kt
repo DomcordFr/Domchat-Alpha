@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.SelectAll
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
-import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 /**
@@ -48,7 +47,6 @@ fun UserMessageDropdown(
     modifier: Modifier = Modifier,
     offset: DpOffset = DpOffset(0.dp, 0.dp),
 ) {
-    val isDark = LocalDarkMode.current
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     DropdownMenu(
         expanded = expanded,
@@ -57,7 +55,7 @@ fun UserMessageDropdown(
             .liquidGlassSurface(shape = RoundedCornerShape(18.dp)),
         offset = offset,
         shape = RoundedCornerShape(18.dp),
-        containerColor = if (isDark) Color(0xFF16161A).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.88f),
+        containerColor = Color.Transparent,
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         DropdownMenuItem(

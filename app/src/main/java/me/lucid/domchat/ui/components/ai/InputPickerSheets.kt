@@ -13,14 +13,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -38,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,9 +55,12 @@ import me.lucid.domchat.data.ai.mcp.McpStatus
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.data.model.Conversation
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.data.model.SKILL_SELECTION_OVERRIDE_ID
 import me.lucid.domchat.data.model.hasManualSkillSelectionOverride
 import me.lucid.domchat.data.model.withoutSkillSelectionOverride
+import me.lucid.domchat.ui.components.chat.DomChatSearchBar
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.icons.ModeIcons
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.components.ui.ItemPosition
@@ -66,7 +69,6 @@ import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.rounded.Close
 import org.koin.compose.koinInject
 
 @Composable
@@ -255,19 +257,50 @@ internal fun LorebooksPickerSheet(
         mutableStateOf(effectiveEnabledIds)
     }
 
+    var lorebookSearchQuery by remember { mutableStateOf("") }
+    val filteredLorebooks = remember(settings.lorebooks, lorebookSearchQuery) {
+        settings.lorebooks.filter {
+            lorebookSearchQuery.isEmpty() ||
+                it.name.contains(lorebookSearchQuery, ignoreCase = true) ||
+                it.id.contains(lorebookSearchQuery, ignoreCase = true)
+        }
+    }
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.60f }
 
+    // Liquid glass (BALANCED_BLEND) or frosted glass (SOFT_FROSTED) sheet — no solid black backdrop.
+    val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    @Composable
+    fun lorebookGlassSurface(shape: Shape) = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
+
+    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
-        containerColor = Color(0xFF000000),
+        containerColor = Color.Transparent,
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape = sheetShape,
         sheetGesturesEnabled = true,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
+        modifier = lorebookGlassSurface(sheetShape),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
@@ -281,42 +314,32 @@ internal fun LorebooksPickerSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.lorebooks_picker_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.cancel),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
-            }
+            DomChatSheetHeader(
+                title = stringResource(R.string.lorebooks_picker_title),
+                onCloseClick = onDismiss,
+            )
 
-            if (settings.lorebooks.isEmpty()) {
+            DomChatSearchBar(
+                value = lorebookSearchQuery,
+                onValueChange = { lorebookSearchQuery = it },
+                placeholder = "Search lorebooks...",
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+
+            if (filteredLorebooks.isEmpty()) {
                 Text(
                     text = stringResource(R.string.lorebooks_picker_none),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                settings.lorebooks.forEachIndexed { index, lorebook ->
+                filteredLorebooks.forEachIndexed { index, lorebook ->
                     val isEnabled = localEnabledIds.contains(lorebook.id)
 
                     val position = when {
-                        settings.lorebooks.size == 1 -> ItemPosition.ONLY
+                        filteredLorebooks.size == 1 -> ItemPosition.ONLY
                         index == 0 -> ItemPosition.FIRST
-                        index == settings.lorebooks.lastIndex -> ItemPosition.LAST
+                        index == filteredLorebooks.lastIndex -> ItemPosition.LAST
                         else -> ItemPosition.MIDDLE
                     }
 
@@ -341,11 +364,10 @@ internal fun LorebooksPickerSheet(
                     }
 
                     CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
-                        Surface(
-                            color = Color(0xFF000000),
-                            shape = shape,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            onClick = { onNavigateToLorebook(lorebook.id.toString()) }
+                        Box(
+                            modifier = Modifier
+                                .lorebookGlassSurface(shape)
+                                .clickable { onNavigateToLorebook(lorebook.id.toString()) },
                         ) {
                             Row(
                                 modifier = Modifier

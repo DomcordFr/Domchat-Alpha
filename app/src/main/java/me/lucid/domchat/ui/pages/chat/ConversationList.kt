@@ -663,14 +663,14 @@ private fun ConversationItem(
         val dropdownGlass = if (LocalSettings.current.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
             Modifier.frostedGlassSurface(
                 shape = RoundedCornerShape(18.dp),
-                borderWidth = 0.5.dp,
+                borderWidth = 0.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                 fillColor = Color.Transparent,
             )
         } else {
             Modifier.liquidGlassSurface(
                 shape = RoundedCornerShape(18.dp),
-                borderWidth = 0.5.dp,
+                borderWidth = 0.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                 fillColor = Color.Transparent,
                 glassMode = LiquidGlassMode.BALANCED_BLEND,
@@ -681,7 +681,9 @@ private fun ConversationItem(
             onDismissRequest = { showDropdownMenu = false },
             modifier = dropdownGlass,
             shape = RoundedCornerShape(18.dp),
-            containerColor = Color.Transparent,
+            // AMOLED black glass popup with a single specular rim; no manual offset so the
+            // menu anchors to its row without window-coordinate distortion.
+            containerColor = Color(0xFF000000).copy(alpha = 0.90f),
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         ) {
             DropdownMenuItem(

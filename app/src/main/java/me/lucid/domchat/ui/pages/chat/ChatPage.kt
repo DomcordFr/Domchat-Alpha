@@ -1536,6 +1536,16 @@ private fun ChatPageContent(
         val wallpaperBackdrop = rememberLayerBackdrop()
         val contentBackdrop = rememberLayerBackdrop()
         val pageBackdrop = rememberLayerBackdrop()
+        // True once the content backdrop has recorded at least one frame. Until then
+        // (and whenever the chat is empty) we fall back to the wallpaper backdrop so
+        // liquid glass never samples an empty buffer and the backdrop doesn't lose
+        // its recording on state-driven recomposition.
+        var contentBackdropDrawn by remember { mutableStateOf(false) }
+        SideEffect {
+            if (!contentBackdropDrawn && contentBackdrop.hasRecording) {
+                contentBackdropDrawn = true
+            }
+        }
         // Empty chat: bind the wallpaper backdrop immediately so liquid glass
         // paints at launch with 0ms delay instead of waiting for the first frame.
         val emptyChat = conversation.messageNodes.isEmpty()
@@ -1568,7 +1578,7 @@ private fun ChatPageContent(
                     Scaffold(
                         topBar = {
                             CompositionLocalProvider(
-                                LocalAppBackdrop provides if (emptyChat) wallpaperBackdrop else contentBackdrop
+                                LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
                             ) {
                                 if (toolbarPlacement == ChatToolbarPlacement.Top) {
                                     StartupChromeReveal(
@@ -2132,7 +2142,7 @@ private fun ChatPageContent(
                     )
                 } else {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides if (emptyChat) wallpaperBackdrop else contentBackdrop
+                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
                     ) {
                     MinimalChatInput(
                     modifier = Modifier

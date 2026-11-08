@@ -19,8 +19,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Velocity
 import me.lucid.domchat.ui.theme.LocalDarkMode
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +28,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -97,6 +96,7 @@ import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.data.model.PresetInjectionPosition
 import me.lucid.domchat.data.model.PromptPreset
+import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -104,9 +104,10 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatSlider
+import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
@@ -175,8 +176,8 @@ fun PromptPresetsBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val settingsStore: SettingsStore = koinInject()
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val amoledMode by rememberAmoledDarkMode()
     val isDark = LocalDarkMode.current
@@ -386,24 +387,18 @@ fun PromptPresetsBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .navigationBarsPadding()
+                .nestedScroll(overscrollAbsorber),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            DomChatSheetHeader(
-                title = "Prompt Presets",
-                subtitle = "Toggle & inject multiple roleplay instruction cards",
-                badge = {
-                    if (conversation != null) {
-                        DomChatGlassChip(
-                            text = if (isChatSpecific) "Chat Specific" else "Using Global",
-                            accent = isChatSpecific
-                        )
-                    }
-                },
-                actions = {
+            item {
+                DomChatSheetHeader(
+                    title = "Prompt Presets",
+                    actions = {
                     if (!isEditingOrCreating) {
                         Surface(
                             onClick = {
@@ -436,7 +431,9 @@ fun PromptPresetsBottomSheet(
                     }
                 },
             )
+        }
 
+        item {
             // Search bar at top
             DomChatSearchBar(
                 value = presetSearchQuery,
@@ -444,33 +441,41 @@ fun PromptPresetsBottomSheet(
                 placeholder = "Search presets...",
                 modifier = Modifier.padding(bottom = 8.dp),
             )
+        }
 
-            // Action row: Enable All / Disable All / Reset to Global
-            Row(
+        item {
+            // Action pills: Enable All / Disable All / Reset to Default, plus the
+            // active scope badge ("Using Chat" or "Using Global"), all glass pills.
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DomChatGlassPillButton(
-                        text = "Enable All",
-                        onClick = { toggleAll(true) }
-                    )
-                    DomChatGlassPillButton(
-                        text = "Turn Off All",
-                        onClick = { toggleAll(false) }
-                    )
-                }
-
+                DomChatGlassPillButton(
+                    text = "Enable All",
+                    onClick = { toggleAll(true) }
+                )
+                DomChatGlassPillButton(
+                    text = "Disable All",
+                    onClick = { toggleAll(false) }
+                )
                 if (isChatSpecific) {
                     DomChatGlassPillButton(
-                        text = "Reset to Global",
+                        text = "Reset to Default",
                         icon = Icons.Rounded.Refresh,
                         onClick = { resetToGlobal() }
                     )
                 }
+                if (conversation != null) {
+                    DomChatGlassChip(
+                        text = if (isChatSpecific) "Using Chat" else "Using Global",
+                        modifier = Modifier.padding(horizontal = 6.dp),
+                    )
+                }
             }
+        }
 
+        item {
             // Inline Creator / Editor
             AnimatedContent(
                 targetState = isEditingOrCreating,
@@ -727,16 +732,7 @@ fun PromptPresetsBottomSheet(
             } // end if (visible)
         }
 
-            // Presets list - single-column mobile list (no horizontal compression)
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false)
-                    .padding(horizontal = 16.dp)
-                    .nestedScroll(overscrollAbsorber),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
+        itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
                     val snippet = preset.description.ifBlank { preset.content.take(56) }
                     val estTokens = (preset.content.length / 3.8).roundToInt()
@@ -818,11 +814,10 @@ fun PromptPresetsBottomSheet(
                                     onCheckedChange = { enabled ->
                                         haptics.perform(HapticPattern.Tick)
                                         togglePreset(preset.id, enabled)
-                                        Toast.makeText(
-                                            context,
-                                            if (enabled) "Enabled: ${preset.name}" else "Disabled: ${preset.name}",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        toaster.show(
+                                            message = if (enabled) "Enabled: ${preset.name}" else "Disabled: ${preset.name}",
+                                            type = ToastType.Info,
+                                        )
                                     },
                                 )
 
@@ -852,9 +847,9 @@ fun PromptPresetsBottomSheet(
                             }
                         }
                     }
-                }
-            }
+        }
 
+        item {
             Spacer(modifier = Modifier.height(14.dp))
         }
     }
