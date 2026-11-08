@@ -1187,7 +1187,7 @@ object AssistantExportImport : KoinComponent {
                 systemPrompt = systemPromptText,
                 presetMessages = presetMessages,
                 alternateGreetings = alternateGreetings,
-                creatorNotes = if (creatorNotes.isNotBlank()) creatorNotes else blurb,
+                creatorNotes = if (!creatorNotes.isNullOrBlank()) creatorNotes else blurb,
                 creator = creator,
                 characterVersion = characterVersion
             )

@@ -1763,7 +1763,7 @@ fun CharacterListRow(
                 brush = LiquidGlassTokens.SpecularBorderSubtle,
                 shape = RoundedCornerShape(16.dp)
             )
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(

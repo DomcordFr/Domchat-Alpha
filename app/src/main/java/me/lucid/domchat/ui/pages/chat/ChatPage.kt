@@ -113,6 +113,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -3097,7 +3098,7 @@ private val DefaultTopBarActionState = TopBarActionState(
 private fun ChatToolbarActionPill(
     actionState: TopBarActionState,
     currentAssistant: Assistant,
-    conversationTitle: String,
+    conversationTitle: String = "",
     topPillSize: Dp,
     buttonShape: RoundedCornerShape,
     containerColor: Color,
