@@ -1556,50 +1556,64 @@ private fun ChatPageContent(
                     Scaffold(
                         topBar = {
                             CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
-                                ChatToolbar(
-                                    placement = ChatToolbarPlacement.Top,
-                                    settings = setting,
-                                    currentAssistant = currentAssistant,
-                                    conversationInitialized = conversationInitialized,
-                                    conversation = conversation,
-                                    bigScreen = bigScreen,
-                                    drawerState = drawerState,
-                                    previewMode = previewMode,
-                                    isTemporaryChat = isTemporaryChat,
-                                    currentChatModel = currentChatModel,
-                                    isGenerating = isGenerating,
-                                    showCloseAction = previewMode || isChatShareSelecting,
-                                    showTopFade = true,
-                                    vm = vm,
-                                    contextUsage = contextMeterUsage,
-                                    onContextMeterClick = {
-                                        showToolbarOverflowMenu = false
-                                        showContextUsagePopup = !showContextUsagePopup
-                                    },
-                                    onOpenOverflowMenu = {
-                                        showContextUsagePopup = false
-                                        showToolbarOverflowMenu = !showToolbarOverflowMenu
-                                    },
-                                    onCloseAction = {
-                                        showToolbarOverflowMenu = false
-                                        if (previewMode) {
-                                            previewMode = false
-                                        }
-                                        if (isChatShareSelecting) {
-                                            cancelChatShareSelection()
-                                        }
-                                    },
-                                    onUpdateSettings = { newSettings ->
-                                        vm.updateSettings(newSettings)
-                                    },
-                                    onSwitchAssistant = { assistant ->
-                                        navigateToAssistantConversation(assistant)
-                                    },
-                                    onToggleTemporaryChat = {
-                                        onManualTemporaryChatChange(!manualTemporaryChat)
-                                    },
-                                    onNewChat = onNewChat
-                                )
+                                if (toolbarPlacement == ChatToolbarPlacement.Top) {
+                                    StartupChromeReveal(
+                                        key = "${conversation.id}:topbar",
+                                        delayMs = startupWallpaperPauseMs,
+                                        motionPolicy = motionPolicy,
+                                        from = EntranceDirection.DOWN,
+                                    ) {
+                                        ChatToolbar(
+                                            placement = ChatToolbarPlacement.Top,
+                                            settings = setting,
+                                            currentAssistant = currentAssistant,
+                                            conversationInitialized = conversationInitialized,
+                                            conversation = conversation,
+                                            bigScreen = bigScreen,
+                                            drawerState = drawerState,
+                                            previewMode = previewMode,
+                                            isTemporaryChat = isTemporaryChat,
+                                            currentChatModel = currentChatModel,
+                                            isGenerating = isGenerating,
+                                            showCloseAction = previewMode || isChatShareSelecting,
+                                            showTopFade = true,
+                                            vm = vm,
+                                            contextUsage = contextMeterUsage,
+                                            onContextMeterClick = {
+                                                showToolbarOverflowMenu = false
+                                                showContextUsagePopup = !showContextUsagePopup
+                                            },
+                                            onOpenOverflowMenu = {
+                                                showContextUsagePopup = false
+                                                showToolbarOverflowMenu = !showToolbarOverflowMenu
+                                            },
+                                            onCloseAction = {
+                                                showToolbarOverflowMenu = false
+                                                if (previewMode) {
+                                                    previewMode = false
+                                                }
+                                                if (isChatShareSelecting) {
+                                                    cancelChatShareSelection()
+                                                }
+                                            },
+                                            onUpdateSettings = { newSettings ->
+                                                vm.updateSettings(newSettings)
+                                            },
+                                            onSwitchAssistant = { assistant ->
+                                                navigateToAssistantConversation(assistant)
+                                            },
+                                            onToggleTemporaryChat = {
+                                                onManualTemporaryChatChange(!manualTemporaryChat)
+                                            },
+                                            onNewChat = onNewChat
+                                        )
+                                    }
+                                } else {
+                                    ChatTopFadeOverlay(
+                                        fadeHeight = chatBottomToolbarTopFadeHeight,
+                                        settings = setting,
+                                    )
+                                }
                             }
                         },
                         // Input is rendered manually at the bottom of the screen
@@ -1611,74 +1625,6 @@ private fun ChatPageContent(
                                 .fillMaxSize()
                                 .layerBackdrop(pageBackdrop)
                         ) {
-                topBar = {
-                    if (toolbarPlacement == ChatToolbarPlacement.Top) {
-                        StartupChromeReveal(
-                            key = "${conversation.id}:topbar",
-                            delayMs = startupWallpaperPauseMs,
-                            motionPolicy = motionPolicy,
-                            from = EntranceDirection.DOWN,
-                        ) {
-                            ChatToolbar(
-                                placement = ChatToolbarPlacement.Top,
-                                settings = setting,
-                                currentAssistant = currentAssistant,
-                                conversationInitialized = conversationInitialized,
-                                conversation = conversation,
-                                bigScreen = bigScreen,
-                                drawerState = drawerState,
-                                previewMode = previewMode,
-                                isTemporaryChat = isTemporaryChat,
-                                currentChatModel = currentChatModel,
-                                isGenerating = isGenerating,
-                                showCloseAction = previewMode || isChatShareSelecting,
-                                showTopFade = true,
-                                vm = vm,
-                                contextUsage = contextMeterUsage,
-                                onContextMeterClick = {
-                                    showToolbarOverflowMenu = false
-                                    showContextUsagePopup = !showContextUsagePopup
-                                },
-                                onOpenOverflowMenu = {
-                                    showContextUsagePopup = false
-                                    showToolbarOverflowMenu = !showToolbarOverflowMenu
-                                },
-                                onCloseAction = {
-                                    showToolbarOverflowMenu = false
-                                    if (previewMode) {
-                                        previewMode = false
-                                    }
-                                    if (isChatShareSelecting) {
-                                        cancelChatShareSelection()
-                                    }
-                                },
-                                onUpdateSettings = { newSettings ->
-                                    vm.updateSettings(newSettings)
-                                },
-                                onSwitchAssistant = { assistant ->
-                                    navigateToAssistantConversation(assistant)
-                                },
-                                onToggleTemporaryChat = {
-                                    onManualTemporaryChatChange(!manualTemporaryChat)
-                                },
-                                onNewChat = onNewChat
-                            )
-                        }
-                    } else {
-                        ChatTopFadeOverlay(
-                            fadeHeight = chatBottomToolbarTopFadeHeight,
-                            settings = setting,
-                        )
-                    }
-                },
-                // Input is rendered manually at the bottom of the screen
-                containerColor = Color.Transparent,
-                contentWindowInsets = WindowInsets(0.dp)
-            ) { _ ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
                     val recentlyRestoredNodeIds = vm.recentlyRestoredNodeIds.collectAsStateWithLifecycle().value
                     val conversationSnapshots = remember { mutableMapOf<Uuid, Conversation>() }
                     val chatListStateSnapshots = remember { mutableMapOf<Uuid, LazyListState>() }
@@ -2505,8 +2451,6 @@ private fun ChatPageContent(
         }
         }
     }
-
-}
 
 }
 
