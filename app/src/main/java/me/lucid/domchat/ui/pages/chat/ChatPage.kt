@@ -1043,7 +1043,10 @@ fun ChatPage(
                             activePersistenceMode == ChatPersistenceMode.TEMPORARY ||
                             !wideShowsNewChatContent
                     CompositionLocalProvider(LocalDomChatBlur provides wideBlur) {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .layerBackdrop(pageBackdrop)
+                    ) {
                         AssistantBackground(
                             assistant = conversationAssistant,
                             conversationId = conversation.id.toString(),
@@ -1196,12 +1199,13 @@ fun ChatPage(
                             }
                         }
                         if (showWideRailAssistantPicker) {
-                            me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
-                                settings = setting,
-                                currentAssistant = conversationAssistant,
-                                onAssistantSelected = { assistant ->
-                                    vm.setSelectedAssistant(assistant.id)
-                                },
+                            CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                                me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
+                                    settings = setting,
+                                    currentAssistant = conversationAssistant,
+                                    onAssistantSelected = { assistant ->
+                                        vm.setSelectedAssistant(assistant.id)
+                                    },
                                 onNavigate = { assistant ->
                                     showWideRailAssistantPicker = false
                                     navigateToAssistantConversation(assistant)
@@ -1210,6 +1214,7 @@ fun ChatPage(
                                     showWideRailAssistantPicker = false
                                 }
                             )
+                            }
                         }
                     }
                     }
@@ -1279,20 +1284,22 @@ fun ChatPage(
             }
 
             if (showModalAssistantPicker) {
-                me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
-                    settings = setting,
-                    currentAssistant = conversationAssistant,
-                    onAssistantSelected = { assistant ->
-                        vm.setSelectedAssistant(assistant.id)
-                    },
-                    onNavigate = { assistant ->
-                        showModalAssistantPicker = false
-                        navigateToAssistantConversation(assistant)
-                    },
-                    onDismiss = {
-                        showModalAssistantPicker = false
-                    }
-                )
+                CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                    me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
+                        settings = setting,
+                        currentAssistant = conversationAssistant,
+                        onAssistantSelected = { assistant ->
+                            vm.setSelectedAssistant(assistant.id)
+                        },
+                        onNavigate = { assistant ->
+                            showModalAssistantPicker = false
+                            navigateToAssistantConversation(assistant)
+                        },
+                        onDismiss = {
+                            showModalAssistantPicker = false
+                        }
+                    )
+                }
             }
             BackHandler(drawerState.isOpen) {
                 scope.launch { drawerState.close() }
@@ -1911,18 +1918,20 @@ private fun ChatPageContent(
                 
                 // Assistant picker sheet triggered from header avatar
                 if (showHeaderAssistantPicker) {
-                    me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
-                        settings = setting,
-                        currentAssistant = currentAssistant,
-                        onAssistantSelected = { selectedAssistant ->
-                            vm.setSelectedAssistant(selectedAssistant.id)
-                        },
-                        onNavigate = { selectedAssistant ->
-                            showHeaderAssistantPicker = false
-                            navigateToAssistantConversation(selectedAssistant)
-                        },
-                        onDismiss = { showHeaderAssistantPicker = false }
-                    )
+                    CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                        me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
+                            settings = setting,
+                            currentAssistant = currentAssistant,
+                            onAssistantSelected = { selectedAssistant ->
+                                vm.setSelectedAssistant(selectedAssistant.id)
+                            },
+                            onNavigate = { selectedAssistant ->
+                                showHeaderAssistantPicker = false
+                                navigateToAssistantConversation(selectedAssistant)
+                            },
+                            onDismiss = { showHeaderAssistantPicker = false }
+                        )
+                    }
                 }
 
                 // User message regeneration confirmation dialog
@@ -3147,20 +3156,15 @@ private fun ChatToolbarActionPill(
         label = "top_pill_in_chat_alpha"
     )
 
-    val settings = LocalSettings.current
     Surface(
         shape = buttonShape,
-        color = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) blurredContainerColor(containerColor) else Color.Transparent,
-        border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,
+        color = Color.Transparent,
+        border = null,
         modifier = Modifier
             .size(width = pillWidth, height = topPillSize)
             .clip(buttonShape)
             .then(
-                if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                    Modifier.frostedGlassSurface(shape = buttonShape)
-                } else {
-                    Modifier.liquidGlassSurface(shape = buttonShape, glassMode = settings.displaySetting.liquidGlassMode)
-                }
+                Modifier.liquidGlassSurface(shape = buttonShape, fillColor = Color.Transparent, isFloatingControl = true)
             )
     ) {
         Box(Modifier.fillMaxSize()) {
