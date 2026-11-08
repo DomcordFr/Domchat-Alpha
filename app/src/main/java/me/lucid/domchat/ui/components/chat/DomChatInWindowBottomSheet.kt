@@ -248,6 +248,8 @@ fun DomChatInWindowBottomSheet(
         }
 }
 
+}
+
 /**
  * A modal bottom sheet with hardware window blur and Apple-grade frosted container.
  * Creates an Android Window dialog that reliably fills the screen and never gets clipped by parent layouts.
