@@ -45,10 +45,11 @@ import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 /**
  * Unified sleek drag handle pill for all bottom sheets and popovers across DomChat.
@@ -197,27 +198,31 @@ fun DomChatInWindowBottomSheet(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            Surface(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .onSizeChanged {
-                        if (it.height > 0) {
-                            sheetHeightPx = it.height.toFloat()
+            CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
+                Surface(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .onSizeChanged {
+                            if (it.height > 0) {
+                                sheetHeightPx = it.height.toFloat()
+                            }
                         }
-                    }
-                    .graphicsLayer {
-                        translationY = offsetY.value.coerceAtLeast(0f)
-                    }
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {}
-                    )
-                    .domChatBlurEffect(containerColor = sheetBg, shape = shape),
-                shape = shape,
-                color = Color.Transparent,
-                border = BorderStroke(0.5.dp, borderBrush)
-            ) {
+                        .offset { IntOffset(0, offsetY.value.roundToInt().coerceAtLeast(0)) }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        )
+                        .liquidGlassSurface(
+                            shape = shape,
+                            fillColor = sheetBg,
+                            borderWidth = 0.5.dp,
+                            specularBrush = borderBrush,
+                            isFloatingControl = true,
+                        ),
+                    shape = shape,
+                    color = Color.Transparent,
+                ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
