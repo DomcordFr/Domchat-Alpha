@@ -57,7 +57,7 @@ fun UserMessageDropdown(
             .liquidGlassSurface(shape = RoundedCornerShape(18.dp)),
         offset = offset,
         shape = RoundedCornerShape(18.dp),
-        containerColor = Color.Transparent,
+        containerColor = if (isDark) Color(0xFF16161A).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.88f),
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
     ) {
         DropdownMenuItem(

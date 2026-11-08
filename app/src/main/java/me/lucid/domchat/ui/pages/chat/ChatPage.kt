@@ -1527,7 +1527,7 @@ private fun ChatPageContent(
         val wallpaperBackdrop = rememberLayerBackdrop()
         val contentBackdrop = rememberLayerBackdrop()
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
-            CompositionLocalProvider(LocalAppBackdrop provides chatBackdrop) {
+            CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
                 Surface(
                     color = if (renderBackground) {
                         Color.Transparent
@@ -1542,7 +1542,7 @@ private fun ChatPageContent(
                             AssistantBackground(
                                 assistant = currentAssistant,
                                 conversationId = conversation.id.toString(),
-                                modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop)
+                                modifier = Modifier.domChatBlurSource().layerBackdrop(wallpaperBackdrop)
                             )
                         } else {
                             Box(
@@ -1550,7 +1550,7 @@ private fun ChatPageContent(
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                                     .domChatBlurSource()
-                                    .layerBackdrop(chatBackdrop))
+                                    .layerBackdrop(wallpaperBackdrop))
                         }
 
                     Scaffold(
@@ -1666,7 +1666,7 @@ private fun ChatPageContent(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .domChatBlurSource()
-                                    .layerBackdrop(chatBackdrop)
+                                    .layerBackdrop(contentBackdrop)
                                     .graphicsLayer {
                                         alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
                                     }
@@ -3462,7 +3462,7 @@ private fun ChatToolbar(
             modifier = Modifier
                 .then(
                     if (placement == ChatToolbarPlacement.Top) {
-                        Modifier.padding(top = 20.dp)
+                        Modifier.statusBarsPadding().padding(top = 2.dp)
                     } else {
                         Modifier
                     }
