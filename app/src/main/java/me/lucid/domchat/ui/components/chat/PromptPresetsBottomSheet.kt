@@ -449,7 +449,7 @@ fun PromptPresetsBottomSheet(
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.Center,
             ) {
                 DomChatGlassPillButton(
                     text = "Enable All",
@@ -731,8 +731,9 @@ fun PromptPresetsBottomSheet(
                 }
             } // end if (visible)
         }
+    } // end editor item
 
-        itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
+    itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
                     val snippet = preset.description.ifBlank { preset.content.take(56) }
                     val estTokens = (preset.content.length / 3.8).roundToInt()
@@ -918,4 +919,5 @@ fun PromptPresetsBottomSheet(
             }
         )
     }
+}
 }

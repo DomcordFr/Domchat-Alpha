@@ -67,6 +67,8 @@ import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
@@ -276,15 +278,15 @@ internal fun LorebooksPickerSheet(
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     @Composable
-    fun lorebookGlassSurface(shape: Shape) = if (isFrosted) {
-        Modifier.frostedGlassSurface(
+    fun Modifier.lorebookGlassSurface(shape: Shape): Modifier = if (isFrosted) {
+        frostedGlassSurface(
             shape = shape,
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
             fillColor = Color.Transparent,
         )
     } else {
-        Modifier.liquidGlassSurface(
+        liquidGlassSurface(
             shape = shape,
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,

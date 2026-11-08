@@ -453,7 +453,7 @@ fun ChatDrawerContent(
                         // Guard against a missing assistant/persona so the bottom character
                         // chip never crashes the drawer composition or navigation.
                         val assistant = currentAssistant
-                        val assistantName = (assistant?.name.ifEmpty { defaultAssistantName } ?: defaultAssistantName)
+                        val assistantName = assistant?.name?.ifEmpty { defaultAssistantName } ?: defaultAssistantName
 
                         Surface(
                             modifier = Modifier
