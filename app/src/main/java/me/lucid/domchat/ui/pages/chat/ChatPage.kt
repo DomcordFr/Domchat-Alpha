@@ -1526,34 +1526,91 @@ private fun ChatPageContent(
     AssistantChatTheme(assistant = currentAssistant) {
         val wallpaperBackdrop = rememberLayerBackdrop()
         val contentBackdrop = rememberLayerBackdrop()
+        val pageBackdrop = rememberLayerBackdrop()
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
-            CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
-                Surface(
-                    color = if (renderBackground) {
-                        Color.Transparent
+            Surface(
+                color = if (renderBackground) {
+                    Color.Transparent
+                } else {
+                    MaterialTheme.colorScheme.background
+                },
+                contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (renderBackground) {
+                        AssistantBackground(
+                            assistant = currentAssistant,
+                            conversationId = conversation.id.toString(),
+                            modifier = Modifier.domChatBlurSource().layerBackdrop(wallpaperBackdrop)
+                        )
                     } else {
-                        MaterialTheme.colorScheme.background
-                    },
-                    contentColor = if (LocalDarkMode.current) Color.White else MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        if (renderBackground) {
-                            AssistantBackground(
-                                assistant = currentAssistant,
-                                conversationId = conversation.id.toString(),
-                                modifier = Modifier.domChatBlurSource().layerBackdrop(wallpaperBackdrop)
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.background)
-                                    .domChatBlurSource()
-                                    .layerBackdrop(wallpaperBackdrop))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background)
+                                .domChatBlurSource()
+                                .layerBackdrop(wallpaperBackdrop))
                         }
 
                     Scaffold(
+                        topBar = {
+                            CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                                ChatToolbar(
+                                    placement = ChatToolbarPlacement.Top,
+                                    settings = setting,
+                                    currentAssistant = currentAssistant,
+                                    conversationInitialized = conversationInitialized,
+                                    conversation = conversation,
+                                    bigScreen = bigScreen,
+                                    drawerState = drawerState,
+                                    previewMode = previewMode,
+                                    isTemporaryChat = isTemporaryChat,
+                                    currentChatModel = currentChatModel,
+                                    isGenerating = isGenerating,
+                                    showCloseAction = previewMode || isChatShareSelecting,
+                                    showTopFade = true,
+                                    vm = vm,
+                                    contextUsage = contextMeterUsage,
+                                    onContextMeterClick = {
+                                        showToolbarOverflowMenu = false
+                                        showContextUsagePopup = !showContextUsagePopup
+                                    },
+                                    onOpenOverflowMenu = {
+                                        showContextUsagePopup = false
+                                        showToolbarOverflowMenu = !showToolbarOverflowMenu
+                                    },
+                                    onCloseAction = {
+                                        showToolbarOverflowMenu = false
+                                        if (previewMode) {
+                                            previewMode = false
+                                        }
+                                        if (isChatShareSelecting) {
+                                            cancelChatShareSelection()
+                                        }
+                                    },
+                                    onUpdateSettings = { newSettings ->
+                                        vm.updateSettings(newSettings)
+                                    },
+                                    onSwitchAssistant = { assistant ->
+                                        navigateToAssistantConversation(assistant)
+                                    },
+                                    onToggleTemporaryChat = {
+                                        onManualTemporaryChatChange(!manualTemporaryChat)
+                                    },
+                                    onNewChat = onNewChat
+                                )
+                            }
+                        },
+                        // Input is rendered manually at the bottom of the screen
+                        containerColor = Color.Transparent,
+                        contentWindowInsets = WindowInsets(0.dp)
+                    ) { _ ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .layerBackdrop(pageBackdrop)
+                        ) {
                 topBar = {
                     if (toolbarPlacement == ChatToolbarPlacement.Top) {
                         StartupChromeReveal(
@@ -2297,7 +2354,7 @@ private fun ChatPageContent(
                     if (reduceMotion || state == EnterExitState.Visible) 1f else 0.96f
                 }
                 contextMeterUsage?.let { usage ->
-                    CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                    CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
                         ContextUsageOverlay(
                             usage = usage,
                             activity = contextManagementActivity,
@@ -2428,7 +2485,7 @@ private fun ChatPageContent(
                 ) { state ->
                     if (state == EnterExitState.Visible) 1f else 0.96f
                 }
-                CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
                 ChatToolbarOverflowMenu(
                     placement = toolbarPlacement,
                     menuScale = menuScale,

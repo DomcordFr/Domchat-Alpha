@@ -184,6 +184,7 @@ fun DomChatInWindowBottomSheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .offset { IntOffset(0, offsetY.value.roundToInt().coerceAtLeast(0)) }
                 .graphicsLayer {
                     val dragProgress = (1f - (offsetY.value / sheetHeightPx).coerceIn(0f, 1f))
                     this.alpha = scrimAlpha.value * dragProgress
@@ -224,6 +225,7 @@ fun DomChatInWindowBottomSheet(
                     ),
                 shape = shape,
                 color = Color.Transparent,
+                shadowElevation = 0.dp,
             ) {
                 Column(
                     modifier = Modifier

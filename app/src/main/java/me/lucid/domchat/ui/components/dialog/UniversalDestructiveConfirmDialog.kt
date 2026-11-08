@@ -167,9 +167,9 @@ fun UniversalDestructiveConfirmDialog(
                             shape = dialogShape,
                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                                 containerColor = Color.Transparent,
-                                contentColor = Color.White,
+                                contentColor = Color.Red,
                                 disabledContainerColor = Color.Transparent.copy(alpha = 0.2f),
-                                disabledContentColor = Color.White.copy(alpha = 0.3f)
+                                disabledContentColor = Color.Red.copy(alpha = 0.3f)
                             ),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {

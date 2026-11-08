@@ -1274,7 +1274,7 @@ fun ChatMessageTurn(
         UniversalDestructiveConfirmDialog(
             visible = showConfirmDelete,
             title = "Delete message?",
-            message = "This will permanently remove this message from the conversation.",
+            message = "This cannot be undone.",
             onConfirm = {
                 onDelete(nodeToDelete)
                 messageToDelete = null
