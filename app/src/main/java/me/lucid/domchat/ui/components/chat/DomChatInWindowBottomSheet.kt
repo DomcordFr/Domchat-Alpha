@@ -11,8 +11,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -102,8 +104,8 @@ val LocalSheetDismiss = compositionLocalOf<(() -> Unit)?> { null }
 fun DomChatSheetHeader(
     title: String,
     subtitle: String? = null,
-    badge: @Composable (() -> Unit)? = null,
-    actions: @Composable (() -> Unit)? = null,
+    badge: (@Composable () -> Unit)? = null,
+    actions: (@Composable () -> Unit)? = null,
     onCloseClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {

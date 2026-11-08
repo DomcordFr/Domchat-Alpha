@@ -46,6 +46,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -717,7 +718,12 @@ fun PromptPresetsBottomSheet(
                     val isEnabled = effectiveEnabledIds.contains(preset.id)
                     val snippet = preset.description.ifBlank { preset.content.take(56) }
                     val estTokens = (preset.content.length / 3.8).roundToInt()
-                    val positionLabel = preset.injectionPosition.name.replace("_", " ").titlecase(Locale.getDefault())
+                    val positionLabel = when (preset.injectionPosition) {
+                        PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+                        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+                        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+                        PresetInjectionPosition.AT_DEPTH -> "At Depth ${preset.depth}"
+                    }
 
                     Box(
                         modifier = Modifier
