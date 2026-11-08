@@ -81,6 +81,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -93,6 +94,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.model.Conversation
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.data.model.PresetInjectionPosition
 import me.lucid.domchat.data.model.PromptPreset
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -100,6 +102,7 @@ import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip
@@ -125,14 +128,14 @@ private fun PositionButton(
     val selectedColor = MaterialTheme.colorScheme.primary
     Surface(
         onClick = onClick,
-        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF000000),
+        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color.Transparent,
         shape = RoundedCornerShape(12.dp),
         border = if (selected) {
             BorderStroke(0.5.dp, selectedColor)
         } else {
             BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
         },
-        modifier = modifier,
+        modifier = modifier.then(glassSurface(RoundedCornerShape(12.dp))),
     ) {
         Row(
             modifier = Modifier
@@ -177,6 +180,25 @@ fun PromptPresetsBottomSheet(
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val amoledMode by rememberAmoledDarkMode()
     val isDark = LocalDarkMode.current
+
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    fun glassSurface(shape: Shape) = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     val overscrollAbsorber = remember {
         object : NestedScrollConnection {
@@ -362,12 +384,10 @@ fun PromptPresetsBottomSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
-        dragHandle = null,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.6f)
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .navigationBarsPadding()
         ) {
@@ -461,12 +481,13 @@ fun PromptPresetsBottomSheet(
             ) { visible ->
                 if (visible) {
                     Surface(
-                        color = Color(0xFF141520).copy(alpha = 0.85f),
+                        color = Color.Transparent,
                         shape = RoundedCornerShape(20.dp),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 12.dp)
+                            .then(glassSurface(RoundedCornerShape(20.dp)))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -543,10 +564,10 @@ fun PromptPresetsBottomSheet(
 
                         val formEstTokens = (formContent.length / 3.8).roundToInt()
                         Surface(
-                            color = Color(0xFF000000),
+                            color = Color.Transparent,
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp).then(glassSurface(RoundedCornerShape(12.dp)))
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),

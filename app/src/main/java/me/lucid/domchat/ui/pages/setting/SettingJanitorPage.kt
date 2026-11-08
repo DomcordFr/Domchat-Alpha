@@ -137,6 +137,7 @@ import me.lucid.domchat.ui.pages.assistant.AssistantVM
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
 import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
+import me.lucid.domchat.ui.components.richtext.SimpleHtmlBlock
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFieldColors
@@ -180,6 +181,7 @@ data class JanitorExtractResponse(
     @SerialName("creator_name") val creatorName: String? = null,
     @SerialName("bio") val bio: String? = null,
     @SerialName("description") val description: String? = null,
+    @SerialName("clean_description") val cleanDescription: String? = null,
     @SerialName("scenario") val scenario: String? = null,
     @SerialName("firstMessage") val firstMessage: String? = null,
     @SerialName("character_version") val characterVersion: String? = null,
@@ -1425,15 +1427,27 @@ private fun JanitorCharacterInspectorSheet(
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
-                                    // rawNotes already contains real raw HTML with inline
-                                    // <img src="...">, colors, and styles. Pass it straight to
-                                    // MarkdownBlock — SimpleHtmlBlock natively renders  tags,
-                                    // and converting  to ![Image] inside HTML breaks parsing.
                                     val notesContent = rawNotes
                                     if (notesContent.isNotBlank()) {
-                                        MarkdownBlock(
-                                            content = notesContent
-                                        )
+                                        val hasHtml = remember(notesContent) {
+                                            notesContent.contains("<p", ignoreCase = true) ||
+                                            notesContent.contains("<div", ignoreCase = true) ||
+                                            notesContent.contains("<img", ignoreCase = true) ||
+                                            notesContent.contains("<span", ignoreCase = true) ||
+                                            notesContent.contains("<center", ignoreCase = true) ||
+                                            notesContent.contains("<h1", ignoreCase = true) ||
+                                            notesContent.contains("<h2", ignoreCase = true) ||
+                                            notesContent.contains("<h3", ignoreCase = true) ||
+                                            notesContent.contains("<br", ignoreCase = true) ||
+                                            notesContent.contains("<hr", ignoreCase = true)
+                                        }
+                                        if (hasHtml) {
+                                            SimpleHtmlBlock(html = notesContent)
+                                        } else {
+                                            MarkdownBlock(
+                                                content = notesContent
+                                            )
+                                        }
                                     } else {
                                         Text(
                                             text = "No notes available.",
@@ -1695,7 +1709,7 @@ private fun CharacterCard(
             .fillMaxWidth()
             .aspectRatio(0.68f)
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF141520))
+            .background(Color(0xFF000000))
             .border(
                 0.5.dp,
                 LiquidGlassTokens.SpecularBorderSubtle,
@@ -1721,7 +1735,7 @@ private fun CharacterCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF141520)),
+                    .background(Color(0xFF000000)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -1743,7 +1757,7 @@ private fun CharacterCard(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color(0xFF141520).copy(alpha = 0.85f),
+                            Color(0xFF000000).copy(alpha = 0.85f),
                         )
                     )
                 )

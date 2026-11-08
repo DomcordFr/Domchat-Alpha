@@ -50,7 +50,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.ui.graphics.toArgb
@@ -59,7 +58,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
@@ -333,7 +332,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                         AppShapes.CardMedium
                                     )
-                                    .background(Color(0xFF141520))
+                                    .background(Color(0xFF000000))
                             ) {
                                 AsyncImage(
                                     model = globalBg,
@@ -1340,8 +1339,8 @@ private fun TintColorPickerDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            shape = AppShapes.CardMedium,
-            color = Color(0xFF141520),
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF000000),
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             modifier = Modifier.padding(16.dp),
         ) {
@@ -1405,8 +1404,20 @@ private fun TintColorPickerDialog(
                 },
                 singleLine = true,
                 maxLines = 1,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Hex") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                    cursorColor = Color.White.copy(alpha = 0.9f),
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -1415,20 +1426,20 @@ private fun TintColorPickerDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(
+                DomChatGlassPillButton(
+                    text = "Cancel",
                     onClick = { onDismiss() },
-                ) {
-                    Text(text = "Cancel")
-                }
+                    modifier = Modifier.weight(1f).height(48.dp),
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(
+                DomChatGlassPillButton(
+                    text = "Apply",
                     onClick = {
                         onPick(pickerColor)
                         onDismiss()
                     },
-                ) {
-                    Text(text = "Apply")
-                }
+                    modifier = Modifier.weight(1f).height(48.dp),
+                )
             }
         }
         }

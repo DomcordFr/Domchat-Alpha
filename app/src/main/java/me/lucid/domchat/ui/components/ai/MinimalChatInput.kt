@@ -1601,7 +1601,6 @@ fun MinimalChatInput(
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showPicker = false },
-            dragHandle = null,
         ) {
             MinimalPickerContent(
                 state = state,
@@ -3593,8 +3592,6 @@ private fun MinimalPickerContent(
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        DomChatSheetHeader(title = "Tools & Actions")
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()

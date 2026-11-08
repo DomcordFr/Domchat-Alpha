@@ -51,13 +51,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.model.ContextBudgetConfig
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
@@ -120,7 +124,24 @@ fun ContextBudgetBottomSheet(
     val memoryTokens = ((availableInputTokens * memoryPercent) / 100).coerceAtLeast(256)
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    val cardBg = domChatCardContainerColor()
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    fun glassCard(shape: Shape) = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     DomChatInWindowBottomSheet(
         visible = true,
@@ -133,63 +154,17 @@ fun ContextBudgetBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.82f)
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 6.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Tune,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = if (isPerChatMode) "Chat Context Allocation" else "Global Context Budget",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDark) Color.White else Color.Black
-                        )
-                        Text(
-                            text = "Token window & capacity division sliders",
-                            fontSize = 11.5.sp,
-                            color = Color(0xFF888888)
-                        )
-                    }
-                }
+            // Unified header: title left, borderless close right, animated dismiss via sheet.
+            DomChatSheetHeader(
+                title = if (isPerChatMode) "Chat Context Allocation" else "Global Context Budget",
+                subtitle = "Token window & capacity division sliders",
+                onCloseClick = { onDismissRequest() },
+            )
 
-                IconButton(
-                    onClick = {
-                        commitChanges()
-                        onDismissRequest()
-                    },
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f))
-                ) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White, modifier = Modifier.size(16.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Column(
                 modifier = Modifier
@@ -201,9 +176,7 @@ fun ContextBudgetBottomSheet(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(cardBg)
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                            .then(glassCard(RoundedCornerShape(16.dp)))
                             .padding(14.dp)
                     ) {
                         Row(
@@ -251,8 +224,7 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(18.dp)
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(Color(0xFF222228))
+                                .then(glassCard(RoundedCornerShape(9.dp)))
                         ) {
                             Row(modifier = Modifier.fillMaxSize()) {
                                 Box(
@@ -305,9 +277,7 @@ fun ContextBudgetBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(cardBg)
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                                .then(glassCard(RoundedCornerShape(16.dp)))
                                 .padding(14.dp)
                         ) {
                             Column {
@@ -361,9 +331,7 @@ fun ContextBudgetBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(cardBg)
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                                .then(glassCard(RoundedCornerShape(16.dp)))
                                 .padding(14.dp)
                         ) {
                             Column {
@@ -405,9 +373,7 @@ fun ContextBudgetBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(cardBg)
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                                .then(glassCard(RoundedCornerShape(16.dp)))
                                 .padding(14.dp)
                         ) {
                             Column {
@@ -452,9 +418,7 @@ fun ContextBudgetBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(cardBg)
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                                .then(glassCard(RoundedCornerShape(16.dp)))
                                 .padding(14.dp)
                         ) {
                             Column {
@@ -498,9 +462,7 @@ fun ContextBudgetBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(cardBg)
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                                .then(glassCard(RoundedCornerShape(16.dp)))
                                 .padding(14.dp)
                         ) {
                             Column {
@@ -544,9 +506,7 @@ fun ContextBudgetBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(cardBg)
-                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(16.dp))
+                                .then(glassCard(RoundedCornerShape(16.dp)))
                                 .padding(14.dp)
                         ) {
                             Row(

@@ -136,6 +136,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Info
 import me.lucid.domchat.ui.components.chat.ChatInfoBottomSheet
+import me.lucid.domchat.ui.components.dialog.ChatDestructiveConfirmDialog
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
@@ -1535,6 +1536,9 @@ private fun ChatPageContent(
         val wallpaperBackdrop = rememberLayerBackdrop()
         val contentBackdrop = rememberLayerBackdrop()
         val pageBackdrop = rememberLayerBackdrop()
+        // Empty chat: bind the wallpaper backdrop immediately so liquid glass
+        // paints at launch with 0ms delay instead of waiting for the first frame.
+        val emptyChat = conversation.messageNodes.isEmpty()
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
             Surface(
                 color = if (renderBackground) {
@@ -1563,7 +1567,9 @@ private fun ChatPageContent(
 
                     Scaffold(
                         topBar = {
-                            CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                            CompositionLocalProvider(
+                                LocalAppBackdrop provides if (emptyChat) wallpaperBackdrop else contentBackdrop
+                            ) {
                                 if (toolbarPlacement == ChatToolbarPlacement.Top) {
                                     StartupChromeReveal(
                                         key = "${conversation.id}:topbar",
@@ -1974,81 +1980,31 @@ private fun ChatPageContent(
 
                 // Message deletion confirmation dialog (liquid glass).
                 // Shared by the message action row delete button and the message actions popover delete button.
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = pendingDeleteMessage != null,
-                    enter = fadeIn(animationSpec = tween(180)) +
-                        scaleIn(initialScale = 0.92f, animationSpec = tween(180)),
-                    exit = fadeOut(animationSpec = tween(120)) +
-                        scaleOut(targetScale = 0.92f, animationSpec = tween(120)),
-                    modifier = Modifier.fillMaxSize().zIndex(50f),
-                ) {
-                    pendingDeleteMessage?.let { messageToDelete ->
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .widthIn(min = 240.dp, max = 300.dp)
-                                .liquidGlassSurface(
-                                    shape = RoundedCornerShape(28.dp),
-                                    borderWidth = 0.5.dp,
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                    fillColor = Color.Transparent,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.chat_message_delete_title),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                    ),
-                                )
-                                Text(
-                                    text = stringResource(R.string.chat_message_delete_confirm),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    LiquidGlassDialogTextButton(
+                pendingDeleteMessage?.let { messageToDelete ->
+                    ChatDestructiveConfirmDialog(
+                        visible = true,
+                        title = stringResource(R.string.chat_message_delete_title),
+                        message = stringResource(R.string.chat_message_delete_confirm),
+                        onConfirm = {
+                            haptics.perform(HapticPattern.Error)
+                            pendingDeleteMessage = null
+                            scope.launch {
+                                val backup = conversation
+                                val removedIds = vm.deleteMessage(messageToDelete)
+                                toaster.show(
+                                    message = context.getString(R.string.message_deleted),
+                                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                                        label = context.getString(R.string.undo),
                                         onClick = {
-                                            pendingDeleteMessage = null
-                                        },
-                                        text = stringResource(R.string.cancel),
+                                            vm.updateConversation(backup)
+                                            vm.markNodesAsRestored(removedIds)
+                                        }
                                     )
-                                    LiquidGlassDialogTextButton(
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Error)
-                                            val toDelete = messageToDelete
-                                            pendingDeleteMessage = null
-                                            scope.launch {
-                                                val backup = conversation
-                                                val removedIds = vm.deleteMessage(toDelete)
-                                                toaster.show(
-                                                    message = context.getString(R.string.message_deleted),
-                                                    action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                                        label = context.getString(R.string.undo),
-                                                        onClick = {
-                                                            vm.updateConversation(backup)
-                                                            vm.markNodesAsRestored(removedIds)
-                                                        }
-                                                    )
-                                                )
-                                            }
-                                        },
-                                        text = stringResource(R.string.delete),
-                                        color = MaterialTheme.colorScheme.error,
-                                    )
-                                }
+                                )
                             }
-                        }
-                    }
+                        },
+                        onDismiss = { pendingDeleteMessage = null },
+                    )
                 }
 
                 // Gradient behind floating toolbar - hidden when showing new chat content or in transparent immersive mode
@@ -2175,7 +2131,9 @@ private fun ChatPageContent(
                         bottomPadding = if (toolbarPlacement == ChatToolbarPlacement.Bottom) 12.dp else 24.dp,
                     )
                 } else {
-                    CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                    CompositionLocalProvider(
+                        LocalAppBackdrop provides if (emptyChat) wallpaperBackdrop else contentBackdrop
+                    ) {
                     MinimalChatInput(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -2895,7 +2853,6 @@ private fun ChatToolbarOverflowMenu(
 ) {
     BackHandler(onBack = onDismissRequest)
 
-    var dragDismissInProgress by remember { mutableStateOf(false) }
     val scrimInteractionSource = remember { MutableInteractionSource() }
     val menuShape = AppShapes.CardMedium
     val containerColor = domChatSheetContainerColor()
@@ -2903,114 +2860,85 @@ private fun ChatToolbarOverflowMenu(
     val settings = LocalSettings.current
     val menuTopPadding = chatToolbarPopupTopPadding(placement)
     val menuBottomPadding = chatToolbarPopupBottomPadding(placement)
-    val scrimAlpha by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (dragDismissInProgress) 0f else 0.16f,
-        animationSpec = androidx.compose.animation.core.spring(
-            dampingRatio = 0.85f,
-            stiffness = 420f
-        ),
-        label = "chat_toolbar_menu_scrim_alpha"
-    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = scrimAlpha))
+            .background(Color.Black.copy(alpha = 0.16f))
             .clickable(
                 interactionSource = scrimInteractionSource,
                 indication = null,
                 onClick = onDismissRequest
             )
-            .pointerInput(chatListState) {
-                detectDragGestures(
-                    onDragStart = {
-                        dragDismissInProgress = true
-                    },
-                    onDragEnd = {
-                        dragDismissInProgress = false
-                        onDismissRequest()
-                    },
-                    onDragCancel = {
-                        dragDismissInProgress = false
-                        onDismissRequest()
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        chatListState.dispatchRawDelta(-dragAmount.y)
+    ) {
+        Surface(
+            shape = menuShape,
+            color = Color.Transparent,
+            border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,
+            modifier = Modifier
+                .align(
+                    if (placement == ChatToolbarPlacement.Top) {
+                        Alignment.TopEnd
+                    } else {
+                        Alignment.BottomEnd
                     }
                 )
-            }
-    ) {
-        if (!dragDismissInProgress) {
-            Surface(
-                shape = menuShape,
-                color = Color.Transparent,
-                border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,
-                modifier = Modifier
-                    .align(
-                        if (placement == ChatToolbarPlacement.Top) {
-                            Alignment.TopEnd
-                        } else {
-                            Alignment.BottomEnd
-                        }
-                    )
-                    .then(
-                        if (placement == ChatToolbarPlacement.Top) {
-                            Modifier.statusBarsPadding()
-                        } else {
-                            Modifier.navigationBarsPadding()
-                        }
-                    )
-                    .padding(top = menuTopPadding, bottom = menuBottomPadding, end = 16.dp)
-                    .widthIn(min = 196.dp, max = 260.dp)
-                    .graphicsLayer {
-                        scaleX = 1f
-                        scaleY = menuScale
-                        transformOrigin = chatToolbarPopupTransformOrigin(placement)
+                .then(
+                    if (placement == ChatToolbarPlacement.Top) {
+                        Modifier.statusBarsPadding()
+                    } else {
+                        Modifier.navigationBarsPadding()
                     }
-                    .then(
-                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                            Modifier.frostedGlassSurface(shape = menuShape)
-                        } else {
-                            Modifier.liquidGlassSurface(shape = menuShape, glassMode = settings.displaySetting.liquidGlassMode)
-                        }
-                    )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {}
-                    )
-            ) {
-                Column(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(2.dp)
-                ) {
-                    ChatToolbarOverflowMenuItem(
-                        label = "Creator Notes",
-                        icon = Icons.Rounded.AutoAwesome,
-                        onClick = onCreatorNotesClick
-                    )
-                    ChatToolbarOverflowMenuItem(
-                        label = "Prompt Presets",
-                        icon = Icons.Rounded.Tune,
-                        onClick = onPromptPresetsClick
-                    )
-                    ChatToolbarOverflowMenuItem(
-                        label = "Author's Notes",
-                        icon = Icons.Rounded.Edit,
-                        onClick = onAuthorsNotesClick
-                    )
-                    ChatToolbarOverflowMenuItem(
-                        label = "Wallpaper",
-                        icon = Icons.Rounded.Image,
-                        onClick = onWallpaperClick
-                    )
-                    ChatToolbarOverflowMenuItem(
-                        label = "Text Styling",
-                        icon = Icons.Rounded.FormatItalic,
-                        onClick = onTextStylingClick
-                    )
+                )
+                .padding(top = menuTopPadding, bottom = menuBottomPadding, end = 16.dp)
+                .widthIn(min = 196.dp, max = 260.dp)
+                .graphicsLayer {
+                    scaleX = 1f
+                    scaleY = menuScale
+                    transformOrigin = chatToolbarPopupTransformOrigin(placement)
                 }
+                .then(
+                    if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                        Modifier.frostedGlassSurface(shape = menuShape)
+                    } else {
+                        Modifier.liquidGlassSurface(shape = menuShape, glassMode = settings.displaySetting.liquidGlassMode)
+                    }
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {}
+                )
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 8.dp),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(2.dp)
+            ) {
+                ChatToolbarOverflowMenuItem(
+                    label = "Creator Notes",
+                    icon = Icons.Rounded.AutoAwesome,
+                    onClick = onCreatorNotesClick
+                )
+                ChatToolbarOverflowMenuItem(
+                    label = "Prompt Presets",
+                    icon = Icons.Rounded.Tune,
+                    onClick = onPromptPresetsClick
+                )
+                ChatToolbarOverflowMenuItem(
+                    label = "Author's Notes",
+                    icon = Icons.Rounded.Edit,
+                    onClick = onAuthorsNotesClick
+                )
+                ChatToolbarOverflowMenuItem(
+                    label = "Wallpaper",
+                    icon = Icons.Rounded.Image,
+                    onClick = onWallpaperClick
+                )
+                ChatToolbarOverflowMenuItem(
+                    label = "Text Styling",
+                    icon = Icons.Rounded.FormatItalic,
+                    onClick = onTextStylingClick
+                )
             }
         }
     }
@@ -3345,39 +3273,6 @@ private fun androidx.compose.foundation.layout.BoxScope.ChatToolbarInChatLayer(
                 isInsidePill = true,
             )
         }
-    }
-}
-
-
-@Composable
-private fun LiquidGlassDialogTextButton(
-    onClick: () -> Unit,
-    text: String,
-    color: Color = Color.Unspecified,
-) {
-    val haptics = rememberPremiumHaptics()
-    TextButton(
-        onClick = {
-            haptics.perform(HapticPattern.Pop)
-            onClick()
-        },
-        modifier = Modifier
-            .liquidGlassSurface(
-                shape = RoundedCornerShape(16.dp),
-                borderWidth = 0.5.dp,
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                fillColor = Color.Transparent,
-            )
-            .padding(vertical = 10.dp)
-            .width(112.dp),
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontWeight = FontWeight.Medium,
-            ),
-            color = if (color == Color.Unspecified) MaterialTheme.colorScheme.onSurface else color,
-        )
     }
 }
 

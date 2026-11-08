@@ -79,8 +79,11 @@ import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.font.FontWeight
@@ -195,16 +198,32 @@ fun AssistantPickerSheet(
 
     val itemCardBg = domChatCardContainerColor()
     val itemBorder = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f))
+    val tagBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val tagIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    fun tagGlassSurface() = if (tagIsFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = RoundedCornerShape(20.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = tagBorderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = RoundedCornerShape(20.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = tagBorderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
-        dragHandle = null,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.6f)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
             DomChatSheetHeader(
@@ -228,13 +247,7 @@ fun AssistantPickerSheet(
                     val isSelected = tag.id in selectedTagIds
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0xFF000000))
-                            .border(
-                                0.5.dp,
-                                LiquidGlassTokens.SpecularBorderSubtle,
-                                RoundedCornerShape(20.dp)
-                            )
+                            .then(tagGlassSurface())
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                             .clickable {
                                 selectedTagIds = if (isSelected) {

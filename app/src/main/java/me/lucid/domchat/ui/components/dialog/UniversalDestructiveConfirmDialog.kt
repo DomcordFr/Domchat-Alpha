@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -37,7 +38,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 
@@ -92,105 +98,296 @@ fun UniversalDestructiveConfirmDialog(
                 decorFitsSystemWindows = false
             )
         ) {
-            // Center the dialog both vertically and horizontally with generous padding
-            // so it is never cut off at the bottom on small screens.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    modifier = Modifier
-                        .widthIn(max = 420.dp)
-                        .padding(vertical = 28.dp, horizontal = 24.dp)
-                        .background(Color(0xFF000000), shape = dialogShape)
-                        .border(
-                            0.5.dp,
-                            LiquidGlassTokens.SpecularBorderSubtle,
-                            dialogShape
-                        )
-                        .clip(dialogShape),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    shape = dialogShape,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.widthIn(min = 280.dp, max = 380.dp),
                 ) {
-                    // Title
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Body message
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.85f),
-                        maxLines = 3,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Action buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Cancel button - glassy outlined, muted white text
-                        OutlinedButton(
-                            onClick = { onDismiss() },
-                            modifier = Modifier.weight(1f).height(48.dp),
-                            shape = dialogShape,
-                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f)),
-                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color.White.copy(alpha = 0.85f),
-                                disabledContentColor = Color.White.copy(alpha = 0.3f)
+                        // Title
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+
+                        // Body message
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.85f),
+                            maxLines = 4,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+
+                        // Action buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            DomChatGlassPillButton(
+                                text = cancelLabel,
+                                onClick = onDismiss,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
                             )
-                        ) {
-                            Text(text = cancelLabel)
+
+                            DomChatGlassPillButton(
+                                text = confirmLabel,
+                                onClick = {
+                                    onConfirm()
+                                    onDismiss()
+                                },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
+                                destructive = true,
+                            )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
 
-                        Spacer(modifier = Modifier.width(8.dp))
+/**
+ * Confirmation dialog for chat pages: translucent liquid-glass surface over the
+ * conversation backdrop (frosted glass when [LiquidGlassMode.SOFT_FROSTED]),
+ * transparent fill, specular border, glassy pill buttons.
+ */
+@Composable
+fun ChatDestructiveConfirmDialog(
+    visible: Boolean,
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    confirmLabel: String = "Delete",
+    cancelLabel: String = "Cancel",
+) {
+    val dialogShape = RoundedCornerShape(24.dp)
+    val isFrosted = LocalSettings.current.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    val surfaceModifier: Modifier = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = dialogShape,
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = dialogShape,
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
-                        // Delete button - prominent glassy, pure white text + icon, specular border
-                        Button(
-                            onClick = {
-                                onConfirm()
-                                onDismiss()
-                            },
-                            modifier = Modifier.weight(1f).height(48.dp),
-                            shape = dialogShape,
-                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                containerColor = Color.Transparent,
-                                contentColor = Color.Red,
-                                disabledContainerColor = Color.Transparent.copy(alpha = 0.2f),
-                                disabledContentColor = Color.Red.copy(alpha = 0.3f)
-                            ),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
+            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+            initialScale = 0.9f
+        ),
+        exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
+            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+            targetScale = 0.9f
+        ),
+    ) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .widthIn(min = 280.dp, max = 380.dp)
+                        .then(surfaceModifier)
+                        .clip(dialogShape),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Title
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+
+                        // Body message
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.85f),
+                            maxLines = 4,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+
+                        // Action buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Delete,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = confirmLabel,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
+                            // Cancel button - glassy pill, white text
+                            DomChatGlassPillButton(
+                                text = cancelLabel,
+                                onClick = onDismiss,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                            )
+
+                            // Confirm button - glassy pill, destructive accent
+                            DomChatGlassPillButton(
+                                text = confirmLabel,
+                                onClick = {
+                                    onConfirm()
+                                    onDismiss()
+                                },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                destructive = true,
+                                contentColor = Color.White,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Confirmation dialog for settings pages: opaque AMOLED black surface,
+ * [RoundedCornerShape(24.dp)], specular border, glassy pill buttons —
+ * no greyish background, no grey borders.
+ */
+@Composable
+fun SettingsDestructiveConfirmDialog(
+    visible: Boolean,
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    confirmLabel: String = "Delete",
+    cancelLabel: String = "Cancel",
+) {
+    val dialogShape = RoundedCornerShape(24.dp)
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
+            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+            initialScale = 0.9f
+        ),
+        exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
+            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+            targetScale = 0.9f
+        ),
+    ) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = dialogShape,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.widthIn(min = 280.dp, max = 380.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Title
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+
+                        // Body message
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.85f),
+                            maxLines = 4,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+
+                        // Action buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            // Cancel button - black glassy pill, white text
+                            DomChatGlassPillButton(
+                                text = cancelLabel,
+                                onClick = onDismiss,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
+                            )
+
+                            // Confirm button - black glassy pill, destructive accent
+                            DomChatGlassPillButton(
+                                text = confirmLabel,
+                                onClick = {
+                                    onConfirm()
+                                    onDismiss()
+                                },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
+                                destructive = true,
+                            )
                         }
                     }
                 }

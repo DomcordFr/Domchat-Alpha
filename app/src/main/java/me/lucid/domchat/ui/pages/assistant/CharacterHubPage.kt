@@ -149,6 +149,7 @@ import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
 import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
+import me.lucid.domchat.ui.components.richtext.SimpleHtmlBlock
 import me.lucid.domchat.ui.components.ui.AppToasterState
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.Tag
@@ -2111,25 +2112,21 @@ fun CharacterInspectorSheet(
                     }
 
                     // Creator notes blurb excerpt above the Start Chat button:
-                    // first paragraph/sentence of creatorNotes, max 200 chars, ellipsis.
-                    val creatorNotesBlurb = assistant.creatorNotes.orEmpty()
+                    // Strip HTML tags and normalize block tags so <p>/<center>/<span> markup never leaks,
+                    // displaying the first paragraph smoothly without artificial punctuation cuts.
+                    val creatorNotesBlurb = stripHtmlTags(assistant.creatorNotes.orEmpty())
                     if (creatorNotesBlurb.isNotBlank()) {
-                        val firstPara = creatorNotesBlurb.trim().split("\n\n").first()
-                        val sentenceEnd = listOf('.', '!', '?').map { firstPara.indexOf(it) }.filter { it >= 0 }.minOrNull()
-                        val excerpt = if (sentenceEnd != null && sentenceEnd < firstPara.length - 1) {
-                            firstPara.substring(0, sentenceEnd + 1)
-                        } else {
-                            firstPara
+                        val firstPara = creatorNotesBlurb.split("\n\n").firstOrNull()?.trim().orEmpty()
+                        if (firstPara.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = firstPara,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.85f),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
-                        val blurbText = if (excerpt.length > 200) excerpt.take(200).trimEnd() + "..." else excerpt
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = blurbText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.85f),
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
@@ -2338,9 +2335,25 @@ fun CharacterInspectorSheet(
                                 ) {
                                     val notes = assistant.creatorNotes?.trim().orEmpty()
                                     if (notes.isNotBlank()) {
-                                        MarkdownBlock(
-                                            content = notes
-                                        )
+                                        val hasHtml = remember(notes) {
+                                            notes.contains("<p", ignoreCase = true) ||
+                                            notes.contains("<div", ignoreCase = true) ||
+                                            notes.contains("<img", ignoreCase = true) ||
+                                            notes.contains("<span", ignoreCase = true) ||
+                                            notes.contains("<center", ignoreCase = true) ||
+                                            notes.contains("<h1", ignoreCase = true) ||
+                                            notes.contains("<h2", ignoreCase = true) ||
+                                            notes.contains("<h3", ignoreCase = true) ||
+                                            notes.contains("<br", ignoreCase = true) ||
+                                            notes.contains("<hr", ignoreCase = true)
+                                        }
+                                        if (hasHtml) {
+                                            SimpleHtmlBlock(html = notes)
+                                        } else {
+                                            MarkdownBlock(
+                                                content = notes
+                                            )
+                                        }
                                     } else {
                                         Text(
                                             text = "No creator notes provided for this character.",
@@ -3318,24 +3331,20 @@ private fun NewGroupDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.65f))
-                .padding(20.dp)
+                .padding(24.dp)
                 .imePadding()
                 .navigationBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
-                color = Color(0xFF141520),
-                shape = RoundedCornerShape(28.dp),
+                color = Color(0xFF000000),
+                shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 420.dp)
+                    .widthIn(min = 280.dp, max = 360.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
+                    modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
@@ -3601,5 +3610,32 @@ private fun DeleteConfirmationDialog(
             )
         }
     )
+}
+
+/**
+ * Strips HTML tags and unescapes common entities, returning plain text. Used for short
+ * blurbs (creatorNotes) so rich HTML descriptions don't get truncated mid-tag.
+ */
+private fun stripHtmlTags(html: String): String {
+    return html
+        .replace(Regex("(?i)<br\\s*/?>"), "\n")
+        .replace(Regex("(?i)</?(p|div|h[1-6]|blockquote|li)[^>]*>"), "\n")
+        .replace(Regex("<[^>]*>"), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        .replace(Regex("&#(\\d+);")) { match ->
+            match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
+        }
+        .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
+        }
+        .replace(Regex("\n{3,}"), "\n\n")
+        .trim()
 }
 

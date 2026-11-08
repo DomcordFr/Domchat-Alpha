@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.DeleteOutline
 import me.lucid.domchat.R
+import me.lucid.domchat.ui.components.dialog.ChatDestructiveConfirmDialog
 import me.lucid.ai.core.MessageRole
 import me.lucid.ai.ui.MessageNode
 import me.lucid.ai.ui.versionSelectionIndices
@@ -43,6 +44,7 @@ fun ChatMessageBranchSelector(
     val currentVersionPosition = remember(node.messages, node.selectIndex) {
         node.versionSelectionPosition()
     }
+    var branchDeletePending by remember { mutableStateOf(false) }
 
     val canGenerateAlternate = onGenerateAlternate != null && node.role == MessageRole.ASSISTANT
     val showControls = versionIndices.isNotEmpty() && (versionIndices.size > 1 || canGenerateAlternate)
@@ -117,12 +119,8 @@ fun ChatMessageBranchSelector(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = LocalIndication.current,
                             onClick = {
-                                val updatedMessages = node.messages.toMutableList()
-                                if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
-                                    updatedMessages.removeAt(node.selectIndex)
-                                    val newSelectIndex = (node.selectIndex - 1).coerceAtLeast(0)
-                                    onUpdate(node.copy(messages = updatedMessages, selectIndex = newSelectIndex))
-                                }
+                                // Require confirmation before destructively removing a swipe branch.
+                                branchDeletePending = true
                             }
                         )
                         .padding(6.dp)
@@ -130,5 +128,24 @@ fun ChatMessageBranchSelector(
                 )
             }
         }
+    }
+
+    // Branch deletion confirmation — explicit confirm required before removing a swipe.
+    if (branchDeletePending) {
+        ChatDestructiveConfirmDialog(
+            visible = true,
+            title = "Delete this swipe?",
+            message = "This branch will be permanently removed.",
+            onConfirm = {
+                branchDeletePending = false
+                val updatedMessages = node.messages.toMutableList()
+                if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
+                    updatedMessages.removeAt(node.selectIndex)
+                    val newSelectIndex = (node.selectIndex - 1).coerceAtLeast(0)
+                    onUpdate(node.copy(messages = updatedMessages, selectIndex = newSelectIndex))
+                }
+            },
+            onDismiss = { branchDeletePending = false },
+        )
     }
 }

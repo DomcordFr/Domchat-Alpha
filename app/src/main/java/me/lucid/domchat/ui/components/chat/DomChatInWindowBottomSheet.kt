@@ -70,7 +70,9 @@ import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.data.model.LiquidGlassMode
 
 /**
  * Unified sleek drag handle pill for all bottom sheets and popovers across DomChat.
@@ -111,7 +113,6 @@ fun DomChatSheetHeader(
 ) {
     val dismiss = LocalSheetDismiss.current
     Column(modifier = modifier) {
-        DomChatSheetDragHandle()
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -232,8 +233,27 @@ fun DomChatInWindowBottomSheet(
     val scope = rememberCoroutineScope()
     val motionPolicy = me.lucid.domchat.ui.motion.LocalMotionPolicy.current
     val isDark = LocalDarkMode.current
+    val settings = LocalSettings.current
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.60f).dp
+
+    // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
+    val sheetSurfaceModifier: Modifier = if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     var sheetHeightPx by remember { mutableFloatStateOf(1000f) }
     val offsetY = remember { Animatable(1200f) }
@@ -352,13 +372,16 @@ fun DomChatInWindowBottomSheet(
                         indication = null,
                         onClick = {}
                     )
-                    .liquidGlassSurface(
-                        shape = shape,
-                        fillColor = Color.Transparent,
-                        borderWidth = 0.5.dp,
-                        specularBrush = borderBrush,
-                        isFloatingControl = true,
-                    ),
+                    // Fallback opaque surface when no wallpaper/content backdrop is bound
+                    // (e.g. before LocalAppBackdrop is provided): dark glass instead of transparent.
+                    .then(
+                        if (LocalAppBackdrop.current == null) {
+                            Modifier.background(Color(0xFF000000).copy(alpha = 0.85f), shape = shape)
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .then(sheetSurfaceModifier),
                 shape = shape,
                 color = Color.Transparent,
                 shadowElevation = 0.dp,
@@ -371,16 +394,14 @@ fun DomChatInWindowBottomSheet(
                 ) {
                     val sheetScope = this
                     CompositionLocalProvider(LocalSheetDismiss provides { dismissWithAnimation() }) {
-                        if (dragHandle != null) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .then(dragModifier)
-                                    .padding(vertical = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                dragHandle()
-                            }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(dragModifier)
+                                .padding(vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            (dragHandle ?: { DomChatSheetDragHandle() })()
                         }
                         sheetScope.content()
                     }

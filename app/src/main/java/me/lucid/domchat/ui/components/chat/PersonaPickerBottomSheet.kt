@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -79,9 +80,12 @@ import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,6 +101,25 @@ fun PersonaPickerBottomSheet(
     val amoledMode by rememberAmoledDarkMode()
     val isDark = LocalDarkMode.current
     val navController = LocalNavController.current
+
+    val personaBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val personaIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    fun personaGlassCard(shape: Shape) = if (personaIsFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = personaBorderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = personaBorderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     val overscrollAbsorber = remember {
         object : NestedScrollConnection {
@@ -172,13 +195,11 @@ fun PersonaPickerBottomSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
-        dragHandle = null,
         modifier = modifier
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.6f)
                 .padding(horizontal = 16.dp, vertical = 6.dp)
         ) {
             DomChatSheetHeader(
@@ -265,17 +286,21 @@ fun PersonaPickerBottomSheet(
 
                     Surface(
                         onClick = { selectPersona(persona.id) },
-                        color = if (isActive) {
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-                        } else {
-                            domChatCardContainerColor()
-                        },
+                        color = Color.Transparent,
                         shape = RoundedCornerShape(18.dp),
                         border = BorderStroke(
                             width = if (isActive) 1.5.dp else 0.5.dp,
                             color = if (isActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.12f)
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (isActive) {
+                                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), shape = RoundedCornerShape(18.dp))
+                                } else {
+                                    personaGlassCard(RoundedCornerShape(18.dp))
+                                }
+                            )
                     ) {
                         Row(
                             modifier = Modifier

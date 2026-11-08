@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
@@ -43,12 +45,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -93,6 +95,7 @@ import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.R
 import me.lucid.domchat.Screen
@@ -100,6 +103,7 @@ import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.components.chat.ConversationRowSurface
 import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.nav.DomChatDrawerSearch
 import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.ui.text.style.TextAlign
@@ -109,6 +113,7 @@ import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
 import me.lucid.domchat.ui.modifier.domChatChromeTextShadow
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.context.LocalNavController
+import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.utils.toLocalString
@@ -123,6 +128,8 @@ import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import me.lucid.domchat.utils.navigateToChatPage
 
 /**
@@ -652,17 +659,35 @@ private fun ConversationItem(
             }
         }
 
+        val dropdownGlass = if (LocalSettings.current.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
+            Modifier.frostedGlassSurface(
+                shape = RoundedCornerShape(18.dp),
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = Color.Transparent,
+            )
+        } else {
+            Modifier.liquidGlassSurface(
+                shape = RoundedCornerShape(18.dp),
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = Color.Transparent,
+                glassMode = LiquidGlassMode.BALANCED_BLEND,
+            )
+        }
         DropdownMenu(
             expanded = showDropdownMenu,
             onDismissRequest = { showDropdownMenu = false },
+            modifier = dropdownGlass,
             shape = RoundedCornerShape(18.dp),
-            containerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.80f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = Color.Transparent,
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         ) {
             DropdownMenuItem(
                 text = {
                     Text(
-                        if (conversation.isPinned) stringResource(R.string.unpin_chat) else stringResource(R.string.pin_chat)
+                        if (conversation.isPinned) stringResource(R.string.unpin_chat) else stringResource(R.string.pin_chat),
+                        color = Color.White,
                     )
                 },
                 onClick = {
@@ -672,15 +697,16 @@ private fun ConversationItem(
                 },
                 leadingIcon = {
                     Icon(
-                        Icons.Rounded.PushPin,
-                        null
+                        imageVector = Icons.Rounded.PushPin,
+                        contentDescription = null,
+                        tint = Color.White,
                     )
                 }
             )
 
             DropdownMenuItem(
                 text = {
-                    Text(stringResource(R.string.chat_page_edit_title))
+                    Text(stringResource(R.string.chat_page_edit_title), color = Color.White)
                 },
                 onClick = {
                     haptics.perform(HapticPattern.Pop)
@@ -689,13 +715,17 @@ private fun ConversationItem(
                     showDropdownMenu = false
                 },
                 leadingIcon = {
-                    Icon(Icons.Rounded.Edit, null)
+                    Icon(
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
                 }
             )
 
             DropdownMenuItem(
                 text = {
-                    Text(stringResource(id = R.string.chat_page_regenerate_title))
+                    Text(stringResource(id = R.string.chat_page_regenerate_title), color = Color.White)
                 },
                 onClick = {
                     haptics.perform(HapticPattern.Tick)
@@ -703,13 +733,17 @@ private fun ConversationItem(
                     showDropdownMenu = false
                 },
                 leadingIcon = {
-                    Icon(Icons.Rounded.Refresh, null)
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
                 }
             )
 
             DropdownMenuItem(
                 text = {
-                    Text(stringResource(id = R.string.chat_page_delete))
+                    Text(stringResource(id = R.string.chat_page_delete), color = Color.White)
                 },
                 onClick = {
                     haptics.perform(HapticPattern.Error)
@@ -717,39 +751,88 @@ private fun ConversationItem(
                     showDropdownMenu = false
                 },
                 leadingIcon = {
-                    Icon(Icons.Rounded.Delete, null)
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
                 }
             )
         }
 
         if (showEditTitleDialog) {
-            AlertDialog(
+            Dialog(
                 onDismissRequest = { showEditTitleDialog = false },
-                title = { Text(stringResource(R.string.chat_page_edit_title)) },
-                text = {
-                    OutlinedTextField(
-                        value = editedTitle,
-                        onValueChange = { editedTitle = it },
-                        singleLine = true,
-                        shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            onEditTitle(conversation, editedTitle)
-                            showEditTitleDialog = false
-                        }
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
                     ) {
-                        Text(stringResource(R.string.chat_page_save))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showEditTitleDialog = false }) {
-                        Text(stringResource(R.string.chat_page_cancel))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.chat_page_edit_title),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White,
+                            )
+                            OutlinedTextField(
+                                value = editedTitle,
+                                onValueChange = { editedTitle = it },
+                                singleLine = true,
+                                shape = AppShapes.InputField,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                                    cursorColor = Color.White.copy(alpha = 0.9f),
+                                )
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                DomChatGlassPillButton(
+                                    text = stringResource(R.string.chat_page_cancel),
+                                    onClick = { showEditTitleDialog = false },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White,
+                                )
+                                DomChatGlassPillButton(
+                                    text = stringResource(R.string.chat_page_save),
+                                    onClick = {
+                                        onEditTitle(conversation, editedTitle)
+                                        showEditTitleDialog = false
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White,
+                                )
+                            }
+                        }
                     }
                 }
-            )
+            }
         }
     }
 }

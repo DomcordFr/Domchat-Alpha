@@ -113,7 +113,7 @@ fun TestingSettingsPage(vm: me.lucid.domchat.ui.pages.setting.SettingVM = koinVi
             verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
         ) {
             Surface(
-                color = Color(0xFF141520),
+                color = Color(0xFF000000),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
