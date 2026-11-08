@@ -135,7 +135,7 @@ private fun PositionButton(
         } else {
             BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
         },
-        modifier = modifier.then(glassSurface(RoundedCornerShape(12.dp))),
+        modifier = modifier.then(liquidGlassSurface(shape = RoundedCornerShape(12.dp))),
     ) {
         Row(
             modifier = Modifier
@@ -183,6 +183,7 @@ fun PromptPresetsBottomSheet(
 
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    @Composable
     fun glassSurface(shape: Shape) = if (isFrosted) {
         Modifier.frostedGlassSurface(
             shape = shape,

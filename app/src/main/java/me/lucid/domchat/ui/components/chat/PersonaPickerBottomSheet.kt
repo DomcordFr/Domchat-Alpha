@@ -104,6 +104,7 @@ fun PersonaPickerBottomSheet(
 
     val personaBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val personaIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    @Composable
     fun personaGlassCard(shape: Shape) = if (personaIsFrosted) {
         Modifier.frostedGlassSurface(
             shape = shape,

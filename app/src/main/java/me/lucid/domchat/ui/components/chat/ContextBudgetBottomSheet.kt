@@ -126,6 +126,7 @@ fun ContextBudgetBottomSheet(
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    @Composable
     fun glassCard(shape: Shape) = if (isFrosted) {
         Modifier.frostedGlassSurface(
             shape = shape,

@@ -200,6 +200,7 @@ fun AssistantPickerSheet(
     val itemBorder = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f))
     val tagBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val tagIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    @Composable
     fun tagGlassSurface() = if (tagIsFrosted) {
         Modifier.frostedGlassSurface(
             shape = RoundedCornerShape(20.dp),
