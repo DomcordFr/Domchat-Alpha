@@ -135,7 +135,7 @@ private fun PositionButton(
         } else {
             BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
         },
-        modifier = modifier.then(liquidGlassSurface(shape = RoundedCornerShape(12.dp))),
+        modifier = modifier.then(Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp))),
     ) {
         Row(
             modifier = Modifier
