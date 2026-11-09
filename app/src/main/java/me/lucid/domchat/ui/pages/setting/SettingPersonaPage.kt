@@ -673,7 +673,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                         ) {
                                             Checkbox(
                                                 checked = isSelected,
-                                                onChecked = { checked ->
+                                                onCheckedChange = { checked ->
                                                     haptics.perform(HapticPattern.Tick)
                                                     pickerSelectedIds = if (checked) {
                                                         pickerSelectedIds + idStr

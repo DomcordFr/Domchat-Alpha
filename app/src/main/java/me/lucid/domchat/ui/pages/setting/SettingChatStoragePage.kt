@@ -911,14 +911,16 @@ fun SettingChatStoragePage(
         ),
         onDismiss = { pendingModelCacheDeletion = null },
         onConfirm = {
-            val target = pendingModelCacheDeletion ?: return
-            pendingModelCacheDeletion = null
-            scope.launch {
+            val target = pendingModelCacheDeletion
+            if (target != null) {
+                pendingModelCacheDeletion = null
+                scope.launch {
                     embeddingCacheDAO.deleteByModelId(target)
                     loadEmbeddingCacheStats()
                     toaster.show("Cache deleted for $target")
                 }
-            },
+            }
+        },
         )
 }
 

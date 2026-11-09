@@ -409,27 +409,29 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                 providerToDelete = null
             },
             onConfirm = {
-                val p = providerToDelete ?: return@onConfirm
-                val removedVoiceIds = p.voices.map { it.id }.toSet()
-                val newProviders = settings.ttsProviders - p
-                val newSelectedId =
-                    if (settings.selectedTTSProviderId == p.id) {
-                        newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
+                val p = providerToDelete
+                if (p != null) {
+                    val removedVoiceIds = p.voices.map { it.id }.toSet()
+                    val newProviders = settings.ttsProviders - p
+                    val newSelectedId =
+                        if (settings.selectedTTSProviderId == p.id) {
+                            newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
+                        } else {
+                            settings.selectedTTSProviderId
+                        }
+                    val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
+                        newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
+                            ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
+                            ?: DEFAULT_SYSTEM_TTS_VOICE_ID
                     } else {
-                        settings.selectedTTSProviderId
+                        settings.selectedTTSVoiceId
                     }
-                val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
-                    newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
-                        ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
-                        ?: DEFAULT_SYSTEM_TTS_VOICE_ID
-                } else {
-                    settings.selectedTTSVoiceId
+                    vm.updateSettings(settings.copy(
+                        ttsProviders = newProviders,
+                        selectedTTSProviderId = newSelectedId,
+                        selectedTTSVoiceId = newSelectedVoiceId
+                    ))
                 }
-                vm.updateSettings(settings.copy(
-                    ttsProviders = newProviders,
-                    selectedTTSProviderId = newSelectedId,
-                    selectedTTSVoiceId = newSelectedVoiceId
-                ))
                 showDeleteDialog = false
                 providerToDelete = null
             },
@@ -766,29 +768,31 @@ internal fun TtsProvidersContent(
             providerToDelete = null
         },
         onConfirm = {
-            val provider = providerToDelete ?: return@onConfirm
-            val newProviders = settings.ttsProviders - provider
-            val newSelectedId =
-                if (settings.selectedTTSProviderId == provider.id) {
-                    newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
+            val provider = providerToDelete
+            if (provider != null) {
+                val newProviders = settings.ttsProviders - provider
+                val newSelectedId =
+                    if (settings.selectedTTSProviderId == provider.id) {
+                        newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
+                    } else {
+                        settings.selectedTTSProviderId
+                    }
+                val removedVoiceIds = provider.voices.map { it.id }.toSet()
+                val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
+                    newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
+                        ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
+                        ?: DEFAULT_SYSTEM_TTS_VOICE_ID
                 } else {
-                    settings.selectedTTSProviderId
+                    settings.selectedTTSVoiceId
                 }
-            val removedVoiceIds = provider.voices.map { it.id }.toSet()
-            val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
-                newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
-                    ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
-                    ?: DEFAULT_SYSTEM_TTS_VOICE_ID
-            } else {
-                settings.selectedTTSVoiceId
-            }
-            vm.updateSettings(
-                settings.copy(
-                    ttsProviders = newProviders,
-                    selectedTTSProviderId = newSelectedId,
-                    selectedTTSVoiceId = newSelectedVoiceId
+                vm.updateSettings(
+                    settings.copy(
+                        ttsProviders = newProviders,
+                        selectedTTSProviderId = newSelectedId,
+                        selectedTTSVoiceId = newSelectedVoiceId
+                    )
                 )
-            )
+            }
             showDeleteDialog = false
             providerToDelete = null
         },

@@ -582,12 +582,14 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                 serviceToDelete = null
             },
             onConfirm = {
-                val svc = serviceToDelete ?: return@onConfirm
-                val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
-                if (idx >= 0) {
-                    val newServices = settings.searchServices.toMutableList()
-                    newServices.removeAt(idx)
-                    vm.updateSettings(settings.copy(searchServices = newServices))
+                val svc = serviceToDelete
+                if (svc != null) {
+                    val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
+                    if (idx >= 0) {
+                        val newServices = settings.searchServices.toMutableList()
+                        newServices.removeAt(idx)
+                        vm.updateSettings(settings.copy(searchServices = newServices))
+                    }
                 }
                 showDeleteDialog = false
                 serviceToDelete = null
@@ -975,12 +977,14 @@ internal fun SearchProvidersContent(
             serviceToDelete = null
         },
         onConfirm = {
-            val svc = serviceToDelete ?: return@onConfirm
-            val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
-            if (idx >= 0) {
-                val newServices = settings.searchServices.toMutableList()
-                newServices.removeAt(idx)
-                vm.updateSettings(settings.copy(searchServices = newServices))
+            val svc = serviceToDelete
+            if (svc != null) {
+                val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
+                if (idx >= 0) {
+                    val newServices = settings.searchServices.toMutableList()
+                    newServices.removeAt(idx)
+                    vm.updateSettings(settings.copy(searchServices = newServices))
+                }
             }
             showDeleteDialog = false
             serviceToDelete = null
