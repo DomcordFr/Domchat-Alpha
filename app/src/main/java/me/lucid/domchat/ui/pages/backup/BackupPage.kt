@@ -675,11 +675,11 @@ singleLine = true,
         consequence = stringResource(R.string.backup_page_delete_consequence),
         onDismiss = { pendingDeleteItem = null },
         onConfirm = {
-            val item = pendingDeleteItem
-            pendingDeleteItem = null
-            scope.launch {
-                runCatching {
-                    vm.deleteWebDavBackupFile(item)
+            pendingDeleteItem?.let { item ->
+                pendingDeleteItem = null
+                scope.launch {
+                    runCatching {
+                        vm.deleteWebDavBackupFile(item)
                     toaster.show(
                         context.getString(R.string.backup_page_delete_success),
                         type = ToastType.Success
@@ -706,10 +706,10 @@ singleLine = true,
         confirmLabel = stringResource(R.string.backup_page_restore_now),
         onDismiss = { pendingRestoreItem = null },
         onConfirm = {
-            val item = pendingRestoreItem
-            pendingRestoreItem = null
-            scope.launch {
-                restoringItemId = item.displayName
+            pendingRestoreItem?.let { item ->
+                pendingRestoreItem = null
+                scope.launch {
+                    restoringItemId = item.displayName
                     runCatching {
                         val result = vm.restore(item = item)
                         restoreResult = result
@@ -741,7 +741,8 @@ singleLine = true,
                     }
                     restoringItemId = null
                 }
-            },
+            }
+        },
         )
 
     // Permission explanation dialog
@@ -1092,10 +1093,10 @@ private fun ImportExportPage(
         confirmLabel = stringResource(R.string.backup_page_restore_now),
         onDismiss = { pendingLocalRestoreUri = null },
         onConfirm = {
-            val sourceUri = pendingLocalRestoreUri
-            pendingLocalRestoreUri = null
-            scope.launch {
-                isRestoring = true
+            pendingLocalRestoreUri?.let { sourceUri ->
+                pendingLocalRestoreUri = null
+                scope.launch {
+                    isRestoring = true
                     runCatching {
                         val tempFile =
                             File(context.cacheDir, "temp_restore_${System.currentTimeMillis()}.zip")
@@ -1134,7 +1135,8 @@ private fun ImportExportPage(
                     }
                     isRestoring = false
                 }
-            },
+            }
+        },
         )
 
     if (showExportContentDialog) {

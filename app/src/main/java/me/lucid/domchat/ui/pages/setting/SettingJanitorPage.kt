@@ -1416,9 +1416,9 @@ private fun JanitorCharacterInspectorSheet(
                                 // detail endpoint) over the list card's possibly-truncated fields,
                                 // matching what Character Hub shows when the character is opened
                                 // from there.
-                                val extractNotes = fullExtract?.description.takeIf { it.isNotBlank() }
-                                    ?: fullExtract?.bio.takeIf { it.isNotBlank() }
-                                    ?: character.description.takeIf { it.isNotBlank() }
+                                val extractNotes = fullExtract?.description?.takeIf { it.isNotBlank() }
+                                    ?: fullExtract?.bio?.takeIf { it.isNotBlank() }
+                                    ?: character.description?.takeIf { it.isNotBlank() }
                                     ?: character.bio
                                 val rawNotes = extractNotes.orEmpty()
 

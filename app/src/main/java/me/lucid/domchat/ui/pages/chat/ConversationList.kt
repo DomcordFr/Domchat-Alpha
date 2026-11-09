@@ -4,6 +4,7 @@ import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
@@ -59,6 +60,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.OptIn
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,8 +86,10 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.draw.drawWithContent
@@ -441,6 +445,7 @@ private fun PinnedHeader(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ConversationItem(
     conversation: Conversation,
@@ -668,12 +673,10 @@ private fun ConversationItem(
             enter = fadeIn(animationSpec = tween(120)) + scaleIn(
                 animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f),
                 initialScale = 0.92f,
-                scaleAlignment = Alignment.Center,
             ),
             exit = fadeOut(animationSpec = tween(100)) + scaleOut(
                 animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
                 targetScale = 0.92f,
-                scaleAlignment = Alignment.Center,
             ),
         ) {
             // Tap anywhere on the row to dismiss the in-tree overlay menu
@@ -681,9 +684,9 @@ private fun ConversationItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .zIndex(1f)
-                    .clickable(
-                        onClick = { showMenu = false },
+                    .combinedClickable(
                         onLongClick = {},
+                        onClick = { showMenu = false },
                     )
             )
 

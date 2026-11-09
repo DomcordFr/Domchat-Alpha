@@ -911,7 +911,7 @@ fun SettingChatStoragePage(
         ),
         onDismiss = { pendingModelCacheDeletion = null },
         onConfirm = {
-            val target = pendingModelCacheDeletion ?: return@onConfirm
+            val target = pendingModelCacheDeletion ?: return
             pendingModelCacheDeletion = null
             scope.launch {
                     embeddingCacheDAO.deleteByModelId(target)

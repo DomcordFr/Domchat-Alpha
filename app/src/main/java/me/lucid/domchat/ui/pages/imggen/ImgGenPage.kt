@@ -910,9 +910,10 @@ private fun ImageGalleryScreen(
         consequence = stringResource(R.string.imggen_page_delete_consequence),
         onDismiss = { pendingDeleteImage = null },
         onConfirm = {
-            val image = pendingDeleteImage
-            pendingDeleteImage = null
-            vm.deleteImage(image)
+            pendingDeleteImage?.let { img ->
+                pendingDeleteImage = null
+                vm.deleteImage(img)
+            }
         },
     )
 }
