@@ -7,14 +7,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
-import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,30 +19,35 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -56,6 +58,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,8 +83,10 @@ import me.lucid.domchat.data.model.UserPersona
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.domchat.data.datastore.withActivePersona
 import me.lucid.domchat.ui.components.crop.SquareCropImageScreen
+import me.lucid.domchat.ui.components.chat.DomChatSearchBar
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -99,8 +104,12 @@ import androidx.compose.ui.graphics.Brush
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.statusBarsPadding
+
+private enum class EditorStep {
+    Persona,
+    LorebookPicker
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,6 +149,9 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     var formDescription by remember { mutableStateOf("") }
     var formAvatar by remember { mutableStateOf<Avatar>(Avatar.Dummy) }
     var formLorebookIds by remember { mutableStateOf(emptySet<String>()) }
+    var editorStep by remember { mutableStateOf(EditorStep.Persona) }
+    var pickerQuery by remember { mutableStateOf("") }
+    var pickerSelectedIds by remember { mutableStateOf(emptySet<String>()) }
 
     // Built-in cropper state
     var showCropper by remember { mutableStateOf(false) }
@@ -161,6 +173,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         formPronouns = ""
         formDescription = ""
         formAvatar = Avatar.Dummy
+        formLorebookIds = emptySet()
+        editorStep = EditorStep.Persona
         showEditor = true
     }
 
@@ -172,6 +186,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         formDescription = persona.description
         formAvatar = persona.avatar
         formLorebookIds = persona.enabledLorebookIds
+        editorStep = EditorStep.Persona
         showEditor = true
     }
 
@@ -306,25 +321,20 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             // Personas List
             items(filteredPersonas, key = { it.id }) { persona ->
                 val isActive = persona.id == activePersona.id || (persona.isDefault && activePersona.id == null)
-                val cardShape = RoundedCornerShape(20.dp)
-                val borderBrush = Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = if (isActive) 0.38f else (if (isDark) 0.22f else 0.12f)),
-                        Color.White.copy(alpha = if (isActive) 0.15f else (if (isDark) 0.06f else 0.03f))
-                    )
-                )
+                val cardShape = AppShapes.CardSmall // 16.dp
+                val surfaceColor = when {
+                    isActive -> Color.White.copy(alpha = 0.08f)
+                    else -> Color.Black.copy(alpha = 0.03f)
+                }
+                val borderBrush: Brush = when {
+                    isActive -> LiquidGlassTokens.SpecularBorderSubtle
+                    else -> SolidColor(Color.White.copy(alpha = 0.08f))
+                }
 
                 Surface(
-                    color = if (isActive) {
-                        if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)
-                    } else {
-                        Color(0xFF000000)
-                    },
+                    color = surfaceColor,
                     shape = cardShape,
-                    border = BorderStroke(
-                        width = if (isActive) 1.dp else 0.5.dp,
-                        brush = borderBrush
-                    ),
+                    border = BorderStroke(if (isActive) 1.dp else 0.5.dp, borderBrush),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -350,20 +360,20 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = persona.name,
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = if (isDark) Color.White else Color.White
+                                        color = if (isDark) Color.White else Color.Black
                                     )
 
                                     if (persona.pronouns.isNotBlank()) {
                                         Box(
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
+                                                .clip(AppShapes.SettingBadge)
                                                 .background(if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f))
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = persona.pronouns,
                                                 fontSize = 11.sp,
-                                                color = Color(0xFFA6A6A6)
+                                                color = if (isDark) Color(0xFFA6A6A6) else Color(0xFF666666)
                                             )
                                         }
                                     }
@@ -371,15 +381,22 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     if (isActive) {
                                         Box(
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(Color(0xFFFFFFFF))
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                .clip(AppShapes.SettingBadge)
+                                                .background(Color(0xFF000000).copy(alpha = 0.30f))
+                                                .border(
+                                                    BorderStroke(
+                                                        0.5.dp,
+                                                        SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
+                                                    ),
+                                                    AppShapes.SettingBadge
+                                                )
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = "ACTIVE",
                                                 fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF000000)
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.primary
                                             )
                                         }
                                     }
@@ -390,7 +407,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = persona.description,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.65f),
+                                        color = if (isDark) Color.White.copy(alpha = 0.65f) else Color.Black.copy(alpha = 0.6f),
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -414,21 +431,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
 
-                            Surface(
-                                onClick = { openEdit(persona) },
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color(0xFF000000),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Rounded.Edit, contentDescription = "Edit", modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Edit", fontSize = 12.sp)
-                                }
-                            }
+                            DomChatGlassPillButton(
+                                text = "Edit",
+                                icon = Icons.Rounded.Edit,
+                                onClick = { openEdit(persona) }
+                            )
 
                             if (personas.size > 1) {
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -459,6 +466,14 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     if (showEditor) {
         ApplyDialogWindowBlur()
         val dialogShape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog
+
+        // Re-seed picker selection whenever the picker step is entered
+        LaunchedEffect(editorStep) {
+            if (editorStep == EditorStep.LorebookPicker) {
+                pickerSelectedIds = formLorebookIds.toSet()
+            }
+        }
+
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showEditor = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -471,141 +486,229 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = {
-                Text(
-                    text = if (editingTargetId == null) "Create Persona" else "Edit Persona",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = if (isDark) Color.White else Color.White
-                )
+                when (editorStep) {
+                    EditorStep.Persona -> {
+                        Text(
+                            text = if (editingTargetId == null) "Create Persona" else "Edit Persona",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                    }
+                    EditorStep.LorebookPicker -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            IconButton(
+                                onClick = { editorStep = EditorStep.Persona },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color.White.copy(alpha = 0.9f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Text(
+                                text = "Lorebooks",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
             },
             text = {
-                val inputShape = RoundedCornerShape(14.dp)
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Built-in Avatar Picker with Square Crop
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        UIAvatar(
-                            name = formName.ifBlank { "User" },
-                            value = formAvatar,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape),
-                            onUpdate = { formAvatar = it }
-                        )
-
-                        Surface(
-                            onClick = { imagePickerLauncher.launch("image/*") },
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF000000),
-                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f))
-                        ) {
+                    when (editorStep) {
+                        EditorStep.Persona -> {
+                            // Built-in Avatar Picker with Square Crop
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                Icon(Icons.Rounded.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Pick & Crop", fontSize = 12.5.sp)
+                                UIAvatar(
+                                    name = formName.ifBlank { "User" },
+                                    value = formAvatar,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(CircleShape),
+                                    onUpdate = { formAvatar = it }
+                                )
+
+                                Surface(
+                                    onClick = { imagePickerLauncher.launch("image/*") },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Rounded.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Pick & Crop", fontSize = 12.5.sp)
+                                    }
+                                }
                             }
-                        }
-                    }
 
-                    OutlinedTextField(
-                        value = formName,
-                        onValueChange = { formName = it },
-                        label = { Text("Name (e.g. Detective, Anon)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = inputShape,
-                        colors = appFieldColors(),
-                    )
+                            val inputShape = RoundedCornerShape(14.dp)
+                            OutlinedTextField(
+                                value = formName,
+                                onValueChange = { formName = it },
+                                label = { Text("Name (e.g. Detective, Anon)") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = inputShape,
+                                colors = appFieldColors(),
+                            )
 
-                    OutlinedTextField(
-                        value = formPronouns,
-                        onValueChange = { formPronouns = it },
-                        label = { Text("Pronouns (e.g. he/him, they/them)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = inputShape,
-                        colors = appFieldColors(),
-                    )
+                            OutlinedTextField(
+                                value = formPronouns,
+                                onValueChange = { formPronouns = it },
+                                label = { Text("Pronouns (e.g. he/him, they/them)") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = inputShape,
+                                colors = appFieldColors(),
+                            )
 
-                    OutlinedTextField(
-                        value = formDescription,
-                        onValueChange = { formDescription = it },
-                        label = { Text("Lore / Background (Injected for {{user}})") },
-                        minLines = 3,
-                        maxLines = 6,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = inputShape,
-                        colors = appFieldColors(),
-                    )
+                            OutlinedTextField(
+                                value = formDescription,
+                                onValueChange = { formDescription = it },
+                                label = { Text("Lore / Background (Injected for {{user}})") },
+                                minLines = 3,
+                                maxLines = 6,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = inputShape,
+                                colors = appFieldColors(),
+                            )
 
-                    // Lorebook assignment — compact selectable chips (mobile-friendly)
-                    Text(
-                        text = "Lorebooks",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                    val allLorebooks = settings.lorebooks
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        allLorebooks.forEach { lorebook ->
-                            val isSelected = lorebook.id.toString() in formLorebookIds
-                            Box(
+                            // Attach Lorebooks — secondary picker opened from this glass card
+                            val attachedCount = formLorebookIds.size
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF000000).copy(alpha = 0.16f)),
+                                shape = AppShapes.CardSmall,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 modifier = Modifier
-                                    .clip(AppShapes.Tag)
-                                    .background(if (isSelected) Color.White.copy(alpha = 0.10f) else Color.Transparent)
-                                    .border(
-                                        BorderStroke(
-                                            0.5.dp,
-                                            if (isSelected) LiquidGlassTokens.SpecularBorderSubtle else SolidColor(Color.White.copy(alpha = 0.14f))
-                                        ),
-                                        AppShapes.Tag
-                                    )
+                                    .fillMaxWidth()
                                     .clickable {
                                         haptics.perform(HapticPattern.Pop)
-                                        val idStr = lorebook.id.toString()
-                                        formLorebookIds = if (isSelected) {
-                                            formLorebookIds - idStr
-                                        } else {
-                                            formLorebookIds + idStr
-                                        }
+                                        editorStep = EditorStep.LorebookPicker
                                     }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                                contentAlignment = Alignment.Center
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
-                                        style = MaterialTheme.typography.labelMedium.copy(
-                                            fontWeight = FontWeight.Medium,
-                                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.75f)
-                                        ),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    if (isSelected) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Check,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
+                                    Column {
+                                        Text(
+                                            text = "Attach Lorebooks",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
                                         )
+                                        Text(
+                                            text = if (attachedCount == 0) "None" else "$attachedCount attached",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = Color.White.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        EditorStep.LorebookPicker -> {
+                            val allLorebooks = settings.lorebooks
+                            val filteredLorebooks = remember(allLorebooks, pickerQuery) {
+                                if (pickerQuery.isBlank()) allLorebooks
+                                else allLorebooks.filter { it.name.contains(pickerQuery, ignoreCase = true) }
+                            }
+
+                            DomChatSearchBar(
+                                value = pickerQuery,
+                                onValueChange = { pickerQuery = it },
+                                placeholder = "Search lorebooks...",
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 360.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                if (filteredLorebooks.isEmpty()) {
+                                    item(key = "empty") {
+                                        Text(
+                                            text = "No matching lorebooks",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.6f),
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                        )
+                                    }
+                                } else {
+                                    items(filteredLorebooks, key = { it.id.toString() }) { lorebook ->
+                                        val idStr = lorebook.id.toString()
+                                        val isSelected = idStr in pickerSelectedIds
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Checkbox(
+                                                checked = isSelected,
+                                                onChecked = { checked ->
+                                                    haptics.perform(HapticPattern.Tick)
+                                                    pickerSelectedIds = if (checked) {
+                                                        pickerSelectedIds + idStr
+                                                    } else {
+                                                        pickerSelectedIds - idStr
+                                                    }
+                                                },
+                                                colors = CheckboxDefaults.colors(
+                                                    checkedColor = MaterialTheme.colorScheme.primary,
+                                                    uncheckedColor = Color.White.copy(alpha = 0.30f)
+                                                )
+                                            )
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(1.dp)
+                                            ) {
+                                                Text(
+                                                    text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
+                                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                                    color = Color.White,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = if (lorebook.description.isNotBlank()) {
+                                                        lorebook.description
+                                                    } else {
+                                                        stringResource(R.string.lorebooks_page_entries_count, lorebook.entries.size)
+                                                    },
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White.copy(alpha = 0.65f),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -615,7 +718,15 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             },
             confirmButton = {
                 Button(
-                    onClick = { savePersona() },
+                    onClick = {
+                        when (editorStep) {
+                            EditorStep.Persona -> savePersona()
+                            EditorStep.LorebookPicker -> {
+                                formLorebookIds = pickerSelectedIds
+                                editorStep = EditorStep.Persona
+                            }
+                        }
+                    },
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFFFFFF),
@@ -626,7 +737,12 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditor = false }) {
+                TextButton(onClick = {
+                    when (editorStep) {
+                        EditorStep.Persona -> showEditor = false
+                        EditorStep.LorebookPicker -> editorStep = EditorStep.Persona
+                    }
+                }) {
                     Text("Cancel", color = Color(0xFFA6A6A6))
                 }
             }

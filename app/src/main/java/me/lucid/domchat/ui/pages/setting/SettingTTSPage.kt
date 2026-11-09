@@ -400,42 +400,40 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
             )
         }
         
-        if (showDeleteDialog && providerToDelete != null) {
-            DomChatDestructiveConfirmDialog(
-                title = stringResource(R.string.setting_tts_delete_title),
-                consequence = stringResource(R.string.setting_tts_delete_consequence),
-                onDismiss = {
-                    showDeleteDialog = false
-                    providerToDelete = null
-                },
-                onConfirm = {
-                    providerToDelete?.let { p ->
-                        val removedVoiceIds = p.voices.map { it.id }.toSet()
-                        val newProviders = settings.ttsProviders - p
-                        val newSelectedId =
-                            if (settings.selectedTTSProviderId == p.id) {
-                                newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
-                            } else {
-                                settings.selectedTTSProviderId
-                            }
-                        val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
-                            newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
-                                ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
-                                ?: DEFAULT_SYSTEM_TTS_VOICE_ID
-                        } else {
-                            settings.selectedTTSVoiceId
-                        }
-                        vm.updateSettings(settings.copy(
-                            ttsProviders = newProviders,
-                            selectedTTSProviderId = newSelectedId,
-                            selectedTTSVoiceId = newSelectedVoiceId
-                        ))
+        DomChatDestructiveConfirmDialog(
+            visible = showDeleteDialog && providerToDelete != null,
+            title = stringResource(R.string.setting_tts_delete_title),
+            consequence = stringResource(R.string.setting_tts_delete_consequence),
+            onDismiss = {
+                showDeleteDialog = false
+                providerToDelete = null
+            },
+            onConfirm = {
+                val p = providerToDelete ?: return@onConfirm
+                val removedVoiceIds = p.voices.map { it.id }.toSet()
+                val newProviders = settings.ttsProviders - p
+                val newSelectedId =
+                    if (settings.selectedTTSProviderId == p.id) {
+                        newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
+                    } else {
+                        settings.selectedTTSProviderId
                     }
-                    showDeleteDialog = false
-                    providerToDelete = null
-                },
-            )
-        }
+                val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
+                    newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
+                        ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
+                        ?: DEFAULT_SYSTEM_TTS_VOICE_ID
+                } else {
+                    settings.selectedTTSVoiceId
+                }
+                vm.updateSettings(settings.copy(
+                    ttsProviders = newProviders,
+                    selectedTTSProviderId = newSelectedId,
+                    selectedTTSVoiceId = newSelectedVoiceId
+                ))
+                showDeleteDialog = false
+                providerToDelete = null
+            },
+        )
     }
 
     // Edit TTS Provider Bottom Sheet
@@ -759,44 +757,42 @@ internal fun TtsProvidersContent(
         )
     }
 
-    if (showDeleteDialog && providerToDelete != null) {
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_tts_delete_title),
-            consequence = stringResource(R.string.setting_tts_delete_consequence),
-            onDismiss = {
-                showDeleteDialog = false
-                providerToDelete = null
-            },
-            onConfirm = {
-                providerToDelete?.let { provider ->
-                    val newProviders = settings.ttsProviders - provider
-                    val newSelectedId =
-                        if (settings.selectedTTSProviderId == provider.id) {
-                            newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
-                        } else {
-                            settings.selectedTTSProviderId
-                        }
-                    val removedVoiceIds = provider.voices.map { it.id }.toSet()
-                    val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
-                        newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
-                            ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
-                            ?: DEFAULT_SYSTEM_TTS_VOICE_ID
-                    } else {
-                        settings.selectedTTSVoiceId
-                    }
-                    vm.updateSettings(
-                        settings.copy(
-                            ttsProviders = newProviders,
-                            selectedTTSProviderId = newSelectedId,
-                            selectedTTSVoiceId = newSelectedVoiceId
-                        )
-                    )
+    DomChatDestructiveConfirmDialog(
+        visible = showDeleteDialog && providerToDelete != null,
+        title = stringResource(R.string.setting_tts_delete_title),
+        consequence = stringResource(R.string.setting_tts_delete_consequence),
+        onDismiss = {
+            showDeleteDialog = false
+            providerToDelete = null
+        },
+        onConfirm = {
+            val provider = providerToDelete ?: return@onConfirm
+            val newProviders = settings.ttsProviders - provider
+            val newSelectedId =
+                if (settings.selectedTTSProviderId == provider.id) {
+                    newProviders.firstOrNull()?.id ?: DEFAULT_SYSTEM_TTS_ID
+                } else {
+                    settings.selectedTTSProviderId
                 }
-                showDeleteDialog = false
-                providerToDelete = null
-            },
-        )
-    }
+            val removedVoiceIds = provider.voices.map { it.id }.toSet()
+            val newSelectedVoiceId = if (settings.selectedTTSVoiceId in removedVoiceIds) {
+                newProviders.find { it.id == newSelectedId }?.voices?.firstOrNull()?.id
+                    ?: newProviders.firstOrNull()?.voices?.firstOrNull()?.id
+                    ?: DEFAULT_SYSTEM_TTS_VOICE_ID
+            } else {
+                settings.selectedTTSVoiceId
+            }
+            vm.updateSettings(
+                settings.copy(
+                    ttsProviders = newProviders,
+                    selectedTTSProviderId = newSelectedId,
+                    selectedTTSVoiceId = newSelectedVoiceId
+                )
+            )
+            showDeleteDialog = false
+            providerToDelete = null
+        },
+    )
 
     TtsProviderEditorSheet(
         provider = editingProvider,

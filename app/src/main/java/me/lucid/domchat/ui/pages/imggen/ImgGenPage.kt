@@ -904,17 +904,17 @@ private fun ImageGalleryScreen(
         }
     }
 
-    pendingDeleteImage?.let { image ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.imggen_page_delete_title),
-            consequence = stringResource(R.string.imggen_page_delete_consequence),
-            onDismiss = { pendingDeleteImage = null },
-            onConfirm = {
-                pendingDeleteImage = null
-                vm.deleteImage(image)
-            },
-        )
-    }
+    DomChatDestructiveConfirmDialog(
+        visible = pendingDeleteImage != null,
+        title = stringResource(R.string.imggen_page_delete_title),
+        consequence = stringResource(R.string.imggen_page_delete_consequence),
+        onDismiss = { pendingDeleteImage = null },
+        onConfirm = {
+            val image = pendingDeleteImage
+            pendingDeleteImage = null
+            vm.deleteImage(image)
+        },
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)

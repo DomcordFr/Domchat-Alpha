@@ -482,27 +482,26 @@ fun SettingProviderPage(
             )
             
             // Delete confirmation dialog
-            if (showDeleteDialog && providerToDelete != null) {
-                DomChatDestructiveConfirmDialog(
-                    title = stringResource(R.string.confirm_delete),
-                    consequence = stringResource(
-                        if (providerToDelete is ProviderSetting.LiteRtLocal) {
-                            R.string.setting_provider_page_delete_local_dialog_text
-                        } else {
-                            R.string.setting_provider_page_delete_dialog_text
-                        }
-                    ),
-                    onDismiss = {
-                        showDeleteDialog = false
-                        providerToDelete = null
-                    },
-                    onConfirm = {
-                        providerToDelete?.let { p -> vm.deleteProvider(p) }
-                        showDeleteDialog = false
-                        providerToDelete = null
-                    },
-                )
-            }
+            DomChatDestructiveConfirmDialog(
+                visible = showDeleteDialog && providerToDelete != null,
+                title = stringResource(R.string.confirm_delete),
+                consequence = stringResource(
+                    if (providerToDelete is ProviderSetting.LiteRtLocal) {
+                        R.string.setting_provider_page_delete_local_dialog_text
+                    } else {
+                        R.string.setting_provider_page_delete_dialog_text
+                    }
+                ),
+                onDismiss = {
+                    showDeleteDialog = false
+                    providerToDelete = null
+                },
+                onConfirm = {
+                    providerToDelete?.let { p -> vm.deleteProvider(p) }
+                    showDeleteDialog = false
+                    providerToDelete = null
+                },
+            )
                     }
                     if (!useWideLayout) {
                         ProvidersSecondaryActionSlot(modifier = Modifier.fillMaxSize()) {

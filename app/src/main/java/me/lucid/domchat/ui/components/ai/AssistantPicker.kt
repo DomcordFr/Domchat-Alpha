@@ -75,17 +75,15 @@ import me.lucid.domchat.ui.components.ai.DomChatAssistantPickerItem
 import me.lucid.domchat.ui.components.ai.DomChatAssistantPickerTag
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSearchBar
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.LiquidGlassMode
-import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.ui.text.font.FontWeight
 import kotlin.uuid.Uuid
 
@@ -162,7 +160,6 @@ fun AssistantPickerSheet(
 ) {
     val navController = LocalNavController.current
     val haptics = rememberPremiumHaptics()
-    val isDark = LocalDarkMode.current
     val defaultAssistantName = stringResource(R.string.assistant_page_default_assistant)
     val noSystemPromptLabel = stringResource(R.string.assistant_page_no_system_prompt)
     val assistantsById = remember(settings.assistants) {
@@ -197,7 +194,6 @@ fun AssistantPickerSheet(
     }
 
     val itemCardBg = domChatCardContainerColor()
-    val itemBorder = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f))
     val tagBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val tagIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
@@ -218,98 +214,114 @@ fun AssistantPickerSheet(
         )
     }
 
+    val cardIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    @Composable
+    fun cardGlassSurface() = if (cardIsFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = RoundedCornerShape(16.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = RoundedCornerShape(16.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
+
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
+        // Drag handle is rendered as the first LazyColumn item so the
+        // entire top area (handle, header, search, tags) scrolls away
+        // with the character list instead of staying pinned.
+        dragHandle = null,
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            DomChatSheetHeader(
-                title = stringResource(R.string.assistant_page_title),
-                badge = {
-                    // Count rendered as a subtle badge pill with leading spacing — the title
-                    // ("Characters") must never sit flush against the count ("Characters13").
-                    Box(modifier = Modifier.padding(start = 10.dp)) {
-                        Text(
-                            text = "${filteredAssistants.size}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = Color.White.copy(alpha = 0.8f),
-                            modifier = Modifier
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                                .background(Color.White.copy(alpha = 0.12f))
-                                .clip(RoundedCornerShape(6.dp)),
-                        )
-                    }
-                },
-            )
-
-            DomChatSearchBar(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = "Search characters...",
-                modifier = Modifier.padding(bottom = 14.dp),
-            )
-
-            if (distinctTags.isNotEmpty()) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+            // Drag handle pill — scrolls away with the list
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterHorizontally,
                 ) {
-                    items(distinctTags, key = { it.id }) { tag ->
-                    val isSelected = tag.id in selectedTagIds
-                    Box(
-                        modifier = Modifier
-                            .then(tagGlassSurface())
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                            .clickable {
-                                selectedTagIds = if (isSelected) {
-                                    selectedTagIds - tag.id
-                                } else {
-                                    selectedTagIds + tag.id
-                                }
-                            },
+                    DomChatSheetDragHandle()
+                }
+            }
+
+            // Sheet header — title only, no count badge
+            item {
+                DomChatSheetHeader(
+                    title = stringResource(R.string.assistant_page_title),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // Search bar
+            item {
+                DomChatSearchBar(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = "Search characters...",
+                    modifier = Modifier.padding(bottom = 14.dp),
+                )
+            }
+
+            // Filter tags
+            if (distinctTags.isNotEmpty()) {
+                item {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
                     ) {
-                        Text(
-                            text = tag.name,
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = if (isSelected) 1f else 0.9f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        items(distinctTags, key = { it.id }) { tag ->
+                            val isSelected = tag.id in selectedTagIds
+                            Box(
+                                modifier = Modifier
+                                    .then(tagGlassSurface())
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .clickable {
+                                        selectedTagIds = if (isSelected) {
+                                            selectedTagIds - tag.id
+                                        } else {
+                                            selectedTagIds + tag.id
+                                        }
+                                    },
+                            ) {
+                                Text(
+                                    text = tag.name,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White.copy(alpha = if (isSelected) 1f else 0.9f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                     }
                 }
             }
-            Spacer(Modifier.height(8.dp))
-        }
 
-            if (filteredAssistants.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+            // Character count label above the first card
+            if (filteredAssistants.isNotEmpty()) {
+                item {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "No characters found for \"$searchQuery\"" else "No characters available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        text = "${filteredAssistants.size} Characters",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.6f),
                     )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    itemsIndexed(filteredAssistants, key = { _, item -> item.id }) { _, assistant ->
+
+                itemsIndexed(filteredAssistants, key = { _, item -> item.id }) { _, assistant ->
                     val checked = assistant.id == currentAssistant.id.toString()
                     val cardShape = RoundedCornerShape(16.dp)
                     val cardBg = if (checked) {
@@ -317,19 +329,14 @@ fun AssistantPickerSheet(
                     } else {
                         itemCardBg
                     }
-                    val borderStroke = if (checked) {
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                    } else {
-                        itemBorder
-                    }
 
                     Row(
                         modifier = Modifier
                             .animateItem()
                             .fillMaxWidth()
                             .clip(cardShape)
-                            .border(borderStroke, cardShape)
                             .background(cardBg)
+                            .then(cardGlassSurface())
                             .clickable {
                                 if (!checked) {
                                     haptics.perform(HapticPattern.Pop)
@@ -389,10 +396,24 @@ fun AssistantPickerSheet(
                         }
                     }
                 }
+            } else {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (searchQuery.isNotBlank()) "No characters found for \"$searchQuery\"" else "No characters available",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
             }
         }
     }
-}
 }
 
 @Composable

@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Surface
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -27,7 +28,7 @@ import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
-private const val DOMCHAT_DESTRUCTIVE = 0xFFFF6B6B.toInt()
+private const val DOMCHAT_DESTRUCTIVE = 0xFFE53935.toInt()
 private val DomChatAccent = Color.White
 
 /**
@@ -87,22 +88,21 @@ private fun DomChatGlassPillButtonContent(
     text: String,
     content: (@Composable RowScope.() -> Unit)? = null,
 ) {
-    // Default chat-page style: translucent frosted glass (never white, never opaque black)
+    // Destructive actions render as a solid red filled button (never a subtle tint or
+    // thin border). Everything else stays translucent frosted glass.
     val bgColor = containerColor.takeIf { it != null } ?: when {
-        destructive -> Color(DOMCHAT_DESTRUCTIVE).copy(alpha = 0.10f) // subtle destructive tint, never harsh red
+        destructive -> Color(DOMCHAT_DESTRUCTIVE)
         else -> Color(0xFF000000).copy(alpha = 0.15f)
     }
-    // Text and icons stay white on glass; destructive is conveyed by the subtle red tint
-    // and specular rim — never a harsh red border or red foreground.
     val resolvedTextColor = contentColor.takeIf { it != null } ?: Color.White
     val resolvedIconTint = resolvedTextColor
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     Surface(
         onClick = onClick,
         enabled = enabled,
-        shape = AppShapes.ButtonPill,
-        color = if (enabled) bgColor else bgColor.copy(alpha = 0.45f),
-        border = BorderStroke(0.5.dp, borderBrush),
+        shape = if (destructive) RoundedCornerShape(16.dp) else AppShapes.ButtonPill,
+        color = if (enabled) bgColor else bgColor.copy(alpha = 0.5f),
+        border = if (destructive) null else BorderStroke(0.5.dp, borderBrush),
         tonalElevation = 0.dp,
         modifier = modifier,
     ) {
@@ -122,13 +122,15 @@ private fun DomChatGlassPillButtonContent(
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
                 ),
                 color = when {
                     !enabled -> resolvedTextColor.copy(alpha = 0.4f)
                     else -> resolvedTextColor
                 },
                 maxLines = 1,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
             content?.invoke(this)
         }

@@ -2,11 +2,6 @@
 package me.lucid.domchat.ui.components.message
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -18,13 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -36,13 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
-import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.CallSplit
@@ -72,6 +65,7 @@ import me.lucid.domchat.ui.context.LocalTTSState
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.utils.copyMessageToClipboard
 import me.lucid.domchat.utils.toLocalString
 import me.lucid.tts.provider.TTSProviderSetting
@@ -232,7 +226,6 @@ fun ChatMessageActionsSheet(
     onDismissRequest: () -> Unit
 ) {
     val haptics = rememberPremiumHaptics()
-    val groupContainerColor = domChatCardContainerColor()
     val hasTextContent = message.parts.filterIsInstance<UIMessagePart.Text>()
         .any { it.text.isNotBlank() }
 
@@ -244,95 +237,75 @@ fun ChatMessageActionsSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                MessageActionGroupItem(
-                    label = stringResource(R.string.select_and_copy),
-                    icon = { Icon(Icons.Rounded.SelectAll, null, modifier = Modifier.padding(4.dp)) },
-                    position = MessageActionItemPosition.FIRST,
-                    containerColor = groupContainerColor,
+            MessageActionGlassItem(
+                label = stringResource(R.string.select_and_copy),
+                icon = { Icon(Icons.Rounded.SelectAll, null, modifier = Modifier.size(20.dp)) },
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    onDismissRequest()
+                    onSelectAndCopy()
+                },
+            )
+            if (hasTextContent) {
+                MessageActionGlassItem(
+                    label = stringResource(R.string.render_with_webview),
+                    icon = { Icon(Icons.Rounded.OpenInBrowser, null, modifier = Modifier.size(20.dp)) },
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onDismissRequest()
-                        onSelectAndCopy()
-                    }
-                )
-                if (hasTextContent) {
-                    MessageActionGroupItem(
-                        label = stringResource(R.string.render_with_webview),
-                        icon = { Icon(Icons.Rounded.OpenInBrowser, null, modifier = Modifier.padding(4.dp)) },
-                        position = MessageActionItemPosition.MIDDLE,
-                        containerColor = groupContainerColor,
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            onDismissRequest()
-                            onWebViewPreview()
-                        }
-                    )
-                }
-                MessageActionGroupItem(
-                    label = stringResource(R.string.edit),
-                    icon = { Icon(Icons.Rounded.Edit, null, modifier = Modifier.padding(4.dp)) },
-                    position = MessageActionItemPosition.MIDDLE,
-                    containerColor = groupContainerColor,
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        onDismissRequest()
-                        onEdit()
-                    }
-                )
-                MessageActionGroupItem(
-                    label = stringResource(R.string.create_fork),
-                    icon = { Icon(Icons.AutoMirrored.Rounded.CallSplit, null, modifier = Modifier.padding(4.dp)) },
-                    position = MessageActionItemPosition.LAST,
-                    containerColor = groupContainerColor,
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        onDismissRequest()
-                        onFork()
-                    }
+                        onWebViewPreview()
+                    },
                 )
             }
+            MessageActionGlassItem(
+                label = stringResource(R.string.edit),
+                icon = { Icon(Icons.Rounded.Edit, null, modifier = Modifier.size(20.dp)) },
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    onDismissRequest()
+                    onEdit()
+                },
+            )
+            MessageActionGlassItem(
+                label = stringResource(R.string.create_fork),
+                icon = { Icon(Icons.AutoMirrored.Rounded.CallSplit, null, modifier = Modifier.size(20.dp)) },
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    onDismissRequest()
+                    onFork()
+                },
+            )
 
-            Spacer(modifier = Modifier.size(4.dp))
+            Divider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                color = Color.White.copy(alpha = 0.12f),
+                thickness = 0.5.dp,
+            )
 
-            // Delete
-            Card(
+            MessageActionGlassItem(
+                label = stringResource(R.string.delete),
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.White.copy(alpha = 0.9f),
+                    )
+                },
+                destructive = true,
                 onClick = {
                     haptics.perform(HapticPattern.Thud)
                     onDismissRequest()
                     onDelete()
                 },
-                shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f)),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f),
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Delete,
-                        contentDescription = null,
-                        modifier = Modifier.padding(4.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.delete),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                }
-            }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Message Info
             ProvideTextStyle(MaterialTheme.typography.labelSmall) {
@@ -357,57 +330,45 @@ fun ChatMessageActionsSheet(
     }
 }
 
-private enum class MessageActionItemPosition {
-    FIRST,
-    MIDDLE,
-    LAST,
-    SINGLE
-}
-
-private fun groupedMessageActionShape(position: MessageActionItemPosition): RoundedCornerShape {
-    return when (position) {
-        MessageActionItemPosition.FIRST -> RoundedCornerShape(
-            topStart = 24.dp,
-            topEnd = 24.dp,
-            bottomStart = 10.dp,
-            bottomEnd = 10.dp
-        )
-        MessageActionItemPosition.MIDDLE -> RoundedCornerShape(10.dp)
-        MessageActionItemPosition.LAST -> RoundedCornerShape(
-            topStart = 10.dp,
-            topEnd = 10.dp,
-            bottomStart = 24.dp,
-            bottomEnd = 24.dp
-        )
-        MessageActionItemPosition.SINGLE -> RoundedCornerShape(24.dp)
-    }
-}
-
 @Composable
-private fun MessageActionGroupItem(
+private fun MessageActionGlassItem(
     label: String,
     icon: @Composable () -> Unit,
-    position: MessageActionItemPosition,
-    containerColor: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    destructive: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
-    val shape = groupedMessageActionShape(position)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .border(BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)), shape)
-            .background(containerColor)
-            .clickable(onClick = onClick)
-            .padding(16.dp)
+    val haptics = rememberPremiumHaptics()
+    // Dark translucent glass; destructive actions carry a subtle red tint, never a harsh red card.
+    val bgColor = when {
+        destructive -> Color(0xFFFF6B6B).copy(alpha = 0.10f)
+        else -> Color(0xFF000000).copy(alpha = 0.15f)
+    }
+    Surface(
+        onClick = {
+            haptics.perform(HapticPattern.Pop)
+            onClick()
+        },
+        shape = RoundedCornerShape(16.dp),
+        color = bgColor,
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        tonalElevation = 0.dp,
+        modifier = modifier.fillMaxWidth(),
     ) {
-        icon()
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            icon()
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                color = Color.White,
+                maxLines = 1,
+            )
+        }
     }
 }

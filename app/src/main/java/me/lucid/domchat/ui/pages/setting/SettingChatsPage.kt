@@ -45,8 +45,6 @@ import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -62,6 +60,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import me.lucid.domchat.ui.components.dialog.SettingsDestructiveConfirmDialog
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -609,49 +608,30 @@ fun SettingChatsPage(
     }
 
     // Delete confirmation dialog
-    if (showDeleteConfirmDialog && selectedChatIds.isNotEmpty()) {
-        val count = selectedChatIds.size
-        ApplyDialogWindowBlur()
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            containerColor = Color(0xFF000000),
-            modifier = Modifier.widthIn(max = 360.dp).border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-            titleContentColor = Color(0xFFF2F2F7),
-            textContentColor = Color(0xFFF2F2F7),
-            title = { Text("Delete $count ${if (count == 1) "chat" else "chats"}?", fontWeight = FontWeight.Bold) },
-            text = { Text("This will permanently remove the selected conversations from your database.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val idsToDelete = selectedChatIds.toList()
-                        showDeleteConfirmDialog = false
-                        isSelectionMode = false
-                        selectedChatIds = emptySet()
-                        haptics.perform(HapticPattern.Thud)
+    SettingsDestructiveConfirmDialog(
+        visible = showDeleteConfirmDialog && selectedChatIds.isNotEmpty(),
+        title = "Delete ${selectedChatIds.size} ${if (selectedChatIds.size == 1) "chat" else "chats"}?",
+        message = "This will permanently remove the selected conversations from your database.",
+        onDismiss = {
+            showDeleteConfirmDialog = false
+        },
+        onConfirm = {
+            val idsToDelete = selectedChatIds.toList()
+            showDeleteConfirmDialog = false
+            isSelectionMode = false
+            selectedChatIds = emptySet()
+            haptics.perform(HapticPattern.Thud)
 
-                        scope.launch {
-                            val contentResolver = context.contentResolver
-                            conversationRepository.deleteConversationsByIds(idsToDelete)
-                            toaster.show(
-                                message = "Deleted $count ${if (count == 1) "conversation" else "conversations"}",
-                                type = ToastType.Info
-                            )
-                        }
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFEF4444))
-                ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel", color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f))
-                }
+            scope.launch {
+                val contentResolver = context.contentResolver
+                conversationRepository.deleteConversationsByIds(idsToDelete)
+                toaster.show(
+                    message = "Deleted ${idsToDelete.size} ${if (idsToDelete.size == 1) "conversation" else "conversations"}",
+                    type = ToastType.Info
+                )
             }
-        )
-    }
+        },
+    )
 }
 
 private fun formatTimestamp(epochMillis: Long): String {

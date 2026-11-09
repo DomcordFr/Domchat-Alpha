@@ -52,9 +52,9 @@ fun UserMessageDropdown(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
         modifier = modifier
-            .liquidGlassSurface(shape = RoundedCornerShape(18.dp)),
+            .liquidGlassSurface(shape = RoundedCornerShape(16.dp)),
         offset = offset,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         containerColor = Color.Transparent,
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
     ) {

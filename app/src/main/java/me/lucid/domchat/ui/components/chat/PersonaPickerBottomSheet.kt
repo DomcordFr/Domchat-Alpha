@@ -205,7 +205,6 @@ fun PersonaPickerBottomSheet(
         ) {
             DomChatSheetHeader(
                 title = "Select Persona",
-                subtitle = "Switch active identity for {{user}} context",
                 actions = {
                     val isDark = LocalDarkMode.current
                     Row(

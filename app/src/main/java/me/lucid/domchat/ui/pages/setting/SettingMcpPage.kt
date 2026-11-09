@@ -422,27 +422,26 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
     }
     
     // Delete confirmation dialog
-    if (showDeleteDialog && mcpToDelete != null) {
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_mcp_delete_title),
-            consequence = stringResource(R.string.setting_mcp_delete_server),
-            onDismiss = {
-                showDeleteDialog = false
-                mcpToDelete = null
-            },
-            onConfirm = {
-                mcpToDelete?.let { mcp ->
-                    vm.updateSettings(
-                        settings.copy(
-                            mcpServers = mcpConfigs.filter { it.id != mcp.id }
-                        )
+    DomChatDestructiveConfirmDialog(
+        visible = showDeleteDialog && mcpToDelete != null,
+        title = stringResource(R.string.setting_mcp_delete_title),
+        consequence = stringResource(R.string.setting_mcp_delete_server),
+        onDismiss = {
+            showDeleteDialog = false
+            mcpToDelete = null
+        },
+        onConfirm = {
+            mcpToDelete?.let { mcp ->
+                vm.updateSettings(
+                    settings.copy(
+                        mcpServers = mcpConfigs.filter { it.id != mcp.id }
                     )
-                }
-                showDeleteDialog = false
-                mcpToDelete = null
-            },
-        )
-    }
+                )
+            }
+            showDeleteDialog = false
+            mcpToDelete = null
+        },
+    )
     McpServerConfigModal(creationState)
     McpServerConfigModal(editState)
     if (showConnectionsSheet) {

@@ -633,27 +633,26 @@ private fun FontConfigSection(
         }
     }
     
-    if (showDeleteFontDialog) {
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_fonts_delete_title),
-            consequence = stringResource(R.string.setting_fonts_delete_consequence),
-            onDismiss = { showDeleteFontDialog = false },
-            onConfirm = {
-                config.customFontPath?.let { fontManager.deleteFont(it) }
-                onConfigChange(
-                    config.copy(
-                        fontSource = if (isCodeFont) FontSource.SystemCode else FontSource.System,
-                        customFontPath = null,
-                        customFontName = null,
-                        customAxes = emptyList(),
-                        features = emptyList()
-                    ),
-                    true,
-                )
-                showDeleteFontDialog = false
-            },
-        )
-    }
+    DomChatDestructiveConfirmDialog(
+        visible = showDeleteFontDialog,
+        title = stringResource(R.string.setting_fonts_delete_title),
+        consequence = stringResource(R.string.setting_fonts_delete_consequence),
+        onDismiss = { showDeleteFontDialog = false },
+        onConfirm = {
+            config.customFontPath?.let { fontManager.deleteFont(it) }
+            onConfigChange(
+                config.copy(
+                    fontSource = if (isCodeFont) FontSource.SystemCode else FontSource.System,
+                    customFontPath = null,
+                    customFontName = null,
+                    customAxes = emptyList(),
+                    features = emptyList()
+                ),
+                true,
+            )
+            showDeleteFontDialog = false
+        },
+    )
 
     // Reset Dialog
     if (showResetDialog) {

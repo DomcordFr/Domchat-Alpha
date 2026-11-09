@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -44,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -51,12 +53,14 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.TextUnit
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.layout.Spacer
@@ -170,47 +174,94 @@ fun DomChatSearchBar(
     placeholder: String = "Search...",
     modifier: Modifier = Modifier,
 ) {
-    OutlinedTextField(
+    val interactionSource = remember { MutableInteractionSource() }
+    val textStyle = MaterialTheme.typography.bodyLarge.copy(
+        color = Color.White,
+        lineHeight = TextUnit.Unspecified,
+    )
+    val colors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedBorderColor = Color.White.copy(alpha = 0.35f),
+        unfocusedBorderColor = Color.White.copy(alpha = 0.18f),
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        cursorColor = Color.White.copy(alpha = 0.9f),
+        focusedLabelColor = Color.White.copy(alpha = 0.8f),
+        unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+    )
+
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(placeholder) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.5f),
-                modifier = Modifier.size(18.dp),
-            )
-        },
-        trailingIcon = {
-            if (value.isNotEmpty()) {
-                IconButton(onClick = { onValueChange("") }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Clear",
-                        tint = Color.White.copy(alpha = 0.5f),
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        },
-        singleLine = true,
-        shape = CircleShape,
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .padding(PaddingValues(horizontal = 16.dp, vertical = 0.dp)),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            focusedBorderColor = Color.White.copy(alpha = 0.35f),
-            unfocusedBorderColor = Color.White.copy(alpha = 0.18f),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            cursorColor = Color.White.copy(alpha = 0.9f),
-            focusedLabelColor = Color.White.copy(alpha = 0.8f),
-            unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-        )
+            .height(52.dp)
+            .padding(PaddingValues(horizontal = 16.dp, vertical = 8.dp)),
+        enabled = true,
+        readOnly = false,
+        textStyle = textStyle,
+        cursorBrush = SolidColor(Color.White.copy(alpha = 0.9f)),
+        singleLine = true,
+        maxLines = 1,
+        interactionSource = interactionSource,
+        decorationBox = { innerTextField ->
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedTextFieldDefaults.DecorationBox(
+                    value = value,
+                    innerTextField = { innerTextField() },
+                    enabled = true,
+                    singleLine = true,
+                    visualTransformation = VisualTransformation.None,
+                    interactionSource = interactionSource,
+                    placeholder = {
+                        Text(
+                            text = placeholder,
+                            style = textStyle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    trailingIcon = {
+                        if (value.isNotEmpty()) {
+                            IconButton(onClick = { onValueChange("") }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Clear",
+                                    tint = Color.White.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                    colors = colors,
+                    container = {
+                        OutlinedTextFieldDefaults.Container(
+                            enabled = true,
+                            isError = false,
+                            interactionSource = interactionSource,
+                            modifier = Modifier,
+                            colors = colors,
+                            shape = CircleShape,
+                            focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
+                            unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
+                        )
+                    },
+                )
+            }
+        },
     )
 }
 

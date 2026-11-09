@@ -138,6 +138,7 @@ import me.lucid.domchat.ui.components.chat.formatRoleplayTextWithCdnImages
 import me.lucid.domchat.ui.components.chat.cleanHtmlImgToMarkdown
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.richtext.SimpleHtmlBlock
+import me.lucid.domchat.ui.components.richtext.ZoomableAsyncImage
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFieldColors
@@ -1410,14 +1411,16 @@ private fun JanitorCharacterInspectorSheet(
                     ) { tab ->
                         when (tab) {
                             0 -> {
-                                // Notes Tab — creator notes / bio (with in-place embedded images)
-                                val rawNotes = when {
-                                    !character.description.isNullOrBlank() -> character.description
-                                    !character.bio.isNullOrBlank() -> character.bio
-                                    !fullExtract?.bio.isNullOrBlank() -> fullExtract?.bio
-                                    !fullExtract?.description.isNullOrBlank() -> fullExtract?.description
-                                    else -> ""
-                                }.orEmpty()
+                                // Notes Tab — full creator notes / bio (with in-place embedded images)
+                                // Prefer the /api/extract payload (full bio/description from the
+                                // detail endpoint) over the list card's possibly-truncated fields,
+                                // matching what Character Hub shows when the character is opened
+                                // from there.
+                                val extractNotes = fullExtract?.description.takeIf { it.isNotBlank() }
+                                    ?: fullExtract?.bio.takeIf { it.isNotBlank() }
+                                    ?: character.description.takeIf { it.isNotBlank() }
+                                    ?: character.bio
+                                val rawNotes = extractNotes.orEmpty()
 
                                 Box(
                                     modifier = Modifier
@@ -1442,10 +1445,15 @@ private fun JanitorCharacterInspectorSheet(
                                             notesContent.contains("<hr", ignoreCase = true)
                                         }
                                         if (hasHtml) {
+                                            // SimpleHtmlBlock renders  tags natively via RenderImage.
                                             SimpleHtmlBlock(html = notesContent)
                                         } else {
+                                            // Convert bare image URLs to Markdown image syntax so every
+                                            // embedded image renders in-place via MarkdownBlock.
                                             MarkdownBlock(
-                                                content = notesContent
+                                                content = formatRoleplayTextWithCdnImages(
+                                                    sanitizeHtml(notesContent)
+                                                )
                                             )
                                         }
                                     } else {
@@ -1454,6 +1462,42 @@ private fun JanitorCharacterInspectorSheet(
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Color.White.copy(alpha = 0.5f),
                                         )
+                                    }
+
+                                    // Embedded images gallery — every image from the extract payload,
+                                    // no cap. Tap an image to open it full screen.
+                                    val embeddedImages = fullExtract?.embeddedImages ?: emptyList()
+                                    if (embeddedImages.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            text = "Embedded images (${embeddedImages.size})",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = contentTextColor,
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        FlowRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            embeddedImages.forEach { imageUrl ->
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(112.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(Color(0xFF121212)),
+                                                    contentAlignment = Alignment.Center,
+                                                ) {
+                                                    ZoomableAsyncImage(
+                                                        model = imageUrl,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentScale = ContentScale.Crop,
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

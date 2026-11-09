@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,48 +16,110 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.lucid.domchat.ui.context.LocalSettings
-import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
+
+private const val DELETE_RED = 0xFFE53935
+private const val DIALOG_HEIGHT = 48.dp
+private const val BUTTON_CORNER = 16.dp
+
+/**
+ * Button content shared by every destructive confirmation dialog:
+ * - Delete: solid red fill ([DELETE_RED]), rounded corners, 15.dp SemiBold white
+ *   text, centered.
+ * - Cancel: translucent dark surface with a subtle white specular border, centered
+ *   white text.
+ */
+@Composable
+private fun DestructiveConfirmButtons(
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+    confirmLabel: String = "Delete",
+    cancelLabel: String = "Cancel",
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        // Cancel button: translucent glass / dark surface, subtle white border,
+        // centered white text.
+        Surface(
+            onClick = onCancel,
+            shape = RoundedCornerShape(BUTTON_CORNER),
+            color = Color(0xFF000000).copy(alpha = 0.15f),
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            tonalElevation = 0.dp,
+            modifier = Modifier.weight(1f).height(DIALOG_HEIGHT),
+        ) {
+            Text(
+                text = cancelLabel,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                ),
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 1,
+            )
+        }
+
+        // Delete button: full solid red background, never just a tint or border.
+        Surface(
+            onClick = {
+                onConfirm()
+                onCancel()
+            },
+            shape = RoundedCornerShape(BUTTON_CORNER),
+            color = Color(DELETE_RED),
+            tonalElevation = 0.dp,
+            modifier = Modifier.weight(1f).height(DIALOG_HEIGHT),
+        ) {
+            Text(
+                text = confirmLabel,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                ),
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 1,
+            )
+        }
+    }
+}
 
 /**
  * A reusable, smooth-opening destructive action confirmation dialog.
  *
  * Features:
- * - Centered on screen, capped at [widthIn(max = 420.dp)] so it never clips at the
+ * - Centered on screen, capped at [widthIn(max = 380.dp)] so it never clips at the
  *   edges or gets cut off at the bottom on small screens.
  * - Single AMOLED black glass surface ([Color(0xFF000000)]) with a 0.5dp specular
  *   border ([LiquidGlassTokens.SpecularBorderSubtle]) — no nested/dual backgrounds.
  * - Smooth scale + fade entry/exit animations.
  * - Title and body message.
  * - Cancel button: glassy outlined, muted white text.
- * - Delete button: prominent glassy button with pure white text + icon and a specular border.
+ * - Delete button: prominent solid red button with pure white text.
  *
  * @param visible Whether the dialog is currently shown.
  * @param title The dialog title (e.g. "Delete conversation?").
@@ -78,7 +139,7 @@ fun UniversalDestructiveConfirmDialog(
     confirmLabel: String = "Delete",
     cancelLabel: String = "Cancel",
 ) {
-    val dialogShape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
+    val dialogShape = RoundedCornerShape(20.dp)
 
     AnimatedVisibility(
         visible = visible,
@@ -123,7 +184,7 @@ fun UniversalDestructiveConfirmDialog(
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                         )
 
                         // Body message
@@ -133,32 +194,15 @@ fun UniversalDestructiveConfirmDialog(
                             color = Color.White.copy(alpha = 0.85f),
                             maxLines = 4,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                         )
 
-                        // Action buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            DomChatGlassPillButton(
-                                text = cancelLabel,
-                                onClick = onDismiss,
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                contentColor = Color.White,
-                            )
-
-                            DomChatGlassPillButton(
-                                text = confirmLabel,
-                                onClick = {
-                                    onConfirm()
-                                    onDismiss()
-                                },
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                contentColor = Color.White,
-                                destructive = true,
-                            )
-                        }
+                        DestructiveConfirmButtons(
+                            onCancel = onDismiss,
+                            onConfirm = onConfirm,
+                            confirmLabel = confirmLabel,
+                            cancelLabel = cancelLabel,
+                        )
                     }
                 }
             }
@@ -169,7 +213,7 @@ fun UniversalDestructiveConfirmDialog(
 /**
  * Confirmation dialog for chat pages: translucent liquid-glass surface over the
  * conversation backdrop (frosted glass when [LiquidGlassMode.SOFT_FROSTED]),
- * transparent fill, specular border, glassy pill buttons.
+ * transparent fill, specular border, solid red delete button.
  */
 @Composable
 fun ChatDestructiveConfirmDialog(
@@ -181,7 +225,7 @@ fun ChatDestructiveConfirmDialog(
     confirmLabel: String = "Delete",
     cancelLabel: String = "Cancel",
 ) {
-    val dialogShape = RoundedCornerShape(24.dp)
+    val dialogShape = RoundedCornerShape(20.dp)
     val isFrosted = LocalSettings.current.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     val surfaceModifier: Modifier = if (isFrosted) {
         Modifier.frostedGlassSurface(
@@ -243,7 +287,7 @@ fun ChatDestructiveConfirmDialog(
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                         )
 
                         // Body message
@@ -253,33 +297,15 @@ fun ChatDestructiveConfirmDialog(
                             color = Color.White.copy(alpha = 0.85f),
                             maxLines = 4,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                         )
 
-                        // Action buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            // Cancel button - glassy pill, white text
-                            DomChatGlassPillButton(
-                                text = cancelLabel,
-                                onClick = onDismiss,
-                                modifier = Modifier.weight(1f).height(48.dp),
-                            )
-
-                            // Confirm button - glassy pill, destructive accent
-                            DomChatGlassPillButton(
-                                text = confirmLabel,
-                                onClick = {
-                                    onConfirm()
-                                    onDismiss()
-                                },
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                destructive = true,
-                                contentColor = Color.White,
-                            )
-                        }
+                        DestructiveConfirmButtons(
+                            onCancel = onDismiss,
+                            onConfirm = onConfirm,
+                            confirmLabel = confirmLabel,
+                            cancelLabel = cancelLabel,
+                        )
                     }
                 }
             }
@@ -289,7 +315,7 @@ fun ChatDestructiveConfirmDialog(
 
 /**
  * Confirmation dialog for settings pages: opaque AMOLED black surface,
- * [RoundedCornerShape(24.dp)], specular border, glassy pill buttons —
+ * [RoundedCornerShape(20.dp)], specular border, solid red delete button —
  * no greyish background, no grey borders.
  */
 @Composable
@@ -302,7 +328,7 @@ fun SettingsDestructiveConfirmDialog(
     confirmLabel: String = "Delete",
     cancelLabel: String = "Cancel",
 ) {
-    val dialogShape = RoundedCornerShape(24.dp)
+    val dialogShape = RoundedCornerShape(20.dp)
 
     AnimatedVisibility(
         visible = visible,
@@ -347,7 +373,7 @@ fun SettingsDestructiveConfirmDialog(
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                         )
 
                         // Body message
@@ -357,34 +383,15 @@ fun SettingsDestructiveConfirmDialog(
                             color = Color.White.copy(alpha = 0.85f),
                             maxLines = 4,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                         )
 
-                        // Action buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            // Cancel button - glassy pill, white text
-                            DomChatGlassPillButton(
-                                text = cancelLabel,
-                                onClick = onDismiss,
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                contentColor = Color.White,
-                            )
-
-                            // Confirm button - subtle destructive glass tint, white text, specular border
-                            DomChatGlassPillButton(
-                                text = confirmLabel,
-                                onClick = {
-                                    onConfirm()
-                                    onDismiss()
-                                },
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                contentColor = Color.White,
-                                destructive = true,
-                            )
-                        }
+                        DestructiveConfirmButtons(
+                            onCancel = onDismiss,
+                            onConfirm = onConfirm,
+                            confirmLabel = confirmLabel,
+                            cancelLabel = cancelLabel,
+                        )
                     }
                 }
             }

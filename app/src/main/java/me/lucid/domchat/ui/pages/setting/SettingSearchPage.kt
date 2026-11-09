@@ -573,28 +573,26 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
             )
         }
         
-        if (showDeleteDialog && serviceToDelete != null) {
-            DomChatDestructiveConfirmDialog(
-                title = stringResource(R.string.setting_search_delete_title),
-                consequence = stringResource(R.string.setting_search_delete_consequence),
-                onDismiss = {
-                    showDeleteDialog = false
-                    serviceToDelete = null
-                },
-                onConfirm = {
-                    serviceToDelete?.let { svc ->
-                        val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
-                        if (idx >= 0) {
-                            val newServices = settings.searchServices.toMutableList()
-                            newServices.removeAt(idx)
-                            vm.updateSettings(settings.copy(searchServices = newServices))
-                        }
-                    }
-                    showDeleteDialog = false
-                    serviceToDelete = null
-                },
-            )
-        }
+        DomChatDestructiveConfirmDialog(
+            visible = showDeleteDialog && serviceToDelete != null,
+            title = stringResource(R.string.setting_search_delete_title),
+            consequence = stringResource(R.string.setting_search_delete_consequence),
+            onDismiss = {
+                showDeleteDialog = false
+                serviceToDelete = null
+            },
+            onConfirm = {
+                val svc = serviceToDelete ?: return@onConfirm
+                val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
+                if (idx >= 0) {
+                    val newServices = settings.searchServices.toMutableList()
+                    newServices.removeAt(idx)
+                    vm.updateSettings(settings.copy(searchServices = newServices))
+                }
+                showDeleteDialog = false
+                serviceToDelete = null
+            },
+        )
     }
 
     if (showCommonOptions) {
@@ -968,28 +966,26 @@ internal fun SearchProvidersContent(
         )
     }
 
-    if (showDeleteDialog && serviceToDelete != null) {
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_search_delete_title),
-            consequence = stringResource(R.string.setting_search_delete_consequence),
-            onDismiss = {
-                showDeleteDialog = false
-                serviceToDelete = null
-            },
-            onConfirm = {
-                serviceToDelete?.let { svc ->
-                    val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
-                    if (idx >= 0) {
-                        val newServices = settings.searchServices.toMutableList()
-                        newServices.removeAt(idx)
-                        vm.updateSettings(settings.copy(searchServices = newServices))
-                    }
-                }
-                showDeleteDialog = false
-                serviceToDelete = null
-            },
-        )
-    }
+    DomChatDestructiveConfirmDialog(
+        visible = showDeleteDialog && serviceToDelete != null,
+        title = stringResource(R.string.setting_search_delete_title),
+        consequence = stringResource(R.string.setting_search_delete_consequence),
+        onDismiss = {
+            showDeleteDialog = false
+            serviceToDelete = null
+        },
+        onConfirm = {
+            val svc = serviceToDelete ?: return@onConfirm
+            val idx = settings.searchServices.indexOfFirst { it.id == svc.id }
+            if (idx >= 0) {
+                val newServices = settings.searchServices.toMutableList()
+                newServices.removeAt(idx)
+                vm.updateSettings(settings.copy(searchServices = newServices))
+            }
+            showDeleteDialog = false
+            serviceToDelete = null
+        },
+    )
 
     SearchServiceEditorSheet(
         service = editingService,

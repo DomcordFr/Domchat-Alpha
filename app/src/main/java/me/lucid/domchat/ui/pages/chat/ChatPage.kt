@@ -1933,9 +1933,13 @@ private fun ChatPageContent(
                         }
                     }
                 
-                // Assistant picker sheet triggered from header avatar
+                // Assistant picker sheet triggered from header avatar. On an empty
+                // chat the content backdrop has no recording yet, so fall back to the
+                // wallpaper backdrop so liquid glass works immediately on frame 0.
                 if (showHeaderAssistantPicker) {
-                    CompositionLocalProvider(LocalAppBackdrop provides contentBackdrop) {
+                    CompositionLocalProvider(
+                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
+                    ) {
                         me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
                             settings = setting,
                             currentAssistant = currentAssistant,

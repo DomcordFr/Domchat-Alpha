@@ -669,46 +669,47 @@ singleLine = true,
         }
     }
 
-    pendingDeleteItem?.let { item ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.backup_page_delete_title),
-            consequence = stringResource(R.string.backup_page_delete_consequence),
-            onDismiss = { pendingDeleteItem = null },
-            onConfirm = {
-                pendingDeleteItem = null
-                scope.launch {
-                    runCatching {
-                        vm.deleteWebDavBackupFile(item)
-                        toaster.show(
-                            context.getString(R.string.backup_page_delete_success),
-                            type = ToastType.Success
-                        )
-                        vm.loadBackupFileItems()
-                    }.onFailure { err ->
-                        err.printStackTrace()
-                        toaster.show(
-                            context.getString(
-                                R.string.backup_page_delete_failed,
-                                err.message ?: ""
-                            ),
-                            type = ToastType.Error
-                        )
-                    }
+    DomChatDestructiveConfirmDialog(
+        visible = pendingDeleteItem != null,
+        title = stringResource(R.string.backup_page_delete_title),
+        consequence = stringResource(R.string.backup_page_delete_consequence),
+        onDismiss = { pendingDeleteItem = null },
+        onConfirm = {
+            val item = pendingDeleteItem
+            pendingDeleteItem = null
+            scope.launch {
+                runCatching {
+                    vm.deleteWebDavBackupFile(item)
+                    toaster.show(
+                        context.getString(R.string.backup_page_delete_success),
+                        type = ToastType.Success
+                    )
+                    vm.loadBackupFileItems()
+                }.onFailure { err ->
+                    err.printStackTrace()
+                    toaster.show(
+                        context.getString(
+                            R.string.backup_page_delete_failed,
+                            err.message ?: ""
+                        ),
+                        type = ToastType.Error
+                    )
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 
-    pendingRestoreItem?.let { item ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.backup_page_restore_overwrite_title),
-            consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
-            confirmLabel = stringResource(R.string.backup_page_restore_now),
-            onDismiss = { pendingRestoreItem = null },
-            onConfirm = {
-                pendingRestoreItem = null
-                scope.launch {
-                    restoringItemId = item.displayName
+    DomChatDestructiveConfirmDialog(
+        visible = pendingRestoreItem != null,
+        title = stringResource(R.string.backup_page_restore_overwrite_title),
+        consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
+        confirmLabel = stringResource(R.string.backup_page_restore_now),
+        onDismiss = { pendingRestoreItem = null },
+        onConfirm = {
+            val item = pendingRestoreItem
+            pendingRestoreItem = null
+            scope.launch {
+                restoringItemId = item.displayName
                     runCatching {
                         val result = vm.restore(item = item)
                         restoreResult = result
@@ -742,7 +743,6 @@ singleLine = true,
                 }
             },
         )
-    }
 
     // Permission explanation dialog
     if (showPermissionDialog) {
@@ -1085,16 +1085,17 @@ private fun ImportExportPage(
         }
     }
 
-    pendingLocalRestoreUri?.let { sourceUri ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.backup_page_restore_overwrite_title),
-            consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
-            confirmLabel = stringResource(R.string.backup_page_restore_now),
-            onDismiss = { pendingLocalRestoreUri = null },
-            onConfirm = {
-                pendingLocalRestoreUri = null
-                scope.launch {
-                    isRestoring = true
+    DomChatDestructiveConfirmDialog(
+        visible = pendingLocalRestoreUri != null,
+        title = stringResource(R.string.backup_page_restore_overwrite_title),
+        consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
+        confirmLabel = stringResource(R.string.backup_page_restore_now),
+        onDismiss = { pendingLocalRestoreUri = null },
+        onConfirm = {
+            val sourceUri = pendingLocalRestoreUri
+            pendingLocalRestoreUri = null
+            scope.launch {
+                isRestoring = true
                     runCatching {
                         val tempFile =
                             File(context.cacheDir, "temp_restore_${System.currentTimeMillis()}.zip")
@@ -1135,7 +1136,6 @@ private fun ImportExportPage(
                 }
             },
         )
-    }
 
     if (showExportContentDialog) {
         ExportContentSelectionDialog(

@@ -23,6 +23,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,8 +45,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LoadingIndicator
@@ -54,7 +54,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -86,11 +85,15 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
@@ -112,6 +115,8 @@ import me.lucid.domchat.ui.modifier.domChatSoftEdgeBorder
 import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
 import me.lucid.domchat.ui.modifier.domChatChromeTextShadow
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
+import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -470,9 +475,7 @@ private fun ConversationItem(
         }
     }
     
-    var showDropdownMenu by remember {
-        mutableStateOf(false)
-    }
+    var showMenu by remember { mutableStateOf(false) }
     var showEditTitleDialog by remember { mutableStateOf(false) }
     var editedTitle by remember(conversation.id) { mutableStateOf(conversation.title) }
     val messageOnlyMatch = searchQuery.isNotBlank() &&
@@ -480,346 +483,445 @@ private fun ConversationItem(
 
     val assistant = getAssistant(conversation.assistantId)
 
-    ConversationRowSurface(
-        selected = selected,
-        restingAlpha = restoredAlpha,
-        modifier = modifier,
-        onClick = {
-            haptics.perform(HapticPattern.Tick)
-            onClick(conversation)
-        },
-        onLongClick = {
-            haptics.perform(HapticPattern.Buildup)
-            showDropdownMenu = true
-        },
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .border(
-                    width = 0.5.dp,
-                    brush = if (selected) LiquidGlassTokens.SpecularBorderSubtle else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .background(
-                    if (selected) Color(0xFF000000) else Color.Transparent
-                )
+    Box(modifier = modifier.fillMaxWidth()) {
+        ConversationRowSurface(
+            selected = selected,
+            restingAlpha = restoredAlpha,
+            modifier = Modifier.fillMaxWidth().height(72.dp),
+            onClick = {
+                haptics.perform(HapticPattern.Tick)
+                onClick(conversation)
+            },
+            onLongClick = {
+                haptics.perform(HapticPattern.Buildup)
+                showMenu = true
+            },
         ) {
-            // Edge-to-edge character pfp on the right, showing 35% of the image smoothly blending into the left
-            if (assistant != null) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .fillMaxWidth(0.35f)
-                        .align(Alignment.CenterEnd)
-                        .clip(RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp))
-                ) {
-                    when (val av = assistant.avatar) {
-                        is Avatar.Image -> {
-                            AsyncImage(
-                                model = av.url,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                alignment = BiasAlignment(0f, -0.14f),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                                    .drawWithContent {
-                                        drawContent()
-                                        drawRect(
-                                            brush = Brush.horizontalGradient(
-                                                0.0f to Color.Transparent,
-                                                0.35f to Color.Black.copy(alpha = 0.45f),
-                                                1.0f to Color.Black
-                                            ),
-                                            blendMode = BlendMode.DstIn
-                                        )
-                                    }
-                            )
-                        }
-                        is Avatar.Resource -> {
-                            AsyncImage(
-                                model = av.id,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                alignment = BiasAlignment(0f, -0.14f),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                                    .drawWithContent {
-                                        drawContent()
-                                        drawRect(
-                                            brush = Brush.horizontalGradient(
-                                                0.0f to Color.Transparent,
-                                                0.35f to Color.Black.copy(alpha = 0.45f),
-                                                1.0f to Color.Black
-                                            ),
-                                            blendMode = BlendMode.DstIn
-                                        )
-                                    }
-                            )
-                        }
-                        else -> {}
-                    }
-                }
-            }
-
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(72.dp)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .clip(RoundedCornerShape(16.dp))
+                    .border(
+                        width = 0.5.dp,
+                        brush = if (selected) LiquidGlassTokens.SpecularBorderSubtle else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .background(
+                        if (selected) Color(0xFF000000) else Color.Transparent
+                    )
             ) {
-                if (conversation.isFork) {
-                    Icon(
-                        painter = androidx.compose.ui.res.painterResource(id = me.lucid.domchat.R.drawable.ic_fork_left),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .size(20.dp),
-                        tint = Color.White
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = if (assistant != null) 48.dp else 0.dp),
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
-                ) {
-                    Text(
-                        text = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) },
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            shadow = domChatChromeTextShadow()
-                        ),
-                        color = Color.White,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                    )
-                    AnimatedVisibility(visible = messageOnlyMatch) {
-                        Text(
-                            text = stringResource(R.string.chat_page_search_message_match),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.75f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    // Count only the bot's messages (assistant turns), per design.
-                    val msgCount = conversation.messageNodes.count { it.currentMessage.role == me.lucid.ai.core.MessageRole.ASSISTANT }
-                    val zdt = conversation.updateAt.atZone(ZoneId.systemDefault())
-                    val hour12 = if (zdt.hour % 12 == 0) 12 else zdt.hour % 12
-                    val amPm = if (zdt.hour < 12) "AM" else "PM"
-                    val timeStr = "%d:%02d %s".format(hour12, zdt.minute, amPm)
-                    Text(
-                        text = "$msgCount messages · $timeStr",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 11.sp,
-                            shadow = domChatChromeTextShadow(softText = true)
-                        ),
-                        color = Color.White.copy(alpha = 0.65f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                AnimatedVisibility(conversation.isPinned) {
-                    Icon(
-                        imageVector = Icons.Rounded.PushPin,
-                        contentDescription = stringResource(R.string.chat_message_pinned),
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                AnimatedVisibility(loading) {
-                    LoadingIndicator(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(18.dp)
-                            .semantics {
-                                contentDescription = loadingDescription
-                            },
-                        color = LocalContentColor.current,
-                    )
-                }
-                AnimatedVisibility(!loading && generationComplete) {
+                // Edge-to-edge character pfp on the right, showing 35% of the image smoothly blending into the left
+                if (assistant != null) {
                     Box(
                         modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clip(CircleShape)
-                            .background(LocalContentColor.current)
-                            .size(7.dp)
-                    )
+                            .matchParentSize()
+                            .fillMaxWidth(0.35f)
+                            .align(Alignment.CenterEnd)
+                            .clip(RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp))
+                    ) {
+                        when (val av = assistant.avatar) {
+                            is Avatar.Image -> {
+                                AsyncImage(
+                                    model = av.url,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    alignment = BiasAlignment(0f, -0.14f),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                        .drawWithContent {
+                                            drawContent()
+                                            drawRect(
+                                                brush = Brush.horizontalGradient(
+                                                    0.0f to Color.Transparent,
+                                                    0.35f to Color.Black.copy(alpha = 0.45f),
+                                                    1.0f to Color.Black
+                                                ),
+                                                blendMode = BlendMode.DstIn
+                                            )
+                                        }
+                                )
+                            }
+                            is Avatar.Resource -> {
+                                AsyncImage(
+                                    model = av.id,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    alignment = BiasAlignment(0f, -0.14f),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                        .drawWithContent {
+                                            drawContent()
+                                            drawRect(
+                                                brush = Brush.horizontalGradient(
+                                                    0.0f to Color.Transparent,
+                                                    0.35f to Color.Black.copy(alpha = 0.45f),
+                                                    1.0f to Color.Black
+                                                ),
+                                                blendMode = BlendMode.DstIn
+                                            )
+                                        }
+                                )
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (conversation.isFork) {
+                        Icon(
+                            painter = androidx.compose.ui.res.painterResource(id = me.lucid.domchat.R.drawable.ic_fork_left),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .size(20.dp),
+                            tint = Color.White
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = if (assistant != null) 48.dp else 0.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                shadow = domChatChromeTextShadow()
+                            ),
+                            color = Color.White,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                        )
+                        AnimatedVisibility(visible = messageOnlyMatch) {
+                            Text(
+                                text = stringResource(R.string.chat_page_search_message_match),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.75f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        // Count only the bot's messages (assistant turns), per design.
+                        val msgCount = conversation.messageNodes.count { it.currentMessage.role == me.lucid.ai.core.MessageRole.ASSISTANT }
+                        val zdt = conversation.updateAt.atZone(ZoneId.systemDefault())
+                        val hour12 = if (zdt.hour % 12 == 0) 12 else zdt.hour % 12
+                        val amPm = if (zdt.hour < 12) "AM" else "PM"
+                        val timeStr = "%d:%02d %s".format(hour12, zdt.minute, amPm)
+                        Text(
+                            text = "$msgCount messages · $timeStr",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 11.sp,
+                                shadow = domChatChromeTextShadow(softText = true)
+                            ),
+                            color = Color.White.copy(alpha = 0.65f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+
+                    AnimatedVisibility(conversation.isPinned) {
+                        Icon(
+                            imageVector = Icons.Rounded.PushPin,
+                            contentDescription = stringResource(R.string.chat_message_pinned),
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    AnimatedVisibility(loading) {
+                        LoadingIndicator(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .size(18.dp)
+                                .semantics {
+                                    contentDescription = loadingDescription
+                                },
+                            color = LocalContentColor.current,
+                        )
+                    }
+                    AnimatedVisibility(!loading && generationComplete) {
+                        Box(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .clip(CircleShape)
+                                .background(LocalContentColor.current)
+                                .size(7.dp)
+                        )
+                    }
                 }
             }
         }
 
-        DropdownMenu(
-            expanded = showDropdownMenu,
-            onDismissRequest = { showDropdownMenu = false },
-            // Dark glass container inside the menu's own Android window: solid near-black fill
-            // with a single specular rim. Do NOT sample LocalAppBackdrop here — DropdownMenu
-            // paints in a separate window, so backdrop coordinates would resolve against the
-            // wrong window and the popup would land off-screen (top-left) or solid black.
-            shape = RoundedCornerShape(14.dp),
-            containerColor = Color(0xFF141520).copy(alpha = 0.95f),
-            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        AnimatedVisibility(
+            visible = showMenu,
+            enter = fadeIn(animationSpec = tween(120)) + scaleIn(
+                animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f),
+                initialScale = 0.92f,
+                scaleAlignment = Alignment.Center,
+            ),
+            exit = fadeOut(animationSpec = tween(100)) + scaleOut(
+                animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+                targetScale = 0.92f,
+                scaleAlignment = Alignment.Center,
+            ),
         ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        if (conversation.isPinned) stringResource(R.string.unpin_chat) else stringResource(R.string.pin_chat),
-                        color = Color.White,
+            // Tap anywhere on the row to dismiss the in-tree overlay menu
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f)
+                    .clickable(
+                        onClick = { showMenu = false },
+                        onLongClick = {},
                     )
-                },
-                onClick = {
-                    haptics.perform(HapticPattern.Pop)
-                    onPin(conversation)
-                    showDropdownMenu = false
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.PushPin,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
             )
 
-            DropdownMenuItem(
-                text = {
-                    Text(stringResource(R.string.chat_page_edit_title), color = Color.White)
-                },
-                onClick = {
-                    haptics.perform(HapticPattern.Pop)
-                    editedTitle = conversation.title
-                    showEditTitleDialog = true
-                    showDropdownMenu = false
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Edit,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-            )
-
-            DropdownMenuItem(
-                text = {
-                    Text(stringResource(id = R.string.chat_page_regenerate_title), color = Color.White)
-                },
-                onClick = {
-                    haptics.perform(HapticPattern.Tick)
-                    onRegenerateTitle(conversation)
-                    showDropdownMenu = false
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-            )
-
-            DropdownMenuItem(
-                text = {
-                    Text(stringResource(id = R.string.chat_page_delete), color = Color.White)
-                },
-                onClick = {
-                    haptics.perform(HapticPattern.Error)
-                    onDelete(conversation)
-                    showDropdownMenu = false
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Delete,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-            )
-        }
-
-        if (showEditTitleDialog) {
-            Dialog(
-                onDismissRequest = { showEditTitleDialog = false },
-                properties = DialogProperties(usePlatformDefaultWidth = false),
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 8.dp)
+                    .zIndex(2f),
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                ConversationActionMenu(
+                    visible = true,
+                    onDismissRequest = { showMenu = false },
+                    conversation = conversation,
+                    onPin = onPin,
+                    onEditTitle = {
+                        editedTitle = conversation.title
+                        showEditTitleDialog = true
+                    },
+                    onRegenerateTitle = onRegenerateTitle,
+                    onDelete = onDelete,
+                )
+            }
+        }
+    }
+
+    if (showEditTitleDialog) {
+        Dialog(
+            onDismissRequest = { showEditTitleDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(24.dp),
-                        color = Color(0xFF000000),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Text(
+                            text = stringResource(R.string.chat_page_edit_title),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color.White,
+                        )
+                        OutlinedTextField(
+                            value = editedTitle,
+                            onValueChange = { editedTitle = it },
+                            singleLine = true,
+                            shape = AppShapes.InputField,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                                cursorColor = Color.White.copy(alpha = 0.9f),
+                            )
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.chat_page_edit_title),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = Color.White,
+                            DomChatGlassPillButton(
+                                text = stringResource(R.string.chat_page_cancel),
+                                onClick = { showEditTitleDialog = false },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
                             )
-                            OutlinedTextField(
-                                value = editedTitle,
-                                onValueChange = { editedTitle = it },
-                                singleLine = true,
-                                shape = AppShapes.InputField,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedBorderColor = Color.White.copy(alpha = 0.35f),
-                                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
-                                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-                                    cursorColor = Color.White.copy(alpha = 0.9f),
-                                )
+                            DomChatGlassPillButton(
+                                text = stringResource(R.string.chat_page_save),
+                                onClick = {
+                                    onEditTitle(conversation, editedTitle)
+                                    showEditTitleDialog = false
+                                },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White,
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                DomChatGlassPillButton(
-                                    text = stringResource(R.string.chat_page_cancel),
-                                    onClick = { showEditTitleDialog = false },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    containerColor = Color(0xFF000000),
-                                    contentColor = Color.White,
-                                )
-                                DomChatGlassPillButton(
-                                    text = stringResource(R.string.chat_page_save),
-                                    onClick = {
-                                        onEditTitle(conversation, editedTitle)
-                                        showEditTitleDialog = false
-                                    },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    containerColor = Color(0xFF000000),
-                                    contentColor = Color.White,
-                                )
-                            }
                         }
                     }
                 }
             }
         }
+    }
+    }
+
+/**
+ * In-tree long-press action menu for a conversation row.
+ * Stays in the main window coordinate space, so [LocalAppBackdrop] sampling
+ * works without DropdownMenu's isolated PopupWindow coordinate distortion.
+ * Surface has no opaque fill — transparent glass with a specular rim only.
+ */
+@Composable
+private fun ConversationActionMenu(
+    visible: Boolean,
+    onDismissRequest: () -> Unit,
+    conversation: Conversation,
+    onPin: (Conversation) -> Unit,
+    onEditTitle: () -> Unit,
+    onRegenerateTitle: (Conversation) -> Unit,
+    onDelete: (Conversation) -> Unit,
+) {
+    if (!visible) return
+
+    val haptics = rememberPremiumHaptics()
+    val settings = LocalSettings.current
+    val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+
+    // SOFT_FROSTED -> Haze frosted glass; BALANCED_BLEND (and anything else)
+    // -> liquid glass refraction surface. Both with the specular border.
+    // Strictly no grey container: transparent fill only.
+    val surfaceModifier: Modifier = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = RoundedCornerShape(16.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = RoundedCornerShape(16.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.Transparent,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .width(220.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .then(surfaceModifier),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        ConversationMenuItem(
+            icon = Icons.Rounded.PushPin,
+            label = stringResource(if (conversation.isPinned) R.string.unpin_chat else R.string.pin_chat),
+            onClick = {
+                haptics.perform(HapticPattern.Pop)
+                onPin(conversation)
+                onDismissRequest()
+            },
+        )
+
+        ConversationMenuItem(
+            icon = Icons.Rounded.Edit,
+            label = stringResource(R.string.chat_page_edit_title),
+            onClick = {
+                haptics.perform(HapticPattern.Pop)
+                onEditTitle()
+            },
+        )
+
+        ConversationMenuItem(
+            icon = Icons.Rounded.Refresh,
+            label = stringResource(R.string.chat_page_regenerate_title),
+            onClick = {
+                haptics.perform(HapticPattern.Tick)
+                onRegenerateTitle(conversation)
+                onDismissRequest()
+            },
+        )
+
+        ConversationMenuItem(
+            icon = Icons.Rounded.Delete,
+            label = stringResource(R.string.chat_page_delete),
+            destructive = true,
+            onClick = {
+                haptics.perform(HapticPattern.Error)
+                onDelete(conversation)
+                onDismissRequest()
+            },
+        )
+    }
+}
+
+/**
+ * Single glass pill row inside [ConversationActionMenu].
+ * Rounded corners (16.dp), pressed state overlay, icon + label.
+ */
+@Composable
+private fun ConversationMenuItem(
+    icon: ImageVector,
+    label: String,
+    destructive: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val color = if (destructive) MaterialTheme.colorScheme.error else Color.White
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(horizontal = 4.dp, vertical = 1.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (isPressed) Color.White.copy(alpha = 0.10f) else Color.Transparent)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = color.copy(alpha = 0.9f),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Medium,
+            ),
+            color = color.copy(alpha = 0.95f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

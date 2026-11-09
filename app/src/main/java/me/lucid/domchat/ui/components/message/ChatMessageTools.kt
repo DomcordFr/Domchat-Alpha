@@ -864,20 +864,20 @@ private fun ToolCallPreviewSheet(
         },
     )
 
-    pendingMemoryDeleteId?.let { id ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.chat_message_delete_memory_title),
-            consequence = stringResource(R.string.chat_message_delete_memory_consequence),
-            onDismiss = { pendingMemoryDeleteId = null },
-            onConfirm = {
-                pendingMemoryDeleteId = null
-                scope.launch {
-                    runCatching {
-                        memoryRepo.deleteMemory(id)
-                        onDismissRequest()
-                    }
+    DomChatDestructiveConfirmDialog(
+        visible = pendingMemoryDeleteId != null,
+        title = stringResource(R.string.chat_message_delete_memory_title),
+        consequence = stringResource(R.string.chat_message_delete_memory_consequence),
+        onDismiss = { pendingMemoryDeleteId = null },
+        onConfirm = {
+            val id = pendingMemoryDeleteId
+            pendingMemoryDeleteId = null
+            scope.launch {
+                runCatching {
+                    memoryRepo.deleteMemory(id)
+                    onDismissRequest()
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 }

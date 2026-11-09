@@ -46,17 +46,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Psychology
 import kotlin.math.roundToInt
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -85,8 +80,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -100,19 +93,14 @@ import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import me.lucid.domchat.ui.components.ui.DomChatGlassChip
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatCardContainerColor
-import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
-import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import org.koin.compose.koinInject
 
 /**
@@ -260,16 +248,6 @@ fun PromptPresetsBottomSheet(
         formContent = ""
         formPosition = PresetInjectionPosition.SYSTEM_PROMPT
         formDepth = 0
-        isEditingOrCreating = true
-    }
-
-    fun openEdit(preset: PromptPreset) {
-        editingTargetId = preset.id
-        formName = preset.name
-        formDescription = preset.description
-        formContent = preset.content
-        formPosition = preset.injectionPosition
-        formDepth = preset.depth
         isEditingOrCreating = true
     }
 
@@ -453,24 +431,48 @@ fun PromptPresetsBottomSheet(
             ) {
                 DomChatGlassPillButton(
                     text = "Enable All",
-                    onClick = { toggleAll(true) }
+                    onClick = { toggleAll(true) },
+                    modifier = Modifier.height(32.dp),
                 )
                 DomChatGlassPillButton(
                     text = "Disable All",
-                    onClick = { toggleAll(false) }
+                    onClick = { toggleAll(false) },
+                    modifier = Modifier.height(32.dp),
                 )
                 if (isChatSpecific) {
                     DomChatGlassPillButton(
                         text = "Reset to Default",
                         icon = Icons.Rounded.Refresh,
-                        onClick = { resetToGlobal() }
+                        onClick = { resetToGlobal() },
+                        modifier = Modifier.height(32.dp),
                     )
                 }
                 if (conversation != null) {
-                    DomChatGlassChip(
-                        text = if (isChatSpecific) "Using Chat" else "Using Global",
-                        modifier = Modifier.padding(horizontal = 6.dp),
-                    )
+                    // Active-scope badge: same glass pill treatment and fixed height as the
+                    // action pills, so all four pills sit on one clean centered baseline.
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier
+                            .height(32.dp)
+                            .padding(horizontal = 6.dp)
+                            .then(glassSurface(RoundedCornerShape(16.dp))),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                text = if (isChatSpecific) "Using Chat" else "Using Global",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                ),
+                                color = Color.White.copy(alpha = 0.9f),
+                                maxLines = 1,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -734,117 +736,81 @@ fun PromptPresetsBottomSheet(
     } // end editor item
 
     itemsIndexed(filteredPresets, key = { _, it: PromptPreset -> it.id }) { index: Int, preset: PromptPreset ->
-                    val isEnabled = effectiveEnabledIds.contains(preset.id)
-                    val snippet = preset.description.ifBlank { preset.content.take(56) }
-                    val estTokens = (preset.content.length / 3.8).roundToInt()
-                    val positionLabel = when (preset.injectionPosition) {
-                        PresetInjectionPosition.SYSTEM_PROMPT -> "System"
-                        PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
-                        PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
-                        PresetInjectionPosition.AT_DEPTH -> "At Depth ${preset.depth}"
-                    }
+        val isEnabled = effectiveEnabledIds.contains(preset.id)
+        val snippet = preset.description.ifBlank { preset.content.take(140) }
+        val estTokens = (preset.content.length / 3.8).roundToInt()
+        val positionLabel = when (preset.injectionPosition) {
+            PresetInjectionPosition.SYSTEM_PROMPT -> "System"
+            PresetInjectionPosition.POST_HISTORY_INSTRUCTIONS -> "Post-History"
+            PresetInjectionPosition.BEFORE_LAST_USER -> "Before User"
+            PresetInjectionPosition.AT_DEPTH -> "At Depth ${preset.depth}"
+        }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 82.dp, max = 110.dp)
-                            // frostedGlassSurface in SOFT_FROSTED mode, stable liquidGlassSurface
-                            // in BALANCED_BLEND mode — neither freezes nor drops out while the
-                            // LazyColumn scrolls (no per-card AGSL lens pass during scroll).
-                            .then(glassSurface(RoundedCornerShape(16.dp))),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 88.dp)
+                // Mode-aware glass card: frostedGlassSurface in SOFT_FROSTED mode,
+                // stable liquidGlassSurface otherwise — no per-card AGSL lens pass
+                // while the LazyColumn scrolls.
+                .then(glassSurface(RoundedCornerShape(16.dp))),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = preset.name,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(
+                        modifier = Modifier.padding(top = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = preset.name,
-                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Row(
-                                    modifier = Modifier.padding(top = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    // Token estimate pill
-                                    Surface(
-                                        color = Color.White.copy(alpha = 0.08f),
-                                        shape = RoundedCornerShape(6.dp),
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.5.dp),
-                                    ) {
-                                        Text(
-                                            text = "~$estTokens tokens",
-                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                            color = Color.White.copy(alpha = 0.8f),
-                                        )
-                                    }
-                                    // Injection position tag
-                                    Text(
-                                        text = positionLabel,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                        color = Color.White.copy(alpha = 0.6f),
-                                        maxLines = 1,
-                                    )
-                                }
-                                Text(
-                                    text = snippet,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(0.65f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                HapticSwitch(
-                                    checked = isEnabled,
-                                    onCheckedChange = { enabled ->
-                                        haptics.perform(HapticPattern.Tick)
-                                        togglePreset(preset.id, enabled)
-                                        toaster.show(
-                                            message = if (enabled) "Enabled: ${preset.name}" else "Disabled: ${preset.name}",
-                                            type = ToastType.Info,
-                                        )
-                                    },
-                                )
-
-                                IconButton(
-                                    onClick = { openEdit(preset) },
-                                    modifier = Modifier.size(36.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Edit,
-                                        contentDescription = "Edit",
-                                        tint = Color.White.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(20.dp),
-                                    )
-                                }
-
-                                IconButton(
-                                    onClick = { presetToDelete = preset },
-                                    modifier = Modifier.size(36.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Delete,
-                                        contentDescription = "Delete",
-                                        tint = Color.White.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(20.dp),
-                                    )
-                                }
-                            }
-                        }
+                        Text(
+                            text = positionLabel,
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                            color = Color.White.copy(alpha = 0.65f),
+                            maxLines = 1,
+                        )
+                        Text(
+                            text = "~$estTokens tokens",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                            color = Color.White.copy(alpha = 0.65f),
+                        )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = snippet,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.75f),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                HapticSwitch(
+                    checked = isEnabled,
+                    onCheckedChange = { enabled ->
+                        haptics.perform(HapticPattern.Tick)
+                        togglePreset(preset.id, enabled)
+                        toaster.show(
+                            message = if (enabled) "Enabled: ${preset.name}" else "Disabled: ${preset.name}",
+                            type = ToastType.Info,
+                        )
+                    },
+                )
+            }
+        }
         }
 
         item {
@@ -853,68 +819,14 @@ fun PromptPresetsBottomSheet(
     }
 
     // Preset delete confirmation dialog (glassy black, destructive)
-    presetToDelete?.let { preset ->
-        AlertDialog(
-            onDismissRequest = { presetToDelete = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            modifier = Modifier
-                .widthIn(max = 320.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
-            shape = AppShapes.Dialog,
-            containerColor = Color(0xFF000000),
-            title = {
-                ApplyDialogWindowBlur()
-                Text(
-                    text = "Delete ${preset.name}?",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = Color.White
-                )
-            },
-            text = {
-                Text(
-                    text = "This preset will be permanently removed from your presets list.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.85f)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        deletePreset(preset.id)
-                        presetToDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White,
-                        disabledContainerColor = Color.Transparent.copy(alpha = 0.2f),
-                        disabledContentColor = Color.White.copy(alpha = 0.3f)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Delete,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Delete", fontWeight = FontWeight.Bold, color = Color.White)
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { presetToDelete = null }) {
-                    Text(text = "Cancel", color = Color.White.copy(alpha = 0.85f))
-                }
-            }
-        )
-    }
+    DomChatDestructiveConfirmDialog(
+        visible = presetToDelete != null,
+        title = "Delete ${presetToDelete?.name}?",
+        consequence = "This preset will be permanently removed from your presets list.",
+        confirmLabel = "Delete",
+        cancelLabel = "Cancel",
+        onConfirm = { presetToDelete?.let { deletePreset(it.id) }; presetToDelete = null },
+        onDismiss = { presetToDelete = null }
+    )
 }
 }

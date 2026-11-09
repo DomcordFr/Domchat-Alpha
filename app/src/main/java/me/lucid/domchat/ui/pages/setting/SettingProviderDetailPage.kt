@@ -1220,17 +1220,18 @@ private fun ModelList(
         }
     }
 
-    pendingDeleteModel?.let { model ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_provider_delete_model_title),
-            consequence = stringResource(R.string.setting_provider_delete_model_consequence),
-            onDismiss = { pendingDeleteModel = null },
-            onConfirm = {
-                pendingDeleteModel = null
+    DomChatDestructiveConfirmDialog(
+        visible = pendingDeleteModel != null,
+        title = stringResource(R.string.setting_provider_delete_model_title),
+        consequence = stringResource(R.string.setting_provider_delete_model_consequence),
+        onDismiss = { pendingDeleteModel = null },
+        onConfirm = {
+            pendingDeleteModel?.let { model ->
                 onUpdateProvider(providerSetting.delModel(model))
-            },
-        )
-    }
+            }
+            pendingDeleteModel = null
+        },
+    )
 }
 
 

@@ -205,6 +205,7 @@ private class DrawBackdropElement(
                 node.shapeProvider !== shapeProvider ||
                 node.effects !== effects ||
                 node.layerBlock !== layerBlock ||
+                node.frozen != frozen ||
                 node.onDrawBackdrop !== onDrawBackdrop ||
                 node.backdropScale != backdropScale
 
@@ -246,6 +247,7 @@ private class DrawBackdropElement(
         if (onDrawSurface != other.onDrawSurface) return false
         if (onDrawFront != other.onDrawFront) return false
         if (backdropScale != other.backdropScale) return false
+        if (frozen != other.frozen) return false
 
         return true
     }
@@ -261,6 +263,7 @@ private class DrawBackdropElement(
         result = 31 * result + (onDrawSurface?.hashCode() ?: 0)
         result = 31 * result + (onDrawFront?.hashCode() ?: 0)
         result = 31 * result + backdropScale.hashCode()
+        result = 31 * result + frozen.hashCode()
         return result
     }
 }
@@ -372,18 +375,23 @@ private class DrawBackdropNode(
         }
 
         // Do not trigger expensive shader re-record on pure translation jitter;
-        // only re-record when size or source version actually changed.
+        // only re-record when size or source version actually changed. A pure
+        // offset change (e.g. a card scrolling inside a LazyColumn) is compensated
+        // by shifting the baked layer at draw time instead of re-recording it, so
+        // refraction keeps tracking the surface smoothly without freezing.
         val geometryChanged = surfaceDirty ||
             recordSize != recordedBackdropSize
         val versionChanged = version == null || version != recordedBackdropVersion
         val hasRecording = recordedBackdropSize != IntSize.Zero
+        val offsetChanged = recordedBackdropOffset == null || offset != recordedBackdropOffset
+        val pureTranslation = scale == 1f && hasRecording && offsetChanged && !geometryChanged && !versionChanged
         val needsRecord = if (frozen() && hasRecording) {
             geometryChanged
         } else {
             (geometryChanged || versionChanged)
-        }
+        } && !pureTranslation
 
-        if (needsRecord) {
+        if (needsRecord || (scale != 1f && offsetChanged)) {
             recordLayer(
                 this@DrawBackdropNode,
                 layer,
@@ -398,12 +406,26 @@ private class DrawBackdropNode(
         layer.topLeft =
             if (padding != 0f) IntOffset(-padding.toInt(), -padding.toInt())
             else IntOffset.Zero
+        // Compensate pure position drift (scroll, drag, sheet entrance) by drawing
+        // the baked layer shifted by the offset delta instead of re-recording.
+        val drawOffset =
+            if (scale == 1f && hasRecording && recordedBackdropOffset != null) {
+                recordedBackdropOffset!! - offset
+            } else {
+                Offset.Zero
+            }
         if (scale != 1f) {
             scale(1f / scale, pivot = Offset.Zero) {
                 drawLayer(layer)
             }
         } else {
-            drawLayer(layer)
+            if (drawOffset != Offset.Zero) {
+                translate(drawOffset.x, drawOffset.y) {
+                    drawLayer(layer)
+                }
+            } else {
+                drawLayer(layer)
+            }
         }
         return needsRecord
     }

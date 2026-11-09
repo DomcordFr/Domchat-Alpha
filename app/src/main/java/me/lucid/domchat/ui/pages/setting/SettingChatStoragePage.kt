@@ -876,14 +876,14 @@ fun SettingChatStoragePage(
         }
     }
 
-    if (pendingUnusedEmbeddingsDeletion) {
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_chat_storage_delete_unused_embeddings_title),
-            consequence = stringResource(R.string.setting_chat_storage_delete_unused_embeddings_consequence),
-            onDismiss = { pendingUnusedEmbeddingsDeletion = false },
-            onConfirm = {
-                pendingUnusedEmbeddingsDeletion = false
-                scope.launch {
+    DomChatDestructiveConfirmDialog(
+        visible = pendingUnusedEmbeddingsDeletion,
+        title = stringResource(R.string.setting_chat_storage_delete_unused_embeddings_title),
+        consequence = stringResource(R.string.setting_chat_storage_delete_unused_embeddings_consequence),
+        onDismiss = { pendingUnusedEmbeddingsDeletion = false },
+        onConfirm = {
+            pendingUnusedEmbeddingsDeletion = false
+            scope.launch {
                     isCleaningEmbeddingCache = true
                     val deleted = withContext(Dispatchers.IO) {
                         if (activeEmbeddingModelIds.isEmpty()) {
@@ -901,27 +901,25 @@ fun SettingChatStoragePage(
                 }
             },
         )
-    }
 
-    pendingModelCacheDeletion?.let { modelId ->
-        DomChatDestructiveConfirmDialog(
-            title = stringResource(R.string.setting_chat_storage_delete_model_cache_title),
-            consequence = stringResource(
-                R.string.setting_chat_storage_delete_model_cache_consequence,
-                modelId,
-            ),
-            onDismiss = { pendingModelCacheDeletion = null },
-            onConfirm = {
-                val target = modelId
-                pendingModelCacheDeletion = null
-                scope.launch {
+    DomChatDestructiveConfirmDialog(
+        visible = pendingModelCacheDeletion != null,
+        title = stringResource(R.string.setting_chat_storage_delete_model_cache_title),
+        consequence = stringResource(
+            R.string.setting_chat_storage_delete_model_cache_consequence,
+            pendingModelCacheDeletion ?: "",
+        ),
+        onDismiss = { pendingModelCacheDeletion = null },
+        onConfirm = {
+            val target = pendingModelCacheDeletion ?: return@onConfirm
+            pendingModelCacheDeletion = null
+            scope.launch {
                     embeddingCacheDAO.deleteByModelId(target)
                     loadEmbeddingCacheStats()
                     toaster.show("Cache deleted for $target")
                 }
             },
         )
-    }
 }
 
 @Composable

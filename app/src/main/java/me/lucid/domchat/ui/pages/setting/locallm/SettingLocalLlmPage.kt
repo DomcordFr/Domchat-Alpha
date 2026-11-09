@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Upgrade
 import androidx.compose.material3.AlertDialog
+import me.lucid.domchat.ui.components.dialog.SettingsDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -1056,28 +1057,16 @@ private fun ModelSettingsSheet(
         }
     }
 
-    if (showDeleteConfirm) {
-        AlertDialog(
-            containerColor = Color(0xFF000000),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-            titleContentColor = Color(0xFFF2F2F7),
-            textContentColor = Color(0xFFF2F2F7),
-
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(stringResource(R.string.local_llm_delete_confirm_title)) },
-            text = { Text(stringResource(R.string.local_llm_delete_confirm_message, model.displayName)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = false
-                    onDelete()
-                }) { Text(stringResource(R.string.delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.cancel)) }
-            },
-        )
-    }
+    SettingsDestructiveConfirmDialog(
+        visible = showDeleteConfirm,
+        title = stringResource(R.string.local_llm_delete_confirm_title),
+        message = stringResource(R.string.local_llm_delete_confirm_message, model.displayName),
+        onDismiss = { showDeleteConfirm = false },
+        onConfirm = {
+            showDeleteConfirm = false
+            onDelete()
+        },
+    )
 }
 
 @Composable

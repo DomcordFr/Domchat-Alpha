@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,8 +47,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import me.lucid.domchat.R
@@ -59,6 +60,7 @@ import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.data.model.SKILL_SELECTION_OVERRIDE_ID
 import me.lucid.domchat.data.model.hasManualSkillSelectionOverride
 import me.lucid.domchat.data.model.withoutSkillSelectionOverride
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSearchBar
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.icons.ModeIcons
@@ -292,35 +294,17 @@ internal fun LorebooksPickerSheet(
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    val density = LocalDensity.current
-    val configuration = LocalConfiguration.current
-    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.60f }
-
-    // Liquid glass (BALANCED_BLEND) or frosted glass (SOFT_FROSTED) sheet — no solid black backdrop.
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
 
-    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+    // Unified in-window sheet: glass container + scrim + drag handle, capped at 60% screen height.
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = sheetShape,
-        sheetGesturesEnabled = true,
-        modifier = Modifier.lorebookGlassSurface(sheetShape, isFrosted),
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = maxSheetHeight)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
             DomChatSheetHeader(
                 title = stringResource(R.string.lorebooks_picker_title),
@@ -331,151 +315,114 @@ internal fun LorebooksPickerSheet(
                 value = lorebookSearchQuery,
                 onValueChange = { lorebookSearchQuery = it },
                 placeholder = "Search lorebooks...",
-                modifier = Modifier.padding(bottom = 8.dp),
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
             )
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             if (filteredLorebooks.isEmpty()) {
                 Text(
                     text = stringResource(R.string.lorebooks_picker_none),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 )
             } else {
-                filteredLorebooks.forEachIndexed { index, lorebook ->
-                    val isEnabled = localEnabledIds.contains(lorebook.id)
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(filteredLorebooks, key = { it.id }) { lorebook ->
+                        val isEnabled = localEnabledIds.contains(lorebook.id)
 
-                    val position = when {
-                        filteredLorebooks.size == 1 -> ItemPosition.ONLY
-                        index == 0 -> ItemPosition.FIRST
-                        index == filteredLorebooks.lastIndex -> ItemPosition.LAST
-                        else -> ItemPosition.MIDDLE
-                    }
-
-                    val cornerRadius = 28.dp
-                    val smallCorner = 8.dp
-                    val shape = when (position) {
-                        ItemPosition.ONLY -> RoundedCornerShape(cornerRadius)
-                        ItemPosition.FIRST -> RoundedCornerShape(
-                            topStart = cornerRadius,
-                            topEnd = cornerRadius,
-                            bottomStart = smallCorner,
-                            bottomEnd = smallCorner
-                        )
-
-                        ItemPosition.MIDDLE -> RoundedCornerShape(smallCorner)
-                        ItemPosition.LAST -> RoundedCornerShape(
-                            topStart = smallCorner,
-                            topEnd = smallCorner,
-                            bottomStart = cornerRadius,
-                            bottomEnd = cornerRadius
-                        )
-                    }
-
-                    CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
-                        Box(
-                            modifier = Modifier
-                                .lorebookGlassSurface(shape, isFrosted)
-                                .clickable { onNavigateToLorebook(lorebook.id.toString()) },
-                        ) {
-                            Row(
+                        CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .lorebookGlassSurface(RoundedCornerShape(16.dp), isFrosted)
+                                    .clickable { onNavigateToLorebook(lorebook.id.toString()) },
                             ) {
-                                val bookShape = when (position) {
-                                    ItemPosition.ONLY -> RoundedCornerShape(
-                                        topStart = 16.dp,
-                                        topEnd = 6.dp,
-                                        bottomStart = 16.dp,
-                                        bottomEnd = 6.dp
-                                    )
-
-                                    ItemPosition.FIRST -> RoundedCornerShape(
-                                        topStart = 16.dp,
-                                        topEnd = 6.dp,
-                                        bottomStart = 6.dp,
-                                        bottomEnd = 6.dp
-                                    )
-
-                                    ItemPosition.MIDDLE -> RoundedCornerShape(6.dp)
-                                    ItemPosition.LAST -> RoundedCornerShape(
-                                        topStart = 6.dp,
-                                        topEnd = 6.dp,
-                                        bottomStart = 16.dp,
-                                        bottomEnd = 6.dp
-                                    )
-                                }
-                                Surface(
-                                    shape = bookShape,
-                                    color = if (isEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier.size(width = 40.dp, height = 56.dp)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        when (val cover = lorebook.cover) {
-                                            is Avatar.Image -> {
-                                                AsyncImage(
-                                                    model = cover.url,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentScale = ContentScale.Crop
-                                                )
-                                            }
+                                    Surface(
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = if (isEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                        modifier = Modifier.size(width = 40.dp, height = 56.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            when (val cover = lorebook.cover) {
+                                                is Avatar.Image -> {
+                                                    AsyncImage(
+                                                        model = cover.url,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+                                                }
 
-                                            is Avatar.Emoji -> {
-                                                Text(
-                                                    text = cover.content,
-                                                    fontSize = 20.sp
-                                                )
-                                            }
+                                                is Avatar.Emoji -> {
+                                                    Text(
+                                                        text = cover.content,
+                                                        fontSize = 20.sp
+                                                    )
+                                                }
 
-                                            else -> {
-                                                Text(
-                                                    text = lorebook.name.take(1).uppercase().ifEmpty { "L" },
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = if (isEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
+                                                else -> {
+                                                    Text(
+                                                        text = lorebook.name.take(1).uppercase().ifEmpty { "L" },
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        color = if (isEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
                                             }
                                         }
                                     }
-                                }
 
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                                ) {
-                                    Text(
-                                        text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.lorebooks_page_entries_count, lorebook.entries.size),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-
-                                HapticSwitch(
-                                    checked = isEnabled,
-                                    onCheckedChange = { newEnabled ->
-                                        val newIds = if (newEnabled) {
-                                            localEnabledIds + lorebook.id
-                                        } else {
-                                            localEnabledIds - lorebook.id
-                                        }
-                                        localEnabledIds = newIds
-                                        onUpdateConversation(conversation.copy(enabledLorebookIds = newIds))
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Text(
+                                            text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.lorebooks_page_entries_count, lorebook.entries.size),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-                                )
+
+                                    HapticSwitch(
+                                        checked = isEnabled,
+                                        onCheckedChange = { newEnabled ->
+                                            val newIds = if (newEnabled) {
+                                                localEnabledIds + lorebook.id
+                                            } else {
+                                                localEnabledIds - lorebook.id
+                                            }
+                                            localEnabledIds = newIds
+                                            onUpdateConversation(conversation.copy(enabledLorebookIds = newIds))
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }

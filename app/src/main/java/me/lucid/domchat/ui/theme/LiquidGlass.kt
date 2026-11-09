@@ -183,6 +183,7 @@ fun Modifier.liquidGlass(
     specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
     fillColor: Color = Color.Transparent,
     shadowElevation: Dp = 0.dp,
+    isFloatingControl: Boolean = false,
 ): Modifier {
     val settings = LocalSettings.current
     val display = settings.displaySetting
@@ -256,7 +257,11 @@ fun Modifier.liquidGlass(
                 effects = effects,
                 highlight = highlight,
                 onDrawSurface = surfaceBlock,
-                backdropScale = 1f
+                backdropScale = 1f,
+                // Floating controls (input row, chips, floaters) freeze the backdrop
+                // capture so streaming content behind them does not keep re-recording;
+                // pure position changes are still tracked via draw-time translation.
+                frozen = { isFloatingControl }
             )
             .then(
                 if (shadowElevation > 0.dp) {
@@ -327,6 +332,7 @@ fun Modifier.liquidGlassSurface(
         specularBrush = specularBrush,
         fillColor = fillColor,
         shadowElevation = shadowElevation,
+        isFloatingControl = isFloatingControl,
     )
 }
 
