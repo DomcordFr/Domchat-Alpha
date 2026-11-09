@@ -229,7 +229,23 @@ fun AssistantPickerSheet(
         ) {
             DomChatSheetHeader(
                 title = stringResource(R.string.assistant_page_title),
-                badge = { Text("${filteredAssistants.size}") },
+                badge = {
+                    // Count rendered as a subtle badge pill with leading spacing — the title
+                    // ("Characters") must never sit flush against the count ("Characters13").
+                    Box(modifier = Modifier.padding(start = 10.dp)) {
+                        Text(
+                            text = "${filteredAssistants.size}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = Color.White.copy(alpha = 0.8f),
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .background(Color.White.copy(alpha = 0.12f))
+                                .clip(RoundedCornerShape(6.dp)),
+                        )
+                    }
+                },
             )
 
             DomChatSearchBar(

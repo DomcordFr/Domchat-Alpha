@@ -748,13 +748,10 @@ fun PromptPresetsBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 82.dp, max = 110.dp)
-                            .liquidGlassSurface(
-                                shape = RoundedCornerShape(16.dp),
-                                fillColor = Color.Transparent,
-                                borderWidth = 0.5.dp,
-                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                isFloatingControl = true,
-                            ),
+                            // frostedGlassSurface in SOFT_FROSTED mode, stable liquidGlassSurface
+                            // in BALANCED_BLEND mode — neither freezes nor drops out while the
+                            // LazyColumn scrolls (no per-card AGSL lens pass during scroll).
+                            .then(glassSurface(RoundedCornerShape(16.dp))),
                     ) {
                         Row(
                             modifier = Modifier

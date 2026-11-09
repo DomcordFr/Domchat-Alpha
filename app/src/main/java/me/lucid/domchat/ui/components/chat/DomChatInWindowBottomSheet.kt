@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -197,8 +198,8 @@ fun DomChatSearchBar(
         shape = CircleShape,
         modifier = modifier
             .fillMaxWidth()
-            .height(46.dp)
-            .padding(horizontal = 16.dp),
+            .height(48.dp)
+            .padding(PaddingValues(horizontal = 16.dp, vertical = 0.dp)),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,

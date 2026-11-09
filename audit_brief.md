@@ -1,84 +1,73 @@
-# Audit Brief — Task 187: Dual-Tier Backdrop & Brace Balancing (ChatPage.kt)
+# Audit Brief — Task-188: Fix InputPickerSheets Compilation Errors
 
 ## Intent Verification
 
-Task 187 (commit context: `7e2a38e` — feat(chat): add spring-animated sliding indicator to ProvidersBottomBar) requested four changes to `app/src/main/java/me/lucid/domchat/ui/pages/chat/ChatPage.kt`:
+Goal: Resolve the GitHub Actions compilation failures in
+`app/src/main/java/me/lucid/domchat/ui/components/ai/InputPickerSheets.kt`:
 
-1. **Remove redundant `wallpaperBackdrop` and `pageBackdrop` declarations inside `ChatPageContent`** — REMOVED.
-   - Deleted `pageBackdrop: LayerBackdrop` parameter (was line 1347).
-   - Deleted `val wallpaperBackdrop = rememberLayerBackdrop()` (was line 1350).
-   - Deleted `val pageBackdrop = rememberLayerBackdrop()` (was line 1351).
-   - `chatBackdrop` (created at line 795 via `rememberLayerBackdrop()`) remains as the single backdrop source.
-   - Zero `!!` force-unwraps introduced. `grep` verified no `!!` in edited regions.
+1. `InputPickerSheets.kt:267:23` — "None of the following candidates is applicable" on the lorebook-id search expression.
+2. `InputPickerSheets.kt:305:20` — "Unresolved reference 'lorebookGlassSurface'" on the sheet/row modifier call sites.
 
-2. **Parent Box of Scaffold is plain `Box(modifier = Modifier.fillMaxSize())`; `.layerBackdrop(chatBackdrop)` attached directly to `AssistantBackground` and fallback Box** — VERIFIED / NO CHANGE NEEDED.
-   - Line 1528: `Box(modifier = Modifier.fillMaxSize())` — already plain, no wrapping `.layerBackdrop()`.
-   - Line 1533: `AssistantBackground(... modifier = Modifier.domChatBlurSource().layerBackdrop(chatBackdrop))` — already correct.
-   - Lines 1538-1541: fallback `Box(... .fillMaxSize() .background(...) .domChatBlurSource() .layerBackdrop(chatBackdrop))` — already correct.
+Root cause: `lorebookGlassSurface` was declared as a **local `@Composable` extension function** inside `LorebooksPickerSheet` (commit `2908093` changed the call sites to `Modifier.lorebookGlassSurface(...)` but left the function scoped locally), so the extension name was not resolvable at the `Modifier.` call sites. The id-search expression `it.id.toString().contains(...)` uses `kotlin.uuid.Uuid.toString()`, which is valid and already used across the module (`Assistant.id.toString()`, `Conversation.id.toString()`); it compiles cleanly once the enclosing function type-checks.
 
-3. **Balance braces around `Box(modifier = Modifier.fillMaxSize().layerBackdrop(pageBackdrop))` wrapping `ChatPageContent` in `ModalNavigationDrawer`** — VERIFIED / NO CHANGE NEEDED.
-   - No `Box(modifier = Modifier.fillMaxSize().layerBackdrop(pageBackdrop))` wrapping exists in the `ModalNavigationDrawer` path (lines 1226-1270). `pageBackdrop` parameter and locals were removed, and neither call site (lines 1165, 1242) passed `pageBackdrop`.
-   - Brace structure at lines 1224-1270 verified balanced: `CompositionLocalProvider` ×2, `ModalNavigationDrawer(`/`)`/`{`/`}`, drawerContent `{`/`}`, content `{`/`}` all matched.
-   - No cyclic graphics layers introduced.
+Fix applied (single file, +26/-20 lines):
+- Promoted `Modifier.lorebookGlassSurface(shape, isFrosted)` from a broken local function to a **top-level `@Composable` extension function** in the same file.
+- Both call sites now pass the resolved `isFrosted` boolean.
+- Removed the now-unused local `borderBrush` value (inlined `LiquidGlassTokens.SpecularBorderSubtle`).
+- No `!!` force-unwraps introduced; null safety preserved via existing Elvis/defensive patterns.
+- Unified glass card theme preserved: reuses `frostedGlassSurface` / `liquidGlassSurface` with `LiquidGlassTokens.SpecularBorderSubtle` borders and `Color.Transparent` fill — consistent with the 0xFF141520 glass theme and the existing sheet/styling conventions.
 
-4. **`ChatToolbarOverflowMenu`: `border = null` when `liquidGlassSurface` is active** — APPLIED.
-   - Changed `border = border,` → `border = if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) border else null,` (was line 2881).
-   - Matches existing pattern at lines 2677, 2732, 3097 in the same file.
+Invariants honored: zero `!!`, zero background work on `Dispatchers.Main`, all state remembered/collected with lifecycle awareness, existing code style maintained.
 
 ## Call Chain & Architecture
 
 ```
-ChatPage (Composable, @Composable)
-├─ CompositionLocalProvider(LocalDomChatBlur provides blur)
-│  └─ CompositionLocalProvider(LocalAppBackdrop provides chatBackdrop)
-│     └─ Surface(modifier = Modifier.fillMaxSize())
-│        ├─ Box(modifier = Modifier.fillMaxSize())        ← plain, no backdrop wrapper
-│        │   ├─ AssistantBackground(modifier = ...layerBackdrop(chatBackdrop))
-│        │   └─ Box(... .layerBackdrop(chatBackdrop))     ← fallback background
-│        └─ Scaffold(...)
-│           ├─ topBar: ChatToolbar
-│           └─ content: chat messages + input
-└─ ChatToolbarOverflowMenu (inside ChatToolbar)
-   └─ Surface(shape, color = Transparent, border = conditional, modifier = ... .liquidGlassSurface / .frostedGlassSurface)
+UI layer (Compose)
+  └─ LorebooksPickerSheet (InputPickerSheets.kt)
+       ├─ remember settings.lorebooks / filteredLorebooks (search)
+       ├─ isFrosted = settings.displaySetting.liquidGlassMode == SOFT_FROSTED
+       ├─ ModalBottomSheet(modifier = Modifier.lorebookGlassSurface(sheetShape, isFrosted))
+       │     └─ top-level @Composable Modifier.lorebookGlassSurface
+       │           ├─ frostedGlassSurface(...)   (SOFT_FROSTED → Haze blur, no AGSL)
+       │           └─ liquidGlassSurface(... BALANCED_BLEND) (AGSL backdrop glass)
+       └─ lorebook rows: Box(modifier = Modifier.lorebookGlassSurface(shape, isFrosted).clickable(...))
+             └─ onClick → onNavigateToLorebook(lorebook.id.toString())
 ```
 
-- `ChatPageContent` is called from two sites:
-  - Wide-screen path (line ~1165): inside `Box(modifier = Modifier.weight(1f).fillMaxHeight())`.
-  - Modal drawer path (line ~1242): inside `ModalNavigationDrawer(...) { ChatPageContent(...) }`.
-- Neither call site passed `pageBackdrop`; removing the parameter resolves the dangling required parameter.
-- `chatBackdrop: LayerBackdrop` is created once at line 795 via `rememberLayerBackdrop()` and provided via `LocalAppBackdrop`.
+Architectural boundaries respected:
+- UI layer only renders state and emits intents (`onUpdateConversation`, `onNavigateToLorebook`, `onDismiss`). Zero business logic in the composable.
+- `Settings`, `Assistant`, `Conversation` are passed in as immutable data parameters (no ViewModel/repo access inside this file).
+- Glass-surface primitives (`frostedGlassSurface`/`liquidGlassSurface`) live in `ui/theme/LiquidGlass.kt` and read `LocalSettings.current` internally — consistent with the rest of the codebase (`LiquidGlass.kt:305`, `:483`).
+- `Lorebook.id` is `kotlin.uuid.Uuid`; `.toString()` is the standard conversion (same as `Assistant.id.toString()`/`Conversation.id.toString()` used module-wide).
 
 ## Recomposition & Memory Safety
 
-- `rememberLayerBackdrop()` is called once for `chatBackdrop` at line 795 — retained, not duplicated.
-- Removed `wallpaperBackdrop` and `pageBackdrop` locals eliminated two redundant `rememberLayerBackdrop()` calls per recomposition.
-- `Box(modifier = Modifier.fillMaxSize())` (line 1528) is plain — no `.layerBackdrop()` on the Box itself, avoiding double backdrop application and unnecessary graphics layer creation.
-- `.layerBackdrop(chatBackdrop)` is applied directly to `AssistantBackground` and the fallback `Box`, keeping backdrop recording localized to the background layer without wrapping `Scaffold`.
-- No `SnapshotStateList` or mutable collections passed to `items(...)`; `derivedStateOf` rule not applicable here.
-- No `!!` force-unwraps introduced; nullable `DomChatBlur?` handled via `CompositionLocalProvider` with `provides`.
+- All derived state is `remember`-scoped: `availableSkills`, `userInvocableSkills`, `filteredLorebooks`, `localEnabledIds`, `lorebookSearchQuery`, `sheetState`, `scope`, `density`, `configuration`, `maxSheetHeight`, `isFrosted`.
+- `filteredLorebooks` re-runs only when `settings.lorebooks` or `lorebookSearchQuery` changes (no unstable lambdas passed to `remember` keys).
+- `lorebookSearchQuery` is `remember { mutableStateOf("") }` — owned by the composition, released with the sheet.
+- `Modifier.lorebookGlassSurface` is a top-level `@Composable` extension; it captures no unstable locals and reads settings only through the passed `isFrosted` flag plus the shared primitives' own `LocalSettings.current` reads (consistent with `liquidGlassSurface`/`frostedGlassSurface`).
+- No `SnapshotStateList` passed directly to `items()`; `filteredLorebooks` (a `List`) is iterated with `forEachIndexed` inside a recomposable scope — no derived-state violation.
+- No naked objects: `sheetState` via `rememberModalBottomSheetState`, `scope` via `rememberCoroutineScope()`, scroll state via `rememberScrollState()`.
+- No `!!` anywhere in the edited file (grep-verified); all nullable access uses the existing safe patterns.
 
 ## Threading & Dispatchers
 
-- All changes are UI-layer Compose modifications; no coroutines, dispatchers, or threading introduced.
-- `val scope = rememberCoroutineScope()` retained for UI event dispatch (already existed, unchanged).
-- No `Dispatchers.Main` violations; no `Dispatchers.IO` needed for this UI-only change.
-- `LayerBackdrop` is a Compose graphics-layer modifier, executed on the main thread during composition/render — correct per Compose threading model.
+- `InputPickerSheets.kt` performs **no coroutine dispatching** and no direct `Dispatchers.Main`/`Dispatchers.IO` usage.
+- The only coroutine handle is `rememberCoroutineScope()` (`scope`), which is declared but not used for async work in this file (kept for parity with sibling sheets); any future launch must route disk/network to `Dispatchers.IO` per project invariants.
+- All state reads (`settings.displaySetting.liquidGlassMode`, `LocalSettings.current` inside the glass primitives) happen on the UI thread during composition — Compose-correct, no cross-thread reads.
+- No suspend functions, no `flow`, no `withContext` in this file. Threading concerns (ViewModel/Repository/Dispatchers.IO) are owned by the calling layer, not this UI component.
 
 ## Offline & Error State Handling
 
-- Backdrop rendering is purely visual/local; no network or disk I/O involved.
-- `renderBackground: Boolean = true` flag controls whether `AssistantBackground` or a solid-color fallback `Box` is rendered — both paths apply `.layerBackdrop(chatBackdrop)` identically.
-- No error states, loading states, or offline handling affected by this change.
-- `border = null` when `liquidGlassSurface` is active prevents drawing a soft edge border on top of the glass surface modifier, avoiding visual layering conflicts (not an error condition — a styling guard).
+- This file is a pure UI picker sheet; it has no network or disk access, so there are no offline/exception paths to handle directly.
+- UI states are handled explicitly:
+  - Empty search → `DomChatSearchBar` with placeholder; `filteredLorebooks.isEmpty()` renders a "none" text (`R.string.lorebooks_picker_none`).
+  - Search filtering is client-side over `settings.lorebooks` (already local data), so it works offline with no fallback needed.
+  - Dismiss → `onDismiss()`; navigation → `onNavigateToLorebook(id)`; toggles → `onUpdateConversation(conversation.copy(...))`.
+- No `try/catch` needed (no blocking/suspend calls). Error propagation to the caller is via the passed-in callback lambdas, which the ViewModel layer handles per standard `StateFlow` error emission.
 
-## Summary of Edits
+## Verification Notes
 
-| Location | Change |
-|----------|--------|
-| Line 1346-1347 | Removed `pageBackdrop: LayerBackdrop,` parameter |
-| Line 1349-1350 | Removed `val wallpaperBackdrop = rememberLayerBackdrop()` and `val pageBackdrop = rememberLayerBackdrop()` |
-| Line ~2878 | `border = border` → conditional `border = if (...SOFT_FROSTED) border else null` |
-| Lines 1528-1541 | Verified: plain Box + `.layerBackdrop(chatBackdrop)` on AssistantBackground and fallback Box |
-| Lines 1224-1270 | Verified: balanced braces in ModalNavigationDrawer wrapping |
-
-No local Gradle build performed (per constraints). File changes are syntactically consistent with surrounding Kotlin/Compose style.
+- Cannot run a local Gradle build per task constraints (`Do NOT run local gradle builds`).
+- Fix scope: single file, minimal diff, no new imports (reuses existing `Shape`, `Color`, `dp`, `LiquidGlassTokens`, `frostedGlassSurface`, `liquidGlassSurface`, `LiquidGlassMode` imports).
+- `git diff --stat`: 1 file changed, 26 insertions, 20 deletions.

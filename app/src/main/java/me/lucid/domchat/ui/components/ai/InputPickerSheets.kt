@@ -73,6 +73,30 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
 
+/**
+ * Liquid glass (BALANCED_BLEND) or frosted glass (SOFT_FROSTED) surface for lorebook picker
+ * rows and the sheet itself — no solid black backdrop. Reuses the shared
+ * [frostedGlassSurface] / [liquidGlassSurface] primitives so the sheet matches the
+ * DomChat unified glass card theme (0xFF141520).
+ */
+@Composable
+fun Modifier.lorebookGlassSurface(shape: Shape, isFrosted: Boolean): Modifier = if (isFrosted) {
+    frostedGlassSurface(
+        shape = shape,
+        borderWidth = 0.5.dp,
+        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+        fillColor = Color.Transparent,
+    )
+} else {
+    liquidGlassSurface(
+        shape = shape,
+        borderWidth = 0.5.dp,
+        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+        fillColor = Color.Transparent,
+        glassMode = LiquidGlassMode.BALANCED_BLEND,
+    )
+}
+
 @Composable
 internal fun SkillsPickerSheet(
     settings: Settings,
@@ -276,33 +300,15 @@ internal fun LorebooksPickerSheet(
 
     // Liquid glass (BALANCED_BLEND) or frosted glass (SOFT_FROSTED) sheet — no solid black backdrop.
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
-    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
-    @Composable
-    fun Modifier.lorebookGlassSurface(shape: Shape): Modifier = if (isFrosted) {
-        frostedGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = Color.Transparent,
-        )
-    } else {
-        liquidGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = Color.Transparent,
-            glassMode = LiquidGlassMode.BALANCED_BLEND,
-        )
-    }
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
-        containerColor = Color.Transparent,
+        containerColor = domChatSheetContainerColor(),
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = sheetShape,
         sheetGesturesEnabled = true,
-        modifier = Modifier.lorebookGlassSurface(sheetShape),
+        modifier = Modifier.lorebookGlassSurface(sheetShape, isFrosted),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
@@ -368,7 +374,7 @@ internal fun LorebooksPickerSheet(
                     CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
                         Box(
                             modifier = Modifier
-                                .lorebookGlassSurface(shape)
+                                .lorebookGlassSurface(shape, isFrosted)
                                 .clickable { onNavigateToLorebook(lorebook.id.toString()) },
                         ) {
                             Row(

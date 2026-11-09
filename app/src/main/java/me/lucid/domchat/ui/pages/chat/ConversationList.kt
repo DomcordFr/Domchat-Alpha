@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
@@ -96,9 +95,9 @@ import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
-import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.R
+
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.ui.components.ui.Tooltip
@@ -114,7 +113,6 @@ import me.lucid.domchat.ui.modifier.domChatIconPillContainerColor
 import me.lucid.domchat.ui.modifier.domChatChromeTextShadow
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.context.LocalNavController
-import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.utils.toLocalString
@@ -660,30 +658,15 @@ private fun ConversationItem(
             }
         }
 
-        val dropdownGlass = if (LocalSettings.current.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
-            Modifier.frostedGlassSurface(
-                shape = RoundedCornerShape(18.dp),
-                borderWidth = 0.dp,
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                fillColor = Color.Transparent,
-            )
-        } else {
-            Modifier.liquidGlassSurface(
-                shape = RoundedCornerShape(18.dp),
-                borderWidth = 0.dp,
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                fillColor = Color.Transparent,
-                glassMode = LiquidGlassMode.BALANCED_BLEND,
-            )
-        }
         DropdownMenu(
             expanded = showDropdownMenu,
             onDismissRequest = { showDropdownMenu = false },
-            modifier = dropdownGlass,
-            shape = RoundedCornerShape(18.dp),
-            // AMOLED black glass popup with a single specular rim; no manual offset so the
-            // menu anchors to its row without window-coordinate distortion.
-            containerColor = Color(0xFF000000).copy(alpha = 0.90f),
+            // Dark glass container inside the menu's own Android window: solid near-black fill
+            // with a single specular rim. Do NOT sample LocalAppBackdrop here — DropdownMenu
+            // paints in a separate window, so backdrop coordinates would resolve against the
+            // wrong window and the popup would land off-screen (top-left) or solid black.
+            shape = RoundedCornerShape(14.dp),
+            containerColor = Color(0xFF141520).copy(alpha = 0.95f),
             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         ) {
             DropdownMenuItem(

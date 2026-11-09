@@ -1817,17 +1817,15 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
     val avatarUrl = resolveAvatarUrl(extract.avatarHash ?: extract.avatarHash2)
     val systemPrompt = extract.systemPrompt ?: ""
     // Full bio / description stays in the extract (shown in the sheet's Notes / Personality
-    // tabs). creatorNotes preserves the full description (never truncated) and appends the
-    // embedded image URLs so every byte of imported data and every image stays intact.
+    // tabs). creatorNotes preserves the full description (never truncated). Embedded image URLs
+    // are rendered in-place in the inspector Notes tab via MarkdownBlock / SimpleHtmlBlock; they
+    // are NOT appended as a raw "---\nEmbedded images:\n..." block to creatorNotes.
     val fullNotes = when {
         !extract.description.isNullOrBlank() -> extract.description
         !extract.bio.isNullOrBlank() -> extract.bio
         else -> ""
     }
-    val embeddedSection = if (extract.embeddedImages.isNotEmpty()) {
-        "\n\n---\n\nEmbedded images:\n" + extract.embeddedImages.joinToString("\n") { it }
-    } else ""
-    val creatorNotes = (fullNotes + embeddedSection).trimEnd()
+    val creatorNotes = fullNotes.trimEnd()
 
     // Map firstMessage to presetMessages as an assistant greeting
     val presetMessages = extract.firstMessage?.takeIf { it.isNotBlank() }?.let { message ->
