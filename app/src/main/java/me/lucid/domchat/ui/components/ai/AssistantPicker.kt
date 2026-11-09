@@ -252,7 +252,7 @@ fun AssistantPickerSheet(
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterHorizontally,
+                    contentAlignment = Alignment.Center,
                 ) {
                     DomChatSheetDragHandle()
                 }

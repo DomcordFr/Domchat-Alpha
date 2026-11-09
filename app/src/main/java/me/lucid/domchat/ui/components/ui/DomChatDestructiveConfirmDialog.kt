@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.lucid.domchat.R
@@ -37,8 +39,8 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 private const val DELETE_RED = 0xFFE53935
-private const val DIALOG_HEIGHT = 48.dp
-private const val BUTTON_CORNER = 16.dp
+private val DIALOG_HEIGHT = 48.dp
+private val BUTTON_CORNER = 16.dp
 
 /**
  * Single irreversible-confirm pattern: floating rounded dialog, clear title,

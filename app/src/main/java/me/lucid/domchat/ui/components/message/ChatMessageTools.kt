@@ -872,10 +872,12 @@ private fun ToolCallPreviewSheet(
         onConfirm = {
             val id = pendingMemoryDeleteId
             pendingMemoryDeleteId = null
-            scope.launch {
-                runCatching {
-                    memoryRepo.deleteMemory(id)
-                    onDismissRequest()
+            id?.let { memoryId ->
+                scope.launch {
+                    runCatching {
+                        memoryRepo.deleteMemory(memoryId)
+                        onDismissRequest()
+                    }
                 }
             }
         },

@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.lucid.domchat.ui.context.LocalSettings
@@ -38,8 +40,8 @@ import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 private const val DELETE_RED = 0xFFE53935
-private const val DIALOG_HEIGHT = 48.dp
-private const val BUTTON_CORNER = 16.dp
+private val DIALOG_HEIGHT = 48.dp
+private val BUTTON_CORNER = 16.dp
 
 /**
  * Button content shared by every destructive confirmation dialog:

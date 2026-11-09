@@ -208,7 +208,7 @@ fun DomChatSearchBar(
         decorationBox = { innerTextField ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.CenterVertically,
+                contentAlignment = Alignment.Center,
             ) {
                 OutlinedTextFieldDefaults.DecorationBox(
                     value = value,
