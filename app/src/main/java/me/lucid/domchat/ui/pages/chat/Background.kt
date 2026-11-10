@@ -83,7 +83,10 @@ fun AssistantBackground(
         targetState = resolvedBackground,
         transitionSpec = {
             val fadeDuration = if (motionPolicy.reduceMotion) 80 else 180
-            fadeIn(animationSpec = tween(fadeDuration)) togetherWith
+            // Enter opaque on frame 1 so [wallpaperBackdrop] records opaque
+            // pixels immediately instead of a transparent fade-in frame that
+            // leaves liquid glass surfaces blank until the next redraw.
+            fadeIn(animationSpec = tween(fadeDuration), initialAlpha = 1f) togetherWith
                 fadeOut(animationSpec = tween(fadeDuration))
         },
         contentAlignment = Alignment.Center,

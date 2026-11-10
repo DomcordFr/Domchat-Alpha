@@ -68,6 +68,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1453,7 +1454,15 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(swipeModifier),
+                        .then(swipeModifier)
+                        .then(
+                            animateContentSize(
+                                animationSpec = tween(
+                                    durationMillis = 200,
+                                    easing = LinearOutSlowInEasing
+                                )
+                            )
+                        ),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onToggleToolbar()
@@ -1493,7 +1502,7 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
-                    var userEntranceTarget by remember { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
+                    var userEntranceTarget by rememberSaveable(node.id) { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
                     val userEntrance by animateFloatAsState(
                         targetValue = userEntranceTarget,
                         animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
@@ -1513,34 +1522,51 @@ private fun UserMessageTurn(
                         } else null
                     )
                     val userNickname = settings.displaySetting.getActivePersona().name
-                    val displayContent = remember(part.text, assistant, userNickname) {
-                        formatRoleplayTextWithCdnImages(
-                            cleanHtmlImgToMarkdown(
-                                part.text
-                                    .replacePersonaPlaceholders(
-                                        assistant = assistant,
-                                        userNickname = userNickname,
-                                    )
-                                    .replaceRegexes(
-                                        assistant = assistant,
-                                        scope = AssistantAffectScope.USER,
-                                        visual = true,
-                                    )
+                    AnimatedContent(
+                        targetState = node.selectIndex,
+                        transitionSpec = {
+                            (fadeIn(animationSpec = tween(200)) +
+                                slideInHorizontally(animationSpec = tween(200)) { width ->
+                                    if (targetState > initialState) width / 5 else -width / 5
+                                }) togetherWith
+                            (fadeOut(animationSpec = tween(200)) +
+                                slideOutHorizontally(animationSpec = tween(200)) { width ->
+                                    if (targetState > initialState) -width / 5 else width / 5
+                                })
+                        },
+                        label = "UserMessageVersionAnimatedContent"
+                    ) { targetIdx ->
+                        val targetMsg = node.messages.getOrNull(targetIdx) ?: bubbleNode.currentMessage
+                        val targetText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(partIndex)?.text ?: part.text
+                        val displayContent = remember(targetText, assistant, userNickname) {
+                            formatRoleplayTextWithCdnImages(
+                                cleanHtmlImgToMarkdown(
+                                    targetText
+                                        .replacePersonaPlaceholders(
+                                            assistant = assistant,
+                                            userNickname = userNickname,
+                                        )
+                                        .replaceRegexes(
+                                            assistant = assistant,
+                                            scope = AssistantAffectScope.USER,
+                                            visual = true,
+                                        )
+                                )
                             )
+                        }
+                        MarkdownBlock(
+                            workspaceId = assistant?.workspaceId?.toString(),
+                            content = displayContent,
+                            paragraphSpacing = 12.dp,
+                            style = userEntranceStyle,
+                            streamingTextReveal = !isHistoryTurn,
+                            freshReveal = !isHistoryTurn,
+                            modifier = Modifier
+                                .alpha(userEntrance)
+                                .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },
+                            onClickCitation = {}
                         )
                     }
-                    MarkdownBlock(
-                        workspaceId = assistant?.workspaceId?.toString(),
-                        content = displayContent,
-                        paragraphSpacing = 12.dp,
-                        style = userEntranceStyle,
-                        streamingTextReveal = !isHistoryTurn,
-                        freshReveal = !isHistoryTurn,
-                        modifier = Modifier
-                            .alpha(userEntrance)
-                            .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },
-                        onClickCitation = {}
-                    )
                 }
             }
         }
@@ -1681,6 +1707,16 @@ private fun AssistantMessageTurn(
     val showIcon = effectiveDisplay.showModelIcon
     val showModelName = effectiveDisplay.showModelName
     val haptics = rememberPremiumHaptics()
+
+    // Bubble size-animation is gated off during active streaming: applying
+    // animateContentSize on every new-chunk frame kept re-targeting the
+    // spring and made expansion choppy. Animate only when the timeline
+    // toggles or when loading finishes.
+    var prevLoading by remember { mutableStateOf(false) }
+    val loadingJustFinished = !loading && prevLoading
+    LaunchedEffect(loading) {
+        prevLoading = loading
+    }
     val attachmentSignature = group.attachmentsSignature()
     val attachments = remember(attachmentSignature, defaultVideoLabel, defaultAudioLabel, context) {
         collectRenderableAttachments(
@@ -1780,7 +1816,7 @@ private fun AssistantMessageTurn(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (chatAnimationsEnabled && (loading || timelineOpen)) {
+                if (chatAnimationsEnabled && (timelineOpen || loadingJustFinished)) {
                     Modifier.animateContentSize(
                         animationSpec = tween(
                             durationMillis = 220,
@@ -1978,7 +2014,19 @@ private fun AssistantMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(assistantSwipeModifier),
+                        .then(assistantSwipeModifier)
+                        .then(
+                            if (!loading) {
+                                animateContentSize(
+                                    animationSpec = tween(
+                                        durationMillis = 200,
+                                        easing = LinearOutSlowInEasing
+                                    )
+                                )
+                            } else {
+                                Modifier
+                            }
+                        ),
                     onClick = handleBubbleClick,
                     bubbleModifier = { m, shape, color ->
                         if (isTransparentStyle) {
@@ -2015,16 +2063,16 @@ private fun AssistantMessageTurn(
                         }
                     }
                 ) {
-                    androidx.compose.animation.AnimatedContent(
+                    AnimatedContent(
                         targetState = assistantNode.selectIndex,
                         transitionSpec = {
-                            (androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(220)) +
-                                androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(220)) { width ->
-                                    if (targetState > initialState) width / 4 else -width / 4
+                            (fadeIn(animationSpec = tween(200)) +
+                                slideInHorizontally(animationSpec = tween(200)) { width ->
+                                    if (targetState > initialState) width / 5 else -width / 5
                                 }) togetherWith
-                            (androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(180)) +
-                                androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(180)) { width ->
-                                    if (targetState > initialState) -width / 4 else width / 4
+                            (fadeOut(animationSpec = tween(200)) +
+                                slideOutHorizontally(animationSpec = tween(200)) { width ->
+                                    if (targetState > initialState) -width / 5 else width / 5
                                 })
                         },
                         label = "ChatMessageVersionAnimatedContent"
@@ -2136,8 +2184,8 @@ private fun AssistantMessageTurn(
                 targetState = assistantNode.selectIndex,
                 transitionSpec = {
                     val isForward = targetState > initialState
-                    (slideInHorizontally(animationSpec = tween(220)) { width -> if (isForward) width / 4 else -width / 4 } + fadeIn(animationSpec = tween(220))) togetherWith
-                        (slideOutHorizontally(animationSpec = tween(180)) { width -> if (isForward) -width / 4 else width / 4 } + fadeOut(animationSpec = tween(180)))
+                    (slideInHorizontally(animationSpec = tween(200)) { width -> if (isForward) width / 5 else -width / 5 } + fadeIn(animationSpec = tween(200))) togetherWith
+                        (slideOutHorizontally(animationSpec = tween(200)) { width -> if (isForward) -width / 5 else width / 5 } + fadeOut(animationSpec = tween(200)))
                 },
                 label = "assistant_message_content_switch"
             ) { targetIdx ->
@@ -2146,9 +2194,21 @@ private fun AssistantMessageTurn(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(assistantSwipeModifier),
-                    verticalArrangement = Arrangement.spacedBy(elementSpacing)
-                ) {
+                        .then(assistantSwipeModifier)
+                        .then(
+                            if (!loading) {
+                                animateContentSize(
+                                    animationSpec = tween(
+                                        durationMillis = 200,
+                                        easing = LinearOutSlowInEasing
+                                    )
+                                )
+                            } else {
+                                Modifier
+                            }
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(elementSpacing)
+                    ) {
                     val activeParts = if (currentTextParts.isNotEmpty()) currentTextParts else allTextBubbles.map { it.second }
                     activeParts.forEachIndexed { index, part ->
                         val userNickname = settings.displaySetting.getActivePersona().name

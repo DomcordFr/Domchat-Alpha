@@ -239,7 +239,7 @@ fun AssistantPickerSheet(
         // Drag handle is rendered as the first LazyColumn item so the
         // entire top area (handle, header, search, tags) scrolls away
         // with the character list instead of staying pinned.
-        dragHandle = null,
+        dragHandle = {},
     ) {
         LazyColumn(
             modifier = Modifier

@@ -1148,20 +1148,22 @@ fun ChatPage(
                                             vm = vm
                                         )
                                     } else {
-                                        ChatDrawerContent(
-                                            navController = navController,
-                                            current = conversation,
-                                            vm = vm,
-                                            settings = setting,
-                                            inputState = inputState,
-                                            activePersistenceMode = activePersistenceMode,
-                                            drawerState = null,
-                                            presentation = ChatDrawerPresentation.PermanentPane,
-                                            collapsedWidth = wideDrawerExpandedWidth,
-                                            expandedWidth = wideDrawerExpandedWidth,
-                                            onCollapseRequest = { isWidePanelCollapsed = true },
-                                            onOpenAssistantPicker = { showWideRailAssistantPicker = true },
-                                        )
+                                        CompositionLocalProvider(LocalAppBackdrop provides (pageBackdrop ?: chatBackdrop)) {
+                                            ChatDrawerContent(
+                                                navController = navController,
+                                                current = conversation,
+                                                vm = vm,
+                                                settings = setting,
+                                                inputState = inputState,
+                                                activePersistenceMode = activePersistenceMode,
+                                                drawerState = null,
+                                                presentation = ChatDrawerPresentation.PermanentPane,
+                                                collapsedWidth = wideDrawerExpandedWidth,
+                                                expandedWidth = wideDrawerExpandedWidth,
+                                                onCollapseRequest = { isWidePanelCollapsed = true },
+                                                onOpenAssistantPicker = { showWideRailAssistantPicker = true },
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -1388,6 +1390,7 @@ private fun ChatPageContent(
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
+        if (!conversationInitialized) return@onNewChat
         if (isActiveConversation) {
             navController.navigate(Screen.ConversationList)
         } else {
@@ -1542,7 +1545,16 @@ private fun ChatPageContent(
         // its recording on state-driven recomposition.
         var contentBackdropDrawn by remember { mutableStateOf(false) }
         SideEffect {
-            if (!contentBackdropDrawn && contentBackdrop.hasRecording) {
+            // Only trust [contentBackdrop] once it has recorded opaque content.
+            // While the chat content is still fading in (chatListReady == false)
+            // its layer is transparent, so keep serving the opaque wallpaper
+            // backdrop to the top bar, composer, and empty chat surfaces from
+            // frame 1 so liquid glass renders immediately on launch.
+            if (
+                !contentBackdropDrawn &&
+                contentBackdrop.hasRecording &&
+                chatListReady
+            ) {
                 contentBackdropDrawn = true
             }
         }
@@ -3033,7 +3045,7 @@ private data class TopBarActionState(
 )
 
 private val DefaultTopBarActionState = TopBarActionState(
-    mode = TopBarActionMode.InChat,
+    mode = TopBarActionMode.NewChat,
     assistantId = null,
     showCloseAction = false,
 )

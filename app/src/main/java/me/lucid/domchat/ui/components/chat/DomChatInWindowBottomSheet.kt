@@ -207,7 +207,7 @@ fun DomChatSearchBar(
         interactionSource = interactionSource,
         decorationBox = { innerTextField ->
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 OutlinedTextFieldDefaults.DecorationBox(
@@ -252,7 +252,7 @@ fun DomChatSearchBar(
                             enabled = true,
                             isError = false,
                             interactionSource = interactionSource,
-                            modifier = Modifier,
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
                             colors = colors,
                             shape = CircleShape,
                             focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,

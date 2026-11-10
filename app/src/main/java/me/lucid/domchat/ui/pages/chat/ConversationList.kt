@@ -694,7 +694,13 @@ private fun ConversationItem(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = 8.dp)
-                    .zIndex(2f),
+                    .zIndex(2f)
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        layout(constraints.maxWidth, 0) {
+                            placeable.placeRelative(0, 0)
+                        }
+                    },
             ) {
                 ConversationActionMenu(
                     visible = true,

@@ -452,8 +452,7 @@ fun ChatDrawerContent(
                         val haptics = rememberPremiumHaptics()
                         // Guard against a missing assistant/persona so the bottom character
                         // chip never crashes the drawer composition or navigation.
-                        val assistant = currentAssistant
-                        val assistantName = assistant?.name?.ifEmpty { defaultAssistantName } ?: defaultAssistantName
+                        val assistantName = currentAssistant?.name?.ifEmpty { defaultAssistantName } ?: defaultAssistantName
 
                         Surface(
                             modifier = Modifier
@@ -467,13 +466,10 @@ fun ChatDrawerContent(
                                 )
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
-                                    if (assistant != null) {
-                                        navController.navigate(Screen.ConversationList)
-                                    } else {
-                                        // No assistant/persona exists yet: route to the picker
-                                        // instead of navigating on a null reference.
-                                        onOpenAssistantPicker()
-                                    }
+                                    // Character pill always opens the assistant picker; never navigate
+                                    // to ConversationList here, which can conflict with the backstack
+                                    // or crash when the drawer state changes mid-navigation.
+                                    onOpenAssistantPicker()
                                     dismissDrawerAfterSelection()
                                 },
                             color = Color.Transparent,

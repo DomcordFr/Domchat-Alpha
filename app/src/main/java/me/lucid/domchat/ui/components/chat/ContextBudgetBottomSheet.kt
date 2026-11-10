@@ -178,10 +178,11 @@ fun ContextBudgetBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(glassCard(RoundedCornerShape(16.dp)))
-                            .padding(14.dp)
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -279,9 +280,12 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(glassCard(RoundedCornerShape(16.dp)))
-                                .padding(14.dp)
                         ) {
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -333,9 +337,12 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(glassCard(RoundedCornerShape(16.dp)))
-                                .padding(14.dp)
                         ) {
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -375,9 +382,12 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(glassCard(RoundedCornerShape(16.dp)))
-                                .padding(14.dp)
                         ) {
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -420,9 +430,12 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(glassCard(RoundedCornerShape(16.dp)))
-                                .padding(14.dp)
                         ) {
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -464,9 +477,12 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(glassCard(RoundedCornerShape(16.dp)))
-                                .padding(14.dp)
                         ) {
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -508,10 +524,11 @@ fun ContextBudgetBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(glassCard(RoundedCornerShape(16.dp)))
-                                .padding(14.dp)
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {

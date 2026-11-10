@@ -840,10 +840,53 @@ fun MarkdownBlock(
             settleRanges = streamingPresentation.settleRanges
         }
     }
-    val streamingReveal = if (streamingTextReveal && settleRanges.isNotEmpty()) {
+    // Keep the last non-empty settle ranges while streaming, so when
+    // generation finishes the recently revealed text can finish its color
+    // fade to full opacity instead of snapping abruptly.
+    var liveRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
+    if (streamingTextReveal && settleRanges.isNotEmpty()) {
+        liveRanges = settleRanges
+    }
+
+    // Detect the streaming end (loading finished): capture the ranges to
+    // finish fading out. wasStreaming is updated after the check so the
+    // true->false transition is observed in the same composition pass.
+    var wasStreaming by remember { mutableStateOf(false) }
+    val streamingEnded = wasStreaming && !streamingTextReveal
+    wasStreaming = streamingTextReveal
+
+    var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
+    var finishNowMillis by remember { mutableStateOf(0L) }
+    var finishActive by remember { mutableStateOf(false) }
+
+    if (streamingEnded) {
+        finishRanges = liveRanges
+        finishNowMillis = streamingFrameMillis
+        finishActive = liveRanges.isNotEmpty()
+    }
+
+    // Keep the settle clock running after streaming stops so alpha/blur
+    // settle to their final values smoothly rather than jumping.
+    if (finishActive && !streamingTextReveal) {
+        LaunchedEffect(finishActive) {
+            while (finishActive && !streamingTextReveal) {
+                val now = withFrameMillis { it }
+                finishNowMillis = now
+                if (finishRanges.none { now - it.revealedAtMillis < maxSettleDurationMillis }) {
+                    finishActive = false
+                    finishRanges = emptyList()
+                }
+            }
+        }
+    }
+
+    val revealRanges = if (streamingTextReveal) settleRanges else finishRanges
+    val revealNowMillis = if (streamingTextReveal) streamingFrameMillis else finishNowMillis
+
+    val streamingReveal = if (revealRanges.isNotEmpty()) {
         StreamingTextReveal(
-            ranges = settleRanges,
-            nowMillis = streamingFrameMillis,
+            ranges = revealRanges,
+            nowMillis = revealNowMillis,
             color = contentColor,
             smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond,
             blurEnabled = settings.displaySetting.enableBlurEffect,

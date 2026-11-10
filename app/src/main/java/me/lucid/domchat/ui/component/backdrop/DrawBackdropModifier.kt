@@ -297,22 +297,26 @@ private class DrawBackdropNode(
     internal var surfaceDirty = true
 
     private var recordedBackdropVersion: Int? = null
+    private var recordedContentVersion: Int = -1
     private var recordedBackdropOffset: Offset? = null
     private var recordedBackdropSize: IntSize = IntSize.Zero
 
+    /** Last successfully applied draw-time translation; keeps the glass tracking when coordinates detach mid-scroll. */
+    private var lastDrawOffset: Offset = Offset.Zero
+
     private fun currentBackdropVersion(): Int? = (backdrop as? LayerBackdrop)?.geometryVersion
+
+    private fun currentBackdropContentVersion(): Int = (backdrop as? LayerBackdrop)?.contentVersion ?: -1
 
     private fun currentBackdropOffset(): Offset? {
         return try {
             val source = backdrop as? LayerBackdrop ?: return null
             val sourceCoordinates = source.layerCoordinates ?: return null
             val selfCoordinates = layoutCoordinates ?: return null
-            if (!sourceCoordinates.isAttached || !selfCoordinates.isAttached) {
-                return recordedBackdropOffset
-            }
+            if (!sourceCoordinates.isAttached || !selfCoordinates.isAttached) return null
             selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
         } catch (_: Exception) {
-            recordedBackdropOffset
+            null
         }
     }
 
@@ -356,19 +360,25 @@ private class DrawBackdropNode(
         )
         val offset = currentBackdropOffset()
         val version = currentBackdropVersion()
+        val contentVersion = currentBackdropContentVersion()
 
         // If offset is null during fast-scroll fling (coordinates detaching/remeasuring),
-        // still draw the last recorded layer so the bubble never blinks transparent.
+        // keep painting the last baked layer at its last known translation so the
+        // bubble never snaps to (0,0) / top-left wallpaper snapshot while detached.
         if (offset == null) {
             val layer = graphicsLayer
             if (layer != null && recordedBackdropSize != IntSize.Zero) {
                 layer.topLeft = if (padding != 0f) IntOffset(-padding.toInt(), -padding.toInt()) else IntOffset.Zero
                 if (scale != 1f) {
                     scale(1f / scale, pivot = Offset.Zero) {
-                        drawLayer(layer)
+                        translate(lastDrawOffset.x, lastDrawOffset.y) {
+                            drawLayer(layer)
+                        }
                     }
                 } else {
-                    drawLayer(layer)
+                    translate(lastDrawOffset.x, lastDrawOffset.y) {
+                        drawLayer(layer)
+                    }
                 }
             }
             surfaceDirty = true
@@ -383,13 +393,14 @@ private class DrawBackdropNode(
         val geometryChanged = surfaceDirty ||
             recordSize != recordedBackdropSize
         val versionChanged = version == null || version != recordedBackdropVersion
+        val contentChanged = contentVersion != recordedContentVersion
         val hasRecording = recordedBackdropSize != IntSize.Zero
         val offsetChanged = recordedBackdropOffset == null || offset != recordedBackdropOffset
-        val pureTranslation = scale == 1f && hasRecording && offsetChanged && !geometryChanged && !versionChanged
+        val pureTranslation = scale == 1f && hasRecording && offsetChanged && !geometryChanged && !versionChanged && !contentChanged
         val needsRecord = if (frozen() && hasRecording) {
-            geometryChanged
+            geometryChanged || contentChanged
         } else {
-            (geometryChanged || versionChanged)
+            (geometryChanged || versionChanged || contentChanged)
         } && !pureTranslation
 
         if (needsRecord || (scale != 1f && offsetChanged)) {
@@ -400,6 +411,7 @@ private class DrawBackdropNode(
                 block = recordBackdropBlock
             )
             recordedBackdropVersion = version
+            recordedContentVersion = contentVersion
             recordedBackdropOffset = offset
             recordedBackdropSize = recordSize
         }
@@ -415,6 +427,9 @@ private class DrawBackdropNode(
             } else {
                 Offset.Zero
             }
+        // Remember the last applied translation so detached-frame fallbacks keep
+        // tracking instead of collapsing the glass to (0,0).
+        lastDrawOffset = drawOffset
         if (scale != 1f) {
             scale(1f / scale, pivot = Offset.Zero) {
                 drawLayer(layer)
@@ -533,7 +548,9 @@ private class DrawBackdropNode(
         layoutCoordinates = null
         exportedBackdrop?.layerCoordinates = null
         recordedBackdropVersion = null
+        recordedContentVersion = -1
         recordedBackdropOffset = null
         recordedBackdropSize = IntSize.Zero
+        lastDrawOffset = Offset.Zero
     }
 }

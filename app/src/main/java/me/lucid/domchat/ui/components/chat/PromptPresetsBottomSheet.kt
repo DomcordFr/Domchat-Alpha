@@ -97,6 +97,7 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.ui.DomChatGlassChip
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import me.lucid.domchat.ui.components.ui.ToastType
@@ -376,6 +377,13 @@ fun PromptPresetsBottomSheet(
             item {
                 DomChatSheetHeader(
                     title = "Prompt Presets",
+                    badge = {
+                        // Active scope badge ("Using Chat" / "Using Global"), shown in both
+                        // global mode and per-chat mode with canonical liquid glass chip styling.
+                        DomChatGlassChip(
+                            text = if (isChatSpecific) "Using Chat" else "Using Global",
+                        )
+                    },
                     actions = {
                     if (!isEditingOrCreating) {
                         Surface(
@@ -422,8 +430,8 @@ fun PromptPresetsBottomSheet(
         }
 
         item {
-            // Action pills: Enable All / Disable All / Reset to Default, plus the
-            // active scope badge ("Using Chat" or "Using Global"), all glass pills.
+            // Action pills only: Enable All / Disable All / Reset to Default (per-chat mode).
+            // The active scope badge now lives in the sheet header badge slot.
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -446,33 +454,6 @@ fun PromptPresetsBottomSheet(
                         onClick = { resetToGlobal() },
                         modifier = Modifier.height(32.dp),
                     )
-                }
-                if (conversation != null) {
-                    // Active-scope badge: same glass pill treatment and fixed height as the
-                    // action pills, so all four pills sit on one clean centered baseline.
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        modifier = Modifier
-                            .height(32.dp)
-                            .padding(horizontal = 6.dp)
-                            .then(glassSurface(RoundedCornerShape(16.dp))),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                text = if (isChatSpecific) "Using Chat" else "Using Global",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                ),
-                                color = Color.White.copy(alpha = 0.9f),
-                                maxLines = 1,
-                            )
-                        }
-                    }
                 }
             }
         }

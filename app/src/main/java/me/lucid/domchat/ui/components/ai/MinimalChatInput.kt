@@ -1229,10 +1229,20 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .background(Color.Transparent, shape = RoundedCornerShape(12.dp))
-                                                    .border(
-                                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                                        shape = RoundedCornerShape(12.dp)
+                                                    .then(
+                                                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = RoundedCornerShape(12.dp),
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlassSurface(
+                                                                shape = RoundedCornerShape(12.dp),
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                            )
+                                                        }
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1240,14 +1250,14 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(14.dp)
                                                         .clip(RoundedCornerShape(4.dp))
-                                                        .background(Color(0xFFFF453A)),
+                                                        .background(Color.White),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
                                                         imageVector = RoundedStopIcon,
                                                         contentDescription = null,
                                                         modifier = Modifier.size(10.dp),
-                                                        tint = Color.White
+                                                        tint = MaterialTheme.colorScheme.error
                                                     )
                                                 }
                                             }
@@ -1529,10 +1539,20 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .background(Color.Transparent, shape = RoundedCornerShape(12.dp))
-                                                    .border(
-                                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                                        shape = RoundedCornerShape(12.dp)
+                                                    .then(
+                                                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = RoundedCornerShape(12.dp),
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlassSurface(
+                                                                shape = RoundedCornerShape(12.dp),
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                            )
+                                                        }
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1540,14 +1560,14 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(14.dp)
                                                         .clip(RoundedCornerShape(4.dp))
-                                                        .background(Color(0xFFFF453A)),
+                                                        .background(Color.White),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Icon(
                                                         imageVector = RoundedStopIcon,
                                                         contentDescription = null,
                                                         modifier = Modifier.size(10.dp),
-                                                        tint = Color.White
+                                                        tint = MaterialTheme.colorScheme.error
                                                     )
                                                 }
                                             }
