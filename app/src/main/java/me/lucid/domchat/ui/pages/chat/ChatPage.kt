@@ -1390,11 +1390,12 @@ private fun ChatPageContent(
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
-        if (!conversationInitialized) return@onNewChat
-        if (isActiveConversation) {
-            navController.navigate(Screen.ConversationList)
-        } else {
-            navigateToChatPage(navController)
+        if (conversationInitialized) {
+            if (isActiveConversation) {
+                navController.navigate(Screen.ConversationList)
+            } else {
+                navigateToChatPage(navController)
+            }
         }
     }
     var showToolbarOverflowMenu by remember { mutableStateOf(false) }

@@ -99,6 +99,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar

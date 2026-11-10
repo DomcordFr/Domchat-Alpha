@@ -1455,12 +1455,10 @@ private fun UserMessageTurn(
                     modifier = Modifier
                         .widthIn(max = maxWidth)
                         .then(swipeModifier)
-                        .then(
-                            animateContentSize(
-                                animationSpec = tween(
-                                    durationMillis = 200,
-                                    easing = LinearOutSlowInEasing
-                                )
+                        .animateContentSize(
+                            animationSpec = tween(
+                                durationMillis = 200,
+                                easing = LinearOutSlowInEasing
                             )
                         ),
                     onClick = {
@@ -2017,7 +2015,7 @@ private fun AssistantMessageTurn(
                         .then(assistantSwipeModifier)
                         .then(
                             if (!loading) {
-                                animateContentSize(
+                                Modifier.animateContentSize(
                                     animationSpec = tween(
                                         durationMillis = 200,
                                         easing = LinearOutSlowInEasing
@@ -2197,7 +2195,7 @@ private fun AssistantMessageTurn(
                         .then(assistantSwipeModifier)
                         .then(
                             if (!loading) {
-                                animateContentSize(
+                                Modifier.animateContentSize(
                                     animationSpec = tween(
                                         durationMillis = 200,
                                         easing = LinearOutSlowInEasing
