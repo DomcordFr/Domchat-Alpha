@@ -1494,19 +1494,17 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
-                    // Tracks nodes that already played their entrance animation so recycled
-                    // items never re-animate.
-                    val animatedIds by remember(node.id) { mutableStateOf(emptySet<String>()) }
-                    var userEntranceTarget by rememberSaveable(node.id) { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
+                    var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
+                    var userEntranceTarget by remember(node.id) { mutableFloatStateOf(if (isHistoryTurn || hasAnimated) 1f else 0f) }
                     val userEntrance by animateFloatAsState(
                         targetValue = userEntranceTarget,
                         animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
                         label = "user_message_glow_settle"
                     )
-                    LaunchedEffect(Unit) {
-                        if (node.id !in animatedIds) {
+                    LaunchedEffect(node.id) {
+                        if (!hasAnimated) {
                             userEntranceTarget = 1f
-                            animatedIds += node.id
+                            hasAnimated = true
                         }
                     }
                     val userBlurRadius = (1f - userEntrance) * 6f

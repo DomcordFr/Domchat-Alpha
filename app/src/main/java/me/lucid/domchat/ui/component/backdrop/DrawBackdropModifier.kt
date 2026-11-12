@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -362,13 +363,6 @@ private class DrawBackdropNode(
         val version = currentBackdropVersion()
         val contentVersion = currentBackdropContentVersion()
 
-        // Clamp sampling coordinates to item bounds so the wallpaper read never
-        // samples out of bounds or sticks at the top edge.
-        val boundedOffset = Offset(
-            offset.x.coerceIn(0f, size.width),
-            offset.y.coerceIn(0f, size.height),
-        )
-
         // If offset is null during fast-scroll fling (coordinates detaching/remeasuring),
         // draw a clean translucent glass fallback instead of the stale baked layer at
         // its last known translation, so the bubble never shows a frozen wallpaper
@@ -378,6 +372,13 @@ private class DrawBackdropNode(
             surfaceDirty = true
             return false
         }
+
+        // Clamp sampling coordinates to item bounds so the wallpaper read never
+        // samples out of bounds or sticks at the top edge.
+        val boundedOffset = Offset(
+            offset.x.coerceIn(0f, size.width),
+            offset.y.coerceIn(0f, size.height),
+        )
 
         // Do not trigger expensive shader re-record on pure translation jitter;
         // only re-record when size or source version actually changed. A pure

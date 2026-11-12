@@ -841,7 +841,7 @@ fun MarkdownBlock(
     // Settle fade: when streaming ends, drive a smooth 0 -> 1 fade over 250ms
     // with an Animatable instead of per-token alpha/blur modulation.
     val scope = rememberCoroutineScope()
-    val settleAnimatable = remember { Animatable(1f) }
+    val settleAnimatable = remember { androidx.compose.animation.core.Animatable(1f) }
     var settleAlpha by remember { mutableFloatStateOf(1f) }
     LaunchedEffect(settleAnimatable.value) {
         settleAlpha = settleAnimatable.value
