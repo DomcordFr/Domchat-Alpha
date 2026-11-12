@@ -346,7 +346,7 @@ fun ConversationList(
         menuConversation?.let { conversation ->
             Popup(
                 onDismissRequest = { menuConversation = null },
-                offset = with(LocalDensity.current) { (menuAnchor ?: IntOffset.Zero).toDpOffset() },
+                offset = menuAnchor ?: IntOffset.Zero,
             ) {
                 ConversationActionMenu(
                     visible = true,
@@ -616,7 +616,8 @@ private fun ConversationItem(
                     .height(72.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .onGloballyPositioned { coordinates ->
-                        onMenuAnchor(coordinates.positionInWindow())
+                        val pos = coordinates.positionInWindow()
+                        onMenuAnchor(IntOffset(pos.x.toInt(), pos.y.toInt()))
                     }
                     .border(
                         width = 0.5.dp,
