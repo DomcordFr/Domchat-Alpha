@@ -99,6 +99,8 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
@@ -615,7 +617,7 @@ private fun ConversationItem(
                     .clip(RoundedCornerShape(16.dp))
                     .onGloballyPositioned { coordinates ->
                         onMenuAnchor(coordinates.positionInWindow())
-                    },
+                    }
                     .border(
                         width = 0.5.dp,
                         brush = if (selected) LiquidGlassTokens.SpecularBorderSubtle else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
