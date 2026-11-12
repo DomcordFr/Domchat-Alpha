@@ -99,7 +99,6 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
@@ -139,6 +138,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Popup
 import me.lucid.domchat.utils.navigateToChatPage
 
 /**
@@ -179,6 +179,10 @@ fun ConversationList(
     val navController = LocalNavController.current
     Box(modifier = modifier) {
         val listState = rememberLazyListState()
+        var menuConversation by remember { mutableStateOf<Conversation?>(null) }
+        var menuAnchor by remember { mutableStateOf<IntOffset?>(null) }
+        var editConversation by remember { mutableStateOf<Conversation?>(null) }
+        var editedTitle by remember { mutableStateOf("") }
         val canScrollBackward by remember {
             derivedStateOf { listState.canScrollBackward }
         }
@@ -320,7 +324,10 @@ fun ConversationList(
                             onPin = onPin,
                             searchQuery = searchQuery,
                             getAssistant = getAssistant,
-                            modifier = Modifier
+                            modifier = Modifier,
+                            // Open the anchored action menu (rendered as a Popup below the list).
+                            onOpenMenu = { menuConversation = item.conversation },
+                            onMenuAnchor = { menuAnchor = it },
                         )
                     }
 
@@ -330,6 +337,105 @@ fun ConversationList(
                 }
             }
                 }
+        }
+
+        // Conversation action menu rendered in an anchored Popup outside the
+        // LazyColumn item measurement flow (replaces the in-row height-0 layout hack).
+        menuConversation?.let { conversation ->
+            Popup(
+                onDismissRequest = { menuConversation = null },
+                offset = with(LocalDensity.current) { (menuAnchor ?: IntOffset.Zero).toDpOffset() },
+            ) {
+                ConversationActionMenu(
+                    visible = true,
+                    onDismissRequest = { menuConversation = null },
+                    conversation = conversation,
+                    onPin = onPin,
+                    onEditTitle = {
+                        menuConversation = null
+                        editConversation = conversation
+                        editedTitle = conversation.title
+                    },
+                    onRegenerateTitle = onRegenerateTitle,
+                    onDelete = onDelete,
+                )
+            }
+        }
+
+        // Edit title dialog hoisted out of the recycled row.
+        editConversation?.let { conversation ->
+            Dialog(
+                onDismissRequest = { editConversation = null },
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.chat_page_edit_title),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White,
+                            )
+                            OutlinedTextField(
+                                value = editedTitle,
+                                onValueChange = { editedTitle = it },
+                                singleLine = true,
+                                shape = AppShapes.InputField,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedLabelColor = Color.White.copy(alpha = 0.8f),
+                                    unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
+                                    cursorColor = Color.White.copy(alpha = 0.9f),
+                                )
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                DomChatGlassPillButton(
+                                    text = stringResource(R.string.chat_page_cancel),
+                                    onClick = { editConversation = null },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White,
+                                )
+                                DomChatGlassPillButton(
+                                    text = stringResource(R.string.chat_page_save),
+                                    onClick = {
+                                        onEditTitle(conversation, editedTitle)
+                                        editConversation = null
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if (canScrollBackward) {
@@ -461,7 +567,9 @@ private fun ConversationItem(
     onPin: (Conversation) -> Unit = {},
     searchQuery: String = "",
     getAssistant: (Uuid) -> Assistant? = { null },
-    onClick: (Conversation) -> Unit
+    onClick: (Conversation) -> Unit,
+    onOpenMenu: () -> Unit = {},
+    onMenuAnchor: (IntOffset) -> Unit = {},
 ) {
     val haptics = rememberPremiumHaptics()
     val loadingDescription = stringResource(R.string.loading)
@@ -480,9 +588,6 @@ private fun ConversationItem(
             hasAnimated = true
         }
     }
-    
-    var showMenu by remember { mutableStateOf(false) }
-    var showEditTitleDialog by remember { mutableStateOf(false) }
     var editedTitle by remember(conversation.id) { mutableStateOf(conversation.title) }
     val messageOnlyMatch = searchQuery.isNotBlank() &&
         !conversation.title.contains(searchQuery, ignoreCase = true)
@@ -500,7 +605,7 @@ private fun ConversationItem(
             },
             onLongClick = {
                 haptics.perform(HapticPattern.Buildup)
-                showMenu = true
+                onOpenMenu()
             },
         ) {
             Box(
@@ -508,6 +613,9 @@ private fun ConversationItem(
                     .fillMaxWidth()
                     .height(72.dp)
                     .clip(RoundedCornerShape(16.dp))
+                    .onGloballyPositioned { coordinates ->
+                        onMenuAnchor(coordinates.positionInWindow())
+                    },
                     .border(
                         width = 0.5.dp,
                         brush = if (selected) LiquidGlassTokens.SpecularBorderSubtle else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
@@ -669,130 +777,8 @@ private fun ConversationItem(
             }
         }
 
-        AnimatedVisibility(
-            visible = showMenu,
-            enter = fadeIn(animationSpec = tween(120)) + scaleIn(
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f),
-                initialScale = 0.92f,
-            ),
-            exit = fadeOut(animationSpec = tween(100)) + scaleOut(
-                animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
-                targetScale = 0.92f,
-            ),
-        ) {
-            // Tap anywhere on the row to dismiss the in-tree overlay menu
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f)
-                    .combinedClickable(
-                        onLongClick = {},
-                        onClick = { showMenu = false },
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 8.dp)
-                    .zIndex(2f)
-                    .layout { measurable, constraints ->
-                        val placeable = measurable.measure(constraints)
-                        layout(constraints.maxWidth, 0) {
-                            placeable.placeRelative(0, 0)
-                        }
-                    },
-            ) {
-                ConversationActionMenu(
-                    visible = true,
-                    onDismissRequest = { showMenu = false },
-                    conversation = conversation,
-                    onPin = onPin,
-                    onEditTitle = {
-                        editedTitle = conversation.title
-                        showEditTitleDialog = true
-                    },
-                    onRegenerateTitle = onRegenerateTitle,
-                    onDelete = onDelete,
-                )
-            }
-        }
     }
 
-    if (showEditTitleDialog) {
-        Dialog(
-            onDismissRequest = { showEditTitleDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(R.string.chat_page_edit_title),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = Color.White,
-                        )
-                        OutlinedTextField(
-                            value = editedTitle,
-                            onValueChange = { editedTitle = it },
-                            singleLine = true,
-                            shape = AppShapes.InputField,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedBorderColor = Color.White.copy(alpha = 0.35f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
-                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-                                cursorColor = Color.White.copy(alpha = 0.9f),
-                            )
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            DomChatGlassPillButton(
-                                text = stringResource(R.string.chat_page_cancel),
-                                onClick = { showEditTitleDialog = false },
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                containerColor = Color(0xFF000000),
-                                contentColor = Color.White,
-                            )
-                            DomChatGlassPillButton(
-                                text = stringResource(R.string.chat_page_save),
-                                onClick = {
-                                    onEditTitle(conversation, editedTitle)
-                                    showEditTitleDialog = false
-                                },
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                containerColor = Color(0xFF000000),
-                                contentColor = Color.White,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
     }
 
 /**

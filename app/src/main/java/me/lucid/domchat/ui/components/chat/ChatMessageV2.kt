@@ -1454,13 +1454,7 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(swipeModifier)
-                        .animateContentSize(
-                            animationSpec = tween(
-                                durationMillis = 200,
-                                easing = LinearOutSlowInEasing
-                            )
-                        ),
+                        .then(swipeModifier),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onToggleToolbar()
@@ -1500,6 +1494,9 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
+                    // Tracks nodes that already played their entrance animation so recycled
+                    // items never re-animate.
+                    val animatedIds by remember(node.id) { mutableStateOf(emptySet<String>()) }
                     var userEntranceTarget by rememberSaveable(node.id) { mutableFloatStateOf(if (isHistoryTurn) 1f else 0f) }
                     val userEntrance by animateFloatAsState(
                         targetValue = userEntranceTarget,
@@ -1507,7 +1504,10 @@ private fun UserMessageTurn(
                         label = "user_message_glow_settle"
                     )
                     LaunchedEffect(Unit) {
-                        userEntranceTarget = 1f
+                        if (node.id !in animatedIds) {
+                            userEntranceTarget = 1f
+                            animatedIds += node.id
+                        }
                     }
                     val userBlurRadius = (1f - userEntrance) * 6f
                     val userEntranceStyle = LocalTextStyle.current.copy(
@@ -1523,12 +1523,12 @@ private fun UserMessageTurn(
                     AnimatedContent(
                         targetState = node.selectIndex,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(200)) +
-                                slideInHorizontally(animationSpec = tween(200)) { width ->
+                            (fadeIn(animationSpec = tween(220)) +
+                                slideInHorizontally(animationSpec = tween(220)) { width ->
                                     if (targetState > initialState) width / 5 else -width / 5
                                 }) togetherWith
-                            (fadeOut(animationSpec = tween(200)) +
-                                slideOutHorizontally(animationSpec = tween(200)) { width ->
+                            (fadeOut(animationSpec = tween(220)) +
+                                slideOutHorizontally(animationSpec = tween(220)) { width ->
                                     if (targetState > initialState) -width / 5 else width / 5
                                 })
                         },
@@ -2012,19 +2012,7 @@ private fun AssistantMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(assistantSwipeModifier)
-                        .then(
-                            if (!loading) {
-                                Modifier.animateContentSize(
-                                    animationSpec = tween(
-                                        durationMillis = 200,
-                                        easing = LinearOutSlowInEasing
-                                    )
-                                )
-                            } else {
-                                Modifier
-                            }
-                        ),
+                        .then(assistantSwipeModifier),
                     onClick = handleBubbleClick,
                     bubbleModifier = { m, shape, color ->
                         if (isTransparentStyle) {
@@ -2064,12 +2052,12 @@ private fun AssistantMessageTurn(
                     AnimatedContent(
                         targetState = assistantNode.selectIndex,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(200)) +
-                                slideInHorizontally(animationSpec = tween(200)) { width ->
+                            (fadeIn(animationSpec = tween(220)) +
+                                slideInHorizontally(animationSpec = tween(220)) { width ->
                                     if (targetState > initialState) width / 5 else -width / 5
                                 }) togetherWith
-                            (fadeOut(animationSpec = tween(200)) +
-                                slideOutHorizontally(animationSpec = tween(200)) { width ->
+                            (fadeOut(animationSpec = tween(220)) +
+                                slideOutHorizontally(animationSpec = tween(220)) { width ->
                                     if (targetState > initialState) -width / 5 else width / 5
                                 })
                         },
@@ -2182,8 +2170,8 @@ private fun AssistantMessageTurn(
                 targetState = assistantNode.selectIndex,
                 transitionSpec = {
                     val isForward = targetState > initialState
-                    (slideInHorizontally(animationSpec = tween(200)) { width -> if (isForward) width / 5 else -width / 5 } + fadeIn(animationSpec = tween(200))) togetherWith
-                        (slideOutHorizontally(animationSpec = tween(200)) { width -> if (isForward) -width / 5 else width / 5 } + fadeOut(animationSpec = tween(200)))
+                    (slideInHorizontally(animationSpec = tween(220)) { width -> if (isForward) width / 5 else -width / 5 } + fadeIn(animationSpec = tween(220))) togetherWith
+                        (slideOutHorizontally(animationSpec = tween(220)) { width -> if (isForward) -width / 5 else width / 5 } + fadeOut(animationSpec = tween(220)))
                 },
                 label = "assistant_message_content_switch"
             ) { targetIdx ->

@@ -75,9 +75,6 @@ fun navigateToChatPage(
             focusLatestMessageKey = target.focusLatestMessageKey,
         ),
     ) {
-        popUpTo(0) {
-            inclusive = true
-        }
         launchSingleTop = true
     }
 }

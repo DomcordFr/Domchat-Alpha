@@ -1,6 +1,6 @@
 package me.lucid.domchat.ui.components.richtext
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import android.content.Intent
 import android.util.Log
@@ -727,11 +727,9 @@ fun MarkdownBlock(
     // Read rpStyleRules and streaming animation settings
     val settings = LocalSettings.current
     val rpStyleRules = settings.displaySetting.rpStyleRules
-    val contentColor = style.color.takeOrElse { LocalContentColor.current }
     val displaySetting = settings.displaySetting
     val fadeInEnabled = displaySetting.enableStreamingFadeIn
     val fadeDurationMs = displaySetting.streamingFadeDurationMs.coerceIn(100, 1500)
-    val startAlpha = displaySetting.streamingFadeStartAlpha.coerceIn(0f, 0.9f)
     val continuousFlow = displaySetting.streamingContinuousFlow
     val maxSettleDurationMillis = if (fadeInEnabled) {
         (fadeDurationMs * 2L).coerceAtLeast(STREAMING_SETTLE_MAX_MILLIS)
@@ -840,63 +838,31 @@ fun MarkdownBlock(
             settleRanges = streamingPresentation.settleRanges
         }
     }
-    // Keep the last non-empty settle ranges while streaming, so when
-    // generation finishes the recently revealed text can finish its color
-    // fade to full opacity instead of snapping abruptly.
-    var liveRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
-    if (streamingTextReveal && settleRanges.isNotEmpty()) {
-        liveRanges = settleRanges
+    // Settle fade: when streaming ends, drive a smooth 0 -> 1 fade over 250ms
+    // with an Animatable instead of per-token alpha/blur modulation.
+    val scope = rememberCoroutineScope()
+    val settleAnimatable = remember { Animatable(1f) }
+    var settleAlpha by remember { mutableFloatStateOf(1f) }
+    LaunchedEffect(settleAnimatable.value) {
+        settleAlpha = settleAnimatable.value
     }
-
-    // Detect the streaming end (loading finished): capture the ranges to
-    // finish fading out. wasStreaming is updated after the check so the
-    // true->false transition is observed in the same composition pass.
-    var wasStreaming by remember { mutableStateOf(false) }
-    val streamingEnded = wasStreaming && !streamingTextReveal
-    wasStreaming = streamingTextReveal
-
-    var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
-    var finishNowMillis by remember { mutableStateOf(0L) }
-    var finishActive by remember { mutableStateOf(false) }
-
-    if (streamingEnded) {
-        finishRanges = liveRanges
-        finishNowMillis = streamingFrameMillis
-        finishActive = liveRanges.isNotEmpty()
-    }
-
-    // Keep the settle clock running after streaming stops so alpha/blur
-    // settle to their final values smoothly rather than jumping.
-    if (finishActive && !streamingTextReveal) {
-        LaunchedEffect(finishActive) {
-            while (finishActive && !streamingTextReveal) {
-                val now = withFrameMillis { it }
-                finishNowMillis = now
-                if (finishRanges.none { now - it.revealedAtMillis < maxSettleDurationMillis }) {
-                    finishActive = false
-                    finishRanges = emptyList()
-                }
+    var prevStreaming by remember { mutableStateOf(false) }
+    LaunchedEffect(streamingTextReveal) {
+        val justEnded = !streamingTextReveal && prevStreaming
+        prevStreaming = streamingTextReveal
+        if (justEnded) {
+            settleAnimatable.snapTo(0f)
+            scope.launch {
+                settleAnimatable.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(250),
+                )
             }
         }
     }
 
-    val revealRanges = if (streamingTextReveal) settleRanges else finishRanges
-    val revealNowMillis = if (streamingTextReveal) streamingFrameMillis else finishNowMillis
-
-    val streamingReveal = if (revealRanges.isNotEmpty()) {
-        StreamingTextReveal(
-            ranges = revealRanges,
-            nowMillis = revealNowMillis,
-            color = contentColor,
-            smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond,
-            blurEnabled = settings.displaySetting.enableBlurEffect,
-            fadeInEnabled = fadeInEnabled,
-            fadeDurationMs = fadeDurationMs,
-            startAlpha = startAlpha,
-        )
-    } else {
-        null
-    }
+    // Per-token alpha/blur modulation is dropped; no StreamingTextReveal styling.
+    val streamingReveal: StreamingTextReveal? = null
 
     // Provide rpStyleRules to entire tree via CompositionLocal
     CompositionLocalProvider(
@@ -908,19 +874,7 @@ fun MarkdownBlock(
     ) {
         ProvideTextStyle(style) {
             Column(
-                modifier = modifier
-                    .then(
-                        if (streamingTextReveal) {
-                            Modifier.animateContentSize(
-                                animationSpec = spring(
-                                    dampingRatio = 0.82f,
-                                    stiffness = 420f
-                                )
-                            )
-                        } else {
-                            Modifier
-                        }
-                    )
+                modifier = modifier.alpha(settleAlpha),
             ) {
                 astTree.children.fastForEach { child ->
                     MarkdownNode(

@@ -377,13 +377,6 @@ fun PromptPresetsBottomSheet(
             item {
                 DomChatSheetHeader(
                     title = "Prompt Presets",
-                    badge = {
-                        // Active scope badge ("Using Chat" / "Using Global"), shown in both
-                        // global mode and per-chat mode with canonical liquid glass chip styling.
-                        DomChatGlassChip(
-                            text = if (isChatSpecific) "Using Chat" else "Using Global",
-                        )
-                    },
                     actions = {
                     if (!isEditingOrCreating) {
                         Surface(
@@ -430,8 +423,7 @@ fun PromptPresetsBottomSheet(
         }
 
         item {
-            // Action pills only: Enable All / Disable All / Reset to Default (per-chat mode).
-            // The active scope badge now lives in the sheet header badge slot.
+            // Action row: Enable All / Disable All / Reset to Default (per-chat mode) plus active scope chip.
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -455,6 +447,9 @@ fun PromptPresetsBottomSheet(
                         modifier = Modifier.height(32.dp),
                     )
                 }
+                DomChatGlassChip(
+                    text = if (isChatSpecific) "Using Chat" else "Using Global",
+                )
             }
         }
 

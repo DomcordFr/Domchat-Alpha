@@ -29,8 +29,6 @@ import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -162,11 +160,19 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
         ) {
             // Live Allocation Overview Card
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            Modifier.liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardBg,
+                            )
+                        ),
                 ) {
                     Column(
                         modifier = Modifier
@@ -258,11 +264,19 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
 
             // Context Window Presets & Slider
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            Modifier.liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardBg,
+                            )
+                        ),
                 ) {
                     Column(
                         modifier = Modifier
@@ -397,11 +411,19 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
 
             // Allocation Sliders Card
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            Modifier.liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardBg,
+                            )
+                        ),
                 ) {
                     Column(
                         modifier = Modifier
@@ -499,11 +521,19 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
 
             // Output Token Reservation Card
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            Modifier.liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardBg,
+                            )
+                        ),
                 ) {
                     Column(
                         modifier = Modifier
@@ -571,11 +601,19 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
 
             // Context Compaction Card
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-                    colors = CardDefaults.cardColors(containerColor = cardBg),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            Modifier.liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardBg,
+                            )
+                        ),
                 ) {
                     Column(
                         modifier = Modifier

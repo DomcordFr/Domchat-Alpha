@@ -1232,15 +1232,17 @@ fun MinimalChatInput(
                                                     .then(
                                                         if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                                                             Modifier.frostedGlassSurface(
-                                                                shape = RoundedCornerShape(12.dp),
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
                                                             )
                                                         } else {
                                                             Modifier.liquidGlassSurface(
-                                                                shape = RoundedCornerShape(12.dp),
+                                                                shape = CircleShape,
                                                                 borderWidth = 0.5.dp,
                                                                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
                                                             )
                                                         }
                                                     ),
@@ -1248,8 +1250,8 @@ fun MinimalChatInput(
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(14.dp)
-                                                        .clip(RoundedCornerShape(4.dp))
+                                                        .size(12.dp)
+                                                        .clip(RoundedCornerShape(3.dp))
                                                         .background(Color.White),
                                                     contentAlignment = Alignment.Center
                                                 ) {
@@ -1542,15 +1544,17 @@ fun MinimalChatInput(
                                                     .then(
                                                         if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
                                                             Modifier.frostedGlassSurface(
-                                                                shape = RoundedCornerShape(12.dp),
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
                                                             )
                                                         } else {
                                                             Modifier.liquidGlassSurface(
-                                                                shape = RoundedCornerShape(12.dp),
+                                                                shape = CircleShape,
                                                                 borderWidth = 0.5.dp,
                                                                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
                                                             )
                                                         }
                                                     ),
@@ -1558,8 +1562,8 @@ fun MinimalChatInput(
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(14.dp)
-                                                        .clip(RoundedCornerShape(4.dp))
+                                                        .size(12.dp)
+                                                        .clip(RoundedCornerShape(3.dp))
                                                         .background(Color.White),
                                                     contentAlignment = Alignment.Center
                                                 ) {

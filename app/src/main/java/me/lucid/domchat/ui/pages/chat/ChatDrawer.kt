@@ -466,11 +466,12 @@ fun ChatDrawerContent(
                                 )
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
-                                    // Character pill always opens the assistant picker; never navigate
-                                    // to ConversationList here, which can conflict with the backstack
-                                    // or crash when the drawer state changes mid-navigation.
-                                    onOpenAssistantPicker()
-                                    dismissDrawerAfterSelection()
+                                    // Close the drawer gently first, then open the assistant picker
+                                    // once dismissal is in flight.
+                                    scope.launch {
+                                        dismissDrawerAfterSelection()
+                                        onOpenAssistantPicker()
+                                    }
                                 },
                             color = Color.Transparent,
                             shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,

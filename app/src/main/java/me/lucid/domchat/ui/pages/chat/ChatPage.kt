@@ -1577,7 +1577,13 @@ private fun ChatPageContent(
                         AssistantBackground(
                             assistant = currentAssistant,
                             conversationId = conversation.id.toString(),
-                            modifier = Modifier.domChatBlurSource().layerBackdrop(wallpaperBackdrop)
+                            modifier = Modifier
+                                .domChatBlurSource()
+                                .layerBackdrop(wallpaperBackdrop)
+                                // Also record into chatBackdrop so LocalAppBackdrop holds an
+                                // immediate non-empty recording on frame 0 (cold start / blank chat),
+                                // instead of a null or transparent backdrop.
+                                .layerBackdrop(chatBackdrop)
                         )
                     } else {
                         Box(
@@ -1591,7 +1597,7 @@ private fun ChatPageContent(
                     Scaffold(
                         topBar = {
                             CompositionLocalProvider(
-                                LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
+                                LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop ?: chatBackdrop ?: chatBackdrop
                             ) {
                                 if (toolbarPlacement == ChatToolbarPlacement.Top) {
                                     StartupChromeReveal(
@@ -1755,7 +1761,7 @@ private fun ChatPageContent(
                                         modifier = Modifier
                                             .fillMaxSize()
                                     ) {
-                                        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
+                                        CompositionLocalProvider(LocalAppBackdrop provides (wallpaperBackdrop ?: chatBackdrop)) {
                                             ChatList(
                                                 innerPadding = PaddingValues(
                                                     top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
@@ -1925,7 +1931,7 @@ private fun ChatPageContent(
                             distance = 30.dp,
                         ),
                 ) {
-                        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
+                        CompositionLocalProvider(LocalAppBackdrop provides (wallpaperBackdrop ?: chatBackdrop)) {
                             NewChatContent(
                                 assistant = currentAssistant,
                                 headerStyle = headerStyle,
@@ -1951,7 +1957,7 @@ private fun ChatPageContent(
                 // wallpaper backdrop so liquid glass works immediately on frame 0.
                 if (showHeaderAssistantPicker) {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
+                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop ?: chatBackdrop
                     ) {
                         me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
                             settings = setting,
@@ -2159,7 +2165,7 @@ private fun ChatPageContent(
                     )
                 } else {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
+                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop ?: chatBackdrop
                     ) {
                     MinimalChatInput(
                     modifier = Modifier

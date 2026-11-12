@@ -362,25 +362,19 @@ private class DrawBackdropNode(
         val version = currentBackdropVersion()
         val contentVersion = currentBackdropContentVersion()
 
+        // Clamp sampling coordinates to item bounds so the wallpaper read never
+        // samples out of bounds or sticks at the top edge.
+        val boundedOffset = Offset(
+            offset.x.coerceIn(0f, size.width),
+            offset.y.coerceIn(0f, size.height),
+        )
+
         // If offset is null during fast-scroll fling (coordinates detaching/remeasuring),
-        // keep painting the last baked layer at its last known translation so the
-        // bubble never snaps to (0,0) / top-left wallpaper snapshot while detached.
+        // draw a clean translucent glass fallback instead of the stale baked layer at
+        // its last known translation, so the bubble never shows a frozen wallpaper
+        // snapshot while detached.
         if (offset == null) {
-            val layer = graphicsLayer
-            if (layer != null && recordedBackdropSize != IntSize.Zero) {
-                layer.topLeft = if (padding != 0f) IntOffset(-padding.toInt(), -padding.toInt()) else IntOffset.Zero
-                if (scale != 1f) {
-                    scale(1f / scale, pivot = Offset.Zero) {
-                        translate(lastDrawOffset.x, lastDrawOffset.y) {
-                            drawLayer(layer)
-                        }
-                    }
-                } else {
-                    translate(lastDrawOffset.x, lastDrawOffset.y) {
-                        drawLayer(layer)
-                    }
-                }
-            }
+            drawRect(Color.Black.copy(alpha = 0.12f))
             surfaceDirty = true
             return false
         }
@@ -412,7 +406,7 @@ private class DrawBackdropNode(
             )
             recordedBackdropVersion = version
             recordedContentVersion = contentVersion
-            recordedBackdropOffset = offset
+            recordedBackdropOffset = boundedOffset
             recordedBackdropSize = recordSize
         }
 
@@ -423,7 +417,7 @@ private class DrawBackdropNode(
         // the baked layer shifted by the offset delta instead of re-recording.
         val drawOffset =
             if (scale == 1f && hasRecording && recordedBackdropOffset != null) {
-                recordedBackdropOffset!! - offset
+                recordedBackdropOffset!! - boundedOffset
             } else {
                 Offset.Zero
             }

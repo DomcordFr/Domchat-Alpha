@@ -245,7 +245,7 @@ fun AssistantPickerSheet(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 0.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             // Drag handle pill — scrolls away with the list
