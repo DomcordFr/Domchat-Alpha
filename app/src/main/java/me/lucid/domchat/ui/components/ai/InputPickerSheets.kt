@@ -316,7 +316,7 @@ internal fun LorebooksPickerSheet(
                 value = lorebookSearchQuery,
                 onValueChange = { lorebookSearchQuery = it },
                 placeholder = "Search lorebooks...",
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
             )
 
             Spacer(modifier = Modifier.height(10.dp))

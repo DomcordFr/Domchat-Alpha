@@ -48,6 +48,24 @@ class LayerBackdrop internal constructor(
 
     internal var layerCoordinates: LayoutCoordinates? by mutableStateOf(null)
 
+    /** Sampler nodes that should invalidate their draw when this source changes. */
+    private val samplerInvalidators = mutableSetOf<() -> Unit>()
+
+    /** Register a sampler callback to be invoked on geometry/content change. */
+    internal fun registerSamplerInvalidator(callback: () -> Unit) {
+        samplerInvalidators.add(callback)
+    }
+
+    /** Unregister a previously registered sampler callback. */
+    internal fun unregisterSamplerInvalidator(callback: () -> Unit) {
+        samplerInvalidators.remove(callback)
+    }
+
+    /** Notify every registered sampler that the source pixels changed. */
+    private fun notifySamplers() {
+        samplerInvalidators.forEach { it() }
+    }
+
     /**
      * Changes after the source layer is recorded. Samplers can read this plain
      * field during drawing without creating a snapshot invalidation loop.
@@ -61,6 +79,7 @@ class LayerBackdrop internal constructor(
     internal fun contentRecorded() {
         if (contentVersion == 0) geometryChanged()
         contentVersion++
+        notifySamplers()
     }
 
     /**
@@ -72,6 +91,7 @@ class LayerBackdrop internal constructor(
 
     internal fun geometryChanged() {
         geometryVersion++
+        notifySamplers()
     }
 
     /** True once the source has been recorded at least once. */

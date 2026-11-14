@@ -756,7 +756,7 @@ fun ChatPage(
     val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (isActiveConversation) {
-            navController.navigate(Screen.ConversationList)
+            navController.navigate(Screen.Chat(id = java.util.UUID.randomUUID().toString())) { launchSingleTop = true }
         } else {
             navigateToChatPage(navController)
         }
@@ -1392,7 +1392,7 @@ private fun ChatPageContent(
     val onNewChat = {
         if (conversationInitialized) {
             if (isActiveConversation) {
-                navController.navigate(Screen.ConversationList)
+                navController.navigate(Screen.Chat(id = java.util.UUID.randomUUID().toString())) { launchSingleTop = true }
             } else {
                 navigateToChatPage(navController)
             }
@@ -1583,7 +1583,10 @@ private fun ChatPageContent(
                                 // Also record into chatBackdrop so LocalAppBackdrop holds an
                                 // immediate non-empty recording on frame 0 (cold start / blank chat),
                                 // instead of a null or transparent backdrop.
-                                .layerBackdrop(chatBackdrop)
+                                .layerBackdrop(chatBackdrop),
+                            // Wallpaper bitmap decoded: invalidate the wallpaper backdrop so all
+                            // liquid glass samplers re-record against the real background.
+                            onWallpaperLoaded = { wallpaperBackdrop.geometryChanged() },
                         )
                     } else {
                         Box(

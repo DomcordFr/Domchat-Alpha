@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter.State
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.BackgroundBlurMode
 import me.lucid.domchat.ui.hooks.rememberUserSettingsState
@@ -38,6 +39,7 @@ fun AssistantBackground(
     conversationBackground: String? = null,
     conversationId: String? = null,
     modifier: Modifier = Modifier,
+    onWallpaperLoaded: (() -> Unit)? = null,
 ) {
     val motionPolicy = LocalMotionPolicy.current
     val settings by rememberUserSettingsState()
@@ -110,6 +112,14 @@ fun AssistantBackground(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     alignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.4f),
+                    onState = { state ->
+                        if (state is State.Success) {
+                            // Wallpaper bitmap decoded: tell every liquid glass sampler to
+                            // invalidate and re-record so they sample the real background
+                            // instead of a stale or empty snapshot.
+                            onWallpaperLoaded?.invoke()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxSize()
                         .then(

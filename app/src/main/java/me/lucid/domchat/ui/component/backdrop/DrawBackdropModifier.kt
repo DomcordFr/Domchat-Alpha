@@ -211,6 +211,7 @@ private class DrawBackdropElement(
                 node.onDrawBackdrop !== onDrawBackdrop ||
                 node.backdropScale != backdropScale
 
+        val oldBackdrop = node.backdrop
         node.backdrop = backdrop
         node.shapeProvider = shapeProvider
         node.effects = effects
@@ -226,6 +227,10 @@ private class DrawBackdropElement(
             node.surfaceDirty = true
         }
         node.invalidateDrawCache()
+        if (oldBackdrop !== backdrop) {
+            node.unregisterSampler(oldBackdrop)
+            node.registerSampler(backdrop)
+        }
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -305,6 +310,20 @@ private class DrawBackdropNode(
     /** Last successfully applied draw-time translation; keeps the glass tracking when coordinates detach mid-scroll. */
     private var lastDrawOffset: Offset = Offset.Zero
 
+    /** Invalidates this sampler's draw when the backdrop source changes (e.g. wallpaper bitmap finished decoding). */
+    private val invalidateSamplerDraw: () -> Unit = {
+        surfaceDirty = true
+        invalidateDraw()
+    }
+
+    fun registerSampler(backdrop: Backdrop) {
+        (backdrop as? LayerBackdrop)?.registerSamplerInvalidator(invalidateSamplerDraw)
+    }
+
+    fun unregisterSampler(backdrop: Backdrop) {
+        (backdrop as? LayerBackdrop)?.unregisterSamplerInvalidator(invalidateSamplerDraw)
+    }
+
     private fun currentBackdropVersion(): Int? = (backdrop as? LayerBackdrop)?.geometryVersion
 
     private fun currentBackdropContentVersion(): Int = (backdrop as? LayerBackdrop)?.contentVersion ?: -1
@@ -373,30 +392,28 @@ private class DrawBackdropNode(
             return false
         }
 
-        // Clamp sampling coordinates to item bounds so the wallpaper read never
-        // samples out of bounds or sticks at the top edge.
-        val boundedOffset = Offset(
-            offset.x.coerceIn(0f, size.width),
-            offset.y.coerceIn(0f, size.height),
-        )
+        // Sample the exact background behind the item at its current offset without
+        // clamping, so scrolling bubbles never read out-of-bounds or stick at an edge.
+        val boundedOffset = offset
 
-        // Do not trigger expensive shader re-record on pure translation jitter;
-        // only re-record when size or source version actually changed. A pure
-        // offset change (e.g. a card scrolling inside a LazyColumn) is compensated
-        // by shifting the baked layer at draw time instead of re-recording it, so
-        // refraction keeps tracking the surface smoothly without freezing.
+        // Re-record when size, source version, or content changes. Non-frozen samplers
+        // also re-record when the surface moves significantly (e.g. a card scrolling
+        // inside a LazyColumn) so bubbles sample the exact background behind them
+        // instead of a frozen or stale snapshot. Small translation jitter is still
+        // compensated by shifting the baked layer at draw time.
         val geometryChanged = surfaceDirty ||
             recordSize != recordedBackdropSize
         val versionChanged = version == null || version != recordedBackdropVersion
         val contentChanged = contentVersion != recordedContentVersion
         val hasRecording = recordedBackdropSize != IntSize.Zero
         val offsetChanged = recordedBackdropOffset == null || offset != recordedBackdropOffset
-        val pureTranslation = scale == 1f && hasRecording && offsetChanged && !geometryChanged && !versionChanged && !contentChanged
-        val needsRecord = if (frozen() && hasRecording) {
-            geometryChanged || contentChanged
-        } else {
-            (geometryChanged || versionChanged || contentChanged)
-        } && !pureTranslation
+        val offsetSignificantlyChanged =
+            recordedBackdropOffset == null || (offset - (recordedBackdropOffset ?: offset)).getDistance() > 1f
+        val baseNeedsRecord = when {
+            frozen() && hasRecording -> geometryChanged || contentChanged
+            else -> geometryChanged || versionChanged || contentChanged
+        }
+        val needsRecord = baseNeedsRecord || (!frozen() && offsetSignificantlyChanged)
 
         if (needsRecord || (scale != 1f && offsetChanged)) {
             recordLayer(
@@ -530,6 +547,7 @@ private class DrawBackdropNode(
         surfaceDirty = true
         observeEffects()
         invalidateDrawCache()
+        registerSampler(backdrop)
     }
 
     override fun onDetach() {
@@ -538,6 +556,7 @@ private class DrawBackdropNode(
             graphicsContext.releaseGraphicsLayer(layer)
             graphicsLayer = null
         }
+        unregisterSampler(backdrop)
         (backdrop as? LayerBackdrop)?.layerCoordinates = null
         effectScope.reset()
         layoutCoordinates = null

@@ -69,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -344,23 +345,30 @@ fun ConversationList(
         // Conversation action menu rendered in an anchored Popup outside the
         // LazyColumn item measurement flow (replaces the in-row height-0 layout hack).
         menuConversation?.let { conversation ->
+            val rowOffsetPx = with(LocalDensity.current) { 72.dp.roundToPx() }
             Popup(
                 onDismissRequest = { menuConversation = null },
-                offset = menuAnchor ?: IntOffset.Zero,
+                offset = IntOffset(menuAnchor?.x ?: 0, (menuAnchor?.y ?: 0) + rowOffsetPx),
             ) {
-                ConversationActionMenu(
+                AnimatedVisibility(
                     visible = true,
-                    onDismissRequest = { menuConversation = null },
-                    conversation = conversation,
-                    onPin = onPin,
-                    onEditTitle = {
-                        menuConversation = null
-                        editConversation = conversation
-                        editedTitle = conversation.title
-                    },
-                    onRegenerateTitle = onRegenerateTitle,
-                    onDelete = onDelete,
-                )
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut(),
+                ) {
+                    ConversationActionMenu(
+                        visible = true,
+                        onDismissRequest = { menuConversation = null },
+                        conversation = conversation,
+                        onPin = onPin,
+                        onEditTitle = {
+                            menuConversation = null
+                            editConversation = conversation
+                            editedTitle = conversation.title
+                        },
+                        onRegenerateTitle = onRegenerateTitle,
+                        onDelete = onDelete,
+                    )
+                }
             }
         }
 
@@ -815,14 +823,14 @@ private fun ConversationActionMenu(
             shape = RoundedCornerShape(16.dp),
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
-            fillColor = Color.Transparent,
+            fillColor = Color(0xFF000000),
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = RoundedCornerShape(16.dp),
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
-            fillColor = Color.Transparent,
+            fillColor = Color(0xFF000000),
             glassMode = LiquidGlassMode.BALANCED_BLEND,
         )
     }

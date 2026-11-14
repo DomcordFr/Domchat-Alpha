@@ -418,7 +418,7 @@ fun PromptPresetsBottomSheet(
                 value = presetSearchQuery,
                 onValueChange = { presetSearchQuery = it },
                 placeholder = "Search presets...",
-                modifier = Modifier.padding(bottom = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             )
         }
 

@@ -254,7 +254,7 @@ fun DomChatSearchBar(
                             interactionSource = interactionSource,
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             colors = colors,
-                            shape = CircleShape,
+                            shape = AppShapes.SearchField,
                             focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
                             unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
                         )

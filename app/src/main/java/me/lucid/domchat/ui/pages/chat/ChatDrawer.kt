@@ -466,10 +466,14 @@ fun ChatDrawerContent(
                                 )
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
-                                    // Close the drawer gently first, then open the assistant picker
-                                    // once dismissal is in flight.
+                                    // Await drawer close animation completion before opening the
+                                    // assistant picker so drawer sliding and sheet loading do not
+                                    // fight on the UI thread.
                                     scope.launch {
-                                        dismissDrawerAfterSelection()
+                                        when (presentation) {
+                                            ChatDrawerPresentation.Modal -> drawerState?.close()
+                                            ChatDrawerPresentation.PermanentPane -> onCollapseRequest?.invoke()
+                                        }
                                         onOpenAssistantPicker()
                                     }
                                 },

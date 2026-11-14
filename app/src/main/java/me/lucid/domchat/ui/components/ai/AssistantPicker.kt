@@ -272,7 +272,7 @@ fun AssistantPickerSheet(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = "Search characters...",
-                    modifier = Modifier.padding(bottom = 14.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
                 )
             }
 
