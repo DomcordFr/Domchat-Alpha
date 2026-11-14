@@ -831,10 +831,10 @@ private fun ConversationItem(
     }
 
 /**
- * In-tree long-press action menu for a conversation row.
- * Stays in the main window coordinate space, so [LocalAppBackdrop] sampling
- * works without DropdownMenu's isolated PopupWindow coordinate distortion.
- * Surface has no opaque fill — transparent glass with a specular rim only.
+ * Long-press action menu for a conversation row.
+ * Rendered by [ConversationList] in a Popup anchored to the row. The glass
+ * surface samples [LocalAppBackdrop] and uses an opaque AMOLED black fill
+ * beneath the refraction so it never reads as grey or transparent.
  */
 @Composable
 private fun ConversationActionMenu(

@@ -1553,7 +1553,13 @@ private fun ChatPageContent(
         val emptyChat = conversation.messageNodes.isEmpty()
         // Overlay floaters sample the chat content once it is opaque and ready;
         // everything else (bubbles, chat list, new-chat content) samples wallpaper.
-        val overlayBackdrop = if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
+        // `chatListReady` is checked directly (not only the cached flag) so the
+        // first frame after a conversation switch cannot sample a transparent layer.
+        val overlayBackdrop = if (emptyChat || !chatListReady || !contentBackdropDrawn) {
+            wallpaperBackdrop
+        } else {
+            contentBackdrop
+        }
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
             Surface(
                 color = if (renderBackground) {
