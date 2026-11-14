@@ -196,8 +196,7 @@ fun DomChatSearchBar(
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
-            .padding(PaddingValues(horizontal = 16.dp, vertical = 8.dp)),
+            .height(52.dp),
         enabled = true,
         readOnly = false,
         textStyle = textStyle,

@@ -753,13 +753,11 @@ fun ChatPage(
     val conversation by vm.conversation.collectAsStateWithLifecycle()
     val conversationInitialized by vm.conversationInitialized.collectAsStateWithLifecycle()
     val conversationAssistant by vm.conversationAssistant.collectAsStateWithLifecycle()
-    val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
-        if (isActiveConversation) {
-            navController.navigate(Screen.Chat(id = java.util.UUID.randomUUID().toString())) { launchSingleTop = true }
-        } else {
-            navigateToChatPage(navController)
-        }
+        // Always start a fresh generic chat. Route through the shared helper so the
+        // existing chat destination is updated in place (launchSingleTop) instead of
+        // pushing a raw Screen.Chat route directly.
+        navigateToChatPage(navController)
     }
     val loadingJob by vm.conversationJob.collectAsStateWithLifecycle()
     val conversationPersistenceMode by vm.conversationPersistenceMode.collectAsStateWithLifecycle()
@@ -1197,7 +1195,6 @@ fun ChatPage(
                                     initialSearchQuery = searchQuery,
                                     renderBackground = false,
                                     chatBackdrop = chatBackdrop,
-                                    pageBackdrop = pageBackdrop,
                                     inheritedBlur = wideBlur,
                                 )
                             }
@@ -1258,7 +1255,6 @@ fun ChatPage(
                         ChatPageContent(
                             inheritedBlur = modalBlur,
                             chatBackdrop = chatBackdrop,
-                            pageBackdrop = pageBackdrop,
                             inputState = inputState,
                             loadingJob = loadingJob,
                             setting = setting,
@@ -1364,7 +1360,6 @@ private fun ChatPageContent(
     renderBackground: Boolean = true,
     inheritedBlur: DomChatBlur? = null,
     chatBackdrop: LayerBackdrop,
-    pageBackdrop: LayerBackdrop,
 ) {
     val settings = setting
     val scope = rememberCoroutineScope()
@@ -1388,14 +1383,11 @@ private fun ChatPageContent(
     var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
-    val isActiveConversation = conversationInitialized && hasConversationMessages(conversation)
     val onNewChat = {
         if (conversationInitialized) {
-            if (isActiveConversation) {
-                navController.navigate(Screen.Chat(id = java.util.UUID.randomUUID().toString())) { launchSingleTop = true }
-            } else {
-                navigateToChatPage(navController)
-            }
+            // Route through the shared helper so the existing chat destination is
+            // updated in place instead of pushing a raw Screen.Chat route.
+            navigateToChatPage(navController)
         }
     }
     var showToolbarOverflowMenu by remember { mutableStateOf(false) }
@@ -1537,31 +1529,31 @@ private fun ChatPageContent(
     }
 
     AssistantChatTheme(assistant = currentAssistant) {
+        // Pure wallpaper layer — the ONLY backdrop chat bubbles, the chat list and
+        // new-chat surfaces may sample. Chat content is never recorded into it, so
+        // bubbles can never mirror the messages or the composer onto themselves.
         val wallpaperBackdrop = rememberLayerBackdrop()
+        // Records the chat list content. Served ONLY to overlay floaters (top bar,
+        // composer, picker, menus, sheets) and only while it is opaque and ready.
         val contentBackdrop = rememberLayerBackdrop()
-        val pageBackdrop = rememberLayerBackdrop()
-        // True once the content backdrop has recorded at least one frame. Until then
-        // (and whenever the chat is empty) we fall back to the wallpaper backdrop so
-        // liquid glass never samples an empty buffer and the backdrop doesn't lose
-        // its recording on state-driven recomposition.
+        // True while [contentBackdrop] holds an opaque, ready recording. Reset
+        // whenever the chat list is not ready (cold start, conversation switch) so
+        // a transparent recording is never served to liquid glass samplers, which
+        // used to make surfaces render fully transparent until a menu re-recorded.
         var contentBackdropDrawn by remember { mutableStateOf(false) }
         SideEffect {
-            // Only trust [contentBackdrop] once it has recorded opaque content.
-            // While the chat content is still fading in (chatListReady == false)
-            // its layer is transparent, so keep serving the opaque wallpaper
-            // backdrop to the top bar, composer, and empty chat surfaces from
-            // frame 1 so liquid glass renders immediately on launch.
-            if (
-                !contentBackdropDrawn &&
-                contentBackdrop.hasRecording &&
-                chatListReady
-            ) {
+            if (chatListReady && contentBackdrop.hasRecording) {
                 contentBackdropDrawn = true
+            } else if (!chatListReady) {
+                contentBackdropDrawn = false
             }
         }
         // Empty chat: bind the wallpaper backdrop immediately so liquid glass
         // paints at launch with 0ms delay instead of waiting for the first frame.
         val emptyChat = conversation.messageNodes.isEmpty()
+        // Overlay floaters sample the chat content once it is opaque and ready;
+        // everything else (bubbles, chat list, new-chat content) samples wallpaper.
+        val overlayBackdrop = if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
             Surface(
                 color = if (renderBackground) {
@@ -1600,7 +1592,7 @@ private fun ChatPageContent(
                     Scaffold(
                         topBar = {
                             CompositionLocalProvider(
-                                LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop ?: chatBackdrop ?: chatBackdrop
+                                LocalAppBackdrop provides overlayBackdrop
                             ) {
                                 if (toolbarPlacement == ChatToolbarPlacement.Top) {
                                     StartupChromeReveal(
@@ -1667,9 +1659,7 @@ private fun ChatPageContent(
                         contentWindowInsets = WindowInsets(0.dp)
                     ) { _ ->
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .layerBackdrop(pageBackdrop)
+                            modifier = Modifier.fillMaxSize()
                         ) {
                     val recentlyRestoredNodeIds = vm.recentlyRestoredNodeIds.collectAsStateWithLifecycle().value
                     val conversationSnapshots = remember { mutableMapOf<Uuid, Conversation>() }
@@ -1764,12 +1754,13 @@ private fun ChatPageContent(
                                         modifier = Modifier
                                             .fillMaxSize()
                                     ) {
-                                        CompositionLocalProvider(LocalAppBackdrop provides (wallpaperBackdrop ?: chatBackdrop)) {
+                                        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
                                             ChatList(
                                                 innerPadding = PaddingValues(
                                                     top = chatListTopPadding(toolbarPlacement, statusBarTopPadding),
                                                     bottom = chatListBottomPadding(toolbarPlacement)
                                                 ),
+                                                wallpaperBackdrop = wallpaperBackdrop,
                                                 conversation = frameConversation,
                                                 state = frameListState,
                                                 loading = targetConversationId == conversation.id && loadingJob != null,
@@ -1934,7 +1925,7 @@ private fun ChatPageContent(
                             distance = 30.dp,
                         ),
                 ) {
-                        CompositionLocalProvider(LocalAppBackdrop provides (wallpaperBackdrop ?: chatBackdrop)) {
+                        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
                             NewChatContent(
                                 assistant = currentAssistant,
                                 headerStyle = headerStyle,
@@ -1960,7 +1951,7 @@ private fun ChatPageContent(
                 // wallpaper backdrop so liquid glass works immediately on frame 0.
                 if (showHeaderAssistantPicker) {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop ?: chatBackdrop
+                        LocalAppBackdrop provides overlayBackdrop
                     ) {
                         me.lucid.domchat.ui.components.ai.AssistantPickerSheet(
                             settings = setting,
@@ -2168,7 +2159,7 @@ private fun ChatPageContent(
                     )
                 } else {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides if (emptyChat || !contentBackdropDrawn) wallpaperBackdrop else contentBackdrop ?: chatBackdrop
+                        LocalAppBackdrop provides overlayBackdrop
                     ) {
                     MinimalChatInput(
                     modifier = Modifier
@@ -2329,7 +2320,7 @@ private fun ChatPageContent(
                     if (reduceMotion || state == EnterExitState.Visible) 1f else 0.96f
                 }
                 contextMeterUsage?.let { usage ->
-                    CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                    CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
                         ContextUsageOverlay(
                             usage = usage,
                             activity = contextManagementActivity,
@@ -2348,7 +2339,7 @@ private fun ChatPageContent(
             }
 
             if (showChatInfoSheet) {
-                CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
                     ChatInfoBottomSheet(
                         settings = setting,
                         conversation = conversation,
@@ -2462,7 +2453,7 @@ private fun ChatPageContent(
                 ) { state ->
                     if (state == EnterExitState.Visible) 1f else 0.96f
                 }
-                CompositionLocalProvider(LocalAppBackdrop provides pageBackdrop) {
+                CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
                 ChatToolbarOverflowMenu(
                     placement = toolbarPlacement,
                     menuScale = menuScale,

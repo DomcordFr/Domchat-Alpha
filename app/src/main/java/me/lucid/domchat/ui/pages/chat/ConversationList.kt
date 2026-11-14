@@ -13,6 +13,7 @@ import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
@@ -69,7 +70,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -184,6 +184,7 @@ fun ConversationList(
         val listState = rememberLazyListState()
         var menuConversation by remember { mutableStateOf<Conversation?>(null) }
         var menuAnchor by remember { mutableStateOf<IntOffset?>(null) }
+        val menuTransition = remember { MutableTransitionState(false) }
         var editConversation by remember { mutableStateOf<Conversation?>(null) }
         var editedTitle by remember { mutableStateOf("") }
         val canScrollBackward by remember {
@@ -329,7 +330,10 @@ fun ConversationList(
                             getAssistant = getAssistant,
                             modifier = Modifier,
                             // Open the anchored action menu (rendered as a Popup below the list).
-                            onOpenMenu = { menuConversation = item.conversation },
+                            onOpenMenu = {
+                                menuConversation = item.conversation
+                                menuTransition.targetState = true
+                            },
                             onMenuAnchor = { menuAnchor = it },
                         )
                     }
@@ -345,19 +349,29 @@ fun ConversationList(
         // Conversation action menu rendered in an anchored Popup outside the
         // LazyColumn item measurement flow (replaces the in-row height-0 layout hack).
         menuConversation?.let { conversation ->
-            val rowOffsetPx = with(LocalDensity.current) { 72.dp.roundToPx() }
             Popup(
-                onDismissRequest = { menuConversation = null },
-                offset = IntOffset(menuAnchor?.x ?: 0, (menuAnchor?.y ?: 0) + rowOffsetPx),
+                onDismissRequest = { menuTransition.targetState = false },
+                offset = menuAnchor ?: IntOffset.Zero,
             ) {
                 AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut(),
+                    // Drive the animation from a transition state so the menu
+                    // scales/fades in on first composition and can play its exit
+                    // before the Popup is removed.
+                    visibleState = menuTransition,
+                    enter = fadeIn(animationSpec = tween(120)) +
+                        scaleIn(
+                            initialScale = 0.92f,
+                            animationSpec = spring(dampingRatio = 0.7f, stiffness = 360f),
+                        ),
+                    exit = fadeOut(animationSpec = tween(90)) +
+                        scaleOut(
+                            targetScale = 0.92f,
+                            animationSpec = spring(dampingRatio = 0.85f, stiffness = 420f),
+                        ),
                 ) {
                     ConversationActionMenu(
                         visible = true,
-                        onDismissRequest = { menuConversation = null },
+                        onDismissRequest = { menuTransition.targetState = false },
                         conversation = conversation,
                         onPin = onPin,
                         onEditTitle = {
@@ -368,6 +382,14 @@ fun ConversationList(
                         onRegenerateTitle = onRegenerateTitle,
                         onDelete = onDelete,
                     )
+                }
+            }
+            // Keep the Popup composed until the exit animation finishes, then
+            // release the conversation and its anchor.
+            LaunchedEffect(menuTransition.isIdle, menuTransition.currentState) {
+                if (menuTransition.isIdle && !menuTransition.currentState) {
+                    menuConversation = null
+                    menuAnchor = null
                 }
             }
         }
@@ -816,8 +838,8 @@ private fun ConversationActionMenu(
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
 
     // SOFT_FROSTED -> Haze frosted glass; BALANCED_BLEND (and anything else)
-    // -> liquid glass refraction surface. Both with the specular border.
-    // Strictly no grey container: transparent fill only.
+    // -> liquid glass refraction surface. Both use an opaque AMOLED black fill
+    // beneath the refraction so the popup never reads as grey or transparent.
     val surfaceModifier: Modifier = if (isFrosted) {
         Modifier.frostedGlassSurface(
             shape = RoundedCornerShape(16.dp),

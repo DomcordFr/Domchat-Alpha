@@ -56,6 +56,9 @@ import androidx.compose.runtime.LaunchedEffect
 import me.lucid.domchat.ui.motion.EntranceDirection
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.entrance
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.LayerBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -261,6 +264,9 @@ fun ChatList(
     loading: Boolean,
     previewMode: Boolean,
     settings: Settings,
+    // Clean wallpaper layer only. Chat bubbles must never sample the chat content
+    // or page backdrop, otherwise messages mirror themselves onto their own glass.
+    wallpaperBackdrop: LayerBackdrop = rememberLayerBackdrop(),
     contentMaxWidth: Dp = Dp.Unspecified,
     recentlyRestoredNodeIds: Set<Uuid> = emptySet(),
     initialSearchQuery: String? = null,
@@ -278,44 +284,46 @@ fun ChatList(
     onJumpToMessage: (Int) -> Unit = {},
 ) {
     SharedTransitionLayout {
-        AnimatedContent(
-            targetState = previewMode,
-            label = "ChatListMode",
-            transitionSpec = {
-                (fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 0.8f))
-            }
-        ) { target ->
-            if (target) {
-                ChatListPreview(
-                    innerPadding = innerPadding,
-                    conversation = conversation,
-                    settings = settings,
-                    contentMaxWidth = contentMaxWidth,
-                    onJumpToMessage = onJumpToMessage,
-                    animatedVisibilityScope = this@AnimatedContent,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = onSearchQueryChange,
-                )
-            } else {
-                ChatListNormal(
-                    innerPadding = innerPadding,
-                    conversation = conversation,
-                    state = state,
-                    loading = loading,
-                    settings = settings,
-                    contentMaxWidth = contentMaxWidth,
-                    recentlyRestoredNodeIds = recentlyRestoredNodeIds,
-                    selecting = shareSelecting,
-                    selectedItems = selectedShareItems,
-                    onSelectedItemsChange = onSelectedShareItemsChange,
-                    onRegenerate = onRegenerate,
-                    onEdit = onEdit,
-                    onForkMessage = onForkMessage,
-                    onDelete = onDelete,
-                    onUpdateMessage = onUpdateMessage,
-                    onAddCustomGreeting = onAddCustomGreeting,
-                    animatedVisibilityScope = this@AnimatedContent,
-                )
+        CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
+            AnimatedContent(
+                targetState = previewMode,
+                label = "ChatListMode",
+                transitionSpec = {
+                    (fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 0.8f))
+                }
+            ) { target ->
+                if (target) {
+                    ChatListPreview(
+                        innerPadding = innerPadding,
+                        conversation = conversation,
+                        settings = settings,
+                        contentMaxWidth = contentMaxWidth,
+                        onJumpToMessage = onJumpToMessage,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = onSearchQueryChange,
+                    )
+                } else {
+                    ChatListNormal(
+                        innerPadding = innerPadding,
+                        conversation = conversation,
+                        state = state,
+                        loading = loading,
+                        settings = settings,
+                        contentMaxWidth = contentMaxWidth,
+                        recentlyRestoredNodeIds = recentlyRestoredNodeIds,
+                        selecting = shareSelecting,
+                        selectedItems = selectedShareItems,
+                        onSelectedItemsChange = onSelectedShareItemsChange,
+                        onRegenerate = onRegenerate,
+                        onEdit = onEdit,
+                        onForkMessage = onForkMessage,
+                        onDelete = onDelete,
+                        onUpdateMessage = onUpdateMessage,
+                        onAddCustomGreeting = onAddCustomGreeting,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                }
             }
         }
     }
