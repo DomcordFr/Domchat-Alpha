@@ -180,7 +180,10 @@ fun ConversationList(
     bottomContent: (@Composable () -> Unit)? = null,
 ) {
     val navController = LocalNavController.current
-    Box(modifier = modifier) {
+    var popupRootCoordinates by remember { mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(null) }
+    Box(
+        modifier = modifier.onGloballyPositioned { popupRootCoordinates = it }
+    ) {
         val listState = rememberLazyListState()
         var menuConversation by remember { mutableStateOf<Conversation?>(null) }
         var menuAnchor by remember { mutableStateOf<IntOffset?>(null) }
@@ -334,7 +337,20 @@ fun ConversationList(
                                 menuConversation = item.conversation
                                 menuTransition.targetState = true
                             },
-                            onMenuAnchor = { menuAnchor = it },
+                            onMenuAnchor = { absolute ->
+                                // Popup offsets are relative to this Box, while the row reports
+                                // its window position. Convert so the menu lines up with the row.
+                                val root = popupRootCoordinates
+                                menuAnchor = if (root != null && root.isAttached) {
+                                    val origin = root.positionInWindow()
+                                    IntOffset(
+                                        (absolute.x - origin.x).toInt(),
+                                        (absolute.y - origin.y).toInt(),
+                                    )
+                                } else {
+                                    absolute
+                                }
+                            },
                         )
                     }
 
