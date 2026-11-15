@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -197,7 +198,13 @@ fun AssistantBackground(
                 )
             }
         } else {
-            // Default Canvas: Theme background + optical caustics for Haze refraction
+            // Default Canvas: Theme background + optical caustics for Haze refraction.
+            // There is no async image decode here, so signal liquid glass samplers that
+            // the backdrop is opaque and ready immediately on frame 0 (cold start /
+            // blank chat) instead of leaving surfaces transparent until the next redraw.
+            SideEffect {
+                onWallpaperLoaded?.invoke()
+            }
             val isDark = LocalDarkMode.current
             val baseCanvasColor = if (isDark) {
                 Color.Black

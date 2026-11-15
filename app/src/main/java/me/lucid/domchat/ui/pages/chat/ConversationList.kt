@@ -190,9 +190,6 @@ fun ConversationList(
         val menuTransition = remember { MutableTransitionState(false) }
         var editConversation by remember { mutableStateOf<Conversation?>(null) }
         var editedTitle by remember { mutableStateOf("") }
-        val canScrollBackward by remember {
-            derivedStateOf { listState.canScrollBackward }
-        }
         val canScrollForward by remember {
             derivedStateOf { listState.canScrollForward }
         }
@@ -484,24 +481,6 @@ fun ConversationList(
                     }
                 }
             }
-        }
-
-        if (canScrollBackward) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(112.dp)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0f to MaterialTheme.colorScheme.surfaceContainerLow,
-                                0.35f to MaterialTheme.colorScheme.surfaceContainerLow,
-                                1f to Color.Transparent,
-                            )
-                        )
-                    )
-            )
         }
 
         if (canScrollForward) {
@@ -875,9 +854,9 @@ private fun ConversationActionMenu(
 
     Column(
         modifier = Modifier
-            .width(220.dp)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .then(surfaceModifier),
+            .width(230.dp)
+            .then(surfaceModifier)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         ConversationMenuItem(
@@ -941,16 +920,16 @@ private fun ConversationMenuItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .padding(horizontal = 4.dp, vertical = 1.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(if (isPressed) Color.White.copy(alpha = 0.10f) else Color.Transparent)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
-            ),
+            )
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Icon(
             imageVector = icon,

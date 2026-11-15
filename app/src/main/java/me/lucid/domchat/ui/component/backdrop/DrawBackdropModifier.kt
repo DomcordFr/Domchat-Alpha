@@ -382,13 +382,32 @@ private class DrawBackdropNode(
         val version = currentBackdropVersion()
         val contentVersion = currentBackdropContentVersion()
 
-        // If offset is null during fast-scroll fling (coordinates detaching/remeasuring),
-        // draw a clean translucent glass fallback instead of the stale baked layer at
-        // its last known translation, so the bubble never shows a frozen wallpaper
-        // snapshot while detached.
+        // Coordinates detached mid-scroll / during item recycling: offset is null.
+        // Never paint black or transparent. Keep painting the last recorded layer at
+        // its last known translation so liquid glass never fails while detached. Only
+        // fall back to a translucent placeholder when there is no cached layer at all.
         if (offset == null) {
-            drawRect(Color.Black.copy(alpha = 0.12f))
-            surfaceDirty = true
+            if (recordedBackdropSize != IntSize.Zero) {
+                val drawOffset = lastDrawOffset
+                if (scale != 1f) {
+                    scale(1f / scale, pivot = Offset.Zero) {
+                        if (drawOffset != Offset.Zero) {
+                            translate(drawOffset.x, drawOffset.y) { drawLayer(layer) }
+                        } else {
+                            drawLayer(layer)
+                        }
+                    }
+                } else {
+                    if (drawOffset != Offset.Zero) {
+                        translate(drawOffset.x, drawOffset.y) { drawLayer(layer) }
+                    } else {
+                        drawLayer(layer)
+                    }
+                }
+            } else {
+                drawRect(Color.Black.copy(alpha = 0.12f))
+                surfaceDirty = true
+            }
             return false
         }
 
@@ -557,7 +576,7 @@ private class DrawBackdropNode(
             graphicsLayer = null
         }
         unregisterSampler(backdrop)
-        (backdrop as? LayerBackdrop)?.layerCoordinates = null
+        // A sampler must NEVER reset the source backdrop coordinates when detaching.
         effectScope.reset()
         layoutCoordinates = null
         exportedBackdrop?.layerCoordinates = null
@@ -565,6 +584,7 @@ private class DrawBackdropNode(
         recordedContentVersion = -1
         recordedBackdropOffset = null
         recordedBackdropSize = IntSize.Zero
-        lastDrawOffset = Offset.Zero
+        // Keep lastDrawOffset so a recycled node can still fall back to its last
+        // known translation if coordinates detach again before a fresh capture.
     }
 }
