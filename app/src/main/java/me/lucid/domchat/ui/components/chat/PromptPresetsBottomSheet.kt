@@ -118,14 +118,14 @@ private fun PositionButton(
     val selectedColor = MaterialTheme.colorScheme.primary
     Surface(
         onClick = onClick,
-        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color.Transparent,
+        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.06f),
         shape = RoundedCornerShape(12.dp),
         border = if (selected) {
             BorderStroke(0.5.dp, selectedColor)
         } else {
             BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
         },
-        modifier = modifier.then(Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp))),
+        modifier = modifier,
     ) {
         Row(
             modifier = Modifier
@@ -174,22 +174,9 @@ fun PromptPresetsBottomSheet(
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
-    fun glassSurface(shape: Shape) = if (isFrosted) {
-        Modifier.frostedGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = Color.Transparent,
-        )
-    } else {
-        Modifier.liquidGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = Color.Transparent,
-            glassMode = LiquidGlassMode.BALANCED_BLEND,
-        )
-    }
+    fun glassSurface(shape: Shape) = Modifier
+        .background(Color.White.copy(alpha = 0.06f), shape = shape)
+        .border(0.5.dp, borderBrush, shape = shape)
 
     val overscrollAbsorber = remember {
         object : NestedScrollConnection {

@@ -77,6 +77,7 @@ import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSearchBar
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.ui.DomChatGlassChip
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
@@ -197,41 +198,14 @@ fun AssistantPickerSheet(
     val tagBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val tagIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
-    fun tagGlassSurface() = if (tagIsFrosted) {
-        Modifier.frostedGlassSurface(
-            shape = RoundedCornerShape(20.dp),
-            borderWidth = 0.5.dp,
-            specularBrush = tagBorderBrush,
-            fillColor = Color.Transparent,
-        )
-    } else {
-        Modifier.liquidGlassSurface(
-            shape = RoundedCornerShape(20.dp),
-            borderWidth = 0.5.dp,
-            specularBrush = tagBorderBrush,
-            fillColor = Color.Transparent,
-            glassMode = LiquidGlassMode.BALANCED_BLEND,
-        )
-    }
+    fun tagGlassSurface() = Modifier
+        .background(Color.White.copy(alpha = 0.08f), shape = RoundedCornerShape(20.dp))
+        .border(0.5.dp, tagBorderBrush, shape = RoundedCornerShape(20.dp))
 
-    val cardIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
-    fun cardGlassSurface() = if (cardIsFrosted) {
-        Modifier.frostedGlassSurface(
-            shape = RoundedCornerShape(16.dp),
-            borderWidth = 0.5.dp,
-            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            fillColor = Color.Transparent,
-        )
-    } else {
-        Modifier.liquidGlassSurface(
-            shape = RoundedCornerShape(16.dp),
-            borderWidth = 0.5.dp,
-            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            fillColor = Color.Transparent,
-            glassMode = LiquidGlassMode.BALANCED_BLEND,
-        )
-    }
+    fun cardGlassSurface() = Modifier
+        .background(Color.White.copy(alpha = 0.06f), shape = RoundedCornerShape(16.dp))
+        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, shape = RoundedCornerShape(16.dp))
 
     DomChatInWindowBottomSheet(
         visible = true,
@@ -251,17 +225,29 @@ fun AssistantPickerSheet(
             // Drag handle pill — scrolls away with the list
             item {
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 2.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    DomChatSheetDragHandle()
+                    Box(
+                        modifier = Modifier
+                            .size(width = 38.dp, height = 4.5.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.28f))
+                    )
                 }
             }
 
-            // Sheet header — title only, no count badge
+            // Sheet header with character count badge
             item {
                 DomChatSheetHeader(
                     title = stringResource(R.string.assistant_page_title),
+                    badge = {
+                        DomChatGlassChip(
+                            text = "${filteredAssistants.size} ${if (filteredAssistants.size == 1) "Character" else "Characters"}"
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -288,14 +274,14 @@ fun AssistantPickerSheet(
                             Box(
                                 modifier = Modifier
                                     .then(tagGlassSurface())
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
                                     .clickable {
                                         selectedTagIds = if (isSelected) {
                                             selectedTagIds - tag.id
                                         } else {
                                             selectedTagIds + tag.id
                                         }
-                                    },
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
                             ) {
                                 Text(
                                     text = tag.name,

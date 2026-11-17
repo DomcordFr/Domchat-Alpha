@@ -33,13 +33,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -127,22 +125,9 @@ fun ContextBudgetBottomSheet(
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
-    fun glassCard(shape: Shape) = if (isFrosted) {
-        Modifier.frostedGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = Color.Transparent,
-        )
-    } else {
-        Modifier.liquidGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = Color.Transparent,
-            glassMode = LiquidGlassMode.BALANCED_BLEND,
-        )
-    }
+    fun glassCard(shape: Shape) = Modifier
+        .background(Color.White.copy(alpha = 0.06f), shape = shape)
+        .border(0.5.dp, borderBrush, shape = shape)
 
     DomChatInWindowBottomSheet(
         visible = true,
