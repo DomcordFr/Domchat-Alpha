@@ -22,6 +22,8 @@ REQUIRED_IMPORTS = {
     r'\bliquidGlassSurface\s*\(': 'me.lucid.domchat.ui.theme.liquidGlassSurface',
     r'\brememberLayerBackdrop\s*\(': 'me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop',
     r'\bderivedStateOf\b': 'androidx.compose.runtime.derivedStateOf',
+    r'\.border\s*\(': 'androidx.compose.foundation.border',
+    r'\bCircleShape\b': 'androidx.compose.foundation.shape.CircleShape',
 }
 
 PROTECTED_FEATURE_TOKENS = [
