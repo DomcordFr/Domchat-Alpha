@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
 
+# --- DOMCHAT TERMUX SANDBOX SHIELD ---
+if [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux" ]; then
+  echo "FATAL ERROR: Local ./gradlew execution is strictly BANNED in Termux (No SDK / Causes OOM Crash)." >&2
+  echo "To verify your code locally, run: python3 scripts/domchat_preflight.py" >&2
+  exit 1
+fi
+# -------------------------------------
+
 #
 # Copyright 2015 the original author or authors.
 #
