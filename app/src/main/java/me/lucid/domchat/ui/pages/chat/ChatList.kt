@@ -687,15 +687,15 @@ private fun SharedTransitionScope.ChatListNormal(
                         }
                     },
                 ) { index, group ->
+                    val isPreexisting = group.firstNode.id.toString() in me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes.current
                     Column(
                         modifier = Modifier
-                            .animateItem()
                             .entrance(
                                 key = "${conversation.id}:turn:${group.firstNode.id}",
                                 motionPolicy = motionPolicy,
                                 from = EntranceDirection.UP,
                                 delayMs = (displayGroups.lastIndex - index).coerceAtLeast(0) * 70,
-                                allow = entranceOpen.value || index >= displayGroups.lastIndex - 1,
+                                allow = !isPreexisting && (entranceOpen.value || index >= displayGroups.lastIndex - 1),
                             )
                     ) {
                         // Check if any node in group is selected

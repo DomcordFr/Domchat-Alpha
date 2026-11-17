@@ -139,7 +139,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SecondaryTabRow
@@ -152,8 +151,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -1250,18 +1249,10 @@ fun MinimalChatInput(
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(12.dp)
-                                                        .clip(RoundedCornerShape(3.dp))
-                                                        .background(Color.White),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = RoundedStopIcon,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(10.dp),
-                                                        tint = MaterialTheme.colorScheme.error
-                                                    )
-                                                }
+                                                        .size(13.dp)
+                                                        .clip(RoundedCornerShape(3.5.dp))
+                                                        .background(MaterialTheme.colorScheme.error)
+                                                )
                                             }
                                         }
                                         DomChatComposerAction.Send,
@@ -1562,18 +1553,10 @@ fun MinimalChatInput(
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(12.dp)
-                                                        .clip(RoundedCornerShape(3.dp))
-                                                        .background(Color.White),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = RoundedStopIcon,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(10.dp),
-                                                        tint = MaterialTheme.colorScheme.error
-                                                    )
-                                                }
+                                                        .size(13.dp)
+                                                        .clip(RoundedCornerShape(3.5.dp))
+                                                        .background(MaterialTheme.colorScheme.error)
+                                                )
                                             }
                                         }
                                         DomChatComposerAction.Send,
@@ -3271,7 +3254,6 @@ private fun ToolApprovalCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
                         .liquidGlassSurface(
                             shape = RoundedCornerShape(18.dp),
                             fillColor = Color(0xFF000000).copy(alpha = 0.10f),
@@ -3283,7 +3265,7 @@ private fun ToolApprovalCard(
                         text = summary,
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.65f),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -3619,7 +3601,6 @@ private fun MinimalPickerContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 2.dp)
                 .liquidGlassSurface(
                     shape = RoundedCornerShape(16.dp),
                     fillColor = Color(0xFF000000).copy(alpha = 0.08f),

@@ -405,7 +405,7 @@ private class DrawBackdropNode(
                     }
                 }
             } else {
-                drawRect(Color.Black.copy(alpha = 0.12f))
+                drawRect(Color(0xFF0D0F14).copy(alpha = 0.85f))
                 surfaceDirty = true
             }
             return false
