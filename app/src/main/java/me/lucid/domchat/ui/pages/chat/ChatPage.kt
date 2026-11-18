@@ -1366,9 +1366,15 @@ private fun ChatPageContent(
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     // Nodes already in the conversation when it opens: they never animate.
-    val preexistingNodeIds = remember(conversation.id) {
-        conversation.messageNodes.map { it.id.toString() }.toSet()
+    // Captured once as soon as the conversation is initialized / messages load,
+    // so existing turns are recognized as history and never re-animate on chat open.
+    val preexistingNodeIdsState = remember(conversation.id) {
+        mutableStateOf<Set<String>?>(null)
     }
+    if (preexistingNodeIdsState.value == null && (conversationInitialized || conversation.messageNodes.isNotEmpty())) {
+        preexistingNodeIdsState.value = conversation.messageNodes.map { it.id.toString() }.toSet()
+    }
+    val preexistingNodeIds = preexistingNodeIdsState.value ?: emptySet()
     val context = LocalContext.current
     val modelRequiredMessage = context.getString(R.string.chat_model_required)
     var previewMode by rememberSaveable { mutableStateOf(false) }
@@ -1599,7 +1605,7 @@ private fun ChatPageContent(
                     Scaffold(
                         topBar = {
                             CompositionLocalProvider(
-                                LocalAppBackdrop provides chatBackdrop
+                                LocalAppBackdrop provides overlayBackdrop
                             ) {
                                 if (toolbarPlacement == ChatToolbarPlacement.Top) {
                                     StartupChromeReveal(
@@ -2166,7 +2172,7 @@ private fun ChatPageContent(
                     )
                 } else {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides chatBackdrop
+                        LocalAppBackdrop provides overlayBackdrop
                     ) {
                     MinimalChatInput(
                     modifier = Modifier

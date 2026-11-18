@@ -119,8 +119,10 @@ import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContentColor
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Search
@@ -1251,7 +1253,7 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(13.dp)
                                                         .clip(RoundedCornerShape(3.5.dp))
-                                                        .background(Color(0xFFFF2B2B))
+                                                        .background(Color(0xFFFF1A1A))
                                                 )
                                             }
                                         }
@@ -1555,7 +1557,7 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(13.dp)
                                                         .clip(RoundedCornerShape(3.5.dp))
-                                                        .background(Color(0xFFFF2B2B))
+                                                        .background(Color(0xFFFF1A1A))
                                                 )
                                             }
                                         }
@@ -1757,77 +1759,74 @@ fun MinimalChatInput(
     }
 
     if (showTextStylingDialog) {
-        val rules = settings.displaySetting.rpStyleRules.toMutableList()
-        var selectedStyleIndex by remember { mutableStateOf<Int?>(null) } // 0=Quote,1=Italic,2=Code,3=Custom
-        var customSymbols by remember { mutableStateOf("") }
-        var rDraft by remember { mutableIntStateOf(0) }
-        var gDraft by remember { mutableIntStateOf(0) }
-        var bDraft by remember { mutableIntStateOf(0) }
-
-        // Built-in text styling patterns
-        val styleDefs = listOf(
-            Pair("Quote", ">"),
-            Pair("Italic", "*"),
-            Pair("Code", "`"),
-            Pair("Custom", null)
-        )
+        val currentRules = settings.displaySetting.rpStyleRules
+        var expandedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+        val existingCustom = currentRules.find { it.pattern !in listOf(">", "*", "`") }
+        var customSymbols by rememberSaveable { mutableStateOf(existingCustom?.pattern ?: "**") }
 
         fun parseColor(hex: String): Color {
-            val c = hex.removePrefix("#").toInt(16)
-            return Color(
-                red = ((c shr 16) and 0xff) / 255f,
-                green = ((c shr 8) and 0xff) / 255f,
-                blue = (c and 0xff) / 255f,
-                alpha = 1f
-            )
+            return try {
+                val clean = hex.removePrefix("#")
+                val c = clean.toLong(16)
+                Color(
+                    red = ((c shr 16) and 0xff) / 255f,
+                    green = ((c shr 8) and 0xff) / 255f,
+                    blue = (c and 0xff) / 255f,
+                    alpha = 1f
+                )
+            } catch (_: Exception) {
+                Color(0xFF808080)
+            }
+        }
+
+        fun parseRgb(hex: String): Triple<Int, Int, Int> {
+            return try {
+                val clean = hex.removePrefix("#")
+                val c = clean.toInt(16)
+                Triple(
+                    (c shr 16) and 0xff,
+                    (c shr 8) and 0xff,
+                    c and 0xff
+                )
+            } catch (_: Exception) {
+                Triple(128, 128, 128)
+            }
         }
 
         fun rgbToHex(r: Int, g: Int, b: Int): String =
-            "#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}"
+            "#${r.coerceIn(0, 255).toString(16).padStart(2, '0')}${g.coerceIn(0, 255).toString(16).padStart(2, '0')}${b.coerceIn(0, 255).toString(16).padStart(2, '0')}"
 
-        // Resolve the active rule for the selected style (built-in or custom)
-        val activeRule = remember(selectedStyleIndex, customSymbols, rules) {
-            selectedStyleIndex?.let { idx ->
-                val (label, pattern) = styleDefs[idx]
-                val effectivePattern = if (idx == 3) customSymbols.takeIf { it.isNotBlank() } else pattern
-                effectivePattern?.let { pat ->
-                    rules.find { it.pattern == pat }
-                }
-            } ?: null
-        }
-
-        fun setStyleColor(r: Int, g: Int, b: Int) {
-            val hex = rgbToHex(r, g, b)
-            activeRule?.let { rule ->
-                val ruleList = rules.toMutableList()
-                val ruleIdx = ruleList.indexOfFirst { it.id == rule.id }
-                if (ruleIdx >= 0) {
-                    ruleList[ruleIdx] = rule.copy(colorHex = hex)
-                    rules.clear()
-                    rules.addAll(ruleList)
-                }
-            }
-        }
-
-        fun ensureCustomRule() {
-            val syms = customSymbols.trim()
-            if (syms.isBlank()) return
-            val existing = rules.find { it.pattern == syms }
-            if (existing == null) {
-                rules.add(me.lucid.domchat.data.datastore.RpStyleRule(
-                    pattern = syms,
-                    colorHex = rgbToHex(rDraft, gDraft, bDraft)
-                ))
-            }
-        }
-
-        fun saveRules() {
+        fun updateRule(pattern: String, newHex: String) {
             scope.launch {
                 settingsStore.update { cur ->
-                    cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = rules.toList()))
+                    val list = cur.displaySetting.rpStyleRules.toMutableList()
+                    val idx = list.indexOfFirst { it.pattern == pattern }
+                    if (idx >= 0) {
+                        list[idx] = list[idx].copy(colorHex = newHex)
+                    } else {
+                        list.add(me.lucid.domchat.data.datastore.RpStyleRule(pattern = pattern, colorHex = newHex))
+                    }
+                    cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = list))
                 }
             }
         }
+
+        fun resetToGlobal() {
+            haptics.perform(HapticPattern.Pop)
+            scope.launch {
+                settingsStore.update { cur ->
+                    cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = emptyList()))
+                }
+            }
+            toaster.show("Reset text styling to global defaults")
+        }
+
+        val styleDefs = listOf(
+            Triple("Quote", ">", "#808080"),
+            Triple("Italic", "*", "#A0A0A0"),
+            Triple("Code", "`", "#7EC8E3"),
+            Triple("Custom", customSymbols.ifBlank { "**" }, "#E57373"),
+        )
 
         DomChatInWindowBottomSheet(
             visible = true,
@@ -1837,249 +1836,234 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState())
-                    .animateContentSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Header row
+                // Header row with title and "Reset to Global"
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "Text Styling",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = Color.White
                     )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(
-                        onClick = { showTextStylingDialog = false }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
+                        DomChatGlassPillButton(
+                            text = "Reset to Global",
+                            icon = Icons.Rounded.Refresh,
+                            onClick = { resetToGlobal() },
+                            modifier = Modifier.height(30.dp),
                         )
+                        IconButton(
+                            onClick = { showTextStylingDialog = false },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Close",
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
 
                 HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     color = Color.White.copy(alpha = 0.12f)
                 )
 
-                // 2x2 grid of text style buttons
                 Text(
-                    text = "Choose a style",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f)
+                    text = "Tap a style to configure its color and settings",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.65f)
                 )
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+
+                // Compact accordion cards
+                styleDefs.forEachIndexed { idx, (label, pattern, defaultHex) ->
+                    val isExpanded = expandedIndex == idx
+                    val effectivePattern = if (idx == 3) customSymbols.ifBlank { "**" } else pattern
+                    val activeRule = currentRules.find { it.pattern == effectivePattern }
+                    val currentHex = activeRule?.colorHex ?: defaultHex
+                    val currentColor = parseColor(currentHex)
+                    val (r, g, b) = parseRgb(currentHex)
+
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (isExpanded) Color.White.copy(alpha = 0.08f) else Color(0xFF000000).copy(alpha = 0.35f),
+                        border = BorderStroke(
+                            0.5.dp,
+                            if (isExpanded) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        val (label0, pattern0) = styleDefs[0]
-                        val isSelected0 = selectedStyleIndex == 0
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                selectedStyleIndex = 0
-                                customSymbols = ""
-                                activeRule?.let { rule ->
-                                    rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
-                                    gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
-                                    bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
-                                }
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected0) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
-                            border = BorderStroke(
-                                0.5.dp,
-                                if (isSelected0) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.weight(1f).height(72.dp)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize()
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                    .clickable {
+                                        haptics.perform(HapticPattern.Pop)
+                                        expandedIndex = if (isExpanded) null else idx
+                                    },
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(22.dp)
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
+                                        .background(currentColor)
+                                        .border(0.5.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
                                 )
-                                Text(
-                                    text = label0,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isSelected0) MaterialTheme.colorScheme.primary else Color.White
-                                )
-                                Spacer(Modifier.weight(1f))
-                                if (isSelected0) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = "Selected",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                        color = if (isExpanded) MaterialTheme.colorScheme.primary else Color.White
+                                    )
+                                    Text(
+                                        text = if (idx == 3) "Symbol: $effectivePattern" else "Syntax: $pattern",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White.copy(alpha = 0.55f)
                                     )
                                 }
-                            }
-                        }
-                        val (label1, pattern1) = styleDefs[1]
-                        val isSelected1 = selectedStyleIndex == 1
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                selectedStyleIndex = 1
-                                customSymbols = ""
-                                activeRule?.let { rule ->
-                                    rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
-                                    gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
-                                    bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
-                                }
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected1) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
-                            border = BorderStroke(
-                                0.5.dp,
-                                if (isSelected1) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.weight(1f).height(72.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(20.dp)
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
-                                )
-                                Text(
-                                    text = label1,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isSelected1) MaterialTheme.colorScheme.primary else Color.White
-                                )
-                                Spacer(Modifier.weight(1f))
-                                if (isSelected1) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = "Selected",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
+                                        .background(Color.White.copy(alpha = 0.08f))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = currentHex.uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White.copy(alpha = 0.75f),
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                                     )
                                 }
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                    tint = Color.White.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        val (label2, pattern2) = styleDefs[2]
-                        val isSelected2 = selectedStyleIndex == 2
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                selectedStyleIndex = 2
-                                customSymbols = ""
-                                activeRule?.let { rule ->
-                                    rDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 16) and 0xff)
-                                    gDraft = ((rule.colorHex.removePrefix("#").toInt(16) shr 8) and 0xff)
-                                    bDraft = (rule.colorHex.removePrefix("#").toInt(16) and 0xff)
-                                }
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected2) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
-                            border = BorderStroke(
-                                0.5.dp,
-                                if (isSelected2) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.weight(1f).height(72.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
+
+                            if (isExpanded) {
+                                Spacer(Modifier.height(12.dp))
+                                HorizontalDivider(
+                                    color = Color.White.copy(alpha = 0.08f),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                                 )
-                                Text(
-                                    text = label2,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isSelected2) MaterialTheme.colorScheme.primary else Color.White
-                                )
-                                Spacer(Modifier.weight(1f))
-                                if (isSelected2) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = "Selected",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
+
+                                if (idx == 3) {
+                                    OutlinedTextField(
+                                        value = customSymbols,
+                                        onValueChange = { newSym ->
+                                            val oldSym = customSymbols
+                                            customSymbols = newSym
+                                            if (newSym.isNotBlank()) {
+                                                scope.launch {
+                                                    settingsStore.update { cur ->
+                                                        val list = cur.displaySetting.rpStyleRules.toMutableList()
+                                                        val existingIdx = list.indexOfFirst { it.pattern == oldSym }
+                                                        if (existingIdx >= 0) {
+                                                            list[existingIdx] = list[existingIdx].copy(pattern = newSym)
+                                                        } else {
+                                                            list.add(me.lucid.domchat.data.datastore.RpStyleRule(pattern = newSym, colorHex = currentHex))
+                                                        }
+                                                        cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = list))
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        label = { Text("Custom symbols (e.g. ** or ~~)") },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent,
+                                            focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                                            unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White,
+                                            cursorColor = Color.White,
+                                        )
                                     )
                                 }
-                            }
-                        }
-                        val (label3, pattern3) = styleDefs[3]
-                        val isSelected3 = selectedStyleIndex == 3
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                selectedStyleIndex = 3
-                                customSymbols = ""
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected3) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color(0xFF000000).copy(alpha = 0.35f),
-                            border = BorderStroke(
-                                0.5.dp,
-                                if (isSelected3) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.weight(1f).height(72.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(parseColor(activeRule?.colorHex ?: "#808080"))
-                                )
-                                Text(
-                                    text = label3,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isSelected3) MaterialTheme.colorScheme.primary else Color.White
-                                )
-                                Spacer(Modifier.weight(1f))
-                                if (isSelected3) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = "Selected",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
+
+                                // RGB sliders with live color updates and immediate auto-save
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    // Red Slider
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Red", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
+                                        Text("$r", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    DomChatSlider(
+                                        value = r.toFloat(),
+                                        onValueChange = { newR ->
+                                            val newHex = rgbToHex(newR.toInt(), g, b)
+                                            updateRule(effectivePattern, newHex)
+                                        },
+                                        valueRange = 0f..255f,
+                                        steps = 255
+                                    )
+
+                                    // Green Slider
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Green", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
+                                        Text("$g", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    DomChatSlider(
+                                        value = g.toFloat(),
+                                        onValueChange = { newG ->
+                                            val newHex = rgbToHex(r, newG.toInt(), b)
+                                            updateRule(effectivePattern, newHex)
+                                        },
+                                        valueRange = 0f..255f,
+                                        steps = 255
+                                    )
+
+                                    // Blue Slider
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Blue", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
+                                        Text("$b", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    DomChatSlider(
+                                        value = b.toFloat(),
+                                        onValueChange = { newB ->
+                                            val newHex = rgbToHex(r, g, newB.toInt())
+                                            updateRule(effectivePattern, newHex)
+                                        },
+                                        valueRange = 0f..255f,
+                                        steps = 255
                                     )
                                 }
                             }
@@ -2087,142 +2071,16 @@ fun MinimalChatInput(
                     }
                 }
 
-                // Custom symbols field (animated in when Custom is selected)
-                AnimatedVisibility(
-                    visible = selectedStyleIndex == 3,
-                    enter = fadeIn(animationSpec = tween(220)) + expandVertically(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)),
-                    exit = fadeOut(animationSpec = tween(140)) + shrinkVertically(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f))
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        showTextStylingDialog = false
+                        haptics.perform(HapticPattern.Pop)
+                    },
+                    modifier = Modifier.align(Alignment.End),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Surrounding symbols",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        OutlinedTextField(
-                            value = customSymbols,
-                            onValueChange = { customSymbols = it },
-                            label = { Text("e.g. **bold** or ~~strikethrough~~") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                cursorColor = Color.White.copy(alpha = 0.9f),
-                                focusedLabelColor = Color.White.copy(alpha = 0.8f),
-                                unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
-                            )
-                        )
-                    }
-                }
-
-                // RGB sliders (0..255) - apply to the selected rule
-                selectedStyleIndex?.let { idx ->
-                    val (label, _) = styleDefs[idx]
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = "Color for $label",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "R",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White
-                            )
-                            Text(
-                                text = rDraft.toString(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        DomChatSlider(
-                            value = rDraft.toFloat(),
-                            onValueChange = { rDraft = it.toInt(); setStyleColor(rDraft, gDraft, bDraft) },
-                            valueRange = 0f..255f,
-                            steps = 255
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "G",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White
-                            )
-                            Text(
-                                text = gDraft.toString(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        DomChatSlider(
-                            value = gDraft.toFloat(),
-                            onValueChange = { gDraft = it.toInt(); setStyleColor(rDraft, gDraft, bDraft) },
-                            valueRange = 0f..255f,
-                            steps = 255
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "B",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White
-                            )
-                            Text(
-                                text = bDraft.toString(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        DomChatSlider(
-                            value = bDraft.toFloat(),
-                            onValueChange = { bDraft = it.toInt(); setStyleColor(rDraft, gDraft, bDraft) },
-                            valueRange = 0f..255f,
-                            steps = 255
-                        )
-                    }
-                }
-
-                // Save / Cancel
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = { showTextStylingDialog = false }) {
-                        Text("Cancel", style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.7f)))
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            if (selectedStyleIndex == 3) {
-                                ensureCustomRule()
-                            }
-                            saveRules()
-                            showTextStylingDialog = false
-                            haptics.perform(HapticPattern.Success)
-                        }
-                    ) {
-                        Text("Save")
-                    }
+                    Text("Done")
                 }
             }
         }
@@ -2770,8 +2628,10 @@ fun MinimalChatInput(
                 // If Bottom Fade, show Blur Height Reach slider
                 AnimatedVisibility(
                     visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
-                    enter = fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)),
-                    exit = fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)),
+                    enter = expandVertically(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) +
+                            fadeIn(animationSpec = tween(200)),
+                    exit = shrinkVertically(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) +
+                           fadeOut(animationSpec = tween(180)),
                 ) {
                     Column {
                         Row(

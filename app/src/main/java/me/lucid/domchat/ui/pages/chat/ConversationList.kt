@@ -215,31 +215,8 @@ fun ConversationList(
                     hint = stringResource(R.string.chat_page_search_hint),
                     containerColor = searchContainerFill,
                     shape = searchShape,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlassSurface(
-                            shape = searchShape,
-                            borderWidth = 0.5.dp,
-                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                            fillColor = Color.Transparent,
-                        ),
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            }
-
-            AnimatedVisibility(
-                visible = !isSearchExpanded && quickActions != null,
-                enter = fadeIn(animationSpec = spring(stiffness = 300f)) + expandVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)),
-                exit = fadeOut(animationSpec = spring(stiffness = 500f)) + shrinkVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp)
-                ) {
-                    if (quickActions != null) {
-                        quickActions()
-                    }
-                }
             }
 
             LazyColumn(
@@ -253,6 +230,17 @@ fun ConversationList(
                     bottom = if (bottomContent != null) 58.dp else 8.dp,
                 ),
             ) {
+                if (!isSearchExpanded && quickActions != null) {
+                    item(key = "drawer_quick_actions") {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 2.dp, bottom = 4.dp)
+                        ) {
+                            quickActions()
+                        }
+                    }
+                }
                 if (conversations.itemCount == 0) {
                     item {
                         val emptyGlassFill = if (LocalDarkMode.current) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)

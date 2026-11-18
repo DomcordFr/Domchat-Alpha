@@ -165,6 +165,7 @@ fun DomChatGlassChip(
             color = if (accent) DomChatAccent else Color.White.copy(alpha = 0.88f),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
             maxLines = 1,
+            softWrap = false,
         )
     }
 }

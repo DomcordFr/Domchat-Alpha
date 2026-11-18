@@ -72,6 +72,8 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurfaceColor
+import me.lucid.domchat.ui.theme.liquidGlassBorderBrush
 import me.lucid.tts.model.PlaybackState
 import me.lucid.tts.model.PlaybackStatus
 import kotlin.math.roundToInt
@@ -109,20 +111,26 @@ fun TTSController() {
         }
     }
 
-    val sheetBg = if (isDark) Color(0xFF16171E).copy(alpha = 0.70f) else Color.White.copy(alpha = 0.72f)
+    val dynamicGlassFill = liquidGlassSurfaceColor()
+    val sheetBg = if (dynamicGlassFill != Color.Transparent) {
+        dynamicGlassFill
+    } else {
+        if (isDark) Color(0xFF141520).copy(alpha = 0.22f) else Color.White.copy(alpha = 0.45f)
+    }
+    val glassBorderBrush = LiquidGlassTokens.SpecularBorderBrush
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     val surfaceModifier = if (isFrosted) {
         Modifier.frostedGlassSurface(
             shape = CircleShape,
-            borderWidth = 0.5.dp,
-            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            borderWidth = 1.dp,
+            specularBrush = glassBorderBrush,
             fillColor = sheetBg,
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = CircleShape,
-            borderWidth = 0.5.dp,
-            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            borderWidth = 1.dp,
+            specularBrush = glassBorderBrush,
             fillColor = sheetBg,
             glassMode = LiquidGlassMode.BALANCED_BLEND,
         )

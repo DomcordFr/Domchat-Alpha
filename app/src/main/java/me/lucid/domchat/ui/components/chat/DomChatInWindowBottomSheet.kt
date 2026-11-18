@@ -74,6 +74,8 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassBorderBrush
+import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.LiquidGlassMode
 
 /**
@@ -266,6 +268,7 @@ fun DomChatInWindowBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = AppShapes.BottomSheet,
+    maxHeight: Dp = (LocalConfiguration.current.screenHeightDp * 0.60f).dp,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
     },
@@ -279,10 +282,15 @@ fun DomChatInWindowBottomSheet(
     val motionPolicy = me.lucid.domchat.ui.motion.LocalMotionPolicy.current
     val isDark = LocalDarkMode.current
     val settings = LocalSettings.current
-    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
-    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.60f).dp
+    val borderBrush = liquidGlassBorderBrush()
+    val maxSheetHeight = maxHeight
 
-    val sheetFillColor = if (isDark) Color(0xFF000000).copy(alpha = 0.88f) else Color(0xFF1C1C1E).copy(alpha = 0.85f)
+    val dynamicFill = domChatSheetContainerColor()
+    val sheetFillColor = if (dynamicFill != Color.Transparent) {
+        dynamicFill
+    } else {
+        if (isDark) Color(0xFF141520).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.55f)
+    }
     // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
     val sheetSurfaceModifier: Modifier = if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
         Modifier.frostedGlassSurface(
@@ -431,14 +439,16 @@ fun DomChatInWindowBottomSheet(
                 ) {
                     val sheetScope = this
                     CompositionLocalProvider(LocalSheetDismiss provides { dismissWithAnimation() }) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .then(dragModifier)
-                                .padding(vertical = 4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            (dragHandle ?: { DomChatSheetDragHandle() })()
+                        dragHandle?.let { handle ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(dragModifier)
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                handle()
+                            }
                         }
                         sheetScope.content()
                     }
@@ -460,6 +470,7 @@ fun DomChatGlassBottomSheet(
     modifier: Modifier = Modifier,
     sheetState: Any? = null,
     shape: Shape = AppShapes.BottomSheet,
+    maxHeight: Dp = (LocalConfiguration.current.screenHeightDp * 0.60f).dp,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
     },
@@ -471,6 +482,7 @@ fun DomChatGlassBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         shape = shape,
+        maxHeight = maxHeight,
         dragHandle = dragHandle,
         content = content,
     )

@@ -433,7 +433,10 @@ fun PromptPresetsBottomSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .padding(end = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     DomChatGlassPillButton(
@@ -459,9 +462,15 @@ fun PromptPresetsBottomSheet(
                         )
                     }
                 }
-                DomChatGlassChip(
-                    text = if (isChatSpecific) "Using Chat" else "Using Global",
-                )
+                Box(
+                    modifier = Modifier.wrapContentWidth(),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    DomChatGlassChip(
+                        text = if (isChatSpecific) "Using Chat" else "Using Global",
+                        modifier = Modifier.wrapContentWidth(),
+                    )
+                }
             }
         }
 

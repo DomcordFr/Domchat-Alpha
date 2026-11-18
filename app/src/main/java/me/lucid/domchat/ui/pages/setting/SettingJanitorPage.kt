@@ -40,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.DropdownMenu
@@ -1058,14 +1059,17 @@ private fun JanitorCharacterInspectorSheet(
         }
     }
 
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
+        dragHandle = null,
+        maxHeight = screenHeight * 0.92f,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.92f)
+                .fillMaxHeight()
         ) {
             val sheetScrollState = rememberScrollState()
             Column(
@@ -1442,7 +1446,10 @@ private fun JanitorCharacterInspectorSheet(
                                     // not already inlined in the notes content to avoid duplicate grids.
                                     val embeddedImages = fullExtract?.embeddedImages ?: emptyList()
                                     val notInlinedImages = remember(embeddedImages, notesContent) {
-                                        embeddedImages.filter { url -> !notesContent.contains(url) }
+                                        embeddedImages.filter { url ->
+                                            val cleanUrl = url.trim().removePrefix("https:").removePrefix("http:").substringBefore("?")
+                                            cleanUrl.isNotBlank() && !notesContent.contains(cleanUrl)
+                                        }
                                     }
                                     if (notInlinedImages.isNotEmpty()) {
                                         Spacer(modifier = Modifier.height(16.dp))
