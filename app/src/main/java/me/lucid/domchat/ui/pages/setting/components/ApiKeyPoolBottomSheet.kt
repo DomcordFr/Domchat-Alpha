@@ -36,12 +36,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.platform.LocalConfiguration
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,7 +92,6 @@ fun ApiKeyPoolBottomSheet(
     onEdit: (ProviderSetting) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val toaster = LocalToaster.current
@@ -114,22 +113,11 @@ fun ApiKeyPoolBottomSheet(
         haptics.perform(HapticPattern.Selection)
     }
 
-    ModalBottomSheet(
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                }
-            )
-        },
-        containerColor = Color(0xFF000000),
+        maxHeight = screenHeight * 0.85f,
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
@@ -631,7 +619,6 @@ private fun ApiKeyEditDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
-        },
-        shape = AppShapes.SettingDialog
+        }
     )
 }

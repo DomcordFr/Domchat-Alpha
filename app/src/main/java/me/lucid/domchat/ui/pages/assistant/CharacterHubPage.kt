@@ -1,6 +1,9 @@
 package me.lucid.domchat.ui.pages.assistant
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -1877,7 +1880,7 @@ fun CharacterListRow(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                val rawBlurb = assistant.creatorNotes?.takeIf { it.isNotBlank() } ?: assistant.description.takeIf { it.isNotBlank() }
+                val rawBlurb: String? = assistant.creatorNotes?.takeIf { it.isNotBlank() } ?: assistant.authorsNote?.takeIf { it.isNotBlank() }
                 if (!rawBlurb.isNullOrBlank()) {
                     val cleaned = cleanHtmlText(rawBlurb)
                     if (cleaned.isNotBlank()) {

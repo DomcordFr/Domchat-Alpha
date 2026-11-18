@@ -2104,7 +2104,7 @@ private fun ModelPickerFab(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         ModelTypeTag(model = model)
-                                        if (model.modalities.size > 1) {
+                                        if (model.inputModalities.size > 1) {
                                             ModelModalityTag(model = model)
                                         }
                                     }
