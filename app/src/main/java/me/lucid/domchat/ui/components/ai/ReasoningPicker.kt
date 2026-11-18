@@ -21,11 +21,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalAbsoluteTonalElevation
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -176,19 +175,10 @@ fun ReasoningPicker(
     val isDarkMode = LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
     
-    ApplyDialogWindowBlur()
-    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
-        shape = sheetShape,
-        onDismissRequest = {
-            onDismissRequest()
-        },
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
+    DomChatInWindowBottomSheet(
+        visible = true,
+        onDismissRequest = onDismissRequest,
+        maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.75f).dp,
     ) {
         Column(
             modifier = Modifier

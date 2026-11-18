@@ -413,28 +413,7 @@ fun SettingProviderPage(
             var showDeleteDialog by remember { mutableStateOf(false) }
             var providerToDelete by remember { mutableStateOf<ProviderSetting?>(null) }
             
-            // Search bar at top with view mode toggle
-            // Search bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                trailingIcon = if (searchQuery.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
-                        }
-                    }
-                } else null,
-                colors = appFieldColors(),
-            )
-            
+
             // Tag filter row - only show when there are tags
             if (settings.providerTags.isNotEmpty()) {
                 ProviderTagsFilterRow(
@@ -1419,6 +1398,7 @@ private fun AddButton(
     if (showBottomSheet) {
         DomChatGlassBottomSheet(
             visible = true,
+            containerColor = Color(0xFF000000),
             onDismissRequest = {
                 showBottomSheet = false
             }
@@ -1713,6 +1693,7 @@ private fun AddButton(
     if (customDialogState.isEditing) {
         DomChatGlassBottomSheet(
             visible = true,
+            containerColor = Color(0xFF000000),
             onDismissRequest = {
                 customDialogState.dismiss()
             }

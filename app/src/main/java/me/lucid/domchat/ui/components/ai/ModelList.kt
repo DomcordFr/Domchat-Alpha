@@ -51,14 +51,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -222,23 +221,12 @@ fun ModelSelector(
     }
 
     if (popup) {
-        val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            containerColor = Color(0xFF000000),
+        DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = {
                 popup = false
             },
-            sheetState = state,
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
-            sheetGesturesEnabled = true,
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
@@ -800,6 +788,7 @@ internal fun ColumnScope.ModelList(
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .height(84.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
             ) {
                 val isDark = LocalDarkMode.current
                 val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
@@ -810,7 +799,6 @@ internal fun ColumnScope.ModelList(
                     onValueChange = { searchKeywords = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                         .clip(searchFieldShape)
                         .border(0.5.dp, searchBorder, searchFieldShape)
                         .domChatBlurEffect(
@@ -905,7 +893,7 @@ internal fun ColumnScope.ModelList(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color(0xFF000000)
+                                    Color.Black.copy(alpha = 0.45f)
                                 )
                             )
                         )
@@ -915,7 +903,7 @@ internal fun ColumnScope.ModelList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp)
-                        .background(Color(0xFF000000))
+                        .background(Color.Black.copy(alpha = 0.45f))
                 )
             }
 
@@ -1148,7 +1136,7 @@ private fun ModelItem(
             ),
             shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF000000),
+                containerColor = Color.White.copy(alpha = 0.06f),
                 contentColor = Color.White,
             )
         ) {

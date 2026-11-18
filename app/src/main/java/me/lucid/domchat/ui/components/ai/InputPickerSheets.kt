@@ -26,11 +26,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -47,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
@@ -144,18 +143,12 @@ internal fun SkillsPickerSheet(
         mutableStateOf(effectiveEnabledIds)
     }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sheetGesturesEnabled = true,
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
     ) {
         Column(
             modifier = Modifier
@@ -435,21 +428,15 @@ internal fun PluginsPickerSheet(
     onUpdateAssistant: (Assistant) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val mcpManager = koinInject<McpManager>()
     val syncingStatus by mcpManager.syncingStatus.collectAsStateWithLifecycle()
     val loading = syncingStatus.values.any { it == McpStatus.Connecting }
 
-    ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sheetGesturesEnabled = true,
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
     ) {
         Column(
             modifier = Modifier

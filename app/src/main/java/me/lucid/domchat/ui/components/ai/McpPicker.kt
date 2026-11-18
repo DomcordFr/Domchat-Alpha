@@ -24,10 +24,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -129,17 +128,10 @@ fun McpPickerButton(
         }
     }
     if (showMcpPicker) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-        val sheetShape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-        ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-            shape = sheetShape,
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
+        DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = { showMcpPicker = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            modifier = androidx.compose.ui.Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape)
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.75f).dp,
         ) {
             Column(
                 modifier = Modifier.Companion

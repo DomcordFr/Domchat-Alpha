@@ -41,13 +41,12 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -123,23 +122,10 @@ fun VoiceSelector(
     }
 
     if (showSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = { showSheet = false },
-            sheetState = sheetState,
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            sheetGesturesEnabled = true,
-            containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            ),
-            dragHandle = {
-                ApplyDialogWindowBlur()
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            }
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
@@ -354,6 +340,7 @@ fun ColumnScope.VoiceList(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(84.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
         ) {
             val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
             OutlinedTextField(
@@ -361,7 +348,6 @@ fun ColumnScope.VoiceList(
                 onValueChange = { searchKeywords = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                     .clip(searchFieldShape)
                     .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, searchFieldShape)
                     .domChatBlurEffect(
@@ -602,7 +588,7 @@ private fun VoiceItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val shape = rememberAnimatedGroupedVoiceItemShape(selected = selected, position = position)
-    val containerColor = Color(0xFF000000)
+    val containerColor = if (selected) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
     val contentColor = if (selected) {
         Color(0xFFFFFFFF)
     } else {

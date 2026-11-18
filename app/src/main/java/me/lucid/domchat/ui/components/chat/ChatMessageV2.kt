@@ -1496,6 +1496,7 @@ private fun UserMessageTurn(
                     }
                 ) {
                     var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
+                    var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
                     var userEntranceTarget by remember(node.id) { mutableFloatStateOf(if (isHistoryTurn || hasAnimated) 1f else 0f) }
                     val userEntrance by animateFloatAsState(
                         targetValue = userEntranceTarget,
@@ -1505,7 +1506,11 @@ private fun UserMessageTurn(
                     LaunchedEffect(node.id) {
                         if (!hasAnimated) {
                             userEntranceTarget = 1f
+                            val textLength = bubbleNode.currentMessage.parts.filterIsInstance<UIMessagePart.Text>().sumOf { it.text.length }
+                            val revealDuration = (textLength * 35L).coerceIn(600L, 2500L)
+                            kotlinx.coroutines.delay(revealDuration)
                             hasAnimated = true
+                            isRevealing = false
                         }
                     }
                     val userBlurRadius = (1f - userEntrance) * 6f
@@ -1556,8 +1561,8 @@ private fun UserMessageTurn(
                             content = displayContent,
                             paragraphSpacing = 12.dp,
                             style = userEntranceStyle,
-                            streamingTextReveal = !isHistoryTurn && !hasAnimated,
-                            freshReveal = !isHistoryTurn && !hasAnimated,
+                            streamingTextReveal = isRevealing,
+                            freshReveal = isRevealing,
                             modifier = Modifier
                                 .alpha(userEntrance)
                                 .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },

@@ -53,7 +53,12 @@ import androidx.compose.foundation.border
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
+import me.lucid.domchat.data.datastore.LiquidGlassMode
+import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import java.text.NumberFormat
 import java.util.Locale
@@ -171,14 +176,32 @@ fun ChatInfoBottomSheet(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Liquid Glass Context Window Card
+            val isDark = LocalDarkMode.current
+            val isSoftFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+            val cardFillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f)
+
+            // Liquid / Frosted Glass Context Window Card
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .liquidGlassSurface(
-                        shape = RoundedCornerShape(20.dp),
-                        fillColor = Color.Transparent,
-                        isFloatingControl = true,
+                    .then(
+                        if (isSoftFrosted) {
+                            Modifier.frostedGlassSurface(
+                                shape = AppShapes.CardMedium,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardFillColor,
+                            )
+                        } else {
+                            Modifier.liquidGlassSurface(
+                                shape = AppShapes.CardMedium,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = cardFillColor,
+                                glassMode = LiquidGlassMode.BALANCED_BLEND,
+                                isFloatingControl = true,
+                            )
+                        }
                     )
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
@@ -301,14 +324,31 @@ private fun MetricCard(
     modifier: Modifier = Modifier,
     isAmoled: Boolean = false
 ) {
+    val settings = LocalSettings.current
+    val isDark = LocalDarkMode.current
+    val isSoftFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    val cardFillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f)
+
     Box(
         modifier = modifier
-            .liquidGlassSurface(
-                shape = RoundedCornerShape(18.dp),
-                borderWidth = 0.5.dp,
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                fillColor = Color.Transparent,
-                isFloatingControl = true
+            .then(
+                if (isSoftFrosted) {
+                    Modifier.frostedGlassSurface(
+                        shape = AppShapes.CardMedium,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        fillColor = cardFillColor,
+                    )
+                } else {
+                    Modifier.liquidGlassSurface(
+                        shape = AppShapes.CardMedium,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        fillColor = cardFillColor,
+                        glassMode = LiquidGlassMode.BALANCED_BLEND,
+                        isFloatingControl = true
+                    )
+                }
             )
     ) {
         Column(

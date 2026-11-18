@@ -29,9 +29,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.platform.LocalConfiguration
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,13 +94,10 @@ fun LanguageSelectionDialog(
         }
     }
 
-    ModalBottomSheet(
-        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLow,
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismissRequest,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
     ) {
         Column(
             modifier = Modifier

@@ -23,10 +23,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -166,17 +165,10 @@ fun SearchPickerButton(
     }
 
     if (showSearchPicker) {
-        ApplyDialogWindowBlur()
-        val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-        ModalBottomSheet(
-            containerColor = domChatSheetContainerColor(),
-            shape = sheetShape,
+        DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = { showSearchPicker = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape)
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.75f).dp,
         ) {
             Column(
                 modifier = Modifier

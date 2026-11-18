@@ -92,8 +92,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import me.lucid.domchat.data.datastore.RpStyleRule
 import me.lucid.domchat.ui.components.table.DataTable
@@ -738,15 +740,19 @@ fun MarkdownBlock(
         (fadeDurationMs * 2L).coerceAtLeast(STREAMING_SETTLE_MAX_MILLIS)
     } else STREAMING_SETTLE_MAX_MILLIS
 
+    val speedScale = (450f / fadeDurationMs.toFloat()).coerceIn(0.35f, 2.0f)
+
     val streamingPresentation = remember {
         StreamingTextPresentationState(
             initialRawContent = content,
             maxSettleDurationMillis = maxSettleDurationMillis,
-            continuousFlow = continuousFlow
+            continuousFlow = continuousFlow,
+            speedScale = speedScale
         )
     }
     streamingPresentation.maxSettleDurationMillis = maxSettleDurationMillis
     streamingPresentation.continuousFlow = continuousFlow
+    streamingPresentation.speedScale = speedScale
     var displayContent by remember { mutableStateOf(content) }
     var settleRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
     var streamingFrameMillis by remember { mutableStateOf(0L) }
@@ -790,7 +796,7 @@ fun MarkdownBlock(
         // right after the item first appears on screen (a visible stutter, amplified by the
         // multiple text bubbles present in tool-usage turns).
         var lastPreprocessed = data.first
-        snapshotFlow { updatedDisplayContent }.distinctUntilChanged().mapLatest {
+        snapshotFlow { updatedDisplayContent }.distinctUntilChanged().conflate().map {
             parseMarkdownCached(it)
         }.catch { exception -> exception.printStackTrace() }.flowOn(Dispatchers.Default) // 在后台线程解析AST树
             .collect { parsed ->
@@ -924,7 +930,16 @@ internal class StreamingTextPresentationState(
     nowMillis: Long = 0L,
     var maxSettleDurationMillis: Long = STREAMING_SETTLE_MAX_MILLIS,
     var continuousFlow: Boolean = false,
+    speedScale: Float = 1.0f,
 ) {
+    var speedScale: Float = speedScale
+        set(value) {
+            field = value
+            val defaultChars = STREAMING_DEFAULT_CHARS_PER_SECOND * value
+            if (smoothedCharsPerSecond == STREAMING_DEFAULT_CHARS_PER_SECOND) {
+                smoothedCharsPerSecond = defaultChars
+            }
+        }
     var rawContent: String = initialRawContent
         private set
     var displayContent: String = initialRawContent
@@ -932,7 +947,7 @@ internal class StreamingTextPresentationState(
     var settleRanges: List<StreamingSettleRange> = emptyList()
         private set
 
-    var smoothedCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+    var smoothedCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND * speedScale
         private set
     var isFreshReveal: Boolean = false
         private set
@@ -940,7 +955,7 @@ internal class StreamingTextPresentationState(
     private var firstPendingSinceMillis = 0L
     private var revealCarry = 0f
     private var lastRevealMillis = nowMillis
-    private var currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+    private var currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND * speedScale
 
     fun acceptRawContent(nextRawContent: String, nowMillis: Long): Boolean {
         isFreshReveal = false
@@ -953,7 +968,7 @@ internal class StreamingTextPresentationState(
             snapTo(nextRawContent)
             lastRawUpdateMillis = nowMillis
             lastRevealMillis = nowMillis
-            currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+            currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND * speedScale
             return true
         }
 
@@ -975,7 +990,7 @@ internal class StreamingTextPresentationState(
             snapTo(nextRawContent)
             lastRawUpdateMillis = nowMillis
             lastRevealMillis = nowMillis
-            currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+            currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND * speedScale
             return true
         }
 
@@ -994,12 +1009,12 @@ internal class StreamingTextPresentationState(
         rawContent = targetContent
         displayContent = ""
         settleRanges = emptyList()
-        smoothedCharsPerSecond = STREAMING_MIN_CHARS_PER_SECOND * 1.5f
+        smoothedCharsPerSecond = STREAMING_MIN_CHARS_PER_SECOND * speedScale * 1.5f
         lastRawUpdateMillis = nowMillis
         firstPendingSinceMillis = nowMillis
         revealCarry = 0f
         lastRevealMillis = nowMillis
-        currentRevealCharsPerSecond = STREAMING_MIN_CHARS_PER_SECOND * 1.5f
+        currentRevealCharsPerSecond = STREAMING_MIN_CHARS_PER_SECOND * speedScale * 1.5f
     }
 
     fun step(nowMillis: Long, elapsedMillis: Long): Boolean {
@@ -1023,16 +1038,18 @@ internal class StreamingTextPresentationState(
             return false
         }
 
+        val minChars = STREAMING_MIN_CHARS_PER_SECOND * speedScale
+        val maxChars = STREAMING_MAX_CHARS_PER_SECOND * speedScale
         val baseRevealChars = if (isFreshReveal) {
-            STREAMING_MIN_CHARS_PER_SECOND * 1.5f
+            minChars * 1.5f
         } else {
             val backlogMillis = pendingLength * 1000f / smoothedCharsPerSecond.coerceAtLeast(1f)
             val catchUpMultiplier = when {
                 backlogMillis <= STREAMING_CATCH_UP_AFTER_MILLIS -> 1f
-                else -> (backlogMillis / STREAMING_SMOOTHING_WINDOW_MILLIS).coerceIn(1f, STREAMING_MAX_CATCH_UP_MULTIPLIER)
+                else -> (backlogMillis / STREAMING_SMOOTHING_WINDOW_MILLIS).coerceIn(1f, 1.6f)
             }
             smoothedCharsPerSecond
-                .coerceIn(STREAMING_MIN_CHARS_PER_SECOND, STREAMING_MAX_CHARS_PER_SECOND) * catchUpMultiplier
+                .coerceIn(minChars, maxChars) * catchUpMultiplier
         }
 
         val stalledMillis = (nowMillis - lastRawUpdateMillis - STREAMING_STALL_GRACE_MILLIS).coerceAtLeast(0L)
@@ -1048,7 +1065,7 @@ internal class StreamingTextPresentationState(
             } else {
                 STREAMING_DECEL_TIME_CONSTANT_MILLIS
             }
-        ).coerceIn(STREAMING_MIN_CHARS_PER_SECOND * STREAMING_STALL_MIN_MULTIPLIER, STREAMING_MAX_CHARS_PER_SECOND)
+        ).coerceIn(minChars * STREAMING_STALL_MIN_MULTIPLIER, maxChars)
 
         revealCarry += currentRevealCharsPerSecond * elapsedMillis.coerceAtLeast(1L) / 1000f
         val revealBudget = floor(revealCarry).toInt().coerceAtMost(pendingLength)
@@ -1095,7 +1112,7 @@ internal class StreamingTextPresentationState(
         firstPendingSinceMillis = 0L
         revealCarry = 0f
         isFreshReveal = false
-        currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+        currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND * speedScale
     }
 }
 

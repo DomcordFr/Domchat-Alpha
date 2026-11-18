@@ -767,8 +767,9 @@ private fun ConversationItem(
                             .padding(end = if (assistant != null) 48.dp else 0.dp),
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
+                        val rawTitle = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) }
                         Text(
-                            text = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) },
+                            text = truncateAfterWords(rawTitle, 3),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodyLarge.copy(
@@ -1063,5 +1064,15 @@ fun ConversationListPage() {
                 showConfirmDelete = false
             }
         )
+    }
+}
+
+private fun truncateAfterWords(text: String, maxWords: Int = 3): String {
+    val trimmed = text.trim()
+    val words = trimmed.split(Regex("\\s+"))
+    return if (words.size > maxWords) {
+        words.take(maxWords).joinToString(" ") + "..."
+    } else {
+        trimmed
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -104,7 +105,7 @@ fun OneUITopAppBar(
     // Current title area height (shrinks as we collapse)
     val currentTitleAreaHeight = lerp(titleAreaHeight, 0.dp, collapseProgress)
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth().zIndex(2f)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -177,12 +178,13 @@ fun OneUITopAppBar(
         // Bottom fading gradient overlay when scrolled down into collapsed header
         if (collapseProgress > 0.05f) {
             val gradientAlpha = ((collapseProgress - 0.05f) / 0.45f).coerceIn(0f, 1f)
+            val fadeHeight = 28.dp
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .offset(y = 22.dp)
-                    .height(22.dp)
+                    .offset(y = fadeHeight)
+                    .height(fadeHeight)
                     .background(
                         Brush.verticalGradient(
                             listOf(

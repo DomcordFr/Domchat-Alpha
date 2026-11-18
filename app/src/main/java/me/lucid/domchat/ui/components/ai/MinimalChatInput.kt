@@ -404,8 +404,6 @@ fun MinimalChatInput(
     val isDarkMode = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
     // Picker sheet styling - optical roundness: outer (40dp) = button corners (24dp) + padding (16dp)
-    // Sheet uses surfaceContainerLow always, buttons inside handle OLED colors
-    val pickerSheetColor = Color(0xFF000000)
     val pickerSheetShape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
     
     // Camera permission - must be in parent, not inside ModalBottomSheet
@@ -3311,8 +3309,6 @@ private fun MinimalPickerContent(
     val amoledMode by me.lucid.domchat.ui.hooks.rememberAmoledDarkMode()
     val isDarkMode = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
-    // Sheet background uses surfaceContainerLow always
-    val sheetContainerColor = Color(0xFF000000)
     
     // Camera state
     var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }

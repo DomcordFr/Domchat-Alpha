@@ -22,10 +22,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.platform.LocalConfiguration
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -346,15 +346,10 @@ private fun ToolCallPreviewSheet(
     val isMemoryOperation = toolName in listOf("create_memory", "edit_memory")
     val memoryId = (content as? JsonObject)?.get("id")?.jsonPrimitiveOrNull?.intOrNull
 
-    ModalBottomSheet(
-        containerColor = domChatSheetContainerColor(),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        onDismissRequest = {
-            onDismissRequest()
-        },
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
+    DomChatInWindowBottomSheet(
+        visible = true,
+        onDismissRequest = onDismissRequest,
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.80f).dp,
         content = {
             Column(
                 modifier = Modifier

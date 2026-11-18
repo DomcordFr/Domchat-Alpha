@@ -24,10 +24,10 @@ import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.platform.LocalConfiguration
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,22 +75,16 @@ fun ContextSourcesSheet(
     onEntryClick: ((UsedLorebookEntry) -> Unit)? = null,
     onDismissRequest: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     
     val sortedModes = remember(modes) { modes.sortedByDescending { it.priority } }
     val sortedMemories = remember(memories) { memories.sortedByDescending { it.priority } }
     val sortedEntries = remember(entries) { entries.sortedByDescending { it.priority } }
     
-    ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sheetGesturesEnabled = true,
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        }
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
     ) {
         Column(
             modifier = Modifier

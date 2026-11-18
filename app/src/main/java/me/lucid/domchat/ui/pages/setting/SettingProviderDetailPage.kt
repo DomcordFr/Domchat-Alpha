@@ -1421,56 +1421,52 @@ private fun LocalHuggingFaceInstallFab(
     }
 
     if (showSheet) {
-        androidx.compose.ui.window.Dialog(
+        DomChatGlassBottomSheet(
+            visible = true,
+            containerColor = Color(0xFF000000),
             onDismissRequest = { showSheet = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
-            DomChatGlassBottomSheet(
-                visible = true,
-                onDismissRequest = { showSheet = false },
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .imePadding()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                Text(
+                    text = stringResource(R.string.local_llm_install_url_action),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text(stringResource(R.string.local_llm_install_url_label)) },
+                    supportingText = { Text(stringResource(R.string.local_llm_install_url_hint)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                    colors = appFieldColors(),
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 ) {
-                    Text(
-                        text = stringResource(R.string.local_llm_install_url_action),
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    OutlinedTextField(
-                        value = url,
-                        onValueChange = { url = it },
-                        label = { Text(stringResource(R.string.local_llm_install_url_label)) },
-                        supportingText = { Text(stringResource(R.string.local_llm_install_url_hint)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                        colors = appFieldColors(),
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    OutlinedButton(
+                        onClick = { showSheet = false },
+                        modifier = Modifier.weight(1f),
                     ) {
-                        OutlinedButton(
-                            onClick = { showSheet = false },
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-                        Button(
-                            onClick = {
-                                onInstallUrl(url)
-                                url = ""
-                                showSheet = false
-                            },
-                            enabled = url.isNotBlank() && !isDownloading,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(stringResource(R.string.local_llm_install_url_action))
-                        }
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Button(
+                        onClick = {
+                            onInstallUrl(url)
+                            url = ""
+                            showSheet = false
+                        },
+                        enabled = url.isNotBlank() && !isDownloading,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.local_llm_install_url_action))
                     }
                 }
             }
@@ -1825,15 +1821,12 @@ private fun ModelPickerFab(
     }
     
     if (showPicker) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { showPicker = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        DomChatGlassBottomSheet(
+            visible = true,
+            containerColor = Color(0xFF000000),
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+            onDismissRequest = { showPicker = false }
         ) {
-            DomChatGlassBottomSheet(
-                visible = true,
-                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-                onDismissRequest = { showPicker = false }
-            ) {
                 var filterText by rememberSaveable { mutableStateOf("") }
                 var debouncedQuery by remember { mutableStateOf("") }
                 LaunchedEffect(filterText) {
@@ -2061,7 +2054,7 @@ private fun ModelPickerFab(
                                         onAddModel(model)
                                     }
                                 },
-                            shape = RoundedCornerShape(18.dp),
+                            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                             border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                             colors = androidx.compose.material3.CardDefaults.cardColors(
                                 containerColor = Color(0xFF000000)
@@ -2072,7 +2065,7 @@ private fun ModelPickerFab(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
                             ) {
                                 ModelIcon(
                                     model = model,
@@ -2099,15 +2092,6 @@ private fun ModelPickerFab(
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                     }
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        ModelTypeTag(model = model)
-                                        if (model.inputModalities.size > 1) {
-                                            ModelModalityTag(model = model)
-                                        }
-                                    }
                                 }
                                 ModelSelectionCircle(selected = isSelected)
                             }
@@ -2117,7 +2101,6 @@ private fun ModelPickerFab(
             }
         }
     }
-}
 }
 
 @Composable
@@ -2142,17 +2125,14 @@ private fun AddNewModelFab(
     
     if (dialogState.isEditing) {
         dialogState.currentState?.let { modelState ->
-            androidx.compose.ui.window.Dialog(
-                onDismissRequest = { dialogState.dismiss() },
-                properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+            DomChatGlassBottomSheet(
+                visible = true,
+                containerColor = Color(0xFF000000),
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+                onDismissRequest = {
+                    dialogState.dismiss()
+                }
             ) {
-                DomChatGlassBottomSheet(
-                    visible = true,
-                    maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-                    onDismissRequest = {
-                        dialogState.dismiss()
-                    }
-                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2233,7 +2213,6 @@ private fun AddNewModelFab(
             }
         }
     }
-}
 
 @Composable
 private fun ModelSelectionCircle(selected: Boolean) {
@@ -2287,15 +2266,12 @@ private fun ModelPicker(
     var showModal by remember { mutableStateOf(false) }
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
     if (showModal) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { showModal = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        DomChatGlassBottomSheet(
+            visible = true,
+            containerColor = Color(0xFF000000),
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+            onDismissRequest = { showModal = false }
         ) {
-            DomChatGlassBottomSheet(
-                visible = true,
-                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-                onDismissRequest = { showModal = false }
-            ) {
                 var filterText by remember { mutableStateOf("") }
                 val filterKeywords = filterText.split(" ").filter { it.isNotBlank() }
                 val filteredModels = models.fastFilter {
@@ -2480,7 +2456,6 @@ private fun ModelPicker(
             }
             }
         }
-    }
     BadgedBox(
         badge = {
             if (models.isNotEmpty()) {
@@ -3186,16 +3161,12 @@ private fun LocalLiteRtModelIdentitySheet(
         }
     }
 
-    androidx.compose.ui.window.Dialog(
+    DomChatGlassBottomSheet(
+        visible = true,
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
-        DomChatGlassBottomSheet(
-            visible = true,
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-            onDismissRequest = onDismiss,
-            dragHandle = null,
-        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -3272,7 +3243,6 @@ private fun LocalLiteRtModelIdentitySheet(
             }
         }
     }
-}
 
 @Composable
 private fun ModelCard(
@@ -3296,18 +3266,14 @@ private fun ModelCard(
 
     if (dialogState.isEditing) {
         dialogState.currentState?.let { editingModel ->
-            androidx.compose.ui.window.Dialog(
-                onDismissRequest = { dialogState.dismiss() },
-                properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+            DomChatGlassBottomSheet(
+                visible = true,
+                containerColor = Color(0xFF000000),
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+                onDismissRequest = {
+                    dialogState.dismiss()
+                },
             ) {
-                DomChatGlassBottomSheet(
-                    visible = true,
-                    maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-                    onDismissRequest = {
-                        dialogState.dismiss()
-                    },
-                    dragHandle = null,
-                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3375,7 +3341,6 @@ private fun ModelCard(
                 }
             }
         }
-    }
 
     PhysicsSwipeToDelete(
         position = ItemPosition.ONLY,
@@ -3384,8 +3349,8 @@ private fun ModelCard(
         onDragProgress = onDragProgress,
         onDragEnd = onDragEnd,
         onDelete = onDelete,
-        groupCornerRadius = 18.dp,
-        itemCornerRadius = 18.dp,
+        groupCornerRadius = 24.dp,
+        itemCornerRadius = 24.dp,
         modifier = modifier.fillMaxWidth()
     ) { swipeShape ->
         Row(
@@ -3612,6 +3577,7 @@ private fun ProviderOverrideSettings(
         if (showProviderConfig && editingProvider != null) {
             DomChatGlassBottomSheet(
                 visible = true,
+                containerColor = Color(0xFF000000),
                 onDismissRequest = {
                     showProviderConfig = false
                     editingProvider = null
