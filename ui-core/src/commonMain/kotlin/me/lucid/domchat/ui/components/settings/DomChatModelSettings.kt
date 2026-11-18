@@ -158,9 +158,10 @@ fun DomChatGroupedModelRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
             .fillMaxWidth()
+            .padding(horizontal = 0.5.dp, vertical = 0.5.dp)
+            .background(rowBackground, shape = rowShape)
+            .border(BorderStroke(if (selected) 1.dp else 0.5.dp, borderBrush), shape = rowShape)
             .clip(rowShape)
-            .border(BorderStroke(if (selected) 1.dp else 0.5.dp, borderBrush), rowShape)
-            .background(rowBackground)
             .padding(vertical = 12.dp, horizontal = 16.dp),
     ) {
         Row(

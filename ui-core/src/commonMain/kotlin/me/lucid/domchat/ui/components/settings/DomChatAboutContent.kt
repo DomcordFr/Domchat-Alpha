@@ -81,7 +81,7 @@ fun DomChatAboutContent(
         Spacer(Modifier.height(8.dp))
         Surface(
             color = Color(0xFF000000),
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(16.dp),
             border = BorderStroke(
                 0.5.dp,
                 Brush.verticalGradient(
@@ -106,11 +106,11 @@ fun DomChatAboutContent(
                 },
         ) {
             Text(
-                text = "v • Maintained by Lucid",
+                text = "v1.0",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp),
             )
         }
         Spacer(Modifier.height(32.dp))

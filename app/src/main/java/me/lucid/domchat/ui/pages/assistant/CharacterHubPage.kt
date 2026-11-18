@@ -3,10 +3,13 @@ package me.lucid.domchat.ui.pages.assistant
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -70,13 +73,20 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.rounded.DragIndicator
+import androidx.compose.material.icons.rounded.Folder
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.ui.ItemPosition
+import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import sh.calvin.reorderable.draggableHandle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -185,6 +195,7 @@ enum class CharacterSortOption {
 private const val HUB_GROUP_PREFS = "character_hub_groups"
 private const val PREFS_KEY_GROUPS = "group_names"
 private const val PREFS_KEY_ASSIGNMENTS = "char_assignments"
+private const val PREFS_KEY_ORDER = "group_order"
 
 /**
  * Reads the persisted group name map (groupId -> displayName) from SharedPreferences.
@@ -197,6 +208,19 @@ private fun loadGroupNames(context: Context): Map<String, String> =
             } ?: emptyMap()
     } catch (_: Exception) {
         emptyMap()
+    }
+
+/**
+ * Reads the persisted group order list from SharedPreferences.
+ */
+private fun loadGroupOrder(context: Context): List<String> =
+    try {
+        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+            .getString(PREFS_KEY_ORDER, null)?.let {
+                JsonInstant.decodeFromString<List<String>>(it)
+            } ?: emptyList()
+    } catch (_: Exception) {
+        emptyList()
     }
 
 /**
@@ -216,6 +240,13 @@ private fun saveGroupNames(context: Context, groups: Map<String, String>) {
     try {
         context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
             .edit().putString(PREFS_KEY_GROUPS, JsonInstant.encodeToString(groups)).apply()
+    } catch (_: Exception) { /* best-effort persistence */ }
+}
+
+private fun saveGroupOrder(context: Context, order: List<String>) {
+    try {
+        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+            .edit().putString(PREFS_KEY_ORDER, JsonInstant.encodeToString(order)).apply()
     } catch (_: Exception) { /* best-effort persistence */ }
 }
 
@@ -277,10 +308,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
      */
     fun persistGroups() {
         val groupsSnapshot = groupNames
+        val orderSnapshot = groupOrder
         val assignmentsSnapshot = charGroupAssignments
         scope.launch {
             withContext(Dispatchers.IO) {
                 saveGroupNames(context, groupsSnapshot)
+                saveGroupOrder(context, orderSnapshot)
                 saveCharAssignments(context, assignmentsSnapshot)
             }
         }
@@ -386,9 +419,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     LaunchedEffect(Unit) {
         scope.launch {
             val groups = withContext(Dispatchers.IO) { loadGroupNames(context) }
+            val order = withContext(Dispatchers.IO) { loadGroupOrder(context) }
             val assignments = withContext(Dispatchers.IO) { loadCharAssignments(context) }
             withContext(Dispatchers.Main) {
                 groupNames = groups
+                groupOrder = order
                 charGroupAssignments = assignments
             }
         }
@@ -487,7 +522,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         AnimatedContent<Pair<Boolean, String?>>(
             targetState = isGridView to selectedGroupId,
             transitionSpec = {
-                fadeIn(animationSpec = tween(180)) togetherWith fadeOut(animationSpec = tween(140))
+                (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                 scaleIn(initialScale = 0.96f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)))
+                .togetherWith(
+                    fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                    scaleOut(targetScale = 0.96f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                )
             },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
@@ -506,13 +546,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
                                     .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                                     .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                                 placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
@@ -735,35 +774,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Surface(
+                            UploadCharacterButton(
                                 onClick = {
                                     importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
-                                },
-                                shape = AppShapes.ButtonPill,
-                                color = Color(0xFF000000),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier
-                                    .wrapContentWidth()
-                                    .align(Alignment.CenterVertically)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.FileUpload,
-                                        contentDescription = "Upload Character",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Text(
-                                        text = "Upload Character",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White
-                                    )
                                 }
-                            }
+                            )
 
                             Surface(
                                 onClick = { isGridView = !isGridView },
@@ -826,6 +841,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 }
                                 persistGroups()
                                 toaster?.show("Group deleted — characters moved to All", ToastType.Info)
+                            },
+                            onReorderGroups = { newOrder ->
+                                groupOrder = newOrder
+                                persistGroups()
                             }
                         )
                     }
@@ -864,13 +883,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 ) {
                     // Header items: scroll away with content (only OneUITopAppBar stays sticky)
                     item {
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
                                     .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                                     .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                                 placeholder = { Text("Search by character or creator...", fontSize = 13.5.sp) },
@@ -1093,35 +1111,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Surface(
+                            UploadCharacterButton(
                                 onClick = {
                                     importLauncher.launch(arrayOf("application/json", "image/png", "image/webp", "*/*"))
-                                },
-                                shape = AppShapes.ButtonPill,
-                                color = Color(0xFF000000),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier
-                                    .wrapContentWidth()
-                                    .align(Alignment.CenterVertically)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.FileUpload,
-                                        contentDescription = "Upload Character",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Text(
-                                        text = "Upload Character",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White
-                                    )
                                 }
-                            }
+                            )
 
                             Surface(
                                 onClick = { isGridView = !isGridView },
@@ -1184,6 +1178,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 }
                                 persistGroups()
                                 toaster?.show("Group deleted — characters moved to All", ToastType.Info)
+                            },
+                            onReorderGroups = { newOrder ->
+                                groupOrder = newOrder
+                                persistGroups()
                             }
                         )
                     }
@@ -1748,6 +1746,71 @@ fun CharacterPortraitCard(
     }
 }
 
+/**
+ * Strips raw HTML tags (<p>, <br>, etc.) and decodes common HTML entities from character descriptions.
+ */
+private fun cleanHtmlText(raw: String): String {
+    return raw
+        .replace(Regex("<[^>]*>"), " ")
+        .replace("&nbsp;", " ")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace(Regex("\\s+"), " ")
+        .trim()
+}
+
+/**
+ * Sleek Upload Character button with obsidian surface, subtle indigo specular gradient rim, and haptic feedback.
+ */
+@Composable
+private fun UploadCharacterButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val haptics = rememberPremiumHaptics()
+    Surface(
+        onClick = {
+            haptics.perform(HapticPattern.Pop)
+            onClick()
+        },
+        shape = AppShapes.ButtonPill,
+        color = Color(0xFF000000),
+        border = BorderStroke(
+            1.dp,
+            Brush.horizontalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.32f),
+                    Color(0xFF6366F1).copy(alpha = 0.40f),
+                    Color.White.copy(alpha = 0.16f)
+                )
+            )
+        ),
+        modifier = modifier.wrapContentWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.FileUpload,
+                contentDescription = "Upload Character",
+                tint = Color.White,
+                modifier = Modifier.size(17.dp)
+            )
+            Text(
+                text = "Import / Upload",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color.White
+            )
+        }
+    }
+}
+
 @Composable
 fun CharacterListRow(
     assistant: Assistant,
@@ -1755,75 +1818,85 @@ fun CharacterListRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit = {}
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF000000))
-            .border(
-                width = 0.5.dp,
-                brush = LiquidGlassTokens.SpecularBorderSubtle,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        onClick = onClick,
+        onLongClick = onLongClick,
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFF000000),
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(52.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            FullCharacterCardImage(
-                name = assistant.effectiveDisplayName,
-                avatar = assistant.avatar,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = assistant.effectiveDisplayName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (!assistant.creator.isNullOrBlank()) {
-                Text(
-                    text = "by ${assistant.creator.truncateCreator(10)}",
-                    fontSize = 12.sp,
-                    color = Color(0xFF8A8A96)
+            Box(
+                modifier = Modifier
+                    .width(48.dp)
+                    .height(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
+            ) {
+                FullCharacterCardImage(
+                    name = assistant.effectiveDisplayName,
+                    avatar = assistant.avatar,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-            // Creator notes blurb — truncate multi-KB notes/bios to 160 chars with ellipsis
-            // so a long creator note never dumps a wall of text into the hub row.
-            assistant.creatorNotes?.takeIf { it.isNotBlank() }?.let { notes ->
-                val trimmed = notes.trim()
-                val blurb = if (trimmed.length > 160) "${trimmed.take(160).trim()}..." else trimmed
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+            ) {
                 Text(
-                    text = blurb,
-                    fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.7f),
+                    text = assistant.effectiveDisplayName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!assistant.creator.isNullOrBlank()) {
+                    Text(
+                        text = "by ${assistant.creator.truncateCreator(12)}",
+                        fontSize = 12.sp,
+                        color = Color(0xFF8A8A96),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                assistant.creatorNotes?.takeIf { it.isNotBlank() }?.let { notes ->
+                    val cleaned = cleanHtmlText(notes)
+                    if (cleaned.isNotBlank()) {
+                        val blurb = if (cleaned.length > 140) "${cleaned.take(140).trim()}..." else cleaned
+                        Text(
+                            text = blurb,
+                            fontSize = 11.5.sp,
+                            color = Color.White.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+            val introsCount = assistant.alternateGreetings.size + 1
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0xFF0F1017))
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "$introsCount greeting${if (introsCount > 1) "s" else ""}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.9f)
                 )
             }
-        }
-        val introsCount = assistant.alternateGreetings.size + 1
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFF000000))
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = "$introsCount greeting${if (introsCount > 1) "s" else ""}",
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White.copy(0.92f)
-            )
         }
     }
 }
@@ -1901,17 +1974,10 @@ fun CharacterInspectorSheet(
     onDelete: () -> Unit = {},
     onUpdateLorebookIds: ((Set<kotlin.uuid.Uuid>) -> Unit)? = null
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    var isDismissing by remember { mutableStateOf(false) }
 
     fun dismissWithAnimation() {
-        if (isDismissing) return
-        isDismissing = true
-        scope.launch {
-            sheetState.hide()
-            onDismiss()
-        }
+        onDismiss()
     }
 
     val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
@@ -1934,22 +2000,18 @@ fun CharacterInspectorSheet(
     }
     val hasAttachedLorebooks = attachedLorebookList.isNotEmpty()
 
-    ModalBottomSheet(
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = { dismissWithAnimation() },
-        sheetState = sheetState,
-        sheetGesturesEnabled = false,
-        containerColor = sheetBgColor,
-        contentColor = contentTextColor,
+        maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp,
         dragHandle = null,
-        contentWindowInsets = { WindowInsets(0.dp) },
         shape = sheetShape,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
     ) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.92f)
+                .fillMaxHeight()
         ) {
             val scrollState = rememberScrollState()
             Column(
@@ -3090,10 +3152,12 @@ private fun GroupTabsRow(
     onGroupRenamed: (String, String) -> Unit = { _, _ -> },
     onGroupMoved: (String, Int) -> Unit = { _, _ -> },
     onGroupDeleted: (String) -> Unit = { _ -> },
+    onReorderGroups: (List<String>) -> Unit = { _ -> },
 ) {
     // Stable display order: persisted order first, then any groups not yet recorded.
     val orderedGroups = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
     var longPressedGroupId by remember { mutableStateOf<String?>(null) }
+    var showReorderSheet by remember { mutableStateOf(false) }
     var renameDraft by remember { mutableStateOf("") }
 
     Row(
@@ -3186,13 +3250,12 @@ private fun GroupTabsRow(
         }
     }
 
-    // Group action menu (long-press): Rename / Move Forward / Move Backward / Delete Group.
+    // Group action menu (long-press): Rename, Save, Reorder, Delete
     longPressedGroupId?.let { groupId ->
         val label = groupNames[groupId] ?: "Group"
-        val idx = orderedGroups.indexOf(groupId)
         Dialog(
             onDismissRequest = { longPressedGroupId = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Box(
                 modifier = Modifier
@@ -3202,30 +3265,45 @@ private fun GroupTabsRow(
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 420.dp)
-                        .wrapContentHeight()
-                        .background(Color(0xFF000000))
-                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
-                        .padding(20.dp),
-                    color = Color.Transparent,
+                        .widthIn(max = 400.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(22.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Manage group",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.65f)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Manage Group",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.65f)
+                                )
+                            }
+                            IconButton(onClick = { longPressedGroupId = null }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White
+                                )
+                            }
+                        }
 
                         // Rename
                         OutlinedTextField(
@@ -3263,36 +3341,15 @@ private fun GroupTabsRow(
 
                         HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.08f))
 
-                        // Move Forward / Move Backward
-                        Row(
+                        // Reorder option
+                        DomChatGlassPillButton(
+                            text = "Reorder Groups",
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            DomChatGlassPillButton(
-                                text = "Move Backward",
-                                onClick = {
-                                    if (idx > 0) {
-                                        onGroupMoved(groupId, idx - 1)
-                                        longPressedGroupId = null
-                                    }
-                                },
-                                enabled = idx > 0,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            DomChatGlassPillButton(
-                                text = "Move Forward",
-                                onClick = {
-                                    if (idx < orderedGroups.lastIndex) {
-                                        onGroupMoved(groupId, idx + 1)
-                                        longPressedGroupId = null
-                                    }
-                                },
-                                enabled = idx < orderedGroups.lastIndex,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                            onClick = {
+                                longPressedGroupId = null
+                                showReorderSheet = true
+                            }
+                        )
 
                         // Delete group (does NOT delete characters)
                         DomChatGlassPillButton(
@@ -3304,6 +3361,178 @@ private fun GroupTabsRow(
                                 longPressedGroupId = null
                             },
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    // Group re-ordering bottom sheet
+    GroupReorderSheet(
+        visible = showReorderSheet,
+        groupOrder = orderedGroups,
+        groupNames = groupNames,
+        onDismissRequest = { showReorderSheet = false },
+        onReorder = onReorderGroups,
+        onDeleteGroup = onGroupDeleted
+    )
+}
+
+/**
+ * Bottom sheet to smoothly reorder groups by dragging up/down, or swiping left to delete.
+ */
+@Composable
+private fun GroupReorderSheet(
+    visible: Boolean,
+    groupOrder: List<String>,
+    groupNames: Map<String, String>,
+    onDismissRequest: () -> Unit,
+    onReorder: (List<String>) -> Unit,
+    onDeleteGroup: (String) -> Unit
+) {
+    if (!visible) return
+    val haptics = rememberPremiumHaptics()
+    val orderedGroups = remember(groupOrder, groupNames) {
+        (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
+    }
+    var currentOrder by remember(orderedGroups) { mutableStateOf(orderedGroups) }
+    val lazyListState = rememberLazyListState()
+    val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val list = currentOrder.toMutableList()
+        val item = list.removeAt(from.index)
+        list.add(to.index, item)
+        currentOrder = list
+        onReorder(list)
+    }
+
+    DomChatInWindowBottomSheet(
+        visible = visible,
+        onDismissRequest = onDismissRequest,
+        maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.72f).dp,
+        dragHandle = { DomChatSheetDragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Reorder Groups",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Drag handle to rearrange • Swipe left to delete",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+                }
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            if (currentOrder.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No custom groups created",
+                        color = Color.White.copy(alpha = 0.5f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            } else {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(currentOrder, key = { it }) { groupId ->
+                        ReorderableItem(
+                            state = reorderableState,
+                            key = groupId
+                        ) { isDragging ->
+                            PhysicsSwipeToDelete(
+                                position = ItemPosition.Solo,
+                                deleteEnabled = true,
+                                groupCornerRadius = 16.dp,
+                                itemCornerRadius = 16.dp,
+                                onDelete = {
+                                    onDeleteGroup(groupId)
+                                    val updated = currentOrder.filter { it != groupId }
+                                    currentOrder = updated
+                                    onReorder(updated)
+                                }
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Folder,
+                                                contentDescription = null,
+                                                tint = Color.White.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Text(
+                                                text = groupNames[groupId] ?: "Group",
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = {},
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .draggableHandle(
+                                                    onDragStarted = { haptics.perform(HapticPattern.Pop) },
+                                                    onDragStopped = { haptics.perform(HapticPattern.Thud) }
+                                                )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.DragIndicator,
+                                                contentDescription = "Drag to reorder",
+                                                tint = Color.White.copy(alpha = 0.65f),
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3326,14 +3555,13 @@ private fun NewGroupDialog(
     if (!visible) return
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp)
-                .imePadding()
-                .navigationBarsPadding(),
+                .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
@@ -3412,47 +3640,83 @@ private fun CharacterActionPopover(
     if (!visible) return
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .padding(20.dp)
                 .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 460.dp)
-                    .wrapContentHeight()
-                    .background(Color(0xFF000000))
-                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
-                    .padding(20.dp),
-                color = Color.Transparent,
+                    .widthIn(max = 440.dp)
+                    .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.82f).dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
+                            ) {
+                                FullCharacterCardImage(
+                                    name = assistant.effectiveDisplayName,
+                                    avatar = assistant.avatar,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = assistant.effectiveDisplayName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "Manage groups & character",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.65f)
+                                )
+                            }
+                        }
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.1f))
+
                     Text(
-                        text = assistant.effectiveDisplayName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Manage groups",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.65f)
+                        text = "Assign to group",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.85f)
                     )
 
-                    // Groups as horizontally scrollable chips
-                    Text(
-                        text = "Groups",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3460,7 +3724,6 @@ private fun CharacterActionPopover(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // "All" (ungrouped) chip — wraps content, never forced to full width
                         val isAll = characterGroupId == null
                         GroupActionChip(
                             text = "All",
@@ -3491,26 +3754,25 @@ private fun CharacterActionPopover(
                             DomChatGlassPillButton(
                                 text = "Delete group",
                                 destructive = true,
-                                onClick = { onDeleteGroup(characterGroupId ?: "") },
+                                onClick = { onDeleteGroup(characterGroupId) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    // Delete character
                     Surface(
                         onClick = { onDelete() },
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.Transparent,
-                        border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f)),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF1A0A0A),
+                        border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.5f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
@@ -3520,7 +3782,7 @@ private fun CharacterActionPopover(
                             )
                             Text(
                                 text = "Delete character",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                 color = Color(0xFFEF4444)
                             )
                         }

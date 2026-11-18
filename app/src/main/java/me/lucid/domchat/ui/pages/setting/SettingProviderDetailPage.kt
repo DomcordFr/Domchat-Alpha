@@ -61,7 +61,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedButton
@@ -81,8 +80,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -205,6 +204,17 @@ import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.pages.backup.ExportKeySelectionDialog
 import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
+import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.convxFluidTouch
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.LiquidGlassMode
+import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.hooks.HapticPattern
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.Widgets
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 
 internal fun resolveProviderModel(
     resolver: ModelMetadataResolver,
@@ -545,74 +555,12 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
             )
         },
         bottomBar = {
-            val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.align(Alignment.Center),
-                        shape = RoundedCornerShape(28.dp),
-                        color = androidx.compose.ui.graphics.Color(0xFF000000),
-                        tonalElevation = 6.dp,
-                        shadowElevation = 8.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .then(
-                                        if (pager.currentPage == 0)
-                                            Modifier.background(Color(0xFF000000))
-                                        else Modifier.clickable {
-                                            haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
-                                            scope.launch { pager.animateScrollToPage(0) }
-                                        }
-                                    )
-                                    .padding(12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Settings,
-                                    contentDescription = stringResource(R.string.setting_provider_page_configuration),
-                                    tint = if (pager.currentPage == 0)
-                                        Color(0xFFFFFFFF)
-                                    else Color.White.copy(alpha = 0.65f),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .then(
-                                        if (pager.currentPage == 1)
-                                            Modifier.background(Color(0xFF000000))
-                                        else Modifier.clickable {
-                                            haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
-                                            scope.launch { pager.animateScrollToPage(1) }
-                                        }
-                                    )
-                                    .padding(12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.ViewModule,
-                                    contentDescription = stringResource(R.string.setting_provider_page_models),
-                                    tint = if (pager.currentPage == 1)
-                                        Color(0xFFFFFFFF)
-                                    else Color.White.copy(alpha = 0.65f),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+            ProviderDetailBottomBar(
+                pager = pager,
+                modelCount = provider.models.size,
+                isLiquidGlass = settings.displaySetting.liquidGlassMode != LiquidGlassMode.OFF,
+                scope = scope
+            )
         }
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -664,6 +612,138 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ProviderDetailBottomBar(
+    pager: androidx.compose.foundation.pager.PagerState,
+    modelCount: Int,
+    isLiquidGlass: Boolean,
+    scope: kotlinx.coroutines.CoroutineScope
+) {
+    val haptics = rememberPremiumHaptics()
+    val isPage0 = pager.currentPage == 0
+    val isPage1 = pager.currentPage == 1
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val barShape = RoundedCornerShape(32.dp)
+        val barModifier = if (isLiquidGlass) {
+            Modifier
+                .liquidGlassSurface(
+                    shape = barShape,
+                    borderWidth = 0.5.dp,
+                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    isFloatingControl = true
+                )
+                .convxFluidTouch(bloomAlpha = 0.20f, bloomRadiusDp = 52f)
+        } else {
+            Modifier
+                .clip(barShape)
+                .background(Color(0xFF000000))
+                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, barShape)
+        }
+
+        Surface(
+            shape = barShape,
+            color = if (isLiquidGlass) Color.Transparent else Color(0xFF000000),
+            modifier = barModifier
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Tab 0: Configuration / Settings
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (isPage0) {
+                        if (isLiquidGlass) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.12f)
+                    } else Color.Transparent,
+                    border = if (isPage0) {
+                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
+                    } else null,
+                    modifier = Modifier.combinedClickable(
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            scope.launch { pager.animateScrollToPage(0) }
+                        },
+                        onLongClick = if (isLiquidGlass) {
+                            {
+                                haptics.perform(HapticPattern.Heavy)
+                            }
+                        } else null
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = stringResource(R.string.setting_provider_page_configuration),
+                            tint = if (isPage0) Color.White else Color.White.copy(alpha = 0.65f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Settings",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (isPage0) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isPage0) Color.White else Color.White.copy(alpha = 0.65f)
+                        )
+                    }
+                }
+
+                // Tab 1: Models (with count badge)
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (isPage1) {
+                        if (isLiquidGlass) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.12f)
+                    } else Color.Transparent,
+                    border = if (isPage1) {
+                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
+                    } else null,
+                    modifier = Modifier.combinedClickable(
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            scope.launch { pager.animateScrollToPage(1) }
+                        },
+                        onLongClick = if (isLiquidGlass) {
+                            {
+                                haptics.perform(HapticPattern.Heavy)
+                            }
+                        } else null
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Widgets,
+                            contentDescription = stringResource(R.string.setting_provider_page_models),
+                            tint = if (isPage1) Color.White else Color.White.copy(alpha = 0.65f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = if (modelCount > 0) "Models ($modelCount)" else "Models",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (isPage1) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isPage1) Color.White else Color.White.copy(alpha = 0.65f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun SettingProviderConfigPage(
     provider: ProviderSetting,
@@ -686,8 +766,47 @@ private fun SettingProviderConfigPage(
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Surface(
+                shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                color = Color(0xFF000000),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Connection & Credentials",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        )
+                    }
+                    Text(
+                        text = "Configure API keys, base endpoints, and network options. Once saved, switch to the Models tab below to manage and select models for your chats.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.65f),
+                            lineHeight = 16.sp
+                        )
+                    )
+                }
+            }
+
             Card(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                 colors = CardDefaults.cardColors(
                     containerColor = Color(0xFF000000)
                 )
@@ -1014,6 +1133,48 @@ private fun ModelList(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             state = lazyListState
         ) {
+            item(key = "model_page_guided_banner") {
+                Surface(
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                    color = Color(0xFF000000),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Widgets,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "Active Models (${providerSetting.models.size})",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                    color = Color.White
+                                )
+                            )
+                        }
+                        Text(
+                            text = "These models are available in chat. Drag handle to reorder, swipe left to remove, tap to edit parameters, or tap '+' to discover and import models.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Color.White.copy(alpha = 0.65f),
+                                lineHeight = 16.sp
+                            )
+                        )
+                    }
+                }
+            }
+
             if (providerSetting.models.size > 4 || searchQuery.isNotEmpty()) {
                 item(key = "model_search_input") {
                     androidx.compose.material3.OutlinedTextField(
@@ -1036,8 +1197,6 @@ private fun ModelList(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 6.dp)
-                            .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                     )
                 }
             }
@@ -1634,7 +1793,6 @@ private fun ModelPickerFab(
     var showPicker by remember { mutableStateOf(false) }
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(showPicker, modelsLoaded, canReload, isLoading, reloadError) {
         if (showPicker && !modelsLoaded && canReload && !isLoading && reloadError == null) {
@@ -1660,6 +1818,7 @@ private fun ModelPickerFab(
     if (showPicker) {
         DomChatGlassBottomSheet(
             visible = true,
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             onDismissRequest = { showPicker = false }
         ) {
             var filterText by rememberSaveable { mutableStateOf("") }
@@ -1717,14 +1876,20 @@ private fun ModelPickerFab(
             val allFilteredSelected = remember(filteredModels, selectedModelMap) {
                 filteredModels.isNotEmpty() && filteredModels.all { selectedModelMap.containsKey(it.modelId) }
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.85f)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Surface(
+                shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
+                color = Color(0xFF000000),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                modifier = Modifier.fillMaxWidth()
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.88f)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1936,6 +2101,7 @@ private fun ModelPickerFab(
                     }
                 }
             }
+            }
         }
     }
 }
@@ -1949,7 +2115,6 @@ private fun AddNewModelFab(
     val scope = rememberCoroutineScope()
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     FloatingActionButton(
         onClick = { 
@@ -1965,19 +2130,26 @@ private fun AddNewModelFab(
         dialogState.currentState?.let { modelState ->
             DomChatGlassBottomSheet(
                 visible = true,
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
                 onDismissRequest = {
                     dialogState.dismiss()
                 }
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.88f)
-                        .imePadding()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                Surface(
+                    shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
+                    color = Color(0xFF000000),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.88f)
+                            .imePadding()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -2045,6 +2217,7 @@ private fun AddNewModelFab(
                         }
                     }
                 }
+                }
             }
         }
     }
@@ -2102,38 +2275,37 @@ private fun ModelPicker(
     var showModal by remember { mutableStateOf(false) }
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
     if (showModal) {
-        ModalBottomSheet(
-            containerColor = Color(0xFF000000),
-            dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-            contentColor = domChatSheetContentColor(),
-            onDismissRequest = { showModal = false },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            )
+        DomChatGlassBottomSheet(
+            visible = true,
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
+            onDismissRequest = { showModal = false }
         ) {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-            var filterText by remember { mutableStateOf("") }
-            val filterKeywords = filterText.split(" ").filter { it.isNotBlank() }
-            val filteredModels = models.fastFilter {
-                if (filterKeywords.isEmpty()) {
-                    true
-                } else {
-                    filterKeywords.all { keyword ->
-                        it.modelId.contains(keyword, ignoreCase = true) ||
-                            it.displayName.contains(keyword, ignoreCase = true)
+            Surface(
+                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+                color = Color(0xFF000000),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                var filterText by remember { mutableStateOf("") }
+                val filterKeywords = filterText.split(" ").filter { it.isNotBlank() }
+                val filteredModels = models.fastFilter {
+                    if (filterKeywords.isEmpty()) {
+                        true
+                    } else {
+                        filterKeywords.all { keyword ->
+                            it.modelId.contains(keyword, ignoreCase = true) ||
+                                it.displayName.contains(keyword, ignoreCase = true)
+                        }
                     }
                 }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.85f)
-                    .padding(8.dp)
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.88f)
+                        .padding(8.dp)
+                        .imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                 // Select All / Deselect All - show only one based on selection state
                 val allFilteredSelected = filteredModels.isNotEmpty() && filteredModels.all { model ->
                     selectedModels.any { selected -> modelsReferToSameApiModel(selected, model) }
@@ -2294,6 +2466,7 @@ private fun ModelPicker(
                     shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                     colors = appFieldColors(),
                 )
+            }
             }
         }
     }
@@ -2974,7 +3147,6 @@ private fun LocalLiteRtModelIdentitySheet(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val imagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -2996,35 +3168,36 @@ private fun LocalLiteRtModelIdentitySheet(
 
     DomChatGlassBottomSheet(
         visible = true,
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
         dragHandle = null,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .imePadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        Surface(
+            shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
+            color = Color(0xFF000000),
+            border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                IconButton(
-                    onClick = {
-                        scope.launch {
-                            sheetState.hide()
-                            onDismiss()
-                        }
-                    },
-                    modifier = Modifier.align(Alignment.CenterStart),
-                ) {
-                    Icon(Icons.Rounded.Close, null)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterStart),
+                    ) {
+                        Icon(Icons.Rounded.Close, null)
+                    }
+                    Text(
+                        text = stringResource(R.string.local_llm_edit_identity_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
                 }
-                Text(
-                    text = stringResource(R.string.local_llm_edit_identity_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-            }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -3079,6 +3252,7 @@ private fun LocalLiteRtModelIdentitySheet(
                 }
             }
         }
+        }
     }
 }
 
@@ -3104,44 +3278,46 @@ private fun ModelCard(
 
     if (dialogState.isEditing) {
         dialogState.currentState?.let { editingModel ->
-            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
             DomChatGlassBottomSheet(
                 visible = true,
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
                 onDismissRequest = {
                     dialogState.dismiss()
                 },
-                sheetState = sheetState,
                 dragHandle = null,
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.88f)
-                        .imePadding()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                Surface(
+                    shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
+                    color = Color(0xFF000000),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.88f)
+                            .imePadding()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    sheetState.hide()
-                                    dialogState.dismiss()
-                                }
-                            },
-                            modifier = Modifier.align(Alignment.CenterStart)
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Icon(Icons.Rounded.Close, null)
+                            IconButton(
+                                onClick = {
+                                    dialogState.dismiss()
+                                },
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            ) {
+                                Icon(Icons.Rounded.Close, null)
+                            }
+                            Text(
+                                text = stringResource(R.string.setting_provider_page_edit_model),
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.align(Alignment.Center),
+                            )
                         }
-                        Text(
-                            text = stringResource(R.string.setting_provider_page_edit_model),
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.align(Alignment.Center),
-                        )
-                    }
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
@@ -3180,6 +3356,7 @@ private fun ModelCard(
                         }
                     }
                 }
+                }
             }
         }
     }
@@ -3191,19 +3368,17 @@ private fun ModelCard(
         onDragProgress = onDragProgress,
         onDragEnd = onDragEnd,
         onDelete = onDelete,
+        groupCornerRadius = 16.dp,
+        itemCornerRadius = 16.dp,
         modifier = modifier.fillMaxWidth()
-    ) { _ ->
+    ) { swipeShape ->
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(0.dp))
-                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(0.dp))
-                .background(
-                    color = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) 
-                        Color(0xFF000000) 
-                    else 
-                        Color(0xFF000000)
-                )
+                .padding(0.5.dp)
+                .background(Color(0xFF000000), shape = swipeShape)
+                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, swipeShape)
+                .clip(swipeShape)
                 .clickable {
                     dialogState.open(model.copy())
                 }

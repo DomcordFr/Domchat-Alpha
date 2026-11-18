@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Input
 import androidx.compose.material.icons.rounded.Add
@@ -49,14 +50,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -366,6 +366,8 @@ fun LorebooksPageContent(
                             PhysicsSwipeToDelete(
                                 position = position,
                                 deleteEnabled = canDelete,
+                                groupCornerRadius = 18.dp,
+                                itemCornerRadius = 18.dp,
                                 neighborOffset = neighborOffset,
                                 onDragProgress = { offset, unlocked ->
                                     draggingIndex = index
@@ -385,9 +387,10 @@ fun LorebooksPageContent(
                                 modifier = Modifier
                                     .scale(if (isDragging) 0.95f else 1f)
                                     .fillMaxWidth()
-                            ) { _ ->
+                            ) { swipeShape ->
                                 LorebookCard(
                                     lorebook = lorebook,
+                                    shape = swipeShape,
                                     position = position,
                                     onClick = {
                                         haptics.perform(HapticPattern.Tick)
@@ -485,17 +488,18 @@ fun LorebooksPageContent(
 @Composable
 private fun LorebookCard(
     lorebook: Lorebook,
+    shape: Shape = RoundedCornerShape(18.dp),
     position: ItemPosition,
     onClick: () -> Unit,
     dragHandle: @Composable () -> Unit,
 ) {
     val isDark = LocalDarkMode.current
-    val cardShape = RoundedCornerShape(18.dp)
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
-        shape = cardShape,
-        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+        shape = shape,
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 0.5.dp, vertical = 0.5.dp)
     ) {
         Row(
             modifier = Modifier
@@ -592,8 +596,6 @@ internal fun LorebookCreatorSheet(
     onDismiss: () -> Unit,
     onSave: (Lorebook) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var cover by remember { mutableStateOf<Avatar?>(null) }
@@ -619,16 +621,10 @@ internal fun LorebookCreatorSheet(
         }
     }
     
-    ApplyDialogWindowBlur()
-    val isDark = LocalDarkMode.current
-    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-    ModalBottomSheet(
-        containerColor = Color(0xFF000000),
-        shape = sheetShape,
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, sheetShape).imePadding(),
-        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
+        modifier = Modifier.imePadding(),
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(

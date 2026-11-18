@@ -4,6 +4,12 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -323,20 +329,37 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             items(filteredPersonas, key = { it.id }) { persona ->
                 val isActive = persona.id == activePersona.id || (persona.isDefault && activePersona.id == null)
                 val cardShape = AppShapes.CardSmall // 16.dp
-                val surfaceColor = when {
-                    isActive -> Color.White.copy(alpha = 0.08f)
-                    else -> Color.Black.copy(alpha = 0.03f)
-                }
-                val borderBrush: Brush = when {
-                    isActive -> LiquidGlassTokens.SpecularBorderSubtle
-                    else -> SolidColor(Color.White.copy(alpha = 0.08f))
+                val surfaceColor by animateColorAsState(
+                    targetValue = when {
+                        isActive -> if (isDark) Color(0xFF0D0E15) else Color.White.copy(alpha = 0.90f)
+                        else -> if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.50f)
+                    },
+                    animationSpec = tween(durationMillis = 240),
+                    label = "persona_card_color"
+                )
+                val borderWidth by animateDpAsState(
+                    targetValue = if (isActive) 1.dp else 0.5.dp,
+                    animationSpec = tween(durationMillis = 240),
+                    label = "persona_card_border_width"
+                )
+                val borderBrush: Brush = if (isActive) {
+                    LiquidGlassTokens.SpecularBorderSubtle
+                } else {
+                    SolidColor(if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f))
                 }
 
                 Surface(
                     color = surfaceColor,
                     shape = cardShape,
-                    border = BorderStroke(if (isActive) 1.dp else 0.5.dp, borderBrush),
-                    modifier = Modifier.fillMaxWidth()
+                    border = BorderStroke(borderWidth, borderBrush),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(cardShape)
+                        .clickable {
+                            if (!isActive) {
+                                setActive(persona.id)
+                            }
+                        }
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -379,26 +402,34 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                         }
                                     }
 
-                                    if (isActive) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(AppShapes.SettingBadge)
-                                                .background(Color(0xFF000000).copy(alpha = 0.30f))
-                                                .border(
-                                                    BorderStroke(
-                                                        0.5.dp,
-                                                        SolidColor(MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
-                                                    ),
-                                                    AppShapes.SettingBadge
-                                                )
-                                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    AnimatedVisibility(
+                                        visible = isActive,
+                                        enter = fadeIn(tween(200)) + expandHorizontally(spring(stiffness = 380f)),
+                                        exit = fadeOut(tween(150)) + shrinkHorizontally(spring(stiffness = 380f))
+                                    ) {
+                                        Surface(
+                                            color = Color(0xFF10B981).copy(alpha = 0.15f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            border = BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.45f))
                                         ) {
-                                            Text(
-                                                text = "ACTIVE",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF10B981),
+                                                    modifier = Modifier.size(11.dp)
+                                                )
+                                                Text(
+                                                    text = "ACTIVE",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF10B981)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -423,13 +454,19 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (!isActive) {
-                                DomChatGlassPillButton(
-                                    text = "Use in Chat",
-                                    icon = Icons.Rounded.Check,
-                                    onClick = { setActive(persona.id) }
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            AnimatedVisibility(
+                                visible = !isActive,
+                                enter = fadeIn(tween(150)) + expandHorizontally(spring(stiffness = 380f)),
+                                exit = fadeOut(tween(150)) + shrinkHorizontally(spring(stiffness = 380f))
+                            ) {
+                                Row {
+                                    DomChatGlassPillButton(
+                                        text = "Use in Chat",
+                                        icon = Icons.Rounded.Check,
+                                        onClick = { setActive(persona.id) }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
                             }
 
                             DomChatGlassPillButton(

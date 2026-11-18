@@ -10,6 +10,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
+import me.lucid.domchat.ui.modifier.fadeEdges
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -193,6 +194,14 @@ fun ConversationList(
         val canScrollForward by remember {
             derivedStateOf { listState.canScrollForward }
         }
+        val canScrollBackward by remember {
+            derivedStateOf { listState.canScrollBackward }
+        }
+        val topFadeProgress by animateFloatAsState(
+            targetValue = if (canScrollBackward) 1f else 0f,
+            animationSpec = tween(durationMillis = 200),
+            label = "drawer_top_fade"
+        )
 
         Column(
             modifier = Modifier.fillMaxSize()
@@ -204,7 +213,7 @@ fun ConversationList(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                    .padding(horizontal = 4.dp, top = 2.dp, bottom = 8.dp)
             ) {
                 DomChatDrawerSearch(
                     query = searchQuery,
@@ -223,10 +232,11 @@ fun ConversationList(
                 state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .fadeEdges(topProgress = topFadeProgress, fadeHeight = 44f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    top = 8.dp,
+                    top = 4.dp,
                     bottom = if (bottomContent != null) 58.dp else 8.dp,
                 ),
             ) {

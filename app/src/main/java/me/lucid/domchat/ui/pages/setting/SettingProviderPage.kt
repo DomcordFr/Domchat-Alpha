@@ -100,7 +100,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
@@ -109,7 +108,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.isSystemInDarkTheme
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.appFilterChipColors
@@ -422,9 +420,7 @@ fun SettingProviderPage(
                 placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -1881,13 +1877,25 @@ private fun ProviderItemContent(
                             Text(stringResource(R.string.setting_provider_page_disabled))
                         }
                     }
-                    Tag(type = TagType.INFO) {
-                        Text(
-                            stringResource(
-                                R.string.setting_provider_page_model_count,
-                                provider.models.size
+                    Surface(
+                        shape = me.lucid.domchat.ui.theme.AppShapes.Tag,
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(
+                                    R.string.setting_provider_page_model_count,
+                                    provider.models.size
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFF2F2F7)
                             )
-                        )
+                        }
                     }
                     if (provider.name == "AiHubMix") {
                         Tag(type = TagType.INFO) {

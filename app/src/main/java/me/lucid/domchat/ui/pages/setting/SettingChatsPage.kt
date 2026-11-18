@@ -57,9 +57,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import me.lucid.ai.core.MessageRole
+import me.lucid.ai.ui.UIMessagePart
+import me.lucid.domchat.data.model.Conversation
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.JsonObject
+import me.lucid.domchat.utils.JsonInstant
+import java.time.ZoneOffset
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import me.lucid.domchat.ui.components.dialog.SettingsDestructiveConfirmDialog
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -177,6 +194,26 @@ fun SettingChatsPage(
     var isSelectionMode by rememberSaveable { mutableStateOf(false) }
     var selectedChatIds by rememberSaveable { mutableStateOf<Set<String>>(emptySet()) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var managingConversation by remember { mutableStateOf<LightConversationEntity?>(null) }
+    var pendingExportContent by remember { mutableStateOf("") }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null && pendingExportContent.isNotEmpty()) {
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.write(pendingExportContent.toByteArray(Charsets.UTF_8))
+                }
+                haptics.perform(HapticPattern.Success)
+                toaster.show("Chat exported successfully in SillyTavern format", type = ToastType.Success)
+            } catch (e: Exception) {
+                haptics.perform(HapticPattern.Error)
+                toaster.show("Export failed: ${e.message}", type = ToastType.Error)
+            }
+            pendingExportContent = ""
+        }
+    }
 
     // Filter and sort conversations
     val filteredConversations = remember(rawConversations, searchQuery, selectedAssistantFilter, sortOrder) {
@@ -327,35 +364,61 @@ fun SettingChatsPage(
                         .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                 )
 
-                // Assistant Filter Chips
+                // Assistant Filter Chips (styled in black background + glassy border)
                 if (allAssistants.size > 1) {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(horizontal = 2.dp)
                     ) {
                         item {
-                            FilterChip(
-                                selected = selectedAssistantFilter == null,
-                                onClick = { selectedAssistantFilter = null },
-                                label = { Text("All Characters (${rawConversations.size})") },
-                                shape = RoundedCornerShape(50),
-                                colors = appFilterChipColors(selected = selectedAssistantFilter == null),
-                                border = appFilterChipBorder(selected = selectedAssistantFilter == null)
-                            )
+                            val isSelected = selectedAssistantFilter == null
+                            Surface(
+                                color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color(0xFF000000),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(
+                                    0.5.dp,
+                                    if (isSelected) Color.White.copy(alpha = 0.5f) else LiquidGlassTokens.SpecularBorderSubtle
+                                ),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        haptics.perform(HapticPattern.Tick)
+                                        selectedAssistantFilter = null
+                                    }
+                            ) {
+                                Text(
+                                    text = "All Characters (${rawConversations.size})",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                                )
+                            }
                         }
                         items(allAssistants, key = { it.id.toString() }) { assistant ->
                             val assistantIdStr = assistant.id.toString()
                             val count = rawConversations.count { it.assistantId == assistantIdStr }
-                            FilterChip(
-                                selected = selectedAssistantFilter == assistantIdStr,
-                                onClick = {
-                                    selectedAssistantFilter = if (selectedAssistantFilter == assistantIdStr) null else assistantIdStr
-                                },
-                                label = { Text("${assistant.name} ($count)") },
-                                shape = RoundedCornerShape(50),
-                                colors = appFilterChipColors(selected = selectedAssistantFilter == assistantIdStr),
-                                border = appFilterChipBorder(selected = selectedAssistantFilter == assistantIdStr)
-                            )
+                            val isSelected = selectedAssistantFilter == assistantIdStr
+                            Surface(
+                                color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color(0xFF000000),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(
+                                    0.5.dp,
+                                    if (isSelected) Color.White.copy(alpha = 0.5f) else LiquidGlassTokens.SpecularBorderSubtle
+                                ),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        haptics.perform(HapticPattern.Tick)
+                                        selectedAssistantFilter = if (isSelected) null else assistantIdStr
+                                    }
+                            ) {
+                                Text(
+                                    text = "${assistant.name} ($count)",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -481,7 +544,7 @@ fun SettingChatsPage(
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 68.dp, max = 82.dp)
+                                .heightIn(min = 72.dp)
                                 .clip(cardShape)
                                 .domChatBlurEffect(containerColor = cardBg, shape = cardShape)
                                 .combinedClickable(
@@ -501,9 +564,14 @@ fun SettingChatsPage(
                                     },
                                     onLongClick = {
                                         haptics.perform(HapticPattern.Buildup)
-                                        if (!isSelectionMode) {
-                                            isSelectionMode = true
-                                            selectedChatIds = setOf(conv.id)
+                                        if (isSelectionMode) {
+                                            selectedChatIds = if (isSelected) {
+                                                selectedChatIds - conv.id
+                                            } else {
+                                                selectedChatIds + conv.id
+                                            }
+                                        } else {
+                                            managingConversation = conv
                                         }
                                     }
                                 ),
@@ -541,7 +609,7 @@ fun SettingChatsPage(
 
                                 Column(
                                     modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -571,19 +639,34 @@ fun SettingChatsPage(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         if (assistant != null) {
+                                            val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
                                             Surface(
-                                                color = Color.White.copy(alpha = 0.12f),
-                                                shape = RoundedCornerShape(6.dp)
+                                                color = Color(0xFF000000),
+                                                shape = RoundedCornerShape(6.dp),
+                                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                             ) {
-                                                Text(
-                                                    text = assistant.name,
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Medium
-                                                    ),
-                                                    color = Color.White,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                )
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = assistant.name,
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Medium
+                                                        ),
+                                                        color = Color.White
+                                                    )
+                                                    Text(
+                                                        text = "• $assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"}",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontSize = 9.sp,
+                                                            fontWeight = FontWeight.Normal
+                                                        ),
+                                                        color = Color.White.copy(alpha = 0.65f)
+                                                    )
+                                                }
                                             }
                                         }
 
@@ -592,7 +675,7 @@ fun SettingChatsPage(
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 fontSize = 11.sp
                                             ),
-                                            color = Color.White.copy(alpha = 0.65f).copy(alpha = 0.65f),
+                                            color = Color.White.copy(alpha = 0.65f),
                                             maxLines = 1,
                                             softWrap = false,
                                             overflow = TextOverflow.Ellipsis
@@ -632,6 +715,260 @@ fun SettingChatsPage(
             }
         },
     )
+
+    // Chat Long-Click Management Card
+    managingConversation?.let { conv ->
+        val assistant = assistantMap[conv.assistantId]
+        val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
+
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { managingConversation = null },
+            modifier = Modifier.imePadding()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                DomChatSheetDragHandle()
+
+                // Header Card
+                Surface(
+                    color = Color(0xFF000000),
+                    shape = RoundedCornerShape(18.dp),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (assistant != null) {
+                            UIAvatar(
+                                name = assistant.name,
+                                value = assistant.avatar,
+                                modifier = Modifier.size(46.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = conv.title.ifBlank { "Untitled Conversation" },
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (assistant != null) {
+                                    Text(
+                                        text = "${assistant.name} ($assistantChatCount chats)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.White.copy(alpha = 0.7f)
+                                    )
+                                }
+                                Text(
+                                    text = formatTimestamp(conv.updateAt),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Action Items Card
+                Surface(
+                    color = Color(0xFF000000),
+                    shape = RoundedCornerShape(18.dp),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Open Chat
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    val targetId = conv.id
+                                    managingConversation = null
+                                    haptics.perform(HapticPattern.Tick)
+                                    runCatching { Uuid.parse(targetId) }.getOrNull()?.let { uuid ->
+                                        navigateToChatPage(navController, chatId = uuid)
+                                    }
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Rounded.Forum, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                            Text("Open Chat", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color.White)
+                        }
+
+                        // Export in SillyTavern format
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    val targetConv = conv
+                                    managingConversation = null
+                                    haptics.perform(HapticPattern.Pop)
+                                    scope.launch {
+                                        runCatching { Uuid.parse(targetConv.id) }.getOrNull()?.let { uuid ->
+                                            val fullConv = withContext(Dispatchers.IO) {
+                                                conversationRepository.getConversationById(uuid)
+                                            }
+                                            if (fullConv != null) {
+                                                val userNickname = settings.displaySetting.userNickname.ifBlank {
+                                                    settings.displaySetting.getActivePersona().name.ifBlank { "User" }
+                                                }
+                                                val charName = assistant?.name ?: "Character"
+                                                pendingExportContent = exportConversationToSillyTavern(fullConv, charName, userNickname)
+                                                val cleanTitle = targetConv.title.ifBlank { "Chat" }.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                                                exportLauncher.launch("${cleanTitle}.jsonl")
+                                            } else {
+                                                toaster.show("Could not load full conversation for export", type = ToastType.Error)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Rounded.FileUpload, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(20.dp))
+                            Column {
+                                Text("Export Chat (SillyTavern)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color.White)
+                                Text("Exports as .jsonl compatible with SillyTavern", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                            }
+                        }
+
+                        // Toggle Pin
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    val targetConv = conv
+                                    managingConversation = null
+                                    haptics.perform(HapticPattern.Tick)
+                                    scope.launch {
+                                        runCatching { Uuid.parse(targetConv.id) }.getOrNull()?.let { uuid ->
+                                            withContext(Dispatchers.IO) {
+                                                conversationRepository.togglePinStatus(uuid)
+                                            }
+                                            toaster.show(if (targetConv.isPinned) "Chat unpinned" else "Chat pinned")
+                                        }
+                                    }
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Rounded.PushPin, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(20.dp))
+                            Text(if (conv.isPinned) "Unpin Chat" else "Pin Chat to Top", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color.White)
+                        }
+
+                        // Select Chat
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    isSelectionMode = true
+                                    selectedChatIds = setOf(conv.id)
+                                    managingConversation = null
+                                    haptics.perform(HapticPattern.Tick)
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Rounded.SelectAll, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                            Text("Select (Batch Actions)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color.White)
+                        }
+
+                        // Delete Chat
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    val targetConv = conv
+                                    managingConversation = null
+                                    selectedChatIds = setOf(targetConv.id)
+                                    showDeleteConfirmDialog = true
+                                    haptics.perform(HapticPattern.Buildup)
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Rounded.Delete, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(20.dp))
+                            Text("Delete Chat", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color(0xFFEF4444))
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+private fun exportConversationToSillyTavern(
+    conversation: Conversation,
+    assistantName: String,
+    userName: String
+): String {
+    val messages = conversation.messageNodes.currentVersionMessages()
+    val lines = mutableListOf<String>()
+
+    val headerObj = buildJsonObject {
+        put("user_name", userName)
+        put("character_name", assistantName)
+        put("title", conversation.title)
+        put("create_date", conversation.createAt.toString())
+        put("chat_metadata", buildJsonObject {})
+    }
+    lines.add(JsonInstant.encodeToString(JsonObject.serializer(), headerObj))
+
+    for (node in messages) {
+        val text = node.parts.filterIsInstance<UIMessagePart.Text>().joinToString("\n") { it.text }
+        val isUser = node.role == MessageRole.USER
+        val senderName = if (isUser) userName else assistantName
+        val epochMillis = runCatching {
+            node.createdAt.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+        }.getOrDefault(System.currentTimeMillis())
+
+        val msgObj = buildJsonObject {
+            put("name", senderName)
+            put("is_user", isUser)
+            put("is_name", true)
+            put("send_date", epochMillis)
+            put("mes", text)
+            put("extra", buildJsonObject {})
+        }
+        lines.add(JsonInstant.encodeToString(JsonObject.serializer(), msgObj))
+    }
+    return lines.joinToString("\n")
 }
 
 private fun formatTimestamp(epochMillis: Long): String {
