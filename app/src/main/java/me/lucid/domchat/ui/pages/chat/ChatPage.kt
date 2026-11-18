@@ -546,7 +546,7 @@ internal fun chatListBottomPadding(placement: ChatToolbarPlacement): androidx.co
 }
 
 internal fun chatToolbarPopupTopPadding(placement: ChatToolbarPlacement): androidx.compose.ui.unit.Dp {
-    return if (placement == ChatToolbarPlacement.Top) 64.dp else 0.dp
+    return if (placement == ChatToolbarPlacement.Top) 59.dp else 0.dp
 }
 
 internal fun chatToolbarPopupBottomPadding(placement: ChatToolbarPlacement): androidx.compose.ui.unit.Dp {
@@ -561,7 +561,7 @@ private fun chatToolbarPopupTransformOrigin(placement: ChatToolbarPlacement): Tr
     }
 }
 
-private val chatTopToolbarFadeHeight = 96.dp
+private val chatTopToolbarFadeHeight = 91.dp
 private val chatBottomToolbarTopFadeHeight = 36.dp
 
 // Startup: pause after the splash clears so the user can view the wallpaper,
@@ -3464,7 +3464,7 @@ private fun ChatToolbar(
             modifier = Modifier
                 .then(
                     if (placement == ChatToolbarPlacement.Top) {
-                        Modifier.statusBarsPadding().padding(top = 2.dp)
+                        Modifier.statusBarsPadding().offset(y = (-5).dp)
                     } else {
                         Modifier
                     }
