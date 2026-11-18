@@ -1019,6 +1019,8 @@ private fun JanitorCharacterInspectorSheet(
     val haptics = rememberPremiumHaptics()
     val toaster = LocalToaster.current
 
+    var isImporting by remember(character.id) { mutableStateOf(false) }
+    var importStatus by remember(character.id) { mutableStateOf(ImportStatus.IDLE) }
     val isAlreadyInHub = remember(character.name, settings.assistants) {
         settings.assistants.any { it.name.trim().equals(character.name.trim(), ignoreCase = true) }
     }
@@ -1260,7 +1262,6 @@ private fun JanitorCharacterInspectorSheet(
                                             importStatus = ImportStatus.SUCCESS
                                             haptics.perform(HapticPattern.Success)
                                             delay(1500)
-                                            sheetState.hide()
                                             onDismiss()
                                             toaster.show("Imported ${character.name}", ToastType.Success)
                                         } else {

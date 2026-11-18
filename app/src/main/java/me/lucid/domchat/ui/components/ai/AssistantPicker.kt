@@ -85,6 +85,7 @@ import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.compose.ui.text.font.FontWeight
