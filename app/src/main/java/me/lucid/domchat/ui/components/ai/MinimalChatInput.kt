@@ -1251,7 +1251,7 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(13.dp)
                                                         .clip(RoundedCornerShape(3.5.dp))
-                                                        .background(MaterialTheme.colorScheme.error)
+                                                        .background(Color(0xFFFF2B2B))
                                                 )
                                             }
                                         }
@@ -1555,7 +1555,7 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(13.dp)
                                                         .clip(RoundedCornerShape(3.5.dp))
-                                                        .background(MaterialTheme.colorScheme.error)
+                                                        .background(Color(0xFFFF2B2B))
                                                 )
                                             }
                                         }

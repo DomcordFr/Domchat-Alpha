@@ -194,88 +194,123 @@ fun ConversationList(
             derivedStateOf { listState.canScrollForward }
         }
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                top = if (isSearchExpanded || searchQuery.isNotBlank()) 88.dp else 64.dp,
-                bottom = if (bottomContent != null) 58.dp else 8.dp,
-            ),
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Quick action buttons (Imagine, Stats) - animated visibility
-                    AnimatedVisibility(
-                        visible = !isSearchExpanded && quickActions != null,
-                        enter = fadeIn(animationSpec = spring(stiffness = 300f)) + expandVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)),
-                        exit = fadeOut(animationSpec = spring(stiffness = 500f)) + shrinkVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f))
-                    ) {
-                        Column {
-                            if (quickActions != null) {
-                                quickActions()
-                            }
-                        }
+            val searchShape = RoundedCornerShape(14.dp)
+            val isDark = LocalDarkMode.current
+            val searchContainerFill = if (isDark) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.50f)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                DomChatDrawerSearch(
+                    query = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    expanded = isSearchExpanded,
+                    onExpandedChange = onSearchExpandedChange,
+                    placeholder = stringResource(id = R.string.chat_page_search_placeholder),
+                    hint = stringResource(R.string.chat_page_search_hint),
+                    containerColor = searchContainerFill,
+                    shape = searchShape,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = searchShape,
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                            fillColor = Color.Transparent,
+                        ),
+                )
+            }
+
+            AnimatedVisibility(
+                visible = !isSearchExpanded && quickActions != null,
+                enter = fadeIn(animationSpec = spring(stiffness = 300f)) + expandVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)),
+                exit = fadeOut(animationSpec = spring(stiffness = 500f)) + shrinkVertically(animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                ) {
+                    if (quickActions != null) {
+                        quickActions()
                     }
                 }
             }
-            if (conversations.itemCount == 0) {
-                item {
-                    val emptyGlassFill = if (LocalDarkMode.current) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 20.dp)
-                            .liquidGlassSurface(
-                                shape = RoundedCornerShape(20.dp),
-                                fillColor = emptyGlassFill,
-                                borderWidth = 0.5.dp,
-                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                            ),
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.Transparent,
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Box(
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    top = 8.dp,
+                    bottom = if (bottomContent != null) 58.dp else 8.dp,
+                ),
+            ) {
+                if (conversations.itemCount == 0) {
+                    item {
+                        val emptyGlassFill = if (LocalDarkMode.current) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.65f)
+                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp)) {
+                            Surface(
                                 modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                                contentAlignment = Alignment.Center
+                                    .fillMaxWidth()
+                                    .liquidGlassSurface(
+                                        shape = RoundedCornerShape(20.dp),
+                                        fillColor = emptyGlassFill,
+                                        borderWidth = 0.5.dp,
+                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    ),
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color.Transparent,
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Chat,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(22.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Chat,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(22.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Text(
+                                        text = stringResource(id = R.string.chat_page_no_conversations),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            shadow = domChatChromeTextShadow()
+                                        ),
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Start a new conversation or select a character to begin",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            shadow = domChatChromeTextShadow(softText = true)
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
-                            Text(
-                                text = stringResource(id = R.string.chat_page_no_conversations),
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    shadow = domChatChromeTextShadow()
-                                ),
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Start a new conversation or select a character to begin",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    shadow = domChatChromeTextShadow(softText = true)
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }
-            }
 
             items(
                 count = conversations.itemCount,
@@ -357,6 +392,7 @@ fun ConversationList(
                 }
             }
                 }
+        }
         }
 
         // Conversation action menu rendered in an anchored Popup outside the
@@ -501,19 +537,6 @@ fun ConversationList(
             )
         }
 
-        DomChatDrawerSearch(
-            query = searchQuery,
-            onQueryChange = onSearchQueryChange,
-            expanded = isSearchExpanded,
-            onExpandedChange = onSearchExpandedChange,
-            placeholder = stringResource(id = R.string.chat_page_search_placeholder),
-            hint = stringResource(R.string.chat_page_search_hint),
-            containerColor = domChatIconPillContainerColor(),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .zIndex(1f),
-        )
 
         Box(
     modifier = Modifier
@@ -793,13 +816,14 @@ private fun ConversationItem(
                         )
                     }
                     AnimatedVisibility(!loading && generationComplete) {
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .clip(CircleShape)
-                                .background(LocalContentColor.current)
-                                .size(7.dp)
-                        )
+                        Box(modifier = Modifier.padding(start = 8.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(LocalContentColor.current)
+                            )
+                        }
                     }
                 }
             }
@@ -854,7 +878,7 @@ private fun ConversationActionMenu(
 
     Column(
         modifier = Modifier
-            .width(230.dp)
+            .width(180.dp)
             .then(surfaceModifier)
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),

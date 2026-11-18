@@ -87,6 +87,7 @@ private class LayerBackdropNode(
     }
 
     override fun onDetach() {
-        backdrop.layerCoordinates = null
+        // Retain last known coordinates across transient detachments (keyboard animation,
+        // scroll recycling) so active glass samplers do not drop to null coordinates.
     }
 }

@@ -39,9 +39,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -1020,21 +1019,12 @@ private fun JanitorCharacterInspectorSheet(
     val haptics = rememberPremiumHaptics()
     val toaster = LocalToaster.current
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var isImporting by remember(character.id) { mutableStateOf(false) }
-    var importStatus by remember(character.id) { mutableStateOf(ImportStatus.IDLE) }
     val isAlreadyInHub = remember(character.name, settings.assistants) {
         settings.assistants.any { it.name.trim().equals(character.name.trim(), ignoreCase = true) }
     }
 
-    var isDismissing by remember { mutableStateOf(false) }
     fun dismissWithAnimation() {
-        if (isDismissing) return
-        isDismissing = true
-        scope.launch {
-            sheetState.hide()
-            onDismiss()
-        }
+        onDismiss()
     }
 
     var sheetSelectedTab by remember { mutableIntStateOf(0) }
@@ -1066,27 +1056,10 @@ private fun JanitorCharacterInspectorSheet(
         }
     }
 
-    // Show the sheet smoothly when a character is selected
-    LaunchedEffect(character) {
-        sheetState.show()
-    }
-
-    ModalBottomSheet(
-        containerColor = sheetBgColor,
-        shape = sheetShape,
-        dragHandle = null,
-        contentWindowInsets = { WindowInsets(0.dp) },
-        sheetGesturesEnabled = false,
-        modifier = Modifier.border(
-            0.5.dp,
-            LiquidGlassTokens.SpecularBorderBrush,
-            sheetShape,
-        ),
-        contentColor = contentTextColor,
-        onDismissRequest = { dismissWithAnimation() },
-        sheetState = sheetState,
+    DomChatInWindowBottomSheet(
+        visible = true,
+        onDismissRequest = onDismiss,
     ) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1422,7 +1395,7 @@ private fun JanitorCharacterInspectorSheet(
                                     ?: character.bio
                                 val rawNotes = extractNotes.orEmpty()
 
-                                Box(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(16.dp))
@@ -1464,13 +1437,16 @@ private fun JanitorCharacterInspectorSheet(
                                         )
                                     }
 
-                                    // Embedded images gallery — every image from the extract payload,
-                                    // no cap. Tap an image to open it full screen.
+                                    // Embedded images gallery — only show additional images that are
+                                    // not already inlined in the notes content to avoid duplicate grids.
                                     val embeddedImages = fullExtract?.embeddedImages ?: emptyList()
-                                    if (embeddedImages.isNotEmpty()) {
+                                    val notInlinedImages = remember(embeddedImages, notesContent) {
+                                        embeddedImages.filter { url -> !notesContent.contains(url) }
+                                    }
+                                    if (notInlinedImages.isNotEmpty()) {
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Text(
-                                            text = "Embedded images (${embeddedImages.size})",
+                                            text = "Additional images (${notInlinedImages.size})",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = contentTextColor,
@@ -1481,7 +1457,7 @@ private fun JanitorCharacterInspectorSheet(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalArrangement = Arrangement.spacedBy(8.dp),
                                         ) {
-                                            embeddedImages.forEach { imageUrl ->
+                                            notInlinedImages.forEach { imageUrl ->
                                                 Box(
                                                     modifier = Modifier
                                                         .size(112.dp)

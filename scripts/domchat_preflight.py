@@ -50,11 +50,16 @@ def get_changed_kt_files() -> list[str]:
     return [f for f in out if f.endswith(".kt") and (REPO_ROOT / f).exists()]
 
 def strip_comments_and_strings(code: str) -> str:
-    code = re.sub(r'/\*.*?\*/', lambda m: '\n' * m.group(0).count('\n'), code, flags=re.DOTALL)
-    code = re.sub(r'//.*', '', code)
-    code = re.sub(r'"""[\s\S]*?"""', lambda m: '\n' * m.group(0).count('\n'), code)
-    code = re.sub(r'"(?:\\.|[^"\\])*"', '""', code)
-    return code
+    pattern = r'//[^\n]*|/\*[\s\S]*?\*/|"""[\s\S]*?"""|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\''
+    def repl(m):
+        s = m.group(0)
+        if (s.startswith('/') or s.startswith('"""')) and '\n' in s:
+            return '\n' * s.count('\n')
+        elif s.startswith('//') or s.startswith('/*'):
+            return ''
+        else:
+            return '""'
+    return re.sub(pattern, repl, code)
 
 def check_balanced_delimiters(filepath: str, clean: str) -> list[str]:
     stack = []

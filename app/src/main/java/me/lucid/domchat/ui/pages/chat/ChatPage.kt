@@ -118,6 +118,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -1598,7 +1599,7 @@ private fun ChatPageContent(
                     Scaffold(
                         topBar = {
                             CompositionLocalProvider(
-                                LocalAppBackdrop provides overlayBackdrop
+                                LocalAppBackdrop provides chatBackdrop
                             ) {
                                 if (toolbarPlacement == ChatToolbarPlacement.Top) {
                                     StartupChromeReveal(
@@ -2165,7 +2166,7 @@ private fun ChatPageContent(
                     )
                 } else {
                     CompositionLocalProvider(
-                        LocalAppBackdrop provides overlayBackdrop
+                        LocalAppBackdrop provides chatBackdrop
                     ) {
                     MinimalChatInput(
                     modifier = Modifier
@@ -2357,31 +2358,33 @@ private fun ChatPageContent(
             }
 
             activeChatMessageAction?.let { action ->
-                ChatMessageActionsSheet(
-                    message = action.message,
-                    model = action.model,
-                    onEdit = {
-                        activeChatMessageAction = null
-                        action.onEdit()
-                    },
-                    onDelete = {
-                        activeChatMessageAction = null
-                        action.onDelete()
-                    },
-                    onFork = {
-                        activeChatMessageAction = null
-                        action.onFork()
-                    },
-                    onSelectAndCopy = {
-                        activeChatMessageAction = null
-                        action.onSelectAndCopy()
-                    },
-                    onWebViewPreview = {
-                        activeChatMessageAction = null
-                        action.onWebViewPreview()
-                    },
-                    onDismissRequest = { activeChatMessageAction = null }
-                )
+                CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
+                    ChatMessageActionsSheet(
+                        message = action.message,
+                        model = action.model,
+                        onEdit = {
+                            activeChatMessageAction = null
+                            action.onEdit()
+                        },
+                        onDelete = {
+                            activeChatMessageAction = null
+                            action.onDelete()
+                        },
+                        onFork = {
+                            activeChatMessageAction = null
+                            action.onFork()
+                        },
+                        onSelectAndCopy = {
+                            activeChatMessageAction = null
+                            action.onSelectAndCopy()
+                        },
+                        onWebViewPreview = {
+                            activeChatMessageAction = null
+                            action.onWebViewPreview()
+                        },
+                        onDismissRequest = { activeChatMessageAction = null }
+                    )
+                }
             }
 
             // Custom initial message creator dialog (swipe-reroll on intro message)
@@ -2460,22 +2463,25 @@ private fun ChatPageContent(
                     if (state == EnterExitState.Visible) 1f else 0.96f
                 }
                 CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
-                ChatToolbarOverflowMenu(
-                    placement = toolbarPlacement,
-                    menuScale = menuScale,
-                    previewMode = previewMode,
-                    hasConversationContent = conversation.messageNodes.isNotEmpty(),
-                    chatListState = chatListState,
-                    onDismissRequest = { showToolbarOverflowMenu = false },
-                    onCreatorNotesClick = { showToolbarOverflowMenu = false },
-                    onPromptPresetsClick = { showToolbarOverflowMenu = false },
-                    onAuthorsNotesClick = { showToolbarOverflowMenu = false },
-                    onWallpaperClick = { showToolbarOverflowMenu = false },
-                    onTextStylingClick = { showToolbarOverflowMenu = false },
-                )
+                    ChatToolbarOverflowMenu(
+                        placement = toolbarPlacement,
+                        menuScale = menuScale,
+                        previewMode = previewMode,
+                        hasConversationContent = conversation.messageNodes.isNotEmpty(),
+                        chatListState = chatListState,
+                        onDismissRequest = { showToolbarOverflowMenu = false },
+                        onCreatorNotesClick = { showToolbarOverflowMenu = false },
+                        onPromptPresetsClick = { showToolbarOverflowMenu = false },
+                        onAuthorsNotesClick = { showToolbarOverflowMenu = false },
+                        onWallpaperClick = { showToolbarOverflowMenu = false },
+                        onTextStylingClick = { showToolbarOverflowMenu = false },
+                    )
+                }
             }
-            TTSController()
-        }
+
+            CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
+                TTSController()
+            }
         }
         }
     }

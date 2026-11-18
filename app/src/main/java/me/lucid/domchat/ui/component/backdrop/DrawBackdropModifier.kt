@@ -530,6 +530,7 @@ private class DrawBackdropNode(
             exportedBackdrop?.layerCoordinates = coordinates
             surfaceDirty = true
             invalidateDrawCache()
+            invalidateDraw()
         }
     }
 

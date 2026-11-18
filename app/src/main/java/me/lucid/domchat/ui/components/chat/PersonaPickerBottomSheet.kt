@@ -268,7 +268,7 @@ fun PersonaPickerBottomSheet(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = "Search personas...",
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
             )
 
             Spacer(modifier = Modifier.height(10.dp))

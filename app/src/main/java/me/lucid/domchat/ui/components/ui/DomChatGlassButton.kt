@@ -29,6 +29,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 private const val DOMCHAT_DESTRUCTIVE = 0xFFE53935.toInt()
 private val DomChatAccent = Color.White
@@ -146,17 +147,22 @@ fun DomChatGlassChip(
     modifier: Modifier = Modifier,
     accent: Boolean = false,
 ) {
+    val chipFill = Color(0xFF000000).copy(alpha = 0.35f)
     Surface(
-        color = Color(DOMCHAT_UNIFIED_CARD_COLOR),
+        color = Color.Transparent,
         shape = AppShapes.Tag,
-        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         tonalElevation = 0.dp,
-        modifier = modifier,
+        modifier = modifier.liquidGlassSurface(
+            shape = AppShapes.Tag,
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = chipFill,
+        ),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = if (accent) DomChatAccent else Color.White.copy(alpha = 0.85f),
+            color = if (accent) DomChatAccent else Color.White.copy(alpha = 0.88f),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
             maxLines = 1,
         )

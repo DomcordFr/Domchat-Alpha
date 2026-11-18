@@ -65,9 +65,13 @@ import me.lucid.domchat.ui.context.LocalTTSState
 import me.lucid.domchat.ui.hooks.CustomTtsState
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.tts.model.PlaybackState
 import me.lucid.tts.model.PlaybackStatus
 import kotlin.math.roundToInt
@@ -106,13 +110,23 @@ fun TTSController() {
     }
 
     val sheetBg = if (isDark) Color(0xFF16171E).copy(alpha = 0.70f) else Color.White.copy(alpha = 0.72f)
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (isDark) 0.30f else 0.16f),
-            Color.White.copy(alpha = if (isDark) 0.08f else 0.04f),
-            Color.Transparent
+    val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    val surfaceModifier = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = CircleShape,
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = sheetBg,
         )
-    )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = CircleShape,
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = sheetBg,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -146,10 +160,10 @@ fun TTSController() {
                         ambientColor = Color.Black.copy(alpha = 0.35f),
                         spotColor = Color.Black.copy(alpha = 0.45f)
                     )
-                    .domChatBlurEffect(containerColor = sheetBg, shape = CircleShape),
+                    .then(surfaceModifier),
                 shape = CircleShape,
                 color = Color.Transparent,
-                border = BorderStroke(0.6.dp, borderBrush)
+                tonalElevation = 0.dp,
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),

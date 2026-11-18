@@ -5,9 +5,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
@@ -173,10 +175,24 @@ fun PromptPresetsBottomSheet(
 
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
+    val presetCardFill = if (isDark) Color(0xFFFFFFFF).copy(alpha = 0.05f) else Color.White.copy(alpha = 0.18f)
     @Composable
-    fun glassSurface(shape: Shape) = Modifier
-        .background(Color.White.copy(alpha = 0.06f), shape = shape)
-        .border(0.5.dp, borderBrush, shape = shape)
+    fun glassSurface(shape: Shape): Modifier = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = presetCardFill,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = presetCardFill,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     val overscrollAbsorber = remember {
         object : NestedScrollConnection {
@@ -411,28 +427,37 @@ fun PromptPresetsBottomSheet(
 
         item {
             // Action row: Enable All / Disable All / Reset to Default (per-chat mode) plus active scope chip.
-            FlowRow(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                DomChatGlassPillButton(
-                    text = "Enable All",
-                    onClick = { toggleAll(true) },
-                    modifier = Modifier.height(32.dp),
-                )
-                DomChatGlassPillButton(
-                    text = "Disable All",
-                    onClick = { toggleAll(false) },
-                    modifier = Modifier.height(32.dp),
-                )
-                if (isChatSpecific) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     DomChatGlassPillButton(
-                        text = "Reset to Default",
-                        icon = Icons.Rounded.Refresh,
-                        onClick = { resetToGlobal() },
+                        text = "Enable All",
+                        onClick = { toggleAll(true) },
                         modifier = Modifier.height(32.dp),
                     )
+                    DomChatGlassPillButton(
+                        text = "Disable All",
+                        onClick = { toggleAll(false) },
+                        modifier = Modifier.height(32.dp),
+                    )
+                    AnimatedVisibility(
+                        visible = isChatSpecific,
+                        enter = fadeIn(animationSpec = tween(150)) + expandHorizontally(animationSpec = spring(stiffness = 350f)),
+                        exit = fadeOut(animationSpec = tween(150)) + shrinkHorizontally(animationSpec = spring(stiffness = 350f)),
+                    ) {
+                        DomChatGlassPillButton(
+                            text = "Reset",
+                            icon = Icons.Rounded.Refresh,
+                            onClick = { resetToGlobal() },
+                            modifier = Modifier.height(32.dp),
+                        )
+                    }
                 }
                 DomChatGlassChip(
                     text = if (isChatSpecific) "Using Chat" else "Using Global",

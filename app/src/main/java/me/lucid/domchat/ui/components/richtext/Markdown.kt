@@ -864,8 +864,20 @@ fun MarkdownBlock(
         }
     }
 
-    // Per-token alpha/blur modulation is dropped; no StreamingTextReveal styling.
-    val streamingReveal: StreamingTextReveal? = null
+    val streamingReveal: StreamingTextReveal? = if (streamingTextReveal && settleRanges.isNotEmpty()) {
+        StreamingTextReveal(
+            ranges = settleRanges,
+            nowMillis = streamingFrameMillis,
+            color = style.color.takeOrElse { Color.White },
+            smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond,
+            blurEnabled = true,
+            fadeInEnabled = true,
+            fadeDurationMs = 450,
+            startAlpha = 0.0f,
+        )
+    } else {
+        null
+    }
 
     // Provide rpStyleRules to entire tree via CompositionLocal
     CompositionLocalProvider(

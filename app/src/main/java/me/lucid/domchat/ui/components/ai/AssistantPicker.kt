@@ -197,17 +197,47 @@ fun AssistantPickerSheet(
     }
 
     val itemCardBg = domChatCardContainerColor()
+    val isDark = LocalDarkMode.current
     val tagBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val tagIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
-    @Composable
-    fun tagGlassSurface() = Modifier
-        .background(Color.White.copy(alpha = 0.08f), shape = RoundedCornerShape(20.dp))
-        .border(0.5.dp, tagBorderBrush, shape = RoundedCornerShape(20.dp))
+    val tagGlassFill = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.25f)
+    val cardGlassFill = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.18f)
 
     @Composable
-    fun cardGlassSurface() = Modifier
-        .background(Color.White.copy(alpha = 0.06f), shape = RoundedCornerShape(16.dp))
-        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, shape = RoundedCornerShape(16.dp))
+    fun tagGlassSurface(): Modifier = if (tagIsFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = RoundedCornerShape(20.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = tagBorderBrush,
+            fillColor = tagGlassFill,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = RoundedCornerShape(20.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = tagBorderBrush,
+            fillColor = tagGlassFill,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
+
+    @Composable
+    fun cardGlassSurface(): Modifier = if (tagIsFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = RoundedCornerShape(16.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = cardGlassFill,
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = RoundedCornerShape(16.dp),
+            borderWidth = 0.5.dp,
+            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = cardGlassFill,
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     DomChatInWindowBottomSheet(
         visible = true,

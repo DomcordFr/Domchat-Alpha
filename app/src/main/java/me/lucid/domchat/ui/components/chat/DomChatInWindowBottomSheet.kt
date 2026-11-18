@@ -24,11 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -205,61 +201,56 @@ fun DomChatSearchBar(
         maxLines = 1,
         interactionSource = interactionSource,
         decorationBox = { innerTextField ->
-            Box(
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                OutlinedTextFieldDefaults.DecorationBox(
-                    value = value,
-                    innerTextField = { innerTextField() },
-                    enabled = true,
-                    singleLine = true,
-                    visualTransformation = VisualTransformation.None,
-                    interactionSource = interactionSource,
-                    placeholder = {
-                        Text(
-                            text = placeholder,
-                            style = textStyle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = null,
-                            tint = Color.White.copy(alpha = 0.5f),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    },
-                    trailingIcon = {
-                        if (value.isNotEmpty()) {
-                            IconButton(onClick = { onValueChange("") }) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Close,
-                                    contentDescription = "Clear",
-                                    tint = Color.White.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = value,
+                innerTextField = { innerTextField() },
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interactionSource,
+                placeholder = {
+                    Text(
+                        text = placeholder,
+                        style = textStyle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+                trailingIcon = {
+                    if (value.isNotEmpty()) {
+                        IconButton(onClick = { onValueChange("") }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Clear",
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(18.dp),
+                            )
                         }
-                    },
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    colors = colors,
-                    container = {
-                        OutlinedTextFieldDefaults.Container(
-                            enabled = true,
-                            isError = false,
-                            interactionSource = interactionSource,
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            colors = colors,
-                            shape = AppShapes.SearchField,
-                            focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
-                            unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
-                        )
-                    },
-                )
-            }
+                    }
+                },
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                colors = colors,
+                container = {
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = true,
+                        isError = false,
+                        interactionSource = interactionSource,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        colors = colors,
+                        shape = AppShapes.SearchField,
+                        focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
+                        unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
+                    )
+                },
+            )
         },
     )
 }
@@ -291,20 +282,21 @@ fun DomChatInWindowBottomSheet(
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.60f).dp
 
+    val sheetFillColor = if (isDark) Color(0xFF000000).copy(alpha = 0.88f) else Color(0xFF1C1C1E).copy(alpha = 0.85f)
     // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
     val sheetSurfaceModifier: Modifier = if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
         Modifier.frostedGlassSurface(
             shape = shape,
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
-            fillColor = Color.Transparent,
+            fillColor = sheetFillColor,
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = shape,
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
-            fillColor = Color.Transparent,
+            fillColor = sheetFillColor,
             glassMode = LiquidGlassMode.BALANCED_BLEND,
         )
     }
@@ -426,15 +418,6 @@ fun DomChatInWindowBottomSheet(
                         indication = null,
                         onClick = {}
                     )
-                    // Fallback opaque surface when no wallpaper/content backdrop is bound
-                    // (e.g. before LocalAppBackdrop is provided): dark glass instead of transparent.
-                    .then(
-                        if (LocalAppBackdrop.current == null) {
-                            Modifier.background(Color(0xFF000000).copy(alpha = 0.85f), shape = shape)
-                        } else {
-                            Modifier
-                        }
-                    )
                     .then(sheetSurfaceModifier),
                 shape = shape,
                 color = Color.Transparent,
@@ -467,16 +450,15 @@ fun DomChatInWindowBottomSheet(
 }
 
 /**
- * A modal bottom sheet with hardware window blur and Apple-grade frosted container.
- * Creates an Android Window dialog that reliably fills the screen and never gets clipped by parent layouts.
+ * A bottom sheet with hardware window blur and liquid glass container.
+ * Delegates to DomChatInWindowBottomSheet to preserve the 3-tier liquid glass architecture.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DomChatGlassBottomSheet(
     visible: Boolean = true,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    sheetState: Any? = null,
     shape: Shape = AppShapes.BottomSheet,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
@@ -484,23 +466,12 @@ fun DomChatGlassBottomSheet(
     sheetGesturesEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    if (!visible) return
-    val isDark = LocalDarkMode.current
-    val sheetBg = Color(0xFF000000)
-    val contentColor = if (isDark) Color.White else Color.Black
-
-    ModalBottomSheet(
+    DomChatInWindowBottomSheet(
+        visible = visible,
         onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        containerColor = sheetBg,
-        contentColor = contentColor,
-        shape = shape,
-        scrimColor = Color.Black.copy(alpha = 0.28f),
-        sheetGesturesEnabled = sheetGesturesEnabled,
-        dragHandle = dragHandle,
         modifier = modifier,
-    ) {
-        ApplyDialogWindowBlur()
-        content()
-    }
+        shape = shape,
+        dragHandle = dragHandle,
+        content = content,
+    )
 }
