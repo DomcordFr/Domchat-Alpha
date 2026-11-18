@@ -2039,12 +2039,13 @@ fun CharacterInspectorSheet(
                             avatar = assistant.avatar,
                             modifier = Modifier.fillMaxSize()
                         )
+                        val sheetBgColor = Color(0xFF000000)
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(
                                     Brush.verticalGradient(
-                                        colors = listOf(
+                                        colors = listOf<Color>(
                                             Color.Transparent,
                                             Color.Transparent,
                                             sheetBgColor.copy(alpha = 0.15f),
@@ -2738,7 +2739,7 @@ fun CharacterInspectorSheet(
 
             // Close button floating at top-right with safe margin
             IconButton(
-                onClick = { dismissWithAnimation() },
+                onClick = onDismiss,
                 modifier = Modifier
                     .padding(top = 16.dp, end = 16.dp)
                     .align(Alignment.TopEnd)

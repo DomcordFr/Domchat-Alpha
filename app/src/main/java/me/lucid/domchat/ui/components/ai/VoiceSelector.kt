@@ -138,10 +138,7 @@ fun VoiceSelector(
                     providers = providers.filter { it.voices.isNotEmpty() },
                     onSelect = {
                         onSelect(it)
-                        scope.launch {
-                            sheetState.hide()
-                            showSheet = false
-                        }
+                        showSheet = false
                     },
                     catalogSnapshot = catalogSnapshot,
                 )

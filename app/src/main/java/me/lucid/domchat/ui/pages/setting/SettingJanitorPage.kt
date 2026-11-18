@@ -1143,7 +1143,7 @@ private fun JanitorCharacterInspectorSheet(
                     }
                     // Close/cross button top-end corner over hero image
                     IconButton(
-                        onClick = { dismissWithAnimation() },
+                        onClick = onDismiss,
                         modifier = Modifier
                             .padding(top = 12.dp, end = 12.dp)
                             .align(Alignment.TopEnd)

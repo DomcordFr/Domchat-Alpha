@@ -53,7 +53,7 @@ import androidx.compose.foundation.border
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
-import me.lucid.domchat.data.datastore.LiquidGlassMode
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LocalDarkMode

@@ -252,16 +252,10 @@ fun ModelSelector(
                     modelFilter = effectiveModelFilter,
                     onSelect = {
                         onSelect(it)
-                        scope.launch {
-                            state.hide()
-                            popup = false
-                        }
+                        popup = false
                     },
                     onDismiss = {
-                        scope.launch {
-                            state.hide()
-                            popup = false
-                        }
+                        popup = false
                     }
                 )
             }
