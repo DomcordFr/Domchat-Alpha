@@ -40,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.theme.LocalDarkMode
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold

@@ -68,7 +68,6 @@ fun ChatInfoBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val amoledMode by rememberAmoledDarkMode()
     val activePersona = settings.displaySetting.getActivePersona()
 
