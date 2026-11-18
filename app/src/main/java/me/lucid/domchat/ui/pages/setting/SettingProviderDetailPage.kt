@@ -207,9 +207,12 @@ import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.convxFluidTouch
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
-import me.lucid.domchat.ui.theme.LiquidGlassMode
+import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.hooks.HapticPattern
+import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.font.FontWeight
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.Widgets
@@ -674,7 +677,7 @@ private fun ProviderDetailBottomBar(
                         },
                         onLongClick = if (isLiquidGlass) {
                             {
-                                haptics.perform(HapticPattern.Heavy)
+                                haptics.perform(HapticPattern.Thud)
                             }
                         } else null
                     )
@@ -715,7 +718,7 @@ private fun ProviderDetailBottomBar(
                         },
                         onLongClick = if (isLiquidGlass) {
                             {
-                                haptics.perform(HapticPattern.Heavy)
+                                haptics.perform(HapticPattern.Thud)
                             }
                         } else null
                     )

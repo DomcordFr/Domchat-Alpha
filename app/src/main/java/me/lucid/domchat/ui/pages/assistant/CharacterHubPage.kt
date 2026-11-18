@@ -23,6 +23,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -86,7 +87,6 @@ import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import sh.calvin.reorderable.draggableHandle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -1819,12 +1819,15 @@ fun CharacterListRow(
     onLongClick: () -> Unit = {}
 ) {
     Surface(
-        onClick = onClick,
-        onLongClick = onLongClick,
         shape = RoundedCornerShape(16.dp),
         color = Color(0xFF000000),
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     ) {
         Row(
             modifier = Modifier
@@ -3470,7 +3473,7 @@ private fun GroupReorderSheet(
                             key = groupId
                         ) { isDragging ->
                             PhysicsSwipeToDelete(
-                                position = ItemPosition.Solo,
+                                position = ItemPosition.ONLY,
                                 deleteEnabled = true,
                                 groupCornerRadius = 16.dp,
                                 itemCornerRadius = 16.dp,

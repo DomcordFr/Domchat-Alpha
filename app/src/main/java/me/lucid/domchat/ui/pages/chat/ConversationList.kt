@@ -213,7 +213,7 @@ fun ConversationList(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, top = 2.dp, bottom = 8.dp)
+                    .padding(start = 4.dp, end = 4.dp, top = 2.dp, bottom = 8.dp)
             ) {
                 DomChatDrawerSearch(
                     query = searchQuery,

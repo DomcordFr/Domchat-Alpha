@@ -64,8 +64,12 @@ import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.graphics.SolidColor
 import me.lucid.ai.core.MessageRole
 import me.lucid.ai.ui.UIMessagePart
+import me.lucid.ai.ui.currentVersionMessages
+import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
@@ -377,7 +381,7 @@ fun SettingChatsPage(
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(
                                     0.5.dp,
-                                    if (isSelected) Color.White.copy(alpha = 0.5f) else LiquidGlassTokens.SpecularBorderSubtle
+                                    if (isSelected) SolidColor(Color.White.copy(alpha = 0.5f)) else LiquidGlassTokens.SpecularBorderSubtle
                                 ),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
@@ -403,7 +407,7 @@ fun SettingChatsPage(
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(
                                     0.5.dp,
-                                    if (isSelected) Color.White.copy(alpha = 0.5f) else LiquidGlassTokens.SpecularBorderSubtle
+                                    if (isSelected) SolidColor(Color.White.copy(alpha = 0.5f)) else LiquidGlassTokens.SpecularBorderSubtle
                                 ),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
