@@ -107,6 +107,8 @@ import coil3.compose.AsyncImage
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurfaceColor
+import me.lucid.domchat.ui.theme.liquidGlassBorderBrush
 import me.lucid.domchat.R
 
 import me.lucid.domchat.Screen
@@ -213,6 +215,9 @@ fun ConversationList(
                     .fillMaxWidth()
                     .padding(start = 4.dp, end = 4.dp, top = 2.dp, bottom = 8.dp)
             ) {
+                val isDark = LocalDarkMode.current
+                val searchGlassBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
+                val searchGlassFill = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.40f)
                 DomChatDrawerSearch(
                     query = searchQuery,
                     onQueryChange = onSearchQueryChange,
@@ -225,8 +230,8 @@ fun ConversationList(
                     fieldModifier = Modifier.liquidGlassSurface(
                         shape = searchShape,
                         borderWidth = 0.5.dp,
-                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                        fillColor = Color.Transparent,
+                        specularBrush = searchGlassBrush,
+                        fillColor = searchGlassFill,
                         isFloatingControl = true,
                     ),
                     modifier = Modifier.fillMaxWidth(),

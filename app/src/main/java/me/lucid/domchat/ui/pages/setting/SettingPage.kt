@@ -379,7 +379,7 @@ fun SettingPage(
                     colors = appFieldColors(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)
                         .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                 )
             }

@@ -21,8 +21,10 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -102,72 +104,94 @@ fun OneUITopAppBar(
     // Current title area height (shrinks as we collapse)
     val currentTitleAreaHeight = lerp(titleAreaHeight, 0.dp, collapseProgress)
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(currentHeight)
-            .background(Color(0xFF000000))
-    ) {
-        // Status bar spacer
-        Spacer(modifier = Modifier.height(statusBarHeight))
-        
-        // Top nav bar row with back button, collapsed title, and actions
-        Row(
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(navBarHeight)
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .height(currentHeight)
+                .background(Color(0xFF000000))
         ) {
-            // Navigation icon
-            navigationIcon()
+            // Status bar spacer
+            Spacer(modifier = Modifier.height(statusBarHeight))
             
-            // Collapsed title (appears when scrolled)
-            Box(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                if (collapsedTitleAlpha > 0f) {
+            // Top nav bar row with back button, collapsed title, and actions
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(navBarHeight)
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Navigation icon
+                navigationIcon()
+                
+                // Collapsed title (appears when scrolled)
+                Box(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                    if (collapsedTitleAlpha > 0f) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = collapsedTitleAlpha)
+                        )
+                    }
+                }
+                
+                // Actions
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    content = actions
+                )
+            }
+            
+            // Large centered title area (visible when expanded)
+            if (currentTitleAreaHeight > 0.dp && expandedTitleAlpha > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(currentTitleAreaHeight)
+                        .graphicsLayer {
+                            alpha = expandedTitleAlpha
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 32.sp,
+                            lineHeight = 38.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = collapsedTitleAlpha)
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
                     )
                 }
             }
-            
-            // Actions
-            Row(
-                horizontalArrangement = Arrangement.End,
-                content = actions
-            )
         }
-        
-        // Large centered title area (visible when expanded)
-        if (currentTitleAreaHeight > 0.dp && expandedTitleAlpha > 0f) {
+
+        // Bottom fading gradient overlay when scrolled down into collapsed header
+        if (collapseProgress > 0.05f) {
+            val gradientAlpha = ((collapseProgress - 0.05f) / 0.45f).coerceIn(0f, 1f)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(currentTitleAreaHeight)
-                    .graphicsLayer {
-                        alpha = expandedTitleAlpha
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.displaySmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp,
-                        lineHeight = 38.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                )
-            }
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 22.dp)
+                    .height(22.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF000000).copy(alpha = gradientAlpha),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
         }
     }
 }
