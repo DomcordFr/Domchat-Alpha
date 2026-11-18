@@ -561,7 +561,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
             ProviderDetailBottomBar(
                 pager = pager,
                 modelCount = provider.models.size,
-                isLiquidGlass = settings.displaySetting.liquidGlassMode != LiquidGlassMode.OFF,
+                isLiquidGlass = settings.displaySetting.liquidGlassMode != LiquidGlassMode.SOFT_FROSTED,
                 scope = scope
             )
         }
