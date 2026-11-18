@@ -1987,15 +1987,7 @@ fun CharacterInspectorSheet(
     onDelete: () -> Unit = {},
     onUpdateLorebookIds: ((Set<kotlin.uuid.Uuid>) -> Unit)? = null
 ) {
-    val scope = rememberCoroutineScope()
-
-    fun dismissWithAnimation() {
-        onDismiss()
-    }
-
     val sheetShape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet
-    // Charter: character popups are always a black glass plate, independent of glass/luminance settings.
-    val sheetBgColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor()
     val contentTextColor = Color(0xFFF2F2F7)
     val cardBgColor = Color(0xFF000000)
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
@@ -2013,23 +2005,19 @@ fun CharacterInspectorSheet(
     }
     val hasAttachedLorebooks = attachedLorebookList.isNotEmpty()
 
-    Dialog(
-        onDismissRequest = { dismissWithAnimation() },
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    val screenHeight = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp
+    DomChatInWindowBottomSheet(
+        visible = true,
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF000000),
+        dragHandle = null,
+        shape = sheetShape,
+        maxHeight = screenHeight * 0.92f,
     ) {
-        DomChatInWindowBottomSheet(
-            visible = true,
-            onDismissRequest = { dismissWithAnimation() },
-            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp,
-            dragHandle = { DomChatSheetDragHandle() },
-            shape = sheetShape,
-            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
-        ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .background(Color(0xFF000000))
         ) {
             val scrollState = rememberScrollState()
             Column(
@@ -3041,7 +3029,6 @@ fun CharacterInspectorSheet(
             }
         }
     }
-}
 }
 
 /**

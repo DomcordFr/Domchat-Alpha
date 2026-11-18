@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -269,6 +270,7 @@ fun DomChatInWindowBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = AppShapes.BottomSheet,
+    containerColor: Color = Color.Unspecified,
     maxHeight: Dp = (LocalConfiguration.current.screenHeightDp * 0.60f).dp,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
@@ -286,28 +288,36 @@ fun DomChatInWindowBottomSheet(
     val borderBrush = liquidGlassBorderBrush()
     val maxSheetHeight = maxHeight
 
-    val dynamicFill = domChatSheetContainerColor()
-    val sheetFillColor = if (dynamicFill != Color.Transparent) {
-        dynamicFill
+    val isSolidContainer = containerColor != Color.Unspecified && containerColor.alpha > 0f
+
+    val sheetSurfaceModifier: Modifier = if (isSolidContainer) {
+        Modifier
+            .background(containerColor, shape = shape)
+            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, shape)
     } else {
-        if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.95f)
-    }
-    // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
-    val sheetSurfaceModifier: Modifier = if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
-        Modifier.frostedGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = sheetFillColor,
-        )
-    } else {
-        Modifier.liquidGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = borderBrush,
-            fillColor = sheetFillColor,
-            glassMode = LiquidGlassMode.BALANCED_BLEND,
-        )
+        val dynamicFill = domChatSheetContainerColor()
+        val sheetFillColor = if (dynamicFill != Color.Transparent) {
+            dynamicFill
+        } else {
+            if (isDark) Color(0xFF141520).copy(alpha = 0.22f) else Color.White.copy(alpha = 0.45f)
+        }
+        // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
+        if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
+            Modifier.frostedGlassSurface(
+                shape = shape,
+                borderWidth = 0.5.dp,
+                specularBrush = borderBrush,
+                fillColor = sheetFillColor,
+            )
+        } else {
+            Modifier.liquidGlassSurface(
+                shape = shape,
+                borderWidth = 0.5.dp,
+                specularBrush = borderBrush,
+                fillColor = sheetFillColor,
+                glassMode = LiquidGlassMode.BALANCED_BLEND,
+            )
+        }
     }
 
     var sheetHeightPx by remember { mutableFloatStateOf(1000f) }
@@ -399,7 +409,7 @@ fun DomChatInWindowBottomSheet(
                 .graphicsLayer {
                     this.alpha = scrimAlpha.value * (1f - (offsetY.value / sheetHeightPx).coerceIn(0f, 1f))
                 }
-                .background(Color.Black.copy(alpha = 0.45f))
+                .background(Color.Black.copy(alpha = if (isSolidContainer) 0.55f else 0.20f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -471,6 +481,7 @@ fun DomChatGlassBottomSheet(
     modifier: Modifier = Modifier,
     sheetState: Any? = null,
     shape: Shape = AppShapes.BottomSheet,
+    containerColor: Color = Color.Unspecified,
     maxHeight: Dp = (LocalConfiguration.current.screenHeightDp * 0.60f).dp,
     dragHandle: @Composable (() -> Unit)? = {
         DomChatSheetDragHandle()
@@ -483,6 +494,7 @@ fun DomChatGlassBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         shape = shape,
+        containerColor = containerColor,
         maxHeight = maxHeight,
         dragHandle = dragHandle,
         content = content,

@@ -1028,10 +1028,6 @@ private fun JanitorCharacterInspectorSheet(
         settings.assistants.any { it.name.trim().equals(character.name.trim(), ignoreCase = true) }
     }
 
-    fun dismissWithAnimation() {
-        onDismiss()
-    }
-
     var sheetSelectedTab by remember { mutableIntStateOf(0) }
     val sheetTabTitles = listOf("Notes", "Personality", "Greetings")
 
@@ -1065,14 +1061,15 @@ private fun JanitorCharacterInspectorSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
+        containerColor = Color(0xFF000000),
         dragHandle = null,
+        shape = sheetShape,
         maxHeight = screenHeight * 0.92f,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .background(sheetBgColor)
         ) {
             val sheetScrollState = rememberScrollState()
             Column(
@@ -1443,49 +1440,6 @@ private fun JanitorCharacterInspectorSheet(
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Color.White.copy(alpha = 0.5f),
                                         )
-                                    }
-
-                                    // Embedded images gallery — only show additional images that are
-                                    // not already inlined in the notes content to avoid duplicate grids.
-                                    val embeddedImages = fullExtract?.embeddedImages ?: emptyList()
-                                    val notInlinedImages = remember(embeddedImages, notesContent) {
-                                        embeddedImages.filter { url ->
-                                            val cleanUrl = url.trim().removePrefix("https:").removePrefix("http:").substringBefore("?")
-                                            cleanUrl.isNotBlank() && !notesContent.contains(cleanUrl)
-                                        }
-                                    }
-                                    if (notInlinedImages.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Text(
-                                            text = "Additional images (${notInlinedImages.size})",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = contentTextColor,
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        FlowRow(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                            notInlinedImages.forEach { imageUrl ->
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(112.dp)
-                                                        .clip(RoundedCornerShape(8.dp))
-                                                        .background(Color(0xFF000000))
-                                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp)),
-                                                    contentAlignment = Alignment.Center,
-                                                ) {
-                                                    ZoomableAsyncImage(
-                                                        model = imageUrl,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        contentScale = ContentScale.Crop,
-                                                    )
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
