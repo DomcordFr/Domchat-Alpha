@@ -841,39 +841,54 @@ fun MarkdownBlock(
             settleRanges = streamingPresentation.settleRanges
         }
     }
-    // Settle fade: when streaming ends, drive a smooth 0 -> 1 fade over 250ms
-    // with an Animatable instead of per-token alpha/blur modulation.
-    val scope = rememberCoroutineScope()
-    val settleAnimatable = remember { androidx.compose.animation.core.Animatable(1f) }
-    var settleAlpha by remember { mutableFloatStateOf(1f) }
-    LaunchedEffect(settleAnimatable.value) {
-        settleAlpha = settleAnimatable.value
+    // Keep the last non-empty settle ranges while streaming, so when
+    // generation finishes the recently revealed text can finish its color
+    // fade and glow settle to full opacity smoothly instead of snapping.
+    var liveRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
+    if (streamingTextReveal && settleRanges.isNotEmpty()) {
+        liveRanges = settleRanges
     }
-    var prevStreaming by remember { mutableStateOf(false) }
-    LaunchedEffect(streamingTextReveal) {
-        val justEnded = !streamingTextReveal && prevStreaming
-        prevStreaming = streamingTextReveal
-        if (justEnded) {
-            settleAnimatable.snapTo(0f)
-            scope.launch {
-                settleAnimatable.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(250),
-                )
+
+    var wasStreaming by remember { mutableStateOf(false) }
+    val streamingEnded = wasStreaming && !streamingTextReveal
+    wasStreaming = streamingTextReveal
+
+    var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
+    var finishNowMillis by remember { mutableStateOf(0L) }
+    var finishActive by remember { mutableStateOf(false) }
+
+    if (streamingEnded) {
+        finishRanges = liveRanges
+        finishNowMillis = streamingFrameMillis
+        finishActive = liveRanges.isNotEmpty()
+    }
+
+    if (finishActive && !streamingTextReveal) {
+        LaunchedEffect(finishActive) {
+            while (finishActive && !streamingTextReveal) {
+                val now = withFrameMillis { it }
+                finishNowMillis = now
+                if (finishRanges.none { now - it.revealedAtMillis < maxSettleDurationMillis }) {
+                    finishActive = false
+                    finishRanges = emptyList()
+                }
             }
         }
     }
 
-    val streamingReveal: StreamingTextReveal? = if (streamingTextReveal && settleRanges.isNotEmpty()) {
+    val revealRanges = if (streamingTextReveal) settleRanges else finishRanges
+    val revealNowMillis = if (streamingTextReveal) streamingFrameMillis else finishNowMillis
+
+    val streamingReveal: StreamingTextReveal? = if (revealRanges.isNotEmpty()) {
         StreamingTextReveal(
-            ranges = settleRanges,
-            nowMillis = streamingFrameMillis,
+            ranges = revealRanges,
+            nowMillis = revealNowMillis,
             color = style.color.takeOrElse { Color.White },
             smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond,
-            blurEnabled = true,
-            fadeInEnabled = true,
-            fadeDurationMs = 450,
-            startAlpha = 0.0f,
+            blurEnabled = settings.displaySetting.enableBlurEffect,
+            fadeInEnabled = fadeInEnabled,
+            fadeDurationMs = fadeDurationMs,
+            startAlpha = displaySetting.streamingFadeStartAlpha,
         )
     } else {
         null
@@ -889,7 +904,7 @@ fun MarkdownBlock(
     ) {
         ProvideTextStyle(style) {
             Column(
-                modifier = modifier.alpha(settleAlpha),
+                modifier = modifier,
             ) {
                 astTree.children.fastForEach { child ->
                     MarkdownNode(
@@ -919,6 +934,8 @@ internal class StreamingTextPresentationState(
 
     var smoothedCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
         private set
+    var isFreshReveal: Boolean = false
+        private set
     private var lastRawUpdateMillis = nowMillis
     private var firstPendingSinceMillis = 0L
     private var revealCarry = 0f
@@ -926,6 +943,7 @@ internal class StreamingTextPresentationState(
     private var currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
 
     fun acceptRawContent(nextRawContent: String, nowMillis: Long): Boolean {
+        isFreshReveal = false
         if (nextRawContent == rawContent) {
             settleRanges = settleRanges.pruneStreamingSettleRanges(nowMillis, maxSettleDurationMillis)
             return false
@@ -972,15 +990,16 @@ internal class StreamingTextPresentationState(
      * glow/blur-settle. Used for user messages that appear all at once when sent.
      */
     fun resetForFreshReveal(targetContent: String, nowMillis: Long) {
+        isFreshReveal = true
         rawContent = targetContent
         displayContent = ""
         settleRanges = emptyList()
-        smoothedCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+        smoothedCharsPerSecond = STREAMING_MIN_CHARS_PER_SECOND * 1.5f
         lastRawUpdateMillis = nowMillis
         firstPendingSinceMillis = nowMillis
         revealCarry = 0f
         lastRevealMillis = nowMillis
-        currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
+        currentRevealCharsPerSecond = STREAMING_MIN_CHARS_PER_SECOND * 1.5f
     }
 
     fun step(nowMillis: Long, elapsedMillis: Long): Boolean {
@@ -988,6 +1007,7 @@ internal class StreamingTextPresentationState(
         if (displayContent == rawContent) {
             firstPendingSinceMillis = 0L
             revealCarry = 0f
+            isFreshReveal = false
             currentRevealCharsPerSecond = approachStreamingRate(
                 current = currentRevealCharsPerSecond,
                 target = 0f,
@@ -1003,13 +1023,17 @@ internal class StreamingTextPresentationState(
             return false
         }
 
-        val backlogMillis = pendingLength * 1000f / smoothedCharsPerSecond.coerceAtLeast(1f)
-        val catchUpMultiplier = when {
-            backlogMillis <= STREAMING_CATCH_UP_AFTER_MILLIS -> 1f
-            else -> (backlogMillis / STREAMING_SMOOTHING_WINDOW_MILLIS).coerceIn(1f, STREAMING_MAX_CATCH_UP_MULTIPLIER)
+        val baseRevealChars = if (isFreshReveal) {
+            STREAMING_MIN_CHARS_PER_SECOND * 1.5f
+        } else {
+            val backlogMillis = pendingLength * 1000f / smoothedCharsPerSecond.coerceAtLeast(1f)
+            val catchUpMultiplier = when {
+                backlogMillis <= STREAMING_CATCH_UP_AFTER_MILLIS -> 1f
+                else -> (backlogMillis / STREAMING_SMOOTHING_WINDOW_MILLIS).coerceIn(1f, STREAMING_MAX_CATCH_UP_MULTIPLIER)
+            }
+            smoothedCharsPerSecond
+                .coerceIn(STREAMING_MIN_CHARS_PER_SECOND, STREAMING_MAX_CHARS_PER_SECOND) * catchUpMultiplier
         }
-        val baseRevealChars = smoothedCharsPerSecond
-            .coerceIn(STREAMING_MIN_CHARS_PER_SECOND, STREAMING_MAX_CHARS_PER_SECOND) * catchUpMultiplier
 
         val stalledMillis = (nowMillis - lastRawUpdateMillis - STREAMING_STALL_GRACE_MILLIS).coerceAtLeast(0L)
         val stallProgress = (stalledMillis / STREAMING_STALL_DECEL_MILLIS.toFloat()).coerceIn(0f, 1f)
@@ -1049,6 +1073,7 @@ internal class StreamingTextPresentationState(
         lastRevealMillis = nowMillis
         if (displayContent == rawContent) {
             firstPendingSinceMillis = 0L
+            isFreshReveal = false
         }
         val settledRanges = streamingSettleRangesForReveal(
             content = displayContent,
@@ -1069,6 +1094,7 @@ internal class StreamingTextPresentationState(
         settleRanges = emptyList()
         firstPendingSinceMillis = 0L
         revealCarry = 0f
+        isFreshReveal = false
         currentRevealCharsPerSecond = STREAMING_DEFAULT_CHARS_PER_SECOND
     }
 }

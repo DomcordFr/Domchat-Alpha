@@ -36,6 +36,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -1555,8 +1556,8 @@ private fun UserMessageTurn(
                             content = displayContent,
                             paragraphSpacing = 12.dp,
                             style = userEntranceStyle,
-                            streamingTextReveal = !isHistoryTurn,
-                            freshReveal = !isHistoryTurn,
+                            streamingTextReveal = !isHistoryTurn && !hasAnimated,
+                            freshReveal = !isHistoryTurn && !hasAnimated,
                             modifier = Modifier
                                 .alpha(userEntrance)
                                 .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },

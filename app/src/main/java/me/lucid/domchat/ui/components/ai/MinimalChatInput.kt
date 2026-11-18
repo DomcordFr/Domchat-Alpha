@@ -1200,6 +1200,7 @@ fun MinimalChatInput(
                                 }
                                 DomChatComposerActionButton(
                                     action = currentAction,
+                                    containerColorOverride = if (currentAction == DomChatComposerAction.Loading) Color.Transparent else null,
                                     onClick = {
                                         when (currentAction) {
                                             DomChatComposerAction.Send,
@@ -1227,6 +1228,13 @@ fun MinimalChatInput(
                                 ) { action ->
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
+                                            val stopBorderBrush = Brush.verticalGradient(
+                                                listOf(
+                                                    Color(0xFFFF4D4D).copy(alpha = 0.50f),
+                                                    Color(0xFF8B0000).copy(alpha = 0.25f),
+                                                    Color.Transparent
+                                                )
+                                            )
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
@@ -1235,15 +1243,15 @@ fun MinimalChatInput(
                                                             Modifier.frostedGlassSurface(
                                                                 shape = CircleShape,
                                                                 borderWidth = 0.5.dp,
-                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
                                                             )
                                                         } else {
                                                             Modifier.liquidGlassSurface(
                                                                 shape = CircleShape,
                                                                 borderWidth = 0.5.dp,
-                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
                                                             )
                                                         }
                                                     ),
@@ -1253,7 +1261,7 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(13.dp)
                                                         .clip(RoundedCornerShape(3.5.dp))
-                                                        .background(Color(0xFFFF1A1A))
+                                                        .background(Color(0xFFFF1E1E))
                                                 )
                                             }
                                         }
@@ -1525,12 +1533,21 @@ fun MinimalChatInput(
                                     modifier = Modifier.size(AppSize.ChromePill),
                                     containerColorOverride = if (currentAction == DomChatComposerAction.Picker) {
                                         Color(0xFF000000)
+                                    } else if (currentAction == DomChatComposerAction.Loading) {
+                                        Color.Transparent
                                     } else {
                                         null
                                     },
                                 ) { action ->
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
+                                            val stopBorderBrush = Brush.verticalGradient(
+                                                listOf(
+                                                    Color(0xFFFF4D4D).copy(alpha = 0.50f),
+                                                    Color(0xFF8B0000).copy(alpha = 0.25f),
+                                                    Color.Transparent
+                                                )
+                                            )
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
@@ -1539,15 +1556,15 @@ fun MinimalChatInput(
                                                             Modifier.frostedGlassSurface(
                                                                 shape = CircleShape,
                                                                 borderWidth = 0.5.dp,
-                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
                                                             )
                                                         } else {
                                                             Modifier.liquidGlassSurface(
                                                                 shape = CircleShape,
                                                                 borderWidth = 0.5.dp,
-                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.20f),
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
                                                             )
                                                         }
                                                     ),
@@ -1557,7 +1574,7 @@ fun MinimalChatInput(
                                                     modifier = Modifier
                                                         .size(13.dp)
                                                         .clip(RoundedCornerShape(3.5.dp))
-                                                        .background(Color(0xFFFF1A1A))
+                                                        .background(Color(0xFFFF1E1E))
                                                 )
                                             }
                                         }

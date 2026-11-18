@@ -1011,7 +1011,8 @@ private fun JanitorCharacterInspectorSheet(
     assistantVM: AssistantVM,
     settings: Settings,
 ) {
-    val sheetBgColor = Color(0xFF000000)
+    val sheetBgColor = Color(0xFF10111A)
+    val cardContainerColor = Color(0xFF181926)
     val cardBorderColor = LiquidGlassTokens.SpecularBorderSubtle
     val contentTextColor = Color(0xFFF2F2F7)
     val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
@@ -1070,6 +1071,7 @@ private fun JanitorCharacterInspectorSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
+                .background(sheetBgColor)
         ) {
             val sheetScrollState = rememberScrollState()
             Column(
@@ -1344,7 +1346,7 @@ private fun JanitorCharacterInspectorSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .background(sheetBgColor)
+                            .background(cardContainerColor)
                             .border(0.5.dp, cardBorderColor, RoundedCornerShape(14.dp))
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1404,7 +1406,7 @@ private fun JanitorCharacterInspectorSheet(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(16.dp))
-                                        .background(sheetBgColor)
+                                        .background(cardContainerColor)
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
@@ -1491,7 +1493,7 @@ private fun JanitorCharacterInspectorSheet(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(16.dp))
-                                        .background(sheetBgColor)
+                                        .background(cardContainerColor)
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
@@ -1593,7 +1595,7 @@ private fun JanitorCharacterInspectorSheet(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
                                                         .clip(RoundedCornerShape(16.dp))
-                                                        .background(sheetBgColor)
+                                                        .background(cardContainerColor)
                                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                                         .padding(16.dp)
                                                 ) {
@@ -1608,7 +1610,7 @@ private fun JanitorCharacterInspectorSheet(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clip(RoundedCornerShape(16.dp))
-                                                .background(sheetBgColor)
+                                                .background(cardContainerColor)
                                                 .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                                 .padding(16.dp)
                                         ) {
@@ -1732,20 +1734,20 @@ private fun CharacterCard(
 ) {
     val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
 
+    val isDark = LocalDarkMode.current
+    val cardBg = if (isDark) Color(0xFF141522) else Color(0xFFF2F2F7)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(0.68f)
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF000000))
+            .background(cardBg)
             .border(
                 0.5.dp,
                 LiquidGlassTokens.SpecularBorderSubtle,
                 RoundedCornerShape(18.dp)
             )
-            .graphicsLayer {
-                compositingStrategy = CompositingStrategy.Offscreen
-            }
             .clickable(onClick = onClick),
     ) {
         // Full-bleed avatar background
@@ -1763,7 +1765,7 @@ private fun CharacterCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF000000)),
+                    .background(cardBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

@@ -26,10 +26,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -128,7 +126,6 @@ fun ChatInfoBottomSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
-        dragHandle = null,
         modifier = modifier
     ) {
         Column(
@@ -136,7 +133,10 @@ fun ChatInfoBottomSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 22.dp, vertical = 8.dp)
         ) {
-            DomChatSheetHeader(title = "Context & Stats")
+            DomChatSheetHeader(
+                title = "Context & Stats",
+                onCloseClick = onDismissRequest,
+            )
 
             // Header: Character + Model overview
             Row(
@@ -306,7 +306,7 @@ private fun MetricCard(
     Surface(
         color = cardBg,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.12f)),
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         modifier = modifier
     ) {
         Column(

@@ -427,51 +427,41 @@ fun PromptPresetsBottomSheet(
         }
 
         item {
-            // Action row: Enable All / Disable All / Reset to Default (per-chat mode) plus active scope chip.
-            Row(
+            // Action badges: Enable All / Disable All / Reset (per-chat mode) plus active scope chip.
+            // Laid out via FlowRow so badges never squish, truncate, or overflow each other when toggled.
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .padding(end = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                DomChatGlassPillButton(
+                    text = "Enable All",
+                    onClick = { toggleAll(true) },
+                    modifier = Modifier.height(32.dp),
+                )
+                DomChatGlassPillButton(
+                    text = "Disable All",
+                    onClick = { toggleAll(false) },
+                    modifier = Modifier.height(32.dp),
+                )
+                AnimatedVisibility(
+                    visible = isChatSpecific,
+                    enter = fadeIn(animationSpec = tween(150)) + expandHorizontally(animationSpec = spring(stiffness = 350f)),
+                    exit = fadeOut(animationSpec = tween(150)) + shrinkHorizontally(animationSpec = spring(stiffness = 350f)),
                 ) {
                     DomChatGlassPillButton(
-                        text = "Enable All",
-                        onClick = { toggleAll(true) },
+                        text = "Reset",
+                        icon = Icons.Rounded.Refresh,
+                        onClick = { resetToGlobal() },
                         modifier = Modifier.height(32.dp),
                     )
-                    DomChatGlassPillButton(
-                        text = "Disable All",
-                        onClick = { toggleAll(false) },
-                        modifier = Modifier.height(32.dp),
-                    )
-                    AnimatedVisibility(
-                        visible = isChatSpecific,
-                        enter = fadeIn(animationSpec = tween(150)) + expandHorizontally(animationSpec = spring(stiffness = 350f)),
-                        exit = fadeOut(animationSpec = tween(150)) + shrinkHorizontally(animationSpec = spring(stiffness = 350f)),
-                    ) {
-                        DomChatGlassPillButton(
-                            text = "Reset",
-                            icon = Icons.Rounded.Refresh,
-                            onClick = { resetToGlobal() },
-                            modifier = Modifier.height(32.dp),
-                        )
-                    }
                 }
-                Box(
+                DomChatGlassChip(
+                    text = if (isChatSpecific) "Using Chat" else "Using Global",
+                    accent = isChatSpecific,
                     modifier = Modifier.wrapContentWidth(),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    DomChatGlassChip(
-                        text = if (isChatSpecific) "Using Chat" else "Using Global",
-                        modifier = Modifier.wrapContentWidth(),
-                    )
-                }
+                )
             }
         }
 

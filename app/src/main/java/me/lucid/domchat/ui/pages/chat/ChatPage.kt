@@ -137,6 +137,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Info
 import me.lucid.domchat.ui.components.chat.ChatInfoBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.dialog.ChatDestructiveConfirmDialog
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
@@ -546,7 +547,7 @@ internal fun chatListBottomPadding(placement: ChatToolbarPlacement): androidx.co
 }
 
 internal fun chatToolbarPopupTopPadding(placement: ChatToolbarPlacement): androidx.compose.ui.unit.Dp {
-    return if (placement == ChatToolbarPlacement.Top) 59.dp else 0.dp
+    return if (placement == ChatToolbarPlacement.Top) 56.dp else 0.dp
 }
 
 internal fun chatToolbarPopupBottomPadding(placement: ChatToolbarPlacement): androidx.compose.ui.unit.Dp {
@@ -1723,6 +1724,23 @@ private fun ChatPageContent(
                                         alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
                                     }
                             ) {
+                                if (renderBackground) {
+                                    AssistantBackground(
+                                        assistant = currentAssistant,
+                                        conversationId = conversation.id.toString(),
+                                        modifier = Modifier.fillMaxSize(),
+                                        onWallpaperLoaded = {
+                                            wallpaperBackdrop.geometryChanged()
+                                            contentBackdrop.geometryChanged()
+                                        },
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.background)
+                                    )
+                                }
                                 CompositionLocalProvider(
                                     me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes provides preexistingNodeIds
                                 ) {
@@ -3470,7 +3488,7 @@ private fun ChatToolbar(
             modifier = Modifier
                 .then(
                     if (placement == ChatToolbarPlacement.Top) {
-                        Modifier.statusBarsPadding().offset(y = (-5).dp)
+                        Modifier.statusBarsPadding().offset(y = (-8).dp)
                     } else {
                         Modifier
                     }
@@ -4361,9 +4379,15 @@ private fun ContextUsagePopupContent(
         ((effectiveAvailable.toFloat() / activeBudgetCeiling) * 100).toInt().coerceIn(0, 100)
 
     Column(
-        modifier = Modifier.padding(20.dp),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
     ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            DomChatSheetDragHandle()
+        }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             AnimatedContent(
                 targetState = isEditingLimit,
