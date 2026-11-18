@@ -4739,8 +4739,9 @@ private fun CompactionBadge(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp, vertical = 8.dp)
-                    .background(Color(0xFF1C1D26))
-                    .clip(RoundedCornerShape(8.dp)),
+                    .background(Color(0xFF000000), RoundedCornerShape(8.dp))
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
+                    .padding(10.dp),
             ) {
                 Text(
                     text = summary,

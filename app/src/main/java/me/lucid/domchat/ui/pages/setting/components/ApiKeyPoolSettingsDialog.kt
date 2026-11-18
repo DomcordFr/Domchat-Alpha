@@ -166,17 +166,13 @@ private fun StrategyOptionCard(
             .clickable(onClick = onClick),
         shape = AppShapes.CardSmall,
         colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                Color.White.copy(alpha = 0.18f)
-            } else {
-                Color(0xFF000000)
-            },
+            containerColor = Color(0xFF000000),
         ),
-        border = if (selected) {
-            BorderStroke(1.5.dp, Color.White.copy(alpha = 0.4f))
-        } else {
-            BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
-        },
+        border = BorderStroke(
+            0.5.dp,
+            if (selected) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
+            else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+        ),
     ) {
         Row(
             modifier = Modifier

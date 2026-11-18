@@ -23,6 +23,7 @@ __pycache__/
 *.class
 *.log
 *.jks
+scripts/ci_watch.py
 !app/keystore/release.jks
 *.keystore
 Thumbs.db

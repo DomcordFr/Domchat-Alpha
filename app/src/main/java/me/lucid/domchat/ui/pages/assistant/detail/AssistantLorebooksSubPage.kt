@@ -93,7 +93,7 @@ fun AssistantLorebooksSubPage(
         } else {
             // Description card header
             Surface(
-                color = Color(0xFF141520),
+                color = Color(0xFF000000),
                 border = androidx.compose.foundation.BorderStroke(
                     0.5.dp,
                     me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
@@ -257,7 +257,7 @@ private fun LorebookSelectionCard(
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF141520)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         border = androidx.compose.foundation.BorderStroke(
             0.5.dp,
             me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle

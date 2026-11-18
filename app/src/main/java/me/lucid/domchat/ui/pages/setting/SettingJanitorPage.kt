@@ -1012,8 +1012,8 @@ private fun JanitorCharacterInspectorSheet(
     assistantVM: AssistantVM,
     settings: Settings,
 ) {
-    val sheetBgColor = Color(0xFF10111A)
-    val cardContainerColor = Color(0xFF181926)
+    val sheetBgColor = Color(0xFF000000)
+    val cardContainerColor = Color(0xFF000000)
     val cardBorderColor = LiquidGlassTokens.SpecularBorderSubtle
     val contentTextColor = Color(0xFFF2F2F7)
     val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
@@ -1473,7 +1473,8 @@ private fun JanitorCharacterInspectorSheet(
                                                     modifier = Modifier
                                                         .size(112.dp)
                                                         .clip(RoundedCornerShape(8.dp))
-                                                        .background(Color(0xFF121212)),
+                                                        .background(Color(0xFF000000))
+                                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp)),
                                                     contentAlignment = Alignment.Center,
                                                 ) {
                                                     ZoomableAsyncImage(
@@ -1736,7 +1737,7 @@ private fun CharacterCard(
     val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
 
     val isDark = LocalDarkMode.current
-    val cardBg = if (isDark) Color(0xFF141522) else Color(0xFFF2F2F7)
+    val cardBg = if (isDark) Color(0xFF000000) else Color(0xFFF2F2F7)
 
     Box(
         modifier = modifier

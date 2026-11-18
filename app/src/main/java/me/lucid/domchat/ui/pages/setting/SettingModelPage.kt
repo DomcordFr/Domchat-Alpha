@@ -37,15 +37,19 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContentColor
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,6 +117,14 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
+    val canScrollBackward by remember {
+        derivedStateOf { lazyListState.canScrollBackward }
+    }
+    val topFadeProgress by animateFloatAsState(
+        targetValue = if (canScrollBackward) 1f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "model_top_fade"
+    )
     
     Scaffold(
         topBar = {
@@ -127,7 +139,9 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { contentPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .fadeEdges(topProgress = topFadeProgress, fadeHeight = 44f),
             state = lazyListState,
             contentPadding = PaddingValues(
                 start = 16.dp,
@@ -1241,15 +1255,16 @@ private fun HelperReasoningSettings(
             modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
         )
 
+        val thinkingCardShape = me.lucid.domchat.ui.theme.LiquidGlassTokens.CardShape
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
+                .clip(thinkingCardShape)
                 .background(color = Color(0xFF000000))
                 .border(
                     width = 0.5.dp,
                     brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
+                    shape = thinkingCardShape
                 )
                 .clickable {
                     haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)

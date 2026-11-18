@@ -44,7 +44,7 @@ fun DomChatModelFeatureCard(
     title: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit,
 ) {
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(18.dp)
     Card(
         modifier = modifier.border(
             0.5.dp,
@@ -142,15 +142,11 @@ fun DomChatGroupedModelRow(
     )
     val contentColor = Color(0xFFF2F2F7)
     val rowShape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
-    val rowBackground = if (selected) {
-        Color.White.copy(alpha = 0.18f)
-    } else {
-        Color(0xFF000000)
-    }
+    val rowBackground = Color(0xFF000000)
     val borderBrush = Brush.verticalGradient(
         listOf(
-            Color.White.copy(alpha = if (selected) 0.38f else 0.14f),
-            Color.White.copy(alpha = if (selected) 0.14f else 0.04f)
+            Color.White.copy(alpha = if (selected) 0.80f else 0.18f),
+            Color.White.copy(alpha = if (selected) 0.35f else 0.05f)
         )
     )
     Row(
@@ -207,11 +203,10 @@ private fun groupedCornerRadii(
     selected: Boolean,
     position: DomChatModelGroupPosition,
 ): ModelCornerRadii {
-    if (selected) return ModelCornerRadii(50.dp, 50.dp, 50.dp, 50.dp)
     return when (position) {
-        DomChatModelGroupPosition.First -> ModelCornerRadii(24.dp, 24.dp, 10.dp, 10.dp)
-        DomChatModelGroupPosition.Middle -> ModelCornerRadii(10.dp, 10.dp, 10.dp, 10.dp)
-        DomChatModelGroupPosition.Last -> ModelCornerRadii(10.dp, 10.dp, 24.dp, 24.dp)
-        DomChatModelGroupPosition.Single -> ModelCornerRadii(24.dp, 24.dp, 24.dp, 24.dp)
+        DomChatModelGroupPosition.First -> ModelCornerRadii(18.dp, 18.dp, 6.dp, 6.dp)
+        DomChatModelGroupPosition.Middle -> ModelCornerRadii(6.dp, 6.dp, 6.dp, 6.dp)
+        DomChatModelGroupPosition.Last -> ModelCornerRadii(6.dp, 6.dp, 18.dp, 18.dp)
+        DomChatModelGroupPosition.Single -> ModelCornerRadii(18.dp, 18.dp, 18.dp, 18.dp)
     }
 }

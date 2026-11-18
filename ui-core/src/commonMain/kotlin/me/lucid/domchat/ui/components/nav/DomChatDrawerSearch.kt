@@ -49,6 +49,7 @@ fun DomChatDrawerSearch(
     placeholder: String,
     hint: String,
     modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
     containerColor: Color = Color.Unspecified,
     shape: Shape = AppShapes.SearchField,
 ) {
@@ -98,7 +99,7 @@ fun DomChatDrawerSearch(
                 }
 
                 val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-                val defaultContainerColor = if (isDark) Color(0xFF141520).copy(alpha = 0.55f) else Color.White.copy(alpha = 0.70f)
+                val defaultContainerColor = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.70f)
                 val searchContainerColor = if (containerColor != Color.Unspecified) containerColor else defaultContainerColor
                 val searchBoardBrush = Brush.verticalGradient(
                     // Mirrors LiquidGlassTokens.SpecularBorderSubtle (ui-core cannot import app tokens)
@@ -108,18 +109,19 @@ fun DomChatDrawerSearch(
                         Color.Transparent,
                     )
                 )
-                val searchBorderStroke: BorderStroke = BorderStroke(0.5.dp, searchBoardBrush)
+                val borderModifier = if (fieldModifier != Modifier) Modifier else Modifier.border(BorderStroke(0.5.dp, searchBoardBrush), shape)
 
                 TextField(
                     value = query,
                     onValueChange = onQueryChange,
                     modifier = Modifier
                         .weight(1f)
+                        .then(fieldModifier)
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused && !expanded) onExpandedChange(true)
                         }
-                        .border(searchBorderStroke, shape),
+                        .then(borderModifier),
                     shape = shape,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = searchContainerColor,

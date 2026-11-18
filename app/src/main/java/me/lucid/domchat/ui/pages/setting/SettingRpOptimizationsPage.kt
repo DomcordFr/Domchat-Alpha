@@ -137,7 +137,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = AppShapes.CardLarge,
-                    modifier = Modifier.border(1.dp, cardBorder, AppShapes.CardLarge)
+                    modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -212,7 +212,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = AppShapes.CardLarge,
-                    modifier = Modifier.border(1.dp, cardBorder, AppShapes.CardLarge)
+                    modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -284,7 +284,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = AppShapes.CardLarge,
-                        modifier = Modifier.border(1.dp, cardBorder, AppShapes.CardLarge)
+                        modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
                     ) {
                         Box(
                             modifier = Modifier
@@ -340,7 +340,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = AppShapes.CardLarge,
-                        modifier = Modifier.border(1.dp, cardBorder, AppShapes.CardLarge)
+                        modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -423,7 +423,7 @@ private fun RpStyleRuleItem(
     Card(
         colors = CardDefaults.cardColors(containerColor = cardBg),
         shape = AppShapes.CardLarge,
-        modifier = modifier.border(1.dp, cardBorder, AppShapes.CardLarge),
+        modifier = modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge),
         onClick = onEdit
     ) {
         ListItem(

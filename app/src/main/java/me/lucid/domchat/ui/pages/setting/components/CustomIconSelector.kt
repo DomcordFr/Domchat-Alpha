@@ -128,8 +128,9 @@ fun CustomIconSelector(
                     .align(Alignment.TopEnd)
                     .size(20.dp),
                 shape = CircleShape,
-                color = androidx.compose.ui.graphics.Color(0xFF2C1517),
+                color = Color(0xFF000000),
                 contentColor = Color(0xFFFF453A),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, Color(0xFFFF453A).copy(alpha = 0.6f)),
                 shadowElevation = 2.dp,
             ) {
                 Icon(
@@ -248,6 +249,7 @@ private fun LobeHubIconPickerSheet(
 
     ModalBottomSheet(
         containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
         dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
         contentColor = Color(0xFFF2F2F7),

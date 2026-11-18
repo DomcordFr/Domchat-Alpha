@@ -106,8 +106,8 @@ fun McpPickerButton(
                         badge = {
                             if (enabledServers.isNotEmpty()) {
                                 Badge(
-                                    containerColor = Color(0xFF141520).copy(alpha = 0.9f),
-                                    contentColor = Color.White.copy(alpha = 0.9f)
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White
                                 ) {
                                     Text(
                                         text = enabledServers.size.toString(),

@@ -179,7 +179,7 @@ fun AssistantProfileSubPage(
                 }
                 ExpandableContent(visible = notesExpanded) {
                     Surface(
-                        color = Color(0xFF141520),
+                        color = Color(0xFF000000),
                         border = BorderStroke(
                             0.5.dp,
                             me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle

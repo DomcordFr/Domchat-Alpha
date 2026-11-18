@@ -301,12 +301,15 @@ private fun MetricCard(
     modifier: Modifier = Modifier,
     isAmoled: Boolean = false
 ) {
-    val cardBg = domChatCardContainerColor()
-    Surface(
-        color = cardBg,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+    Box(
         modifier = modifier
+            .liquidGlassSurface(
+                shape = RoundedCornerShape(18.dp),
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = Color.Transparent,
+                isFloatingControl = true
+            )
     ) {
         Column(
             modifier = Modifier.padding(14.dp),

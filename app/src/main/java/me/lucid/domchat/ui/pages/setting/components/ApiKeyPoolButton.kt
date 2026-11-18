@@ -118,7 +118,7 @@ fun ApiKeyPoolButton(
             .height(buttonHeight),
         shape = AppShapes.ButtonPill,
         color = containerColor,
-        border = if (hasAuthError) BorderStroke(1.5.dp, Color(0xFFFF453A)) else null,
+        border = if (hasAuthError) BorderStroke(0.5.dp, Color(0xFFFF453A)) else null,
         onClick = {
             haptics.perform(HapticPattern.Pop)
             showSheet = true

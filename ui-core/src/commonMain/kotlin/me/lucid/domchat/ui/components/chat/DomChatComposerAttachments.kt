@@ -266,7 +266,7 @@ fun DomChatDocumentAttachmentTile(
             modifier = Modifier.fillMaxSize(),
             shape = AttachmentShape,
             border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.15f)),
-            color = Color(0xFF141520).copy(alpha = 0.70f),
+            color = Color(0xFF000000),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(8.dp),
@@ -324,7 +324,7 @@ private fun DomChatComposerInsetRemoveButton(
     ) {
         Surface(
             shape = CircleShape,
-            color = Color(0xFF141520).copy(alpha = 0.94f),
+            color = Color(0xFF000000),
             border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.20f)),
             modifier = Modifier.padding(4.dp).size(22.dp),
         ) {

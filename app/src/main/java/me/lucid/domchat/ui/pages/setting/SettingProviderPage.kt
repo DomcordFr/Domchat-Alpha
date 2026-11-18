@@ -115,6 +115,7 @@ import me.lucid.domchat.ui.theme.appFilterChipBorder
 import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContentColor
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -666,10 +667,20 @@ private fun ProviderListView(
         } else null
     }
 
+    val canScrollBackward by remember {
+        derivedStateOf { lazyListState.canScrollBackward }
+    }
+    val topFadeProgress by animateFloatAsState(
+        targetValue = if (canScrollBackward) 1f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "provider_top_fade"
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .fadeEdges(topProgress = topFadeProgress, fadeHeight = 44f)
                 .imePadding(),
             contentPadding = contentPadding + PaddingValues(horizontal = 16.dp, vertical = 8.dp) + PaddingValues(bottom = 104.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),

@@ -117,6 +117,8 @@ fun ApiKeyPoolBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
+        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
                 modifier = Modifier.clickable {
@@ -412,7 +414,7 @@ private fun ApiKeyCard(
             contentColor = Color(0xFFF2F2F7)
         ),
         border = if (hasError) {
-            BorderStroke(1.5.dp, Color(0xFFFF453A))
+            BorderStroke(0.5.dp, Color(0xFFFF453A))
         } else {
             BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
         },
@@ -560,7 +562,8 @@ private fun ApiKeyEditDialog(
     val haptics = rememberPremiumHaptics()
 
     AlertDialog(
-                containerColor = Color(0xFF000000),
+        containerColor = Color(0xFF000000),
+        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
         modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
         titleContentColor = Color(0xFFF2F2F7),
         textContentColor = Color(0xFFF2F2F7),

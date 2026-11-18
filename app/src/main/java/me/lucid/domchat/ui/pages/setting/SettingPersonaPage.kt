@@ -16,6 +16,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.derivedStateOf
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -275,6 +278,14 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    val personaListState = rememberLazyListState()
+    val canScrollPersonaBackward by remember { derivedStateOf { personaListState.canScrollBackward } }
+    val personaTopFadeProgress by animateFloatAsState(
+        targetValue = if (canScrollPersonaBackward) 1f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "persona_top_fade"
+    )
+
     Scaffold(
         topBar = {
             OneUITopAppBar(
@@ -296,10 +307,12 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { innerPadding ->
         LazyColumn(
+            state = personaListState,
             modifier = Modifier
                 .fillMaxSize()
-                .consumeWindowInsets(innerPadding),
-            contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                .consumeWindowInsets(innerPadding)
+                .fadeEdges(topProgress = personaTopFadeProgress, fadeHeight = 44f),
+            contentPadding = innerPadding + PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Search Bar
@@ -328,24 +341,17 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             // Personas List
             items(filteredPersonas, key = { it.id }) { persona ->
                 val isActive = persona.id == activePersona.id || (persona.isDefault && activePersona.id == null)
-                val cardShape = AppShapes.CardSmall // 16.dp
-                val surfaceColor by animateColorAsState(
-                    targetValue = when {
-                        isActive -> if (isDark) Color(0xFF0D0E15) else Color.White.copy(alpha = 0.90f)
-                        else -> if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.50f)
-                    },
-                    animationSpec = tween(durationMillis = 240),
-                    label = "persona_card_color"
-                )
+                val cardShape = RoundedCornerShape(18.dp)
+                val surfaceColor = Color(0xFF000000)
                 val borderWidth by animateDpAsState(
                     targetValue = if (isActive) 1.dp else 0.5.dp,
                     animationSpec = tween(durationMillis = 240),
                     label = "persona_card_border_width"
                 )
-                val borderBrush: Brush = if (isActive) {
-                    LiquidGlassTokens.SpecularBorderSubtle
+                val borderBrush = if (isActive) {
+                    LiquidGlassTokens.SpecularBorderBrush
                 } else {
-                    SolidColor(if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f))
+                    LiquidGlassTokens.SpecularBorderSubtle
                 }
 
                 Surface(
@@ -384,20 +390,20 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     Text(
                                         text = persona.name,
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = if (isDark) Color.White else Color.Black
+                                        color = Color.White
                                     )
 
                                     if (persona.pronouns.isNotBlank()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(AppShapes.SettingBadge)
-                                                .background(if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f))
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        Surface(
+                                            color = Color(0xFF000000),
+                                            shape = AppShapes.SettingBadge,
+                                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                         ) {
                                             Text(
                                                 text = persona.pronouns,
                                                 fontSize = 11.sp,
-                                                color = if (isDark) Color(0xFFA6A6A6) else Color(0xFF666666)
+                                                color = Color.White.copy(alpha = 0.75f),
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
@@ -408,9 +414,9 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                         exit = fadeOut(tween(150)) + shrinkHorizontally(spring(stiffness = 380f))
                                     ) {
                                         Surface(
-                                            color = Color(0xFF10B981).copy(alpha = 0.15f),
+                                            color = Color(0xFF000000),
                                             shape = RoundedCornerShape(8.dp),
-                                            border = BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.45f))
+                                            border = BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.65f))
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),

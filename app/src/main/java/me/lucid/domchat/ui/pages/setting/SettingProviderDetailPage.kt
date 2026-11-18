@@ -664,10 +664,10 @@ private fun ProviderDetailBottomBar(
                 // Tab 0: Configuration / Settings
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = if (isPage0) {
-                        if (isLiquidGlass) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.12f)
+                    color = if (isPage0 && isLiquidGlass) {
+                        Color.White.copy(alpha = 0.22f)
                     } else Color.Transparent,
-                    border = if (isPage0) {
+                    border = if (isPage0 && isLiquidGlass) {
                         BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
                     } else null,
                     modifier = Modifier.combinedClickable(
@@ -705,10 +705,10 @@ private fun ProviderDetailBottomBar(
                 // Tab 1: Models (with count badge)
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = if (isPage1) {
-                        if (isLiquidGlass) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.12f)
+                    color = if (isPage1 && isLiquidGlass) {
+                        Color.White.copy(alpha = 0.22f)
                     } else Color.Transparent,
-                    border = if (isPage1) {
+                    border = if (isPage1 && isLiquidGlass) {
                         BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
                     } else null,
                     modifier = Modifier.combinedClickable(
@@ -831,7 +831,8 @@ private fun SettingProviderConfigPage(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = CardDefaults.cardColors(
                     containerColor = Color(0xFF000000)
-                )
+                ),
+                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -1420,51 +1421,56 @@ private fun LocalHuggingFaceInstallFab(
     }
 
     if (showSheet) {
-        DomChatGlassBottomSheet(
-            visible = true,
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { showSheet = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+            DomChatGlassBottomSheet(
+                visible = true,
+                onDismissRequest = { showSheet = false },
             ) {
-                Text(
-                    text = stringResource(R.string.local_llm_install_url_action),
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                OutlinedTextField(
-                    value = url,
-                    onValueChange = { url = it },
-                    label = { Text(stringResource(R.string.local_llm_install_url_label)) },
-                    supportingText = { Text(stringResource(R.string.local_llm_install_url_hint)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    colors = appFieldColors(),
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .imePadding()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    OutlinedButton(
-                        onClick = { showSheet = false },
-                        modifier = Modifier.weight(1f),
+                    Text(
+                        text = stringResource(R.string.local_llm_install_url_action),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text(stringResource(R.string.local_llm_install_url_label)) },
+                        supportingText = { Text(stringResource(R.string.local_llm_install_url_hint)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                        colors = appFieldColors(),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                    Button(
-                        onClick = {
-                            onInstallUrl(url)
-                            url = ""
-                            showSheet = false
-                        },
-                        enabled = url.isNotBlank() && !isDownloading,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(R.string.local_llm_install_url_action))
+                        OutlinedButton(
+                            onClick = { showSheet = false },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                        Button(
+                            onClick = {
+                                onInstallUrl(url)
+                                url = ""
+                                showSheet = false
+                            },
+                            enabled = url.isNotBlank() && !isDownloading,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.local_llm_install_url_action))
+                        }
                     }
                 }
             }
@@ -1819,76 +1825,74 @@ private fun ModelPickerFab(
     }
     
     if (showPicker) {
-        DomChatGlassBottomSheet(
-            visible = true,
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
-            onDismissRequest = { showPicker = false }
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showPicker = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
-            var filterText by rememberSaveable { mutableStateOf("") }
-            var debouncedQuery by remember { mutableStateOf("") }
-            LaunchedEffect(filterText) {
-                if (filterText.isBlank()) {
-                    debouncedQuery = ""
-                } else {
-                    kotlinx.coroutines.delay(100)
-                    debouncedQuery = filterText
-                }
-            }
-            var resolvedModels by remember(models) { mutableStateOf(models) }
-            LaunchedEffect(models, parentProvider) {
-                if (models.isNotEmpty()) {
-                    val resolved = withContext(Dispatchers.Default) {
-                        resolveProviderModels(modelMetadataResolver, parentProvider, models)
-                    }
-                    resolvedModels = resolved
-                }
-            }
-            val filteredModels = remember(resolvedModels, debouncedQuery) {
-                if (debouncedQuery.isBlank()) {
-                    resolvedModels
-                } else {
-                    val queryWords = debouncedQuery.trim().lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
-                    resolvedModels.filter { model ->
-                        val id = model.modelId.lowercase()
-                        val name = model.displayName.lowercase()
-                        queryWords.all { word ->
-                            id.contains(word) || name.contains(word)
-                        }
-                    }
-                }
-            }
-            val selectedModelIds = remember(selectedModels) {
-                selectedModels.map { it.modelId.lowercase() }.toSet()
-            }
-            val selectedModelMap = remember(resolvedModels, selectedModels, selectedModelIds) {
-                val map = HashMap<String, Model>(resolvedModels.size)
-                val selectedByLowerId = selectedModels.associateBy { it.modelId.lowercase() }
-                for (model in resolvedModels) {
-                    val direct = selectedByLowerId[model.modelId.lowercase()]
-                    if (direct != null) {
-                        map[model.modelId] = direct
-                    } else {
-                        val match = selectedModels.firstOrNull { modelsReferToSameApiModel(it, model) }
-                        if (match != null) {
-                            map[model.modelId] = match
-                        }
-                    }
-                }
-                map
-            }
-            val allFilteredSelected = remember(filteredModels, selectedModelMap) {
-                filteredModels.isNotEmpty() && filteredModels.all { selectedModelMap.containsKey(it.modelId) }
-            }
-            Surface(
-                shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
-                color = Color(0xFF000000),
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.fillMaxWidth()
+            DomChatGlassBottomSheet(
+                visible = true,
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+                onDismissRequest = { showPicker = false }
             ) {
+                var filterText by rememberSaveable { mutableStateOf("") }
+                var debouncedQuery by remember { mutableStateOf("") }
+                LaunchedEffect(filterText) {
+                    if (filterText.isBlank()) {
+                        debouncedQuery = ""
+                    } else {
+                        kotlinx.coroutines.delay(100)
+                        debouncedQuery = filterText
+                    }
+                }
+                var resolvedModels by remember(models) { mutableStateOf(models) }
+                LaunchedEffect(models, parentProvider) {
+                    if (models.isNotEmpty()) {
+                        val resolved = withContext(Dispatchers.Default) {
+                            resolveProviderModels(modelMetadataResolver, parentProvider, models)
+                        }
+                        resolvedModels = resolved
+                    }
+                }
+                val filteredModels = remember(resolvedModels, debouncedQuery) {
+                    if (debouncedQuery.isBlank()) {
+                        resolvedModels
+                    } else {
+                        val queryWords = debouncedQuery.trim().lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
+                        resolvedModels.filter { model ->
+                            val id = model.modelId.lowercase()
+                            val name = model.displayName.lowercase()
+                            queryWords.all { word ->
+                                id.contains(word) || name.contains(word)
+                            }
+                        }
+                    }
+                }
+                val selectedModelIds = remember(selectedModels) {
+                    selectedModels.map { it.modelId.lowercase() }.toSet()
+                }
+                val selectedModelMap = remember(resolvedModels, selectedModels, selectedModelIds) {
+                    val map = HashMap<String, Model>(resolvedModels.size)
+                    val selectedByLowerId = selectedModels.associateBy { it.modelId.lowercase() }
+                    for (model in resolvedModels) {
+                        val direct = selectedByLowerId[model.modelId.lowercase()]
+                        if (direct != null) {
+                            map[model.modelId] = direct
+                        } else {
+                            val match = selectedModels.firstOrNull { modelsReferToSameApiModel(it, model) }
+                            if (match != null) {
+                                map[model.modelId] = match
+                            }
+                        }
+                    }
+                    map
+                }
+                val allFilteredSelected = remember(filteredModels, selectedModelMap) {
+                    filteredModels.isNotEmpty() && filteredModels.all { selectedModelMap.containsKey(it.modelId) }
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.88f)
+                        .fillMaxHeight(0.90f)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -2057,17 +2061,18 @@ private fun ModelPickerFab(
                                         onAddModel(model)
                                     }
                                 },
-                            shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                            shape = RoundedCornerShape(18.dp),
+                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                             colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = if (me.lucid.domchat.ui.theme.LocalDarkMode.current) Color(0xFF000000) else Color.Transparent
+                                containerColor = Color(0xFF000000)
                             )
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(8.dp),
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
                             ) {
                                 ModelIcon(
                                     model = model,
@@ -2075,27 +2080,33 @@ private fun ModelPickerFab(
                                     modifier = Modifier.size(32.dp)
                                 )
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp),
                                     modifier = Modifier.weight(1f),
                                 ) {
                                     Text(
                                         text = model.displayName,
                                         style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
-                                    Text(
-                                        text = model.modelId,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.65f),
-                                    )
-                                    FlowRow(
+                                    if (!model.displayName.equals(model.modelId, ignoreCase = true)) {
+                                        Text(
+                                            text = model.modelId,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.55f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                    Row(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         ModelTypeTag(model = model)
-                                        ModelModalityTag(model = model)
-                                        ModelAbilityTag(model = model)
+                                        if (model.modalities.size > 1) {
+                                            ModelModalityTag(model = model)
+                                        }
                                     }
                                 }
                                 ModelSelectionCircle(selected = isSelected)
@@ -2104,9 +2115,9 @@ private fun ModelPickerFab(
                     }
                 }
             }
-            }
         }
     }
+}
 }
 
 @Composable
@@ -2131,95 +2142,93 @@ private fun AddNewModelFab(
     
     if (dialogState.isEditing) {
         dialogState.currentState?.let { modelState ->
-            DomChatGlassBottomSheet(
-                visible = true,
-                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
-                onDismissRequest = {
-                    dialogState.dismiss()
-                }
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { dialogState.dismiss() },
+                properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
             ) {
-                Surface(
-                    shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
-                    color = Color(0xFF000000),
-                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier.fillMaxWidth()
+                DomChatGlassBottomSheet(
+                    visible = true,
+                    maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+                    onDismissRequest = {
+                        dialogState.dismiss()
+                    }
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .fillMaxHeight(0.88f)
+                            .fillMaxHeight(0.90f)
                             .imePadding()
                             .padding(horizontal = 20.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.setting_provider_page_add_model),
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        IconButton(onClick = { dialogState.dismiss() }) {
-                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel))
-                        }
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        ModelSettingsForm(
-                            model = modelState,
-                            onModelChange = { dialogState.currentState = it },
-                            isEdit = false,
-                            parentProvider = parentProvider
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                dialogState.dismiss()
-                            },
-                            modifier = Modifier.weight(1f),
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(stringResource(R.string.cancel))
+                            Text(
+                                text = stringResource(R.string.setting_provider_page_add_model),
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            IconButton(onClick = { dialogState.dismiss() }) {
+                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel))
+                            }
                         }
-                        Button(
-                            onClick = {
-                                val trimmedId = modelState.modelId.trim()
-                                if (trimmedId.isNotBlank()) {
-                                    val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
-                                    val preparedModel = modelState.copy(
-                                        modelId = trimmedId,
-                                        displayName = modelState.displayName.trim().ifBlank { trimmedId },
-                                        inputModalities = if (isVision && !modelState.inputModalities.contains(Modality.IMAGE)) {
-                                            modelState.inputModalities + Modality.IMAGE
-                                        } else {
-                                            modelState.inputModalities
-                                        }
-                                    )
-                                    dialogState.currentState = modelMetadataResolver.applyToModel(
-                                        model = preparedModel,
-                                        providerHint = parentProvider,
-                                    )
-                                    dialogState.confirm()
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
                         ) {
-                            Text(stringResource(R.string.setting_provider_page_add))
+                            ModelSettingsForm(
+                                model = modelState,
+                                onModelChange = { dialogState.currentState = it },
+                                isEdit = false,
+                                parentProvider = parentProvider
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    dialogState.dismiss()
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                            Button(
+                                onClick = {
+                                    val trimmedId = modelState.modelId.trim()
+                                    if (trimmedId.isNotBlank()) {
+                                        val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
+                                        val preparedModel = modelState.copy(
+                                            modelId = trimmedId,
+                                            displayName = modelState.displayName.trim().ifBlank { trimmedId },
+                                            inputModalities = if (isVision && !modelState.inputModalities.contains(Modality.IMAGE)) {
+                                                modelState.inputModalities + Modality.IMAGE
+                                            } else {
+                                                modelState.inputModalities
+                                            }
+                                        )
+                                        dialogState.currentState = modelMetadataResolver.applyToModel(
+                                            model = preparedModel,
+                                            providerHint = parentProvider,
+                                        )
+                                        dialogState.confirm()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(R.string.setting_provider_page_add))
+                            }
                         }
                     }
-                }
                 }
             }
         }
@@ -2278,16 +2287,14 @@ private fun ModelPicker(
     var showModal by remember { mutableStateOf(false) }
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
     if (showModal) {
-        DomChatGlassBottomSheet(
-            visible = true,
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
-            onDismissRequest = { showModal = false }
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showModal = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
-            Surface(
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-                color = Color(0xFF000000),
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush),
-                modifier = Modifier.fillMaxWidth()
+            DomChatGlassBottomSheet(
+                visible = true,
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+                onDismissRequest = { showModal = false }
             ) {
                 var filterText by remember { mutableStateOf("") }
                 val filterKeywords = filterText.split(" ").filter { it.isNotBlank() }
@@ -2304,7 +2311,7 @@ private fun ModelPicker(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.88f)
+                        .fillMaxHeight(0.90f)
                         .padding(8.dp)
                         .imePadding(),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -2386,7 +2393,8 @@ private fun ModelPicker(
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                             colors = androidx.compose.material3.CardDefaults.cardColors(
                                 containerColor = Color(0xFF000000)
-                            )
+                            ),
+                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -2476,8 +2484,17 @@ private fun ModelPicker(
     BadgedBox(
         badge = {
             if (models.isNotEmpty()) {
-                Badge {
-                    Text(models.size.toString())
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Text(
+                        text = models.size.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.5.dp)
+                    )
                 }
             }
         }
@@ -3169,17 +3186,15 @@ private fun LocalLiteRtModelIdentitySheet(
         }
     }
 
-    DomChatGlassBottomSheet(
-        visible = true,
-        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
+    androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
-        dragHandle = null,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
-        Surface(
-            shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
-            color = Color(0xFF000000),
-            border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier.fillMaxWidth()
+        DomChatGlassBottomSheet(
+            visible = true,
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+            onDismissRequest = onDismiss,
+            dragHandle = null,
         ) {
             Column(
                 modifier = Modifier
@@ -3202,59 +3217,59 @@ private fun LocalLiteRtModelIdentitySheet(
                     )
                 }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                CustomIconSelector(
-                    customIconUri = model.customIconUri,
-                    onPickFile = {
-                        imagePickerLauncher.launch(arrayOf("image/*", "image/svg+xml"))
-                    },
-                    onPickLobeHubIcon = { slug ->
-                        onModelChange(model.copy(customIconUri = lobeHubIconUri(slug)))
-                    },
-                    onReset = {
-                        onModelChange(model.copy(customIconUri = null))
-                    },
-                ) { iconModifier ->
-                    ModelIcon(
-                        model = model,
-                        provider = parentProvider,
-                        modifier = iconModifier,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    CustomIconSelector(
+                        customIconUri = model.customIconUri,
+                        onPickFile = {
+                            imagePickerLauncher.launch(arrayOf("image/*", "image/svg+xml"))
+                        },
+                        onPickLobeHubIcon = { slug ->
+                            onModelChange(model.copy(customIconUri = lobeHubIconUri(slug)))
+                        },
+                        onReset = {
+                            onModelChange(model.copy(customIconUri = null))
+                        },
+                    ) { iconModifier ->
+                        ModelIcon(
+                            model = model,
+                            provider = parentProvider,
+                            modifier = iconModifier,
+                        )
+                    }
+                    OutlinedTextField(
+                        value = model.displayName,
+                        onValueChange = { onModelChange(model.copy(displayName = it)) },
+                        label = { Text(stringResource(R.string.setting_provider_page_model_display_name)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                        colors = appFieldColors(),
                     )
                 }
-                OutlinedTextField(
-                    value = model.displayName,
-                    onValueChange = { onModelChange(model.copy(displayName = it)) },
-                    label = { Text(stringResource(R.string.setting_provider_page_model_display_name)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    colors = appFieldColors(),
-                )
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-            ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 ) {
-                    Text(stringResource(R.string.cancel))
-                }
-                Button(
-                    onClick = onConfirm,
-                    enabled = model.displayName.isNotBlank(),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(stringResource(R.string.confirm))
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        enabled = model.displayName.isNotBlank(),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.confirm))
+                    }
                 }
             }
-        }
         }
     }
 }
@@ -3281,24 +3296,22 @@ private fun ModelCard(
 
     if (dialogState.isEditing) {
         dialogState.currentState?.let { editingModel ->
-            DomChatGlassBottomSheet(
-                visible = true,
-                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
-                onDismissRequest = {
-                    dialogState.dismiss()
-                },
-                dragHandle = null,
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { dialogState.dismiss() },
+                properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
             ) {
-                Surface(
-                    shape = me.lucid.domchat.ui.theme.AppShapes.BottomSheet,
-                    color = Color(0xFF000000),
-                    border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier.fillMaxWidth()
+                DomChatGlassBottomSheet(
+                    visible = true,
+                    maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+                    onDismissRequest = {
+                        dialogState.dismiss()
+                    },
+                    dragHandle = null,
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .fillMaxHeight(0.88f)
+                            .fillMaxHeight(0.90f)
                             .imePadding()
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -3321,64 +3334,63 @@ private fun ModelCard(
                                 modifier = Modifier.align(Alignment.Center),
                             )
                         }
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        ModelSettingsForm(
-                            model = editingModel,
-                            onModelChange = { dialogState.currentState = it },
-                            isEdit = true,
-                            parentProvider = parentProvider
-                        )
-                    }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        ) {
+                            ModelSettingsForm(
+                                model = editingModel,
+                                onModelChange = { dialogState.currentState = it },
+                                isEdit = true,
+                                parentProvider = parentProvider
+                            )
+                        }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                dialogState.dismiss()
-                            },
-                            modifier = Modifier.weight(1f),
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                         ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-                        Button(
-                            onClick = {
-                                if (editingModel.displayName.isNotBlank()) {
-                                    dialogState.confirm()
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(stringResource(R.string.confirm))
+                            OutlinedButton(
+                                onClick = {
+                                    dialogState.dismiss()
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                            Button(
+                                onClick = {
+                                    if (editingModel.displayName.isNotBlank()) {
+                                        dialogState.confirm()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(R.string.confirm))
+                            }
                         }
                     }
-                }
                 }
             }
         }
     }
 
     PhysicsSwipeToDelete(
-        position = position,
+        position = ItemPosition.ONLY,
         deleteEnabled = canDelete,
         neighborOffset = neighborOffset,
         onDragProgress = onDragProgress,
         onDragEnd = onDragEnd,
         onDelete = onDelete,
-        groupCornerRadius = 16.dp,
-        itemCornerRadius = 16.dp,
+        groupCornerRadius = 18.dp,
+        itemCornerRadius = 18.dp,
         modifier = modifier.fillMaxWidth()
     ) { swipeShape ->
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(0.5.dp)
                 .background(Color(0xFF000000), shape = swipeShape)
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, swipeShape)
                 .clip(swipeShape)
@@ -3467,7 +3479,8 @@ private fun BuiltInToolsSettings(
                 shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
                 colors = androidx.compose.material3.CardDefaults.cardColors(
                     containerColor = Color(0xFF000000)
-                )
+                ),
+                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
             ) {
                 Row(
                     modifier = Modifier

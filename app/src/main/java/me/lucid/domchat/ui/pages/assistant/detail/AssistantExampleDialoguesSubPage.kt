@@ -54,7 +54,7 @@ fun AssistantExampleDialoguesSubPage(
                 subtitle = stringResource(R.string.assistant_page_preset_messages_desc),
                 content = {
                     Surface(
-                        color = Color(0xFF141520),
+                        color = Color(0xFF000000),
                         border = androidx.compose.foundation.BorderStroke(
                             0.5.dp,
                             LiquidGlassTokens.SpecularBorderSubtle
@@ -80,7 +80,7 @@ fun AssistantExampleDialoguesSubPage(
                             ) {
                                 presetMessages.forEachIndexed { index, message ->
                                     Surface(
-                                        color = Color(0xFF141520),
+                                        color = Color(0xFF000000),
                                         border = androidx.compose.foundation.BorderStroke(
                                             0.5.dp,
                                             LiquidGlassTokens.SpecularBorderSubtle

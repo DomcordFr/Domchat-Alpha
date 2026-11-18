@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.assistant
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -16,6 +17,14 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
+import androidx.compose.material.icons.rounded.Reorder
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -522,12 +531,18 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         AnimatedContent<Pair<Boolean, String?>>(
             targetState = isGridView to selectedGroupId,
             transitionSpec = {
-                (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
-                 scaleIn(initialScale = 0.96f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)))
-                .togetherWith(
-                    fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
-                    scaleOut(targetScale = 0.96f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
-                )
+                if (targetState.first != initialState.first) {
+                    if (targetState.first) {
+                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeIn(animationSpec = tween(200)))
+                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 3 } + fadeOut(animationSpec = tween(160)))
+                    } else {
+                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 3 } + fadeIn(animationSpec = tween(200)))
+                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeOut(animationSpec = tween(160)))
+                    }
+                } else {
+                    (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
+                        .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
+                }
             },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
@@ -1605,7 +1620,7 @@ fun FullCharacterCardImage(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFF18181B)),
+                        .background(Color(0xFF000000)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = avatar.content, fontSize = 48.sp)
@@ -1615,7 +1630,7 @@ fun FullCharacterCardImage(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Brush.linearGradient(listOf(Color(0xFF2C2C2E), Color(0xFF121214)))),
+                        .background(Color(0xFF000000)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -1658,7 +1673,7 @@ fun CharacterPortraitCard(
             .fillMaxWidth()
             .aspectRatio(0.68f)
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF141520))
+            .background(Color(0xFF000000))
             .border(
                 0.5.dp,
                 if (isDark) LiquidGlassTokens.SpecularBorderSubtle
@@ -1677,7 +1692,7 @@ fun CharacterPortraitCard(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Bottom vertical gradient scrim: transparent -> dark glass (0xFF141520) for smooth fade
+        // Bottom vertical gradient scrim: transparent -> black for smooth fade
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1687,7 +1702,7 @@ fun CharacterPortraitCard(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color(0xFF141520).copy(alpha = 0.85f),
+                            Color(0xFF000000).copy(alpha = 0.90f),
                         )
                     )
                 )
@@ -1779,16 +1794,7 @@ private fun UploadCharacterButton(
         },
         shape = AppShapes.ButtonPill,
         color = Color(0xFF000000),
-        border = BorderStroke(
-            1.dp,
-            Brush.horizontalGradient(
-                listOf(
-                    Color.White.copy(alpha = 0.32f),
-                    Color(0xFF6366F1).copy(alpha = 0.40f),
-                    Color.White.copy(alpha = 0.16f)
-                )
-            )
-        ),
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         modifier = modifier.wrapContentWidth()
     ) {
         Row(
@@ -1803,7 +1809,7 @@ private fun UploadCharacterButton(
                 modifier = Modifier.size(17.dp)
             )
             Text(
-                text = "Import / Upload",
+                text = "Upload",
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = Color.White
             )
@@ -1871,10 +1877,11 @@ fun CharacterListRow(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                assistant.creatorNotes?.takeIf { it.isNotBlank() }?.let { notes ->
-                    val cleaned = cleanHtmlText(notes)
+                val rawBlurb = assistant.creatorNotes?.takeIf { it.isNotBlank() } ?: assistant.description.takeIf { it.isNotBlank() }
+                if (!rawBlurb.isNullOrBlank()) {
+                    val cleaned = cleanHtmlText(rawBlurb)
                     if (cleaned.isNotBlank()) {
-                        val blurb = if (cleaned.length > 140) "${cleaned.take(140).trim()}..." else cleaned
+                        val blurb = if (cleaned.length > 120) "${cleaned.take(120).trim()}..." else cleaned
                         Text(
                             text = blurb,
                             fontSize = 11.5.sp,
@@ -1889,7 +1896,7 @@ fun CharacterListRow(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF0F1017))
+                    .background(Color(0xFF000000))
                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
@@ -1897,7 +1904,7 @@ fun CharacterListRow(
                     text = "$introsCount greeting${if (introsCount > 1) "s" else ""}",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Color.White
                 )
             }
         }
@@ -1918,7 +1925,7 @@ fun CharacterHubErrorCard(
             .fillMaxWidth()
             .aspectRatio(0.68f)
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF141520))
+            .background(Color(0xFF000000))
             .border(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.6f), RoundedCornerShape(18.dp)),
         contentAlignment = Alignment.Center
     ) {
@@ -2003,18 +2010,23 @@ fun CharacterInspectorSheet(
     }
     val hasAttachedLorebooks = attachedLorebookList.isNotEmpty()
 
-    DomChatInWindowBottomSheet(
-        visible = true,
+    Dialog(
         onDismissRequest = { dismissWithAnimation() },
-        maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp,
-        dragHandle = null,
-        shape = sheetShape,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { dismissWithAnimation() },
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp,
+            dragHandle = { DomChatSheetDragHandle() },
+            shape = sheetShape,
+            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, sheetShape),
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
+                .background(Color(0xFF000000))
         ) {
             val scrollState = rememberScrollState()
             Column(
@@ -2707,7 +2719,7 @@ fun CharacterInspectorSheet(
                                             modifier = Modifier.fillMaxWidth(),
                                             shape = RoundedCornerShape(14.dp),
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color(0xFF141520),
+                                                containerColor = Color(0xFF000000),
                                                 contentColor = Color.White
                                             ),
                                             border = BorderStroke(0.5.dp, cardBorderColor)
@@ -2761,21 +2773,23 @@ fun CharacterInspectorSheet(
             onDismissRequest = { showAttachLorebookDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
+            ApplyDialogWindowBlur()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp)
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 420.dp)
-                        .background(Color(0xFF000000))
-                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
-                        .padding(20.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(22.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
@@ -2890,21 +2904,23 @@ fun CharacterInspectorSheet(
             },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
+            ApplyDialogWindowBlur()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp)
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 420.dp)
-                        .background(Color(0xFF000000))
-                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(28.dp))
-                        .padding(20.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(22.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
@@ -3022,6 +3038,7 @@ fun CharacterInspectorSheet(
             }
         }
     }
+}
 }
 
 /**
@@ -3260,6 +3277,7 @@ private fun GroupTabsRow(
             onDismissRequest = { longPressedGroupId = null },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
+            ApplyDialogWindowBlur()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -3268,36 +3286,56 @@ private fun GroupTabsRow(
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(22.dp),
                     color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 400.dp)
+                        .widthIn(max = 380.dp)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(22.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Header
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
-                                Text(
-                                    text = "Manage Group",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.65f)
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.08f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Folder,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Manage Group",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.65f)
+                                    )
+                                }
                             }
                             IconButton(onClick = { longPressedGroupId = null }) {
                                 Icon(
@@ -3308,62 +3346,138 @@ private fun GroupTabsRow(
                             }
                         }
 
-                        // Rename
-                        OutlinedTextField(
-                            value = renameDraft,
-                            onValueChange = { renameDraft = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = { Text("Group name") },
-                            shape = AppShapes.InputField,
-                            colors = me.lucid.domchat.ui.theme.appFieldColors()
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            DomChatGlassPillButton(
-                                text = "Cancel",
-                                onClick = { longPressedGroupId = null; renameDraft = label },
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            DomChatGlassPillButton(
-                                text = "Save Rename",
-                                accent = true,
-                                enabled = renameDraft.isNotBlank() && renameDraft != label,
-                                onClick = {
+                        // Rename input with inline save
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = renameDraft,
+                                onValueChange = { renameDraft = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                placeholder = { Text("Group name") },
+                                shape = AppShapes.InputField,
+                                colors = me.lucid.domchat.ui.theme.appFieldColors(),
+                                trailingIcon = {
                                     if (renameDraft.isNotBlank() && renameDraft != label) {
+                                        IconButton(onClick = {
+                                            onGroupRenamed(groupId, renameDraft)
+                                            longPressedGroupId = null
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Check,
+                                                contentDescription = "Save Rename",
+                                                tint = Color(0xFF10B981)
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+
+                            AnimatedVisibility(
+                                visible = renameDraft.isNotBlank() && renameDraft != label,
+                                enter = fadeIn(tween(150)) + expandVertically(),
+                                exit = fadeOut(tween(150)) + shrinkVertically()
+                            ) {
+                                DomChatGlassPillButton(
+                                    text = "Save Rename",
+                                    icon = Icons.Rounded.Check,
+                                    accent = true,
+                                    modifier = Modifier.fillMaxWidth().height(36.dp),
+                                    onClick = {
                                         onGroupRenamed(groupId, renameDraft)
                                         longPressedGroupId = null
                                     }
-                                },
-                            )
+                                )
+                            }
                         }
 
-                        HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.08f))
-
-                        // Reorder option
-                        DomChatGlassPillButton(
-                            text = "Reorder Groups",
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                longPressedGroupId = null
-                                showReorderSheet = true
+                        // Options
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Surface(
+                                onClick = {
+                                    longPressedGroupId = null
+                                    showReorderSheet = true
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Reorder,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Column {
+                                            Text(
+                                                text = "Reorder Groups",
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                                color = Color.White
+                                            )
+                                            Text(
+                                                text = "Drag up/down to rearrange tabs",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color.White.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = Color.White.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
-                        )
 
-                        // Delete group (does NOT delete characters)
-                        DomChatGlassPillButton(
-                            text = "Delete Group",
-                            destructive = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onGroupDeleted(groupId)
-                                longPressedGroupId = null
-                            },
-                        )
+                            Surface(
+                                onClick = {
+                                    onGroupDeleted(groupId)
+                                    longPressedGroupId = null
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.5f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = null,
+                                        tint = Color(0xFFEF4444),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Delete Group",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            color = Color(0xFFEF4444)
+                                        )
+                                        Text(
+                                            text = "Characters remain safe in 'All'",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3398,7 +3512,7 @@ private fun GroupReorderSheet(
     val orderedGroups = remember(groupOrder, groupNames) {
         (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
     }
-    var currentOrder by remember(orderedGroups) { mutableStateOf(orderedGroups) }
+    var currentOrder by remember(visible) { mutableStateOf(orderedGroups) }
     val lazyListState = rememberLazyListState()
     val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
         val list = currentOrder.toMutableList()
@@ -3408,114 +3522,83 @@ private fun GroupReorderSheet(
         onReorder(list)
     }
 
-    DomChatInWindowBottomSheet(
-        visible = visible,
+    Dialog(
         onDismissRequest = onDismissRequest,
-        maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.72f).dp,
-        dragHandle = { DomChatSheetDragHandle() }
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = onDismissRequest,
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.78f).dp,
+            dragHandle = { DomChatSheetDragHandle() }
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
-                Column {
-                    Text(
-                        text = "Reorder Groups",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Drag handle to rearrange • Swipe left to delete",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.65f)
-                    )
-                }
-                IconButton(onClick = onDismissRequest) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Close",
-                        tint = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            if (currentOrder.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No custom groups created",
-                        color = Color.White.copy(alpha = 0.5f),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            } else {
-                LazyColumn(
-                    state = lazyListState,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(currentOrder, key = { it }) { groupId ->
-                        ReorderableItem(
-                            state = reorderableState,
-                            key = groupId
-                        ) { isDragging ->
-                            PhysicsSwipeToDelete(
-                                position = ItemPosition.ONLY,
-                                deleteEnabled = true,
-                                groupCornerRadius = 16.dp,
-                                itemCornerRadius = 16.dp,
-                                onDelete = {
-                                    onDeleteGroup(groupId)
-                                    val updated = currentOrder.filter { it != groupId }
-                                    currentOrder = updated
-                                    onReorder(updated)
-                                }
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = Color(0xFF000000),
-                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Folder,
-                                                contentDescription = null,
-                                                tint = Color.White.copy(alpha = 0.7f),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Text(
-                                                text = groupNames[groupId] ?: "Group",
-                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                                color = Color.White,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
+                    Column {
+                        Text(
+                            text = "Reorder Groups",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Drag handle to rearrange groups",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                    }
+                    IconButton(onClick = onDismissRequest) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                if (currentOrder.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No custom groups created",
+                            color = Color.White.copy(alpha = 0.5f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(currentOrder, key = { it }) { groupId ->
+                            ReorderableItem(
+                                state = reorderableState,
+                                key = groupId
+                            ) { isDragging ->
+                                ReorderGroupRow(
+                                    groupName = groupNames[groupId] ?: "Group",
+                                    onDelete = {
+                                        onDeleteGroup(groupId)
+                                        val updated = currentOrder.filter { it != groupId }
+                                        currentOrder = updated
+                                        onReorder(updated)
+                                    },
+                                    dragHandle = {
                                         IconButton(
                                             onClick = {},
                                             modifier = Modifier
@@ -3533,7 +3616,7 @@ private fun GroupReorderSheet(
                                             )
                                         }
                                     }
-                                }
+                                )
                             }
                         }
                     }
@@ -3543,9 +3626,76 @@ private fun GroupReorderSheet(
     }
 }
 
+/** Single row in Reorder Groups list with explicit delete button and smooth drag handle. */
+@Composable
+private fun ReorderGroupRow(
+    groupName: String,
+    onDelete: () -> Unit,
+    dragHandle: @Composable () -> Unit,
+) {
+    val haptics = rememberPremiumHaptics()
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFF000000),
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Folder,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = groupName,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        haptics.perform(HapticPattern.Error)
+                        onDelete()
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = "Delete Group",
+                        tint = Color(0xFFEF4444).copy(alpha = 0.85f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                dragHandle()
+            }
+        }
+    }
+}
 
 /**
- * Glassy dialog to create a new group/folder.
+ * Glassy dialog to create a new group/folder, vertically centered.
  */
 @Composable
 private fun NewGroupDialog(
@@ -3560,19 +3710,20 @@ private fun NewGroupDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        ApplyDialogWindowBlur()
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
-                .imePadding(),
+                .padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center
         ) {
             Surface(
                 color = Color(0xFF000000),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(22.dp),
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
                     .widthIn(min = 280.dp, max = 360.dp)
+                    .imePadding()
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),

@@ -203,7 +203,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 .fillMaxWidth()
                                 .height(20.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF1C1D26))
+                                .background(Color(0xFF000000))
                         ) {
                             Row(modifier = Modifier.fillMaxSize()) {
                                 Box(

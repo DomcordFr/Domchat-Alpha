@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,9 +89,9 @@ fun DomChatAssistantPickerSheet(
     modifier: Modifier = Modifier,
 ) {
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val resolvedContainerColor = if (containerColor != Color.Unspecified) containerColor else if (isDark) Color(0xFF0C0D14).copy(alpha = 0.88f) else MaterialTheme.colorScheme.surfaceContainerLow
-    val itemUncheckedBg = if (isDark) Color(0xFF141520).copy(alpha = 0.60f) else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.70f)
-    val itemBorder = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.08f))
+    val resolvedContainerColor = if (containerColor != Color.Unspecified) containerColor else if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surfaceContainerLow
+    val itemUncheckedBg = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.70f)
+    val itemBorder = BorderStroke(0.5.dp, if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f))
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()

@@ -52,6 +52,8 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -59,10 +61,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -283,14 +287,24 @@ fun LorebooksPageContent(
         }
     }
 
+    val canScrollBackward by remember {
+        derivedStateOf { listState.canScrollBackward }
+    }
+    val topFadeProgress by animateFloatAsState(
+        targetValue = if (canScrollBackward) 1f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "lorebooks_top_fade"
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .consumeWindowInsets(contentPadding),
+                .consumeWindowInsets(contentPadding)
+                .fadeEdges(topProgress = topFadeProgress, fadeHeight = 44f),
             state = listState,
-            contentPadding = contentPadding + PaddingValues(16.dp) + PaddingValues(bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            contentPadding = contentPadding + PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (orderedLorebooks.isEmpty()) {
                 item(key = "empty") {
@@ -364,7 +378,7 @@ fun LorebooksPageContent(
                     ) { isDragging ->
                         androidx.compose.runtime.key(canDelete) {
                             PhysicsSwipeToDelete(
-                                position = position,
+                                position = ItemPosition.ONLY,
                                 deleteEnabled = canDelete,
                                 groupCornerRadius = 18.dp,
                                 itemCornerRadius = 18.dp,
@@ -499,7 +513,7 @@ private fun LorebookCard(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         shape = shape,
         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 0.5.dp, vertical = 0.5.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier

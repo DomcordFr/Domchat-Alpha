@@ -85,7 +85,7 @@ fun DomChatComposerAddButton(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier.size(AppSize.ChromePill),
-    containerColor: Color = Color(0xFF141520).copy(alpha = 0.60f),
+    containerColor: Color = Color(0xFF000000),
     border: BorderStroke? = null,
     content: @Composable () -> Unit,
 ) {
@@ -120,7 +120,7 @@ fun DomChatComposerAddButton(
 @Composable
 fun RowScope.DomChatComposerCapsule(
     modifier: Modifier = Modifier.weight(1f).heightIn(min = AppSize.ChromePill),
-    containerColor: Color = Color(0xFF141520).copy(alpha = 0.60f),
+    containerColor: Color = Color(0xFF000000),
     border: BorderStroke? = BorderStroke(0.5.dp, SpecularBorderSubtle),
     content: @Composable () -> Unit,
 ) {
@@ -222,7 +222,7 @@ fun DomChatComposerDefaultActionContent(
 @Composable
 private fun DomChatComposerAction.defaultContainerColor(): Color = when (this) {
     DomChatComposerAction.Loading,
-    DomChatComposerAction.ToolApprovalDeny -> Color(0xFF141520)
+    DomChatComposerAction.ToolApprovalDeny -> Color(0xFF000000)
     DomChatComposerAction.Send,
     DomChatComposerAction.QuestionnaireNext,
     DomChatComposerAction.QuestionnaireSubmit,

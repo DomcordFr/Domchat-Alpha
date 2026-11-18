@@ -74,7 +74,7 @@ fun DomChatActivityHeatmapCard(
 ) {
     require(weekdayLabels.size == 7) { "weekdayLabels must contain seven entries" }
     val containerColor = if (darkTheme) {
-        Color(0xFF141520).copy(alpha = 0.85f)
+        Color(0xFF000000)
     } else {
         Color.White.copy(alpha = 0.90f)
     }

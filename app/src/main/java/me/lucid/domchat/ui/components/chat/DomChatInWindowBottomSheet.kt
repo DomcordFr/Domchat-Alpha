@@ -290,7 +290,7 @@ fun DomChatInWindowBottomSheet(
     val sheetFillColor = if (dynamicFill != Color.Transparent) {
         dynamicFill
     } else {
-        if (isDark) Color(0xFF141520).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.55f)
+        if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.95f)
     }
     // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
     val sheetSurfaceModifier: Modifier = if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {

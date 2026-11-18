@@ -359,7 +359,6 @@ private fun ToolCallPreviewSheet(
             Column(
                 modifier = Modifier
                     .fillMaxHeight(0.8f)
-                    .padding(16.dp)
                     .padding(16.dp),
                     //.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

@@ -3,15 +3,23 @@ package me.lucid.domchat.ui.pages.setting
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import me.lucid.domchat.ui.theme.appFieldColors
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.runtime.derivedStateOf
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -247,6 +255,14 @@ fun SettingChatsPage(
         if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
     )
 
+    val chatsListState = rememberLazyListState()
+    val canScrollChatsBackward by remember { derivedStateOf { chatsListState.canScrollBackward } }
+    val chatsTopFadeProgress by animateFloatAsState(
+        targetValue = if (canScrollChatsBackward) 1f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "chats_top_fade"
+    )
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -377,11 +393,11 @@ fun SettingChatsPage(
                         item {
                             val isSelected = selectedAssistantFilter == null
                             Surface(
-                                color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color(0xFF000000),
+                                color = Color(0xFF000000),
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(
-                                    0.5.dp,
-                                    if (isSelected) SolidColor(Color.White.copy(alpha = 0.5f)) else LiquidGlassTokens.SpecularBorderSubtle
+                                    if (isSelected) 1.dp else 0.5.dp,
+                                    if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
                                 ),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
@@ -393,7 +409,7 @@ fun SettingChatsPage(
                                 Text(
                                     text = "All Characters (${rawConversations.size})",
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White,
+                                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.70f),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
                                 )
                             }
@@ -402,12 +418,20 @@ fun SettingChatsPage(
                             val assistantIdStr = assistant.id.toString()
                             val count = rawConversations.count { it.assistantId == assistantIdStr }
                             val isSelected = selectedAssistantFilter == assistantIdStr
+                            val nameWords = assistant.name.trim().split(Regex("\\s+"))
+                            val truncatedName = if (nameWords.size > 2) {
+                                nameWords.take(2).joinToString(" ") + "..."
+                            } else if (assistant.name.length > 18) {
+                                assistant.name.take(16).trimEnd() + "..."
+                            } else {
+                                assistant.name
+                            }
                             Surface(
-                                color = if (isSelected) Color.White.copy(alpha = 0.16f) else Color(0xFF000000),
+                                color = Color(0xFF000000),
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(
                                     0.5.dp,
-                                    if (isSelected) SolidColor(Color.White.copy(alpha = 0.5f)) else LiquidGlassTokens.SpecularBorderSubtle
+                                    if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
                                 ),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
@@ -417,9 +441,9 @@ fun SettingChatsPage(
                                     }
                             ) {
                                 Text(
-                                    text = "${assistant.name} ($count)",
+                                    text = "$truncatedName ($count)",
                                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White,
+                                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.70f),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
                                 )
                             }
@@ -535,15 +559,31 @@ fun SettingChatsPage(
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                AnimatedContent(
+                    targetState = selectedAssistantFilter,
+                    transitionSpec = {
+                        val allIds = listOf<String?>(null) + allAssistants.map { it.id.toString() }
+                        val initialIdx = allIds.indexOf(initialState).let { if (it == -1) 0 else it }
+                        val targetIdx = allIds.indexOf(targetState).let { if (it == -1) 0 else it }
+                        val forward = targetIdx >= initialIdx
+                        val dir = if (forward) 1 else -1
+                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { dir * it / 3 } + fadeIn(animationSpec = tween(180)))
+                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -dir * it / 3 } + fadeOut(animationSpec = tween(150)))
+                    },
+                    label = "chats_tab_slide"
+                ) { _ ->
+                    LazyColumn(
+                        state = chatsListState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .fadeEdges(topProgress = chatsTopFadeProgress, fadeHeight = 44f),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                     items(filteredConversations, key = { it.id }) { conv ->
                         val isSelected = conv.id in selectedChatIds
                         val assistant = assistantMap[conv.assistantId]
-                        val cardShape = RoundedCornerShape(18.dp)
+                        val cardShape = LiquidGlassTokens.CardShape
 
                         Surface(
                             modifier = Modifier
@@ -581,7 +621,7 @@ fun SettingChatsPage(
                                 ),
                             shape = cardShape,
                             color = cardBg,
-                            border = if (isSelected) BorderStroke(1.5.dp, Color.White) else cardBorder
+                            border = if (isSelected) BorderStroke(0.5.dp, Color.White) else cardBorder
                         ) {
                             Row(
                                 modifier = Modifier
@@ -644,6 +684,14 @@ fun SettingChatsPage(
                                     ) {
                                         if (assistant != null) {
                                             val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
+                                            val nameWords = assistant.name.trim().split(Regex("\\s+"))
+                                            val displayCharName = if (nameWords.size > 2) {
+                                                nameWords.take(2).joinToString(" ") + "..."
+                                            } else if (assistant.name.length > 18) {
+                                                assistant.name.take(16).trimEnd() + "..."
+                                            } else {
+                                                assistant.name
+                                            }
                                             Surface(
                                                 color = Color(0xFF000000),
                                                 shape = RoundedCornerShape(6.dp),
@@ -655,12 +703,14 @@ fun SettingChatsPage(
                                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                 ) {
                                                     Text(
-                                                        text = assistant.name,
+                                                        text = displayCharName,
                                                         style = MaterialTheme.typography.labelSmall.copy(
                                                             fontSize = 10.sp,
                                                             fontWeight = FontWeight.Medium
                                                         ),
-                                                        color = Color.White
+                                                        color = Color.White,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
                                                     )
                                                     Text(
                                                         text = "• $assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"}",
@@ -693,6 +743,7 @@ fun SettingChatsPage(
             }
         }
     }
+}
 
     // Delete confirmation dialog
     SettingsDestructiveConfirmDialog(

@@ -70,7 +70,7 @@ fun AssistantPersonalitySubPage(
                 subtitle = "Defines how your character speaks, acts, and responds in roleplay. Written as plain text or Markdown, this is injected into every chat as the character's core definition.",
                 content = {
                     Surface(
-                        color = Color(0xFF141520),
+                        color = Color(0xFF000000),
                         border = androidx.compose.foundation.BorderStroke(
                             0.5.dp,
                             LiquidGlassTokens.SpecularBorderSubtle

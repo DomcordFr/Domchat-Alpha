@@ -207,8 +207,6 @@ fun ConversationList(
             modifier = Modifier.fillMaxSize()
         ) {
             val searchShape = RoundedCornerShape(14.dp)
-            val isDark = LocalDarkMode.current
-            val searchContainerFill = if (isDark) Color(0xFFFFFFFF).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.50f)
 
             Box(
                 modifier = Modifier
@@ -222,8 +220,15 @@ fun ConversationList(
                     onExpandedChange = onSearchExpandedChange,
                     placeholder = stringResource(id = R.string.chat_page_search_placeholder),
                     hint = stringResource(R.string.chat_page_search_hint),
-                    containerColor = searchContainerFill,
+                    containerColor = Color.Transparent,
                     shape = searchShape,
+                    fieldModifier = Modifier.liquidGlassSurface(
+                        shape = searchShape,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        fillColor = Color.Transparent,
+                        isFloatingControl = true,
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

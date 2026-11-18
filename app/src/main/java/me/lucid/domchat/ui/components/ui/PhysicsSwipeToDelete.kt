@@ -280,8 +280,7 @@ fun PhysicsSwipeToDelete(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(totalOffset.roundToInt(), 0) }
-                .clip(shape)
-                .background(fadeColor)
+                .background(fadeColor, shape)
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onDragStart = {

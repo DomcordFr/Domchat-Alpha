@@ -56,7 +56,7 @@ fun AssistantScenarioSubPage(
                 subtitle = "SillyTavern-style author's note. Free-form text injected to steer the character's behavior, scene tone, and writing style throughout the chat. Supports Markdown.",
                 content = {
                     Surface(
-                        color = Color(0xFF141520),
+                        color = Color(0xFF000000),
                         border = androidx.compose.foundation.BorderStroke(
                             0.5.dp,
                             LiquidGlassTokens.SpecularBorderSubtle

@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.memory
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -60,7 +61,7 @@ fun DomChatMemoryModeCard(
     val background = if (enabled) {
         if (darkTheme) Color.White.copy(alpha = 0.16f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
     } else if (darkTheme) {
-        Color(0xFF141520).copy(alpha = 0.60f)
+        Color(0xFF000000)
     } else {
         Color.Black.copy(alpha = 0.05f)
     }
@@ -142,7 +143,7 @@ fun DomChatMemorySettingsItem(
             }
         },
         enabled = onClick != null,
-        color = if (darkTheme) Color(0xFF141520).copy(alpha = 0.60f)
+        color = if (darkTheme) Color(0xFF000000)
         else Color.Black.copy(alpha = 0.05f),
         border = BorderStroke(0.5.dp, Color.White.copy(alpha = if (darkTheme) 0.12f else 0.08f)),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(
@@ -212,6 +213,9 @@ fun DomChatMemoryRow(
     if (confirmDelete && onDelete != null) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
+            containerColor = if (darkTheme) Color(0xFF000000) else MaterialTheme.colorScheme.surface,
+            shape = AppShapes.SettingDialog,
+            modifier = Modifier.border(0.5.dp, Color.White.copy(alpha = if (darkTheme) 0.15f else 0.08f), AppShapes.SettingDialog),
             title = { Text(deleteTitle) },
             text = { Text("$deleteConfirmation\n\n\"${content.take(100)}${if (content.length > 100) "..." else ""}\"") },
             confirmButton = {
@@ -224,7 +228,7 @@ fun DomChatMemoryRow(
     }
     Surface(
         onClick = onEdit,
-        color = if (darkTheme) Color(0xFF141520).copy(alpha = 0.60f)
+        color = if (darkTheme) Color(0xFF000000)
         else Color.Black.copy(alpha = 0.05f),
         border = BorderStroke(0.5.dp, Color.White.copy(alpha = if (darkTheme) 0.12f else 0.08f)),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(

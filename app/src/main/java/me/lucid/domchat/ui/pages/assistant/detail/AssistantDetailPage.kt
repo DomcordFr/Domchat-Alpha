@@ -271,7 +271,7 @@ fun AssistantDetailPage(
                                 expanded = showExportMenu,
                                 onDismissRequest = { showExportMenu = false },
                                 shape = RoundedCornerShape(18.dp),
-                                containerColor = if (isDark) Color(0xFF0E0F18).copy(alpha = 0.97f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surfaceContainerHigh,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             ) {
                                 DropdownMenuItem(
@@ -591,7 +591,7 @@ private fun AssistantDetailHome(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF141520))
+                    .background(Color(0xFF000000))
                     .border(1.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     .let { modifier ->
                         if (useWideSettingsLayout) {

@@ -272,15 +272,10 @@ fun AssistantPickerSheet(
                 }
             }
 
-            // Sheet header with character count badge
+            // Sheet header
             item {
                 DomChatSheetHeader(
                     title = stringResource(R.string.assistant_page_title),
-                    badge = {
-                        DomChatGlassChip(
-                            text = "${filteredAssistants.size} ${if (filteredAssistants.size == 1) "Character" else "Characters"}"
-                        )
-                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -330,14 +325,18 @@ fun AssistantPickerSheet(
                 }
             }
 
-            // Character count label above the first card
+            // Character count badge above cards
             if (filteredAssistants.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "${filteredAssistants.size} Characters",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.6f),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp)
+                    ) {
+                        DomChatGlassChip(
+                            text = "${filteredAssistants.size} ${if (filteredAssistants.size == 1) "Character" else "Characters"}"
+                        )
+                    }
                 }
 
                 itemsIndexed(filteredAssistants, key = { _, item -> item.id }) { _, assistant ->
