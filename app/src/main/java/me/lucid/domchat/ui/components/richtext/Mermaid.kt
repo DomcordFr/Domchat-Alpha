@@ -40,10 +40,10 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.platform.LocalConfiguration
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -334,18 +335,13 @@ fun Mermaid(
     }
 
     if (preview) {
-        ModalBottomSheet(
-            containerColor = Color(0xFF000000),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
+        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+        DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = {
                 preview = false
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            sheetGesturesEnabled = true,
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            }
+            maxHeight = screenHeight * 0.85f,
         ) {
             Column(
                 modifier = Modifier
