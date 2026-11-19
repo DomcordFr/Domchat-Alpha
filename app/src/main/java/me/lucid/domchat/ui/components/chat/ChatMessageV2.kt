@@ -1506,9 +1506,8 @@ private fun UserMessageTurn(
                     LaunchedEffect(node.id) {
                         if (!hasAnimated) {
                             userEntranceTarget = 1f
-                            val textLength = bubbleNode.currentMessage.parts.filterIsInstance<UIMessagePart.Text>().sumOf { it.text.length }
-                            val revealDuration = (textLength * 35L).coerceIn(600L, 2500L)
-                            kotlinx.coroutines.delay(revealDuration)
+                            // Safety timeout so state eventually settles even if scrolled away
+                            kotlinx.coroutines.delay(8000L)
                             hasAnimated = true
                             isRevealing = false
                         }
@@ -1553,9 +1552,9 @@ private fun UserMessageTurn(
                                             scope = AssistantAffectScope.USER,
                                             visual = true,
                                         )
-                                )
-                            )
-                        }
+                                 )
+                             )
+                         }
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
@@ -1563,6 +1562,11 @@ private fun UserMessageTurn(
                             style = userEntranceStyle,
                             streamingTextReveal = isRevealing,
                             freshReveal = isRevealing,
+                            displaySetting = effectiveDisplay,
+                            onRevealComplete = {
+                                hasAnimated = true
+                                isRevealing = false
+                            },
                             modifier = Modifier
                                 .alpha(userEntrance)
                                 .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },
@@ -2091,6 +2095,7 @@ private fun AssistantMessageTurn(
                             content = displayContent,
                             paragraphSpacing = 12.dp,
                             streamingTextReveal = loading && index == allTextBubbles.lastIndex,
+                            displaySetting = effectiveDisplay,
                             onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
                             onClickCitation = { id -> onCitationClick(id) }
                         )
@@ -2223,6 +2228,7 @@ private fun AssistantMessageTurn(
                             content = displayContent,
                             paragraphSpacing = 12.dp,
                             streamingTextReveal = loading && index == allTextBubbles.lastIndex,
+                            displaySetting = effectiveDisplay,
                             onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
                             onClickCitation = { id -> onCitationClick(id) },
                             modifier = Modifier.clickable { handleBubbleClick() }
