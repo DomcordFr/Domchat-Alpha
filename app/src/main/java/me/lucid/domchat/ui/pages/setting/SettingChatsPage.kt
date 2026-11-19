@@ -35,6 +35,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import me.lucid.domchat.data.model.Avatar
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -343,8 +347,8 @@ fun SettingChatsPage(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -643,17 +647,62 @@ fun SettingChatsPage(
                                 }
 
                                 if (assistant != null) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(46.dp)
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(14.dp))
-                                    ) {
-                                        UIAvatar(
-                                            name = assistant.name,
-                                            value = assistant.avatar,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
+                                    val avatarShape = RoundedCornerShape(14.dp)
+                                    when (val av = assistant.avatar) {
+                                        is Avatar.Image -> {
+                                            AsyncImage(
+                                                model = av.url,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(46.dp)
+                                                    .clip(avatarShape)
+                                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, avatarShape),
+                                                contentScale = ContentScale.Crop,
+                                            )
+                                        }
+                                        is Avatar.Resource -> {
+                                            AsyncImage(
+                                                model = av.id,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(46.dp)
+                                                    .clip(avatarShape)
+                                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, avatarShape),
+                                                contentScale = ContentScale.Crop,
+                                            )
+                                        }
+                                        is Avatar.Emoji -> {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(46.dp)
+                                                    .clip(avatarShape)
+                                                    .background(Color(0xFF000000))
+                                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, avatarShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = av.content,
+                                                    fontSize = 22.sp
+                                                )
+                                            }
+                                        }
+                                        is Avatar.Dummy -> {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(46.dp)
+                                                    .clip(avatarShape)
+                                                    .background(Color(0xFF000000))
+                                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, avatarShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = assistant.name.firstOrNull()?.uppercase() ?: "A",
+                                                    fontSize = 18.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 
@@ -706,83 +755,89 @@ fun SettingChatsPage(
                                         )
                                     }
 
-                                    // Row 2: Character tag, Fork/Branch pill, and Chat counter
+                                    // Row 2: Character tag, Fork/Branch pill on Left & Chat counter on Right under activity
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        if (assistant != null) {
-                                            val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
-                                            val displayCharName = assistant.name.trim().let { name ->
-                                                if (name.length > 18) name.take(16).trimEnd() + "..." else name
-                                            }
-                                            Surface(
-                                                color = Color.White.copy(alpha = 0.08f),
-                                                shape = RoundedCornerShape(8.dp),
-                                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            modifier = Modifier.weight(1f, fill = false)
+                                        ) {
+                                            if (assistant != null) {
+                                                Surface(
+                                                    color = Color(0xFF000000),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                                 ) {
                                                     Text(
-                                                        text = displayCharName,
+                                                        text = assistant.name.trim(),
                                                         style = MaterialTheme.typography.labelSmall.copy(
                                                             fontSize = 10.5.sp,
                                                             fontWeight = FontWeight.SemiBold
                                                         ),
                                                         color = Color(0xFFF2F2F7),
                                                         maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        modifier = Modifier
+                                                            .widthIn(max = 130.dp)
+                                                            .padding(horizontal = 8.dp, vertical = 2.5.dp)
                                                     )
+                                                }
+                                            }
+
+                                            if (conv.isFork) {
+                                                Surface(
+                                                    color = Color(0xFF64D2FF).copy(alpha = 0.12f),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    border = BorderStroke(0.5.dp, Color(0xFF64D2FF).copy(alpha = 0.35f))
+                                                ) {
                                                     Text(
-                                                        text = "• $assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"}",
+                                                        text = "Branch",
                                                         style = MaterialTheme.typography.labelSmall.copy(
                                                             fontSize = 9.5.sp,
-                                                            fontWeight = FontWeight.Normal
+                                                            fontWeight = FontWeight.Medium
                                                         ),
-                                                        color = Color.White.copy(alpha = 0.55f)
+                                                        color = Color(0xFF64D2FF),
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            if (conv.isConsolidated) {
+                                                Surface(
+                                                    color = Color(0xFFBF5AF2).copy(alpha = 0.12f),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    border = BorderStroke(0.5.dp, Color(0xFFBF5AF2).copy(alpha = 0.35f))
+                                                ) {
+                                                    Text(
+                                                        text = "Merged",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontSize = 9.5.sp,
+                                                            fontWeight = FontWeight.Medium
+                                                        ),
+                                                        color = Color(0xFFBF5AF2),
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                     )
                                                 }
                                             }
                                         }
 
-                                        if (conv.isFork) {
-                                            Surface(
-                                                color = Color(0xFF64D2FF).copy(alpha = 0.12f),
-                                                shape = RoundedCornerShape(8.dp),
-                                                border = BorderStroke(0.5.dp, Color(0xFF64D2FF).copy(alpha = 0.35f))
-                                            ) {
-                                                Text(
-                                                    text = "Branch",
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = 9.5.sp,
-                                                        fontWeight = FontWeight.Medium
-                                                    ),
-                                                    color = Color(0xFF64D2FF),
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                )
-                                            }
-                                        }
-
-                                        if (conv.isConsolidated) {
-                                            Surface(
-                                                color = Color(0xFFBF5AF2).copy(alpha = 0.12f),
-                                                shape = RoundedCornerShape(8.dp),
-                                                border = BorderStroke(0.5.dp, Color(0xFFBF5AF2).copy(alpha = 0.35f))
-                                            ) {
-                                                Text(
-                                                    text = "Merged",
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontSize = 9.5.sp,
-                                                        fontWeight = FontWeight.Medium
-                                                    ),
-                                                    color = Color(0xFFBF5AF2),
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                )
-                                            }
+                                        // Chat count under activity on the right
+                                        if (assistant != null) {
+                                            val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
+                                            Text(
+                                                text = "$assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"}",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontSize = 9.5.sp,
+                                                    fontWeight = FontWeight.Normal
+                                                ),
+                                                color = Color.White.copy(alpha = 0.45f),
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
                                         }
                                     }
                                 }

@@ -98,6 +98,7 @@ import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.Folder
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import sh.calvin.reorderable.ReorderableItem
@@ -310,6 +311,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var showNewGroupDialog by remember { mutableStateOf(false) }
     var characterToMove by remember { mutableStateOf<Assistant?>(null) }
     var showMoveToGroupDialog by remember { mutableStateOf(false) }
+    var showReorderSheet by remember { mutableStateOf(false) }
     var groupSearchQuery by remember { mutableStateOf("") }
 
     val context = LocalContext.current
@@ -866,7 +868,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onReorderGroups = { newOrder ->
                                 groupOrder = newOrder
                                 persistGroups()
-                            }
+                            },
+                            onOpenReorder = { showReorderSheet = true }
                         )
                     }
 
@@ -1203,7 +1206,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             onReorderGroups = { newOrder ->
                                 groupOrder = newOrder
                                 persistGroups()
-                            }
+                            },
+                            onOpenReorder = { showReorderSheet = true }
                         )
                     }
 
@@ -1574,6 +1578,27 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         )
     }
 
+    // Group re-ordering bottom sheet (root level so it slides from bottom of screen)
+    GroupReorderSheet(
+        visible = showReorderSheet,
+        groupOrder = groupOrder,
+        groupNames = groupNames,
+        onDismissRequest = { showReorderSheet = false },
+        onReorder = { newOrder ->
+            groupOrder = newOrder
+            persistGroups()
+        },
+        onDeleteGroup = { groupId ->
+            charGroupAssignments = charGroupAssignments.filterValues { it != groupId }
+            groupNames = groupNames - groupId
+            groupOrder = groupOrder.filter { it != groupId }
+            if (selectedGroupId == groupId) {
+                selectedGroupId = null
+            }
+            persistGroups()
+            toaster?.show("Group deleted — characters moved to All", ToastType.Info)
+        }
+    )
 }
 
 /**
@@ -2236,9 +2261,9 @@ fun CharacterInspectorSheet(
                             ),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Icon(Icons.Rounded.Chat, contentDescription = null, modifier = Modifier.size(19.dp))
+                            Icon(Icons.Rounded.Chat, contentDescription = null, tint = Color.Black, modifier = Modifier.size(19.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Start Chat", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("Start Chat", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
 
                         OutlinedButton(
@@ -2285,14 +2310,16 @@ fun CharacterInspectorSheet(
                             Text("Clone", fontSize = 12.5.sp)
                         }
 
-                        OutlinedButton(
+                        Button(
                             onClick = onDelete,
                             modifier = Modifier.height(40.dp),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE53935),
+                                contentColor = Color.White
+                            )
                         ) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                     }
 
@@ -3183,11 +3210,11 @@ private fun GroupTabsRow(
     onGroupMoved: (String, Int) -> Unit = { _, _ -> },
     onGroupDeleted: (String) -> Unit = { _ -> },
     onReorderGroups: (List<String>) -> Unit = { _ -> },
+    onOpenReorder: () -> Unit = {},
 ) {
     // Stable display order: persisted order first, then any groups not yet recorded.
     val orderedGroups = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
     var longPressedGroupId by remember { mutableStateOf<String?>(null) }
-    var showReorderSheet by remember { mutableStateOf(false) }
     var renameDraft by remember { mutableStateOf("") }
 
     Row(
@@ -3195,7 +3222,7 @@ private fun GroupTabsRow(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // "All" tab
         val allLabel = "All ($allCount)"
@@ -3362,21 +3389,7 @@ private fun GroupTabsRow(
                                 singleLine = true,
                                 placeholder = { Text("Group name") },
                                 shape = AppShapes.InputField,
-                                colors = me.lucid.domchat.ui.theme.appFieldColors(),
-                                trailingIcon = {
-                                    if (renameDraft.isNotBlank() && renameDraft != label) {
-                                        IconButton(onClick = {
-                                            onGroupRenamed(groupId, renameDraft)
-                                            longPressedGroupId = null
-                                        }) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Check,
-                                                contentDescription = "Save Rename",
-                                                tint = Color(0xFF10B981)
-                                            )
-                                        }
-                                    }
-                                }
+                                colors = me.lucid.domchat.ui.theme.appFieldColors()
                             )
 
                             AnimatedVisibility(
@@ -3408,7 +3421,7 @@ private fun GroupTabsRow(
                                 modifier = Modifier.weight(1f).height(44.dp),
                                 onClick = {
                                     longPressedGroupId = null
-                                    showReorderSheet = true
+                                    onOpenReorder()
                                 }
                             )
                             DomChatGlassPillButton(
@@ -3427,16 +3440,6 @@ private fun GroupTabsRow(
             }
         }
     }
-
-    // Group re-ordering bottom sheet
-    GroupReorderSheet(
-        visible = showReorderSheet,
-        groupOrder = orderedGroups,
-        groupNames = groupNames,
-        onDismissRequest = { showReorderSheet = false },
-        onReorder = onReorderGroups,
-        onDeleteGroup = onGroupDeleted
-    )
 }
 
 /**
@@ -3473,72 +3476,58 @@ private fun GroupReorderSheet(
         maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.78f).dp,
         dragHandle = { DomChatSheetDragHandle() }
     ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        ) {
+            DomChatSheetHeader(
+                title = "Reorder Groups",
+                subtitle = "Drag handle to rearrange groups, swipe left to delete",
+                onCloseClick = onDismissRequest,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (currentOrder.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column {
-                        Text(
-                            text = "Reorder Groups",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Drag handle to rearrange groups",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.65f)
-                        )
-                    }
-                    IconButton(onClick = onDismissRequest) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White
-                        )
-                    }
+                    Text(
+                        text = "No custom groups created",
+                        color = Color.White.copy(alpha = 0.5f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                if (currentOrder.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No custom groups created",
-                            color = Color.White.copy(alpha = 0.5f),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        state = lazyListState,
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(currentOrder, key = { it }) { groupId ->
-                            ReorderableItem(
-                                state = reorderableState,
-                                key = groupId
-                            ) { isDragging ->
+            } else {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(currentOrder, key = { it }) { groupId ->
+                        ReorderableItem(
+                            state = reorderableState,
+                            key = groupId
+                        ) { isDragging ->
+                            PhysicsSwipeToDelete(
+                                onDelete = {
+                                    onDeleteGroup(groupId)
+                                    val updated = currentOrder.filter { it != groupId }
+                                    currentOrder = updated
+                                    onReorder(updated)
+                                },
+                                position = ItemPosition.ONLY,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { shape ->
                                 ReorderGroupRow(
                                     groupName = groupNames[groupId] ?: "Group",
-                                    onDelete = {
-                                        onDeleteGroup(groupId)
-                                        val updated = currentOrder.filter { it != groupId }
-                                        currentOrder = updated
-                                        onReorder(updated)
-                                    },
                                     dragHandle = {
                                         IconButton(
                                             onClick = {},
@@ -3564,17 +3553,15 @@ private fun GroupReorderSheet(
                 }
             }
         }
+    }
 }
 
-/** Single row in Reorder Groups list with explicit delete button and smooth drag handle. */
+/** Single row in Reorder Groups list with drag handle. Deletion is revealed via right-to-left swipe. */
 @Composable
 private fun ReorderGroupRow(
     groupName: String,
-    onDelete: () -> Unit,
     dragHandle: @Composable () -> Unit,
 ) {
-    val haptics = rememberPremiumHaptics()
-
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = Color(0xFF000000),
@@ -3610,26 +3597,7 @@ private fun ReorderGroupRow(
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                IconButton(
-                    onClick = {
-                        haptics.perform(HapticPattern.Error)
-                        onDelete()
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Delete,
-                        contentDescription = "Delete Group",
-                        tint = Color(0xFFEF4444).copy(alpha = 0.85f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                dragHandle()
-            }
+            dragHandle()
         }
     }
 }
@@ -3756,8 +3724,8 @@ private fun CharacterActionPopover(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(22.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -3854,30 +3822,33 @@ private fun CharacterActionPopover(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     Surface(
                         onClick = { onDelete() },
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF1A0A0A),
-                        border = BorderStroke(0.5.dp, Color(0xFFEF4444).copy(alpha = 0.5f)),
-                        modifier = Modifier.fillMaxWidth()
+                        color = Color(0xFFE53935),
+                        border = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
                                 contentDescription = "Delete",
-                                tint = Color(0xFFEF4444),
+                                tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Delete character",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = Color(0xFFEF4444)
+                                color = Color.White
                             )
                         }
                     }

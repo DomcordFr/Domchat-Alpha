@@ -1,5 +1,12 @@
 package me.lucid.domchat.ui.components.chat
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,6 +72,7 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import me.lucid.domchat.Screen
 import me.lucid.domchat.ui.context.LocalNavController
+import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.getActivePersona
@@ -103,6 +111,7 @@ fun PersonaPickerBottomSheet(
     val amoledMode by rememberAmoledDarkMode()
     val isDark = LocalDarkMode.current
     val navController = LocalNavController.current
+    val toaster = LocalToaster.current
 
     val personaBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val personaIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
@@ -175,14 +184,18 @@ fun PersonaPickerBottomSheet(
     }
 
     fun selectPersona(id: String) {
+        if (id == activePersona.id) return
         haptics.perform(HapticPattern.Pop)
+        val oldName = activePersona.name.ifBlank { "Default" }
+        val newPersona = currentPersonas.find { it.id == id }
+        val newName = newPersona?.name?.ifBlank { "Default" } ?: "Default"
         scope.launch {
             settingsStore.update { cur ->
                 cur.copy(
                     displaySetting = cur.displaySetting.withActivePersona(id)
                 )
             }
-            onDismissRequest()
+            toaster.show("Switched persona from $oldName to $newName")
         }
     }
 
@@ -286,23 +299,20 @@ fun PersonaPickerBottomSheet(
                 items(filteredPersonas, key = { it.id }) { persona ->
                     val isActive = persona.id == activePersona.id || (persona.isDefault && activePersona.id == null)
                     val cardShape = RoundedCornerShape(18.dp)
+                    val targetCardBg = if (isActive) Color(0xFF141416).copy(alpha = 0.85f) else Color(0xFF000000).copy(alpha = 0.55f)
+                    val animatedCardBg by animateColorAsState(targetCardBg, animationSpec = tween(220), label = "persona_card_bg")
 
                     Surface(
                         onClick = { selectPersona(persona.id) },
-                        color = Color.Transparent,
+                        color = animatedCardBg,
                         shape = cardShape,
                         border = BorderStroke(
                             width = if (isActive) 1.dp else 0.5.dp,
-                            color = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.12f)
+                            brush = if (isActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(personaGlassCard(cardShape))
-                            .then(
-                                if (isActive) {
-                                    Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), shape = cardShape)
-                                } else Modifier
-                            )
                     ) {
                         Row(
                             modifier = Modifier
@@ -328,7 +338,7 @@ fun PersonaPickerBottomSheet(
                                     Text(
                                         text = persona.name,
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = Color.White,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -343,11 +353,17 @@ fun PersonaPickerBottomSheet(
                                     }
 
                                     if (isActive) {
-                                        Tag(type = TagType.SUCCESS) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color(0xFF000000),
+                                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                        ) {
                                             Text(
                                                 text = "ACTIVE",
                                                 fontWeight = FontWeight.Bold,
-                                                fontSize = 9.sp
+                                                fontSize = 9.sp,
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
@@ -357,7 +373,7 @@ fun PersonaPickerBottomSheet(
                                     Text(
                                         text = persona.description,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = Color.White.copy(alpha = 0.70f),
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.padding(top = 2.dp)
@@ -397,26 +413,30 @@ fun PersonaPickerBottomSheet(
                                             personaToDelete = persona
                                         },
                                         shape = CircleShape,
-                                        color = if (isDark) MaterialTheme.colorScheme.error.copy(alpha = 0.12f) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
-                                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.25f)),
+                                        color = Color(0xFFE53935).copy(alpha = 0.18f),
+                                        border = BorderStroke(0.5.dp, Color(0xFFE53935).copy(alpha = 0.40f)),
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
                                                 imageVector = Icons.Rounded.Delete,
                                                 contentDescription = "Delete",
-                                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.9f),
+                                                tint = Color(0xFFFF6B6B),
                                                 modifier = Modifier.size(15.dp)
                                             )
                                         }
                                     }
                                 }
 
-                                if (isActive) {
+                                AnimatedVisibility(
+                                    visible = isActive,
+                                    enter = fadeIn(tween(180)) + scaleIn(tween(180)),
+                                    exit = fadeOut(tween(140)) + scaleOut(tween(140))
+                                ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Check,
                                         contentDescription = "Selected",
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = Color.White,
                                         modifier = Modifier
                                             .size(24.dp)
                                             .padding(start = 4.dp)

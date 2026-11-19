@@ -1623,8 +1623,10 @@ private fun ChatPageContent(
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background)
                                 .domChatBlurSource()
-                                .layerBackdrop(wallpaperBackdrop))
-                        }
+                                .layerBackdrop(wallpaperBackdrop)
+                                .layerBackdrop(chatBackdrop)
+                        )
+                    }
 
                     Scaffold(
                         topBar = {

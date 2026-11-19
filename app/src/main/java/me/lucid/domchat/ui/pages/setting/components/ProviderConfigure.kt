@@ -27,9 +27,16 @@ import androidx.compose.material3.SuggestionChipDefaults
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
+import me.lucid.domchat.ui.theme.appSegmentedButtonColors
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -235,25 +242,36 @@ fun ProviderConfigure(
             )
         }
 
-        // 4. Provider-specific configuration
-        when (provider) {
-            is ProviderSetting.OpenAI -> {
-                ProviderConfigureOpenAI(provider, onEdit)
-            }
+        // 4. Provider-specific configuration with smooth transitions
+        AnimatedContent(
+            targetState = provider,
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(220, delayMillis = 40)) +
+                    scaleIn(initialScale = 0.98f, animationSpec = tween(220, delayMillis = 40)))
+                    .togetherWith(fadeOut(animationSpec = tween(120)))
+            },
+            contentKey = { it::class },
+            label = "provider_config_transition"
+        ) { currentProvider ->
+            when (currentProvider) {
+                is ProviderSetting.OpenAI -> {
+                    ProviderConfigureOpenAI(currentProvider, onEdit)
+                }
 
-            is ProviderSetting.Google -> {
-                ProviderConfigureGoogle(provider, onEdit)
-            }
+                is ProviderSetting.Google -> {
+                    ProviderConfigureGoogle(currentProvider, onEdit)
+                }
 
-            is ProviderSetting.Claude -> {
-                ProviderConfigureClaude(provider, onEdit)
-            }
+                is ProviderSetting.Claude -> {
+                    ProviderConfigureClaude(currentProvider, onEdit)
+                }
 
-            is ProviderSetting.ComfyUI -> {
-                ProviderConfigureComfyUI(provider, onEdit)
-            }
+                is ProviderSetting.ComfyUI -> {
+                    ProviderConfigureComfyUI(currentProvider, onEdit)
+                }
 
-            is ProviderSetting.LiteRtLocal -> Unit // configured via the dedicated on-device screen
+                is ProviderSetting.LiteRtLocal -> Unit // configured via the dedicated on-device screen
+            }
         }
     }
 }
@@ -264,91 +282,34 @@ private fun ProviderTypeSelector(
     onTypeSelected: (KClass<out ProviderSetting>) -> Unit
 ) {
     val haptics = rememberPremiumHaptics()
-    Row(
+    SingleChoiceSegmentedButtonRow(
         modifier = Modifier
             .fillMaxWidth()
-            .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+            .padding(vertical = 4.dp)
     ) {
         ProviderSetting.Types.forEachIndexed { index, type ->
             val selected = selectedType == type
-            val interactionSource = remember(type) { MutableInteractionSource() }
-            val isPressed by interactionSource.collectIsPressedAsState()
-            val scale by animateFloatAsState(
-                targetValue = if (isPressed) 0.96f else 1f,
-                animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-                label = "provider_type_scale"
-            )
-            val containerColor by animateColorAsState(
-                targetValue = if (selected) {
-                    Color.White.copy(alpha = 0.18f)
-                } else {
-                    Color(0xFF000000)
-                },
-                animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
-                label = "provider_type_container"
-            )
-            val contentColor by animateColorAsState(
-                targetValue = if (selected) {
-                    Color.White
-                } else {
-                    Color(0xFFF2F2F7).copy(alpha = 0.70f)
-                },
-                animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
-                label = "provider_type_content"
-            )
-            Surface(
-                modifier = Modifier
-                    .weight(1f)
-                    .zIndex(if (selected) 1f else 0f)
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
+            SegmentedButton(
+                selected = selected,
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    if (!selected) {
+                        onTypeSelected(type)
                     }
-                    .selectable(
-                        selected = selected,
-                        interactionSource = interactionSource,
-                        indication = null,
-                        role = Role.RadioButton,
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            if (!selected) {
-                                onTypeSelected(type)
-                            }
-                        }
-                    ),
-                shape = AppShapes.ButtonPill,
-                color = containerColor,
-                contentColor = contentColor,
-                border = BorderStroke(
-                    0.5.dp,
-                    if (selected) Color.White.copy(alpha = 0.38f)
-                    else Color.White.copy(alpha = 0.12f)
-                ),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .heightIn(min = 40.dp)
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (selected) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                    }
+                },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = ProviderSetting.Types.size),
+                colors = appSegmentedButtonColors(),
+                label = {
                     Text(
                         text = type.simpleName ?: "",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         maxLines = 1,
                         softWrap = false,
-                        overflow = TextOverflow.Clip
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            }
+            )
         }
     }
 }

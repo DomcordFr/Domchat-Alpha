@@ -38,12 +38,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -105,43 +110,64 @@ fun VoiceSelector(
     val scope = rememberCoroutineScope()
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onClick = { showSheet = true }, modifier = modifier) {
+        TextButton(
+            onClick = { showSheet = true },
+            modifier = modifier,
+            colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
+        ) {
             Text(
                 text = selected?.second?.name?.ifBlank { selected.second.providerVoiceId }
                     ?: "Select voice",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
             )
         }
         if (allowClear && selected != null) {
             IconButton(onClick = { onClear?.invoke() }) {
-                Icon(Icons.Rounded.Close, null)
+                Icon(Icons.Rounded.Close, null, tint = Color.White)
             }
         }
     }
 
     if (showSheet) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showSheet = false },
-            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight(0.8f)
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showSheet = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                VoiceList(
-                    currentVoice = voiceId,
-                    providers = providers.filter { it.voices.isNotEmpty() },
-                    onSelect = {
-                        onSelect(it)
-                        showSheet = false
-                    },
-                    catalogSnapshot = catalogSnapshot,
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.85f)
+                        .imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    DomChatSheetHeader(
+                        title = "Select Voice",
+                        subtitle = "Choose TTS voice",
+                        onCloseClick = { showSheet = false },
+                    )
+                    VoiceList(
+                        currentVoice = voiceId,
+                        providers = providers.filter { it.voices.isNotEmpty() },
+                        onSelect = {
+                            onSelect(it)
+                            showSheet = false
+                        },
+                        catalogSnapshot = catalogSnapshot,
+                    )
+                }
             }
         }
     }
@@ -585,12 +611,8 @@ private fun VoiceItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val shape = rememberAnimatedGroupedVoiceItemShape(selected = selected, position = position)
-    val containerColor = if (selected) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
-    val contentColor = if (selected) {
-        Color(0xFFFFFFFF)
-    } else {
-        Color(0xFFEDEDF2)
-    }
+    val containerColor = if (selected) Color(0xFF141416).copy(alpha = 0.85f) else Color(0xFF000000).copy(alpha = 0.55f)
+    val contentColor = Color(0xFFFFFFFF)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -638,12 +660,12 @@ private fun VoiceItem(
             ) {
                 val locale = voice.locale
                 if (!locale.isNullOrBlank()) {
-                    Tag(type = TagType.INFO) { Text(locale) }
+                    Tag(type = TagType.DEFAULT) { Text(locale, color = Color.White) }
                 }
-                Tag(type = TagType.SUCCESS) { Text("x${"%.2f".format(voice.speed)}") }
-                Tag(type = TagType.WARNING) { Text("p${"%.2f".format(voice.pitch)}") }
+                Tag(type = TagType.DEFAULT) { Text("x${"%.2f".format(voice.speed)}", color = Color.White) }
+                Tag(type = TagType.DEFAULT) { Text("p${"%.2f".format(voice.pitch)}", color = Color.White) }
                 if (provider !is TTSProviderSetting.SystemTTS) {
-                    Tag { Text(provider.name.ifBlank { "TTS" }) }
+                    Tag(type = TagType.DEFAULT) { Text(provider.name.ifBlank { "TTS" }, color = Color.White) }
                 }
             }
         }

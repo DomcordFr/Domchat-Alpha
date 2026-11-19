@@ -654,7 +654,11 @@ private fun AnimatedSinglePill(
                     Modifier.liquidGlassSurface(
                         shape = pillShape,
                         borderWidth = 0.5.dp,
-                        fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
+                        fillColor = if (effectiveAlpha <= 0.02f) {
+                            if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.35f)
+                        } else {
+                            baseTone.copy(alpha = effectiveAlpha)
+                        },
                     )
                 } else Modifier
             )

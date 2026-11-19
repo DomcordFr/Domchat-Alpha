@@ -55,6 +55,9 @@ import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.font.FontWeight
@@ -230,66 +233,59 @@ fun ModelSelector(
             ModelType.IMAGE -> "Select Image Model"
             ModelType.STT -> "Select Speech Model"
         }
-        DomChatInWindowBottomSheet(
-            visible = true,
-            onDismissRequest = {
-                popup = false
-            },
-            containerColor = Color(0xFF000000),
-            dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
-            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
+        Dialog(
+            onDismissRequest = { popup = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.88f)
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = {
+                    popup = false
+                },
+                containerColor = Color(0xFF000000),
+                dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
+                maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.88f)
+                        .padding(horizontal = 20.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = sheetTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = sheetTitle,
+                        onCloseClick = { popup = false },
                     )
-                    IconButton(onClick = { popup = false }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White
-                        )
-                    }
-                }
-                val modelMetadataResolver = org.koin.compose.koinInject<me.lucid.domchat.data.ai.models.ModelMetadataResolver>()
-                val filteredProviderSettings = providers.fastFilter {
-                    it.enabled && it.models.fastAny { model ->
-                        val isTypeMatch = if (type == ModelType.STT) {
-                            val resolvedModel = modelMetadataResolver.applyToModel(model, it)
-                            resolvedModel.type == ModelType.STT
-                        } else {
-                            model.type == type
+                    val modelMetadataResolver = org.koin.compose.koinInject<me.lucid.domchat.data.ai.models.ModelMetadataResolver>()
+                    val filteredProviderSettings = providers.fastFilter {
+                        it.enabled && it.models.fastAny { model ->
+                            val isTypeMatch = if (type == ModelType.STT) {
+                                val resolvedModel = modelMetadataResolver.applyToModel(model, it)
+                                resolvedModel.type == ModelType.STT
+                            } else {
+                                model.type == type
+                            }
+                            isTypeMatch && effectiveModelFilter(model)
                         }
-                        isTypeMatch && effectiveModelFilter(model)
                     }
+                    ModelList(
+                        currentModel = modelId,
+                        providers = filteredProviderSettings,
+                        modelType = type,
+                        modelFilter = effectiveModelFilter,
+                        onSelect = {
+                            onSelect(it)
+                            popup = false
+                        },
+                        onDismiss = {
+                            popup = false
+                        }
+                    )
                 }
-                ModelList(
-                    currentModel = modelId,
-                    providers = filteredProviderSettings,
-                    modelType = type,
-                    modelFilter = effectiveModelFilter,
-                    onSelect = {
-                        onSelect(it)
-                        popup = false
-                    },
-                    onDismiss = {
-                        popup = false
-                    }
-                )
             }
         }
     }
@@ -1159,9 +1155,9 @@ private fun ModelItem(
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,
-                fillColor = Color.White.copy(alpha = if (select) 0.14f else 0.07f),
-                borderWidth = 0.5.dp,
-                specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                fillColor = if (select) Color(0xFF161618).copy(alpha = 0.85f) else Color(0xFF000000).copy(alpha = 0.50f),
+                borderWidth = if (select) 1.dp else 0.5.dp,
+                specularBrush = if (select) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
             ),
             shape = cardShape,
             colors = CardDefaults.cardColors(
@@ -1237,14 +1233,14 @@ private fun ModelItem(
 fun ModelTypeTag(model: Model) {
     if (model.type == ModelType.CHAT && model.backend) {
         Tag(
-            type = TagType.INFO
+            type = TagType.DEFAULT
         ) {
-            Text(text = stringResource(R.string.setting_provider_page_backend_model))
+            Text(text = stringResource(R.string.setting_provider_page_backend_model), color = Color.White)
         }
         return
     }
     Tag(
-        type = TagType.INFO
+        type = TagType.DEFAULT
     ) {
         Text(
             text = stringResource(
@@ -1254,7 +1250,8 @@ fun ModelTypeTag(model: Model) {
                     ModelType.IMAGE -> R.string.setting_provider_page_image_model
                     ModelType.STT -> R.string.setting_provider_page_stt_model
                 }
-            )
+            ),
+            color = Color.White
         )
     }
 }
@@ -1264,7 +1261,7 @@ fun ModelModalityTag(model: Model) {
     if (model.type == ModelType.STT) return
     
     Tag(
-        type = TagType.SUCCESS
+        type = TagType.DEFAULT
     ) {
         model.inputModalities.fastForEach { modality ->
             if (modality == Modality.AUDIO) return@fastForEach
@@ -1275,6 +1272,7 @@ fun ModelModalityTag(model: Model) {
                     Modality.AUDIO -> Icons.Rounded.Mic
                 },
                 contentDescription = null,
+                tint = Color.White,
                 modifier = Modifier
                     .size(LocalTextStyle.current.lineHeight.toDp())
                     .padding(1.dp)
@@ -1283,6 +1281,7 @@ fun ModelModalityTag(model: Model) {
         Icon(
             imageVector = Icons.Rounded.ChevronRight,
             contentDescription = null,
+            tint = Color.White.copy(alpha = 0.7f),
             modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
         )
         model.outputModalities.fastForEach { modality ->
@@ -1293,6 +1292,7 @@ fun ModelModalityTag(model: Model) {
                     Modality.AUDIO -> Icons.Rounded.Mic
                 },
                 contentDescription = null,
+                tint = Color.White,
                 modifier = Modifier
                     .size(LocalTextStyle.current.lineHeight.toDp())
                     .padding(1.dp)
@@ -1307,11 +1307,12 @@ fun ModelAbilityTag(model: Model) {
         when (ability) {
             ModelAbility.TOOL -> {
                 Tag(
-                    type = TagType.WARNING
+                    type = TagType.DEFAULT
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Build,
                         contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp())
                     )
                 }
@@ -1319,11 +1320,12 @@ fun ModelAbilityTag(model: Model) {
 
             ModelAbility.REASONING -> {
                 Tag(
-                    type = TagType.INFO
+                    type = TagType.DEFAULT
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Lightbulb,
                         contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.size(LocalTextStyle.current.lineHeight.toDp()),
                     )
                 }

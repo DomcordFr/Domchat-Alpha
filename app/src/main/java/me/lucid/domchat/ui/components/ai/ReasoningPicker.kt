@@ -20,8 +20,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.LocalAbsoluteTonalElevation
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
@@ -175,18 +178,33 @@ fun ReasoningPicker(
     val isDarkMode = LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
     
-    DomChatInWindowBottomSheet(
-        visible = true,
+    Dialog(
         onDismissRequest = onDismissRequest,
-        maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.75f).dp,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = onDismissRequest,
+            containerColor = Color(0xFF000000),
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
         ) {
-            when (config.type) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
+            ) {
+                DomChatSheetHeader(
+                    title = "Thinking Budget",
+                    subtitle = "Configure model reasoning effort",
+                    onCloseClick = onDismissRequest,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                when (config.type) {
                 ReasoningModeType.BINARY -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ReasoningOptionItem(
@@ -350,6 +368,7 @@ fun ReasoningPicker(
         }
     }
 }
+}
 
 // Position in a group for determining corner radius
 private enum class ItemPosition {
@@ -397,16 +416,11 @@ private fun ReasoningOptionItem(
     
     val isDark = LocalDarkMode.current
     val rowBackground = if (selected) {
-        if (isDark) Color.White.copy(alpha = 0.20f) else Color.Black.copy(alpha = 0.12f)
+        if (isDark) Color(0xFF141416).copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.12f)
     } else {
-        domChatCardContainerColor()
+        if (isDark) Color(0xFF000000).copy(alpha = 0.55f) else domChatCardContainerColor()
     }
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (selected) 0.38f else 0.14f),
-            Color.White.copy(alpha = if (selected) 0.14f else 0.04f)
-        )
-    )
+    val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
 
     Row(
         modifier = Modifier

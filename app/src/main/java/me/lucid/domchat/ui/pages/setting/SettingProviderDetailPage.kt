@@ -175,6 +175,8 @@ import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.components.chat.DomChatGlassBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.modifier.fadeEdges
 import me.lucid.domchat.ui.components.ui.rememberShareSheetState
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalToaster
@@ -1542,27 +1544,42 @@ private fun ModelSettingsForm(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        SecondaryTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            containerColor = Color.Transparent,
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 6.dp)
         ) {
-            Tab(
+            SegmentedButton(
                 selected = pagerState.currentPage == 0,
                 onClick = {
                     scope.launch {
                         pagerState.animateScrollToPage(0)
                     }
                 },
-                text = { Text(stringResource(R.string.setting_provider_page_basic_settings)) }
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                colors = appSegmentedButtonColors(),
+                label = {
+                    Text(
+                        stringResource(R.string.setting_provider_page_basic_settings),
+                        fontWeight = if (pagerState.currentPage == 0) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                }
             )
-            Tab(
+            SegmentedButton(
                 selected = pagerState.currentPage == 1,
                 onClick = {
                     scope.launch {
                         pagerState.animateScrollToPage(1)
                     }
                 },
-                text = { Text(stringResource(R.string.setting_provider_page_advanced_settings)) }
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                colors = appSegmentedButtonColors(),
+                label = {
+                    Text(
+                        stringResource(R.string.setting_provider_page_advanced_settings),
+                        fontWeight = if (pagerState.currentPage == 1) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                }
             )
         }
 
@@ -1951,23 +1968,9 @@ private fun ModelPickerSheet(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.setting_provider_page_add_from_list),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+            DomChatSheetHeader(
+                title = stringResource(R.string.setting_provider_page_add_from_list),
+                actions = {
                     if (apiModelSource.canFetchModels) {
                         IconButton(onClick = ::reloadApiModels) {
                             Icon(
@@ -1978,15 +1981,9 @@ private fun ModelPickerSheet(
                             )
                         }
                     }
-                    IconButton(onClick = onDismissRequest) {
-                        Icon(
-                            Icons.Rounded.Close,
-                            contentDescription = stringResource(R.string.cancel),
-                            tint = Color.White
-                        )
-                    }
-                }
-            }
+                },
+                onCloseClick = onDismissRequest
+            )
 
             androidx.compose.material3.OutlinedTextField(
                 value = filterText,
@@ -2078,9 +2075,10 @@ private fun ModelPickerSheet(
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 36f),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp)
                 ) {
                     items(filteredModels, key = { it.modelId }) { model ->
                         val isSelected = selectedModelMap.containsKey(model.modelId)
@@ -2181,37 +2179,21 @@ private fun AddNewModelSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.90f)
                 .imePadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.setting_provider_page_add_model),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                IconButton(onClick = onDismissRequest) {
-                    Icon(
-                        Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.cancel),
-                        tint = Color.White
-                    )
-                }
-            }
+            DomChatSheetHeader(
+                title = stringResource(R.string.setting_provider_page_add_model),
+                onCloseClick = onDismissRequest
+            )
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 24f)
             ) {
                 ModelSettingsForm(
                     model = modelState,
@@ -3356,7 +3338,7 @@ private fun ModelCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     if (model.providerOverwrite != null) {
-                        Tag(type = TagType.INFO) {
+                        Tag(type = TagType.DEFAULT) {
                             Text(
                                 model.providerOverwrite?.let { it::class.simpleName } ?: model.providerOverwrite?.name
                                 ?: "ProviderOverwrite"
@@ -3475,37 +3457,21 @@ private fun EditModelSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.90f)
                 .imePadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.setting_provider_page_edit_model),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                IconButton(onClick = onDismissRequest) {
-                    Icon(
-                        Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.cancel),
-                        tint = Color.White
-                    )
-                }
-            }
+            DomChatSheetHeader(
+                title = stringResource(R.string.setting_provider_page_edit_model),
+                onCloseClick = onDismissRequest
+            )
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 24f)
             ) {
                 ModelSettingsForm(
                     model = editingModel,

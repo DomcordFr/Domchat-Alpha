@@ -1924,7 +1924,7 @@ private fun ProviderItemContent(
                         }
                     }
                     if (provider.name == "AiHubMix") {
-                        Tag(type = TagType.INFO) {
+                        Tag(type = TagType.DEFAULT) {
                             Text("10% off")
                         }
                     }

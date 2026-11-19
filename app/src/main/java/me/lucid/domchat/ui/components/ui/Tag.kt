@@ -60,13 +60,7 @@ fun Tag(
     )
 
     val background = Color(0xFF000000)
-    val textColor = when (type) {
-        TagType.INFO -> Color(0xFF64D2FF)
-        TagType.SUCCESS -> Color(0xFF30D158)
-        TagType.WARNING -> Color(0xFFFF9F0A)
-        TagType.ERROR -> Color(0xFFFF453A)
-        else -> Color(0xFFF2F2F7)
-    }
+    val textColor = if (type == TagType.ERROR) Color(0xFFFF6B6B) else Color.White
     val tagShape = me.lucid.domchat.ui.theme.AppShapes.Tag
     ProvideTextStyle(MaterialTheme.typography.labelSmall.copy(color = textColor)) {
         Row(
@@ -77,7 +71,7 @@ fun Tag(
                 }
                 .liquidGlassSurface(
                     shape = tagShape,
-                    fillColor = Color.White.copy(alpha = 0.08f),
+                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                 )

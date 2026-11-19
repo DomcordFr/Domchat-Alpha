@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
@@ -21,6 +22,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clipToBounds
+import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.derivedStateOf
 import me.lucid.domchat.ui.modifier.fadeEdges
@@ -421,7 +424,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                         Surface(
                                             color = Color(0xFF000000),
                                             shape = RoundedCornerShape(8.dp),
-                                            border = BorderStroke(0.5.dp, Color(0xFF10B981).copy(alpha = 0.65f))
+                                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -431,14 +434,14 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                                 Icon(
                                                     Icons.Rounded.Check,
                                                     contentDescription = null,
-                                                    tint = Color(0xFF10B981),
+                                                    tint = Color.White,
                                                     modifier = Modifier.size(11.dp)
                                                 )
                                                 Text(
                                                     text = "ACTIVE",
                                                     fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF10B981)
+                                                    color = Color.White
                                                 )
                                             }
                                         }
@@ -539,11 +542,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     targetState = editorStep,
                     transitionSpec = {
                         if (targetState == EditorStep.LorebookPicker) {
-                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeIn(animationSpec = tween(220)))
-                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeOut(animationSpec = tween(180)))
+                            (slideInHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> width / 3 } + fadeIn(animationSpec = tween(180)))
+                                .togetherWith(slideOutHorizontally(animationSpec = tween(180, easing = FastOutSlowInEasing)) { width -> -width / 3 } + fadeOut(animationSpec = tween(140)))
                         } else {
-                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeIn(animationSpec = tween(220)))
-                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeOut(animationSpec = tween(180)))
+                            (slideInHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> -width / 3 } + fadeIn(animationSpec = tween(180)))
+                                .togetherWith(slideOutHorizontally(animationSpec = tween(180, easing = FastOutSlowInEasing)) { width -> width / 3 } + fadeOut(animationSpec = tween(140)))
                         }
                     },
                     label = "persona_title_step_anim"
@@ -588,17 +591,19 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     targetState = editorStep,
                     transitionSpec = {
                         if (targetState == EditorStep.LorebookPicker) {
-                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeIn(animationSpec = tween(220)))
-                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeOut(animationSpec = tween(180)))
+                            (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = tween(200)))
+                                .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width } + fadeOut(animationSpec = tween(160)))
                         } else {
-                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeIn(animationSpec = tween(220)))
-                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeOut(animationSpec = tween(180)))
+                            (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = tween(200)))
+                                .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width } + fadeOut(animationSpec = tween(160)))
                         }
                     },
                     label = "persona_body_step_anim"
                 ) { step ->
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clipToBounds(),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         when (step) {
@@ -743,24 +748,18 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 16.dp),
+                                                .clip(AppShapes.CardSmall)
+                                                .clickable {
+                                                    haptics.perform(HapticPattern.Tick)
+                                                    pickerSelectedIds = if (isSelected) {
+                                                        pickerSelectedIds - idStr
+                                                    } else {
+                                                        pickerSelectedIds + idStr
+                                                    }
+                                                }
+                                                .padding(horizontal = 16.dp, vertical = 6.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Checkbox(
-                                                checked = isSelected,
-                                                onCheckedChange = { checked ->
-                                                    haptics.perform(HapticPattern.Tick)
-                                                    pickerSelectedIds = if (checked) {
-                                                        pickerSelectedIds + idStr
-                                                    } else {
-                                                        pickerSelectedIds - idStr
-                                                    }
-                                                },
-                                                colors = CheckboxDefaults.colors(
-                                                    checkedColor = MaterialTheme.colorScheme.primary,
-                                                    uncheckedColor = Color.White.copy(alpha = 0.30f)
-                                                )
-                                            )
                                             Column(
                                                 modifier = Modifier.weight(1f),
                                                 verticalArrangement = Arrangement.spacedBy(1.dp)
@@ -784,6 +783,18 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                                     overflow = TextOverflow.Ellipsis
                                                 )
                                             }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            HapticSwitch(
+                                                checked = isSelected,
+                                                onCheckedChange = { checked ->
+                                                    haptics.perform(HapticPattern.Tick)
+                                                    pickerSelectedIds = if (checked) {
+                                                        pickerSelectedIds + idStr
+                                                    } else {
+                                                        pickerSelectedIds - idStr
+                                                    }
+                                                }
+                                            )
                                         }
                                     }
                                 }

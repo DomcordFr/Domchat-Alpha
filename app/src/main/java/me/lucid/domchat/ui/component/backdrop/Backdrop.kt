@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.Density
 interface Backdrop {
 
     val isCoordinatesDependent: Boolean
+    val hasRecording: Boolean get() = true
 
     fun DrawScope.drawBackdrop(
         density: Density,

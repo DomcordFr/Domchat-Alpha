@@ -111,28 +111,24 @@ fun TTSController() {
         }
     }
 
-    val dynamicGlassFill = liquidGlassSurfaceColor()
-    val sheetBg = if (dynamicGlassFill != Color.Transparent) {
-        dynamicGlassFill
-    } else {
-        if (isDark) Color(0xFF141520).copy(alpha = 0.22f) else Color.White.copy(alpha = 0.45f)
-    }
-    val glassBorderBrush = LiquidGlassTokens.SpecularBorderBrush
+    val sheetBg = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.30f)
+    val glassBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     val surfaceModifier = if (isFrosted) {
         Modifier.frostedGlassSurface(
             shape = CircleShape,
-            borderWidth = 1.dp,
+            borderWidth = 0.5.dp,
             specularBrush = glassBorderBrush,
             fillColor = sheetBg,
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = CircleShape,
-            borderWidth = 1.dp,
+            borderWidth = 0.5.dp,
             specularBrush = glassBorderBrush,
             fillColor = sheetBg,
             glassMode = LiquidGlassMode.BALANCED_BLEND,
+            isFloatingControl = false,
         )
     }
 

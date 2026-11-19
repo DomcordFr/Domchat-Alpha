@@ -4171,7 +4171,7 @@ private fun MinimalPickerItem(
             .pressScale(interactionSource)
             .liquidGlassSurface(
                 shape = itemShape,
-                fillColor = Color.White.copy(alpha = 0.08f),
+                fillColor = Color(0xFF000000).copy(alpha = 0.40f),
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
             )

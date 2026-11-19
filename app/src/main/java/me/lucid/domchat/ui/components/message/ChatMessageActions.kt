@@ -20,11 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -71,6 +69,7 @@ import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.utils.copyMessageToClipboard
 import me.lucid.domchat.utils.toLocalString
 import me.lucid.tts.provider.TTSProviderSetting
@@ -344,26 +343,35 @@ private fun MessageActionGlassItem(
     modifier: Modifier = Modifier,
 ) {
     val haptics = rememberPremiumHaptics()
-    // Dark translucent glass; destructive actions carry a subtle red tint, never a harsh red card.
-    val bgColor = when {
-        destructive -> Color(0xFFFF6B6B).copy(alpha = 0.10f)
-        else -> Color(0xFF000000).copy(alpha = 0.15f)
-    }
+    val isDark = LocalDarkMode.current
+    val itemShape = RoundedCornerShape(16.dp)
+
     Surface(
         onClick = {
-            haptics.perform(HapticPattern.Pop)
+            haptics.perform(if (destructive) HapticPattern.Thud else HapticPattern.Pop)
             onClick()
         },
-        shape = RoundedCornerShape(16.dp),
-        color = bgColor,
-        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        shape = itemShape,
+        color = if (destructive) Color(0xFFE53935) else Color.Transparent,
+        border = if (destructive) null else BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
         tonalElevation = 0.dp,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (!destructive) {
+                    Modifier.liquidGlassSurface(
+                        shape = itemShape,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
+                    )
+                } else Modifier
+            ),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
         ) {
             icon()
             Text(

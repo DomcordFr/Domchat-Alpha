@@ -29,6 +29,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,34 +72,26 @@ import java.time.format.TextStyle
 private val StatCardMinHeight = 136.dp
 private val HeatmapCardMinHeight = 264.dp
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun MenuPage() {
     val vm: MenuVM = koinViewModel()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val isDark = LocalDarkMode.current
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            OneUITopAppBar(
+                title = stringResource(R.string.menu_statistics_title),
+                scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     BackButton()
                 },
-                title = {
-                    Text(
-                        text = stringResource(R.string.menu_statistics_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surface,
-                    titleContentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
-                ),
             )
         },
+        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { innerPadding ->
         MenuStatsContent(
             uiState = uiState,

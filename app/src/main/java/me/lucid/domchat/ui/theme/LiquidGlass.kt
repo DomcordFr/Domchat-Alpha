@@ -261,7 +261,7 @@ fun Modifier.liquidGlass(
                 // Floating controls (input row, chips, floaters) freeze the backdrop
                 // capture so streaming content behind them does not keep re-recording;
                 // pure position changes are still tracked via draw-time translation.
-                frozen = { isFloatingControl }
+                frozen = { isFloatingControl && (backdrop?.hasRecording == true) }
             )
             .then(
                 if (shadowElevation > 0.dp) {

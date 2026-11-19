@@ -95,7 +95,7 @@ class LayerBackdrop internal constructor(
     }
 
     /** True once the source has been recorded at least once. */
-    internal val hasRecording: Boolean get() = contentVersion > 0
+    override val hasRecording: Boolean get() = contentVersion > 0
 
     /** Fraction of screen resolution [graphicsLayer] was recorded at. */
     internal var sourceScale: Float = 1f

@@ -756,7 +756,12 @@ fun MarkdownBlock(
         (fadeDurationMs * 2L).coerceAtLeast(STREAMING_SETTLE_MAX_MILLIS)
     } else STREAMING_SETTLE_MAX_MILLIS
 
-    val speedScale = (450f / fadeDurationMs.toFloat()).coerceIn(0.25f, 3.0f)
+    val speedScale = if (fadeDurationMs > 450) {
+        val factor = 450f / fadeDurationMs.toFloat()
+        (factor * factor).coerceIn(0.06f, 1.0f)
+    } else {
+        (450f / fadeDurationMs.toFloat()).coerceIn(1.0f, 3.0f)
+    }
 
     val streamingPresentation = remember {
         StreamingTextPresentationState(
@@ -828,6 +833,7 @@ fun MarkdownBlock(
                 displayContent = streamingPresentation.displayContent
                 settleRanges = emptyList()
                 wasStreaming = false
+                onRevealComplete?.invoke()
             }
             return@LaunchedEffect
         }
@@ -882,6 +888,7 @@ fun MarkdownBlock(
                 finishRanges = settleRanges
                 finishNowMillis = now
                 finishActive = settleRanges.isNotEmpty()
+                onRevealComplete?.invoke()
                 break
             }
         }
@@ -1041,8 +1048,8 @@ internal class StreamingTextPresentationState(
         displayContent = ""
         settleRanges = emptyList()
         val length = targetContent.length
-        val targetSec = (length * 0.018f).coerceIn(0.4f, 1.4f) / speedScale.coerceAtLeast(0.35f)
-        val initialSpeed = (length / targetSec.coerceAtLeast(0.1f)).coerceIn(28f, 160f)
+        val targetSec = (length * 0.010f).coerceIn(0.20f, 0.50f)
+        val initialSpeed = (length / targetSec.coerceAtLeast(0.1f)).coerceIn(60f, 220f)
         smoothedCharsPerSecond = initialSpeed
         lastRawUpdateMillis = nowMillis
         firstPendingSinceMillis = nowMillis
@@ -1072,17 +1079,18 @@ internal class StreamingTextPresentationState(
             return false
         }
 
-        val minChars = (STREAMING_MIN_CHARS_PER_SECOND * speedScale).coerceAtLeast(8f)
+        val minChars = (STREAMING_MIN_CHARS_PER_SECOND * speedScale).coerceAtLeast(2.5f)
         val maxChars = (STREAMING_MAX_CHARS_PER_SECOND * speedScale).coerceAtLeast(minChars * 1.5f)
         val baseRevealChars = if (isFreshReveal) {
             val length = rawContent.length
-            val targetSec = (length * 0.018f).coerceIn(0.4f, 1.4f) / speedScale.coerceAtLeast(0.35f)
-            (length / targetSec.coerceAtLeast(0.1f)).coerceIn(28f, 160f)
+            val targetSec = (length * 0.010f).coerceIn(0.20f, 0.50f)
+            (length / targetSec.coerceAtLeast(0.1f)).coerceIn(60f, 220f)
         } else {
             val pacedRate = (smoothedCharsPerSecond * speedScale).coerceIn(minChars, maxChars)
             val backlogMillis = pendingLength * 1000f / pacedRate.coerceAtLeast(1f)
             val catchUpMultiplier = when {
-                pendingLength > 250 -> (pendingLength / (3.5f * minChars)).coerceIn(1f, 2.5f)
+                speedScale < 0.65f -> 1.0f
+                pendingLength > 250 -> (pendingLength / (3.5f * minChars)).coerceIn(1f, 2.0f)
                 backlogMillis <= STREAMING_CATCH_UP_AFTER_MILLIS -> 1f
                 else -> (backlogMillis / STREAMING_SMOOTHING_WINDOW_MILLIS).coerceIn(1f, 1.35f)
             }
@@ -1116,7 +1124,7 @@ internal class StreamingTextPresentationState(
             pending = rawContent.substring(displayContent.length),
             budget = revealBudget.coerceAtLeast(if (starved) 1 else 0),
             starved = starved,
-            continuousFlow = continuousFlow,
+            continuousFlow = continuousFlow || isFreshReveal,
         )
         if (count <= 0) {
             return false

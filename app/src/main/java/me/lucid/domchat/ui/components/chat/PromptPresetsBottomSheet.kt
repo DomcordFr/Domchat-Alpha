@@ -9,8 +9,12 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -427,36 +431,12 @@ fun PromptPresetsBottomSheet(
         }
 
         item {
-            // Action & scope controls: stable 2-row layout to prevent wrap/jumping
+            // Action & scope controls: stable 2-row layout with Enable/Disable above scope & reset
             Column(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Row 1: Scope indicator (left) + optional Reset to Global (right)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    DomChatGlassChip(
-                        text = if (isChatSpecific) "Using Chat" else "Using Global",
-                        accent = isChatSpecific,
-                    )
-                    AnimatedVisibility(
-                        visible = isChatSpecific,
-                        enter = fadeIn(animationSpec = tween(150)),
-                        exit = fadeOut(animationSpec = tween(150)),
-                    ) {
-                        DomChatGlassPillButton(
-                            text = "Reset",
-                            icon = Icons.Rounded.Refresh,
-                            onClick = { resetToGlobal() },
-                            modifier = Modifier.height(30.dp),
-                        )
-                    }
-                }
-
-                // Row 2: Enable All & Disable All evenly balanced
+                // Row 1: Enable All & Disable All evenly balanced
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -472,6 +452,45 @@ fun PromptPresetsBottomSheet(
                         onClick = { toggleAll(false) },
                         modifier = Modifier.weight(1f).height(34.dp),
                     )
+                }
+
+                // Row 2: Scope indicator (left, animated forward/backward switch) + optional Reset to Global (right, animated appearance)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AnimatedContent(
+                        targetState = isChatSpecific,
+                        transitionSpec = {
+                            if (targetState) {
+                                (slideInHorizontally { width -> width / 3 } + fadeIn(tween(200))) togetherWith
+                                    (slideOutHorizontally { width -> -width / 3 } + fadeOut(tween(150)))
+                            } else {
+                                (slideInHorizontally { width -> -width / 3 } + fadeIn(tween(200))) togetherWith
+                                    (slideOutHorizontally { width -> width / 3 } + fadeOut(tween(150)))
+                            }
+                        },
+                        label = "scope_switch_transition"
+                    ) { chatSpecific ->
+                        DomChatGlassChip(
+                            text = if (chatSpecific) "Using Chat" else "Using Global",
+                            accent = chatSpecific,
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = isChatSpecific,
+                        enter = fadeIn(animationSpec = tween(220)) + scaleIn(tween(220)) + expandHorizontally(),
+                        exit = fadeOut(animationSpec = tween(180)) + scaleOut(tween(180)) + shrinkHorizontally(),
+                    ) {
+                        DomChatGlassPillButton(
+                            text = "Reset",
+                            icon = Icons.Rounded.Refresh,
+                            onClick = { resetToGlobal() },
+                            modifier = Modifier.height(30.dp),
+                        )
+                    }
                 }
             }
         }

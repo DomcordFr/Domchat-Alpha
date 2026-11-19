@@ -213,7 +213,7 @@ fun ConversationList(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 2.dp, bottom = 8.dp)
+                    .padding(horizontal = 8.dp, top = 2.dp, bottom = 8.dp)
             ) {
                 val isDark = LocalDarkMode.current
                 val searchGlassBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
@@ -652,7 +652,7 @@ private fun ConversationItem(
 
     val assistant = getAssistant(conversation.assistantId)
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         ConversationRowSurface(
             selected = selected,
             restingAlpha = restoredAlpha,

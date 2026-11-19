@@ -106,7 +106,7 @@ fun DomChatAboutContent(
                 },
         ) {
             Text(
-                text = "v1.0",
+                text = if (versionName.startsWith("v")) versionName else "v$versionName",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
@@ -119,6 +119,15 @@ fun DomChatAboutContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            DomChatAboutItem(
+                icon = Icons.Rounded.Code,
+                title = "Source Code",
+                subtitle = "https://github.com/DomcordFr/Domchat",
+                trailing = Icons.AutoMirrored.Rounded.OpenInNew,
+                darkTheme = darkTheme,
+                onHaptic = onHaptic,
+                onClick = onSourceCode,
+            )
         }
         Spacer(Modifier.height(24.dp))
         AboutSectionTitle("System Information")
@@ -161,7 +170,7 @@ fun DomChatAboutContent(
             ),
         ) {
             Text(
-                text = "Domchat v1.0",
+                text = "$appName ${if (versionName.startsWith("v")) versionName else "v$versionName"}",
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
                 color = Color.White,
                 textAlign = TextAlign.Center,

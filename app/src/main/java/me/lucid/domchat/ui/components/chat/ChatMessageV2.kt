@@ -1720,10 +1720,13 @@ private fun AssistantMessageTurn(
     // spring and made expansion choppy. Animate only when the timeline
     // toggles or when loading finishes.
     var prevLoading by remember { mutableStateOf(false) }
+    var isTextAnimating by remember { mutableStateOf(false) }
     val loadingJustFinished = !loading && prevLoading
     LaunchedEffect(loading) {
+        if (loading) isTextAnimating = true
         prevLoading = loading
     }
+    val isTurnActive = loading || isTextAnimating
     val attachmentSignature = group.attachmentsSignature()
     val attachments = remember(attachmentSignature, defaultVideoLabel, defaultAudioLabel, context) {
         collectRenderableAttachments(
@@ -1733,7 +1736,7 @@ private fun AssistantMessageTurn(
             fallbackAudioLabel = defaultAudioLabel,
         )
     }
-    val showName = showModelName && (!isLastTurn || !loading)
+    val showName = showModelName && (!isLastTurn || !isTurnActive)
     val nameAlpha by animateFloatAsState(
         targetValue = if (showName) 1f else 0f,
         animationSpec = spring(dampingRatio = 0.8f, stiffness = 350f),
@@ -2097,6 +2100,11 @@ private fun AssistantMessageTurn(
                             paragraphSpacing = 12.dp,
                             streamingTextReveal = loading && index == allTextBubbles.lastIndex,
                             displaySetting = effectiveDisplay,
+                            onRevealComplete = {
+                                if (index == allTextBubbles.lastIndex) {
+                                    isTextAnimating = false
+                                }
+                            },
                             onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
                             onClickCitation = { id -> onCitationClick(id) }
                         )
@@ -2230,6 +2238,11 @@ private fun AssistantMessageTurn(
                             paragraphSpacing = 12.dp,
                             streamingTextReveal = loading && index == allTextBubbles.lastIndex,
                             displaySetting = effectiveDisplay,
+                            onRevealComplete = {
+                                if (index == allTextBubbles.lastIndex) {
+                                    isTextAnimating = false
+                                }
+                            },
                             onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
                             onClickCitation = { id -> onCitationClick(id) },
                             modifier = Modifier.clickable { handleBubbleClick() }
@@ -2241,7 +2254,7 @@ private fun AssistantMessageTurn(
         
         // Token statistics - combined for all messages in group
         val usage = group.combinedUsage
-        if (showTokenUsage && usage != null && !loading) {
+        if (showTokenUsage && usage != null && !isTurnActive) {
             TokenStatisticsInline(
                 usage = usage,
                 generationDurationMs = group.combinedGenerationDurationMs,
@@ -2250,7 +2263,7 @@ private fun AssistantMessageTurn(
         }
         
         // Action buttons
-        val showActions = !loading && (isLastTurn || actionsExpanded)
+        val showActions = !isTurnActive && (isLastTurn || actionsExpanded)
         
         AnimatedVisibility(
             visible = showActions,
@@ -2441,12 +2454,10 @@ private fun AssistantThinkingDropdown(
                     Modifier.liquidGlassSurface(
                         shape = shape,
                         borderWidth = 0.5.dp,
-                        fillColor = if (tintAmount > 0.02f) {
-                            Color.hsv(tintHue.coerceIn(0f, 360f), 0.75f, 1.0f).copy(alpha = (tintAmount * 0.40f).coerceIn(0f, 1f))
-                        } else if (isDark) {
-                            Color.White.copy(alpha = 0.05f)
+                        fillColor = if (effectiveAlpha <= 0.02f) {
+                            if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.35f)
                         } else {
-                            Color.White.copy(alpha = 0.25f)
+                            baseTone.copy(alpha = effectiveAlpha)
                         },
                     )
                 }

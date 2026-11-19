@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -30,8 +31,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.ButtonDefaults
@@ -282,6 +285,8 @@ fun SettingJanitorPage() {
     val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val janitorPrefs = remember { context.getSharedPreferences("janitor_hub_prefs", android.content.Context.MODE_PRIVATE) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -292,7 +297,7 @@ fun SettingJanitorPage() {
     var browseState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var searchState by remember { mutableStateOf<JanitorLoadState>(JanitorLoadState.Loading) }
     var isTabSwitching by remember { mutableStateOf(false) }
-    var feedMode by rememberSaveable { mutableStateOf("Popular") }
+    var feedMode by rememberSaveable { mutableStateOf(janitorPrefs.getString("feed_mode", "Popular") ?: "Popular") }
     var page by rememberSaveable { mutableIntStateOf(1) }
     var isLoadingMore by remember { mutableStateOf(false) }
     var feedMenuOpen by remember { mutableStateOf(false) }
@@ -490,10 +495,6 @@ fun SettingJanitorPage() {
         }
     }
 
-    LaunchedEffect(Unit) {
-        loadBrowse("24h")
-    }
-
     LaunchedEffect(selectedTab, feedMode) {
         isTabSwitching = true
         page = 1
@@ -622,6 +623,7 @@ fun SettingJanitorPage() {
                                                 },
                                                 onClick = {
                                                     haptics.perform(HapticPattern.Pop)
+                                                    janitorPrefs.edit().putString("feed_mode", option).apply()
                                                     feedMode = option
                                                     page = 1
                                                     feedMenuOpen = false
@@ -1184,7 +1186,7 @@ private fun JanitorCharacterInspectorSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
                         text = character.name.takeIf { it.isNotBlank() } ?: "Character",
@@ -1201,8 +1203,35 @@ private fun JanitorCharacterInspectorSheet(
                         )
                     }
 
-                    // Tags row
+                    // Greetings badge
+                    val introsCount = (if (!character.firstMessage.isNullOrBlank() || !fullExtract?.firstMessage.isNullOrBlank()) 1 else 0) +
+                        (fullExtract?.alternateGreetings ?: character.alternateGreetings).size
+                    if (introsCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(cardContainerColor)
+                                .border(0.5.dp, cardBorderColor, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "$introsCount scenario greeting${if (introsCount > 1) "s" else ""}",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = contentTextColor.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+
+                    // Tags heading & tags row
                     if (character.tags.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Tags",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = contentTextColor.copy(alpha = 0.7f)
+                        )
                         LazyRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1228,8 +1257,28 @@ private fun JanitorCharacterInspectorSheet(
                         }
                     }
 
+                    // Blurb
+                    val blurbRaw = fullExtract?.description?.takeIf { it.isNotBlank() }
+                        ?: fullExtract?.bio?.takeIf { it.isNotBlank() }
+                        ?: character.description?.takeIf { it.isNotBlank() }
+                        ?: character.bio.orEmpty()
+                    val cleanBlurb = sanitizeHtml(blurbRaw)
+                    if (cleanBlurb.isNotBlank()) {
+                        val firstPara = cleanBlurb.split("\n\n").firstOrNull()?.trim().orEmpty()
+                        if (firstPara.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = firstPara,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.85f),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+
                     // Primary Action: Import to Hub
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     val buttonBgColor by animateColorAsState(
                         targetValue = when (importStatus) {
                             ImportStatus.SUCCESS -> Color(0xFF2E7D32)
@@ -1343,19 +1392,30 @@ private fun JanitorCharacterInspectorSheet(
                                             strokeWidth = 2.5.dp
                                         )
                                     } else {
-                                        Text(
-                                            text = if (isAlreadyInHub) "Import Again" else "Import to Hub",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
-                                            color = Color.Black
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isAlreadyInHub) Icons.Rounded.Refresh else Icons.Rounded.Download,
+                                                contentDescription = null,
+                                                tint = Color.Black,
+                                                modifier = Modifier.size(19.dp)
+                                            )
+                                            Text(
+                                                text = if (isAlreadyInHub) "Import Again" else "Import to Hub",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp,
+                                                color = Color.Black
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // 3 Inspection Tabs (Notes, Personality, Greetings)
                     Row(
@@ -1516,39 +1576,49 @@ private fun JanitorCharacterInspectorSheet(
                                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             if (allGreetings.size > 1) {
                                                 val greetingRowState = rememberLazyListState()
-                                                LazyRow(
-                                                    state = greetingRowState,
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(12.dp))
+                                                        .background(Color(0xFF000000))
+                                                        .border(0.5.dp, cardBorderColor, RoundedCornerShape(12.dp))
+                                                        .padding(horizontal = 8.dp, vertical = 6.dp)
                                                 ) {
-                                                    items(allGreetings.size) { idx ->
-                                                        val isGreetingSelected = activeGreetingIndex == idx
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .clip(RoundedCornerShape(8.dp))
-                                                                .background(
-                                                                    if (isGreetingSelected) {
-                                                                        Color.White.copy(alpha = 0.20f)
-                                                                    } else {
-                                                                        Color.White.copy(alpha = 0.05f)
-                                                                    }
+                                                    LazyRow(
+                                                        state = greetingRowState,
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        items(allGreetings.size) { idx ->
+                                                            val isGreetingSelected = activeGreetingIndex == idx
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .clip(RoundedCornerShape(8.dp))
+                                                                    .background(
+                                                                        if (isGreetingSelected) {
+                                                                            Color.White.copy(alpha = 0.35f)
+                                                                        } else {
+                                                                            Color.White.copy(alpha = 0.05f)
+                                                                        }
+                                                                    )
+                                                                    .border(
+                                                                        0.5.dp,
+                                                                        if (isGreetingSelected) {
+                                                                            Brush.verticalGradient(listOf(Color.White, Color.White))
+                                                                        } else cardBorderColor,
+                                                                        RoundedCornerShape(8.dp)
+                                                                    )
+                                                                    .clickable { activeGreetingIndex = idx }
+                                                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = if (idx == 0) "Intro #1 (Default)" else "Greeting #${idx + 1}",
+                                                                    fontSize = 12.sp,
+                                                                    fontWeight = if (isGreetingSelected) FontWeight.Bold else FontWeight.Medium,
+                                                                    color = if (isGreetingSelected) Color.White else contentTextColor.copy(alpha = 0.75f)
                                                                 )
-                                                                .border(
-                                                                    0.5.dp,
-                                                                    if (isGreetingSelected) {
-                                                                        Brush.verticalGradient(listOf(Color.White, Color.White))
-                                                                    } else cardBorderColor,
-                                                                    RoundedCornerShape(8.dp)
-                                                                )
-                                                                .clickable { activeGreetingIndex = idx }
-                                                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = if (idx == 0) "Intro #1 (Default)" else "Greeting #${idx + 1}",
-                                                                fontSize = 12.sp,
-                                                                fontWeight = if (isGreetingSelected) FontWeight.Bold else FontWeight.Medium,
-                                                                color = if (isGreetingSelected) Color.White else contentTextColor.copy(alpha = 0.75f)
-                                                            )
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -1600,7 +1670,7 @@ private fun JanitorCharacterInspectorSheet(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(10.dp).navigationBarsPadding())
                 }
             }
         }

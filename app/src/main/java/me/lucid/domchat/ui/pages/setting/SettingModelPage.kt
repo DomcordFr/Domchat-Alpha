@@ -26,6 +26,9 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.OutlinedTextField
 import me.lucid.domchat.ui.components.ui.DebouncedTextField
@@ -271,96 +274,93 @@ private fun DefaultSTTModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_page_stt_service),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_page_stt_service),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                HelperReasoningSettings(
-                    reasoningTokens = settings.sttThinkingBudget,
-                    onUpdateReasoningTokens = {
-                        vm.updateSettings(
-                            settings.copy(
-                                sttThinkingBudget = it
-                            )
-                        )
-                    }
-                )
-
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    tail = { AutoSaveIndicator(visible = promptPending) }
-                ) {
-                    DebouncedTextField(
-                        value = settings.sttPrompt,
-                        onValueChange = {
+                    HelperReasoningSettings(
+                        reasoningTokens = settings.sttThinkingBudget,
+                        onUpdateReasoningTokens = {
                             vm.updateSettings(
                                 settings.copy(
-                                    sttPrompt = it
-                                )
-                            )
-                        },
-                        stateKey = "stt_prompt",
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 10,
-                        onPendingChange = { promptPending = it },
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    sttPrompt = DEFAULT_STT_PROMPT
+                                    sttThinkingBudget = it
                                 )
                             )
                         }
+                    )
+
+                    FormItem(
+                        label = {
+                            Text(stringResource(R.string.setting_model_page_prompt))
+                        },
+                        tail = { AutoSaveIndicator(visible = promptPending) }
                     ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
-                }
-                
-                FormItem(
-                    label = { Text(stringResource(R.string.setting_stt_replace_model_icon)) },
-                    description = { Text(stringResource(R.string.setting_stt_replace_model_icon_desc)) },
-                    tail = {
-                        androidx.compose.material3.Switch(
-                            checked = settings.displaySetting.sttReplaceModelIcon,
-                            onCheckedChange = { newValue ->
+                        DebouncedTextField(
+                            value = settings.sttPrompt,
+                            onValueChange = {
                                 vm.updateSettings(
                                     settings.copy(
-                                        displaySetting = settings.displaySetting.copy(
-                                            sttReplaceModelIcon = newValue
-                                        )
+                                        sttPrompt = it
+                                    )
+                                )
+                            },
+                            stateKey = "stt_prompt",
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 10,
+                            onPendingChange = { promptPending = it },
+                        )
+                        TextButton(
+                            onClick = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        sttPrompt = DEFAULT_STT_PROMPT
                                     )
                                 )
                             }
-                        )
+                        ) {
+                            Text(stringResource(R.string.setting_model_page_reset_to_default))
+                        }
                     }
-                )
+                    
+                    FormItem(
+                        label = { Text(stringResource(R.string.setting_stt_replace_model_icon)) },
+                        description = { Text(stringResource(R.string.setting_stt_replace_model_icon_desc)) },
+                        tail = {
+                            androidx.compose.material3.Switch(
+                                checked = settings.displaySetting.sttReplaceModelIcon,
+                                onCheckedChange = { newValue ->
+                                    vm.updateSettings(
+                                        settings.copy(
+                                            displaySetting = settings.displaySetting.copy(
+                                                sttReplaceModelIcon = newValue
+                                            )
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
             }
         }
     }
@@ -414,67 +414,64 @@ private fun DefaultTranslationModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_model_page_translate_model),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_model_page_translate_model),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_translate_prompt_vars))
-                    },
-                    tail = { AutoSaveIndicator(visible = promptPending) }
-                ) {
-                    DebouncedTextField(
-                        value = settings.translatePrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    translatePrompt = it
-                                )
-                            )
+                    FormItem(
+                        label = {
+                            Text(stringResource(R.string.setting_model_page_prompt))
                         },
-                        stateKey = "translate_prompt",
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 10,
-                        onPendingChange = { promptPending = it },
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    translatePrompt = DEFAULT_TRANSLATION_PROMPT
-                                )
-                            )
-                        }
+                        description = {
+                            Text(stringResource(R.string.setting_model_page_translate_prompt_vars))
+                        },
+                        tail = { AutoSaveIndicator(visible = promptPending) }
                     ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
+                        DebouncedTextField(
+                            value = settings.translatePrompt,
+                            onValueChange = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        translatePrompt = it
+                                    )
+                                )
+                            },
+                            stateKey = "translate_prompt",
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 10,
+                            onPendingChange = { promptPending = it },
+                        )
+                        TextButton(
+                            onClick = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        translatePrompt = DEFAULT_TRANSLATION_PROMPT
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.setting_model_page_reset_to_default))
+                        }
                     }
                 }
             }
@@ -538,79 +535,76 @@ private fun DefaultSuggestionModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_model_page_suggestion_model),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_model_page_suggestion_model),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_suggestion_prompt_vars))
-                    },
-                    tail = { AutoSaveIndicator(visible = promptPending) }
-                ) {
-                    DebouncedTextField(
-                        value = settings.suggestionPrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    suggestionPrompt = it
-                                )
-                            )
+                    FormItem(
+                        label = {
+                            Text(stringResource(R.string.setting_model_page_prompt))
                         },
-                        stateKey = "suggestion_prompt",
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 8,
-                        onPendingChange = { promptPending = it },
-                    )
-                    TextButton(
-                        onClick = {
+                        description = {
+                            Text(stringResource(R.string.setting_model_page_suggestion_prompt_vars))
+                        },
+                        tail = { AutoSaveIndicator(visible = promptPending) }
+                    ) {
+                        DebouncedTextField(
+                            value = settings.suggestionPrompt,
+                            onValueChange = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        suggestionPrompt = it
+                                    )
+                                )
+                            },
+                            stateKey = "suggestion_prompt",
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 8,
+                            onPendingChange = { promptPending = it },
+                        )
+                        TextButton(
+                            onClick = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        suggestionPrompt = DEFAULT_SUGGESTION_PROMPT
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.setting_model_page_reset_to_default))
+                        }
+                    }
+                    HelperReasoningSettings(
+                        reasoningTokens = settings.suggestionThinkingBudget,
+                        onUpdateReasoningTokens = { tokens ->
                             vm.updateSettings(
                                 settings.copy(
-                                    suggestionPrompt = DEFAULT_SUGGESTION_PROMPT
+                                    suggestionThinkingBudget = tokens
                                 )
                             )
                         }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
+                    )
                 }
-                HelperReasoningSettings(
-                    reasoningTokens = settings.suggestionThinkingBudget,
-                    onUpdateReasoningTokens = { tokens ->
-                        vm.updateSettings(
-                            settings.copy(
-                                suggestionThinkingBudget = tokens
-                            )
-                        )
-                    }
-                )
             }
         }
     }
@@ -661,79 +655,76 @@ private fun DefaultTitleModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_model_page_title_model),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_model_page_title_model),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_suggestion_prompt_vars))
-                    },
-                    tail = { AutoSaveIndicator(visible = promptPending) }
-                ) {
-                    DebouncedTextField(
-                        value = settings.titlePrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    titlePrompt = it
-                                )
-                            )
+                    FormItem(
+                        label = {
+                            Text(stringResource(R.string.setting_model_page_prompt))
                         },
-                        stateKey = "title_prompt",
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 8,
-                        onPendingChange = { promptPending = it },
-                    )
-                    TextButton(
-                        onClick = {
+                        description = {
+                            Text(stringResource(R.string.setting_model_page_suggestion_prompt_vars))
+                        },
+                        tail = { AutoSaveIndicator(visible = promptPending) }
+                    ) {
+                        DebouncedTextField(
+                            value = settings.titlePrompt,
+                            onValueChange = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        titlePrompt = it
+                                    )
+                                )
+                            },
+                            stateKey = "title_prompt",
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 8,
+                            onPendingChange = { promptPending = it },
+                        )
+                        TextButton(
+                            onClick = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        titlePrompt = DEFAULT_TITLE_PROMPT
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.setting_model_page_reset_to_default))
+                        }
+                    }
+                    HelperReasoningSettings(
+                        reasoningTokens = settings.titleThinkingBudget,
+                        onUpdateReasoningTokens = { tokens ->
                             vm.updateSettings(
                                 settings.copy(
-                                    titlePrompt = DEFAULT_TITLE_PROMPT
+                                    titleThinkingBudget = tokens
                                 )
                             )
                         }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
+                    )
                 }
-                HelperReasoningSettings(
-                    reasoningTokens = settings.titleThinkingBudget,
-                    onUpdateReasoningTokens = { tokens ->
-                        vm.updateSettings(
-                            settings.copy(
-                                titleThinkingBudget = tokens
-                            )
-                        )
-                    }
-                )
             }
         }
     }
@@ -791,44 +782,41 @@ private fun DefaultSummarizerModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_model_page_summarizer_model),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_model_page_summarizer_model),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                HelperReasoningSettings(
-                    reasoningTokens = settings.summarizerThinkingBudget,
-                    onUpdateReasoningTokens = { tokens ->
-                        vm.updateSettings(
-                            settings.copy(
-                                summarizerThinkingBudget = tokens
+                    HelperReasoningSettings(
+                        reasoningTokens = settings.summarizerThinkingBudget,
+                        onUpdateReasoningTokens = { tokens ->
+                            vm.updateSettings(
+                                settings.copy(
+                                    summarizerThinkingBudget = tokens
+                                )
                             )
-                        )
-                    }
-                )
+                        }
+                    )
+                }
             }
         }
     }
@@ -886,44 +874,41 @@ private fun DefaultSubagentModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_model_page_subagent_model),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_model_page_subagent_model),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                HelperReasoningSettings(
-                    reasoningTokens = settings.subagentThinkingBudget,
-                    onUpdateReasoningTokens = { tokens ->
-                        vm.updateSettings(
-                            settings.copy(
-                                subagentThinkingBudget = tokens
+                    HelperReasoningSettings(
+                        reasoningTokens = settings.subagentThinkingBudget,
+                        onUpdateReasoningTokens = { tokens ->
+                            vm.updateSettings(
+                                settings.copy(
+                                    subagentThinkingBudget = tokens
+                                )
                             )
-                        )
-                    }
-                )
+                        }
+                    )
+                }
             }
         }
     }
@@ -1013,79 +998,76 @@ private fun DefaultOcrModelSetting(
     )
 
     if (showModal) {
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { showModal = false },
-            containerColor = Color(0xFF000000),
-            dragHandle = { DomChatSheetDragHandle() },
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            DomChatInWindowBottomSheet(
+                visible = true,
+                onDismissRequest = { showModal = false },
+                containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
+                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_model_page_ocr_model),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    DomChatSheetHeader(
+                        title = stringResource(R.string.setting_model_page_ocr_model),
+                        onCloseClick = { showModal = false },
                     )
-                    IconButton(onClick = { showModal = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                    }
-                }
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_ocr_prompt_vars))
-                    },
-                    tail = { AutoSaveIndicator(visible = promptPending) }
-                ) {
-                    DebouncedTextField(
-                        value = settings.ocrPrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    ocrPrompt = it
-                                )
-                            )
+                    FormItem(
+                        label = {
+                            Text(stringResource(R.string.setting_model_page_prompt))
                         },
-                        stateKey = "ocr_prompt",
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 10,
-                        onPendingChange = { promptPending = it },
-                    )
-                    TextButton(
-                        onClick = {
+                        description = {
+                            Text(stringResource(R.string.setting_model_page_ocr_prompt_vars))
+                        },
+                        tail = { AutoSaveIndicator(visible = promptPending) }
+                    ) {
+                        DebouncedTextField(
+                            value = settings.ocrPrompt,
+                            onValueChange = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        ocrPrompt = it
+                                    )
+                                )
+                            },
+                            stateKey = "ocr_prompt",
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 10,
+                            onPendingChange = { promptPending = it },
+                        )
+                        TextButton(
+                            onClick = {
+                                vm.updateSettings(
+                                    settings.copy(
+                                        ocrPrompt = DEFAULT_OCR_PROMPT
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.setting_model_page_reset_to_default))
+                        }
+                    }
+                    HelperReasoningSettings(
+                        reasoningTokens = settings.ocrThinkingBudget,
+                        onUpdateReasoningTokens = { tokens ->
                             vm.updateSettings(
                                 settings.copy(
-                                    ocrPrompt = DEFAULT_OCR_PROMPT
+                                    ocrThinkingBudget = tokens
                                 )
                             )
                         }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
+                    )
                 }
-                HelperReasoningSettings(
-                    reasoningTokens = settings.ocrThinkingBudget,
-                    onUpdateReasoningTokens = { tokens ->
-                        vm.updateSettings(
-                            settings.copy(
-                                ocrThinkingBudget = tokens
-                            )
-                        )
-                    }
-                )
             }
         }
     }
