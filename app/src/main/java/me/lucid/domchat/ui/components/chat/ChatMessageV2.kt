@@ -1311,6 +1311,7 @@ private fun UserMessageTurn(
 ) {
     val context = LocalContext.current
     val settings = LocalSettings.current
+    val effectiveDisplay = settings.getEffectiveDisplaySetting(assistant)
     // History turns never animate; only turns that arrived this session do.
     val isHistoryTurn = group.firstNode.id.toString() in me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes.current
     val defaultVideoLabel = stringResource(R.string.chat_message_attachment_video)
