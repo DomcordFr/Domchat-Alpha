@@ -302,11 +302,11 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) Color(0xFF141416) else Color(0xFF000000),
-                                    border = BorderStroke(
-                                        0.5.dp,
-                                        if (selected) Color.White.copy(alpha = 0.38f)
-                                        else LiquidGlassTokens.SpecularBorderSubtle
-                                    ),
+                                    border = if (selected) {
+                                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.38f))
+                                    } else {
+                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                    },
                                     onClick = {
                                         haptics.perform(HapticPattern.Tick)
                                         maxContextTokens = tokens
@@ -335,11 +335,11 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
                                     color = if (selected) Color(0xFF141416) else Color(0xFF000000),
-                                    border = BorderStroke(
-                                        0.5.dp,
-                                        if (selected) Color.White.copy(alpha = 0.38f)
-                                        else LiquidGlassTokens.SpecularBorderSubtle
-                                    ),
+                                    border = if (selected) {
+                                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.38f))
+                                    } else {
+                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                    },
                                     onClick = {
                                         haptics.perform(HapticPattern.Tick)
                                         maxContextTokens = tokens

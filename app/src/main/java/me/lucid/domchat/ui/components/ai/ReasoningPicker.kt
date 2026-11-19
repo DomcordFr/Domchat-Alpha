@@ -486,49 +486,46 @@ private fun ReasoningLevelCard(
     val elevation = 0.dp
     val tonalElevation = 0.dp
 
-    CompositionLocalProvider(LocalAbsoluteTonalElevation provides tonalElevation) {
-        val cardElevation = CardDefaults.cardElevation(defaultElevation = elevation)
-        val cardColors = CardDefaults.cardColors(
-            containerColor = resolvedContainerColor,
-            contentColor = resolvedContentColor
+    val cardElevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    val cardColors = CardDefaults.cardColors(
+        containerColor = resolvedContainerColor,
+        contentColor = resolvedContentColor
+    )
+    // Selected items are completely round, non-selected use 10.dp corners
+    val resolvedShape = if (selected) RoundedCornerShape(50) else RoundedCornerShape(14.dp)
+    val borderBrush = Brush.verticalGradient(
+        listOf(
+            Color.White.copy(alpha = if (selected) 0.38f else 0.14f),
+            Color.White.copy(alpha = if (selected) 0.14f else 0.04f)
         )
-        // Selected items are completely round, non-selected use 10.dp corners
-        val resolvedShape = if (selected) RoundedCornerShape(50) else RoundedCornerShape(14.dp)
-        val borderBrush = Brush.verticalGradient(
-            listOf(
-                Color.White.copy(alpha = if (selected) 0.38f else 0.14f),
-                Color.White.copy(alpha = if (selected) 0.14f else 0.04f)
-            )
-        )
-        Card(
-            onClick = onClick,
-            modifier = modifier.border(0.5.dp, borderBrush, resolvedShape),
-            shape = resolvedShape,
-            elevation = cardElevation,
-            colors = cardColors
+    )
+    Card(
+        onClick = onClick,
+        modifier = modifier.border(0.5.dp, borderBrush, resolvedShape),
+        shape = resolvedShape,
+        elevation = cardElevation,
+        colors = cardColors
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            icon()
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                icon()
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                        title()
-                    }
-                    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                        description()
-                    }
+                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                    title()
+                }
+                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                    description()
                 }
             }
         }
-
     }
 }
 
