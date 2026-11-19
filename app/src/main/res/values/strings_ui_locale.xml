@@ -67,7 +67,7 @@
     <string name="assistant_detail_advanced_desc">Templates, regex, custom headers</string>
 
     <!-- Assistant detail 2-section -->
-    <string name="assistant_detail_section_core_roleplay">Core Roleplay</string>
+    <string name="assistant_detail_section_core_roleplay">Roleplay</string>
     <string name="assistant_detail_section_advanced">Advanced</string>
     <string name="assistant_detail_core_profile_desc">Display name, chat name, tags, appearance</string>
     <string name="assistant_detail_core_prompts_desc">Personality, scenario, initial messages</string>

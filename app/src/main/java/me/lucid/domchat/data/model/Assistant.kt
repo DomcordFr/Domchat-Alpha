@@ -103,11 +103,15 @@ data class Assistant(
     val creator: String? = null,
     val characterVersion: String? = null,
     val minP: Float? = null,
+    val topK: Int? = null,
     val frequencyPenalty: Float? = null,
     val presencePenalty: Float? = null,
     val repetitionPenalty: Float? = null,
     val authorsNote: String? = null,
     val authorsNoteDepth: Int = 4,
+    val scenario: String? = null,
+    val exampleDialogue: String? = null,
+    val greetingLabels: List<String> = emptyList(),
     val useAssistantMaterialYouColors: Boolean = false,
     val materialYouColorIndex: Int = 0, // 0 = auto (default pick), 1-3 = alternative palette colors
     val customMaterialYouColor: String? = null, // Hex seed used when materialYouColorIndex == -1

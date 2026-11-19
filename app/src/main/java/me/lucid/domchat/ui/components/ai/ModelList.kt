@@ -291,6 +291,11 @@ fun ModelSelector(
     }
 }
 
+enum class ModelPickerStyle {
+    SETTINGS,
+    LIQUID_GLASS,
+}
+
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 @Composable
 internal fun ColumnScope.ModelList(
@@ -298,6 +303,7 @@ internal fun ColumnScope.ModelList(
     providers: List<ProviderSetting>,
     modelType: ModelType,
     modelFilter: (Model) -> Boolean = { true },
+    style: ModelPickerStyle = ModelPickerStyle.SETTINGS,
     onSelect: (Model) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -611,6 +617,7 @@ internal fun ColumnScope.ModelList(
                                     .animateItem(),
                                 providerSetting = favoriteItem.provider,
                                 select = favoriteItem.model.id == currentModel,
+                                style = style,
                                 inGroup = true,
                                 position = favoriteItem.position,
                                 onDismiss = {
@@ -674,6 +681,7 @@ internal fun ColumnScope.ModelList(
                             modifier = Modifier.animateItem(),
                             providerSetting = recentItem.provider,
                             select = recentItem.model.id == currentModel,
+                            style = style,
                             inGroup = true,
                             position = recentItem.position,
                             onDismiss = {
@@ -712,6 +720,7 @@ internal fun ColumnScope.ModelList(
                                 modifier = Modifier.animateItem(),
                                 providerSetting = item.provider,
                                 select = currentModel == item.model.id,
+                                style = style,
                                 inGroup = true,
                                 position = item.position,
                                 onDismiss = {
@@ -1111,17 +1120,77 @@ private fun ModelItem(
     tail: @Composable RowScope.() -> Unit = {},
     dragHandle: @Composable (RowScope.() -> Unit)? = null,
     inGroup: Boolean = false,
-    position: ModelItemPosition = ModelItemPosition.SINGLE
+    position: ModelItemPosition = ModelItemPosition.SINGLE,
+    style: ModelPickerStyle = ModelPickerStyle.SETTINGS
 ) {
     val navController = LocalNavController.current
 
+    val activeBadge: @Composable RowScope.() -> Unit = {
+        if (select) {
+            if (style == ModelPickerStyle.LIQUID_GLASS) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color.White.copy(alpha = 0.14f),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "ACTIVE",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                            color = Color.White
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "ACTIVE",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     if(inGroup) {
+        val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
+            if (select) Color(0xFF141520).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.05f)
+        } else {
+            if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
+        }
         DomChatGroupedModelRow(
             title = model.displayName,
             selected = select,
             position = position.toSharedPosition(),
             onClick = { onSelect(model) },
-            containerColor = Color.White.copy(alpha = if (select) 0.14f else 0.07f),
+            containerColor = rowContainerColor,
             onLongClick = {
                 onDismiss()
                 navController.navigate(Screen.SettingProviderDetail(providerSetting.id.toString()))
@@ -1146,16 +1215,24 @@ private fun ModelItem(
                     ModelAbilityTag(model = model)
                 }
             },
-            tail = tail,
+            tail = {
+                activeBadge()
+                tail()
+            },
             dragHandle = dragHandle,
         )
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
+        val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
+            if (select) Color(0xFF141520).copy(alpha = 0.40f) else Color(0xFF000000).copy(alpha = 0.40f)
+        } else {
+            Color(0xFF000000)
+        }
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,
-                fillColor = if (select) Color(0xFF161618).copy(alpha = 0.85f) else Color(0xFF000000).copy(alpha = 0.50f),
+                fillColor = resolvedFillColor,
                 borderWidth = if (select) 1.dp else 0.5.dp,
                 specularBrush = if (select) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
             ),
@@ -1221,6 +1298,7 @@ private fun ModelItem(
                             ModelAbilityTag(model = model)
                         }
                     }
+                    activeBadge()
                     tail()
                 }
                 dragHandle?.let { it() }

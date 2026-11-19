@@ -43,7 +43,7 @@ fun SummarizerModelTipBanner(
 
     Surface(
         onClick = onClick,
-        color = domChatCardContainerColor(),
+        color = Color.Transparent,
         shape = bannerShape,
         modifier = modifier
             .fillMaxWidth()

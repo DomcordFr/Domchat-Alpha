@@ -22,26 +22,34 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.activity.compose.BackHandler
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Chat
+import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.DataObject
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Upload
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,12 +62,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -74,9 +84,12 @@ import androidx.navigation.compose.rememberNavController
 import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Assistant
+import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.components.nav.BackButton
 import me.lucid.domchat.ui.components.ui.UIAvatar
+import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.heroAnimation
+import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.hierarchicalEnterTransition
 import me.lucid.domchat.ui.motion.hierarchicalExitTransition
@@ -93,6 +106,7 @@ import me.lucid.domchat.data.model.Tag as DataTag
 import me.lucid.domchat.ui.pages.chat.ExportOptionsDialog
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.utils.AssistantExportImport
+import me.lucid.domchat.utils.ImageUtils
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.components.ui.ToastAction
 
@@ -102,6 +116,7 @@ private object AssistantDetailRoutes {
     const val HOME = "home"
     const val CORE = "core"
     const val PROFILE = "profile"
+    const val CREATOR_NOTES = "creator_notes"
     const val PERSONALITY = "personality"
     const val SCENARIO = "scenario"
     const val GREETINGS = "greetings"
@@ -230,67 +245,116 @@ fun AssistantDetailPage(
         vm.update(assistant)
     }
 
+    BackHandler(enabled = currentRoute != null && currentRoute != AssistantDetailRoutes.HOME && navController.previousBackStackEntry != null) {
+        navController.popBackStack()
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    AnimatedVisibility(
-                        visible = currentRoute != null && currentRoute != AssistantDetailRoutes.HOME,
-                        enter = fadeIn(),
-                        exit = fadeOut(animationSpec = tween(0))
-                    ) {
-                        Text(
-                            text = assistant.name.ifBlank {
-                                stringResource(R.string.assistant_page_default_assistant)
-                            },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
-                    AnimatedVisibility(
-                        visible = currentRoute == AssistantDetailRoutes.HOME,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Box {
-                            IconButton(onClick = { showExportMenu = true }) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Upload,
-                                    contentDescription = stringResource(R.string.assistant_detail_export)
-                                )
-                            }
+            Column(modifier = Modifier.fillMaxWidth().background(Color(0xFF000000))) {
+                val pageTitle = when (currentRoute) {
+                    AssistantDetailRoutes.PROFILE -> stringResource(R.string.assistant_detail_profile)
+                    AssistantDetailRoutes.CREATOR_NOTES -> stringResource(R.string.assistant_detail_section_creator_notes)
+                    AssistantDetailRoutes.PERSONALITY -> stringResource(R.string.assistant_detail_section_personality)
+                    AssistantDetailRoutes.SCENARIO -> stringResource(R.string.assistant_detail_section_scenario)
+                    AssistantDetailRoutes.GREETINGS -> stringResource(R.string.assistant_detail_section_initial_messages)
+                    AssistantDetailRoutes.LOREBOOKS -> stringResource(R.string.assistant_detail_section_lorebooks)
+                    AssistantDetailRoutes.EXAMPLE_DIALOGUES -> stringResource(R.string.assistant_page_preset_messages)
+                    AssistantDetailRoutes.MODEL -> stringResource(R.string.assistant_detail_models)
+                    AssistantDetailRoutes.CONTEXT_MANAGEMENT -> "Context & Budget"
+                    AssistantDetailRoutes.UI -> stringResource(R.string.assistant_detail_ui_customization)
+                    else -> assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+                }
 
-                            val isDark = LocalDarkMode.current
-                            DropdownMenu(
-                                expanded = showExportMenu,
-                                onDismissRequest = { showExportMenu = false },
-                                shape = RoundedCornerShape(18.dp),
-                                containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.assistant_detail_export_lastchat_bundle)) },
-                                    onClick = {
-                                        showExportMenu = false
-                                        if (hasMemories || hasLorebooks) {
-                                            showExportOptionsDialog = true
-                                        } else {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = pageTitle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            if (currentRoute != null && currentRoute != AssistantDetailRoutes.HOME && navController.previousBackStackEntry != null) {
+                                navController.popBackStack()
+                            } else {
+                                rootNavController.popBackStack()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        AnimatedVisibility(
+                            visible = currentRoute == AssistantDetailRoutes.HOME,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Box {
+                                IconButton(onClick = { showExportMenu = true }) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Upload,
+                                        contentDescription = stringResource(R.string.assistant_detail_export),
+                                        tint = Color.White
+                                    )
+                                }
+
+                                val isDark = LocalDarkMode.current
+                                DropdownMenu(
+                                    expanded = showExportMenu,
+                                    onDismissRequest = { showExportMenu = false },
+                                    shape = RoundedCornerShape(18.dp),
+                                    containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.assistant_detail_export_lastchat_bundle)) },
+                                        onClick = {
+                                            showExportMenu = false
+                                            if (hasMemories || hasLorebooks) {
+                                                showExportOptionsDialog = true
+                                            } else {
+                                                scope.launch {
+                                                    try {
+                                                        val content = AssistantExportImport.exportToLastChatBundle(
+                                                            assistant = assistant,
+                                                            context = context,
+                                                            includeMemories = false,
+                                                            includeLorebooks = false
+                                                        )
+                                                        pendingExportContent = content
+                                                        val fileName = AssistantExportImport.getSuggestedFileName(assistant, "lastchat")
+                                                        exportLauncher.launch(fileName)
+                                                    } catch (e: Exception) {
+                                                        e.printStackTrace()
+                                                        toaster.show(
+                                                            context.getString(
+                                                                R.string.export_failed_message,
+                                                                e.message ?: context.getString(R.string.backup_page_unknown_error)
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.assistant_detail_export_card_json)) },
+                                        onClick = {
+                                            showExportMenu = false
                                             scope.launch {
                                                 try {
-                                                    val content = AssistantExportImport.exportToLastChatBundle(
-                                                        assistant = assistant,
-                                                        context = context,
-                                                        includeMemories = false,
-                                                        includeLorebooks = false
-                                                    )
+                                                    val content = AssistantExportImport.exportToCharacterCardV2(assistant, context)
                                                     pendingExportContent = content
-                                                    val fileName = AssistantExportImport.getSuggestedFileName(assistant, "lastchat")
+                                                    val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2")
                                                     exportLauncher.launch(fileName)
                                                 } catch (e: Exception) {
                                                     e.printStackTrace()
@@ -303,61 +367,57 @@ fun AssistantDetailPage(
                                                 }
                                             }
                                         }
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.assistant_detail_export_card_json)) },
-                                    onClick = {
-                                        showExportMenu = false
-                                        scope.launch {
-                                            try {
-                                                val content = AssistantExportImport.exportToCharacterCardV2(assistant, context)
-                                                pendingExportContent = content
-                                                val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2")
-                                                exportLauncher.launch(fileName)
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                                toaster.show(
-                                                    context.getString(
-                                                        R.string.export_failed_message,
-                                                        e.message ?: context.getString(R.string.backup_page_unknown_error)
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.assistant_detail_export_card_png)) },
+                                        onClick = {
+                                            showExportMenu = false
+                                            scope.launch {
+                                                try {
+                                                    val bytes = AssistantExportImport.exportToCharacterCardPng(assistant, context)
+                                                    if (bytes != null) {
+                                                        pendingExportBytes = bytes
+                                                        val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2_png")
+                                                        pngExportLauncher.launch(fileName)
+                                                    } else {
+                                                        toaster.show(context.getString(R.string.export_failed_create_png))
+                                                    }
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                    toaster.show(
+                                                        context.getString(
+                                                            R.string.export_failed_message,
+                                                            e.message ?: context.getString(R.string.backup_page_unknown_error)
+                                                        )
                                                     )
-                                                )
-                                            }
-                                        }
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.assistant_detail_export_card_png)) },
-                                    onClick = {
-                                        showExportMenu = false
-                                        scope.launch {
-                                            try {
-                                                val bytes = AssistantExportImport.exportToCharacterCardPng(assistant, context)
-                                                if (bytes != null) {
-                                                    pendingExportBytes = bytes
-                                                    val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2_png")
-                                                    pngExportLauncher.launch(fileName)
-                                                } else {
-                                                    toaster.show(context.getString(R.string.export_failed_create_png))
                                                 }
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                                toaster.show(
-                                                    context.getString(
-                                                        R.string.export_failed_message,
-                                                        e.message ?: context.getString(R.string.backup_page_unknown_error)
-                                                    )
-                                                )
                                             }
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         }
-                    }
-                }
-            )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color(0xFF000000)
+                    )
+                )
+
+                // Top fading gradient for smooth scroll cutoff
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color(0xFF000000),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+            }
         },
     ) { innerPadding ->
         NavHost(
@@ -392,138 +452,123 @@ fun AssistantDetailPage(
             }
         ) {
             composable(AssistantDetailRoutes.HOME) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantDetailHome(
-                        assistant = assistant,
-                        navController = navController,
-                    )
-                }
+                AssistantDetailHome(
+                    assistant = assistant,
+                    navController = navController,
+                    onUpdate = { onUpdate(it) },
+                )
             }
 
-            // Profile (avatar, display & chat name, creator notes, tags)
+            // Profile (display & chat name, tags)
             composable(AssistantDetailRoutes.PROFILE) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantProfileSubPage(
-                        assistant = assistant,
-                        tags = tags,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm
-                    )
-                }
+                AssistantProfileSubPage(
+                    assistant = assistant,
+                    tags = tags,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm
+                )
+            }
+
+            // Creator Notes (dedicated workspace, native image embedding)
+            composable(AssistantDetailRoutes.CREATOR_NOTES) {
+                AssistantCreatorNotesSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Personality (system prompt)
             composable(AssistantDetailRoutes.PERSONALITY) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantPersonalitySubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantPersonalitySubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
-            // Scenario (author's note)
+            // Scenario (world scene and context setup)
             composable(AssistantDetailRoutes.SCENARIO) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantScenarioSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantScenarioSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Greetings (initial message + alternate greetings)
             composable(AssistantDetailRoutes.GREETINGS) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantGreetingsSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantGreetingsSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Example Dialogues & SillyTavern settings
             composable(AssistantDetailRoutes.EXAMPLE_DIALOGUES) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantExampleDialoguesSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantExampleDialoguesSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
-            // Lorebooks (nested under Context Management)
+            // Lorebooks (attached lorebooks with toggles)
             composable(AssistantDetailRoutes.LOREBOOKS) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantLorebooksSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm
-                    )
-                }
+                AssistantLorebooksSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm
+                )
             }
 
             // Core Roleplay shell (retained for route compatibility)
             composable(AssistantDetailRoutes.CORE) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantCoreRoleplaySubPage(
-                        assistant = assistant,
-                        tags = tags,
-                        providers = providers,
-                        settings = settings,
-                        onUpdate = { onUpdate(it) },
-                        vm = vm,
-                        catalogSnapshot = catalogSnapshot,
-                        onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
-                        onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
-                    )
-                }
+                AssistantCoreRoleplaySubPage(
+                    assistant = assistant,
+                    tags = tags,
+                    providers = providers,
+                    settings = settings,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm,
+                    catalogSnapshot = catalogSnapshot,
+                    onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
+                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                )
             }
 
             // Advanced
             composable(AssistantDetailRoutes.ADVANCED) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantAdvancedSubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantAdvancedSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Model Configuration
             composable(AssistantDetailRoutes.MODEL) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantModelSubPage(
-                        assistant = assistant,
-                        providers = providers,
-                        ttsProviders = settings.ttsProviders,
-                        catalogSnapshot = catalogSnapshot,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantModelSubPage(
+                    assistant = assistant,
+                    providers = providers,
+                    ttsProviders = settings.ttsProviders,
+                    catalogSnapshot = catalogSnapshot,
+                    onUpdate = { onUpdate(it) }
+                )
             }
 
             // Context & Budget / Context Management
             composable(AssistantDetailRoutes.CONTEXT_MANAGEMENT) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantContextManagementSubPage(
-                        assistant = assistant,
-                        hasSummarizerModelConfigured = false,
-                        onUpdate = { onUpdate(it) },
-                        onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
-                        onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
-                    )
-                }
+                AssistantContextManagementSubPage(
+                    assistant = assistant,
+                    hasSummarizerModelConfigured = false,
+                    onUpdate = { onUpdate(it) },
+                    onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
+                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                )
             }
 
             // UI Customization
             composable(AssistantDetailRoutes.UI) {
-                AnimatedContent<String?>(targetState = currentRoute) {
-                    AssistantUISubPage(
-                        assistant = assistant,
-                        onUpdate = { onUpdate(it) }
-                    )
-                }
+                AssistantUISubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) }
+                )
             }
         }
     }
@@ -569,8 +614,31 @@ fun AssistantDetailPage(
 private fun AssistantDetailHome(
     assistant: Assistant,
     navController: NavHostController,
+    onUpdate: (Assistant) -> Unit,
 ) {
+    val context = LocalContext.current
+    val toaster = LocalToaster.current
+    val haptics = rememberPremiumHaptics()
     val useWideSettingsLayout = LocalSettingsWideLayout.current
+
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val localPath = ImageUtils.copyImageToAppStorage(
+                context = context,
+                sourceUri = uri,
+                subDir = "avatars",
+                fileName = "avatar_bot_${assistant.id}_${System.currentTimeMillis()}.png"
+            )
+            if (localPath != null) {
+                haptics.perform(HapticPattern.Pop)
+                onUpdate(assistant.copy(avatar = Avatar.Image(localPath), useAssistantAvatar = true))
+                toaster.show("Avatar updated")
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -578,7 +646,7 @@ private fun AssistantDetailHome(
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         // ════════════════════════════════════════════════════════════════════
-        // HEADER SECTION - Avatar, Name, System Prompt Preview (2 lines, centered)
+        // HEADER SECTION - Avatar, Name, System Prompt Preview
         // ════════════════════════════════════════════════════════════════════
         Column(
             modifier = Modifier
@@ -593,13 +661,19 @@ private fun AssistantDetailHome(
                     .clip(CircleShape)
                     .background(Color(0xFF000000))
                     .border(1.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
+                    .clickable {
+                        avatarPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
                     .let { modifier ->
                         if (useWideSettingsLayout) {
                             modifier
                         } else {
                             modifier.heroAnimation(key = "assistant_avatar_${assistant.id}")
                         }
-                    }
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 UIAvatar(
                     value = assistant.avatar,
@@ -608,6 +682,12 @@ private fun AssistantDetailHome(
                     modifier = Modifier.size(96.dp)
                 )
             }
+
+            Text(
+                text = "Tap to change avatar",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Text(
                 text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
@@ -633,7 +713,7 @@ private fun AssistantDetailHome(
         Spacer(Modifier.height(8.dp))
 
         // ════════════════════════════════════════════════════════════════════
-        // NAVIGATION CARDS - Dedicated modular sub-pages
+        // NAVIGATION CARDS - Roleplay modular sub-pages
         // ═══════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_core_roleplay)) {
             NavigationCard(
@@ -641,6 +721,13 @@ private fun AssistantDetailHome(
                 title = stringResource(R.string.assistant_detail_profile),
                 description = stringResource(R.string.assistant_detail_core_profile_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.PROFILE) }
+            )
+
+            NavigationCard(
+                icon = Icons.Rounded.Description,
+                title = stringResource(R.string.assistant_detail_section_creator_notes),
+                description = stringResource(R.string.assistant_detail_creator_notes_desc),
+                onClick = { navController.navigate(AssistantDetailRoutes.CREATOR_NOTES) }
             )
 
             NavigationCard(
@@ -665,14 +752,14 @@ private fun AssistantDetailHome(
             )
 
             NavigationCard(
-                icon = Icons.Rounded.DataObject,
+                icon = Icons.Rounded.AutoStories,
                 title = stringResource(R.string.assistant_detail_section_lorebooks),
                 description = stringResource(R.string.assistant_detail_core_lorebooks_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) }
             )
 
             NavigationCard(
-                icon = Icons.Rounded.Upload,
+                icon = Icons.Rounded.Forum,
                 title = stringResource(R.string.assistant_page_preset_messages),
                 description = stringResource(R.string.assistant_page_preset_messages_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.EXAMPLE_DIALOGUES) }

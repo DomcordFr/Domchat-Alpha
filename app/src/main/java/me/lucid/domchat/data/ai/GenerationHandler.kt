@@ -1206,6 +1206,34 @@ class GenerationHandler(
             baseSystemPromptBuilder.append(evaluated)
         }
 
+        // Evaluated Scenario injection (scene setup and world situation)
+        if (!assistant.scenario.isNullOrBlank()) {
+            val evaluatedScenario = RoleplayPromptAssembler.evaluateMacros(
+                text = assistant.scenario,
+                charName = charName,
+                userName = userName,
+                modelName = effectiveModelName
+            )
+            baseSystemPromptBuilder.appendLine()
+            baseSystemPromptBuilder.appendLine("<Scenario>")
+            baseSystemPromptBuilder.appendLine(evaluatedScenario)
+            baseSystemPromptBuilder.appendLine("</Scenario>")
+        }
+
+        // Evaluated Example Dialogues injection
+        if (!assistant.exampleDialogue.isNullOrBlank()) {
+            val evaluatedExamples = RoleplayPromptAssembler.evaluateMacros(
+                text = assistant.exampleDialogue,
+                charName = charName,
+                userName = userName,
+                modelName = effectiveModelName
+            )
+            baseSystemPromptBuilder.appendLine()
+            baseSystemPromptBuilder.appendLine("<Example_Dialogues>")
+            baseSystemPromptBuilder.appendLine(evaluatedExamples)
+            baseSystemPromptBuilder.appendLine("</Example_Dialogues>")
+        }
+
         // SillyTavern User Persona lore & description injection
         if (activePersona.description.isNotBlank() || activePersona.pronouns.isNotBlank()) {
             val evaluatedPersona = RoleplayPromptAssembler.evaluateMacros(
@@ -2026,7 +2054,7 @@ class GenerationHandler(
             frequencyPenalty = assistant.frequencyPenalty,
             presencePenalty = assistant.presencePenalty,
             repetitionPenalty = assistant.repetitionPenalty,
-            topK = null,
+            topK = assistant.topK,
             maxTokens = if (buildResult.messageBudgetTokens != null) {
                 smartOutputTokenBudget(model, assistant.maxTokens) ?: assistant.maxTokens
             } else {

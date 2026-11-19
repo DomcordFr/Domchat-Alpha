@@ -260,33 +260,137 @@ fun ColumnScope.VoiceList(
             }
     }
 
-    Box(
+    Column(
         modifier = Modifier
+            .fillMaxSize()
             .weight(1f)
-            .fillMaxWidth()
     ) {
+        // Sticky Search Field
+        val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
+        OutlinedTextField(
+            value = searchKeywords,
+            onValueChange = { searchKeywords = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFF000000).copy(alpha = 0.5f),
+                unfocusedContainerColor = Color(0xFF000000).copy(alpha = 0.3f),
+                focusedTextColor = Color(0xFFF2F2F7),
+                unfocusedTextColor = Color(0xFFF2F2F7),
+                disabledTextColor = Color(0xFF8A8A96),
+                cursorColor = Color(0xFFF2F2F7),
+                focusedBorderColor = Color.White.copy(alpha = 0.30f),
+                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+            ),
+            leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White.copy(alpha = 0.6f)) },
+            trailingIcon = {
+                if (searchKeywords.isNotEmpty()) {
+                    IconButton(onClick = { searchKeywords = "" }) {
+                        Icon(Icons.Rounded.Close, null, tint = Color.White.copy(alpha = 0.6f))
+                    }
+                }
+            },
+            placeholder = { Text("Search voices", color = Color.White.copy(alpha = 0.45f)) },
+            maxLines = 1,
+            singleLine = true,
+            shape = searchFieldShape,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+        )
+
+        // Provider Pills
+        if (providers.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                state = providerBadgeListState,
+            ) {
+                items(providers) { provider ->
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isPressed by interactionSource.collectIsPressedAsState()
+                    val scale by animateFloatAsState(
+                        targetValue = if (isPressed) 0.85f else 1f,
+                        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                        label = "voice_provider_badge_scale",
+                    )
+                    val isActive = activeProviderId == provider.id
+                    Surface(
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            activeProviderId = provider.id
+                            val position = providerPositions[provider.id] ?: 0
+                            coroutineScope.launch {
+                                lazyListState.animateScrollToItem(position)
+                            }
+                        },
+                        interactionSource = interactionSource,
+                        shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
+                        color = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                            }
+                            .border(
+                                width = 0.5.dp,
+                                brush = if (isActive) {
+                                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
+                                } else {
+                                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                },
+                                shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
+                            )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            TTSProviderIcon(
+                                provider = provider,
+                                catalogSnapshot = catalogSnapshot,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color.White
+                            )
+                            Text(
+                                text = provider.name.ifBlank { "TTS" },
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Voice List
         LazyColumn(
             state = lazyListState,
             verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 84.dp,
-                bottom = 100.dp,
+                top = 4.dp,
+                bottom = 24.dp,
             ),
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .weight(1f)
                 .onGloballyPositioned { coordinates ->
                     viewportHeight = coordinates.size.height
                 },
         ) {
-            if (providers.isEmpty()) {
+            if (providers.isEmpty() || providerListItems.isEmpty()) {
                 item {
                     Text(
-                        text = "No TTS voices",
+                        text = "No TTS voices found",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.extendColors.gray6,
-                        modifier = Modifier.padding(8.dp),
+                        color = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(16.dp),
                     )
                 }
             }
@@ -312,205 +416,6 @@ fun ColumnScope.VoiceList(
                         onSelect = onSelect,
                         modifier = Modifier.animateItem(),
                     )
-                }
-            }
-        }
-
-        val thresholdPx = remember { with(density) { 24.dp.toPx() } }
-        val topFadeAlpha by remember {
-            derivedStateOf {
-                if (lazyListState.firstVisibleItemIndex > 0) {
-                    1f
-                } else {
-                    (lazyListState.firstVisibleItemScrollOffset / thresholdPx).coerceIn(0f, 1f)
-                }
-            }
-        }
-
-        if (topFadeAlpha > 0f) {
-            val isDark = LocalDarkMode.current
-            val fadeBg = Color(0xFF000000)
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .graphicsLayer { alpha = topFadeAlpha }
-            ) {
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(42.dp)
-                        .background(fadeBg)
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    fadeBg,
-                                    Color.Transparent,
-                                )
-                            )
-                        )
-                )
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(84.dp)
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
-        ) {
-            val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-            OutlinedTextField(
-                value = searchKeywords,
-                onValueChange = { searchKeywords = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(searchFieldShape)
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, searchFieldShape)
-                    .domChatBlurEffect(
-                        containerColor = Color(0xFF000000).copy(alpha = 0.12f),
-                        shape = searchFieldShape
-                    ),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedTextColor = Color(0xFFF2F2F7),
-                    unfocusedTextColor = Color(0xFFF2F2F7),
-                    disabledTextColor = Color(0xFF8A8A96),
-                    cursorColor = Color(0xFFF2F2F7),
-                    errorCursorColor = Color(0xFFEF4444),
-                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                    disabledBorderColor = Color.White.copy(alpha = 0.06f),
-                    errorBorderColor = Color(0xFFEF4444),
-                    focusedLabelColor = Color(0xFFF2F2F7),
-                    unfocusedLabelColor = Color(0xFF8A8A96),
-                    focusedPlaceholderColor = Color(0xFF8A8A96),
-                    unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                    disabledPlaceholderColor = Color(0xFF8A8A96),
-                    focusedLeadingIconColor = Color(0xFF8A8A96),
-                    unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                    focusedTrailingIconColor = Color(0xFF8A8A96),
-                    unfocusedTrailingIconColor = Color(0xFF8A8A96),
-                    focusedSupportingTextColor = Color(0xFF8A8A96),
-                    unfocusedSupportingTextColor = Color(0xFF8A8A96),
-                    errorSupportingTextColor = Color(0xFFEF4444),
-                ),
-                leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                placeholder = { Text("Search voices") },
-                maxLines = 1,
-                singleLine = true,
-                shape = searchFieldShape,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color(0xFF000000),
-                            )
-                        )
-                    )
-            )
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(36.dp)
-                    .background(Color(0xFF000000))
-            )
-        }
-
-        if (providers.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    state = providerBadgeListState,
-                ) {
-                    items(providers) { provider ->
-                        val interactionSource = remember { MutableInteractionSource() }
-                        val isPressed by interactionSource.collectIsPressedAsState()
-                        val scale by animateFloatAsState(
-                            targetValue = if (isPressed) 0.85f else 1f,
-                            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-                            label = "voice_provider_badge_scale",
-                        )
-                        val isActive = activeProviderId == provider.id
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                activeProviderId = provider.id
-                                val position = providerPositions[provider.id] ?: 0
-                                coroutineScope.launch {
-                                    lazyListState.animateScrollToItem(position)
-                                }
-                            },
-                            interactionSource = interactionSource,
-                            shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                            color = Color(0xFF000000),
-                            contentColor = Color.White,
-                            modifier = Modifier
-                                .border(
-                                    width = 0.5.dp,
-                                    brush = if (isActive) {
-                                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
-                                    } else {
-                                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                                    },
-                                    shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
-                                )
-                                .domChatBlurEffect(
-                                    containerColor = Color(0xFF000000).copy(alpha = 0.08f),
-                                    shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
-                                )
-                                .graphicsLayer {
-                                    scaleX = scale
-                                    scaleY = scale
-                                },
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                TTSProviderIcon(
-                                    provider = provider,
-                                    catalogSnapshot = catalogSnapshot,
-                                    modifier = Modifier.size(22.dp),
-                                    tint = Color.White
-                                )
-                                Text(
-                                    text = provider.name.ifBlank { "TTS" },
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -551,14 +456,11 @@ private fun groupedVoiceItemCornerRadii(
     selected: Boolean,
     position: VoiceItemPosition,
 ): VoiceItemCornerRadii {
-    if (selected) {
-        return VoiceItemCornerRadii(50.dp, 50.dp, 50.dp, 50.dp)
-    }
     return when (position) {
-        VoiceItemPosition.FIRST -> VoiceItemCornerRadii(24.dp, 24.dp, 10.dp, 10.dp)
-        VoiceItemPosition.MIDDLE -> VoiceItemCornerRadii(10.dp, 10.dp, 10.dp, 10.dp)
-        VoiceItemPosition.LAST -> VoiceItemCornerRadii(10.dp, 10.dp, 24.dp, 24.dp)
-        VoiceItemPosition.SINGLE -> VoiceItemCornerRadii(24.dp, 24.dp, 24.dp, 24.dp)
+        VoiceItemPosition.FIRST -> VoiceItemCornerRadii(18.dp, 18.dp, 6.dp, 6.dp)
+        VoiceItemPosition.MIDDLE -> VoiceItemCornerRadii(6.dp, 6.dp, 6.dp, 6.dp)
+        VoiceItemPosition.LAST -> VoiceItemCornerRadii(6.dp, 6.dp, 18.dp, 18.dp)
+        VoiceItemPosition.SINGLE -> VoiceItemCornerRadii(18.dp, 18.dp, 18.dp, 18.dp)
     }
 }
 
@@ -611,7 +513,7 @@ private fun VoiceItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val shape = rememberAnimatedGroupedVoiceItemShape(selected = selected, position = position)
-    val containerColor = if (selected) Color(0xFF141416).copy(alpha = 0.85f) else Color(0xFF000000).copy(alpha = 0.55f)
+    val containerColor = if (selected) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
     val contentColor = Color(0xFFFFFFFF)
 
     Row(
@@ -621,12 +523,8 @@ private fun VoiceItem(
             .fillMaxWidth()
             .clip(shape)
             .background(containerColor)
-            .domChatBlurEffect(
-                containerColor = Color(0xFF000000).copy(alpha = 0.08f),
-                shape = shape
-            )
             .border(
-                width = 0.5.dp,
+                width = if (selected) 1.dp else 0.5.dp,
                 brush = if (selected) {
                     me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
                 } else {
@@ -666,6 +564,31 @@ private fun VoiceItem(
                 Tag(type = TagType.DEFAULT) { Text("p${"%.2f".format(voice.pitch)}", color = Color.White) }
                 if (provider !is TTSProviderSetting.SystemTTS) {
                     Tag(type = TagType.DEFAULT) { Text(provider.name.ifBlank { "TTS" }, color = Color.White) }
+                }
+            }
+        }
+        if (selected) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = "ACTIVE",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                        color = Color.White
+                    )
                 }
             }
         }

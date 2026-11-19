@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -112,6 +113,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import kotlin.text.Charsets
 import kotlin.text.Regex
@@ -1041,6 +1044,7 @@ private fun JanitorCharacterInspectorSheet(
 
     var fullExtract by remember(character.id) { mutableStateOf<JanitorExtractResponse?>(null) }
     var isExtractLoading by remember(character.id) { mutableStateOf(false) }
+    var showFullScreenImage by remember { mutableStateOf(false) }
 
     LaunchedEffect(character.id) {
         isExtractLoading = true
@@ -1107,6 +1111,10 @@ private fun JanitorCharacterInspectorSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(340.dp)
+                            .then(
+                                if (imageUrl.isNotBlank()) Modifier.clickable { showFullScreenImage = true }
+                                else Modifier
+                            )
                     ) {
                         if (imageUrl.isNotBlank()) {
                             AsyncImage(
@@ -1680,6 +1688,48 @@ private fun JanitorCharacterInspectorSheet(
 }
 }
 }
+
+    if (showFullScreenImage && imageUrl.isNotBlank()) {
+        Dialog(
+            onDismissRequest = { showFullScreenImage = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.95f))
+                    .clickable { showFullScreenImage = false },
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = character.name,
+                    modifier = Modifier.fillMaxSize(),
+                    alignment = Alignment.Center,
+                    contentScale = ContentScale.Fit,
+                )
+                IconButton(
+                    onClick = { showFullScreenImage = false },
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(top = 16.dp, end = 16.dp)
+                        .align(Alignment.TopEnd)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.50f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        }
+    }
 
 /**
  * Custom pulsing dark-glass orbital loader. Replaces the stock circular progress spinner

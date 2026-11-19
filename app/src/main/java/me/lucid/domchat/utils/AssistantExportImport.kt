@@ -336,8 +336,9 @@ object AssistantExportImport : KoinComponent {
                 name = assistant.name,
                 description = "", 
                 personality = assistant.systemPrompt, 
+                scenario = assistant.scenario.orEmpty(),
                 firstMes = assistant.presetMessages.firstOrNull()?.toContentText() ?: "",
-                mesExample = "", 
+                mesExample = assistant.exampleDialogue.orEmpty(), 
                 systemPrompt = assistant.systemPrompt, 
                 characterBook = characterBook,
                 tags = assistant.tags.map { it.toString() },
@@ -1179,7 +1180,9 @@ object AssistantExportImport : KoinComponent {
                 alternateGreetings = alternateGreetings,
                 creatorNotes = if (!creatorNotes.isNullOrBlank()) creatorNotes else description.orEmpty(),
                 creator = creator,
-                characterVersion = characterVersion
+                characterVersion = characterVersion,
+                scenario = scenario.takeIf { it.isNotBlank() },
+                exampleDialogue = mesExample.takeIf { it.isNotBlank() }
             )
 
             // Avatar handling

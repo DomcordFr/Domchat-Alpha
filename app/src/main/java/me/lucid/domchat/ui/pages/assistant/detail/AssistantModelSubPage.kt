@@ -269,6 +269,186 @@ fun AssistantModelSubPage(
                     }
                 }
             }
+
+            // Top-K
+            SettingGroupItem(
+                title = "Top-K",
+                subtitle = if (assistant.topK != null) {
+                    "${assistant.topK}"
+                } else {
+                    stringResource(R.string.common_default)
+                },
+                trailing = {
+                    HapticSwitch(
+                        checked = assistant.topK != null,
+                        onCheckedChange = { enabled ->
+                            onUpdate(assistant.copy(topK = if (enabled) 40 else null))
+                        }
+                    )
+                }
+            )
+
+            // Top-K Slider
+            ExpandableContent(visible = assistant.topK != null) {
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DomChatSlider(
+                            value = (assistant.topK ?: 40).toFloat(),
+                            onValueChange = { onUpdate(assistant.copy(topK = it.toInt().coerceAtLeast(1))) },
+                            valueRange = 1f..100f,
+                            steps = 99,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // Min-P Sampling
+            SettingGroupItem(
+                title = "Min-P Sampling",
+                subtitle = if (assistant.minP != null) {
+                    "${assistant.minP}"
+                } else {
+                    stringResource(R.string.common_default)
+                },
+                trailing = {
+                    HapticSwitch(
+                        checked = assistant.minP != null,
+                        onCheckedChange = { enabled ->
+                            onUpdate(assistant.copy(minP = if (enabled) 0.05f else null))
+                        }
+                    )
+                }
+            )
+
+            // Min-P Slider
+            ExpandableContent(visible = assistant.minP != null) {
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DomChatSlider(
+                            value = assistant.minP ?: 0.05f,
+                            onValueChange = { onUpdate(assistant.copy(minP = it.toFixed(2).toFloatOrNull() ?: 0.05f)) },
+                            valueRange = 0f..1f,
+                            steps = 19,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // Repetition Penalty
+            SettingGroupItem(
+                title = "Repetition Penalty",
+                subtitle = if (assistant.repetitionPenalty != null) {
+                    "${assistant.repetitionPenalty}"
+                } else {
+                    stringResource(R.string.common_default)
+                },
+                trailing = {
+                    HapticSwitch(
+                        checked = assistant.repetitionPenalty != null,
+                        onCheckedChange = { enabled ->
+                            onUpdate(assistant.copy(repetitionPenalty = if (enabled) 1.1f else null))
+                        }
+                    )
+                }
+            )
+
+            // Repetition Penalty Slider
+            ExpandableContent(visible = assistant.repetitionPenalty != null) {
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DomChatSlider(
+                            value = assistant.repetitionPenalty ?: 1.1f,
+                            onValueChange = { onUpdate(assistant.copy(repetitionPenalty = it.toFixed(2).toFloatOrNull() ?: 1.1f)) },
+                            valueRange = 1.0f..2.0f,
+                            steps = 19,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // Frequency Penalty
+            SettingGroupItem(
+                title = "Frequency Penalty",
+                subtitle = if (assistant.frequencyPenalty != null) {
+                    "${assistant.frequencyPenalty}"
+                } else {
+                    stringResource(R.string.common_default)
+                },
+                trailing = {
+                    HapticSwitch(
+                        checked = assistant.frequencyPenalty != null,
+                        onCheckedChange = { enabled ->
+                            onUpdate(assistant.copy(frequencyPenalty = if (enabled) 0.5f else null))
+                        }
+                    )
+                }
+            )
+
+            // Frequency Penalty Slider
+            ExpandableContent(visible = assistant.frequencyPenalty != null) {
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DomChatSlider(
+                            value = assistant.frequencyPenalty ?: 0.5f,
+                            onValueChange = { onUpdate(assistant.copy(frequencyPenalty = it.toFixed(2).toFloatOrNull() ?: 0.5f)) },
+                            valueRange = -2.0f..2.0f,
+                            steps = 39,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            // Presence Penalty
+            SettingGroupItem(
+                title = "Presence Penalty",
+                subtitle = if (assistant.presencePenalty != null) {
+                    "${assistant.presencePenalty}"
+                } else {
+                    stringResource(R.string.common_default)
+                },
+                trailing = {
+                    HapticSwitch(
+                        checked = assistant.presencePenalty != null,
+                        onCheckedChange = { enabled ->
+                            onUpdate(assistant.copy(presencePenalty = if (enabled) 0.5f else null))
+                        }
+                    )
+                }
+            )
+
+            // Presence Penalty Slider
+            ExpandableContent(visible = assistant.presencePenalty != null) {
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DomChatSlider(
+                            value = assistant.presencePenalty ?: 0.5f,
+                            onValueChange = { onUpdate(assistant.copy(presencePenalty = it.toFixed(2).toFloatOrNull() ?: 0.5f)) },
+                            valueRange = -2.0f..2.0f,
+                            steps = 39,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════════

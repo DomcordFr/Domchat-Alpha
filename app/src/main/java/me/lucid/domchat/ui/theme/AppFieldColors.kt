@@ -56,7 +56,7 @@ fun appFilterChipColors(selected: Boolean): androidx.compose.material3.Selectabl
         containerColor = Color(0xFF000000),
         labelColor = Color(0xFF8A8A96),
         iconColor = Color(0xFF8A8A96),
-        selectedContainerColor = Color.White.copy(alpha = 0.16f),
+        selectedContainerColor = Color(0xFF000000),
         selectedLabelColor = Color(0xFFF2F2F7),
         selectedLeadingIconColor = Color(0xFFF2F2F7),
         selectedTrailingIconColor = Color(0xFFF2F2F7),
@@ -67,7 +67,7 @@ fun appFilterChipColors(selected: Boolean): androidx.compose.material3.Selectabl
 fun appFilterChipBorder(selected: Boolean): androidx.compose.foundation.BorderStroke =
     androidx.compose.foundation.BorderStroke(
         0.5.dp,
-        if (selected) Color.White.copy(alpha = 0.38f) else Color.White.copy(alpha = 0.12f)
+        if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
     )
 
 /**

@@ -2032,6 +2032,7 @@ fun CharacterInspectorSheet(
     val cardBgColor = Color(0xFF000000)
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
+    val context = LocalContext.current
     var viewerImageUrls by remember { mutableStateOf(emptyList<String>()) }
     var viewerOpen by remember { mutableStateOf(false) }
     var viewerCurrentPage by remember { mutableIntStateOf(0) }
@@ -2087,6 +2088,18 @@ fun CharacterInspectorSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(340.dp)
+                            .clickable {
+                                val url = when (val av = assistant.avatar) {
+                                    is Avatar.Image -> av.url
+                                    is Avatar.Resource -> "android.resource://${context.packageName}/${if (av.id != 0) av.id else me.lucid.domchat.R.drawable.default_generical_pfp}"
+                                    else -> null
+                                }
+                                if (!url.isNullOrBlank()) {
+                                    viewerImageUrls = listOf(url)
+                                    viewerCurrentPage = 0
+                                    viewerOpen = true
+                                }
+                            }
                     ) {
                         FullCharacterCardImage(
                             name = assistant.effectiveDisplayName,
@@ -3031,11 +3044,13 @@ fun CharacterInspectorSheet(
             onDismissRequest = { viewerOpen = false },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             val viewerPagerState = rememberPagerState(initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))) { viewerImageUrls.size }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.95f)),
+                    .background(Color.Black.copy(alpha = 0.95f))
+                    .clickable { viewerOpen = false },
             ) {
                 HorizontalPager(
                     state = viewerPagerState,

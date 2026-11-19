@@ -1726,6 +1726,7 @@ fun MinimalChatInput(
                     currentModel = assistant.chatModelId ?: settings.chatModelId,
                     providers = filteredProviders,
                     modelType = me.lucid.ai.provider.ModelType.CHAT,
+                    style = me.lucid.domchat.ui.components.ai.ModelPickerStyle.LIQUID_GLASS,
                     onSelect = { selectedModel: Model ->
                         onUpdateChatModel(selectedModel)
                         showModelPickerSheet = false
@@ -2358,6 +2359,7 @@ fun MinimalChatInput(
     if (showSamplersSheet) {
         var tempDraft by remember { mutableFloatStateOf(assistant.temperature ?: 1.0f) }
         var minPDraft by remember { mutableFloatStateOf(assistant.minP ?: 0.0f) }
+        var topKDraft by remember { mutableFloatStateOf(assistant.topK?.toFloat() ?: 0.0f) }
         var topPDraft by remember { mutableFloatStateOf(assistant.topP ?: 1.0f) }
         var freqDraft by remember { mutableFloatStateOf(assistant.frequencyPenalty ?: 0.0f) }
         var presDraft by remember { mutableFloatStateOf(assistant.presencePenalty ?: 0.0f) }
@@ -2411,6 +2413,24 @@ fun MinimalChatInput(
                         Text(String.format(java.util.Locale.US, "%.2f", tempDraft), color = MaterialTheme.colorScheme.primary)
                     }
                     DomChatSlider(value = tempDraft, onValueChange = { tempDraft = it }, valueRange = 0.0f..2.0f)
+                }
+
+                // Top-K
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Top-K", style = MaterialTheme.typography.bodyMedium)
+                        val topKInt = topKDraft.toInt()
+                        Text(if (topKInt <= 0) "Off (Default)" else "$topKInt", color = MaterialTheme.colorScheme.primary)
+                    }
+                    DomChatSlider(
+                        value = topKDraft,
+                        onValueChange = { topKDraft = it },
+                        valueRange = 0.0f..100.0f,
+                        steps = 99
+                    )
                 }
 
                 // Min-P
@@ -2486,6 +2506,7 @@ fun MinimalChatInput(
                             onUpdateAssistant(
                                 assistant.copy(
                                     temperature = tempDraft,
+                                    topK = topKDraft.toInt().takeIf { it > 0 },
                                     minP = minPDraft.takeIf { it > 0f },
                                     topP = topPDraft,
                                     frequencyPenalty = freqDraft.takeIf { it != 0f },

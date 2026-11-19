@@ -390,33 +390,11 @@ private fun ReasoningOptionItem(
     isAmoled: Boolean  // Only use Color.Black when actually in OLED mode
 ) {
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    
-    // Animated corner radius - selected items animate to fully round
-    val topCorner by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (selected) 50.dp else when (position) {
-            ItemPosition.FIRST, ItemPosition.SINGLE -> 24.dp
-            else -> 10.dp
-        },
-        animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f),
-        label = "topCorner"
-    )
-    val bottomCorner by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (selected) 50.dp else when (position) {
-            ItemPosition.LAST, ItemPosition.SINGLE -> 24.dp
-            else -> 10.dp
-        },
-        animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f),
-        label = "bottomCorner"
-    )
-    
-    val itemShape = RoundedCornerShape(
-        topStart = topCorner, topEnd = topCorner,
-        bottomStart = bottomCorner, bottomEnd = bottomCorner
-    )
+    val itemShape = RoundedCornerShape(18.dp)
     
     val isDark = LocalDarkMode.current
     val rowBackground = if (selected) {
-        if (isDark) Color(0xFF141416).copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.12f)
+        Color(0xFF000000)
     } else {
         if (isDark) Color(0xFF000000).copy(alpha = 0.55f) else domChatCardContainerColor()
     }
@@ -426,7 +404,7 @@ private fun ReasoningOptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(itemShape)
-            .border(0.5.dp, borderBrush, itemShape)
+            .border(if (selected) 1.dp else 0.5.dp, borderBrush, itemShape)
             .background(rowBackground)
             .clickable {
                 haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
@@ -449,13 +427,38 @@ private fun ReasoningOptionItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (selected) (if (isDark) Color.White else Color.Black) else MaterialTheme.colorScheme.onSurface
+                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (selected) (if (isDark) Color.White.copy(alpha = 0.75f) else Color.Black.copy(alpha = 0.75f)) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (selected) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        if (selected) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = "ACTIVE",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }
@@ -468,7 +471,7 @@ private fun ReasoningLevelCard(
     title: @Composable () -> Unit = {},
     description: @Composable () -> Unit = {},
     onClick: () -> Unit,
-    shape: Shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+    shape: Shape = RoundedCornerShape(18.dp),
     containerColor: Color? = null
 ) {
     val amoledMode by rememberAmoledDarkMode()
@@ -477,31 +480,24 @@ private fun ReasoningLevelCard(
     
     val defaultContainerColor = domChatCardContainerColor()
     val resolvedContainerColor = if (selected) {
-        if (isDarkMode) Color.White.copy(alpha = 0.20f) else Color.Black.copy(alpha = 0.12f)
-    } else (containerColor ?: defaultContainerColor)
+        Color(0xFF000000)
+    } else (containerColor ?: if (isDarkMode) Color(0xFF000000).copy(alpha = 0.55f) else defaultContainerColor)
     
     val defaultContentColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
-    val resolvedContentColor = if (selected) (if (isDarkMode) Color.White else Color.Black) else defaultContentColor
+    val resolvedContentColor = if (selected) Color.White else defaultContentColor
     
     val elevation = 0.dp
-    val tonalElevation = 0.dp
 
     val cardElevation = CardDefaults.cardElevation(defaultElevation = elevation)
     val cardColors = CardDefaults.cardColors(
         containerColor = resolvedContainerColor,
         contentColor = resolvedContentColor
     )
-    // Selected items are completely round, non-selected use 10.dp corners
-    val resolvedShape = if (selected) RoundedCornerShape(50) else RoundedCornerShape(14.dp)
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (selected) 0.38f else 0.14f),
-            Color.White.copy(alpha = if (selected) 0.14f else 0.04f)
-        )
-    )
+    val resolvedShape = RoundedCornerShape(18.dp)
+    val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
     Card(
         onClick = onClick,
-        modifier = modifier.border(0.5.dp, borderBrush, resolvedShape),
+        modifier = modifier.border(if (selected) 1.dp else 0.5.dp, borderBrush, resolvedShape),
         shape = resolvedShape,
         elevation = cardElevation,
         colors = cardColors
@@ -518,11 +514,32 @@ private fun ReasoningLevelCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                    title()
-                }
-                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                    description()
+                title()
+                description()
+            }
+            if (selected) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "ACTIVE",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }

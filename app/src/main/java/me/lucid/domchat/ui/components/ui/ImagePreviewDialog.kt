@@ -40,6 +40,15 @@ import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.saveToDownloads
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.draw.clip
+import coil3.request.allowHardware
+import coil3.request.crossfade
+
 @Composable
 fun ImagePreviewDialog(
     images: List<String>,
@@ -55,14 +64,16 @@ fun ImagePreviewDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
             dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
         )
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         // Full screen black background in dark mode
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (isDarkMode) Color.Black else Color.Black.copy(alpha = 0.9f))
+                .background(if (isDarkMode) Color.Black else Color.Black.copy(alpha = 0.95f))
         ) {
             // Image container - full bleed without rounded corners for proper clipping
             Box(
@@ -78,12 +89,38 @@ fun ImagePreviewDialog(
                         val request = remember(images[index], context) {
                             coil3.request.ImageRequest.Builder(context)
                                 .data(images[index])
-                                .size(coil3.size.Dimension(2048), coil3.size.Dimension(2048))
+                                .crossfade(true)
+                                .allowHardware(true)
+                                .apply {
+                                    if (images[index].startsWith("data:")) {
+                                        memoryCacheKey(images[index].take(200))
+                                    }
+                                }
                                 .build()
                         }
                         val painter = rememberAsyncImagePainter(request)
                         return@ImagePager Pair(painter, painter.intrinsicSize)
                     },
+                )
+            }
+
+            // Close button top-end
+            IconButton(
+                onClick = onDismissRequest,
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(top = 16.dp, end = 16.dp)
+                    .align(Alignment.TopEnd)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.50f))
+                    .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = "Close",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp),
                 )
             }
 
