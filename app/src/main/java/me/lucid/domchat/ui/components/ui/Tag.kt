@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import androidx.compose.ui.graphics.Color
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 enum class TagType {
     DEFAULT,
@@ -66,6 +67,7 @@ fun Tag(
         TagType.ERROR -> Color(0xFFFF453A)
         else -> Color(0xFFF2F2F7)
     }
+    val tagShape = me.lucid.domchat.ui.theme.AppShapes.Tag
     ProvideTextStyle(MaterialTheme.typography.labelSmall.copy(color = textColor)) {
         Row(
             modifier = modifier
@@ -73,9 +75,14 @@ fun Tag(
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(me.lucid.domchat.ui.theme.AppShapes.Tag)
-                .background(background)
-                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Tag)
+                .then(
+                    me.lucid.domchat.ui.theme.liquidGlassSurface(
+                        shape = tagShape,
+                        fillColor = Color.White.copy(alpha = 0.08f),
+                        borderWidth = 0.5.dp,
+                        specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                    )
+                )
                 .let {
                     if (onClick != null) {
                         it.clickable(
@@ -89,7 +96,7 @@ fun Tag(
                         it
                     }
                 }
-                .padding(horizontal = 6.dp, vertical = 1.dp),
+                .padding(horizontal = 7.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             children()

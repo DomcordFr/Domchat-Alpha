@@ -3,6 +3,7 @@ package me.lucid.domchat.ui.pages.setting
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -13,6 +14,9 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -531,46 +535,73 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
             titleContentColor = Color(0xFFF2F2F7),
             textContentColor = Color(0xFFF2F2F7),
             title = {
-                when (editorStep) {
-                    EditorStep.Persona -> {
-                        Text(
-                            text = if (editingTargetId == null) "Create Persona" else "Edit Persona",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                    }
-                    EditorStep.LorebookPicker -> {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            IconButton(
-                                onClick = { editorStep = EditorStep.Persona },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = Color.White.copy(alpha = 0.9f),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                AnimatedContent(
+                    targetState = editorStep,
+                    transitionSpec = {
+                        if (targetState == EditorStep.LorebookPicker) {
+                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeIn(animationSpec = tween(220)))
+                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeOut(animationSpec = tween(180)))
+                        } else {
+                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeIn(animationSpec = tween(220)))
+                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeOut(animationSpec = tween(180)))
+                        }
+                    },
+                    label = "persona_title_step_anim"
+                ) { step ->
+                    when (step) {
+                        EditorStep.Persona -> {
                             Text(
-                                text = "Lorebooks",
+                                text = if (editingTargetId == null) "Create Persona" else "Edit Persona",
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                 color = Color.White
                             )
+                        }
+                        EditorStep.LorebookPicker -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                IconButton(
+                                    onClick = { editorStep = EditorStep.Persona },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = Color.White.copy(alpha = 0.9f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "Lorebooks",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }
             },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    when (editorStep) {
+                AnimatedContent(
+                    targetState = editorStep,
+                    transitionSpec = {
+                        if (targetState == EditorStep.LorebookPicker) {
+                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeIn(animationSpec = tween(220)))
+                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeOut(animationSpec = tween(180)))
+                        } else {
+                            (slideInHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { -it } + fadeIn(animationSpec = tween(220)))
+                                .togetherWith(slideOutHorizontally(animationSpec = spring(stiffness = 500f, dampingRatio = 0.82f)) { it } + fadeOut(animationSpec = tween(180)))
+                        }
+                    },
+                    label = "persona_body_step_anim"
+                ) { step ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        when (step) {
                         EditorStep.Persona -> {
                             // Built-in Avatar Picker with Square Crop
                             Row(
@@ -760,7 +791,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         }
                     }
                 }
-            },
+            }
+        },
             confirmButton = {
                 Button(
                     onClick = {

@@ -212,6 +212,7 @@ private class DrawBackdropElement(
                 node.backdropScale != backdropScale
 
         val oldBackdrop = node.backdrop
+        val backdropChanged = oldBackdrop !== backdrop
         node.backdrop = backdrop
         node.shapeProvider = shapeProvider
         node.effects = effects
@@ -223,14 +224,16 @@ private class DrawBackdropElement(
         node.onDrawFront = onDrawFront
         node.backdropScale = backdropScale
         node.frozen = frozen
-        if (captureChanged) {
-            node.surfaceDirty = true
-        }
-        node.invalidateDrawCache()
-        if (oldBackdrop !== backdrop) {
+        if (backdropChanged) {
+            node.resetBackdropRecording()
             node.unregisterSampler(oldBackdrop)
             node.registerSampler(backdrop)
         }
+        if (captureChanged) {
+            node.surfaceDirty = true
+            node.invalidateDraw()
+        }
+        node.invalidateDrawCache()
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -312,6 +315,15 @@ private class DrawBackdropNode(
 
     /** Invalidates this sampler's draw when the backdrop source changes (e.g. wallpaper bitmap finished decoding). */
     private val invalidateSamplerDraw: () -> Unit = {
+        surfaceDirty = true
+        invalidateDraw()
+    }
+
+    fun resetBackdropRecording() {
+        recordedBackdropVersion = null
+        recordedContentVersion = -1
+        recordedBackdropOffset = null
+        recordedBackdropSize = IntSize.Zero
         surfaceDirty = true
         invalidateDraw()
     }
@@ -429,7 +441,7 @@ private class DrawBackdropNode(
         val offsetSignificantlyChanged =
             recordedBackdropOffset == null || (offset - (recordedBackdropOffset ?: offset)).getDistance() > 1f
         val baseNeedsRecord = when {
-            frozen() && hasRecording -> geometryChanged || contentChanged
+            frozen() && hasRecording && !versionChanged -> geometryChanged || contentChanged
             else -> geometryChanged || versionChanged || contentChanged
         }
         val needsRecord = baseNeedsRecord || (!frozen() && offsetSignificantlyChanged)

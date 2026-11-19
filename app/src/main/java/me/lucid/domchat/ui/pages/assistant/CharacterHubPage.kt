@@ -10,6 +10,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -2014,11 +2015,25 @@ fun CharacterInspectorSheet(
         shape = sheetShape,
         maxHeight = screenHeight * 0.92f,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
+        CompositionLocalProvider(
+            LocalContentColor provides Color(0xFFF2F2F7),
+            LocalTextStyle provides MaterialTheme.typography.bodyMedium.copy(color = Color(0xFFF2F2F7))
         ) {
+            MaterialTheme(
+                colorScheme = darkColorScheme(
+                    surface = Color(0xFF000000),
+                    onSurface = Color(0xFFF2F2F7),
+                    surfaceVariant = Color(0xFF141418),
+                    onSurfaceVariant = Color(0xFFC7C7CC),
+                    background = Color(0xFF000000),
+                    onBackground = Color(0xFFF2F2F7),
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                ) {
             val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
@@ -2756,6 +2771,8 @@ fun CharacterInspectorSheet(
                 )
             }
         }
+            }
+        }
     }
 
     // Attach Lorebook Dialog - shows all available lorebooks to attach
@@ -3261,138 +3278,150 @@ private fun GroupTabsRow(
         }
     }
 
-    // Group action menu (long-press): Rename, Save, Reorder, Delete
+    // Group action menu (long-press): Rename, Save, Reorder, Delete (Centered popup dialog)
     longPressedGroupId?.let { groupId ->
         val label = groupNames[groupId] ?: "Group"
-        DomChatInWindowBottomSheet(
-            visible = true,
+        Dialog(
             onDismissRequest = { longPressedGroupId = null },
-            containerColor = Color(0xFF000000),
-            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.52f).dp,
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            Column(
+            ApplyDialogWindowBlur()
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    color = Color(0xFF000000),
+                    shape = RoundedCornerShape(22.dp),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier
+                        .widthIn(min = 280.dp, max = 360.dp)
+                        .imePadding()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.08f)),
-                            contentAlignment = Alignment.Center
+                        // Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Folder,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Column {
-                            Text(
-                                text = "Manage Group",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.65f)
-                            )
-                        }
-                    }
-                    IconButton(onClick = { longPressedGroupId = null }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                // Rename input with inline save
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = renameDraft,
-                        onValueChange = { renameDraft = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        placeholder = { Text("Group name") },
-                        shape = AppShapes.InputField,
-                        colors = me.lucid.domchat.ui.theme.appFieldColors(),
-                        trailingIcon = {
-                            if (renameDraft.isNotBlank() && renameDraft != label) {
-                                IconButton(onClick = {
-                                    onGroupRenamed(groupId, renameDraft)
-                                    longPressedGroupId = null
-                                }) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.08f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = "Save Rename",
-                                        tint = Color(0xFF10B981)
+                                        imageVector = Icons.Rounded.Folder,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Manage Group",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.65f)
                                     )
                                 }
                             }
-                        }
-                    )
-
-                    AnimatedVisibility(
-                        visible = renameDraft.isNotBlank() && renameDraft != label,
-                        enter = fadeIn(tween(150)) + expandVertically(),
-                        exit = fadeOut(tween(150)) + shrinkVertically()
-                    ) {
-                        DomChatGlassPillButton(
-                            text = "Save Rename",
-                            icon = Icons.Rounded.Check,
-                            accent = true,
-                            modifier = Modifier.fillMaxWidth().height(42.dp),
-                            onClick = {
-                                onGroupRenamed(groupId, renameDraft)
-                                longPressedGroupId = null
+                            IconButton(onClick = { longPressedGroupId = null }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White
+                                )
                             }
-                        )
+                        }
+
+                        // Rename input with inline save
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = renameDraft,
+                                onValueChange = { renameDraft = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                placeholder = { Text("Group name") },
+                                shape = AppShapes.InputField,
+                                colors = me.lucid.domchat.ui.theme.appFieldColors(),
+                                trailingIcon = {
+                                    if (renameDraft.isNotBlank() && renameDraft != label) {
+                                        IconButton(onClick = {
+                                            onGroupRenamed(groupId, renameDraft)
+                                            longPressedGroupId = null
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Check,
+                                                contentDescription = "Save Rename",
+                                                tint = Color(0xFF10B981)
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+
+                            AnimatedVisibility(
+                                visible = renameDraft.isNotBlank() && renameDraft != label,
+                                enter = fadeIn(tween(150)) + expandVertically(),
+                                exit = fadeOut(tween(150)) + shrinkVertically()
+                            ) {
+                                DomChatGlassPillButton(
+                                    text = "Save Rename",
+                                    icon = Icons.Rounded.Check,
+                                    accent = true,
+                                    modifier = Modifier.fillMaxWidth().height(42.dp),
+                                    onClick = {
+                                        onGroupRenamed(groupId, renameDraft)
+                                        longPressedGroupId = null
+                                    }
+                                )
+                            }
+                        }
+
+                        // Actions: Clean pill button layout
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            DomChatGlassPillButton(
+                                text = "Reorder",
+                                icon = Icons.Rounded.Reorder,
+                                modifier = Modifier.weight(1f).height(44.dp),
+                                onClick = {
+                                    longPressedGroupId = null
+                                    showReorderSheet = true
+                                }
+                            )
+                            DomChatGlassPillButton(
+                                text = "Delete",
+                                icon = Icons.Rounded.Delete,
+                                destructive = true,
+                                modifier = Modifier.weight(1f).height(44.dp),
+                                onClick = {
+                                    onGroupDeleted(groupId)
+                                    longPressedGroupId = null
+                                }
+                            )
+                        }
                     }
                 }
-
-                // Actions: Clean pill button layout
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    DomChatGlassPillButton(
-                        text = "Reorder Groups",
-                        icon = Icons.Rounded.Reorder,
-                        modifier = Modifier.weight(1f).height(44.dp),
-                        onClick = {
-                            longPressedGroupId = null
-                            showReorderSheet = true
-                        }
-                    )
-                    DomChatGlassPillButton(
-                        text = "Delete Group",
-                        icon = Icons.Rounded.Delete,
-                        destructive = true,
-                        modifier = Modifier.weight(1f).height(44.dp),
-                        onClick = {
-                            onGroupDeleted(groupId)
-                            longPressedGroupId = null
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }

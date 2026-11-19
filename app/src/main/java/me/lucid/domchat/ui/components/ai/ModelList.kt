@@ -121,6 +121,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.extendColors
 import me.lucid.domchat.ui.components.settings.DomChatGroupedModelRow
 import me.lucid.domchat.ui.components.settings.DomChatModelGroupPosition
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.utils.toDp
 import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
@@ -221,18 +222,47 @@ fun ModelSelector(
     }
 
     if (popup) {
+        val sheetTitle = when (type) {
+            ModelType.CHAT -> "Select Chat Model"
+            ModelType.EMBEDDING -> "Select Embedding Model"
+            ModelType.IMAGE -> "Select Image Model"
+            ModelType.STT -> "Select Speech Model"
+        }
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = {
                 popup = false
             },
-            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            containerColor = Color(0xFF000000),
+            dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight(0.85f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.88f)
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = sheetTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { popup = false }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White
+                        )
+                    }
+                }
                 val modelMetadataResolver = org.koin.compose.koinInject<me.lucid.domchat.data.ai.models.ModelMetadataResolver>()
                 val filteredProviderSettings = providers.fastFilter {
                     it.enabled && it.models.fastAny { model ->
@@ -1093,6 +1123,7 @@ private fun ModelItem(
             selected = select,
             position = position.toSharedPosition(),
             onClick = { onSelect(model) },
+            containerColor = Color.White.copy(alpha = if (select) 0.14f else 0.07f),
             onLongClick = {
                 onDismiss()
                 navController.navigate(Screen.SettingProviderDetail(providerSetting.id.toString()))
@@ -1122,15 +1153,19 @@ private fun ModelItem(
         )
     } else {
         val interactionSource = remember { MutableInteractionSource() }
+        val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
         Card(
-            modifier = modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
-                shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
+            modifier = modifier.then(
+                me.lucid.domchat.ui.theme.liquidGlassSurface(
+                    shape = cardShape,
+                    fillColor = Color.White.copy(alpha = if (select) 0.14f else 0.07f),
+                    borderWidth = 0.5.dp,
+                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                )
             ),
-            shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+            shape = cardShape,
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.06f),
+                containerColor = Color.Transparent,
                 contentColor = Color.White,
             )
         ) {

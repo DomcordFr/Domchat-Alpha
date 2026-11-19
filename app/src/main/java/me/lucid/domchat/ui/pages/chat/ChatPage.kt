@@ -1568,6 +1568,25 @@ private fun ChatPageContent(
         } else {
             contentBackdrop
         }
+
+        LaunchedEffect(conversation.id) {
+            delay(50)
+            wallpaperBackdrop.geometryChanged()
+            chatBackdrop.geometryChanged()
+            delay(startupWallpaperPauseMs.toLong().coerceAtLeast(100L))
+            wallpaperBackdrop.geometryChanged()
+            chatBackdrop.geometryChanged()
+            contentBackdrop.geometryChanged()
+        }
+        LaunchedEffect(chatListReady) {
+            if (chatListReady) {
+                delay(30)
+                wallpaperBackdrop.geometryChanged()
+                chatBackdrop.geometryChanged()
+                contentBackdrop.geometryChanged()
+            }
+        }
+
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
             Surface(
                 color = if (renderBackground) {
@@ -1590,9 +1609,13 @@ private fun ChatPageContent(
                                 // immediate non-empty recording on frame 0 (cold start / blank chat),
                                 // instead of a null or transparent backdrop.
                                 .layerBackdrop(chatBackdrop),
-                            // Wallpaper bitmap decoded: invalidate the wallpaper backdrop so all
+                            // Wallpaper bitmap decoded: invalidate all backdrops so all
                             // liquid glass samplers re-record against the real background.
-                            onWallpaperLoaded = { wallpaperBackdrop.geometryChanged() },
+                            onWallpaperLoaded = {
+                                wallpaperBackdrop.geometryChanged()
+                                chatBackdrop.geometryChanged()
+                                contentBackdrop.geometryChanged()
+                            },
                         )
                     } else {
                         Box(

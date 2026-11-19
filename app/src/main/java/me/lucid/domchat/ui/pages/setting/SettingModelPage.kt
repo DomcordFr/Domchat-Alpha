@@ -24,7 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.OutlinedTextField
 import me.lucid.domchat.ui.components.ui.DebouncedTextField
 import androidx.compose.material3.ProvideTextStyle
@@ -34,7 +36,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.animation.core.animateFloatAsState
@@ -226,7 +227,6 @@ private fun DefaultSTTModelSetting(
 ) {
     val navController = LocalNavController.current
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var promptPending by remember { mutableStateOf(false) }
     ModelFeatureCard(
         title = {
@@ -270,32 +270,34 @@ private fun DefaultSTTModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_page_stt_service),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 HelperReasoningSettings(
                     reasoningTokens = settings.sttThinkingBudget,
                     onUpdateReasoningTokens = {
@@ -369,7 +371,6 @@ private fun DefaultTranslationModelSetting(
     vm: SettingVM
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var promptPending by remember { mutableStateOf(false) }
     ModelFeatureCard(
         title = {
@@ -412,31 +413,34 @@ private fun DefaultTranslationModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_translate_model),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 FormItem(
                     label = {
                         Text(stringResource(R.string.setting_model_page_prompt))
@@ -483,7 +487,6 @@ private fun DefaultSuggestionModelSetting(
     vm: SettingVM
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var promptPending by remember { mutableStateOf(false) }
     ModelFeatureCard(
         title = {
@@ -534,31 +537,34 @@ private fun DefaultSuggestionModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_suggestion_model),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 FormItem(
                     label = {
                         Text(stringResource(R.string.setting_model_page_prompt))
@@ -615,7 +621,6 @@ private fun DefaultTitleModelSetting(
     vm: SettingVM
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var promptPending by remember { mutableStateOf(false) }
     ModelFeatureCard(
         title = {
@@ -655,31 +660,34 @@ private fun DefaultTitleModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_title_model),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 FormItem(
                     label = {
                         Text(stringResource(R.string.setting_model_page_prompt))
@@ -736,7 +744,6 @@ private fun DefaultSummarizerModelSetting(
     vm: SettingVM
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModelFeatureCard(
         title = {
             Text(stringResource(R.string.setting_model_page_summarizer_model), maxLines = 1)
@@ -783,31 +790,34 @@ private fun DefaultSummarizerModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_summarizer_model),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 HelperReasoningSettings(
                     reasoningTokens = settings.summarizerThinkingBudget,
                     onUpdateReasoningTokens = { tokens ->
@@ -829,7 +839,6 @@ private fun DefaultSubagentModelSetting(
     vm: SettingVM
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModelFeatureCard(
         title = {
             Text(stringResource(R.string.setting_model_page_subagent_model), maxLines = 1)
@@ -876,31 +885,34 @@ private fun DefaultSubagentModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_subagent_model),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 HelperReasoningSettings(
                     reasoningTokens = settings.subagentThinkingBudget,
                     onUpdateReasoningTokens = { tokens ->
@@ -957,7 +969,6 @@ private fun DefaultOcrModelSetting(
     vm: SettingVM
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var promptPending by remember { mutableStateOf(false) }
     ModelFeatureCard(
         title = {
@@ -1001,31 +1012,34 @@ private fun DefaultOcrModelSetting(
     )
 
     if (showModal) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = { showModal = false },
             containerColor = Color(0xFF000000),
-            contentColor = Color(0xFFF2F2F7),
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-            modifier = Modifier.border(
-                width = 0.5.dp,
-                brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-            )
-                .imePadding(),
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = sheetState
+            dragHandle = { DomChatSheetDragHandle() },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_ocr_model),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = { showModal = false }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    }
+                }
                 FormItem(
                     label = {
                         Text(stringResource(R.string.setting_model_page_prompt))

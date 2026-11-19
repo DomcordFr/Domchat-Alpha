@@ -4156,22 +4156,25 @@ private fun MinimalPickerItem(
     onClick: () -> Unit
 ) {
     val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
-    val cardBg = domChatCardContainerColor()
     val interactionSource = remember { MutableInteractionSource() }
+    val itemShape = RoundedCornerShape(14.dp)
     Surface(
         onClick = onClick,
         interactionSource = interactionSource,
-        color = cardBg,
+        color = Color.Transparent,
         contentColor = if (isDark) Color(0xFFF2F2F7) else Color.White,
-        shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            0.5.dp,
-            if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
-        ),
+        shape = itemShape,
+        border = null,
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
             .pressScale(interactionSource)
+            .liquidGlassSurface(
+                shape = itemShape,
+                fillColor = Color.White.copy(alpha = 0.08f),
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            )
     ) {
         Row(
             modifier = Modifier

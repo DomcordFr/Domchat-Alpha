@@ -583,12 +583,11 @@ fun SettingChatsPage(
                     items(filteredConversations, key = { it.id }) { conv ->
                         val isSelected = conv.id in selectedChatIds
                         val assistant = assistantMap[conv.assistantId]
-                        val cardShape = LiquidGlassTokens.CardShape
+                        val cardShape = RoundedCornerShape(18.dp)
 
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 72.dp)
                                 .clip(cardShape)
                                 .domChatBlurEffect(containerColor = cardBg, shape = cardShape)
                                 .combinedClickable(
@@ -621,7 +620,7 @@ fun SettingChatsPage(
                                 ),
                             shape = cardShape,
                             color = cardBg,
-                            border = if (isSelected) BorderStroke(0.5.dp, Color.White) else cardBorder
+                            border = if (isSelected) BorderStroke(1.dp, Color.White) else cardBorder
                         ) {
                             Row(
                                 modifier = Modifier
@@ -644,96 +643,147 @@ fun SettingChatsPage(
                                 }
 
                                 if (assistant != null) {
-                                    UIAvatar(
-                                        name = assistant.name,
-                                        value = assistant.avatar,
-                                        modifier = Modifier.size(42.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(46.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(14.dp))
+                                    ) {
+                                        UIAvatar(
+                                            name = assistant.name,
+                                            value = assistant.avatar,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
                                 }
 
                                 Column(
                                     modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    verticalArrangement = Arrangement.spacedBy(5.dp)
                                 ) {
+                                    // Row 1: Title + Pin badge (Left) & Timestamp (Right)
                                     Row(
+                                        modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        if (conv.isPinned) {
-                                            Icon(
-                                                Icons.Rounded.PushPin,
-                                                contentDescription = "Pinned",
-                                                modifier = Modifier.size(14.dp),
-                                                tint = Color.White
+                                        Row(
+                                            modifier = Modifier.weight(1f, fill = false),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            if (conv.isPinned) {
+                                                Icon(
+                                                    Icons.Rounded.PushPin,
+                                                    contentDescription = "Pinned",
+                                                    modifier = Modifier.size(13.dp),
+                                                    tint = Color(0xFFFFD60A)
+                                                )
+                                            }
+                                            Text(
+                                                text = conv.title.ifBlank { "Untitled Conversation" },
+                                                style = MaterialTheme.typography.titleMedium.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 15.sp
+                                                ),
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
                                         Text(
-                                            text = conv.title.ifBlank { "Untitled Conversation" },
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.SemiBold
+                                            text = formatTimestamp(conv.updateAt),
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 10.5.sp,
+                                                fontWeight = FontWeight.Normal
                                             ),
-                                            color = Color.White,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
+                                            color = Color.White.copy(alpha = 0.50f),
+                                            maxLines = 1,
+                                            softWrap = false
                                         )
                                     }
 
+                                    // Row 2: Character tag, Fork/Branch pill, and Chat counter
                                     Row(
+                                        modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
                                         if (assistant != null) {
                                             val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
-                                            val nameWords = assistant.name.trim().split(Regex("\\s+"))
-                                            val displayCharName = if (nameWords.size > 2) {
-                                                nameWords.take(2).joinToString(" ") + "..."
-                                            } else if (assistant.name.length > 18) {
-                                                assistant.name.take(16).trimEnd() + "..."
-                                            } else {
-                                                assistant.name
+                                            val displayCharName = assistant.name.trim().let { name ->
+                                                if (name.length > 18) name.take(16).trimEnd() + "..." else name
                                             }
                                             Surface(
-                                                color = Color(0xFF000000),
-                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color.White.copy(alpha = 0.08f),
+                                                shape = RoundedCornerShape(8.dp),
                                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                             ) {
                                                 Row(
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                 ) {
                                                     Text(
                                                         text = displayCharName,
                                                         style = MaterialTheme.typography.labelSmall.copy(
-                                                            fontSize = 10.sp,
-                                                            fontWeight = FontWeight.Medium
+                                                            fontSize = 10.5.sp,
+                                                            fontWeight = FontWeight.SemiBold
                                                         ),
-                                                        color = Color.White,
+                                                        color = Color(0xFFF2F2F7),
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis
                                                     )
                                                     Text(
                                                         text = "• $assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"}",
                                                         style = MaterialTheme.typography.labelSmall.copy(
-                                                            fontSize = 9.sp,
+                                                            fontSize = 9.5.sp,
                                                             fontWeight = FontWeight.Normal
                                                         ),
-                                                        color = Color.White.copy(alpha = 0.65f)
+                                                        color = Color.White.copy(alpha = 0.55f)
                                                     )
                                                 }
                                             }
                                         }
 
-                                        Text(
-                                            text = formatTimestamp(conv.updateAt),
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                fontSize = 11.sp
-                                            ),
-                                            color = Color.White.copy(alpha = 0.65f),
-                                            maxLines = 1,
-                                            softWrap = false,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                        if (conv.isFork) {
+                                            Surface(
+                                                color = Color(0xFF64D2FF).copy(alpha = 0.12f),
+                                                shape = RoundedCornerShape(8.dp),
+                                                border = BorderStroke(0.5.dp, Color(0xFF64D2FF).copy(alpha = 0.35f))
+                                            ) {
+                                                Text(
+                                                    text = "Branch",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = 9.5.sp,
+                                                        fontWeight = FontWeight.Medium
+                                                    ),
+                                                    color = Color(0xFF64D2FF),
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (conv.isConsolidated) {
+                                            Surface(
+                                                color = Color(0xFFBF5AF2).copy(alpha = 0.12f),
+                                                shape = RoundedCornerShape(8.dp),
+                                                border = BorderStroke(0.5.dp, Color(0xFFBF5AF2).copy(alpha = 0.35f))
+                                            ) {
+                                                Text(
+                                                    text = "Merged",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontSize = 9.5.sp,
+                                                        fontWeight = FontWeight.Medium
+                                                    ),
+                                                    color = Color(0xFFBF5AF2),
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

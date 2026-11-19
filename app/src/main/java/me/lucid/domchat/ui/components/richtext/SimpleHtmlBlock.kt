@@ -80,8 +80,12 @@ fun SimpleHtmlBlock(
 
     val uriHandler = LocalUriHandler.current
     val blockDirection = rememberElementDirection(document.body.text)
+    val effectiveContentColor = LocalContentColor.current.takeIf { it != Color.Unspecified && it != Color.Black } ?: Color(0xFFF2F2F7)
 
-    CompositionLocalProvider(LocalLayoutDirection provides blockDirection.toLayoutDirection()) {
+    CompositionLocalProvider(
+        LocalLayoutDirection provides blockDirection.toLayoutDirection(),
+        LocalContentColor provides effectiveContentColor
+    ) {
         Column(modifier = modifier) {
             document.body.children.forEach { node ->
                 RenderNode(
@@ -587,7 +591,7 @@ private fun parseInlineStyle(style: String): SpanStyle? {
 }
 
 private fun parseColor(colorString: String): Color? {
-    return try {
+    val parsed = try {
         when {
             colorString.startsWith("#") -> {
                 // Hex color
@@ -654,6 +658,16 @@ private fun parseColor(colorString: String): Color? {
         }
     } catch (e: Exception) {
         null
+    }
+    return parsed?.let { ensureReadableOnDark(it) }
+}
+
+private fun ensureReadableOnDark(color: Color): Color {
+    val luminance = 0.2126f * color.red + 0.7152f * color.green + 0.0722f * color.blue
+    return if (luminance < 0.28f) {
+        Color(0xFFF2F2F7)
+    } else {
+        color
     }
 }
 

@@ -91,6 +91,7 @@ import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import me.lucid.domchat.ui.components.chat.DomChatGlassBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -220,6 +221,10 @@ fun SettingProviderPage(
     
     var showSearchCommonOptions by remember { mutableStateOf(false) }
     var showTtsFilterSettings by remember { mutableStateOf(false) }
+    var showAddProviderSheet by remember { mutableStateOf(false) }
+    val customDialogState = useEditState<ProviderSetting> {
+        addProvider(it)
+    }
     val providerPresets = remember(catalogSnapshot, settings.providers) {
         (catalogSnapshot?.toProviderPresets()?.takeIf { it.isNotEmpty() }
             ?: FALLBACK_PROVIDER_PRESETS
@@ -301,69 +306,69 @@ fun SettingProviderPage(
         }
     }
 
-    Scaffold(
-        topBar = {
-            OneUITopAppBar(
-                title = stringResource(currentTab.titleRes),
-                scrollBehavior = scrollBehavior,
-                navigationIcon = {
-                    BackButton()
-                }
-            )
-        },
-        bottomBar = {
-            ProvidersBottomBar(
-                selectedTab = currentTab,
-                onTabSelected = { tab ->
-                    scope.launch {
-                        pager.animateScrollToPage(tab.ordinal)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                OneUITopAppBar(
+                    title = stringResource(currentTab.titleRes),
+                    scrollBehavior = scrollBehavior,
+                    navigationIcon = {
+                        BackButton()
                     }
-                }
-            ) {
-                if (useWideLayout) {
-                    when (currentTab) {
-                        ProvidersTab.Models -> ImportProviderButton(
-                            asFab = true,
-                            enableHaptics = settings.displaySetting.enableUIHaptics,
-                            onAdd = { addProvider(it) }
-                        )
+                )
+            },
+            bottomBar = {
+                ProvidersBottomBar(
+                    selectedTab = currentTab,
+                    onTabSelected = { tab ->
+                        scope.launch {
+                            pager.animateScrollToPage(tab.ordinal)
+                        }
+                    }
+                ) {
+                    if (useWideLayout) {
+                        when (currentTab) {
+                            ProvidersTab.Models -> ImportProviderButton(
+                                asFab = true,
+                                enableHaptics = settings.displaySetting.enableUIHaptics,
+                                onAdd = { addProvider(it) }
+                            )
 
-                        ProvidersTab.Search,
-                        ProvidersTab.Tts -> {
-                            val isDark = LocalDarkMode.current
-                            FloatingActionButton(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    if (currentTab == ProvidersTab.Search) {
-                                        showSearchCommonOptions = true
-                                    } else {
-                                        showTtsFilterSettings = true
-                                    }
-                                },
-                                shape = CircleShape,
-                                containerColor = Color(0xFFFFFFFF),
-                                contentColor = Color(0xFF000000)
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Settings,
-                                    contentDescription = when (currentTab) {
-                                        ProvidersTab.Search -> stringResource(R.string.setting_page_search_common_options)
-                                        else -> stringResource(R.string.setting_tts_settings_title)
-                                    }
-                                )
+                            ProvidersTab.Search,
+                            ProvidersTab.Tts -> {
+                                val isDark = LocalDarkMode.current
+                                FloatingActionButton(
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        if (currentTab == ProvidersTab.Search) {
+                                            showSearchCommonOptions = true
+                                        } else {
+                                            showTtsFilterSettings = true
+                                        }
+                                    },
+                                    shape = CircleShape,
+                                    containerColor = Color(0xFFFFFFFF),
+                                    contentColor = Color(0xFF000000)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Settings,
+                                        contentDescription = when (currentTab) {
+                                            ProvidersTab.Search -> stringResource(R.string.setting_page_search_common_options)
+                                            else -> stringResource(R.string.setting_tts_settings_title)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                }
-                when (currentTab) {
-                    ProvidersTab.Models -> AddButton(
-                        enableHaptics = settings.displaySetting.enableUIHaptics,
-                        providerPresets = providerPresets,
-                        asFab = true,
-                        onAdd = { addProvider(it) }
-                    )
+                    when (currentTab) {
+                        ProvidersTab.Models -> AddButton(
+                            enableHaptics = settings.displaySetting.enableUIHaptics,
+                            asFab = true,
+                            onClick = { showAddProviderSheet = true }
+                        )
 
-                    ProvidersTab.Search -> AddSearchServiceButton(
+                        ProvidersTab.Search -> AddSearchServiceButton(
                         enableHaptics = settings.displaySetting.enableUIHaptics,
                         catalogSnapshot = catalogSnapshot,
                         asFab = true
@@ -560,6 +565,30 @@ fun SettingProviderPage(
                 )
             }
         )
+    }
+
+    if (showAddProviderSheet) {
+        ChooseProviderSheet(
+            visible = true,
+            providerPresets = providerPresets,
+            onDismissRequest = { showAddProviderSheet = false },
+            onSelectPreset = { preset ->
+                addProvider(preset.toProviderSetting())
+                showAddProviderSheet = false
+            },
+            onSelectCustom = {
+                showAddProviderSheet = false
+                customDialogState.open(ProviderSetting.OpenAI())
+            }
+        )
+    }
+
+    if (customDialogState.isEditing) {
+        CustomProviderSheet(
+            dialogState = customDialogState,
+            onDismissRequest = { customDialogState.dismiss() }
+        )
+    }
     }
 }
 
@@ -1358,30 +1387,18 @@ private fun handleProviderShareQrValue(
 @Composable
 private fun AddButton(
     enableHaptics: Boolean,
-    providerPresets: List<me.lucid.domchat.ui.pages.setting.components.ProviderPreset>,
     asFab: Boolean = false,
-    onAdd: (ProviderSetting) -> Unit
+    onClick: () -> Unit
 ) {
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-    var showCustomProviderDialog by remember { mutableStateOf(false) }
-    
-    // Custom provider dialog state
-    val customDialogState = useEditState<ProviderSetting> {
-        onAdd(it)
-    }
-
     val haptics = rememberPremiumHaptics(enabled = enableHaptics)
-    val openProviderSheet = {
+    val handleClick = {
         haptics.perform(HapticPattern.Pop)
-        searchQuery = ""
-        showBottomSheet = true
+        onClick()
     }
 
-    val isDark = LocalDarkMode.current
     if (asFab) {
         FloatingActionButton(
-            onClick = openProviderSheet,
+            onClick = handleClick,
             shape = CircleShape,
             containerColor = Color(0xFFFFFFFF),
             contentColor = Color(0xFF000000)
@@ -1389,112 +1406,129 @@ private fun AddButton(
             Icon(Icons.Rounded.Add, stringResource(R.string.add))
         }
     } else {
-        IconButton(onClick = openProviderSheet) {
+        IconButton(onClick = handleClick) {
             Icon(Icons.Rounded.Add, stringResource(R.string.add))
         }
     }
+}
 
-    // Provider selection bottom sheet
-    if (showBottomSheet) {
-        DomChatGlassBottomSheet(
-            visible = true,
-            containerColor = Color(0xFF000000),
-            onDismissRequest = {
-                showBottomSheet = false
-            }
+@Composable
+private fun ChooseProviderSheet(
+    visible: Boolean,
+    providerPresets: List<me.lucid.domchat.ui.pages.setting.components.ProviderPreset>,
+    onDismissRequest: () -> Unit,
+    onSelectPreset: (me.lucid.domchat.ui.pages.setting.components.ProviderPreset) -> Unit,
+    onSelectCustom: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    val haptics = rememberPremiumHaptics()
+
+    DomChatGlassBottomSheet(
+        visible = visible,
+        containerColor = Color(0xFF000000),
+        dragHandle = { DomChatSheetDragHandle() },
+        onDismissRequest = onDismissRequest
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .fillMaxHeight(0.85f)
+                .clipToBounds()
         ) {
-            Column(
+            // Header Row: title + close button
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .fillMaxHeight(0.85f)
-                    .clipToBounds()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Title
                 Text(
                     text = stringResource(R.string.setting_provider_page_choose_provider),
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-                
-                // Search bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                    trailingIcon = if (searchQuery.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
-                            }
-                        }
-                    } else null,
-                    colors = appFieldColors(),
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Filter presets based on search
-                val filteredPresets = remember(searchQuery, providerPresets) {
-                    if (searchQuery.isBlank()) {
-                        providerPresets
-                    } else {
-                        providerPresets.filter { preset ->
-                            preset.name.contains(searchQuery, ignoreCase = true) ||
-                            preset.description.contains(searchQuery, ignoreCase = true)
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White
+                    )
+                }
+            }
+
+            // Search bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Rounded.Search, null) },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
                         }
                     }
+                } else null,
+                colors = appFieldColors(),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val filteredPresets = remember(searchQuery, providerPresets) {
+                if (searchQuery.isBlank()) {
+                    providerPresets
+                } else {
+                    providerPresets.filter { preset ->
+                        preset.name.contains(searchQuery, ignoreCase = true) ||
+                        preset.description.contains(searchQuery, ignoreCase = true)
+                    }
                 }
-                val localPreset = filteredPresets.firstOrNull {
-                    it.type == ProviderSetting.LiteRtLocal::class
-                }
-                val remotePresets = filteredPresets.filterNot {
-                    it.type == ProviderSetting.LiteRtLocal::class
-                }
-                
-                CompositionLocalProvider(
-                    LocalOverscrollFactory provides null
-                ) {
-                    val lazyListState = rememberLazyListState()
-                    // Consume scroll events to prevent sheet from closing when scrolling
-                    val nestedScrollConnection = remember {
-                        object : NestedScrollConnection {
-                            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                                // Only consume if we're not at the top and scrolling up
-                                if (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0) {
-                                    return Offset.Zero // Let the list handle it
-                                }
+            }
+            val localPreset = filteredPresets.firstOrNull {
+                it.type == ProviderSetting.LiteRtLocal::class
+            }
+            val remotePresets = filteredPresets.filterNot {
+                it.type == ProviderSetting.LiteRtLocal::class
+            }
+
+            CompositionLocalProvider(
+                LocalOverscrollFactory provides null
+            ) {
+                val lazyListState = rememberLazyListState()
+                val nestedScrollConnection = remember {
+                    object : NestedScrollConnection {
+                        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                            if (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0) {
                                 return Offset.Zero
                             }
+                            return Offset.Zero
                         }
                     }
-                    LazyColumn(
-                        state = lazyListState,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clipToBounds()
-                            .nestedScroll(nestedScrollConnection),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                    // The on-device option is deliberately first and opens its dedicated manager.
+                }
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clipToBounds()
+                        .nestedScroll(nestedScrollConnection),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
                     localPreset?.let { preset ->
                         item {
                             Surface(
                                 onClick = {
                                     haptics.perform(HapticPattern.Pop)
-                                    onAdd(preset.toProviderSetting())
-                                    showBottomSheet = false
+                                    onSelectPreset(preset)
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1531,13 +1565,11 @@ private fun AddButton(
                         }
                     }
 
-                    // Custom remote provider setup follows the dedicated local option.
                     item {
                         Surface(
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
-                                showBottomSheet = false
-                                customDialogState.open(ProviderSetting.OpenAI())
+                                onSelectCustom()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1570,13 +1602,11 @@ private fun AddButton(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // NanoGPT — default supported provider, first below the custom option
                     item(key = "preset_nanogpt") {
                         Surface(
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
-                                onAdd(NANO_GPT_PRESET.toProviderSetting())
-                                showBottomSheet = false
+                                onSelectPreset(NANO_GPT_PRESET)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1625,7 +1655,6 @@ private fun AddButton(
                         }
                     }
 
-                    // Provider presets
                     itemsIndexed(remotePresets.filter { it.name != "NanoGPT" }, key = { _, preset -> preset.name }) { index, preset ->
                         val position = when {
                             remotePresets.size == 1 -> ItemPosition.ONLY
@@ -1639,9 +1668,7 @@ private fun AddButton(
                         Surface(
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
-                                val provider = preset.toProviderSetting()
-                                onAdd(provider)
-                                showBottomSheet = false
+                                onSelectPreset(preset)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1683,85 +1710,92 @@ private fun AddButton(
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
                     }
-                    }
                 }
             }
         }
     }
-    
-    // Custom provider dialog with full glassy backdrop
-    if (customDialogState.isEditing) {
-        DomChatGlassBottomSheet(
-            visible = true,
-            containerColor = Color(0xFF000000),
-            onDismissRequest = {
-                customDialogState.dismiss()
-            }
+}
+
+@Composable
+private fun CustomProviderSheet(
+    dialogState: me.lucid.domchat.ui.hooks.EditState<ProviderSetting>,
+    onDismissRequest: () -> Unit
+) {
+    DomChatGlassBottomSheet(
+        visible = dialogState.isEditing,
+        containerColor = Color(0xFF000000),
+        dragHandle = { DomChatSheetDragHandle() },
+        onDismissRequest = onDismissRequest
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.88f)
+                .imePadding()
+                .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            Column(
+            // Header
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.88f)
-                    .imePadding()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Header
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.setting_provider_page_add_provider),
-                        style = MaterialTheme.typography.titleLarge
+                Text(
+                    text = stringResource(R.string.setting_provider_page_add_provider),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White
                     )
-                    IconButton(onClick = { customDialogState.dismiss() }) {
-                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel))
-                    }
                 }
+            }
 
-                // Scrollable Provider Settings Form
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    customDialogState.currentState?.let {
-                        ProviderConfigure(
-                            provider = it,
-                            showEnabledToggle = false,
-                            onEdit = { newState ->
-                                customDialogState.currentState = newState
-                            }
-                        )
-                    }
+            // Scrollable Provider Settings Form
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                dialogState.currentState?.let {
+                    ProviderConfigure(
+                        provider = it,
+                        showEnabledToggle = false,
+                        onEdit = { newState ->
+                            dialogState.currentState = newState
+                        }
+                    )
                 }
+            }
 
-                // Action Buttons
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // Action Buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.CardLarge
                 ) {
-                    androidx.compose.material3.OutlinedButton(
-                        onClick = { customDialogState.dismiss() },
-                        modifier = Modifier.weight(1f),
-                        shape = AppShapes.CardLarge
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                    Button(
-                        onClick = { customDialogState.confirm() },
-                        modifier = Modifier.weight(1f),
-                        shape = AppShapes.CardLarge
-                    ) {
-                        Text(stringResource(R.string.setting_provider_page_add))
-                    }
+                    Text(stringResource(R.string.cancel))
+                }
+                Button(
+                    onClick = { dialogState.confirm() },
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.CardLarge
+                ) {
+                    Text(stringResource(R.string.setting_provider_page_add))
                 }
             }
         }

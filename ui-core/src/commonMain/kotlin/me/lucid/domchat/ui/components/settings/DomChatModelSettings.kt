@@ -112,6 +112,7 @@ fun DomChatGroupedModelRow(
     position: DomChatModelGroupPosition,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color = Color.White.copy(alpha = 0.08f),
     onLongClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit,
     metadata: @Composable () -> Unit = {},
@@ -142,7 +143,7 @@ fun DomChatGroupedModelRow(
     )
     val contentColor = Color(0xFFF2F2F7)
     val rowShape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
-    val rowBackground = Color(0xFF000000)
+    val rowBackground = containerColor
     val borderBrush = Brush.verticalGradient(
         listOf(
             Color.White.copy(alpha = if (selected) 0.80f else 0.18f),

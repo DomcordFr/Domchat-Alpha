@@ -280,36 +280,49 @@ private fun parseInlineCssStyles(attrsString: String): Map<String, String> {
 internal fun parseColorSafe(colorStr: String): Color? {
     val clean = colorStr.trim().removeSurrounding("\"", "").removeSurrounding("'", "")
     val hex = clean.removePrefix("#")
-    if (clean.startsWith("#")) {
+    val parsedColor: Color? = if (clean.startsWith("#")) {
         when (hex.length) {
             6 -> {
                 val rgb = hex.toLongOrNull(16) ?: return null
-                return Color(0xFF000000 or rgb)
+                Color(0xFF000000 or rgb)
             }
             8 -> {
                 val argb = hex.toLongOrNull(16) ?: return null
-                return Color(argb)
+                Color(argb)
             }
             3 -> {
                 val r = hex.substring(0, 1).repeat(2)
                 val g = hex.substring(1, 2).repeat(2)
                 val b = hex.substring(2, 3).repeat(2)
                 val rgb = "$r$g$b".toLongOrNull(16) ?: return null
-                return Color(0xFF000000 or rgb)
+                Color(0xFF000000 or rgb)
             }
+            else -> null
+        }
+    } else {
+        when (clean.lowercase()) {
+            "red" -> Color.Red
+            "green" -> Color.Green
+            "blue" -> Color.Blue
+            "yellow" -> Color.Yellow
+            "cyan" -> Color.Cyan
+            "magenta" -> Color.Magenta
+            "black" -> Color(0xFF000000)
+            "white" -> Color.White
+            "gray", "grey" -> Color.Gray
+            else -> runCatching { Color(android.graphics.Color.parseColor(clean)) }.getOrNull()
         }
     }
-    return when (clean.lowercase()) {
-        "red" -> Color.Red
-        "green" -> Color.Green
-        "blue" -> Color.Blue
-        "yellow" -> Color.Yellow
-        "cyan" -> Color.Cyan
-        "magenta" -> Color.Magenta
-        "black" -> Color.Black
-        "white" -> Color.White
-        "gray", "grey" -> Color.Gray
-        else -> runCatching { Color(android.graphics.Color.parseColor(clean)) }.getOrNull()
+    return parsedColor?.let { ensureReadableContrast(it) }
+}
+
+private fun ensureReadableContrast(color: Color): Color {
+    // Relative luminance: 0.2126 * R + 0.7152 * G + 0.0722 * B
+    val luminance = 0.2126f * color.red + 0.7152f * color.green + 0.0722f * color.blue
+    return if (luminance < 0.28f) {
+        Color(0xFFF2F2F7)
+    } else {
+        color
     }
 }
 

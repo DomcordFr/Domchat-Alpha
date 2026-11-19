@@ -76,6 +76,8 @@ import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.UserPersona
+import me.lucid.domchat.ui.components.ui.Tag
+import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
@@ -283,23 +285,23 @@ fun PersonaPickerBottomSheet(
             ) {
                 items(filteredPersonas, key = { it.id }) { persona ->
                     val isActive = persona.id == activePersona.id || (persona.isDefault && activePersona.id == null)
+                    val cardShape = RoundedCornerShape(18.dp)
 
                     Surface(
                         onClick = { selectPersona(persona.id) },
                         color = Color.Transparent,
-                        shape = RoundedCornerShape(18.dp),
+                        shape = cardShape,
                         border = BorderStroke(
-                            width = if (isActive) 1.5.dp else 0.5.dp,
-                            color = if (isActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.12f)
+                            width = if (isActive) 1.dp else 0.5.dp,
+                            color = if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.12f)
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .then(personaGlassCard(cardShape))
                             .then(
                                 if (isActive) {
-                                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f), shape = RoundedCornerShape(18.dp))
-                                } else {
-                                    personaGlassCard(RoundedCornerShape(18.dp))
-                                }
+                                    Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), shape = cardShape)
+                                } else Modifier
                             )
                     ) {
                         Row(
@@ -332,33 +334,20 @@ fun PersonaPickerBottomSheet(
                                     )
 
                                     if (persona.pronouns.isNotBlank()) {
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                                            shape = RoundedCornerShape(6.dp),
-                                            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
-                                        ) {
+                                        Tag(type = TagType.DEFAULT) {
                                             Text(
                                                 text = persona.pronouns,
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                fontSize = 10.sp
                                             )
                                         }
                                     }
 
                                     if (isActive) {
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.primary,
-                                            shape = CircleShape
-                                        ) {
+                                        Tag(type = TagType.SUCCESS) {
                                             Text(
                                                 text = "ACTIVE",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 9.sp
-                                                ),
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 9.sp
                                             )
                                         }
                                     }

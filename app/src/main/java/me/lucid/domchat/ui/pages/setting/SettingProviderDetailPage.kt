@@ -465,6 +465,10 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     var savingResetJob by remember { mutableStateOf<Job?>(null) }
     var isSaving by remember { mutableStateOf(false) }
 
+    var editingModel by remember { mutableStateOf<Model?>(null) }
+    var isAddingModel by remember { mutableStateOf(false) }
+    var isPickingModel by remember { mutableStateOf(false) }
+
     val onEdit = { newProvider: ProviderSetting ->
         val newSettings = settings.copy(
             providers = settings.providers.map {
@@ -491,8 +495,9 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
         navController.popBackStack()
     }
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
             TopAppBar(
                 navigationIcon = {
                     BackButton()
@@ -606,11 +611,57 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                         SettingProviderModelPage(
                             provider = provider,
                             onEdit = onEdit,
+                            onOpenEditModel = { editingModel = it },
+                            onOpenAddModel = { isAddingModel = true },
+                            onOpenModelPicker = { isPickingModel = true },
                             contentPadding = contentPadding
                         )
                     }
                 }
             }
+        }
+    }
+
+        editingModel?.let { modelToEdit ->
+            EditModelSheet(
+                model = modelToEdit,
+                parentProvider = provider,
+                onEditModel = { updatedModel ->
+                    onEdit(provider.editModel(updatedModel))
+                    editingModel = null
+                },
+                onDismissRequest = { editingModel = null }
+            )
+        }
+
+        if (isAddingModel) {
+            AddNewModelSheet(
+                parentProvider = provider,
+                onAddModel = { newModel ->
+                    onEdit(provider.addModel(newModel))
+                    isAddingModel = false
+                },
+                onDismissRequest = { isAddingModel = false }
+            )
+        }
+
+        if (isPickingModel) {
+            ModelPickerSheet(
+                parentProvider = provider,
+                onAddModel = { onEdit(provider.addModel(it)) },
+                onRemoveModel = { onEdit(provider.delModel(it)) },
+                onAddModels = { models ->
+                    var updated = provider
+                    models.forEach { updated = updated.addModel(it) }
+                    onEdit(updated)
+                },
+                onRemoveModels = { models ->
+                    var updated = provider
+                    models.forEach { updated = updated.delModel(it) }
+                    onEdit(updated)
+                },
+                onDismissRequest = { isPickingModel = false }
+            )
         }
     }
 }
@@ -903,11 +954,17 @@ private fun SettingProviderConfigPage(
 private fun SettingProviderModelPage(
     provider: ProviderSetting,
     onEdit: (ProviderSetting) -> Unit,
+    onOpenEditModel: (Model) -> Unit,
+    onOpenAddModel: () -> Unit,
+    onOpenModelPicker: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     ModelList(
         providerSetting = provider,
         onUpdateProvider = onEdit,
+        onOpenEditModel = onOpenEditModel,
+        onOpenAddModel = onOpenAddModel,
+        onOpenModelPicker = onOpenModelPicker,
         contentPadding = contentPadding
     )
 }
@@ -1022,6 +1079,9 @@ private fun ConnectionTesterButton(
 private fun ModelList(
     providerSetting: ProviderSetting,
     onUpdateProvider: (ProviderSetting) -> Unit,
+    onOpenEditModel: (Model) -> Unit,
+    onOpenAddModel: () -> Unit,
+    onOpenModelPicker: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val providerManager = koinInject<ProviderManager>()
@@ -1261,8 +1321,8 @@ private fun ModelList(
                             onDelete = {
                                 pendingDeleteModel = item
                             },
-                            onEdit = { editedModel ->
-                                onUpdateProvider(providerSetting.editModel(editedModel))
+                            onEdit = {
+                                onOpenEditModel(item)
                             },
                             parentProvider = providerSetting,
                             dragHandle = {
@@ -1343,42 +1403,11 @@ private fun ModelList(
         ) {
             // Model picker FAB (gray, like lorebook toggle button)
             ModelPickerFab(
-                models = modelList.orEmpty(),
-                modelsLoaded = modelList != null,
-                canReload = apiModelSource.canFetchModels,
-                selectedModels = providerSetting.models,
-                isLoading = isReloadingModels,
-                reloadError = reloadModelsError,
-                onReload = ::reloadApiModels,
-                onAddModel = {
-                    onUpdateProvider(providerSetting.addModel(it))
-                },
-                onRemoveModel = {
-                    onUpdateProvider(providerSetting.delModel(it))
-                },
-                onAddModels = { models ->
-                    var updated = providerSetting
-                    models.forEach { model ->
-                        updated = updated.addModel(model)
-                    }
-                    onUpdateProvider(updated)
-                },
-                onRemoveModels = { models ->
-                    var updated = providerSetting
-                    models.forEach { model ->
-                        updated = updated.delModel(model)
-                    }
-                    onUpdateProvider(updated)
-                },
-                parentProvider = providerSetting,
-                onInstallModel = null,
+                onClick = onOpenModelPicker
             )
             
             AddNewModelFab(
-                onAddModel = {
-                    onUpdateProvider(providerSetting.addModel(it))
-                },
-                parentProvider = providerSetting
+                onClick = onOpenAddModel
             )
         }
     }
@@ -1781,34 +1810,13 @@ private fun ModelSettingsForm(
 
 @Composable
 private fun ModelPickerFab(
-    models: List<Model>,
-    modelsLoaded: Boolean,
-    canReload: Boolean,
-    selectedModels: List<Model>,
-    isLoading: Boolean,
-    reloadError: String?,
-    onReload: () -> Unit,
-    onAddModel: (Model) -> Unit,
-    onRemoveModel: (Model) -> Unit,
-    onAddModels: (List<Model>) -> Unit,
-    onRemoveModels: (List<Model>) -> Unit,
-    parentProvider: ProviderSetting,
-    onInstallModel: ((Model) -> Unit)? = null,
+    onClick: () -> Unit
 ) {
-    var showPicker by remember { mutableStateOf(false) }
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    val modelMetadataResolver = koinInject<ModelMetadataResolver>()
-
-    LaunchedEffect(showPicker, modelsLoaded, canReload, isLoading, reloadError) {
-        if (showPicker && !modelsLoaded && canReload && !isLoading && reloadError == null) {
-            onReload()
-        }
-    }
-    
     FloatingActionButton(
         onClick = { 
-            showPicker = true
             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Tick)
+            onClick()
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
@@ -1819,267 +1827,298 @@ private fun ModelPickerFab(
             contentDescription = stringResource(R.string.setting_provider_page_add_from_list)
         )
     }
-    
-    if (showPicker) {
-        DomChatGlassBottomSheet(
-            visible = true,
-            containerColor = Color(0xFF000000),
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-            onDismissRequest = { showPicker = false }
+}
+
+@Composable
+private fun ModelPickerSheet(
+    parentProvider: ProviderSetting,
+    onAddModel: (Model) -> Unit,
+    onRemoveModel: (Model) -> Unit,
+    onAddModels: (List<Model>) -> Unit,
+    onRemoveModels: (List<Model>) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    val providerManager = koinInject<ProviderManager>()
+    val modelMetadataResolver = koinInject<ModelMetadataResolver>()
+    val scope = rememberCoroutineScope()
+    val apiModelSource = rememberApiModelSource(parentProvider)
+    val apiModelCacheKey = apiModelSource.cacheKey
+    var modelList by remember(apiModelCacheKey) { mutableStateOf(ApiModelListCache.get(apiModelCacheKey)) }
+    var isReloadingModels by remember(apiModelCacheKey) { mutableStateOf(false) }
+    var reloadModelsError by remember(apiModelCacheKey) { mutableStateOf<String?>(null) }
+
+    fun reloadApiModels() {
+        if (isReloadingModels) return
+        if (!apiModelSource.canFetchModels) return
+        scope.launch {
+            isReloadingModels = true
+            reloadModelsError = null
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val raw = providerManager.getProviderByType(parentProvider)
+                        .listModels(parentProvider)
+                        .sortedBy { it.modelId }
+                        .toList()
+                    resolveProviderModels(modelMetadataResolver, parentProvider, raw)
+                }
+            }.onSuccess { freshModels ->
+                ApiModelListCache.put(apiModelCacheKey, freshModels)
+                modelList = freshModels
+            }.onFailure { error ->
+                reloadModelsError = error.message ?: error::class.simpleName
+            }
+            isReloadingModels = false
+        }
+    }
+
+    LaunchedEffect(apiModelCacheKey, apiModelSource.canFetchModels) {
+        if (modelList == null && apiModelSource.canFetchModels) {
+            reloadApiModels()
+        }
+    }
+
+    DomChatGlassBottomSheet(
+        visible = true,
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+        dragHandle = { DomChatSheetDragHandle() },
+        onDismissRequest = onDismissRequest
+    ) {
+        val models = modelList.orEmpty()
+        var filterText by rememberSaveable { mutableStateOf("") }
+        var debouncedQuery by remember { mutableStateOf("") }
+        LaunchedEffect(filterText) {
+            if (filterText.isBlank()) {
+                debouncedQuery = ""
+            } else {
+                kotlinx.coroutines.delay(100)
+                debouncedQuery = filterText
+            }
+        }
+        var resolvedModels by remember(models) { mutableStateOf(models) }
+        LaunchedEffect(models, parentProvider) {
+            if (models.isNotEmpty()) {
+                val resolved = withContext(Dispatchers.Default) {
+                    resolveProviderModels(modelMetadataResolver, parentProvider, models)
+                }
+                resolvedModels = resolved
+            }
+        }
+        val filteredModels = remember(resolvedModels, debouncedQuery) {
+            if (debouncedQuery.isBlank()) {
+                resolvedModels
+            } else {
+                val queryWords = debouncedQuery.trim().lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
+                resolvedModels.filter { model ->
+                    val id = model.modelId.lowercase()
+                    val name = model.displayName.lowercase()
+                    queryWords.all { word ->
+                        id.contains(word) || name.contains(word)
+                    }
+                }
+            }
+        }
+        val selectedModelIds = remember(parentProvider.models) {
+            parentProvider.models.map { it.modelId.lowercase() }.toSet()
+        }
+        val selectedModelMap = remember(resolvedModels, parentProvider.models, selectedModelIds) {
+            val map = HashMap<String, Model>(resolvedModels.size)
+            val selectedByLowerId = parentProvider.models.associateBy { it.modelId.lowercase() }
+            for (model in resolvedModels) {
+                val direct = selectedByLowerId[model.modelId.lowercase()]
+                if (direct != null) {
+                    map[model.modelId] = direct
+                } else {
+                    val match = parentProvider.models.firstOrNull { modelsReferToSameApiModel(it, model) }
+                    if (match != null) {
+                        map[model.modelId] = match
+                    }
+                }
+            }
+            map
+        }
+        val allFilteredSelected = remember(filteredModels, selectedModelMap) {
+            filteredModels.isNotEmpty() && filteredModels.all { selectedModelMap.containsKey(it.modelId) }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.90f)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .imePadding(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-                var filterText by rememberSaveable { mutableStateOf("") }
-                var debouncedQuery by remember { mutableStateOf("") }
-                LaunchedEffect(filterText) {
-                    if (filterText.isBlank()) {
-                        debouncedQuery = ""
-                    } else {
-                        kotlinx.coroutines.delay(100)
-                        debouncedQuery = filterText
-                    }
-                }
-                var resolvedModels by remember(models) { mutableStateOf(models) }
-                LaunchedEffect(models, parentProvider) {
-                    if (models.isNotEmpty()) {
-                        val resolved = withContext(Dispatchers.Default) {
-                            resolveProviderModels(modelMetadataResolver, parentProvider, models)
-                        }
-                        resolvedModels = resolved
-                    }
-                }
-                val filteredModels = remember(resolvedModels, debouncedQuery) {
-                    if (debouncedQuery.isBlank()) {
-                        resolvedModels
-                    } else {
-                        val queryWords = debouncedQuery.trim().lowercase().split(Regex("\\s+")).filter { it.isNotBlank() }
-                        resolvedModels.filter { model ->
-                            val id = model.modelId.lowercase()
-                            val name = model.displayName.lowercase()
-                            queryWords.all { word ->
-                                id.contains(word) || name.contains(word)
-                            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.setting_provider_page_add_from_list),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (apiModelSource.canFetchModels) {
+                        IconButton(onClick = ::reloadApiModels) {
+                            Icon(
+                                Icons.Rounded.Refresh,
+                                contentDescription = "Reload",
+                                tint = Color.White,
+                                modifier = if (isReloadingModels) Modifier.graphicsLayer { rotationZ = 360f } else Modifier
+                            )
                         }
                     }
+                    IconButton(onClick = onDismissRequest) {
+                        Icon(
+                            Icons.Rounded.Close,
+                            contentDescription = stringResource(R.string.cancel),
+                            tint = Color.White
+                        )
+                    }
                 }
-                val selectedModelIds = remember(selectedModels) {
-                    selectedModels.map { it.modelId.lowercase() }.toSet()
-                }
-                val selectedModelMap = remember(resolvedModels, selectedModels, selectedModelIds) {
-                    val map = HashMap<String, Model>(resolvedModels.size)
-                    val selectedByLowerId = selectedModels.associateBy { it.modelId.lowercase() }
-                    for (model in resolvedModels) {
-                        val direct = selectedByLowerId[model.modelId.lowercase()]
-                        if (direct != null) {
-                            map[model.modelId] = direct
-                        } else {
-                            val match = selectedModels.firstOrNull { modelsReferToSameApiModel(it, model) }
-                            if (match != null) {
-                                map[model.modelId] = match
-                            }
+            }
+
+            androidx.compose.material3.OutlinedTextField(
+                value = filterText,
+                onValueChange = { filterText = it },
+                placeholder = { Text("Search models...") },
+                leadingIcon = {
+                    Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.65f))
+                },
+                trailingIcon = {
+                    if (filterText.isNotBlank()) {
+                        IconButton(onClick = { filterText = "" }) {
+                            Icon(Icons.Rounded.Close, contentDescription = null)
                         }
                     }
-                    map
-                }
-                val allFilteredSelected = remember(filteredModels, selectedModelMap) {
-                    filteredModels.isNotEmpty() && filteredModels.all { selectedModelMap.containsKey(it.modelId) }
-                }
-                Column(
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(
+                        0.5.dp,
+                        me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                        me.lucid.domchat.ui.theme.AppShapes.SearchField
+                    ),
+                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                singleLine = true,
+                colors = me.lucid.domchat.ui.theme.appFieldColors(),
+            )
+
+            if (filteredModels.isNotEmpty()) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.90f)
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .imePadding(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.setting_provider_page_add_from_list),
-                        style = MaterialTheme.typography.titleMedium
+                        text = "${selectedModelMap.size} selected (${filteredModels.size} found)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.65f)
                     )
-                    IconButton(onClick = { showPicker = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close")
-                    }
-                }
-
-                androidx.compose.material3.OutlinedTextField(
-                    value = filterText,
-                    onValueChange = { filterText = it },
-                    placeholder = { Text("Search models...") },
-                    leadingIcon = {
-                        Icon(Icons.Rounded.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.65f))
-                    },
-                    trailingIcon = {
-                        if (filterText.isNotBlank()) {
-                            IconButton(onClick = { filterText = "" }) {
-                                Icon(Icons.Rounded.Close, contentDescription = null)
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    colors = appFieldColors(),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
                     TextButton(
-                            onClick = {
-                                haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
-                                if (allFilteredSelected) {
-                                    val modelsToRemove = filteredModels.mapNotNull { model ->
-                                        selectedModelMap[model.modelId]
-                                    }
-                                    if (modelsToRemove.isNotEmpty()) {
-                                        onRemoveModels(modelsToRemove)
-                                    }
-                                } else {
-                                    val modelsToAdd = filteredModels.filter { model ->
-                                        !selectedModelMap.containsKey(model.modelId)
-                                    }
-                                    if (modelsToAdd.isNotEmpty()) {
-                                        onAddModels(modelsToAdd)
-                                    }
-                                }
-                            },
-                            modifier = Modifier.height(40.dp),
-                        ) {
-                            Text(stringResource(if (allFilteredSelected) R.string.deselect_all else R.string.select_all))
-                        }
-                        if (isLoading) {
-                            LinearWavyProgressIndicator(modifier = Modifier.weight(1f))
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                        Button(
-                            onClick = {
-                                haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
-                                onReload()
-                            },
-                            enabled = canReload && !isLoading,
-                            modifier = Modifier.height(40.dp),
-                        ) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = null)
-                            Spacer(Modifier.size(4.dp))
-                            Text(stringResource(R.string.setting_provider_page_reload_models))
-                        }
-                }
-                reloadError?.let { error ->
-                        Text(
-                            text = stringResource(R.string.setting_provider_page_reload_models_error, error),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFFF453A),
-                        )
-                    }
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (filteredModels.isEmpty()) {
-                        item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 48.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = stringResource(
-                                        if (canReload) R.string.setting_provider_page_no_models_with_api_key
-                                        else R.string.setting_provider_page_no_models_no_api_key
-                                    ),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.65f),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                )
-                                if (filterText.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Button(
-                                        onClick = {
-                                            val trimmed = filterText.trim()
-                                            val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmed)
-                                            val customModel = Model(
-                                                modelId = trimmed,
-                                                displayName = trimmed,
-                                                inputModalities = if (isVision) listOf(Modality.TEXT, Modality.IMAGE) else listOf(Modality.TEXT)
-                                            )
-                                            onAddModel(customModel)
-                                            filterText = ""
-                                        }
-                                    ) {
-                                        Icon(Icons.Rounded.Add, contentDescription = null)
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("Add \"${filterText.trim()}\" as model")
-                                    }
-                                }
+                        onClick = {
+                            if (allFilteredSelected) {
+                                val toRemove = filteredModels.mapNotNull { selectedModelMap[it.modelId] }
+                                onRemoveModels(toRemove)
+                            } else {
+                                val toAdd = filteredModels.filter { !selectedModelMap.containsKey(it.modelId) }
+                                onAddModels(toAdd)
                             }
                         }
-                    }
-                    items(
-                        items = filteredModels,
-                        key = { it.modelId }
-                    ) { model ->
-                        val selectedModel = selectedModelMap[model.modelId]
-                        val isSelected = selectedModel != null
-                        val interactionSource = remember { MutableInteractionSource() }
-                        val isPressed by interactionSource.collectIsPressedAsState()
-                        val scale by animateFloatAsState(
-                            targetValue = if (isPressed) 0.98f else 1f,
-                            animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
-                            label = "api_model_card_scale",
+                    ) {
+                        Text(
+                            text = if (allFilteredSelected) "Deselect all" else "Select all",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
                         )
-                        Card(
+                    }
+                }
+            }
+
+            if (isReloadingModels && models.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            } else if (reloadModelsError != null && models.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = reloadModelsError ?: "Error loading models",
+                        color = MaterialTheme.extendColors.red6,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(filteredModels, key = { it.modelId }) { model ->
+                        val isSelected = selectedModelMap.containsKey(model.modelId)
+                        Surface(
+                            onClick = {
+                                if (isSelected) {
+                                    val current = selectedModelMap[model.modelId] ?: model
+                                    onRemoveModel(current)
+                                } else {
+                                    onAddModel(model)
+                                }
+                            },
+                            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
+                            color = if (isSelected) Color(0xFF1E1E24) else Color(0xFF000000),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .graphicsLayer {
-                                    scaleX = scale
-                                    scaleY = scale
-                                }
-                                .clickable(
-                                    interactionSource = interactionSource,
-                                    indication = null,
-                                ) {
-                                    haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
-                                    if (isSelected) {
-                                        onRemoveModel(selectedModel ?: model)
-                                    } else {
-                                        onAddModel(model)
-                                    }
-                                },
-                            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = Color(0xFF000000)
-                            )
+                                .border(
+                                    0.5.dp,
+                                    if (isSelected) Color.White.copy(alpha = 0.35f) else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                                    me.lucid.domchat.ui.theme.AppShapes.CardMedium
+                                )
                         ) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 ModelIcon(
                                     model = model,
                                     provider = parentProvider,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(32.dp),
                                 )
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                                    modifier = Modifier.weight(1f),
-                                ) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = model.displayName,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.SemiBold,
+                                        color = Color.White,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -2105,114 +2144,122 @@ private fun ModelPickerFab(
 
 @Composable
 private fun AddNewModelFab(
-    onAddModel: (Model) -> Unit,
-    parentProvider: ProviderSetting
+    onClick: () -> Unit
 ) {
-    val dialogState = useEditState<Model> { onAddModel(it) }
-    val scope = rememberCoroutineScope()
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    val modelMetadataResolver = koinInject<ModelMetadataResolver>()
-    
     FloatingActionButton(
         onClick = { 
-            dialogState.open(Model())
             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
+            onClick()
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
     ) {
         Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.setting_provider_page_add_model))
     }
-    
-    if (dialogState.isEditing) {
-        dialogState.currentState?.let { modelState ->
-            DomChatGlassBottomSheet(
-                visible = true,
-                containerColor = Color(0xFF000000),
-                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-                onDismissRequest = {
-                    dialogState.dismiss()
-                }
+}
+
+@Composable
+private fun AddNewModelSheet(
+    parentProvider: ProviderSetting,
+    onAddModel: (Model) -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    var modelState by remember { mutableStateOf(Model()) }
+    val modelMetadataResolver = koinInject<ModelMetadataResolver>()
+
+    DomChatGlassBottomSheet(
+        visible = true,
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+        dragHandle = { DomChatSheetDragHandle() },
+        onDismissRequest = onDismissRequest
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.90f)
+                .imePadding()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(0.90f)
-                            .imePadding()
-                            .padding(horizontal = 20.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(R.string.setting_provider_page_add_model),
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            IconButton(onClick = { dialogState.dismiss() }) {
-                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel))
-                            }
-                        }
+                Text(
+                    text = stringResource(R.string.setting_provider_page_add_model),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White
+                    )
+                }
+            }
 
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                        ) {
-                            ModelSettingsForm(
-                                model = modelState,
-                                onModelChange = { dialogState.currentState = it },
-                                isEdit = false,
-                                parentProvider = parentProvider
-                            )
-                        }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                ModelSettingsForm(
+                    model = modelState,
+                    onModelChange = { modelState = it },
+                    isEdit = false,
+                    parentProvider = parentProvider
+                )
+            }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    dialogState.dismiss()
-                                },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(stringResource(R.string.cancel))
-                            }
-                            Button(
-                                onClick = {
-                                    val trimmedId = modelState.modelId.trim()
-                                    if (trimmedId.isNotBlank()) {
-                                        val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
-                                        val preparedModel = modelState.copy(
-                                            modelId = trimmedId,
-                                            displayName = modelState.displayName.trim().ifBlank { trimmedId },
-                                            inputModalities = if (isVision && !modelState.inputModalities.contains(Modality.IMAGE)) {
-                                                modelState.inputModalities + Modality.IMAGE
-                                            } else {
-                                                modelState.inputModalities
-                                            }
-                                        )
-                                        dialogState.currentState = modelMetadataResolver.applyToModel(
-                                            model = preparedModel,
-                                            providerHint = parentProvider,
-                                        )
-                                        dialogState.confirm()
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(stringResource(R.string.setting_provider_page_add))
-                            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.CardLarge
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Button(
+                    onClick = {
+                        val trimmedId = modelState.modelId.trim()
+                        if (trimmedId.isNotBlank()) {
+                            val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
+                            val preparedModel = modelState.copy(
+                                modelId = trimmedId,
+                                displayName = modelState.displayName.trim().ifBlank { trimmedId },
+                                inputModalities = if (isVision && !modelState.inputModalities.contains(Modality.IMAGE)) {
+                                    modelState.inputModalities + Modality.IMAGE
+                                } else {
+                                    modelState.inputModalities
+                                }
+                            )
+                            val resolvedModel = modelMetadataResolver.applyToModel(
+                                model = preparedModel,
+                                providerHint = parentProvider,
+                            )
+                            onAddModel(resolvedModel)
                         }
-                    }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.CardLarge
+                ) {
+                    Text(stringResource(R.string.setting_provider_page_add))
                 }
             }
         }
     }
+}
 
 @Composable
 private fun ModelSelectionCircle(selected: Boolean) {
@@ -3165,27 +3212,32 @@ private fun LocalLiteRtModelIdentitySheet(
         visible = true,
         containerColor = Color(0xFF000000),
         maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+        dragHandle = { DomChatSheetDragHandle() },
         onDismissRequest = onDismiss,
     ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .imePadding()
-                    .padding(16.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.align(Alignment.CenterStart),
-                    ) {
-                        Icon(Icons.Rounded.Close, null)
-                    }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = stringResource(R.string.local_llm_edit_identity_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel), tint = Color.White)
+                    }
                 }
 
                 Row(
@@ -3253,95 +3305,11 @@ private fun ModelCard(
     onDragProgress: (Float, Boolean) -> Unit,
     onDragEnd: () -> Unit,
     onDelete: () -> Unit,
-    onEdit: (Model) -> Unit,
+    onEdit: () -> Unit,
     parentProvider: ProviderSetting,
     dragHandle: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dialogState = useEditState<Model> {
-        onEdit(it)
-    }
-    val scope = rememberCoroutineScope()
-
-
-    if (dialogState.isEditing) {
-        dialogState.currentState?.let { editingModel ->
-            DomChatGlassBottomSheet(
-                visible = true,
-                containerColor = Color(0xFF000000),
-                maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
-                onDismissRequest = {
-                    dialogState.dismiss()
-                },
-            ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(0.90f)
-                            .imePadding()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    dialogState.dismiss()
-                                },
-                                modifier = Modifier.align(Alignment.CenterStart)
-                            ) {
-                                Icon(Icons.Rounded.Close, null)
-                            }
-                            Text(
-                                text = stringResource(R.string.setting_provider_page_edit_model),
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.align(Alignment.Center),
-                            )
-                        }
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                        ) {
-                            ModelSettingsForm(
-                                model = editingModel,
-                                onModelChange = { dialogState.currentState = it },
-                                isEdit = true,
-                                parentProvider = parentProvider
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    dialogState.dismiss()
-                                },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(stringResource(R.string.cancel))
-                            }
-                            Button(
-                                onClick = {
-                                    if (editingModel.displayName.isNotBlank()) {
-                                        dialogState.confirm()
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(stringResource(R.string.confirm))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
     PhysicsSwipeToDelete(
         position = ItemPosition.ONLY,
         deleteEnabled = canDelete,
@@ -3360,7 +3328,7 @@ private fun ModelCard(
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, swipeShape)
                 .clip(swipeShape)
                 .clickable {
-                    dialogState.open(model.copy())
+                    onEdit()
                 }
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -3485,6 +3453,94 @@ private fun BuiltInToolsSettings(
 }
 
 @Composable
+@Composable
+private fun EditModelSheet(
+    model: Model,
+    parentProvider: ProviderSetting,
+    onEditModel: (Model) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    var editingModel by remember(model) { mutableStateOf(model.copy()) }
+
+    DomChatGlassBottomSheet(
+        visible = true,
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+        dragHandle = { DomChatSheetDragHandle() },
+        onDismissRequest = onDismissRequest,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.90f)
+                .imePadding()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.setting_provider_page_edit_model),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White
+                    )
+                }
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                ModelSettingsForm(
+                    model = editingModel,
+                    onModelChange = { editingModel = it },
+                    isEdit = true,
+                    parentProvider = parentProvider
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.CardLarge
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Button(
+                    onClick = {
+                        if (editingModel.displayName.isNotBlank()) {
+                            onEditModel(editingModel)
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = AppShapes.CardLarge
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            }
+        }
+    }
+}
+
 private fun ProviderOverrideSettings(
     providerOverride: ProviderSetting?,
     onUpdateProviderOverride: (ProviderSetting?) -> Unit,
@@ -3578,6 +3634,7 @@ private fun ProviderOverrideSettings(
             DomChatGlassBottomSheet(
                 visible = true,
                 containerColor = Color(0xFF000000),
+                dragHandle = { DomChatSheetDragHandle() },
                 onDismissRequest = {
                     showProviderConfig = false
                     editingProvider = null
@@ -3590,13 +3647,29 @@ private fun ProviderOverrideSettings(
                         .fillMaxWidth()
                         .fillMaxHeight(0.88f)
                         .imePadding()
-                        .padding(16.dp),
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.setting_provider_page_configure_provider_override),
-                        style = MaterialTheme.typography.titleLarge,
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.setting_provider_page_configure_provider_override),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        IconButton(onClick = {
+                            showProviderConfig = false
+                            editingProvider = null
+                        }) {
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel), tint = Color.White)
+                        }
+                    }
 
                     Column(
                         modifier = Modifier

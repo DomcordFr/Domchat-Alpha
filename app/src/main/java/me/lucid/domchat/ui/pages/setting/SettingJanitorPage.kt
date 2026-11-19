@@ -39,6 +39,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import androidx.compose.ui.platform.LocalConfiguration
@@ -1066,11 +1067,25 @@ private fun JanitorCharacterInspectorSheet(
         shape = sheetShape,
         maxHeight = screenHeight * 0.92f,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
+        CompositionLocalProvider(
+            LocalContentColor provides Color(0xFFF2F2F7),
+            LocalTextStyle provides MaterialTheme.typography.bodyMedium.copy(color = Color(0xFFF2F2F7))
         ) {
+            MaterialTheme(
+                colorScheme = darkColorScheme(
+                    surface = Color(0xFF000000),
+                    onSurface = Color(0xFFF2F2F7),
+                    surfaceVariant = Color(0xFF141418),
+                    onSurfaceVariant = Color(0xFFC7C7CC),
+                    background = Color(0xFF000000),
+                    onBackground = Color(0xFFF2F2F7),
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                ) {
             val sheetScrollState = rememberScrollState()
             Column(
                 modifier = Modifier
@@ -1587,6 +1602,8 @@ private fun JanitorCharacterInspectorSheet(
             }
         }
     }
+}
+}
 }
 
 /**
