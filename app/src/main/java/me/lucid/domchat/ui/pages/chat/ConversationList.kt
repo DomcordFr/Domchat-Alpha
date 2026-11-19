@@ -104,7 +104,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
@@ -707,11 +706,7 @@ private fun ConversationItem(
                                     safeDrawableResId(context, av.id, me.lucid.domchat.R.drawable.default_generical_pfp)
                                 }
                                 AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(safeId)
-                                        .error(me.lucid.domchat.R.drawable.default_generical_pfp)
-                                        .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
-                                        .build(),
+                                    model = safeId,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     alignment = BiasAlignment(0f, -0.14f),

@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Avatar
 import androidx.compose.foundation.lazy.LazyColumn
@@ -670,11 +669,7 @@ fun SettingChatsPage(
                                                 safeDrawableResId(context, av.id, me.lucid.domchat.R.drawable.default_generical_pfp)
                                             }
                                             AsyncImage(
-                                                model = ImageRequest.Builder(context)
-                                                    .data(safeId)
-                                                    .error(me.lucid.domchat.R.drawable.default_generical_pfp)
-                                                    .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
-                                                    .build(),
+                                                model = safeId,
                                                 contentDescription = null,
                                                 modifier = Modifier
                                                     .size(46.dp)

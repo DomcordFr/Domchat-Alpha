@@ -112,7 +112,6 @@ import me.lucid.domchat.BuildConfig
 import me.lucid.domchat.utils.Version
 import me.lucid.domchat.utils.onSuccess
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import me.lucid.domchat.utils.safeDrawableResId
 import kotlin.uuid.Uuid
 
@@ -800,11 +799,7 @@ private fun DrawerAvatarVisual(
                     safeDrawableResId(context, avatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)
                 }
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(safeId)
-                        .error(me.lucid.domchat.R.drawable.default_generical_pfp)
-                        .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
-                        .build(),
+                    model = safeId,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop

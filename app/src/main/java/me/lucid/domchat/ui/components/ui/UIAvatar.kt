@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import me.lucid.domchat.R
 import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Avatar
@@ -137,11 +136,7 @@ fun UIAvatar(
                         safeDrawableResId(context, value.id, me.lucid.domchat.R.drawable.default_generical_pfp)
                     }
                     AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(safeId)
-                            .error(me.lucid.domchat.R.drawable.default_generical_pfp)
-                            .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
-                            .build(),
+                        model = safeId,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,

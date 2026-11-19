@@ -1657,11 +1657,7 @@ fun FullCharacterCardImage(
                     safeDrawableResId(context, avatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)
                 }
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(safeId)
-                        .error(me.lucid.domchat.R.drawable.default_generical_pfp)
-                        .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
-                        .build(),
+                    model = safeId,
                     contentDescription = name,
                     modifier = Modifier.fillMaxSize(),
                     alignment = Alignment.TopCenter,
