@@ -66,6 +66,13 @@ class LayerBackdrop internal constructor(
         samplerInvalidators.forEach { it() }
     }
 
+    internal var sourceInvalidator: (() -> Unit)? = null
+
+    /** Invalidate the recording source node so it re-records on the next draw pass. */
+    fun invalidateSource() {
+        sourceInvalidator?.invoke()
+    }
+
     /**
      * Changes after the source layer is recorded. Samplers can read this plain
      * field during drawing without creating a snapshot invalidation loop.
@@ -75,11 +82,24 @@ class LayerBackdrop internal constructor(
     internal var contentVersion: Int = 0
         private set
 
+    /** True once the source has been recorded at least once. Reactive state so composables can observe changes. */
+    override var hasRecording: Boolean by mutableStateOf(false)
+        internal set
+
     /** Called by the recording node after a successful record. */
     internal fun contentRecorded() {
-        if (contentVersion == 0) geometryChanged()
+        if (!hasRecording) {
+            hasRecording = true
+            geometryChanged()
+        }
         contentVersion++
         notifySamplers()
+    }
+
+    fun reset() {
+        contentVersion = 0
+        hasRecording = false
+        geometryChanged()
     }
 
     /**
@@ -91,11 +111,9 @@ class LayerBackdrop internal constructor(
 
     internal fun geometryChanged() {
         geometryVersion++
+        sourceInvalidator?.invoke()
         notifySamplers()
     }
-
-    /** True once the source has been recorded at least once. */
-    override val hasRecording: Boolean get() = contentVersion > 0
 
     /** Fraction of screen resolution [graphicsLayer] was recorded at. */
     internal var sourceScale: Float = 1f

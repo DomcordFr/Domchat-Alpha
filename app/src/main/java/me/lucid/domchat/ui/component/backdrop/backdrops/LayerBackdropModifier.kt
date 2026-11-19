@@ -38,8 +38,10 @@ private class LayerBackdropElement(
 
     override fun update(node: LayerBackdropNode) {
         if (node.backdrop != backdrop) {
+            node.backdrop.sourceInvalidator = null
             node.backdrop.layerCoordinates = null
             node.backdrop = backdrop
+            backdrop.sourceInvalidator = { node.invalidateDraw() }
         }
         node.frozen = frozen
         node.invalidateDraw()
@@ -70,6 +72,10 @@ private class LayerBackdropNode(
     var frozen: () -> Boolean
 ) : Modifier.Node(), DrawModifierNode, GlobalPositionAwareModifierNode {
 
+    override fun onAttach() {
+        backdrop.sourceInvalidator = { invalidateDraw() }
+    }
+
     override fun ContentDrawScope.draw() {
         // Record once and composite to the screen; glass samplers reuse this layer.
         recordLayer(this@LayerBackdropNode, backdrop.graphicsLayer) { backdrop.onDraw(this@draw) }
@@ -87,6 +93,9 @@ private class LayerBackdropNode(
     }
 
     override fun onDetach() {
+        if (backdrop.sourceInvalidator != null) {
+            backdrop.sourceInvalidator = null
+        }
         // Retain last known coordinates across transient detachments (keyboard animation,
         // scroll recycling) so active glass samplers do not drop to null coordinates.
     }

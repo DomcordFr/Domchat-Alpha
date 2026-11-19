@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.dialog
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,30 +12,41 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.data.model.LiquidGlassMode
+import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
@@ -45,8 +57,8 @@ private val BUTTON_CORNER = 16.dp
 
 /**
  * Button content shared by every destructive confirmation dialog:
- * - Delete: solid red fill ([DELETE_RED]), rounded corners, 15.dp SemiBold white
- *   text, centered.
+ * - Delete: solid red fill ([DELETE_RED]), rounded corners, delete icon + 15.dp SemiBold white
+ *   text, vertically & horizontally centered.
  * - Cancel: translucent dark surface with a subtle white specular border, centered
  *   white text.
  */
@@ -71,41 +83,54 @@ private fun DestructiveConfirmButtons(
             tonalElevation = 0.dp,
             modifier = Modifier.weight(1f).height(DIALOG_HEIGHT),
         ) {
-            Text(
-                text = cancelLabel,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
-                ),
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 1,
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = cancelLabel,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                    ),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+            }
         }
 
-        // Delete button: full solid red background, never just a tint or border.
+        // Delete button: full solid red background, delete icon + white text.
         Surface(
-            onClick = {
-                onConfirm()
-                onCancel()
-            },
+            onClick = onConfirm,
             shape = RoundedCornerShape(BUTTON_CORNER),
             color = Color(DELETE_RED),
             tonalElevation = 0.dp,
             modifier = Modifier.weight(1f).height(DIALOG_HEIGHT),
         ) {
-            Text(
-                text = confirmLabel,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
-                ),
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 1,
-            )
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = confirmLabel,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                    ),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
@@ -120,8 +145,8 @@ private fun DestructiveConfirmButtons(
  *   border ([LiquidGlassTokens.SpecularBorderSubtle]) — no nested/dual backgrounds.
  * - Smooth scale + fade entry/exit animations.
  * - Title and body message.
- * - Cancel button: glassy outlined, muted white text.
- * - Delete button: prominent solid red button with pure white text.
+ * - Cancel button: glassy outlined, centered white text.
+ * - Delete button: prominent solid red button with delete icon and pure white text.
  *
  * @param visible Whether the dialog is currently shown.
  * @param title The dialog title (e.g. "Delete conversation?").
@@ -141,31 +166,65 @@ fun UniversalDestructiveConfirmDialog(
     confirmLabel: String = "Delete",
     cancelLabel: String = "Cancel",
 ) {
-    val dialogShape = RoundedCornerShape(20.dp)
+    if (!visible) return
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            initialScale = 0.9f
-        ),
-        exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            targetScale = 0.9f
-        ),
+    val dialogShape = RoundedCornerShape(20.dp)
+    var isClosing by remember { mutableStateOf(false) }
+    var confirmedAction by remember { mutableStateOf(false) }
+    val animState = remember { MutableTransitionState(false) }
+
+    LaunchedEffect(Unit) {
+        animState.targetState = true
+    }
+
+    LaunchedEffect(animState.isIdle, animState.currentState, isClosing) {
+        if (isClosing && animState.isIdle && !animState.currentState) {
+            if (confirmedAction) {
+                onConfirm()
+            }
+            onDismiss()
+        }
+    }
+
+    val triggerDismiss: () -> Unit = {
+        if (!isClosing) {
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    val triggerConfirm: () -> Unit = {
+        if (!isClosing) {
+            confirmedAction = true
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    Dialog(
+        onDismissRequest = triggerDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
-        Dialog(
-            onDismissRequest = onDismiss,
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
+        ApplyDialogWindowBlur()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
+            AnimatedVisibility(
+                visibleState = animState,
+                enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    initialScale = 0.9f
+                ),
+                exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    targetScale = 0.9f
+                ),
             ) {
                 Surface(
                     shape = dialogShape,
@@ -200,8 +259,8 @@ fun UniversalDestructiveConfirmDialog(
                         )
 
                         DestructiveConfirmButtons(
-                            onCancel = onDismiss,
-                            onConfirm = onConfirm,
+                            onCancel = triggerDismiss,
+                            onConfirm = triggerConfirm,
                             confirmLabel = confirmLabel,
                             cancelLabel = cancelLabel,
                         )
@@ -215,7 +274,7 @@ fun UniversalDestructiveConfirmDialog(
 /**
  * Confirmation dialog for chat pages: translucent liquid-glass surface over the
  * conversation backdrop (frosted glass when [LiquidGlassMode.SOFT_FROSTED]),
- * transparent fill, specular border, solid red delete button.
+ * transparent fill, specular border, centered text, solid red delete button with delete icon.
  */
 @Composable
 fun ChatDestructiveConfirmDialog(
@@ -227,6 +286,8 @@ fun ChatDestructiveConfirmDialog(
     confirmLabel: String = "Delete",
     cancelLabel: String = "Cancel",
 ) {
+    if (!visible) return
+
     val dialogShape = RoundedCornerShape(20.dp)
     val isFrosted = LocalSettings.current.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     val surfaceModifier: Modifier = if (isFrosted) {
@@ -246,29 +307,62 @@ fun ChatDestructiveConfirmDialog(
         )
     }
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            initialScale = 0.9f
-        ),
-        exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            targetScale = 0.9f
-        ),
+    var isClosing by remember { mutableStateOf(false) }
+    var confirmedAction by remember { mutableStateOf(false) }
+    val animState = remember { MutableTransitionState(false) }
+
+    LaunchedEffect(Unit) {
+        animState.targetState = true
+    }
+
+    LaunchedEffect(animState.isIdle, animState.currentState, isClosing) {
+        if (isClosing && animState.isIdle && !animState.currentState) {
+            if (confirmedAction) {
+                onConfirm()
+            }
+            onDismiss()
+        }
+    }
+
+    val triggerDismiss: () -> Unit = {
+        if (!isClosing) {
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    val triggerConfirm: () -> Unit = {
+        if (!isClosing) {
+            confirmedAction = true
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    Dialog(
+        onDismissRequest = triggerDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
-        Dialog(
-            onDismissRequest = onDismiss,
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
+        ApplyDialogWindowBlur()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
+            AnimatedVisibility(
+                visibleState = animState,
+                enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    initialScale = 0.9f
+                ),
+                exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    targetScale = 0.9f
+                ),
             ) {
                 Box(
                     modifier = Modifier
@@ -303,8 +397,8 @@ fun ChatDestructiveConfirmDialog(
                         )
 
                         DestructiveConfirmButtons(
-                            onCancel = onDismiss,
-                            onConfirm = onConfirm,
+                            onCancel = triggerDismiss,
+                            onConfirm = triggerConfirm,
                             confirmLabel = confirmLabel,
                             cancelLabel = cancelLabel,
                         )
@@ -330,31 +424,65 @@ fun SettingsDestructiveConfirmDialog(
     confirmLabel: String = "Delete",
     cancelLabel: String = "Cancel",
 ) {
-    val dialogShape = RoundedCornerShape(20.dp)
+    if (!visible) return
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            initialScale = 0.9f
-        ),
-        exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            targetScale = 0.9f
-        ),
+    val dialogShape = RoundedCornerShape(20.dp)
+    var isClosing by remember { mutableStateOf(false) }
+    var confirmedAction by remember { mutableStateOf(false) }
+    val animState = remember { MutableTransitionState(false) }
+
+    LaunchedEffect(Unit) {
+        animState.targetState = true
+    }
+
+    LaunchedEffect(animState.isIdle, animState.currentState, isClosing) {
+        if (isClosing && animState.isIdle && !animState.currentState) {
+            if (confirmedAction) {
+                onConfirm()
+            }
+            onDismiss()
+        }
+    }
+
+    val triggerDismiss: () -> Unit = {
+        if (!isClosing) {
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    val triggerConfirm: () -> Unit = {
+        if (!isClosing) {
+            confirmedAction = true
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    Dialog(
+        onDismissRequest = triggerDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
-        Dialog(
-            onDismissRequest = onDismiss,
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
+        ApplyDialogWindowBlur()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
+            AnimatedVisibility(
+                visibleState = animState,
+                enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    initialScale = 0.9f
+                ),
+                exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    targetScale = 0.9f
+                ),
             ) {
                 Surface(
                     shape = dialogShape,
@@ -389,8 +517,8 @@ fun SettingsDestructiveConfirmDialog(
                         )
 
                         DestructiveConfirmButtons(
-                            onCancel = onDismiss,
-                            onConfirm = onConfirm,
+                            onCancel = triggerDismiss,
+                            onConfirm = triggerConfirm,
                             confirmLabel = confirmLabel,
                             cancelLabel = cancelLabel,
                         )
@@ -400,3 +528,4 @@ fun SettingsDestructiveConfirmDialog(
         }
     }
 }
+

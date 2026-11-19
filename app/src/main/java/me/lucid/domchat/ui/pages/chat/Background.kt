@@ -97,8 +97,13 @@ fun AssistantBackground(
         modifier = modifier,
     ) { bgUrl ->
         if (!bgUrl.isNullOrBlank()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                val isDark = LocalDarkMode.current
+            val isDark = LocalDarkMode.current
+            val baseCanvasColor = if (isDark) Color.Black else MaterialTheme.colorScheme.background
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(baseCanvasColor)
+            ) {
                 val scrimAlpha = resolvedDim.coerceIn(0f, 0.95f)
                 val scrimColor = if (isDark) {
                     Color.Black.copy(alpha = scrimAlpha)

@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,12 +17,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,33 +71,67 @@ fun DomChatDestructiveConfirmDialog(
     confirmLabel: String = stringResource(R.string.delete),
     cancelLabel: String = stringResource(R.string.cancel),
 ) {
+    if (!visible) return
+
     val dialogShape = RoundedCornerShape(20.dp)
     val containerColor = domChatDialogContainerColor()
-    ApplyDialogWindowBlur()
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            initialScale = 0.9f
-        ),
-        exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-            targetScale = 0.9f
-        ),
+    var isClosing by remember { mutableStateOf(false) }
+    var confirmedAction by remember { mutableStateOf(false) }
+    val animState = remember { MutableTransitionState(false) }
+
+    LaunchedEffect(Unit) {
+        animState.targetState = true
+    }
+
+    LaunchedEffect(animState.isIdle, animState.currentState, isClosing) {
+        if (isClosing && animState.isIdle && !animState.currentState) {
+            if (confirmedAction) {
+                onConfirm()
+            }
+            onDismiss()
+        }
+    }
+
+    val triggerDismiss: () -> Unit = {
+        if (!isClosing) {
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    val triggerConfirm: () -> Unit = {
+        if (!isClosing) {
+            confirmedAction = true
+            isClosing = true
+            animState.targetState = false
+        }
+    }
+
+    Dialog(
+        onDismissRequest = triggerDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
-        Dialog(
-            onDismissRequest = onDismiss,
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
+        ApplyDialogWindowBlur()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
+            AnimatedVisibility(
+                visibleState = animState,
+                enter = fadeIn(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleIn(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    initialScale = 0.9f
+                ),
+                exit = fadeOut(animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f)) + scaleOut(
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                    targetScale = 0.9f
+                ),
             ) {
                 Surface(
                     shape = dialogShape,
@@ -127,48 +173,61 @@ fun DomChatDestructiveConfirmDialog(
                             // Cancel button: translucent dark surface, subtle white
                             // border, centered white text.
                             Surface(
-                                onClick = onDismiss,
+                                onClick = triggerDismiss,
                                 shape = RoundedCornerShape(BUTTON_CORNER),
                                 color = Color(0xFF000000).copy(alpha = 0.15f),
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 tonalElevation = 0.dp,
                                 modifier = Modifier.weight(1f).height(DIALOG_HEIGHT),
                             ) {
-                                Text(
-                                    text = cancelLabel,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                    ),
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    maxLines = 1,
-                                )
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = cancelLabel,
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp,
+                                        ),
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
 
-                            // Confirm button: solid red fill, never just a tint.
+                            // Confirm button: solid red fill with delete icon.
                             Surface(
-                                onClick = {
-                                    onConfirm()
-                                    onDismiss()
-                                },
+                                onClick = triggerConfirm,
                                 shape = RoundedCornerShape(BUTTON_CORNER),
                                 color = Color(DELETE_RED),
                                 tonalElevation = 0.dp,
                                 modifier = Modifier.weight(1f).height(DIALOG_HEIGHT),
                             ) {
-                                Text(
-                                    text = confirmLabel,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                    ),
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    maxLines = 1,
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = confirmLabel,
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp,
+                                        ),
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
                         }
                     }
@@ -177,3 +236,4 @@ fun DomChatDestructiveConfirmDialog(
         }
     }
 }
+

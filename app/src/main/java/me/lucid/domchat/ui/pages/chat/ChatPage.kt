@@ -1544,43 +1544,43 @@ private fun ChatPageContent(
         // Records the chat list content. Served ONLY to overlay floaters (top bar,
         // composer, picker, menus, sheets) and only while it is opaque and ready.
         val contentBackdrop = rememberLayerBackdrop()
-        // True while [contentBackdrop] holds an opaque, ready recording. Reset
-        // whenever the chat list is not ready (cold start, conversation switch) so
-        // a transparent recording is never served to liquid glass samplers, which
-        // used to make surfaces render fully transparent until a menu re-recorded.
-        var contentBackdropDrawn by remember { mutableStateOf(false) }
-        SideEffect {
-            if (chatListReady && contentBackdrop.hasRecording) {
-                contentBackdropDrawn = true
-            } else if (!chatListReady) {
-                contentBackdropDrawn = false
-            }
-        }
         // Empty chat: bind the wallpaper backdrop immediately so liquid glass
         // paints at launch with 0ms delay instead of waiting for the first frame.
         val emptyChat = conversation.messageNodes.isEmpty()
         // Overlay floaters sample the chat content once it is opaque and ready;
         // everything else (bubbles, chat list, new-chat content) samples wallpaper.
-        // `chatListReady` is checked directly (not only the cached flag) so the
-        // first frame after a conversation switch cannot sample a transparent layer.
-        val overlayBackdrop = if (emptyChat || !chatListReady || !contentBackdropDrawn) {
+        // `chatListReady` and `contentBackdrop.hasRecording` are reactive Compose state.
+        val overlayBackdrop = if (emptyChat || !chatListReady || !contentBackdrop.hasRecording) {
             wallpaperBackdrop
         } else {
             contentBackdrop
         }
 
         LaunchedEffect(conversation.id) {
+            contentBackdrop.reset()
+            wallpaperBackdrop.invalidateSource()
+            chatBackdrop.invalidateSource()
             delay(50)
+            wallpaperBackdrop.invalidateSource()
+            chatBackdrop.invalidateSource()
             wallpaperBackdrop.geometryChanged()
             chatBackdrop.geometryChanged()
             delay(startupWallpaperPauseMs.toLong().coerceAtLeast(100L))
+            wallpaperBackdrop.invalidateSource()
+            chatBackdrop.invalidateSource()
+            contentBackdrop.invalidateSource()
             wallpaperBackdrop.geometryChanged()
             chatBackdrop.geometryChanged()
             contentBackdrop.geometryChanged()
         }
         LaunchedEffect(chatListReady) {
             if (chatListReady) {
+                contentBackdrop.invalidateSource()
+                contentBackdrop.geometryChanged()
                 delay(30)
+                wallpaperBackdrop.invalidateSource()
+                chatBackdrop.invalidateSource()
+                contentBackdrop.invalidateSource()
                 wallpaperBackdrop.geometryChanged()
                 chatBackdrop.geometryChanged()
                 contentBackdrop.geometryChanged()
@@ -1612,6 +1612,9 @@ private fun ChatPageContent(
                             // Wallpaper bitmap decoded: invalidate all backdrops so all
                             // liquid glass samplers re-record against the real background.
                             onWallpaperLoaded = {
+                                wallpaperBackdrop.invalidateSource()
+                                chatBackdrop.invalidateSource()
+                                contentBackdrop.invalidateSource()
                                 wallpaperBackdrop.geometryChanged()
                                 chatBackdrop.geometryChanged()
                                 contentBackdrop.geometryChanged()
@@ -2064,30 +2067,32 @@ private fun ChatPageContent(
                 // Message deletion confirmation dialog (liquid glass).
                 // Shared by the message action row delete button and the message actions popover delete button.
                 pendingDeleteMessage?.let { messageToDelete ->
-                    ChatDestructiveConfirmDialog(
-                        visible = true,
-                        title = stringResource(R.string.chat_message_delete_title),
-                        message = stringResource(R.string.chat_message_delete_confirm),
-                        onConfirm = {
-                            haptics.perform(HapticPattern.Error)
-                            pendingDeleteMessage = null
-                            scope.launch {
-                                val backup = conversation
-                                val removedIds = vm.deleteMessage(messageToDelete)
-                                toaster.show(
-                                    message = context.getString(R.string.message_deleted),
-                                    action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                        label = context.getString(R.string.undo),
-                                        onClick = {
-                                            vm.updateConversation(backup)
-                                            vm.markNodesAsRestored(removedIds)
-                                        }
+                    CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
+                        ChatDestructiveConfirmDialog(
+                            visible = true,
+                            title = stringResource(R.string.chat_message_delete_title),
+                            message = stringResource(R.string.chat_message_delete_confirm),
+                            onConfirm = {
+                                haptics.perform(HapticPattern.Error)
+                                pendingDeleteMessage = null
+                                scope.launch {
+                                    val backup = conversation
+                                    val removedIds = vm.deleteMessage(messageToDelete)
+                                    toaster.show(
+                                        message = context.getString(R.string.message_deleted),
+                                        action = me.lucid.domchat.ui.components.ui.ToastAction(
+                                            label = context.getString(R.string.undo),
+                                            onClick = {
+                                                vm.updateConversation(backup)
+                                                vm.markNodesAsRestored(removedIds)
+                                            }
+                                        )
                                     )
-                                )
-                            }
-                        },
-                        onDismiss = { pendingDeleteMessage = null },
-                    )
+                                }
+                            },
+                            onDismiss = { pendingDeleteMessage = null },
+                        )
+                    }
                 }
 
                 // Gradient behind floating toolbar - hidden when showing new chat content or in transparent immersive mode
