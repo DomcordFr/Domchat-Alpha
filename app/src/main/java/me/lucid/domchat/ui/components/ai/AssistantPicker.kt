@@ -271,21 +271,26 @@ fun AssistantPickerSheet(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            DomChatSearchBar(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = "Search characters...",
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                fieldModifier = Modifier.liquidGlassSurface(
-                    shape = AppShapes.SearchBar,
-                    borderWidth = 0.5.dp,
-                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                    fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.15f),
-                    glassMode = LiquidGlassMode.BALANCED_BLEND,
-                ),
-            )
+                    .padding(bottom = 8.dp)
+            ) {
+                DomChatSearchBar(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = "Search characters...",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = AppShapes.SearchField,
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                            fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.15f),
+                            glassMode = LiquidGlassMode.BALANCED_BLEND,
+                        ),
+                )
+            }
         }
 
         LazyColumn(

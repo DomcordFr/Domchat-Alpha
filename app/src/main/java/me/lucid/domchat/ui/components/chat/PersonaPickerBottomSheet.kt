@@ -257,19 +257,26 @@ fun PersonaPickerBottomSheet(
                 },
             )
 
-            DomChatSearchBar(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = "Search personas...",
-                fieldModifier = Modifier.liquidGlassSurface(
-                    shape = AppShapes.SearchField,
-                    borderWidth = 0.5.dp,
-                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                    fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f),
-                    isFloatingControl = true,
-                ),
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 4.dp)
+            ) {
+                DomChatSearchBar(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = "Search personas...",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = AppShapes.SearchField,
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                            fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f),
+                            glassMode = LiquidGlassMode.BALANCED_BLEND,
+                        ),
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
