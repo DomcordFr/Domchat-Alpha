@@ -21,6 +21,7 @@ import me.lucid.common.platform.PlatformHttpClient
 import me.lucid.common.platform.PlatformHttpRequest
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.utils.safeDrawableResId
 import org.koin.core.context.GlobalContext
 import java.io.File
 import java.io.InputStream
@@ -137,7 +138,8 @@ suspend fun extractColorCandidates(
             loadBitmap(context, avatarSource)?.let { extractCandidatesFromBitmap(it) }
         }
         avatarResourceId != null -> {
-            BitmapFactory.decodeResource(context.resources, avatarResourceId)
+            val safeId = safeDrawableResId(context, avatarResourceId, me.lucid.domchat.R.drawable.default_generical_pfp)
+            BitmapFactory.decodeResource(context.resources, safeId)
                 ?.let { extractCandidatesFromBitmap(it) }
         }
         else -> null

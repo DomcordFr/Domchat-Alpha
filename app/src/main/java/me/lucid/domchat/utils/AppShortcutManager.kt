@@ -117,7 +117,8 @@ class AppShortcutManager(
             is Avatar.Resource -> {
                 // Use the resource directly without circle cropping
                 // This preserves the original icon shape (like Generical)
-                Icon.createWithResource(context, avatar.id)
+                val safeId = safeDrawableResId(context, avatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)
+                Icon.createWithResource(context, safeId)
             }
             is Avatar.Dummy -> {
                 // Create icon with first letter of name

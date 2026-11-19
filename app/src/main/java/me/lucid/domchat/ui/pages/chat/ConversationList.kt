@@ -104,6 +104,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
@@ -700,9 +702,16 @@ private fun ConversationItem(
                                 )
                             }
                             is Avatar.Resource -> {
-                                val resId = if (av.id != 0) av.id else me.lucid.domchat.R.drawable.default_generical_pfp
-                                androidx.compose.foundation.Image(
-                                    painter = androidx.compose.ui.res.painterResource(id = resId),
+                                val context = androidx.compose.ui.platform.LocalContext.current
+                                val safeId = androidx.compose.runtime.remember(av.id, context) {
+                                    safeDrawableResId(context, av.id, me.lucid.domchat.R.drawable.default_generical_pfp)
+                                }
+                                AsyncImage(
+                                    model = ImageRequest.Builder(context)
+                                        .data(safeId)
+                                        .error(me.lucid.domchat.R.drawable.default_generical_pfp)
+                                        .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
+                                        .build(),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     alignment = BiasAlignment(0f, -0.14f),

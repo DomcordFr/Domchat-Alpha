@@ -38,7 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import me.lucid.domchat.R
+import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.ui.hooks.rememberAvatarShape
 import me.lucid.domchat.utils.createChatFilesByContents
@@ -130,9 +132,16 @@ fun UIAvatar(
                 }
 
                 is Avatar.Resource -> {
-                    val resId = if (value.id != 0) value.id else me.lucid.domchat.R.drawable.default_generical_pfp
-                    androidx.compose.foundation.Image(
-                        painter = androidx.compose.ui.res.painterResource(id = resId),
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val safeId = androidx.compose.runtime.remember(value.id, context) {
+                        safeDrawableResId(context, value.id, me.lucid.domchat.R.drawable.default_generical_pfp)
+                    }
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(safeId)
+                            .error(me.lucid.domchat.R.drawable.default_generical_pfp)
+                            .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
+                            .build(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,

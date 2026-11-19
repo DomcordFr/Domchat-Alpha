@@ -11,6 +11,7 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
+import me.lucid.domchat.utils.safeDrawableResId
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -1370,7 +1371,7 @@ private fun UserMessageTurn(
                     .clickable {
                         when (personaAvatar) {
                             is Avatar.Image -> previewUserAvatarUrl = personaAvatar.url
-                            is Avatar.Resource -> previewUserAvatarUrl = "android.resource://${context.packageName}/${if (personaAvatar.id != 0) personaAvatar.id else me.lucid.domchat.R.drawable.default_generical_pfp}"
+                            is Avatar.Resource -> previewUserAvatarUrl = "android.resource://${context.packageName}/${safeDrawableResId(context, personaAvatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
                             else -> Unit
                         }
                     },
@@ -1729,7 +1730,7 @@ private fun AssistantMessageTurn(
         haptics.perform(HapticPattern.Pop)
         when (avatarValue) {
             is Avatar.Image -> previewBotAvatarUrl = avatarValue.url
-            is Avatar.Resource -> previewBotAvatarUrl = "android.resource://${context.packageName}/${if (avatarValue.id != 0) avatarValue.id else me.lucid.domchat.R.drawable.default_generical_pfp}"
+            is Avatar.Resource -> previewBotAvatarUrl = "android.resource://${context.packageName}/${safeDrawableResId(context, avatarValue.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
             else -> Unit
         }
     }

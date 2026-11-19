@@ -168,6 +168,8 @@ import androidx.compose.ui.text.style.TextAlign
 import coil3.request.crossfade
 import androidx.compose.ui.graphics.SolidColor
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import me.lucid.domchat.utils.safeDrawableResId
 import kotlinx.coroutines.launch
 import kotlin.text.Regex
 import me.lucid.domchat.data.model.Avatar
@@ -1650,9 +1652,16 @@ fun FullCharacterCardImage(
                 )
             }
             is Avatar.Resource -> {
-                val resId = if (avatar.id != 0) avatar.id else me.lucid.domchat.R.drawable.default_generical_pfp
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(id = resId),
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val safeId = androidx.compose.runtime.remember(avatar.id, context) {
+                    safeDrawableResId(context, avatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)
+                }
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(safeId)
+                        .error(me.lucid.domchat.R.drawable.default_generical_pfp)
+                        .fallback(me.lucid.domchat.R.drawable.default_generical_pfp)
+                        .build(),
                     contentDescription = name,
                     modifier = Modifier.fillMaxSize(),
                     alignment = Alignment.TopCenter,
@@ -2091,7 +2100,7 @@ fun CharacterInspectorSheet(
                             .clickable {
                                 val url = when (val av = assistant.avatar) {
                                     is Avatar.Image -> av.url
-                                    is Avatar.Resource -> "android.resource://${context.packageName}/${if (av.id != 0) av.id else me.lucid.domchat.R.drawable.default_generical_pfp}"
+                                    is Avatar.Resource -> "android.resource://${context.packageName}/${safeDrawableResId(context, av.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
                                     else -> null
                                 }
                                 if (!url.isNullOrBlank()) {

@@ -475,7 +475,8 @@ object AssistantExportImport : KoinComponent {
      */
     private fun renderResourceToPng(context: Context, resourceId: Int, fallbackName: String): ByteArray {
         try {
-            val drawable = androidx.core.content.ContextCompat.getDrawable(context, resourceId)
+            val safeId = safeDrawableResId(context, resourceId, me.lucid.domchat.R.drawable.default_generical_pfp)
+            val drawable = androidx.core.content.ContextCompat.getDrawable(context, safeId)
             if (drawable != null) {
                 val size = 512
                 val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
