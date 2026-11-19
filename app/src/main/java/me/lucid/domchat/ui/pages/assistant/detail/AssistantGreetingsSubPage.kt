@@ -75,7 +75,7 @@ import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.UIMessagePart
 import me.lucid.domchat.R
 import me.lucid.domchat.data.model.Assistant
-import me.lucid.domchat.ui.components.nav.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.components.ui.HapticSwitch

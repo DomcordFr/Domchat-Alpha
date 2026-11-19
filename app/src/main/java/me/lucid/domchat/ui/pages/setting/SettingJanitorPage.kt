@@ -113,8 +113,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.Image
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import kotlin.text.Charsets
 import kotlin.text.Regex
@@ -1687,7 +1685,6 @@ private fun JanitorCharacterInspectorSheet(
     }
 }
 }
-}
 
     if (showFullScreenImage && imageUrl.isNotBlank()) {
         Dialog(
@@ -1730,6 +1727,7 @@ private fun JanitorCharacterInspectorSheet(
             }
         }
     }
+}
 
 /**
  * Custom pulsing dark-glass orbital loader. Replaces the stock circular progress spinner
