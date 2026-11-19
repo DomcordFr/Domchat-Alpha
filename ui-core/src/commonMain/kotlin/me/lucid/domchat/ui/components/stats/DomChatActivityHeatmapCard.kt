@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +72,7 @@ fun DomChatActivityHeatmapCard(
     darkTheme: Boolean,
     onMonthSelected: () -> Unit,
     modifier: Modifier = Modifier,
+    border: BorderStroke? = null,
 ) {
     require(weekdayLabels.size == 7) { "weekdayLabels must contain seven entries" }
     val containerColor = if (darkTheme) {
@@ -78,18 +80,35 @@ fun DomChatActivityHeatmapCard(
     } else {
         Color.White.copy(alpha = 0.90f)
     }
-    val contentColor = MaterialTheme.colorScheme.onSurface
+    val contentColor = if (darkTheme) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface
     val heatmapBaseColor = MaterialTheme.colorScheme.primary
+    val defaultBorder = BorderStroke(
+        0.5.dp,
+        if (darkTheme) {
+            Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.22f),
+                    Color.White.copy(alpha = 0.06f),
+                    Color.Transparent,
+                )
+            )
+        } else {
+            Brush.verticalGradient(
+                listOf(
+                    Color.Black.copy(alpha = 0.12f),
+                    Color.Black.copy(alpha = 0.04f),
+                    Color.Transparent,
+                )
+            )
+        }
+    )
 
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = contentColor,
         ),
-        border = BorderStroke(
-            0.5.dp,
-            if (darkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f)
-        ),
+        border = border ?: defaultBorder,
         shape = AppShapes.CardMedium,
         modifier = modifier.heightIn(min = HeatmapCardMinHeight),
     ) {

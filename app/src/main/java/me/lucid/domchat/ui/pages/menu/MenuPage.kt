@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.menu
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +54,8 @@ import me.lucid.domchat.utils.currentAppLocale
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.modifier.shimmer
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.plus
 import me.lucid.domchat.R
@@ -70,8 +74,10 @@ private val HeatmapCardMinHeight = 264.dp
 fun MenuPage() {
     val vm: MenuVM = koinViewModel()
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val isDark = LocalDarkMode.current
 
     Scaffold(
+        containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 navigationIcon = {
@@ -81,9 +87,15 @@ fun MenuPage() {
                     Text(
                         text = stringResource(R.string.menu_statistics_title),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                ),
             )
         },
     ) { innerPadding ->
@@ -151,8 +163,7 @@ private fun MenuStatsContent(
                             title = stringResource(R.string.menu_stat_conversations),
                             value = formatCount(stats.usageStats.totalConversations),
                             icon = DomChatStatIcon.Conversations,
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            accentColor = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .fillMaxHeight()
@@ -186,8 +197,7 @@ private fun MenuStatsContent(
                             title = stringResource(R.string.menu_stat_messages),
                             value = formatCount(stats.usageStats.totalMessages),
                             icon = DomChatStatIcon.Messages,
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                            accentColor = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -196,12 +206,7 @@ private fun MenuStatsContent(
                             title = stringResource(R.string.menu_stat_input_tokens),
                             value = formatTokenCount(stats.usageStats.inputTokens),
                             icon = DomChatStatIcon.InputTokens,
-                            containerColor = if (LocalDarkMode.current) {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
-                            },
-                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            accentColor = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -235,12 +240,7 @@ private fun MenuStatsContent(
                             title = stringResource(R.string.menu_stat_output_tokens),
                             value = formatTokenCount(stats.usageStats.outputTokens),
                             icon = DomChatStatIcon.OutputTokens,
-                            containerColor = if (LocalDarkMode.current) {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
-                            },
-                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            accentColor = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -249,8 +249,7 @@ private fun MenuStatsContent(
                             title = stringResource(R.string.menu_stat_cached_tokens),
                             value = formatTokenCount(stats.usageStats.cachedTokens),
                             icon = DomChatStatIcon.CachedTokens,
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            accentColor = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -334,12 +333,13 @@ private fun rememberStatsWidgetRevealStage(
 
 @Composable
 private fun ChatHeatmapSkeletonCard(modifier: Modifier = Modifier) {
-    val containerColor = if (LocalDarkMode.current) {
-        MaterialTheme.colorScheme.surfaceContainerLow
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    }
-    val contentColor = MaterialTheme.colorScheme.onSurface
+    val isDark = LocalDarkMode.current
+    val containerColor = if (isDark) Color(0xFF000000) else Color.White
+    val contentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface
+    val borderStroke = BorderStroke(
+        0.5.dp,
+        if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+    )
     val today = LocalDate.now()
     val windowStart = remember(today) { today.withDayOfMonth(1).minusMonths(11) }
     val layout = remember(today, windowStart) {
@@ -359,7 +359,8 @@ private fun ChatHeatmapSkeletonCard(modifier: Modifier = Modifier) {
             containerColor = containerColor,
             contentColor = contentColor
         ),
-        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
+        border = borderStroke,
+        shape = AppShapes.CardMedium,
         modifier = modifier.heightIn(min = HeatmapCardMinHeight)
     ) {
         Column(
@@ -537,12 +538,13 @@ private fun ChatHeatmapSkeletonCard(modifier: Modifier = Modifier) {
 
 @Composable
 private fun StatCardSkeleton(modifier: Modifier = Modifier) {
-    val containerColor = if (LocalDarkMode.current) {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerHighest
-    }
-    val contentColor = MaterialTheme.colorScheme.onSurface
+    val isDark = LocalDarkMode.current
+    val containerColor = if (isDark) Color(0xFF000000) else Color.White
+    val contentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface
+    val borderStroke = BorderStroke(
+        0.5.dp,
+        if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+    )
 
     Card(
         modifier = modifier.heightIn(min = StatCardMinHeight),
@@ -550,7 +552,8 @@ private fun StatCardSkeleton(modifier: Modifier = Modifier) {
             containerColor = containerColor,
             contentColor = contentColor
         ),
-        shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
+        border = borderStroke,
+        shape = AppShapes.CardMedium
     ) {
         Column(
             modifier = Modifier
@@ -561,7 +564,7 @@ private fun StatCardSkeleton(modifier: Modifier = Modifier) {
             SkeletonBlock(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(me.lucid.domchat.ui.theme.AppShapes.Chip),
+                    .clip(AppShapes.Chip),
                 color = contentColor
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -609,6 +612,11 @@ private fun ChatHeatmapCard(
     val haptics = rememberPremiumHaptics()
     val today = LocalDate.now()
     val activeLocale = currentAppLocale()
+    val isDark = LocalDarkMode.current
+    val borderStroke = BorderStroke(
+        0.5.dp,
+        if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+    )
     DomChatActivityHeatmapCard(
         heatmapData = heatmapData.map { day ->
             CalendarHeatmapDay(
@@ -645,7 +653,8 @@ private fun ChatHeatmapCard(
             )
         },
         showEmptyState = showEmptyState,
-        darkTheme = LocalDarkMode.current,
+        darkTheme = isDark,
+        border = borderStroke,
         onMonthSelected = { haptics.perform(HapticPattern.Pop) },
         modifier = modifier,
     )
@@ -665,19 +674,27 @@ private fun StatCard(
     title: String,
     value: String,
     icon: DomChatStatIcon,
-    containerColor: Color,
-    contentColor: Color,
+    accentColor: Color,
     modifier: Modifier = Modifier,
     subtitle: String? = null
 ) {
+    val isDark = LocalDarkMode.current
+    val containerColor = if (isDark) Color(0xFF000000) else Color.White
+    val contentColor = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface
+    val borderStroke = BorderStroke(
+        0.5.dp,
+        if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
+    )
     DomChatStatCard(
         title = title,
         value = value,
         containerColor = containerColor,
         contentColor = contentColor,
+        border = borderStroke,
+        iconBackgroundColor = accentColor.copy(alpha = if (isDark) 0.18f else 0.12f),
         modifier = modifier,
         subtitle = subtitle,
-        icon = { me.lucid.domchat.ui.components.stats.DomChatStatIconGlyph(icon) },
+        icon = { me.lucid.domchat.ui.components.stats.DomChatStatIconGlyph(icon, tint = accentColor) },
     )
 }
 

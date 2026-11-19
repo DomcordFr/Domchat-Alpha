@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.components.stats
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,13 +15,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
@@ -38,17 +42,22 @@ enum class DomChatStatIcon {
 }
 
 @Composable
-fun DomChatStatIconGlyph(icon: DomChatStatIcon) {
+fun DomChatStatIconGlyph(
+    icon: DomChatStatIcon,
+    tint: Color = LocalContentColor.current,
+) {
+    val iconModifier = Modifier.size(18.dp)
     when (icon) {
-        DomChatStatIcon.Conversations -> Icon(ConversationIcon, null, Modifier.size(18.dp))
-        DomChatStatIcon.Messages -> Icon(MessageIcon, null, Modifier.size(18.dp))
-        DomChatStatIcon.InputTokens -> Icon(InputIcon, null, Modifier.size(18.dp))
+        DomChatStatIcon.Conversations -> Icon(ConversationIcon, null, iconModifier, tint = tint)
+        DomChatStatIcon.Messages -> Icon(MessageIcon, null, iconModifier, tint = tint)
+        DomChatStatIcon.InputTokens -> Icon(InputIcon, null, iconModifier, tint = tint)
         DomChatStatIcon.OutputTokens -> Icon(
             NonMirroringInputIcon,
             null,
-            Modifier.size(18.dp).graphicsLayer { scaleX = -1f },
+            iconModifier.graphicsLayer { scaleX = -1f },
+            tint = tint,
         )
-        DomChatStatIcon.CachedTokens -> Icon(SavingsIcon, null, Modifier.size(18.dp))
+        DomChatStatIcon.CachedTokens -> Icon(SavingsIcon, null, iconModifier, tint = tint)
     }
 }
 
@@ -101,13 +110,38 @@ fun DomChatStatCard(
     icon: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    border: BorderStroke? = null,
+    iconBackgroundColor: Color = contentColor.copy(alpha = 0.15f),
 ) {
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val defaultBorder = BorderStroke(
+        0.5.dp,
+        if (isDark) {
+            Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.22f),
+                    Color.White.copy(alpha = 0.06f),
+                    Color.Transparent,
+                )
+            )
+        } else {
+            Brush.verticalGradient(
+                listOf(
+                    Color.Black.copy(alpha = 0.12f),
+                    Color.Black.copy(alpha = 0.04f),
+                    Color.Transparent,
+                )
+            )
+        }
+    )
+
     Card(
         modifier = modifier.heightIn(min = 136.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = contentColor,
         ),
+        border = border ?: defaultBorder,
         shape = AppShapes.CardMedium,
     ) {
         Column(
@@ -118,7 +152,7 @@ fun DomChatStatCard(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(AppShapes.Chip)
-                    .background(contentColor.copy(alpha = 0.15f)),
+                    .background(iconBackgroundColor),
                 contentAlignment = Alignment.Center,
             ) {
                 icon()
