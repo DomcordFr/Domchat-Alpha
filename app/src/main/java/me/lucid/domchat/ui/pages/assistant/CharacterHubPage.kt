@@ -548,8 +548,19 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeOut(animationSpec = tween(160)))
                     }
                 } else {
-                    (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
-                        .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
+                    val allOrdered = listOf<String?>(null) + (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder })
+                    val initialIdx = allOrdered.indexOf(initialState.second).let { if (it == -1) 0 else it }
+                    val targetIdx = allOrdered.indexOf(targetState.second).let { if (it == -1) 0 else it }
+                    if (targetIdx > initialIdx) {
+                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeIn(animationSpec = tween(200)))
+                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeOut(animationSpec = tween(160)))
+                    } else if (targetIdx < initialIdx) {
+                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeIn(animationSpec = tween(200)))
+                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeOut(animationSpec = tween(160)))
+                    } else {
+                        (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
+                            .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
+                    }
                 }
             },
             contentAlignment = Alignment.TopCenter,
@@ -1639,8 +1650,9 @@ fun FullCharacterCardImage(
                 )
             }
             is Avatar.Resource -> {
-                AsyncImage(
-                    model = avatar.id,
+                val resId = if (avatar.id != 0) avatar.id else me.lucid.domchat.R.drawable.default_generical_pfp
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = resId),
                     contentDescription = name,
                     modifier = Modifier.fillMaxSize(),
                     alignment = Alignment.TopCenter,
@@ -3222,7 +3234,7 @@ private fun GroupTabsRow(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // "All" tab
         val allLabel = "All ($allCount)"

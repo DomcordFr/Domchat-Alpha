@@ -214,7 +214,6 @@ fun ChatDrawerContent(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
                     .liquidGlassSurface(
                         shape = profileCardShape,
                         fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.25f),
@@ -572,15 +571,15 @@ fun ChatDrawerContent(
                     .fillMaxHeight()
                     .width(drawerWidth)
                     .statusBarsPadding()
-                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                     .frostedGlassSurface(shape = drawerShape)
+                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
             } else {
                 Modifier
                     .fillMaxHeight()
                     .width(drawerWidth)
                     .statusBarsPadding()
-                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                     .liquidGlassSurface(shape = drawerShape)
+                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
             }
             Surface(
                 modifier = drawerModifier,
@@ -794,8 +793,9 @@ private fun DrawerAvatarVisual(
             }
 
             is Avatar.Resource -> {
-                AsyncImage(
-                    model = avatar.id,
+                val resId = if (avatar.id != 0) avatar.id else me.lucid.domchat.R.drawable.default_generical_pfp
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = resId),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop

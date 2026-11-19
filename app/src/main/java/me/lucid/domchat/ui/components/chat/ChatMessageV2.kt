@@ -1396,7 +1396,7 @@ private fun UserMessageTurn(
                     .clickable {
                         when (personaAvatar) {
                             is Avatar.Image -> previewUserAvatarUrl = personaAvatar.url
-                            is Avatar.Resource -> previewUserAvatarUrl = "android.resource://com.domchat.app/${personaAvatar.id}"
+                            is Avatar.Resource -> previewUserAvatarUrl = "android.resource://${context.packageName}/${if (personaAvatar.id != 0) personaAvatar.id else me.lucid.domchat.R.drawable.default_generical_pfp}"
                             else -> Unit
                         }
                     },
@@ -1755,7 +1755,7 @@ private fun AssistantMessageTurn(
         haptics.perform(HapticPattern.Pop)
         when (avatarValue) {
             is Avatar.Image -> previewBotAvatarUrl = avatarValue.url
-            is Avatar.Resource -> previewBotAvatarUrl = "android.resource://com.domchat.app/${avatarValue.id}"
+            is Avatar.Resource -> previewBotAvatarUrl = "android.resource://${context.packageName}/${if (avatarValue.id != 0) avatarValue.id else me.lucid.domchat.R.drawable.default_generical_pfp}"
             else -> Unit
         }
     }

@@ -81,6 +81,18 @@ fun ProviderIcon(
         return
     }
 
+    if (provider.name.contains("nanogpt", ignoreCase = true) || (provider is ProviderSetting.OpenAI && provider.baseUrl.contains("nano-gpt.com", ignoreCase = true))) {
+        Box(modifier = modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.nanogpt_logo),
+                contentDescription = provider.name,
+                modifier = Modifier.padding(padding),
+                contentScale = ContentScale.Fit,
+            )
+        }
+        return
+    }
+
     val effectiveContentColor = if (provider.enabled) {
         contentColor
     } else {
@@ -222,6 +234,18 @@ fun AutoProviderIcon(
 ) {
     val darkMode = LocalDarkMode.current
     
+    if (name.contains("nanogpt", ignoreCase = true) || baseUrl?.contains("nano-gpt.com", ignoreCase = true) == true) {
+        Box(modifier = modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.nanogpt_logo),
+                contentDescription = name,
+                modifier = Modifier.padding(padding),
+                contentScale = ContentScale.Fit,
+            )
+        }
+        return
+    }
+
     // Priority 1: Local pattern matching
     val localPath = remember(name) { computeAIIconByName(name) }
     if (localPath != null) {
@@ -387,6 +411,18 @@ fun AutoAIIconWithUrl(
     padding: Dp = 4.dp,
     fallback: @Composable (() -> Unit)? = null,
 ) {
+    if (customIconUri.isNullOrBlank() && (name.contains("nanogpt", ignoreCase = true) || providerSlug?.contains("nanogpt", ignoreCase = true) == true || providerBaseUrl?.contains("nano-gpt.com", ignoreCase = true) == true)) {
+        Box(modifier = modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.nanogpt_logo),
+                contentDescription = name,
+                modifier = Modifier.padding(padding),
+                contentScale = ContentScale.Fit,
+            )
+        }
+        return
+    }
+
     // Priority 1: Custom icon URI (user-selected or catalog-assigned)
     if (!customIconUri.isNullOrBlank()) {
         val lobeHubSlug = customIconUri.extractLobeHubIconSlug()

@@ -254,24 +254,29 @@ fun ProviderConfigure(
             contentKey = { it::class },
             label = "provider_config_transition"
         ) { currentProvider ->
-            when (currentProvider) {
-                is ProviderSetting.OpenAI -> {
-                    ProviderConfigureOpenAI(currentProvider, onEdit)
-                }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                when (currentProvider) {
+                    is ProviderSetting.OpenAI -> {
+                        ProviderConfigureOpenAI(currentProvider, onEdit)
+                    }
 
-                is ProviderSetting.Google -> {
-                    ProviderConfigureGoogle(currentProvider, onEdit)
-                }
+                    is ProviderSetting.Google -> {
+                        ProviderConfigureGoogle(currentProvider, onEdit)
+                    }
 
-                is ProviderSetting.Claude -> {
-                    ProviderConfigureClaude(currentProvider, onEdit)
-                }
+                    is ProviderSetting.Claude -> {
+                        ProviderConfigureClaude(currentProvider, onEdit)
+                    }
 
-                is ProviderSetting.ComfyUI -> {
-                    ProviderConfigureComfyUI(currentProvider, onEdit)
-                }
+                    is ProviderSetting.ComfyUI -> {
+                        ProviderConfigureComfyUI(currentProvider, onEdit)
+                    }
 
-                is ProviderSetting.LiteRtLocal -> Unit // configured via the dedicated on-device screen
+                    is ProviderSetting.LiteRtLocal -> Unit // configured via the dedicated on-device screen
+                }
             }
         }
     }

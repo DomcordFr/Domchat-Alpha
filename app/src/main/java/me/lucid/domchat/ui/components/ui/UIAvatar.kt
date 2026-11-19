@@ -16,12 +16,10 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -132,8 +130,9 @@ fun UIAvatar(
                 }
 
                 is Avatar.Resource -> {
-                    AsyncImage(
-                        model = value.id,
+                    val resId = if (value.id != 0) value.id else me.lucid.domchat.R.drawable.default_generical_pfp
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = resId),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
@@ -246,11 +245,12 @@ fun UIAvatar(
     }
 
     if (showEmojiPicker) {
-        ModalBottomSheet(containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet(
+            visible = true,
+            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
             onDismissRequest = {
                 showEmojiPicker = false
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             dragHandle = {
                 me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
             }

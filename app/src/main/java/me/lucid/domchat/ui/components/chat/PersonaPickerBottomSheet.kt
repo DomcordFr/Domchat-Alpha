@@ -233,44 +233,22 @@ fun PersonaPickerBottomSheet(
                                 navController.navigate(Screen.SettingPersonas)
                             },
                             shape = CircleShape,
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Edit,
-                                    contentDescription = "Manage Personas",
-                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(18.dp)
+                            color = Color.Transparent,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .liquidGlassSurface(
+                                    shape = CircleShape,
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    fillColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.25f),
+                                    isFloatingControl = true,
                                 )
-                            }
-                        }
-
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                onDismissRequest()
-                                navController.navigate(Screen.SettingPersonas)
-                            },
-                            shape = CircleShape,
-                            color = if (isDark) Color.White.copy(alpha = 0.14f) else Color.Black.copy(alpha = 0.08f),
-                            border = BorderStroke(
-                                0.75.dp,
-                                androidx.compose.ui.graphics.Brush.verticalGradient(
-                                    listOf(
-                                        Color.White.copy(alpha = if (isDark) 0.40f else 0.50f),
-                                        Color.White.copy(alpha = if (isDark) 0.12f else 0.18f)
-                                    )
-                                )
-                            ),
-                            modifier = Modifier.size(38.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Rounded.Add,
                                     contentDescription = "New Persona",
-                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurface,
+                                    tint = Color.White,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -283,6 +261,13 @@ fun PersonaPickerBottomSheet(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = "Search personas...",
+                fieldModifier = Modifier.liquidGlassSurface(
+                    shape = AppShapes.SearchField,
+                    borderWidth = 0.5.dp,
+                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.35f),
+                    isFloatingControl = true,
+                ),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
             )
 
@@ -299,17 +284,12 @@ fun PersonaPickerBottomSheet(
                 items(filteredPersonas, key = { it.id }) { persona ->
                     val isActive = persona.id == activePersona.id || (persona.isDefault && activePersona.id == null)
                     val cardShape = RoundedCornerShape(18.dp)
-                    val targetCardBg = if (isActive) Color(0xFF141416).copy(alpha = 0.85f) else Color(0xFF000000).copy(alpha = 0.55f)
-                    val animatedCardBg by animateColorAsState(targetCardBg, animationSpec = tween(220), label = "persona_card_bg")
 
                     Surface(
                         onClick = { selectPersona(persona.id) },
-                        color = animatedCardBg,
+                        color = Color(0xFF000000).copy(alpha = 0.55f),
                         shape = cardShape,
-                        border = BorderStroke(
-                            width = if (isActive) 1.dp else 0.5.dp,
-                            brush = if (isActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                        ),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(personaGlassCard(cardShape))
@@ -352,7 +332,11 @@ fun PersonaPickerBottomSheet(
                                         }
                                     }
 
-                                    if (isActive) {
+                                    AnimatedVisibility(
+                                        visible = isActive,
+                                        enter = fadeIn(tween(180)) + scaleIn(initialScale = 0.8f, animationSpec = tween(180)),
+                                        exit = fadeOut(tween(140)) + scaleOut(targetScale = 0.8f, animationSpec = tween(140))
+                                    ) {
                                         Surface(
                                             shape = RoundedCornerShape(6.dp),
                                             color = Color(0xFF000000),

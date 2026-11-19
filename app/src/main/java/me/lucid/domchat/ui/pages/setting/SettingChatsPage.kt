@@ -58,6 +58,7 @@ import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -348,8 +349,8 @@ fun SettingChatsPage(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -583,7 +584,7 @@ fun SettingChatsPage(
                             .fillMaxSize()
                             .fadeEdges(topProgress = chatsTopFadeProgress, fadeHeight = 44f),
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                     items(filteredConversations, key = { it.id }) { conv ->
                         val isSelected = conv.id in selectedChatIds
@@ -662,8 +663,9 @@ fun SettingChatsPage(
                                             )
                                         }
                                         is Avatar.Resource -> {
-                                            AsyncImage(
-                                                model = av.id,
+                                            val resId = if (av.id != 0) av.id else me.lucid.domchat.R.drawable.default_generical_pfp
+                                            androidx.compose.foundation.Image(
+                                                painter = androidx.compose.ui.res.painterResource(id = resId),
                                                 contentDescription = null,
                                                 modifier = Modifier
                                                     .size(46.dp)
@@ -826,20 +828,23 @@ fun SettingChatsPage(
                                             }
                                         }
 
-                                        // Chat count under activity on the right
-                                        if (assistant != null) {
-                                            val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
-                                            Text(
-                                                text = "$assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"}",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontSize = 9.5.sp,
-                                                    fontWeight = FontWeight.Normal
-                                                ),
-                                                color = Color.White.copy(alpha = 0.45f),
-                                                maxLines = 1,
-                                                softWrap = false
-                                            )
+                                        // Chat and message counts under activity on the right
+                                        val assistantChatCount = if (assistant != null) rawConversations.count { it.assistantId == conv.assistantId } else 0
+                                        val countLabel = if (assistant != null) {
+                                            "$assistantChatCount ${if (assistantChatCount == 1) "chat" else "chats"} · ${conv.assistantMessageCount} ${if (conv.assistantMessageCount == 1) "msg" else "msgs"}"
+                                        } else {
+                                            "${conv.assistantMessageCount} ${if (conv.assistantMessageCount == 1) "msg" else "msgs"}"
                                         }
+                                        Text(
+                                            text = countLabel,
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Normal
+                                            ),
+                                            color = Color.White.copy(alpha = 0.45f),
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
                                     }
                                 }
                             }
@@ -885,15 +890,37 @@ fun SettingChatsPage(
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { managingConversation = null },
-            modifier = Modifier.imePadding()
+            modifier = Modifier.imePadding(),
+            containerColor = Color(0xFF000000),
+            dragHandle = {},
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                DomChatSheetDragHandle()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 2.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 38.dp, height = 4.5.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.28f))
+                    )
+                }
+
+                DomChatSheetHeader(
+                    title = "Manage Chat",
+                    onCloseClick = { managingConversation = null },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
 
                 // Header Card
                 Surface(
@@ -924,7 +951,7 @@ fun SettingChatsPage(
                                 text = conv.title.ifBlank { "Untitled Conversation" },
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.White,
-                                maxLines = 2,
+                                maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Row(
@@ -933,15 +960,20 @@ fun SettingChatsPage(
                             ) {
                                 if (assistant != null) {
                                     Text(
-                                        text = "${assistant.name} ($assistantChatCount chats)",
+                                        text = "${assistant.name.trim()} · $assistantChatCount chats · ${conv.assistantMessageCount} msgs",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White.copy(alpha = 0.7f)
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false)
                                     )
                                 }
                                 Text(
                                     text = formatTimestamp(conv.updateAt),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.5f)
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -1014,7 +1046,7 @@ fun SettingChatsPage(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(Icons.Rounded.FileUpload, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Rounded.FileUpload, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                             Column {
                                 Text("Export Chat (SillyTavern)", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color.White)
                                 Text("Exports as .jsonl compatible with SillyTavern", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
@@ -1043,7 +1075,7 @@ fun SettingChatsPage(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(Icons.Rounded.PushPin, contentDescription = null, tint = Color(0xFFFBBF24), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Rounded.PushPin, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                             Text(if (conv.isPinned) "Unpin Chat" else "Pin Chat to Top", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium), color = Color.White)
                         }
 

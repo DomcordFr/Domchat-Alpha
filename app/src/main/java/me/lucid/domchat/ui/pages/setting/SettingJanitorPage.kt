@@ -564,12 +564,58 @@ fun SettingJanitorPage() {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 4.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Top row: Feed mode dropdown + Sort & Filter buttons
+                            // Search bar (full width, text queries and Janitor bot URLs)
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                placeholder = {
+                                    Text(
+                                        "Search characters or paste link...",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
+                                        }
+                                    }
+                                },
+                                singleLine = true,
+                                shape = AppShapes.SearchField,
+                                colors = appFieldColors(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(AppShapes.SearchField)
+                                    .border(
+                                        0.5.dp,
+                                        LiquidGlassTokens.SpecularBorderSubtle,
+                                        AppShapes.SearchField,
+                                    ),
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                                ),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                    onSearch = {
+                                        if (searchQuery.isNotBlank()) {
+                                            scope.launch {
+                                                loadSearch()
+                                            }
+                                        }
+                                    },
+                                ),
+                            )
+
+                            // Controls row: Feed mode dropdown + Sort & Filter buttons
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -698,8 +744,8 @@ fun SettingJanitorPage() {
                                             modifier = Modifier
                                                 .background(Color(0xFF000000))
                                                 .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                                    ) {
-                                        listOf("Default", "Name A-Z", "Name Z-A").forEach { option ->
+                                        ) {
+                                            listOf("Default", "Name A-Z", "Name Z-A").forEach { option ->
                                                 val isSelected = sortMode == option
                                                 DropdownMenuItem(
                                                     text = {
@@ -759,50 +805,6 @@ fun SettingJanitorPage() {
                                     }
                                 }
                             }
-
-                            // Search bar (full width, text queries and Janitor bot URLs)
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                placeholder = {
-                                    Text(
-                                        "Search characters or paste link...",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Color(0xFF8A8A96)) },
-                                trailingIcon = {
-                                    if (searchQuery.isNotEmpty()) {
-                                        IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Rounded.Clear, contentDescription = "Clear", tint = Color(0xFF8A8A96))
-                                        }
-                                    }
-                                },
-                                singleLine = true,
-                                shape = AppShapes.SearchField,
-                                colors = appFieldColors(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(AppShapes.SearchField)
-                                    .border(
-                                        0.5.dp,
-                                        LiquidGlassTokens.SpecularBorderSubtle,
-                                        AppShapes.SearchField,
-                                    ),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                    imeAction = androidx.compose.ui.text.input.ImeAction.Search
-                                ),
-                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                    onSearch = {
-                                        if (searchQuery.isNotBlank()) {
-                                            scope.launch {
-                                                loadSearch()
-                                            }
-                                        }
-                                    },
-                                ),
-                            )
                         }
                     }
 
@@ -1262,7 +1264,7 @@ private fun JanitorCharacterInspectorSheet(
                         ?: fullExtract?.bio?.takeIf { it.isNotBlank() }
                         ?: character.description?.takeIf { it.isNotBlank() }
                         ?: character.bio.orEmpty()
-                    val cleanBlurb = sanitizeHtml(blurbRaw)
+                    val cleanBlurb = cleanBlurbText(blurbRaw)
                     if (cleanBlurb.isNotBlank()) {
                         val firstPara = cleanBlurb.split("\n\n").firstOrNull()?.trim().orEmpty()
                         if (firstPara.isNotBlank()) {
@@ -1943,6 +1945,39 @@ private fun extractCleanChatName(name: String): String {
     val cutIndex = delimiters.map { name.indexOf(it) }.filter { it > 0 }.minOrNull() ?: name.length
     val clean = name.substring(0, cutIndex.coerceAtLeast(0).coerceAtMost(name.length)).trim()
     return clean.ifBlank { name.trim() }
+}
+
+/**
+ * Strips HTML tags, Markdown images, raw image URLs, and unescapes common entities,
+ * returning clean plain text for blurb and card descriptions.
+ */
+private fun cleanBlurbText(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    return raw
+        .replace(Regex("""!\[.*?\]\(.*?\)"""), "")
+        .replace(Regex("""https?://[^\s<>"]+\.(?:png|jpg|jpeg|webp|gif)(\?[^\s<>"]*)?""", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("""(?i)<br\s*/?>"""), "\n")
+        .replace(Regex("""(?i)</p>"""), "\n\n")
+        .replace(Regex("""<[^>]*>"""), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        .replace(Regex("""&#(\d+);""")) { match ->
+            match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: ""
+        }
+        .replace(Regex("""&#x([0-9a-fA-F]+);""")) { match ->
+            match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: ""
+        }
+        .lines()
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .joinToString("\n\n")
+        .trim()
 }
 
 /**

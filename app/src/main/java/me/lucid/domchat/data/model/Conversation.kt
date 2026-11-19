@@ -52,7 +52,15 @@ data class Conversation(
     val lastPruneMessageCount: Int = 0, // Messages pruned in last auto-prune
     val lastRefreshTime: Long = 0L, // Timestamp of last manual refresh
     val isFork: Boolean = false,
+    val assistantMessageCount: Int = 0,
 ) {
+    val totalAssistantMessageCount: Int
+        get() = if (messageNodes.isNotEmpty()) {
+            messageNodes.sumOf { node -> node.messages.count { it.role == me.lucid.ai.core.MessageRole.ASSISTANT } }
+        } else {
+            assistantMessageCount
+        }
+
     val files: List<Uri>
         get() {
             val images = messageNodes

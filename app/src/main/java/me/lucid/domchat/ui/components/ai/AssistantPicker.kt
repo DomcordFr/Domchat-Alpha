@@ -82,12 +82,13 @@ import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.DomChatGlassChip
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
-import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.LiquidGlassMode
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.frostedGlassSurface
-import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.modifier.fadeEdges
+import me.lucid.domchat.ui.theme.AppShapes
 import androidx.compose.ui.text.font.FontWeight
 import kotlin.uuid.Uuid
 
@@ -243,53 +244,59 @@ fun AssistantPickerSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
-        // Drag handle is rendered as the first LazyColumn item so the
-        // entire top area (handle, header, search, tags) scrolls away
-        // with the character list instead of staying pinned.
         dragHandle = {},
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp, bottom = 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 38.dp, height = 4.5.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.28f))
+                )
+            }
+
+            DomChatSheetHeader(
+                title = stringResource(R.string.assistant_page_title),
+                onCloseClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            DomChatSearchBar(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = "Search characters...",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                fieldModifier = Modifier.liquidGlassSurface(
+                    shape = AppShapes.SearchBar,
+                    borderWidth = 0.5.dp,
+                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.15f),
+                    glassMode = LiquidGlassMode.BALANCED_BLEND,
+                ),
+            )
+        }
+
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 0.dp),
+                .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 24f)
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            // Drag handle pill — scrolls away with the list
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp, bottom = 2.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 38.dp, height = 4.5.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.28f))
-                    )
-                }
-            }
-
-            // Sheet header
-            item {
-                DomChatSheetHeader(
-                    title = stringResource(R.string.assistant_page_title),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            // Search bar
-            item {
-                DomChatSearchBar(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = "Search characters...",
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
-                )
-            }
-
             // Filter tags
             if (distinctTags.isNotEmpty()) {
                 item {
@@ -342,10 +349,10 @@ fun AssistantPickerSheet(
                 itemsIndexed(filteredAssistants, key = { _, item -> item.id }) { _, assistant ->
                     val checked = assistant.id == currentAssistant.id.toString()
                     val cardShape = RoundedCornerShape(16.dp)
-                    val cardBg = if (checked) {
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                    val cardBg = if (isDark) {
+                        if (checked) Color(0xFF000000).copy(alpha = 0.70f) else Color(0xFF000000).copy(alpha = 0.45f)
                     } else {
-                        itemCardBg
+                        if (checked) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else itemCardBg
                     }
 
                     Row(
@@ -385,31 +392,41 @@ fun AssistantPickerSheet(
                             Text(
                                 text = assistant.name,
                                 style = MaterialTheme.typography.titleMedium,
-                                color = if (checked) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                color = if (isDark) Color.White else (if (checked) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 text = assistant.systemPrompt.ifBlank { noSystemPromptLabel },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (checked) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (isDark) Color.White.copy(alpha = 0.7f) else (if (checked) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
 
-                        IconButton(
-                            onClick = {
-                                onDismiss()
-                                navController.navigate(Screen.AssistantDetail(assistant.id))
-                            },
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .liquidGlassSurface(
+                                    shape = CircleShape,
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    fillColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.20f),
+                                    glassMode = LiquidGlassMode.BALANCED_BLEND,
+                                )
+                                .clip(CircleShape)
+                                .clickable {
+                                    onDismiss()
+                                    navController.navigate(Screen.AssistantDetail(assistant.id))
+                                },
+                            contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Edit,
                                 contentDescription = null,
-                                tint = if (checked) MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(18.dp),
                             )
                         }
                     }

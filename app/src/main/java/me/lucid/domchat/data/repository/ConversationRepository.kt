@@ -403,6 +403,10 @@ class ConversationRepository(
                                 updateAt = entity.updateAt,
                                 isConsolidated = entity.isConsolidated,
                                 isFork = entity.isFork,
+                                assistantMessageCount = runCatching {
+                                    val decoded = JsonInstant.decodeFromString<List<MessageNode>>(entity.nodes)
+                                    decoded.sumOf { node -> node.messages.count { it.role == me.lucid.ai.core.MessageRole.ASSISTANT } }
+                                }.getOrDefault(0),
                             )
                         )
                     }
@@ -513,6 +517,7 @@ class ConversationRepository(
             messageNodes = emptyList(),
             isConsolidated = entity.isConsolidated,
             isFork = entity.isFork,
+            assistantMessageCount = entity.assistantMessageCount,
         )
     }
     fun getAverageMessageLength(assistantId: Uuid): Flow<Int> {
@@ -782,4 +787,5 @@ data class LightConversationEntity(
     val updateAt: Long,
     val isConsolidated: Boolean,
     val isFork: Boolean,
+    val assistantMessageCount: Int = 0,
 )

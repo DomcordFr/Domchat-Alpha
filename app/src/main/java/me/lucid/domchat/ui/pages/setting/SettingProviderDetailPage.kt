@@ -57,8 +57,7 @@ import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.FloatingToolbarDefaults.floatingToolbarVerticalNestedScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
@@ -1839,7 +1838,8 @@ private fun ModelPickerFab(
         },
         shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
         containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
-        contentColor = Color.White
+        contentColor = Color.White,
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.CardLarge)
     ) {
         Icon(
             Icons.Rounded.Widgets,
@@ -1985,6 +1985,8 @@ private fun ModelPickerSheet(
                 onCloseClick = onDismissRequest
             )
 
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
+
             androidx.compose.material3.OutlinedTextField(
                 value = filterText,
                 onValueChange = { filterText = it },
@@ -2077,8 +2079,8 @@ private fun ModelPickerSheet(
                         .weight(1f)
                         .fillMaxWidth()
                         .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 36f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
                 ) {
                     items(filteredModels, key = { it.modelId }) { model ->
                         val isSelected = selectedModelMap.containsKey(model.modelId)
@@ -2188,12 +2190,14 @@ private fun AddNewModelSheet(
                 onCloseClick = onDismissRequest
             )
 
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 24f)
+                    .fadeEdges(fadeTop = true, fadeBottom = true, fadeHeight = 28f)
             ) {
                 ModelSettingsForm(
                     model = modelState,
@@ -2203,42 +2207,63 @@ private fun AddNewModelSheet(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color(0xFF000000).copy(alpha = 0.90f),
+                                Color(0xFF000000),
+                            )
+                        )
+                    )
+                    .padding(top = 16.dp, bottom = 4.dp)
             ) {
-                OutlinedButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.weight(1f),
-                    shape = AppShapes.CardLarge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(stringResource(R.string.cancel))
-                }
-                Button(
-                    onClick = {
-                        val trimmedId = modelState.modelId.trim()
-                        if (trimmedId.isNotBlank()) {
-                            val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
-                            val preparedModel = modelState.copy(
-                                modelId = trimmedId,
-                                displayName = modelState.displayName.trim().ifBlank { trimmedId },
-                                inputModalities = if (isVision && !modelState.inputModalities.contains(Modality.IMAGE)) {
-                                    modelState.inputModalities + Modality.IMAGE
-                                } else {
-                                    modelState.inputModalities
-                                }
-                            )
-                            val resolvedModel = modelMetadataResolver.applyToModel(
-                                model = preparedModel,
-                                providerHint = parentProvider,
-                            )
-                            onAddModel(resolvedModel)
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = AppShapes.CardLarge
-                ) {
-                    Text(stringResource(R.string.setting_provider_page_add))
+                    OutlinedButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.weight(1f),
+                        shape = AppShapes.CardLarge,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Button(
+                        onClick = {
+                            val trimmedId = modelState.modelId.trim()
+                            if (trimmedId.isNotBlank()) {
+                                val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
+                                val preparedModel = modelState.copy(
+                                    modelId = trimmedId,
+                                    displayName = modelState.displayName.trim().ifBlank { trimmedId },
+                                    inputModalities = if (isVision && !modelState.inputModalities.contains(Modality.IMAGE)) {
+                                        modelState.inputModalities + Modality.IMAGE
+                                    } else {
+                                        modelState.inputModalities
+                                    }
+                                )
+                                val resolvedModel = modelMetadataResolver.applyToModel(
+                                    model = preparedModel,
+                                    providerHint = parentProvider,
+                                )
+                                onAddModel(resolvedModel)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = AppShapes.CardLarge,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        )
+                    ) {
+                        Text(stringResource(R.string.setting_provider_page_add), fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -3466,12 +3491,14 @@ private fun EditModelSheet(
                 onCloseClick = onDismissRequest
             )
 
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 24f)
+                    .fadeEdges(fadeTop = true, fadeBottom = true, fadeHeight = 28f)
             ) {
                 ModelSettingsForm(
                     model = editingModel,
@@ -3481,27 +3508,48 @@ private fun EditModelSheet(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color(0xFF000000).copy(alpha = 0.90f),
+                                Color(0xFF000000),
+                            )
+                        )
+                    )
+                    .padding(top = 16.dp, bottom = 4.dp)
             ) {
-                OutlinedButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.weight(1f),
-                    shape = AppShapes.CardLarge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(stringResource(R.string.cancel))
-                }
-                Button(
-                    onClick = {
-                        if (editingModel.displayName.isNotBlank()) {
-                            onEditModel(editingModel)
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = AppShapes.CardLarge
-                ) {
-                    Text(stringResource(R.string.confirm))
+                    OutlinedButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.weight(1f),
+                        shape = AppShapes.CardLarge,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Button(
+                        onClick = {
+                            if (editingModel.displayName.isNotBlank()) {
+                                onEditModel(editingModel)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = AppShapes.CardLarge,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        )
+                    ) {
+                        Text(stringResource(R.string.confirm), fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

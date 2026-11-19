@@ -566,7 +566,10 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 IconButton(
-                                    onClick = { editorStep = EditorStep.Persona },
+                                    onClick = {
+                                        formLorebookIds = pickerSelectedIds
+                                        editorStep = EditorStep.Persona
+                                    },
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
@@ -590,20 +593,23 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 AnimatedContent(
                     targetState = editorStep,
                     transitionSpec = {
+                        val slideSpec = tween<androidx.compose.ui.unit.IntOffset>(260, easing = FastOutSlowInEasing)
+                        val fadeSpec = tween<Float>(220)
                         if (targetState == EditorStep.LorebookPicker) {
-                            (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = tween(200)))
-                                .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width } + fadeOut(animationSpec = tween(160)))
+                            (slideInHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = fadeSpec))
+                                .togetherWith(slideOutHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> -width / 2 } + fadeOut(animationSpec = fadeSpec))
                         } else {
-                            (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = tween(200)))
-                                .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width } + fadeOut(animationSpec = tween(160)))
-                        }
+                            (slideInHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = fadeSpec))
+                                .togetherWith(slideOutHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> width / 2 } + fadeOut(animationSpec = fadeSpec))
+                        }.using(
+                            androidx.compose.animation.SizeTransform(clip = false)
+                        )
                     },
                     label = "persona_body_step_anim"
                 ) { step ->
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clipToBounds(),
+                            .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         when (step) {

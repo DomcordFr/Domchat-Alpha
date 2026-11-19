@@ -213,7 +213,7 @@ fun ConversationList(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, end = 8.dp, top = 2.dp, bottom = 8.dp)
+                    .padding(top = 2.dp, bottom = 8.dp)
             ) {
                 val isDark = LocalDarkMode.current
                 val searchGlassBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder
@@ -527,23 +527,6 @@ fun ConversationList(
             }
         }
 
-        if (canScrollForward) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(96.dp)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0f to Color.Transparent,
-                                0.78f to MaterialTheme.colorScheme.surfaceContainerLow,
-                                1f to MaterialTheme.colorScheme.surfaceContainerLow,
-                            )
-                        )
-                    )
-            )
-        }
 
 
         Box(
@@ -717,8 +700,9 @@ private fun ConversationItem(
                                 )
                             }
                             is Avatar.Resource -> {
-                                AsyncImage(
-                                    model = av.id,
+                                val resId = if (av.id != 0) av.id else me.lucid.domchat.R.drawable.default_generical_pfp
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = resId),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     alignment = BiasAlignment(0f, -0.14f),
@@ -787,8 +771,8 @@ private fun ConversationItem(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        // Count only the bot's messages (assistant turns), per design.
-                        val msgCount = conversation.messageNodes.count { it.currentMessage.role == me.lucid.ai.core.MessageRole.ASSISTANT }
+                        // Count bot's messages (assistant turns including rerolls)
+                        val msgCount = conversation.totalAssistantMessageCount
                         val zdt = conversation.updateAt.atZone(ZoneId.systemDefault())
                         val hour12 = if (zdt.hour % 12 == 0) 12 else zdt.hour % 12
                         val amPm = if (zdt.hour < 12) "AM" else "PM"
