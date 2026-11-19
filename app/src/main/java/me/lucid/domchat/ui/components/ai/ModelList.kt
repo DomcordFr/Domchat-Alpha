@@ -57,6 +57,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.font.FontWeight
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -1155,13 +1157,11 @@ private fun ModelItem(
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
         Card(
-            modifier = modifier.then(
-                me.lucid.domchat.ui.theme.liquidGlassSurface(
-                    shape = cardShape,
-                    fillColor = Color.White.copy(alpha = if (select) 0.14f else 0.07f),
-                    borderWidth = 0.5.dp,
-                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                )
+            modifier = modifier.liquidGlassSurface(
+                shape = cardShape,
+                fillColor = Color.White.copy(alpha = if (select) 0.14f else 0.07f),
+                borderWidth = 0.5.dp,
+                specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
             ),
             shape = cardShape,
             colors = CardDefaults.cardColors(

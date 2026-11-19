@@ -207,6 +207,8 @@ import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.convxFluidTouch
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.AppShapes
+import androidx.compose.ui.graphics.SolidColor
 import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -2097,7 +2099,7 @@ private fun ModelPickerSheet(
                                 .fillMaxWidth()
                                 .border(
                                     0.5.dp,
-                                    if (isSelected) Color.White.copy(alpha = 0.35f) else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                                    if (isSelected) SolidColor(Color.White.copy(alpha = 0.35f)) else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                                     me.lucid.domchat.ui.theme.AppShapes.CardMedium
                                 )
                         ) {
@@ -3453,7 +3455,6 @@ private fun BuiltInToolsSettings(
 }
 
 @Composable
-@Composable
 private fun EditModelSheet(
     model: Model,
     parentProvider: ProviderSetting,
@@ -3541,6 +3542,7 @@ private fun EditModelSheet(
     }
 }
 
+@Composable
 private fun ProviderOverrideSettings(
     providerOverride: ProviderSetting?,
     onUpdateProviderOverride: (ProviderSetting?) -> Unit,

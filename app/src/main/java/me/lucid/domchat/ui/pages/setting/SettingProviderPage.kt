@@ -222,9 +222,6 @@ fun SettingProviderPage(
     var showSearchCommonOptions by remember { mutableStateOf(false) }
     var showTtsFilterSettings by remember { mutableStateOf(false) }
     var showAddProviderSheet by remember { mutableStateOf(false) }
-    val customDialogState = useEditState<ProviderSetting> {
-        addProvider(it)
-    }
     val providerPresets = remember(catalogSnapshot, settings.providers) {
         (catalogSnapshot?.toProviderPresets()?.takeIf { it.isNotEmpty() }
             ?: FALLBACK_PROVIDER_PRESETS
@@ -304,6 +301,9 @@ fun SettingProviderPage(
                 }
             }
         }
+    }
+    val customDialogState = useEditState<ProviderSetting> {
+        addProvider(it)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

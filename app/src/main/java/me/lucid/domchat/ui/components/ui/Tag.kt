@@ -75,13 +75,11 @@ fun Tag(
                     scaleX = scale
                     scaleY = scale
                 }
-                .then(
-                    me.lucid.domchat.ui.theme.liquidGlassSurface(
-                        shape = tagShape,
-                        fillColor = Color.White.copy(alpha = 0.08f),
-                        borderWidth = 0.5.dp,
-                        specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
-                    )
+                .liquidGlassSurface(
+                    shape = tagShape,
+                    fillColor = Color.White.copy(alpha = 0.08f),
+                    borderWidth = 0.5.dp,
+                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                 )
                 .let {
                     if (onClick != null) {
