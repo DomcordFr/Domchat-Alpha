@@ -84,6 +84,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.components.ui.Tag
 import me.lucid.domchat.ui.components.ui.TagType
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
@@ -268,43 +270,48 @@ fun ColumnScope.VoiceList(
             .weight(1f)
     ) {
         // Sticky Search Field with liquid glass & clean spacing
-        val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-        OutlinedTextField(
-            value = searchKeywords,
-            onValueChange = { searchKeywords = it },
+        val searchFieldShape = AppShapes.SearchField
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 14.dp)
-                .me.lucid.domchat.ui.theme.liquidGlassSurface(
-                    shape = searchFieldShape,
-                    borderWidth = 0.5.dp,
-                    fillColor = Color(0xFF000000).copy(alpha = 0.45f)
+        ) {
+            OutlinedTextField(
+                value = searchKeywords,
+                onValueChange = { searchKeywords = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlassSurface(
+                        shape = searchFieldShape,
+                        borderWidth = 0.5.dp,
+                        fillColor = Color(0xFF000000).copy(alpha = 0.45f)
+                    ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedTextColor = Color(0xFFF2F2F7),
+                    unfocusedTextColor = Color(0xFFF2F2F7),
+                    disabledTextColor = Color(0xFF8A8A96),
+                    cursorColor = Color(0xFFF2F2F7),
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
                 ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedTextColor = Color(0xFFF2F2F7),
-                unfocusedTextColor = Color(0xFFF2F2F7),
-                disabledTextColor = Color(0xFF8A8A96),
-                cursorColor = Color(0xFFF2F2F7),
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-            ),
-            leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White.copy(alpha = 0.6f)) },
-            trailingIcon = {
-                if (searchKeywords.isNotEmpty()) {
-                    IconButton(onClick = { searchKeywords = "" }) {
-                        Icon(Icons.Rounded.Close, null, tint = Color.White.copy(alpha = 0.6f))
+                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White.copy(alpha = 0.6f)) },
+                trailingIcon = {
+                    if (searchKeywords.isNotEmpty()) {
+                        IconButton(onClick = { searchKeywords = "" }) {
+                            Icon(Icons.Rounded.Close, null, tint = Color.White.copy(alpha = 0.6f))
+                        }
                     }
-                }
-            },
-            placeholder = { Text("Search voices", color = Color.White.copy(alpha = 0.45f)) },
-            maxLines = 1,
-            singleLine = true,
-            shape = searchFieldShape,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        )
+                },
+                placeholder = { Text("Search voices", color = Color.White.copy(alpha = 0.45f)) },
+                maxLines = 1,
+                singleLine = true,
+                shape = searchFieldShape,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            )
+        }
 
         // Provider Pills
         if (providers.isNotEmpty()) {

@@ -1030,6 +1030,7 @@ private fun JanitorCharacterInspectorSheet(
     val imageUrl = resolveAvatarUrl(character.avatarHash ?: character.avatarHash2)
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val haptics = rememberPremiumHaptics()
     val toaster = LocalToaster.current
 
