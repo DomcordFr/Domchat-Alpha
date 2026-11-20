@@ -98,7 +98,8 @@ fun AssistantContextManagementSubPage(
             ExpandableContent(visible = needsSummarizerTip) {
                 SummarizerModelTipBanner(
                     onClick = onNavigateToSummarizerSettings,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                    isEmbedded = true,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                 )
             }
 

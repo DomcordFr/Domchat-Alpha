@@ -48,7 +48,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
-import androidx.compose.material.icons.automirrored.rounded.FormatListNumbered
 import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Edit
@@ -376,7 +375,7 @@ fun DomChatMarkdownEditor(
                         }
                     )
                     EditorToolbarButton(
-                        icon = Icons.AutoMirrored.Rounded.FormatListNumbered,
+                        text = "1.",
                         tooltip = "Numbered List",
                         onClick = {
                             haptics.perform(HapticPattern.Tick)
@@ -591,7 +590,8 @@ fun DomChatMarkdownEditor(
 
 @Composable
 private fun EditorToolbarButton(
-    icon: ImageVector,
+    icon: ImageVector? = null,
+    text: String? = null,
     tooltip: String,
     onClick: () -> Unit,
 ) {
@@ -599,12 +599,23 @@ private fun EditorToolbarButton(
         onClick = onClick,
         modifier = Modifier.size(34.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = tooltip,
-            tint = Color.White.copy(alpha = 0.85f),
-            modifier = Modifier.size(18.dp)
-        )
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = tooltip,
+                tint = Color.White.copy(alpha = 0.85f),
+                modifier = Modifier.size(18.dp)
+            )
+        } else if (text != null) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                ),
+                color = Color.White.copy(alpha = 0.85f)
+            )
+        }
     }
 }
 

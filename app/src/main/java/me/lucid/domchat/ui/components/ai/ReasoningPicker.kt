@@ -372,7 +372,7 @@ private fun ReasoningOptionItem(
     isAmoled: Boolean  // Only use Color.Black when actually in OLED mode
 ) {
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    val itemShape = RoundedCornerShape(22.dp)
+    val itemShape = RoundedCornerShape(26.dp)
     
     val isDark = LocalDarkMode.current
     val targetBg = if (selected) {
@@ -384,6 +384,16 @@ private fun ReasoningOptionItem(
         targetValue = targetBg,
         animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
         label = "reasoning_bg"
+    )
+    val animatedTitleColor by animateColorAsState(
+        targetValue = if (selected) Color.White else (if (isDark) Color(0xFFEEEEEE) else MaterialTheme.colorScheme.onSurface),
+        animationSpec = spring(stiffness = 400f),
+        label = "reasoning_title_color"
+    )
+    val animatedSubtitleColor by animateColorAsState(
+        targetValue = if (selected) Color.White.copy(alpha = 0.75f) else (if (isDark) Color(0xFFAAAAAA) else MaterialTheme.colorScheme.onSurfaceVariant),
+        animationSpec = spring(stiffness = 400f),
+        label = "reasoning_subtitle_color"
     )
     val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
     val targetBorderWidth = if (selected) 1.dp else 0.5.dp
@@ -425,7 +435,8 @@ private fun ReasoningOptionItem(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                    color = animatedTitleColor,
+                    maxLines = 1,
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 AnimatedVisibility(
@@ -461,7 +472,7 @@ private fun ReasoningOptionItem(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (selected) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = animatedSubtitleColor,
                 modifier = Modifier.fillMaxWidth()
             )
         }

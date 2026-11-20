@@ -24,6 +24,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.activity.compose.BackHandler
 import androidx.core.net.toUri
 import androidx.compose.foundation.clickable
@@ -2341,7 +2343,7 @@ private fun ChatPageContent(
 
                 // Smooth glassy loading animation when switching conversations
                 AnimatedVisibility(
-                    visible = targetConversationId == conversation.id && (!chatListReady || !conversationInitialized),
+                    visible = !chatListReady || !conversationInitialized,
                     enter = fadeIn(animationSpec = tween(150)),
                     exit = fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing)),
                     modifier = Modifier

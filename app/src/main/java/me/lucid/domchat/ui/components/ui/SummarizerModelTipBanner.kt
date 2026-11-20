@@ -30,7 +30,8 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 @Composable
 fun SummarizerModelTipBanner(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isEmbedded: Boolean = false,
 ) {
     val bannerShape = RoundedCornerShape(16.dp)
     val isDark = LocalDarkMode.current
@@ -38,9 +39,9 @@ fun SummarizerModelTipBanner(
 
     Surface(
         onClick = onClick,
-        color = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.40f),
+        color = if (isEmbedded) Color.Transparent else (if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.40f)),
         shape = bannerShape,
-        border = BorderStroke(0.5.dp, borderBrush),
+        border = if (isEmbedded) null else BorderStroke(0.5.dp, borderBrush),
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
