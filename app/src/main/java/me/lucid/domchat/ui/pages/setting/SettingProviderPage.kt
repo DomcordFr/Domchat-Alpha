@@ -336,7 +336,6 @@ fun SettingProviderPage(
 
                             ProvidersTab.Search,
                             ProvidersTab.Tts -> {
-                                val isDark = LocalDarkMode.current
                                 FloatingActionButton(
                                     onClick = {
                                         haptics.perform(HapticPattern.Pop)
@@ -347,15 +346,17 @@ fun SettingProviderPage(
                                         }
                                     },
                                     shape = CircleShape,
-                                    containerColor = Color(0xFFFFFFFF),
-                                    contentColor = Color(0xFF000000)
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White,
+                                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                                 ) {
                                     Icon(
                                         Icons.Rounded.Settings,
                                         contentDescription = when (currentTab) {
                                             ProvidersTab.Search -> stringResource(R.string.setting_page_search_common_options)
                                             else -> stringResource(R.string.setting_tts_settings_title)
-                                        }
+                                        },
+                                        tint = Color.White
                                     )
                                 }
                             }
@@ -520,16 +521,18 @@ fun SettingProviderPage(
                                 showTtsFilterSettings = true
                             }
                         },
-                        shape = AppShapes.CardLarge,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        shape = CircleShape,
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
                         Icon(
                             Icons.Rounded.Settings,
                             contentDescription = when (currentTab) {
                                 ProvidersTab.Search -> stringResource(R.string.setting_page_search_common_options)
                                 else -> stringResource(R.string.setting_tts_settings_title)
-                            }
+                            },
+                            tint = Color.White
                         )
                     }
                 }
@@ -966,10 +969,11 @@ private fun ImportProviderButton(
         FloatingActionButton(
             onClick = openImportDialog,
             shape = CircleShape,
-            containerColor = Color(0xFFFFFFFF),
-            contentColor = Color(0xFF000000)
+            containerColor = Color(0xFF000000),
+            contentColor = Color.White,
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
         ) {
-            Icon(Icons.AutoMirrored.Rounded.Input, stringResource(R.string.import_label))
+            Icon(Icons.AutoMirrored.Rounded.Input, stringResource(R.string.import_label), tint = Color.White)
         }
     } else {
         IconButton(onClick = openImportDialog) {
@@ -1400,10 +1404,11 @@ private fun AddButton(
         FloatingActionButton(
             onClick = handleClick,
             shape = CircleShape,
-            containerColor = Color(0xFFFFFFFF),
-            contentColor = Color(0xFF000000)
+            containerColor = Color(0xFF000000),
+            contentColor = Color.White,
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
         ) {
-            Icon(Icons.Rounded.Add, stringResource(R.string.add))
+            Icon(Icons.Rounded.Add, stringResource(R.string.add), tint = Color.White)
         }
     } else {
         IconButton(onClick = handleClick) {

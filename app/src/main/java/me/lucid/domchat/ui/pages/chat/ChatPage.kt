@@ -1604,11 +1604,7 @@ private fun ChatPageContent(
                             conversationId = conversation.id.toString(),
                             modifier = Modifier
                                 .domChatBlurSource()
-                                .layerBackdrop(wallpaperBackdrop)
-                                // Also record into chatBackdrop so LocalAppBackdrop holds an
-                                // immediate non-empty recording on frame 0 (cold start / blank chat),
-                                // instead of a null or transparent backdrop.
-                                .layerBackdrop(chatBackdrop),
+                                .layerBackdrop(wallpaperBackdrop),
                             // Wallpaper bitmap decoded: invalidate all backdrops so all
                             // liquid glass samplers re-record against the real background.
                             onWallpaperLoaded = {
@@ -1627,7 +1623,6 @@ private fun ChatPageContent(
                                 .background(MaterialTheme.colorScheme.background)
                                 .domChatBlurSource()
                                 .layerBackdrop(wallpaperBackdrop)
-                                .layerBackdrop(chatBackdrop)
                         )
                     }
 

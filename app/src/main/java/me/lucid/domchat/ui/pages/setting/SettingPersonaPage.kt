@@ -305,11 +305,12 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { openCreate() },
-                containerColor = Color(0xFFFFFFFF),
-                contentColor = Color(0xFF000000),
-                shape = CircleShape
+                containerColor = Color(0xFF000000),
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "New Persona")
+                Icon(Icons.Rounded.Add, contentDescription = "New Persona", tint = Color.White)
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)

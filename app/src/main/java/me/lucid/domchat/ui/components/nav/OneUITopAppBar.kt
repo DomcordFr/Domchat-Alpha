@@ -203,7 +203,7 @@ fun OneUITopAppBar(
         // Bottom fading gradient overlay when scrolled down into collapsed header
         if (collapseProgress > 0.05f) {
             val gradientAlpha = ((collapseProgress - 0.05f) / 0.45f).coerceIn(0f, 1f)
-            val fadeHeight = 28.dp
+            val fadeHeight = 48.dp
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -214,6 +214,9 @@ fun OneUITopAppBar(
                         Brush.verticalGradient(
                             listOf(
                                 Color(0xFF000000).copy(alpha = gradientAlpha),
+                                Color(0xFF000000).copy(alpha = gradientAlpha * 0.75f),
+                                Color(0xFF000000).copy(alpha = gradientAlpha * 0.40f),
+                                Color(0xFF000000).copy(alpha = gradientAlpha * 0.12f),
                                 Color.Transparent
                             )
                         )

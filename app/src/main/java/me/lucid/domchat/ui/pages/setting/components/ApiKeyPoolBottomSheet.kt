@@ -37,7 +37,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.imePadding
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -549,76 +552,94 @@ private fun ApiKeyEditDialog(
     var keyVisible by remember { mutableStateOf(false) }
     val haptics = rememberPremiumHaptics()
 
-    AlertDialog(
-        containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        titleContentColor = Color(0xFFF2F2F7),
-        textContentColor = Color(0xFFF2F2F7),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+        containerColor = Color(0xFF000000),
+        dragHandle = { DomChatSheetDragHandle() },
+        modifier = Modifier.imePadding(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            DomChatSheetHeader(
+                title = title,
+                onCloseClick = onDismiss,
             )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.api_key_pool_key_name)) },
-                    placeholder = { Text(initialName) },
-                    singleLine = true,
-                    shape = AppShapes.InputField,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = appFieldColors(),
-                )
 
-                OutlinedTextField(
-                    value = key,
-                    onValueChange = { key = it },
-                    label = { Text(stringResource(R.string.api_key_pool_key_value)) },
-                    placeholder = { Text("sk-...") },
-                    singleLine = true,
-                    shape = AppShapes.InputField,
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { keyVisible = !keyVisible }) {
-                            Icon(
-                                imageVector = if (keyVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.65f)
-                            )
-                        }
-                    },
-                    colors = appFieldColors(),
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (key.isNotBlank()) {
-                        haptics.perform(HapticPattern.Pop)
-                        onConfirm(name, key)
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(stringResource(R.string.api_key_pool_key_name)) },
+                placeholder = { Text(initialName) },
+                singleLine = true,
+                shape = AppShapes.InputField,
+                modifier = Modifier.fillMaxWidth(),
+                colors = appFieldColors(),
+            )
+
+            OutlinedTextField(
+                value = key,
+                onValueChange = { key = it },
+                label = { Text(stringResource(R.string.api_key_pool_key_value)) },
+                placeholder = { Text("sk-...") },
+                singleLine = true,
+                shape = AppShapes.InputField,
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { keyVisible = !keyVisible }) {
+                        Icon(
+                            imageVector = if (keyVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.65f)
+                        )
                     }
                 },
-                enabled = key.isNotBlank(),
-                shape = AppShapes.ButtonRounded,
+                colors = appFieldColors(),
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
+                }
+                Surface(
+                    onClick = {
+                        if (key.isNotBlank()) {
+                            haptics.perform(HapticPattern.Pop)
+                            onConfirm(name, key)
+                        }
+                    },
+                    enabled = key.isNotBlank(),
+                    shape = AppShapes.ButtonRounded,
+                    color = Color(0xFF000000),
+                    contentColor = Color.White,
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.confirm),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (key.isNotBlank()) Color.White else Color.White.copy(alpha = 0.4f)
+                        )
+                    }
+                }
             }
         }
-    )
+    }
 }

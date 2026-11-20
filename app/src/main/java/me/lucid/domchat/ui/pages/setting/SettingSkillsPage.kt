@@ -55,15 +55,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -210,12 +211,14 @@ fun SettingSkillsPage(
                             importLauncher.launch(arrayOf("application/json", "text/markdown", "application/zip", "*/*"))
                         },
                         shape = CircleShape,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Input,
-                            contentDescription = stringResource(R.string.import_label)
+                            contentDescription = stringResource(R.string.import_label),
+                            tint = Color.White
                         )
                     }
 
@@ -225,10 +228,11 @@ fun SettingSkillsPage(
                             showAddDialog = true
                         },
                         shape = CircleShape,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
-                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
+                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add), tint = Color.White)
                     }
                 }
             }
@@ -720,7 +724,6 @@ fun SkillEditorSheet(
     onAutoSave: ((Skill) -> Unit)? = null,
 ) {
     val isEditing = skill != null
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val toaster = LocalToaster.current
@@ -777,47 +780,30 @@ fun SkillEditorSheet(
 
     ApplyDialogWindowBlur()
     val isDark = LocalDarkMode.current
-    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-    ModalBottomSheet(
-        containerColor = Color(0xFF000000),
-        contentColor = Color(0xFFF2F2F7),
-
-        shape = sheetShape,
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
+        containerColor = Color(0xFF000000),
+        shape = sheetShape,
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                }
-            )
-        }
+            DomChatSheetDragHandle()
+        },
+        modifier = Modifier.imePadding(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.86f)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(
-                        if (isEditing) R.string.skills_page_edit_skill else R.string.skills_page_add_skill
-                    ),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                AutoSaveIndicator(visible = isAutoSaving)
-            }
+            DomChatSheetHeader(
+                title = stringResource(
+                    if (isEditing) R.string.skills_page_edit_skill else R.string.skills_page_add_skill
+                ),
+                badge = if (isAutoSaving) { { AutoSaveIndicator(visible = true) } } else null,
+                onCloseClick = onDismiss,
+            )
 
             Column(
                 modifier = Modifier
@@ -1103,69 +1089,84 @@ fun SkillEditorSheet(
                 }
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.12f))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                verticalAlignment = Alignment.CenterVertically
+            // Smooth bottom chin with gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color(0xFF000000).copy(alpha = 0.25f),
+                                Color(0xFF000000).copy(alpha = 0.70f),
+                                Color(0xFF000000),
+                            )
+                        )
+                    )
+                    .padding(top = 12.dp, bottom = 4.dp)
             ) {
-                if (isEditing) {
-                    TextButton(onClick = { showExportDialog = true }) {
-                        Text(stringResource(R.string.export_label))
-                    }
-                }
-                Surface(
-                    onClick = {
-                        val base = packageSkillMetadata ?: skill ?: Skill()
-                        val availableIds = if (availableForAllAssistants) emptySet() else availableAssistantIds
-                        val savedSkill = base.copy(
-                            name = name.trim(),
-                            description = description.trim(),
-                            icon = icon,
-                            instructions = instructions,
-                            enabled = true,
-                            alwaysEnabled = alwaysEnabled,
-                            disableModelInvocation = disableModelInvocation,
-                            userInvocable = userInvocable,
-                            injectionPosition = injectionPosition,
-                            depth = depth.toIntOrNull()?.coerceAtLeast(0) ?: 0,
-                            availableForAllAssistants = availableForAllAssistants,
-                            availableAssistantIds = availableIds,
-                            updatedAt = System.currentTimeMillis()
-                        )
-                        haptics.perform(HapticPattern.Success)
-                        if (skillMdEditedDirectly && onSavePreservingPackage != null) {
-                            onSavePreservingPackage(savedSkill)
-                        } else {
-                            onSave(savedSkill)
-                        }
-                    },
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
-                    color = Color(0xFF000000),
-                    contentColor = Color(0xFFF2F2F7),
-                    border = androidx.compose.foundation.BorderStroke(
-                        0.5.dp,
-                        LiquidGlassTokens.SpecularBorderBrush
-                    ),
-                    modifier = Modifier.height(48.dp),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 22.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    if (isEditing) {
+                        TextButton(onClick = { showExportDialog = true }) {
+                            Text(stringResource(R.string.export_label), color = Color.White.copy(alpha = 0.7f))
+                        }
+                    }
+                    Surface(
+                        onClick = {
+                            val base = packageSkillMetadata ?: skill ?: Skill()
+                            val availableIds = if (availableForAllAssistants) emptySet() else availableAssistantIds
+                            val savedSkill = base.copy(
+                                name = name.trim(),
+                                description = description.trim(),
+                                icon = icon,
+                                instructions = instructions,
+                                enabled = true,
+                                alwaysEnabled = alwaysEnabled,
+                                disableModelInvocation = disableModelInvocation,
+                                userInvocable = userInvocable,
+                                injectionPosition = injectionPosition,
+                                depth = depth.toIntOrNull()?.coerceAtLeast(0) ?: 0,
+                                availableForAllAssistants = availableForAllAssistants,
+                                availableAssistantIds = availableIds,
+                                updatedAt = System.currentTimeMillis()
+                            )
+                            haptics.perform(HapticPattern.Success)
+                            if (skillMdEditedDirectly && onSavePreservingPackage != null) {
+                                onSavePreservingPackage(savedSkill)
+                            } else {
+                                onSave(savedSkill)
+                            }
+                        },
+                        shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                        color = Color(0xFF000000),
+                        contentColor = Color(0xFFF2F2F7),
+                        border = androidx.compose.foundation.BorderStroke(
+                            0.5.dp,
+                            LiquidGlassTokens.SpecularBorderSubtle
+                        ),
+                        modifier = Modifier.height(48.dp),
                     ) {
-                        Text(
-                            text = stringResource(if (isEditing) R.string.save else R.string.create),
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.White.copy(alpha = 0.7f)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 22.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(if (isEditing) R.string.save else R.string.create),
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
             }
@@ -1616,29 +1617,24 @@ private fun SkillExportDialog(
 
     ApplyDialogWindowBlur()
     val isDark = LocalDarkMode.current
-    val sheetShape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-    ModalBottomSheet(
-        containerColor = Color(0xFF000000),
-        contentColor = Color(0xFFF2F2F7),
-
-        shape = sheetShape,
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, sheetShape).imePadding(),
-        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
+        containerColor = Color(0xFF000000),
+        shape = sheetShape,
+        dragHandle = { DomChatSheetDragHandle() },
+        modifier = Modifier.imePadding(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
-                .padding(bottom = 16.dp),
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = stringResource(R.string.skill_export_format),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color.White,
-                modifier = Modifier.padding(bottom = 8.dp)
+            DomChatSheetHeader(
+                title = stringResource(R.string.skill_export_format),
+                onCloseClick = onDismiss,
             )
 
             val borderBrush = Brush.verticalGradient(

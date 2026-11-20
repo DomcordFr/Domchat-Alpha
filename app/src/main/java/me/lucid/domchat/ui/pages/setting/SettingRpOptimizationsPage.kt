@@ -109,14 +109,14 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             )
         },
         floatingActionButton = {
-            val isDark = LocalDarkMode.current
             FloatingActionButton(
                 onClick = { showAddDialog = true },
                 shape = CircleShape,
-                containerColor = Color(0xFFFFFFFF),
-                contentColor = Color(0xFF000000)
+                containerColor = Color(0xFF000000),
+                contentColor = Color.White,
+                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             ) {
-                Icon(Icons.Rounded.Add, stringResource(R.string.setting_rp_add_rule))
+                Icon(Icons.Rounded.Add, stringResource(R.string.setting_rp_add_rule), tint = Color.White)
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)

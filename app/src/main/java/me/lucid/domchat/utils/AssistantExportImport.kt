@@ -331,17 +331,22 @@ object AssistantExportImport : KoinComponent {
             null
         }
 
+        val allRegisteredTags = settingsStore.settingsFlow.value.assistantTags
+        val tagNames = assistant.tags.mapNotNull { tagId ->
+            allRegisteredTags.find { it.id == tagId }?.name
+        }
+
         val card = CharacterCardV2(
             data = CharacterCardV2Data(
                 name = assistant.name,
-                description = "", 
-                personality = assistant.systemPrompt, 
+                description = assistant.creatorNotes.orEmpty().ifBlank { assistant.systemPrompt },
+                personality = assistant.systemPrompt,
                 scenario = assistant.scenario.orEmpty(),
                 firstMes = assistant.presetMessages.firstOrNull()?.toContentText() ?: "",
-                mesExample = assistant.exampleDialogue.orEmpty(), 
-                systemPrompt = assistant.systemPrompt, 
+                mesExample = assistant.exampleDialogue.orEmpty(),
+                systemPrompt = assistant.systemPrompt,
                 characterBook = characterBook,
-                tags = assistant.tags.map { it.toString() },
+                tags = tagNames,
                 alternateGreetings = assistant.alternateGreetings,
                 creatorNotes = assistant.creatorNotes.orEmpty(),
                 creator = assistant.creator.orEmpty(),
@@ -1162,8 +1167,46 @@ object AssistantExportImport : KoinComponent {
                 else -> emptyList()
             }
 
-            // Build systemPrompt - ONLY use the card's systemPrompt, not everything
-            val systemPromptText = systemPrompt.trim()
+            // Build systemPrompt - preserve card's systemPrompt, personality, and description without data loss
+            val systemPromptText = when {
+                systemPrompt.isNotBlank() && personality.isNotBlank() && !systemPrompt.contains(personality) -> {
+                    "${systemPrompt.trim()}\n\n${personality.trim()}"
+                }
+                systemPrompt.isNotBlank() -> systemPrompt.trim()
+                personality.isNotBlank() && description.isNotBlank() && !personality.contains(description) -> {
+                    "${description.trim()}\n\n${personality.trim()}"
+                }
+                personality.isNotBlank() -> personality.trim()
+                description.isNotBlank() -> description.trim()
+                else -> ""
+            }
+
+            val tagsRaw = dataObj["tags"] ?: currentObj["tags"]
+            val cardTags = when (tagsRaw) {
+                is kotlinx.serialization.json.JsonArray -> tagsRaw.mapNotNull { it.asStringOrNull() }.filter { it.isNotBlank() }
+                is kotlinx.serialization.json.JsonPrimitive -> tagsRaw.contentOrNull?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+                else -> emptyList()
+            }
+
+            val currentSettings = settingsStore.settingsFlow.value
+            val existingTags = currentSettings.assistantTags
+            val newTagsToRegister = mutableListOf<me.lucid.domchat.data.model.Tag>()
+            val resolvedTagIds = cardTags.map { tagName ->
+                val existing = existingTags.find { it.name.equals(tagName, ignoreCase = true) }
+                    ?: newTagsToRegister.find { it.name.equals(tagName, ignoreCase = true) }
+                if (existing != null) {
+                    existing.id
+                } else {
+                    val newTag = me.lucid.domchat.data.model.Tag(id = kotlin.uuid.Uuid.random(), name = tagName)
+                    newTagsToRegister.add(newTag)
+                    newTag.id
+                }
+            }
+            if (newTagsToRegister.isNotEmpty()) {
+                kotlinx.coroutines.runBlocking {
+                    settingsStore.updateSettings { it.copy(assistantTags = it.assistantTags + newTagsToRegister) }
+                }
+            }
 
             val presetMessages = if (firstMes.isNotBlank() && firstMes.lowercase() != "none" && firstMes.lowercase() != "null") {
                 listOf(me.lucid.ai.ui.UIMessage(
@@ -1176,6 +1219,8 @@ object AssistantExportImport : KoinComponent {
 
             var assistant = Assistant(
                 name = name.ifBlank { "Imported Character" },
+                displayName = name.ifBlank { "Imported Character" },
+                chatName = name.ifBlank { "Imported Character" },
                 systemPrompt = systemPromptText,
                 presetMessages = presetMessages,
                 alternateGreetings = alternateGreetings,
@@ -1183,7 +1228,8 @@ object AssistantExportImport : KoinComponent {
                 creator = creator,
                 characterVersion = characterVersion,
                 scenario = scenario.takeIf { it.isNotBlank() },
-                exampleDialogue = mesExample.takeIf { it.isNotBlank() }
+                exampleDialogue = mesExample.takeIf { it.isNotBlank() },
+                tags = resolvedTagIds
             )
 
             // Avatar handling

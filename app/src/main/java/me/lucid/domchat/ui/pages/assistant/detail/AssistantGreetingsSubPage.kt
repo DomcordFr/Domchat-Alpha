@@ -39,10 +39,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DragHandle
+import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Reorder
 import androidx.compose.material.icons.rounded.Visibility
@@ -446,10 +449,14 @@ fun AssistantGreetingsSubPage(
     manageMenuIndex?.let { targetIndex ->
         if (targetIndex in intros.indices) {
             val currentLabel = labels.getOrNull(targetIndex)?.takeIf { it.isNotBlank() } ?: "Initial #${targetIndex + 1}"
+            var renameDraft by remember(targetIndex) {
+                mutableStateOf(labels.getOrNull(targetIndex).orEmpty())
+            }
             Dialog(
                 onDismissRequest = { manageMenuIndex = null },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -461,75 +468,127 @@ fun AssistantGreetingsSubPage(
                         shape = RoundedCornerShape(22.dp),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
-                            .widthIn(min = 280.dp, max = 340.dp)
+                            .widthIn(min = 280.dp, max = 360.dp)
                             .imePadding()
                     ) {
                         Column(
-                            modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = Modifier.padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            // Header
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    text = currentLabel,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                IconButton(
-                                    onClick = { manageMenuIndex = null },
-                                    modifier = Modifier.size(32.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.08f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Rounded.Chat,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "Manage Initial Message",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = currentLabel,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+                                IconButton(onClick = { manageMenuIndex = null }) {
                                     Icon(
                                         imageVector = Icons.Rounded.Close,
                                         contentDescription = "Close",
-                                        tint = Color.White.copy(alpha = 0.6f),
-                                        modifier = Modifier.size(18.dp)
+                                        tint = Color.White
                                     )
                                 }
                             }
 
-                            // Rename button
-                            GreetingActionRow(
-                                icon = Icons.Rounded.Edit,
-                                text = "Rename",
-                                onClick = {
-                                    showRenameDialog = true
-                                    renameDraftName = currentLabel
-                                }
-                            )
+                            // Rename input with inline save
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = renameDraft,
+                                    onValueChange = { renameDraft = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    placeholder = { Text("Initial message name") },
+                                    shape = AppShapes.InputField,
+                                    colors = me.lucid.domchat.ui.theme.appFieldColors()
+                                )
 
-                            // Reorder button
-                            GreetingActionRow(
-                                icon = Icons.Rounded.Reorder,
-                                text = "Reorder",
-                                onClick = {
-                                    manageMenuIndex = null
-                                    showReorderSheet = true
+                                AnimatedVisibility(
+                                    visible = renameDraft.isNotBlank() && renameDraft != currentLabel,
+                                    enter = fadeIn(tween(150)) + expandVertically(),
+                                    exit = fadeOut(tween(150)) + shrinkVertically()
+                                ) {
+                                    DomChatGlassPillButton(
+                                        text = "Save Rename",
+                                        icon = Icons.Rounded.Check,
+                                        accent = true,
+                                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                                        onClick = {
+                                            val updatedLabels = labels.toMutableList()
+                                            while (updatedLabels.size <= targetIndex) {
+                                                updatedLabels.add("")
+                                            }
+                                            updatedLabels[targetIndex] = renameDraft.trim()
+                                            updateIntros(intros, updatedLabels)
+                                            manageMenuIndex = null
+                                            toaster.show("Renamed to ${renameDraft.trim()}")
+                                        }
+                                    )
                                 }
-                            )
+                            }
 
-                            // Delete button
-                            GreetingActionRow(
-                                icon = Icons.Rounded.Delete,
-                                text = "Delete",
-                                isDestructive = true,
-                                onClick = {
-                                    val updatedIntros = intros.toMutableList().apply { removeAt(targetIndex) }
-                                    val updatedLabels = labels.toMutableList().apply {
-                                        if (targetIndex in indices) removeAt(targetIndex)
+                            // Actions: Clean pill button layout
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                DomChatGlassPillButton(
+                                    text = "Reorder",
+                                    icon = Icons.Rounded.Reorder,
+                                    modifier = Modifier.weight(1f).height(44.dp),
+                                    onClick = {
+                                        manageMenuIndex = null
+                                        showReorderSheet = true
                                     }
-                                    updateIntros(updatedIntros, updatedLabels)
-                                    selectedIndex = (targetIndex - 1).coerceAtLeast(0)
-                                    manageMenuIndex = null
-                                    toaster.show("Deleted $currentLabel")
-                                }
-                            )
+                                )
+                                DomChatGlassPillButton(
+                                    text = "Delete",
+                                    icon = Icons.Rounded.Delete,
+                                    destructive = true,
+                                    modifier = Modifier.weight(1f).height(44.dp),
+                                    onClick = {
+                                        val updatedIntros = intros.toMutableList().apply { removeAt(targetIndex) }
+                                        val updatedLabels = labels.toMutableList().apply {
+                                            if (targetIndex in indices) removeAt(targetIndex)
+                                        }
+                                        updateIntros(updatedIntros, updatedLabels)
+                                        selectedIndex = (targetIndex - 1).coerceAtLeast(0)
+                                        manageMenuIndex = null
+                                        toaster.show("Deleted $currentLabel")
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -538,106 +597,35 @@ fun AssistantGreetingsSubPage(
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // POPUP 3: RENAME GREETING DIALOG
-    // ═══════════════════════════════════════════════════════════════════════
-    if (showRenameDialog && manageMenuIndex != null) {
-        val targetIndex = manageMenuIndex!!
-        Dialog(
-            onDismissRequest = { showRenameDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    color = Color(0xFF000000),
-                    shape = RoundedCornerShape(22.dp),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier
-                        .widthIn(min = 280.dp, max = 360.dp)
-                        .imePadding()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "Rename Greeting",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        OutlinedTextField(
-                            value = renameDraftName,
-                            onValueChange = { renameDraftName = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = { Text("Greeting name") },
-                            shape = AppShapes.InputField,
-                            colors = appFieldColors()
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            DomChatGlassPillButton(
-                                text = "Cancel",
-                                onClick = { showRenameDialog = false },
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            DomChatGlassPillButton(
-                                text = "Save",
-                                enabled = renameDraftName.isNotBlank(),
-                                onClick = {
-                                    val updatedLabels = labels.toMutableList()
-                                    while (updatedLabels.size <= targetIndex) {
-                                        updatedLabels.add("")
-                                    }
-                                    updatedLabels[targetIndex] = renameDraftName.trim()
-                                    updateIntros(intros, updatedLabels)
-                                    showRenameDialog = false
-                                    manageMenuIndex = null
-                                    toaster.show("Renamed to ${renameDraftName.trim()}")
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // POPUP 4: REORDER GREETINGS SHEET
+    // POPUP 3: REORDER GREETINGS SHEET
     // ═══════════════════════════════════════════════════════════════════════
     if (showReorderSheet) {
+        val listState = rememberLazyListState()
+        var currentEntries by remember(showReorderSheet, intros) {
+            mutableStateOf(intros.indices.map { i ->
+                GreetingItemData(
+                    id = "greeting_uid_${i}_${intros[i].hashCode()}",
+                    text = intros[i],
+                    label = labels.getOrNull(i)?.takeIf { it.isNotBlank() } ?: "Initial #${i + 1}"
+                )
+            })
+        }
+
+        val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
+            val list = currentEntries.toMutableList()
+            val item = list.removeAt(from.index)
+            list.add(to.index, item)
+            currentEntries = list
+            updateIntros(list.map { it.text }, list.map { it.label })
+        }
+
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = { showReorderSheet = false },
             containerColor = Color(0xFF000000),
+            maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.78f).dp,
             dragHandle = { DomChatSheetDragHandle() }
         ) {
-            val listState = rememberLazyListState()
-            var localIntros by remember { mutableStateOf(intros) }
-            var localLabels by remember { mutableStateOf(labels) }
-
-            val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
-                val newIntros = localIntros.toMutableList().apply {
-                    add(to.index, removeAt(from.index))
-                }
-                val newLabels = localLabels.toMutableList().apply {
-                    if (from.index in indices && to.index in indices) {
-                        add(to.index, removeAt(from.index))
-                    }
-                }
-                localIntros = newIntros
-                localLabels = newLabels
-                updateIntros(newIntros, newLabels)
-            }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -650,77 +638,91 @@ fun AssistantGreetingsSubPage(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 420.dp)
-                        .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(localIntros, key = { index, _ -> "greeting_$index" }) { index, item ->
-                        ReorderableItem(
-                            state = reorderableState,
-                            key = "greeting_$index"
-                        ) { isDragging ->
-                            val label = localLabels.getOrNull(index)?.takeIf { it.isNotBlank() } ?: "Initial #${index + 1}"
-                            PhysicsSwipeToDelete(
-                                onDelete = {
-                                    val updatedIntros = localIntros.toMutableList().apply { removeAt(index) }
-                                    val updatedLabels = localLabels.toMutableList().apply {
-                                        if (index in indices) removeAt(index)
-                                    }
-                                    localIntros = updatedIntros
-                                    localLabels = updatedLabels
-                                    updateIntros(updatedIntros, updatedLabels)
-                                    selectedIndex = (selectedIndex - 1).coerceAtLeast(0)
-                                    toaster.show("Deleted $label")
-                                },
-                                position = ItemPosition.ONLY,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { _ ->
-                                Surface(
-                                    color = if (isDragging) Color(0xFF1E1E26) else Color(0xFF000000),
-                                    shape = RoundedCornerShape(14.dp),
-                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                if (currentEntries.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No greetings created",
+                            color = Color.White.copy(alpha = 0.5f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(currentEntries, key = { it.id }) { item ->
+                            ReorderableItem(
+                                state = reorderableState,
+                                key = item.id
+                            ) { isDragging ->
+                                PhysicsSwipeToDelete(
+                                    onDelete = {
+                                        val updated = currentEntries.filter { it.id != item.id }
+                                        currentEntries = updated
+                                        updateIntros(updated.map { it.text }, updated.map { it.label })
+                                        selectedIndex = (selectedIndex - 1).coerceAtLeast(0)
+                                        toaster.show("Deleted ${item.label}")
+                                    },
+                                    position = ItemPosition.ONLY,
                                     modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                ) { shape ->
+                                    Surface(
+                                        color = Color(0xFF000000),
+                                        shape = RoundedCornerShape(14.dp),
+                                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = label,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = Color.White
-                                            )
-                                            if (item.isNotBlank()) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                                 Text(
-                                                    text = item.take(60).replace("\n", " "),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = Color.White.copy(alpha = 0.5f),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
+                                                    text = item.label,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = Color.White
+                                                )
+                                                if (item.text.isNotBlank()) {
+                                                    Text(
+                                                        text = item.text.take(60).replace("\n", " "),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.White.copy(alpha = 0.5f),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                            IconButton(
+                                                onClick = {},
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .draggableHandle(
+                                                        onDragStarted = { haptics.perform(HapticPattern.Pop) },
+                                                        onDragStopped = { haptics.perform(HapticPattern.Thud) }
+                                                    )
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.DragIndicator,
+                                                    contentDescription = "Drag to reorder",
+                                                    tint = Color.White.copy(alpha = 0.65f),
+                                                    modifier = Modifier.size(22.dp)
                                                 )
                                             }
-                                        }
-                                        IconButton(
-                                            onClick = {},
-                                            modifier = Modifier.draggableHandle(
-                                                onDragStarted = { haptics.perform(HapticPattern.Pop) }
-                                            )
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.DragHandle,
-                                                contentDescription = "Drag to reorder",
-                                                tint = Color.White.copy(alpha = 0.6f)
-                                            )
                                         }
                                     }
                                 }
@@ -728,46 +730,13 @@ fun AssistantGreetingsSubPage(
                         }
                     }
                 }
-
-                Spacer(Modifier.height(16.dp).navigationBarsPadding())
             }
         }
     }
 }
 
-@Composable
-private fun GreetingActionRow(
-    icon: ImageVector,
-    text: String,
-    isDestructive: Boolean = false,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        color = Color.Transparent,
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (isDestructive) Color(0xFFFF453A) else Color.White,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = if (isDestructive) Color(0xFFFF453A) else Color.White
-                )
-            )
-        }
-    }
-}
+private data class GreetingItemData(
+    val id: String,
+    val text: String,
+    val label: String
+)

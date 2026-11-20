@@ -288,11 +288,12 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                     haptics.perform(HapticPattern.Pop)
                     openCreate()
                 },
-                containerColor = Color(0xFFFFFFFF),
-                contentColor = Color(0xFF000000),
-                shape = CircleShape
+                containerColor = Color(0xFF000000),
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add Preset")
+                Icon(Icons.Rounded.Add, contentDescription = "Add Preset", tint = Color.White)
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)

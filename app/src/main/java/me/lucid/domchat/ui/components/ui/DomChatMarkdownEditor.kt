@@ -5,9 +5,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import kotlin.math.roundToInt
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -102,7 +106,9 @@ fun DomChatMarkdownEditor(
     val wordCount = remember(value) {
         if (value.isBlank()) 0 else value.trim().split("\\s+".toRegex()).size
     }
-    val charCount = value.length
+    val tokenCount = remember(value) {
+        if (value.isBlank()) 0 else (value.length / 3.8).roundToInt().coerceAtLeast(1)
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -154,14 +160,14 @@ fun DomChatMarkdownEditor(
                 )
             }
 
-            // Word / Char count pill
+            // Word / Token count pill
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = Color(0xFF000000).copy(alpha = 0.55f),
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
             ) {
                 Text(
-                    text = "$wordCount words • $charCount chars",
+                    text = "$wordCount words • $tokenCount tokens",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.65f),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -260,7 +266,10 @@ fun DomChatMarkdownEditor(
         // Editor Body
         AnimatedContent(
             targetState = selectedTab,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = {
+                (fadeIn(tween(220)) + slideInHorizontally(tween(220)) { if (targetState > initialState) it / 6 else -it / 6 }) togetherWith
+                    (fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { if (targetState > initialState) -it / 6 else it / 6 })
+            },
             label = "markdown_editor_content"
         ) { tab ->
             if (tab == 0) {

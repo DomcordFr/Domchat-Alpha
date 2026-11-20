@@ -55,6 +55,8 @@ import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import androidx.compose.foundation.border
 import me.lucid.domchat.utils.LorebookExportImport
 import me.lucid.domchat.utils.SkillExportImport
 import org.koin.androidx.compose.koinViewModel
@@ -231,13 +233,15 @@ fun SettingPromptInjectionsPage(
                                 lorebookImportLauncher.launch(arrayOf("application/json", "*/*"))
                             }
                         },
-                        shape = AppShapes.CardLarge,
-                        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
-                        contentColor = Color.White
+                        shape = CircleShape,
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Input,
-                            contentDescription = stringResource(R.string.import_label)
+                            contentDescription = stringResource(R.string.import_label),
+                            tint = Color.White
                         )
                     }
 
@@ -250,9 +254,12 @@ fun SettingPromptInjectionsPage(
                                 showAddLorebookDialog = true
                             }
                         },
-                        shape = AppShapes.CardLarge
+                        shape = CircleShape,
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
-                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
+                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add), tint = Color.White)
                     }
                 }
             }

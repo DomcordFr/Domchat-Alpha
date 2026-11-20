@@ -93,12 +93,12 @@ fun AssistantContextManagementSubPage(
             )
         }
 
-        SettingsGroup(title = stringResource(R.string.context_message_history_title)) {
-            val needsSummarizerTip = !hasSummarizerModelConfigured
-            ExpandableContent(visible = needsSummarizerTip) {
-                SummarizerModelTipBanner(onClick = onNavigateToSummarizerSettings)
-            }
+        val needsSummarizerTip = !hasSummarizerModelConfigured
+        ExpandableContent(visible = needsSummarizerTip) {
+            SummarizerModelTipBanner(onClick = onNavigateToSummarizerSettings)
+        }
 
+        SettingsGroup(title = stringResource(R.string.context_message_history_title)) {
             SettingGroupItem(
                 title = stringResource(R.string.assistant_context_auto_summarize),
                 subtitle = stringResource(R.string.assistant_context_auto_summarize_desc),

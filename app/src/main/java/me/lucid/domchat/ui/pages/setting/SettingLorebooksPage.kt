@@ -51,6 +51,10 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import androidx.compose.foundation.BorderStroke
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -190,12 +194,14 @@ fun SettingLorebooksPage(vm: SettingVM = koinViewModel()) {
                             importLauncher.launch(arrayOf("application/json", "*/*"))
                         },
                         shape = CircleShape,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Input,
-                            contentDescription = stringResource(R.string.import_label)
+                            contentDescription = stringResource(R.string.import_label),
+                            tint = Color.White
                         )
                     }
 
@@ -205,10 +211,11 @@ fun SettingLorebooksPage(vm: SettingVM = koinViewModel()) {
                             haptics.perform(HapticPattern.Pop)
                         },
                         shape = CircleShape,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                     ) {
-                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
+                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add), tint = Color.White)
                     }
                 }
             }
@@ -638,6 +645,8 @@ internal fun LorebookCreatorSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
+        containerColor = Color(0xFF000000),
+        dragHandle = { DomChatSheetDragHandle() },
         modifier = Modifier.imePadding(),
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -649,26 +658,10 @@ internal fun LorebookCreatorSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.lorebooks_page_create_lorebook),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.cancel),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
-            }
+            DomChatSheetHeader(
+                title = stringResource(R.string.lorebooks_page_create_lorebook),
+                onCloseClick = onDismiss,
+            )
 
             // Cover picker + Name input inline
             Row(
@@ -764,9 +757,10 @@ internal fun LorebookCreatorSheet(
                     enabled = name.isNotBlank(),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
-                    )
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Text(stringResource(R.string.create))
                 }

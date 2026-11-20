@@ -52,9 +52,9 @@ import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.motion.entrance
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.modifier.blurredContainerColor
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -288,7 +288,7 @@ private fun TemplateCard(
 ) {
     val isDark = LocalDarkMode.current
     val cardShape = AppShapes.CardMedium
-    val cardFill = if (isDark) Color(0xFF1E1E24).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
+    val cardFill = if (isDark) Color(0xFF141520).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
 
     Card(
         onClick = onClick,
@@ -299,7 +299,8 @@ private fun TemplateCard(
                 fillColor = cardFill,
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            ),
+            )
+            .liquidInteractiveGlass(shape = cardShape),
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -340,7 +341,7 @@ private fun ActionPill(
 ) {
     val pillShape = RoundedCornerShape(24.dp)
     val isDark = LocalDarkMode.current
-    val pillFill = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.25f)
+    val pillFill = if (isDark) Color(0xFF141520).copy(alpha = 0.60f) else Color.White.copy(alpha = 0.75f)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
@@ -351,7 +352,8 @@ private fun ActionPill(
                     fillColor = pillFill,
                     borderWidth = 0.5.dp,
                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                ),
+                )
+                .liquidInteractiveGlass(shape = pillShape),
             shape = pillShape,
             color = Color.Transparent
         ) {

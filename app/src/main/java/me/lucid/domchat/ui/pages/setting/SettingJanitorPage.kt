@@ -2010,6 +2010,8 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         creator = creator,
         creatorNotes = creatorNotes,
         characterVersion = extract.characterVersion ?: "",
+        scenario = extract.scenario.takeIf { it?.isNotBlank() == true },
+        exampleDialogue = extract.exampleDialogue.takeIf { it?.isNotBlank() == true },
         tags = registeredTagIds,
     )
 }

@@ -346,13 +346,15 @@ fun SettingLorebookDetailPage(
                         showAssistantToggleSheet = true
                         haptics.perform(HapticPattern.Tick)
                     },
-                    shape = AppShapes.CardLarge,
+                    shape = CircleShape,
                     containerColor = Color(0xFF000000),
-                    contentColor = Color.White.copy(alpha = 0.92f)
+                    contentColor = Color.White,
+                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                 ) {
                     Icon(
                         Icons.Rounded.ToggleOn,
-                        contentDescription = stringResource(R.string.lorebook_toggle_assistants)
+                        contentDescription = stringResource(R.string.lorebook_toggle_assistants),
+                        tint = Color.White
                     )
                 }
                 
@@ -362,9 +364,12 @@ fun SettingLorebookDetailPage(
                         showAddEntrySheet = true
                         haptics.perform(HapticPattern.Pop)
                     },
-                    shape = AppShapes.CardLarge
+                    shape = CircleShape,
+                    containerColor = Color(0xFF000000),
+                    contentColor = Color.White,
+                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
+                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add), tint = Color.White)
                 }
             }
         },

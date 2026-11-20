@@ -1596,46 +1596,44 @@ private fun ModelSettingsForm(
                             colors = appFieldColors(),
                         )
 
-                        // Display name with catalog icon preview
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            CustomIconSelector(
-                                customIconUri = model.customIconUri,
-                                onPickFile = {
-                                    imagePickerLauncher.launch(arrayOf("image/*", "image/svg+xml"))
-                                },
-                                onPickLobeHubIcon = { slug ->
-                                    onModelChange(model.copy(customIconUri = lobeHubIconUri(slug)))
-                                },
-                                onReset = {
-                                    onModelChange(model.copy(customIconUri = null))
-                                },
-                            ) { iconModifier ->
-                                ModelIcon(
-                                    model = model,
-                                    provider = parentProvider,
-                                    modifier = iconModifier,
-                                )
-                            }
-                            OutlinedTextField(
-                                value = model.displayName,
-                                onValueChange = {
-                                    onModelChange(model.copy(displayName = it))
-                                },
-                                label = { Text(stringResource(if (isEdit) R.string.setting_provider_page_model_name else R.string.setting_provider_page_model_display_name)) },
-                                modifier = Modifier.weight(1f),
-                                placeholder = {
-                                    if (!isEdit) {
-                                        Text(stringResource(R.string.setting_provider_page_model_display_name_placeholder))
+                        // Full-width display name with embedded custom icon selector
+                        OutlinedTextField(
+                            value = model.displayName,
+                            onValueChange = {
+                                onModelChange(model.copy(displayName = it))
+                            },
+                            label = { Text(stringResource(if (isEdit) R.string.setting_provider_page_model_name else R.string.setting_provider_page_model_display_name)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                if (!isEdit) {
+                                    Text(stringResource(R.string.setting_provider_page_model_display_name_placeholder))
+                                }
+                            },
+                            trailingIcon = {
+                                Box(modifier = Modifier.padding(end = 6.dp)) {
+                                    CustomIconSelector(
+                                        customIconUri = model.customIconUri,
+                                        onPickFile = {
+                                            imagePickerLauncher.launch(arrayOf("image/*", "image/svg+xml"))
+                                        },
+                                        onPickLobeHubIcon = { slug ->
+                                            onModelChange(model.copy(customIconUri = lobeHubIconUri(slug)))
+                                        },
+                                        onReset = {
+                                            onModelChange(model.copy(customIconUri = null))
+                                        },
+                                    ) { iconModifier ->
+                                        ModelIcon(
+                                            model = model,
+                                            provider = parentProvider,
+                                            modifier = iconModifier,
+                                        )
                                     }
-                                },
-                                shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                                colors = appFieldColors(),
-                            )
-                        }
+                                }
+                            },
+                            shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                            colors = appFieldColors(),
+                        )
 
                         ModelTypeSelector(
                             selectedType = model.type,
@@ -2059,15 +2057,19 @@ private fun ModelPickerSheet(
                     )
                 }
             } else {
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 36f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                    contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
                 ) {
-                    items(filteredModels, key = { it.modelId }) { model ->
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 72f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
+                    ) {
+                        items(filteredModels, key = { it.modelId }) { model ->
                         val isSelected = selectedModelMap.containsKey(model.modelId)
                         Surface(
                             onClick = {
@@ -2124,6 +2126,25 @@ private fun ModelPickerSheet(
                         }
                     }
                 }
+
+                // Soft top blend overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(28.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF000000),
+                                        Color(0xFF000000).copy(alpha = 0.75f),
+                                        Color(0xFF000000).copy(alpha = 0.30f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
             }
         }
     }
@@ -2139,9 +2160,12 @@ private fun AddNewModelFab(
             haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
             onClick()
         },
-        shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
+        shape = CircleShape,
+        containerColor = Color(0xFF000000),
+        contentColor = Color.White,
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
     ) {
-        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.setting_provider_page_add_model))
+        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.setting_provider_page_add_model), tint = Color.White)
     }
 }
 
@@ -2199,12 +2223,14 @@ private fun AddNewModelSheet(
                         Brush.verticalGradient(
                             listOf(
                                 Color.Transparent,
-                                Color(0xFF000000).copy(alpha = 0.90f),
+                                Color(0xFF000000).copy(alpha = 0.25f),
+                                Color(0xFF000000).copy(alpha = 0.65f),
+                                Color(0xFF000000).copy(alpha = 0.95f),
                                 Color(0xFF000000),
                             )
                         )
                     )
-                    .padding(top = 16.dp, bottom = 4.dp)
+                    .padding(top = 20.dp, bottom = 4.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -3500,12 +3526,14 @@ private fun EditModelSheet(
                         Brush.verticalGradient(
                             listOf(
                                 Color.Transparent,
-                                Color(0xFF000000).copy(alpha = 0.90f),
+                                Color(0xFF000000).copy(alpha = 0.25f),
+                                Color(0xFF000000).copy(alpha = 0.65f),
+                                Color(0xFF000000).copy(alpha = 0.95f),
                                 Color(0xFF000000),
                             )
                         )
                     )
-                    .padding(top = 16.dp, bottom = 4.dp)
+                    .padding(top = 20.dp, bottom = 4.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

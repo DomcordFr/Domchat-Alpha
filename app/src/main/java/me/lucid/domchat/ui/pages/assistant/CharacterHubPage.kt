@@ -1567,6 +1567,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 characterToMove = null
                 showMoveToGroupDialog = false
             },
+            onExport = {
+                showExportDialogFor = char
+                characterToMove = null
+                showMoveToGroupDialog = false
+            },
             onMoveToGroup = { groupId ->
                 val newGroupId = if (groupId.isNullOrBlank()) null else groupId
                 charGroupAssignments = if (newGroupId == null) {
@@ -3768,6 +3773,7 @@ private fun CharacterActionPopover(
     groupNames: Map<String, String>,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
+    onExport: () -> Unit,
     onMoveToGroup: (String?) -> Unit,
     onDeleteGroup: (String) -> Unit
 ) {
@@ -3894,34 +3900,71 @@ private fun CharacterActionPopover(
                         }
                     }
 
-                    Surface(
-                        onClick = { onDelete() },
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFFE53935),
-                        border = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
+                        Surface(
+                            onClick = { onExport() },
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                                .weight(1f)
+                                .height(48.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Delete,
-                                contentDescription = "Delete",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Delete character",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = Color.White
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Share,
+                                    contentDescription = "Export",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Export",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        Surface(
+                            onClick = { onDelete() },
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFE53935),
+                            border = null,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Delete",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }

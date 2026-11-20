@@ -211,8 +211,13 @@ fun Modifier.liquidGlass(
     val tint = if (tintColor == Color.Unspecified) Color.Transparent else tintColor
     val blurContainer = if (tint.alpha > 0.02f) tint else fillColor
 
+    val isDark = LocalDarkMode.current
     val baseTint = if (fillColor == Color.Transparent && display.glassAlpha > 0.02f) {
-        Color.White.copy(alpha = display.glassAlpha.coerceIn(0f, 1f) * 0.25f)
+        if (isDark) {
+            Color(0xFF141520).copy(alpha = (display.glassAlpha.coerceIn(0f, 1f) * 0.55f).coerceAtLeast(0.25f))
+        } else {
+            Color.White.copy(alpha = display.glassAlpha.coerceIn(0f, 1f) * 0.25f)
+        }
     } else {
         Color.Transparent
     }
