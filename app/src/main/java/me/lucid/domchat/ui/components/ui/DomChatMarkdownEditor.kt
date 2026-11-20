@@ -59,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -172,7 +173,8 @@ fun DomChatMarkdownEditor(
                     selection = TextRange(start + prefix.length)
                 }
             } else {
-                val selectedText = subSequence(start, end).toString()
+                val current = toString()
+                val selectedText = current.substring(start, end)
                 val replacement = "$prefix$selectedText$suffix"
                 replace(start, end, replacement)
                 selection = TextRange(start + prefix.length, start + prefix.length + selectedText.length)
@@ -335,12 +337,13 @@ fun DomChatMarkdownEditor(
                                 val sel = selection
                                 val start = minOf(sel.start, sel.end)
                                 val end = maxOf(sel.start, sel.end)
+                                val current = toString()
                                 if (start == end) {
-                                    val prefix = if (start > 0 && this[start - 1] != '\n') "\n> " else "> "
+                                    val prefix = if (start > 0 && current[start - 1] != '\n') "\n> " else "> "
                                     replace(start, end, prefix)
                                     selection = TextRange(start + prefix.length)
                                 } else {
-                                    val selectedText = subSequence(start, end).toString()
+                                    val selectedText = current.substring(start, end)
                                     val quoted = selectedText.lines().joinToString("\n") { line -> "> $line" }
                                     replace(start, end, quoted)
                                     selection = TextRange(start, start + quoted.length)

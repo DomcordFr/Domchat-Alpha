@@ -43,6 +43,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.Arrangement
@@ -1434,12 +1435,13 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(swipeModifier),
+                        .then(swipeModifier)
+                        .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onToggleToolbar()
                     },
-                    bubbleModifier = { m, shape, color ->
+                    bubbleModifier = { m: Modifier, shape: Shape, color: Color ->
                         if (isTransparentStyle) {
                             m
                         } else if (!isGlassy) {
@@ -1473,7 +1475,6 @@ private fun UserMessageTurn(
                             }
                         }
                     }
-                    .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
                 ) {
                     var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
                     var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
@@ -2004,6 +2005,7 @@ private fun AssistantMessageTurn(
                     modifier = Modifier
                         .widthIn(max = maxWidth)
                         .then(assistantSwipeModifier)
+                        .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
                         .animateContentSize(
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
@@ -2011,7 +2013,7 @@ private fun AssistantMessageTurn(
                             )
                         ),
                     onClick = handleBubbleClick,
-                    bubbleModifier = { m, shape, color ->
+                    bubbleModifier = { m: Modifier, shape: Shape, color: Color ->
                         if (isTransparentStyle) {
                             m
                         } else if (!isGlassy) {
@@ -2045,7 +2047,6 @@ private fun AssistantMessageTurn(
                             }
                         }
                     }
-                    .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
                 ) {
                     AnimatedContent(
                         targetState = assistantNode.selectIndex,

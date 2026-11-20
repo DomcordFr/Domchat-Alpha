@@ -36,6 +36,7 @@ import me.lucid.domchat.data.ai.models.mergeCatalogIntoSettings
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.work.Configuration
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -75,11 +76,16 @@ const val WORKSPACE_ENVIRONMENT_NOTIFICATION_CHANNEL_ID = "workspace_environment
 
 typealias AetherChatApp = DomChatApp
 
-class DomChatApp : Application(), SingletonImageLoader.Factory {
+class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Provider {
     companion object {
         lateinit var instance: DomChatApp
             private set
     }
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(if (BuildConfig.DEBUG) android.util.Log.DEBUG else android.util.Log.INFO)
+            .build()
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         return get<AppImageLoaderFactory>().create(context)
