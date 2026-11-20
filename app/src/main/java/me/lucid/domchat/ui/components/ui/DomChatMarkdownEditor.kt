@@ -17,6 +17,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,9 +99,97 @@ fun DomChatMarkdownEditor(
     minLines: Int = 10,
     showMacros: Boolean = true,
     allowImageEmbed: Boolean = true,
+    stateKey: Any? = null,
 ) {
     val haptics = rememberPremiumHaptics()
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Write, 1: Preview
+
+    val textFieldState = if (stateKey != null) {
+        androidx.compose.runtime.key(stateKey) {
+            rememberTextFieldState(initialText = value)
+        }
+    } else {
+        rememberTextFieldState(initialText = value)
+    }
+
+    var isFocused by remember { mutableStateOf(false) }
+    val latestValue by rememberUpdatedState(value)
+    val latestOnValueChange by rememberUpdatedState(onValueChange)
+
+    // Sync from external value when NOT focused (e.g. character import, external reset, or tab switch)
+    LaunchedEffect(value, stateKey, isFocused) {
+        if (!isFocused && textFieldState.text.toString() != value) {
+            textFieldState.edit {
+                replace(0, length, value)
+            }
+        }
+    }
+
+    // Debounced auto-sync to external state (200ms debounce)
+    LaunchedEffect(stateKey, textFieldState) {
+        snapshotFlow { textFieldState.text.toString() }
+            .drop(1)
+            .debounce(200L)
+            .collect { newText ->
+                if (newText != latestValue) {
+                    latestOnValueChange(newText)
+                }
+            }
+    }
+
+    // Immediate commit on losing focus or disposal
+    DisposableEffect(isFocused) {
+        if (!isFocused) {
+            val currentText = textFieldState.text.toString()
+            if (currentText != latestValue) {
+                latestOnValueChange(currentText)
+            }
+        }
+        onDispose {
+            val currentText = textFieldState.text.toString()
+            if (currentText != latestValue) {
+                latestOnValueChange(currentText)
+            }
+        }
+    }
+
+    fun insertOrWrap(prefix: String, suffix: String, defaultPlaceholder: String = "") {
+        haptics.perform(HapticPattern.Tick)
+        textFieldState.edit {
+            val sel = selection
+            val start = minOf(sel.start, sel.end)
+            val end = maxOf(sel.start, sel.end)
+            if (start == end) {
+                val insertContent = if (defaultPlaceholder.isNotEmpty()) {
+                    "$prefix$defaultPlaceholder$suffix"
+                } else {
+                    "$prefix$suffix"
+                }
+                replace(start, end, insertContent)
+                if (defaultPlaceholder.isNotEmpty()) {
+                    selection = TextRange(start + prefix.length, start + prefix.length + defaultPlaceholder.length)
+                } else {
+                    selection = TextRange(start + prefix.length)
+                }
+            } else {
+                val selectedText = subSequence(start, end).toString()
+                val replacement = "$prefix$selectedText$suffix"
+                replace(start, end, replacement)
+                selection = TextRange(start + prefix.length, start + prefix.length + selectedText.length)
+            }
+        }
+    }
+
+    fun insertTextAtCursor(textToInsert: String) {
+        haptics.perform(HapticPattern.Tick)
+        textFieldState.edit {
+            val sel = selection
+            val start = minOf(sel.start, sel.end)
+            val end = maxOf(sel.start, sel.end)
+            replace(start, end, textToInsert)
+            selection = TextRange(start + textToInsert.length)
+        }
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -99,15 +197,22 @@ fun DomChatMarkdownEditor(
         if (uri != null) {
             haptics.perform(HapticPattern.Pop)
             val imageMarkdown = "\n![Image]($uri)\n"
-            onValueChange(value + imageMarkdown)
+            textFieldState.edit {
+                val sel = selection
+                val start = minOf(sel.start, sel.end)
+                val end = maxOf(sel.start, sel.end)
+                replace(start, end, imageMarkdown)
+                selection = TextRange(start + imageMarkdown.length)
+            }
         }
     }
 
-    val wordCount = remember(value) {
-        if (value.isBlank()) 0 else value.trim().split("\\s+".toRegex()).size
+    val currentText = textFieldState.text
+    val wordCount = remember(currentText) {
+        if (currentText.isBlank()) 0 else currentText.trim().split("\\s+".toRegex()).size
     }
-    val tokenCount = remember(value) {
-        if (value.isBlank()) 0 else (value.length / 3.8).roundToInt().coerceAtLeast(1)
+    val tokenCount = remember(currentText) {
+        if (currentText.isBlank()) 0 else (currentText.length / 3.8).roundToInt().coerceAtLeast(1)
     }
 
     Column(
@@ -144,6 +249,10 @@ fun DomChatMarkdownEditor(
                     selected = selectedTab == 1,
                     onClick = {
                         haptics.perform(HapticPattern.Tick)
+                        val textToCommit = textFieldState.text.toString()
+                        if (textToCommit != latestValue) {
+                            latestOnValueChange(textToCommit)
+                        }
                         selectedTab = 1
                     },
                     leadingIcon = {
@@ -200,24 +309,21 @@ fun DomChatMarkdownEditor(
                         icon = Icons.Rounded.FormatBold,
                         tooltip = "Bold",
                         onClick = {
-                            haptics.perform(HapticPattern.Tick)
-                            onValueChange("$value**text**")
+                            insertOrWrap("**", "**", "bold")
                         }
                     )
                     EditorToolbarButton(
                         icon = Icons.Rounded.FormatItalic,
                         tooltip = "Italic",
                         onClick = {
-                            haptics.perform(HapticPattern.Tick)
-                            onValueChange("$value*text*")
+                            insertOrWrap("*", "*", "italic")
                         }
                     )
                     EditorToolbarButton(
                         icon = Icons.Rounded.Code,
                         tooltip = "Code",
                         onClick = {
-                            haptics.perform(HapticPattern.Tick)
-                            onValueChange("$value`code`")
+                            insertOrWrap("`", "`", "code")
                         }
                     )
                     EditorToolbarButton(
@@ -225,7 +331,21 @@ fun DomChatMarkdownEditor(
                         tooltip = "Quote",
                         onClick = {
                             haptics.perform(HapticPattern.Tick)
-                            onValueChange("$value\n> ")
+                            textFieldState.edit {
+                                val sel = selection
+                                val start = minOf(sel.start, sel.end)
+                                val end = maxOf(sel.start, sel.end)
+                                if (start == end) {
+                                    val prefix = if (start > 0 && this[start - 1] != '\n') "\n> " else "> "
+                                    replace(start, end, prefix)
+                                    selection = TextRange(start + prefix.length)
+                                } else {
+                                    val selectedText = subSequence(start, end).toString()
+                                    val quoted = selectedText.lines().joinToString("\n") { line -> "> $line" }
+                                    replace(start, end, quoted)
+                                    selection = TextRange(start, start + quoted.length)
+                                }
+                            }
                         }
                     )
 
@@ -247,15 +367,13 @@ fun DomChatMarkdownEditor(
                         MacroPill(
                             label = "{{char}}",
                             onClick = {
-                                haptics.perform(HapticPattern.Tick)
-                                onValueChange("$value{{char}}")
+                                insertTextAtCursor("{{char}}")
                             }
                         )
                         MacroPill(
                             label = "{{user}}",
                             onClick = {
-                                haptics.perform(HapticPattern.Tick)
-                                onValueChange("$value{{user}}")
+                                insertTextAtCursor("{{user}}")
                             }
                         )
                     }
@@ -274,16 +392,17 @@ fun DomChatMarkdownEditor(
         ) { tab ->
             if (tab == 0) {
                 OutlinedTextField(
-                    value = value,
-                    onValueChange = onValueChange,
+                    state = textFieldState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = (minLines * 24).dp)
+                        .onFocusChanged { isFocused = it.isFocused }
                         .liquidGlassSurface(
                             shape = AppShapes.CardLarge,
                             borderWidth = 0.5.dp,
                             fillColor = Color(0xFF000000).copy(alpha = 0.45f)
                         ),
+                    lineLimits = TextFieldLineLimits.MultiLine(minHeightInLines = minLines),
                     colors = appFieldColors(),
                     placeholder = {
                         Text(
@@ -313,9 +432,10 @@ fun DomChatMarkdownEditor(
                     color = Color.Transparent
                 ) {
                     Box(modifier = Modifier.padding(16.dp)) {
-                        if (value.isNotBlank()) {
+                        val previewText = textFieldState.text.toString()
+                        if (previewText.isNotBlank()) {
                             MarkdownBlock(
-                                content = value,
+                                content = previewText,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {

@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,19 +85,25 @@ fun DebouncedTextField(
 
     // Debounced sync to external state
     LaunchedEffect(stateKey) {
-        snapshotFlow { textFieldState.text }
+        snapshotFlow { textFieldState.text.toString() }
             .drop(1) // Skip initial emission
             .debounce(debounceMs)
             .collect {
-                if (it.toString() != latestValue) {
-                    latestOnValueChange(it.toString())
+                if (it != latestValue) {
+                    latestOnValueChange(it)
                 }
             }
     }
 
-    // Immediate commit on losing focus
-    LaunchedEffect(isFocused) {
+    // Immediate commit on losing focus or disposal
+    DisposableEffect(isFocused) {
         if (!isFocused) {
+            val currentText = textFieldState.text.toString()
+            if (currentText != latestValue) {
+                latestOnValueChange(currentText)
+            }
+        }
+        onDispose {
             val currentText = textFieldState.text.toString()
             if (currentText != latestValue) {
                 latestOnValueChange(currentText)
