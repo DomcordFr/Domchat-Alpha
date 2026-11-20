@@ -125,6 +125,9 @@ val dataSourceModule = module {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
                     db.query("PRAGMA busy_timeout = 5000").close()
+                    db.query("PRAGMA synchronous = NORMAL").close()
+                    db.query("PRAGMA temp_store = MEMORY").close()
+                    db.query("PRAGMA mmap_size = 33554432").close()
                 }
             })
             .build()

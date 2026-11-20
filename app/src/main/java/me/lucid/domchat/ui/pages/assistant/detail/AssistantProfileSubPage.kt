@@ -118,73 +118,60 @@ fun AssistantProfileSubPage(
 
         // ═══════════════════════════════════════════════════════════════════
         // IDENTITY GROUP (display name, chat name)
-        // ═════════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_profile_identity)) {
             SettingGroupInputItem(
-                title = stringResource(R.string.assistant_page_name),
-                subtitle = stringResource(R.string.assistant_profile_name_desc),
+                title = "Display Name",
+                subtitle = "Name shown in Hub, lists, and character header",
                 content = {
-                    Column(
+                    DebouncedTextField(
+                        value = assistant.displayName ?: assistant.name,
+                        onValueChange = { onUpdate(assistant.copy(displayName = it.takeIf { it.isNotBlank() })) },
+                        stateKey = "${assistant.id}_display",
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        DebouncedTextField(
-                            value = assistant.displayName ?: assistant.name,
-                            onValueChange = { onUpdate(assistant.copy(displayName = it.takeIf { it.isNotBlank() })) },
-                            stateKey = "${assistant.id}_display",
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = stringResource(R.string.assistant_page_name_placeholder)
-                        )
-                        DebouncedTextField(
-                            value = assistant.chatName ?: assistant.name,
-                            onValueChange = { onUpdate(assistant.copy(chatName = it.takeIf { it.isNotBlank() })) },
-                            stateKey = "${assistant.id}_chat",
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = stringResource(R.string.assistant_page_chat_name_placeholder)
-                        )
-                    }
+                        singleLine = true,
+                        placeholder = stringResource(R.string.assistant_page_name_placeholder)
+                    )
+                }
+            )
+            SettingGroupInputItem(
+                title = "Chat Name",
+                subtitle = "Name used in dialogues and substituted for {{char}}",
+                content = {
+                    DebouncedTextField(
+                        value = assistant.chatName ?: assistant.name,
+                        onValueChange = { onUpdate(assistant.copy(chatName = it.takeIf { it.isNotBlank() })) },
+                        stateKey = "${assistant.id}_chat",
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = stringResource(R.string.assistant_page_chat_name_placeholder)
+                    )
                 }
             )
         }
-
 
         // ═══════════════════════════════════════════════════════════════════
         // TAGS
         // ═══════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_page_tags)) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFF000000),
-                border = BorderStroke(
-                    0.5.dp,
-                    me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                ),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.assistant_page_tags),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.assistant_profile_tags_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    TagsInput(
-                        value = assistant.tags,
-                        tags = tags,
-                        onValueChange = { tagIds, updatedTags ->
-                            vm.updateTags(tagIds, updatedTags)
-                        },
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.assistant_profile_tags_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                TagsInput(
+                    value = assistant.tags,
+                    tags = tags,
+                    onValueChange = { tagIds, updatedTags ->
+                        vm.updateTags(tagIds, updatedTags)
+                    },
+                )
             }
         }
     }

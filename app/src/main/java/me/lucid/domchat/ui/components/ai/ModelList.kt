@@ -1,5 +1,11 @@
 package me.lucid.domchat.ui.components.ai
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -616,7 +622,11 @@ internal fun ColumnScope.ModelList(
                                 onSelect = handleSelect,
                                 modifier = Modifier
                                     .scale(dragScale)
-                                    .animateItem(),
+                                    .animateItem(
+                                        fadeInSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                        placementSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                        fadeOutSpec = spring(dampingRatio = 0.8f, stiffness = 300f)
+                                    ),
                                 providerSetting = favoriteItem.provider,
                                 select = favoriteItem.model.id == currentModel,
                                 style = style,
@@ -719,7 +729,11 @@ internal fun ColumnScope.ModelList(
                             ModelItem(
                                 model = item.model,
                                 onSelect = handleSelect,
-                                modifier = Modifier.animateItem(),
+                                modifier = Modifier.animateItem(
+                                    fadeInSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                    placementSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                    fadeOutSpec = spring(dampingRatio = 0.8f, stiffness = 300f)
+                                ),
                                 providerSetting = item.provider,
                                 select = currentModel == item.model.id,
                                 style = style,
@@ -747,19 +761,28 @@ internal fun ColumnScope.ModelList(
                                             }
                                         }
                                     ) {
-                                        if (item.isFavorite) {
-                                            Icon(
-                                                HeartIcon,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(20.dp),
-                                                tint = Color.White,
-                                            )
-                                        } else {
-                                            Icon(
-                                                Icons.Rounded.FavoriteBorder,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(20.dp)
-                                            )
+                                        AnimatedContent(
+                                            targetState = item.isFavorite,
+                                            transitionSpec = {
+                                                (scaleIn(animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f)) + fadeIn())
+                                                    .togetherWith(scaleOut() + fadeOut())
+                                            },
+                                            label = "favorite_heart_anim"
+                                        ) { isFav ->
+                                            if (isFav) {
+                                                Icon(
+                                                    HeartIcon,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp),
+                                                    tint = Color.White,
+                                                )
+                                            } else {
+                                                Icon(
+                                                    Icons.Rounded.FavoriteBorder,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -963,50 +986,45 @@ internal fun ColumnScope.ModelList(
                                 label = "provider_badge_scale"
                             )
                             val isActive = activeProviderId == provider.id
-                            Surface(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    activeProviderId = provider.id
-                                    val position = providerPositions[provider.id] ?: 0
-                                    coroutineScope.launch {
-                                        lazyListState.animateScrollToItem(position)
-                                    }
-                                },
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = 0.5.dp,
-                                    color = if (isActive) Color.White.copy(alpha = 0.40f) else Color.White.copy(alpha = 0.12f)
-                                ),
-                                interactionSource = interactionSource,
-                                shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                                color = if (isActive) {
-                                    Color.White.copy(alpha = 0.18f)
-                                } else {
-                                    Color(0xFF000000).copy(alpha = 0.12f)
-                                },
-                                contentColor = Color.White,
+                            Box(
                                 modifier = Modifier
-                                    .domChatBlurEffect(
-                                        containerColor = Color(0xFF000000).copy(alpha = 0.08f),
-                                        shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill
-                                    )
                                     .graphicsLayer {
                                         scaleX = scale
                                         scaleY = scale
                                     }
+                                    .liquidGlassSurface(
+                                        shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
+                                        fillColor = if (isActive) Color.White.copy(alpha = 0.22f) else Color(0xFF000000).copy(alpha = 0.35f),
+                                        borderWidth = 0.5.dp,
+                                        specularBrush = if (isActive) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                                    )
+                                    .clip(me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
+                                    .clickable(
+                                        interactionSource = interactionSource,
+                                        indication = null
+                                    ) {
+                                        haptics.perform(HapticPattern.Pop)
+                                        activeProviderId = provider.id
+                                        val position = providerPositions[provider.id] ?: 0
+                                        coroutineScope.launch {
+                                            lazyListState.animateScrollToItem(position)
+                                        }
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     ProviderIcon(
                                         provider = provider,
-                                        modifier = Modifier.size(22.dp),
+                                        modifier = Modifier.size(20.dp),
                                         contentColor = Color.White
                                     )
                                     Text(
                                         text = provider.name,
-                                        style = MaterialTheme.typography.labelMedium
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -1129,53 +1147,33 @@ private fun ModelItem(
 
     val activeBadge: @Composable RowScope.() -> Unit = {
         if (select) {
-            if (style == ModelPickerStyle.LIQUID_GLASS) {
-                Surface(
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color.Transparent,
+                contentColor = Color.White,
+                modifier = Modifier.liquidGlassSurface(
                     shape = RoundedCornerShape(10.dp),
-                    color = Color.White.copy(alpha = 0.14f),
-                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                    borderWidth = 0.5.dp,
+                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                    fillColor = Color.White.copy(alpha = 0.18f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = "ACTIVE",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                            color = Color.White
-                        )
-                    }
-                }
-            } else {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = "ACTIVE",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                            color = Color.White
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = "ACTIVE",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                        color = Color.White
+                    )
                 }
             }
         }
@@ -1183,7 +1181,7 @@ private fun ModelItem(
 
     if(inGroup) {
         val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color(0xFF141520).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.05f)
+            if (select) Color(0xFF000000).copy(alpha = 0.40f) else Color.White.copy(alpha = 0.05f)
         } else {
             if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
         }
@@ -1217,8 +1215,10 @@ private fun ModelItem(
                     ModelAbilityTag(model = model)
                 }
             },
-            tail = {
+            titleTrailing = {
                 activeBadge()
+            },
+            tail = {
                 tail()
             },
             dragHandle = dragHandle,
@@ -1226,11 +1226,7 @@ private fun ModelItem(
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
-        val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color(0xFF141520).copy(alpha = 0.40f) else Color(0xFF000000).copy(alpha = 0.40f)
-        } else {
-            Color(0xFF000000)
-        }
+        val resolvedFillColor = Color(0xFF000000)
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,
@@ -1282,12 +1278,19 @@ private fun ModelItem(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        Text(
-                            text = model.displayName,
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = model.displayName,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            activeBadge()
+                        }
 
                         FlowRow(
                             modifier = Modifier
@@ -1300,7 +1303,6 @@ private fun ModelItem(
                             ModelAbilityTag(model = model)
                         }
                     }
-                    activeBadge()
                     tail()
                 }
                 dragHandle?.let { it() }

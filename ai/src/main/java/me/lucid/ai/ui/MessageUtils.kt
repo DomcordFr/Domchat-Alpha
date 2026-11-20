@@ -39,49 +39,39 @@ data class UIMessage(
     private fun appendChunk(chunk: MessageChunk): UIMessage {
         val choice = chunk.choices.getOrNull(0)
         return choice?.delta?.let { delta ->
-            // Handle Parts
-            var newParts = delta.parts.fold(parts) { acc, deltaPart ->
+            val newParts = ArrayList(parts)
+            delta.parts.forEach { deltaPart ->
                 when (deltaPart) {
                     is UIMessagePart.Text -> {
-                        val existingTextPart =
-                            acc.find { it is UIMessagePart.Text } as? UIMessagePart.Text
-                        if (existingTextPart != null) {
-                            acc.map { part ->
-                                if (part is UIMessagePart.Text) {
-                                    val combined = existingTextPart.text + deltaPart.text
-                                    UIMessagePart.Text(if (existingTextPart.text.isEmpty()) combined.trimStart() else combined)
-                                } else part
-                            }
+                        val textIdx = newParts.indexOfFirst { it is UIMessagePart.Text }
+                        if (textIdx != -1) {
+                            val existingTextPart = newParts[textIdx] as UIMessagePart.Text
+                            val combined = existingTextPart.text + deltaPart.text
+                            newParts[textIdx] = UIMessagePart.Text(if (existingTextPart.text.isEmpty()) combined.trimStart() else combined)
                         } else {
-                            acc + deltaPart.copy(text = deltaPart.text.trimStart())
+                            newParts.add(deltaPart.copy(text = deltaPart.text.trimStart()))
                         }
                     }
 
                     is UIMessagePart.Image -> {
-                        val existingImagePart =
-                            acc.find { it is UIMessagePart.Image } as? UIMessagePart.Image
-                        if (existingImagePart != null) {
-                            acc.map { part ->
-                                if (part is UIMessagePart.Image) {
-                                    UIMessagePart.Image(
-                                        url = existingImagePart.url + deltaPart.url,
-                                    )
-                                } else part
-                            }
-                        } else {
-                            acc + UIMessagePart.Image(
-                                url = "data:image/png;base64,${deltaPart.url}",
+                        val imgIdx = newParts.indexOfFirst { it is UIMessagePart.Image }
+                        if (imgIdx != -1) {
+                            val existingImagePart = newParts[imgIdx] as UIMessagePart.Image
+                            newParts[imgIdx] = UIMessagePart.Image(
+                                url = existingImagePart.url + deltaPart.url,
                             )
+                        } else {
+                            newParts.add(UIMessagePart.Image(
+                                url = "data:image/png;base64,${deltaPart.url}",
+                            ))
                         }
                     }
 
                     is UIMessagePart.Reasoning -> {
-                        val existingReasoningPart =
-                            acc.find { it is UIMessagePart.Reasoning } as? UIMessagePart.Reasoning
-                        if (existingReasoningPart != null) {
+                        val reasoningIdx = newParts.indexOfFirst { it is UIMessagePart.Reasoning }
+                        if (reasoningIdx != -1) {
+                            val existingReasoningPart = newParts[reasoningIdx] as UIMessagePart.Reasoning
                             val reasoning = existingReasoningPart.reasoning + deltaPart.reasoning
-                            // Prefer: (1) explicit title on delta, (2) title from the new delta text,
-                            // (3) latest title found anywhere in the accumulated text (only rescanned on newlines or if missing), (4) keep old title.
                             val hasNewline = deltaPart.reasoning.contains('\n') || deltaPart.reasoning.contains('\r')
                             val title = deltaPart.title
                                 ?: deltaPart.reasoning.extractReasoningSummaryTitle()
@@ -90,78 +80,63 @@ data class UIMessage(
                                 } else {
                                     existingReasoningPart.title
                                 }
-                            acc.map { part ->
-                                if (part is UIMessagePart.Reasoning) {
-                                    UIMessagePart.Reasoning(
-                                        reasoning = reasoning,
-                                        createdAt = existingReasoningPart.createdAt,
-                                        finishedAt = null,
-                                        title = title,
-                                        metadata = deltaPart.metadata ?: existingReasoningPart.metadata,
-                                    ).also {
-                                        if (deltaPart.metadata != null) {
-                                            it.metadata = deltaPart.metadata // 更新metadata
-                                        }
-                                    }
-                                } else part
+                            newParts[reasoningIdx] = UIMessagePart.Reasoning(
+                                reasoning = reasoning,
+                                createdAt = existingReasoningPart.createdAt,
+                                finishedAt = null,
+                                title = title,
+                                metadata = deltaPart.metadata ?: existingReasoningPart.metadata,
+                            ).also {
+                                if (deltaPart.metadata != null) {
+                                    it.metadata = deltaPart.metadata
+                                }
                             }
                         } else {
                             val title = deltaPart.title ?: deltaPart.reasoning.extractReasoningSummaryTitle()
-                            acc + deltaPart.copy(title = title)
+                            newParts.add(deltaPart.copy(title = title))
                         }
                     }
 
                     is UIMessagePart.ToolCall -> {
                         if (deltaPart.toolCallId.isBlank()) {
-                            val lastToolCall =
-                                acc.lastOrNull { it is UIMessagePart.ToolCall } as? UIMessagePart.ToolCall
-                            if (lastToolCall != null && (lastToolCall == acc.lastOrNull() || !lastToolCall.toolCallId.isBlank())) {
+                            val lastToolCallIdx = newParts.indexOfLast { it is UIMessagePart.ToolCall }
+                            val lastToolCall = if (lastToolCallIdx != -1) newParts[lastToolCallIdx] as UIMessagePart.ToolCall else null
+                            if (lastToolCall != null && (lastToolCallIdx == newParts.lastIndex || !lastToolCall.toolCallId.isBlank())) {
                                 if (shouldStartNewBlankIdToolCall(lastToolCall, deltaPart)) {
-                                    acc + deltaPart.copy()
+                                    newParts.add(deltaPart.copy())
                                 } else {
-                                    acc.map { part ->
-                                        if (part == lastToolCall && part is UIMessagePart.ToolCall) {
-                                            part.merge(deltaPart)
-                                        } else part
-                                    }
+                                    newParts[lastToolCallIdx] = lastToolCall.merge(deltaPart)
                                 }
                             } else {
-                                acc + deltaPart.copy()
+                                newParts.add(deltaPart.copy())
                             }
                         } else {
-                            // insert or update
-                            val existsPart = acc.find {
+                            val toolIdx = newParts.indexOfFirst {
                                 it is UIMessagePart.ToolCall && it.toolCallId == deltaPart.toolCallId
-                            } as? UIMessagePart.ToolCall
-                            if (existsPart == null) {
-                                // insert
-                                acc + deltaPart.copy()
+                            }
+                            if (toolIdx == -1) {
+                                newParts.add(deltaPart.copy())
                             } else {
-                                // update
-                                acc.map { part ->
-                                    if (part is UIMessagePart.ToolCall && part.toolCallId == deltaPart.toolCallId) {
-                                        part.merge(deltaPart)
-                                    } else part
-                                }
+                                val existing = newParts[toolIdx] as UIMessagePart.ToolCall
+                                newParts[toolIdx] = existing.merge(deltaPart)
                             }
                         }
                     }
 
                     else -> {
                         println("delta part append not supported: $deltaPart")
-                        acc
                     }
                 }
             }
             // Handle Reasoning End
-            if (parts.filterIsInstance<UIMessagePart.Reasoning>()
-                    .isNotEmpty() && delta.parts.filterIsInstance<UIMessagePart.Reasoning>()
-                    .isEmpty()
-            ) {
-                newParts = newParts.map { part ->
+            val hadReasoning = parts.any { it is UIMessagePart.Reasoning }
+            val deltaHasReasoning = delta.parts.any { it is UIMessagePart.Reasoning }
+            if (hadReasoning && !deltaHasReasoning) {
+                for (i in newParts.indices) {
+                    val part = newParts[i]
                     if (part is UIMessagePart.Reasoning && part.finishedAt == null) {
-                        part.copy(finishedAt = Clock.System.now())
-                    } else part
+                        newParts[i] = part.copy(finishedAt = Clock.System.now())
+                    }
                 }
             }
             // Handle annotations

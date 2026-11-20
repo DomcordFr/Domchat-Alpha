@@ -39,7 +39,7 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Upload
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -47,6 +47,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -132,6 +134,7 @@ private object AssistantDetailRoutes {
     const val TOOLS = "tools"
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssistantDetailPage(
     id: String,
@@ -139,6 +142,7 @@ fun AssistantDetailPage(
     initialMemoryTab: Int? = null,
     scrollToMemoryId: Int? = null
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val vm: AssistantDetailVM = koinViewModel(
         parameters = {
             parametersOf(id)
@@ -250,50 +254,47 @@ fun AssistantDetailPage(
         navController.popBackStack()
     }
 
+    LaunchedEffect(currentRoute) {
+        scrollBehavior.state.heightOffset = 0f
+        scrollBehavior.state.contentOffset = 0f
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Column(modifier = Modifier.fillMaxWidth().background(Color(0xFF000000))) {
-                val pageTitle = when (currentRoute) {
-                    AssistantDetailRoutes.PROFILE -> stringResource(R.string.assistant_detail_profile)
-                    AssistantDetailRoutes.CREATOR_NOTES -> stringResource(R.string.assistant_detail_section_creator_notes)
-                    AssistantDetailRoutes.PERSONALITY -> stringResource(R.string.assistant_detail_section_personality)
-                    AssistantDetailRoutes.SCENARIO -> stringResource(R.string.assistant_detail_section_scenario)
-                    AssistantDetailRoutes.GREETINGS -> stringResource(R.string.assistant_detail_section_initial_messages)
-                    AssistantDetailRoutes.LOREBOOKS -> stringResource(R.string.assistant_detail_section_lorebooks)
-                    AssistantDetailRoutes.EXAMPLE_DIALOGUES -> stringResource(R.string.assistant_page_preset_messages)
-                    AssistantDetailRoutes.MODEL -> stringResource(R.string.assistant_detail_models)
-                    AssistantDetailRoutes.CONTEXT_MANAGEMENT -> "Context & Budget"
-                    AssistantDetailRoutes.UI -> stringResource(R.string.assistant_detail_ui_customization)
-                    else -> assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
-                }
+            val pageTitle = when (currentRoute) {
+                AssistantDetailRoutes.PROFILE -> "Character Profile"
+                AssistantDetailRoutes.CREATOR_NOTES -> "Creator Notes"
+                AssistantDetailRoutes.PERSONALITY -> "Personality & System Prompt"
+                AssistantDetailRoutes.SCENARIO -> "Scenario & World Context"
+                AssistantDetailRoutes.GREETINGS -> "Initial Messages"
+                AssistantDetailRoutes.LOREBOOKS -> "Lorebooks & World Info"
+                AssistantDetailRoutes.EXAMPLE_DIALOGUES -> "Example Dialogues"
+                AssistantDetailRoutes.MODEL -> stringResource(R.string.assistant_detail_models)
+                AssistantDetailRoutes.CONTEXT_MANAGEMENT -> "Context & Budget"
+                AssistantDetailRoutes.UI -> stringResource(R.string.assistant_detail_ui_customization)
+                else -> assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+            }
 
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = pageTitle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            if (currentRoute != null && currentRoute != AssistantDetailRoutes.HOME && navController.previousBackStackEntry != null) {
-                                navController.popBackStack()
-                            } else {
-                                rootNavController.popBackStack()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
-                                tint = Color.White
-                            )
+            OneUITopAppBar(
+                title = pageTitle,
+                scrollBehavior = scrollBehavior,
+                navigationIcon = {
+                    IconButton(onClick = {
+                        if (currentRoute != null && currentRoute != AssistantDetailRoutes.HOME && navController.previousBackStackEntry != null) {
+                            navController.popBackStack()
+                        } else {
+                            rootNavController.popBackStack()
                         }
-                    },
-                    actions = {
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
                         AnimatedVisibility(
                             visible = currentRoute == AssistantDetailRoutes.HOME,
                             enter = fadeIn(),
@@ -398,28 +399,10 @@ fun AssistantDetailPage(
                                 }
                             }
                         }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFF000000)
-                    )
-                )
-
-                // Top fading gradient for smooth scroll cutoff
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(18.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color(0xFF000000),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
-            }
+                    }
+            )
         },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -719,50 +702,50 @@ private fun AssistantDetailHome(
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_core_roleplay)) {
             NavigationCard(
                 icon = Icons.Rounded.Person,
-                title = stringResource(R.string.assistant_detail_profile),
+                title = "Character Profile",
                 description = stringResource(R.string.assistant_detail_core_profile_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.PROFILE) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.Description,
-                title = stringResource(R.string.assistant_detail_section_creator_notes),
+                title = "Creator Notes",
                 description = stringResource(R.string.assistant_detail_creator_notes_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.CREATOR_NOTES) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.Psychology,
-                title = stringResource(R.string.assistant_detail_section_personality),
+                title = "Personality & System Prompt",
                 description = stringResource(R.string.assistant_detail_personality_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.PERSONALITY) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.DataObject,
-                title = stringResource(R.string.assistant_detail_section_scenario),
+                title = "Scenario & World Context",
                 description = stringResource(R.string.assistant_detail_scenario_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.SCENARIO) }
             )
 
             NavigationCard(
                 icon = Icons.AutoMirrored.Rounded.Chat,
-                title = stringResource(R.string.assistant_detail_section_initial_messages),
+                title = "Initial Messages",
                 description = stringResource(R.string.assistant_detail_add_intro),
                 onClick = { navController.navigate(AssistantDetailRoutes.GREETINGS) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.AutoStories,
-                title = stringResource(R.string.assistant_detail_section_lorebooks),
+                title = "Lorebooks & World Info",
                 description = stringResource(R.string.assistant_detail_core_lorebooks_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) }
             )
 
             NavigationCard(
                 icon = Icons.Rounded.Forum,
-                title = stringResource(R.string.assistant_page_preset_messages),
-                description = stringResource(R.string.assistant_page_preset_messages_desc),
+                title = "Example Dialogues",
+                description = "Example conversation turns demonstrating speech style and behavior",
                 onClick = { navController.navigate(AssistantDetailRoutes.EXAMPLE_DIALOGUES) }
             )
         }

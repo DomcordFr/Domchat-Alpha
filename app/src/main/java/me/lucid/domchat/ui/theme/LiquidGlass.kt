@@ -2,6 +2,12 @@ package me.lucid.domchat.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -9,13 +15,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.composed
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.launch
+import kotlin.math.tanh
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -230,6 +242,8 @@ fun Modifier.liquidGlass(
                 refractionHeight = heightPx,
                 refractionAmount = amountPx,
                 depthEffect = depthEffect,
+                chromaticAberration = display.chromaticDispersionEnabled,
+                chromaticAberrationAmount = 0.65f,
             )
         }
     }
@@ -256,6 +270,7 @@ fun Modifier.liquidGlass(
                 shape = { shape },
                 effects = effects,
                 highlight = highlight,
+                shadow = null,
                 onDrawSurface = surfaceBlock,
                 backdropScale = 1f,
                 // Floating controls (input row, chips, floaters) freeze the backdrop
@@ -406,6 +421,8 @@ fun Modifier.liquidGlassBubbleSurface(
                 refractionHeight = heightPx,
                 refractionAmount = amountPx,
                 depthEffect = true,
+                chromaticAberration = display.chromaticDispersionEnabled,
+                chromaticAberrationAmount = 0.65f,
             )
         }
     }
@@ -435,6 +452,7 @@ fun Modifier.liquidGlassBubbleSurface(
                 shape = { shape },
                 effects = effects,
                 highlight = highlight,
+                shadow = null,
                 onDrawSurface = surfaceBlock,
                 backdropScale = 1f
             )
@@ -488,6 +506,56 @@ fun Modifier.liquidGlassBubbleSurface(
 @Composable
 fun Modifier.frostedGlassSurface(
     shape: Shape = LiquidGlassTokens.CardShape,
+    borderWidth: Dp = 0.5.dp,
+    specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
+    fillColor: Color = Color.Transparent,
+    shadowElevation: Dp = 0.dp,
+): Modifier {
+    val settings = LocalSettings.current
+    val display = settings.displaySetting
+
+    val effectiveAlpha = display.glassAlpha.coerceIn(0f, 1f)
+    val effectiveTone = display.glassBaseLuminance.coerceIn(0f, 1f)
+    val effectiveBlur = display.glassBlur.coerceIn(0f, 100f)
+
+    val tonedColor = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, effectiveTone)
+    val containerColor = if (effectiveAlpha <= 0.02f) Color.Transparent else tonedColor.copy(alpha = effectiveAlpha)
+
+    var m: Modifier = this
+
+    if (effectiveBlur > 0f) {
+        m = m.domChatBlurEffect(
+            containerColor = containerColor,
+            shape = shape,
+            blurRadius = effectiveBlur.dp,
+        )
+    } else if (containerColor != Color.Transparent && containerColor.alpha > 0f) {
+        m = m.background(containerColor, shape = shape)
+    }
+
+    if (borderWidth > 0.dp) {
+        m = m.border(width = borderWidth, brush = specularBrush, shape = shape)
+    }
+
+    if (shadowElevation > 0.dp) {
+        m = m.shadow(
+            elevation = shadowElevation,
+            shape = shape,
+            ambientColor = Color.Black.copy(alpha = 0.25f),
+            spotColor = Color.Black.copy(alpha = 0.35f),
+        )
+    }
+
+    return m
+}
+
+/**
+ * Frosted glass surface dedicated to chat bubbles.
+ * Reads bubble-specific settings (chatBubbleAlpha, chatBubbleTone, chatBubbleBlur).
+ */
+@Composable
+fun Modifier.frostedGlassBubbleSurface(
+    shape: Shape = LiquidGlassTokens.BubbleShape,
     borderWidth: Dp = 0.5.dp,
     specularBrush: Brush = LiquidGlassTokens.SpecularBorderSubtle,
     fillColor: Color = Color.Transparent,
@@ -559,52 +627,110 @@ fun LiquidGlassCard(
 }
 
 /**
- * Fluid touch modifier that tracks press position and paints a subtle radial specular bloom
- * behind the user's thumb, evoking Convx-style liquid glass tactility.
- *
- * The bloom is a white radial gradient (alpha up to 0.15f) centered on the last press point,
- * fading out on release via a spring animation. It is drawn behind content so it never
- * obscures interactive elements.
+ * Convx-Grade Interactive Liquid Glass Modifier:
+ * - Dynamic touch highlight following finger during drag/hold with BlendMode.Plus.
+ * - Micro-expansion on press (1.02x - 1.04x) with spring damping.
+ * - Elastic micro-translation response with tanh soft-clamping.
  */
-fun Modifier.convxFluidTouch(
-    bloomAlpha: Float = 0.15f,
-    bloomRadiusDp: Float = 40f
+fun Modifier.convxInteractiveGlass(
+    enabled: Boolean = true,
+    scaleLiftDp: Dp = 4.dp,
+    elasticDrag: Boolean = true,
+    spotAlpha: Float = 0.22f,
+    sheenAlpha: Float = 0.08f,
+    radiusScale: Float = 1.35f,
 ): Modifier = composed {
+    val settings = LocalSettings.current
+    val isEnabled = enabled && settings.displaySetting.interactiveGlassPhysics
+    if (!isEnabled) return@composed this
+
+    val scope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val bloomRadiusPx = with(density) { bloomRadiusDp.dp.toPx() }
-    var touchX by remember { mutableFloatStateOf(-1f) }
-    var touchY by remember { mutableFloatStateOf(-1f) }
-    var bloomAlphaAnim by remember { mutableFloatStateOf(0f) }
+    val liftPx = with(density) { scaleLiftDp.toPx() }
+
+    val pressProgress = remember { Animatable(0f) }
+    val touchPosition = remember { Animatable(Offset.Zero, Offset.VectorConverter, Offset.VisibilityThreshold) }
+    var startPosition by remember { mutableStateOf(Offset.Zero) }
+
+    val pressSpec = spring<Float>(dampingRatio = 0.65f, stiffness = 380f)
+    val positionSpec = spring<Offset>(dampingRatio = 0.65f, stiffness = 380f, visibilityThreshold = Offset.VisibilityThreshold)
 
     this
         .pointerInput(Unit) {
-            detectTapGestures(
-                onPress = { offset ->
-                    touchX = offset.x
-                    touchY = offset.y
-                    bloomAlphaAnim = bloomAlpha
-                    tryAwaitRelease()
-                    bloomAlphaAnim = 0f
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                startPosition = down.position
+                scope.launch {
+                    touchPosition.snapTo(down.position)
+                    pressProgress.animateTo(1f, pressSpec)
                 }
-            )
+
+                val pointerId = down.id
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull { it.id == pointerId } ?: break
+                    if (!change.pressed) break
+
+                    scope.launch {
+                        touchPosition.snapTo(change.position)
+                    }
+                }
+
+                // Release: spring back smoothly
+                scope.launch {
+                    launch { pressProgress.animateTo(0f, pressSpec) }
+                    launch { touchPosition.animateTo(startPosition, positionSpec) }
+                }
+            }
+        }
+        .graphicsLayer {
+            val p = pressProgress.value
+            if (p > 0f) {
+                val scaleFactor = 1f + (liftPx / size.height.coerceAtLeast(1f)) * p
+                scaleX = scaleFactor.coerceIn(1f, 1.04f)
+                scaleY = scaleFactor.coerceIn(1f, 1.04f)
+
+                if (elasticDrag) {
+                    val delta = touchPosition.value - startPosition
+                    val maxOffsetPx = 14f * density.density
+                    translationX = (tanh(delta.x / 120f) * maxOffsetPx) * p
+                    translationY = (tanh(delta.y / 120f) * maxOffsetPx) * p
+                }
+            }
         }
         .drawWithContent {
             drawContent()
-            if (touchX >= 0f && touchY >= 0f && bloomAlphaAnim > 0f) {
-                val bloomBrush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = bloomAlphaAnim),
-                        Color.White.copy(alpha = bloomAlphaAnim * 0.3f),
-                        Color.Transparent
-                    ),
-                    center = Offset(touchX, touchY),
-                    radius = bloomRadiusPx
-                )
+            val p = pressProgress.value
+            if (p > 0.01f) {
+                val pos = touchPosition.value
+                val maxDim = maxOf(size.width, size.height)
+                val spotRadius = (maxDim * radiusScale) * (0.85f + 0.15f * p)
+
+                // Additive spotlight following touch
                 drawCircle(
-                    brush = bloomBrush,
-                    center = Offset(touchX, touchY),
-                    radius = bloomRadiusPx
+                    brush = Brush.radialGradient(
+                        0.0f to Color.White.copy(alpha = spotAlpha * p),
+                        0.45f to Color.White.copy(alpha = sheenAlpha * p),
+                        1.0f to Color.Transparent,
+                        center = pos,
+                        radius = spotRadius
+                    ),
+                    radius = spotRadius,
+                    center = pos,
+                    blendMode = BlendMode.Plus
                 )
             }
         }
 }
+
+/**
+ * Fluid touch modifier backwards-compatible with Convx-grade interactive liquid glass.
+ */
+fun Modifier.convxFluidTouch(
+    bloomAlpha: Float = 0.22f,
+    bloomRadiusDp: Float = 40f
+): Modifier = convxInteractiveGlass(
+    spotAlpha = bloomAlpha,
+    scaleLiftDp = 3.dp,
+    elasticDrag = true
+)

@@ -113,22 +113,21 @@ fun PersonaPickerBottomSheet(
     val navController = LocalNavController.current
     val toaster = LocalToaster.current
 
-    val personaBorderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val personaIsFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
-    fun personaGlassCard(shape: Shape) = if (personaIsFrosted) {
+    fun personaGlassCard(shape: Shape, isActive: Boolean) = if (personaIsFrosted) {
         Modifier.frostedGlassSurface(
             shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = personaBorderBrush,
-            fillColor = Color.Transparent,
+            borderWidth = if (isActive) 1.dp else 0.5.dp,
+            specularBrush = if (isActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = if (isActive) Color.White.copy(alpha = 0.10f) else Color.Transparent,
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = personaBorderBrush,
-            fillColor = Color.Transparent,
+            borderWidth = if (isActive) 1.dp else 0.5.dp,
+            specularBrush = if (isActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+            fillColor = if (isActive) Color.White.copy(alpha = 0.12f) else Color.Transparent,
             glassMode = LiquidGlassMode.BALANCED_BLEND,
         )
     }
@@ -294,12 +293,12 @@ fun PersonaPickerBottomSheet(
 
                     Surface(
                         onClick = { selectPersona(persona.id) },
-                        color = Color(0xFF000000).copy(alpha = 0.55f),
+                        color = Color.Transparent,
                         shape = cardShape,
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .then(personaGlassCard(cardShape))
+                            .animateItem()
+                            .then(personaGlassCard(cardShape, isActive))
                     ) {
                         Row(
                             modifier = Modifier
@@ -346,8 +345,12 @@ fun PersonaPickerBottomSheet(
                                     ) {
                                         Surface(
                                             shape = RoundedCornerShape(6.dp),
-                                            color = Color(0xFF000000),
-                                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                            color = Color.Transparent,
+                                            modifier = Modifier.liquidGlassSurface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                tint = Color.White.copy(alpha = 0.18f),
+                                                borderStroke = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                                            )
                                         ) {
                                             Text(
                                                 text = "ACTIVE",

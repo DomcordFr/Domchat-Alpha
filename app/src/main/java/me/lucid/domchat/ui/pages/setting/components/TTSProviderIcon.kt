@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.setting.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PhoneAndroid
@@ -31,7 +32,7 @@ fun TTSProviderIcon(
             Icon(
                 imageVector = Icons.Rounded.PhoneAndroid,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.fillMaxSize(),
                 tint = tint
             )
         }

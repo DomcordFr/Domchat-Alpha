@@ -68,7 +68,6 @@ fun ImagePreviewDialog(
             decorFitsSystemWindows = false,
         )
     ) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         // Full screen black background in dark mode
         Box(
             modifier = Modifier
@@ -177,15 +176,15 @@ fun ImagePreviewDialog(
                                     onDismissRequest()
                                 }
                             },
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.primary,
+                            shape = CircleShape,
+                            color = Color.White,
                             modifier = Modifier.size(48.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     Icons.Rounded.Download,
                                     contentDescription = stringResource(R.string.save),
-                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    tint = Color.Black,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }

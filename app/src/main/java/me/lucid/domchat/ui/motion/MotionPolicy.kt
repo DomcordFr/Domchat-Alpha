@@ -69,7 +69,7 @@ fun Modifier.pressScale(
     val motionPolicy = LocalMotionPolicy.current
     if (motionPolicy.reduceMotion) return this
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
+    val scaleState = animateFloatAsState(
         targetValue = if (isPressed) pressedScale else 1f,
         animationSpec = spring(
             dampingRatio = 0.55f,
@@ -78,8 +78,9 @@ fun Modifier.pressScale(
         label = "pressScale",
     )
     return this.graphicsLayer {
-        scaleX = scale
-        scaleY = scale
+        val s = scaleState.value
+        scaleX = s
+        scaleY = s
     }
 }
 

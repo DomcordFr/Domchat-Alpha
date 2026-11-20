@@ -1913,12 +1913,16 @@ fun MinimalChatInput(
 
                     Surface(
                         shape = RoundedCornerShape(14.dp),
-                        color = if (isExpanded) Color.White.copy(alpha = 0.08f) else Color(0xFF000000).copy(alpha = 0.35f),
-                        border = BorderStroke(
-                            0.5.dp,
-                            if (isExpanded) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                        color = Color.Transparent,
+                        border = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .liquidGlassSurface(
+                                shape = RoundedCornerShape(14.dp),
+                                fillColor = Color(0xFF000000).copy(alpha = 0.35f),
+                                borderWidth = 0.5.dp,
+                                specularBrush = if (isExpanded) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                            )
                     ) {
                         Column(
                             modifier = Modifier
@@ -2404,119 +2408,385 @@ fun MinimalChatInput(
                 )
 
                 // Temperature
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Temperature", style = MaterialTheme.typography.bodyMedium)
-                        Text(String.format(java.util.Locale.US, "%.2f", tempDraft), color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Temperature", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", tempDraft),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = tempDraft,
+                            onValueChange = {
+                                if (kotlin.math.abs(it - tempDraft) >= 0.05f) haptics.perform(HapticPattern.Tick)
+                                tempDraft = it
+                            },
+                            valueRange = 0.0f..2.0f
+                        )
                     }
-                    DomChatSlider(value = tempDraft, onValueChange = { tempDraft = it }, valueRange = 0.0f..2.0f)
                 }
 
-                // Top-K
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                // Top-K (continuous track without dot ticks)
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Top-K", style = MaterialTheme.typography.bodyMedium)
-                        val topKInt = topKDraft.toInt()
-                        Text(if (topKInt <= 0) "Off (Default)" else "$topKInt", color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Top-K", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            val topKInt = topKDraft.toInt()
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = if (topKInt <= 0) "Off (Default)" else "$topKInt",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = topKDraft,
+                            onValueChange = {
+                                if (it.toInt() != topKDraft.toInt()) haptics.perform(HapticPattern.Tick)
+                                topKDraft = it
+                            },
+                            valueRange = 0.0f..100.0f
+                        )
                     }
-                    DomChatSlider(
-                        value = topKDraft,
-                        onValueChange = { topKDraft = it },
-                        valueRange = 0.0f..100.0f,
-                        steps = 99
-                    )
                 }
 
                 // Min-P
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Min-P Sampling", style = MaterialTheme.typography.bodyMedium)
-                        Text(String.format(java.util.Locale.US, "%.2f", minPDraft), color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Min-P Sampling", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", minPDraft),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = minPDraft,
+                            onValueChange = {
+                                if (kotlin.math.abs(it - minPDraft) >= 0.05f) haptics.perform(HapticPattern.Tick)
+                                minPDraft = it
+                            },
+                            valueRange = 0.0f..1.0f
+                        )
                     }
-                    DomChatSlider(value = minPDraft, onValueChange = { minPDraft = it }, valueRange = 0.0f..1.0f)
                 }
 
                 // Top-P
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Top-P", style = MaterialTheme.typography.bodyMedium)
-                        Text(String.format(java.util.Locale.US, "%.2f", topPDraft), color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Top-P", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", topPDraft),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = topPDraft,
+                            onValueChange = {
+                                if (kotlin.math.abs(it - topPDraft) >= 0.05f) haptics.perform(HapticPattern.Tick)
+                                topPDraft = it
+                            },
+                            valueRange = 0.0f..1.0f
+                        )
                     }
-                    DomChatSlider(value = topPDraft, onValueChange = { topPDraft = it }, valueRange = 0.0f..1.0f)
                 }
 
                 // Frequency Penalty
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Frequency Penalty", style = MaterialTheme.typography.bodyMedium)
-                        Text(String.format(java.util.Locale.US, "%.2f", freqDraft), color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Frequency Penalty", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", freqDraft),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = freqDraft,
+                            onValueChange = {
+                                if (kotlin.math.abs(it - freqDraft) >= 0.1f) haptics.perform(HapticPattern.Tick)
+                                freqDraft = it
+                            },
+                            valueRange = -2.0f..2.0f
+                        )
                     }
-                    DomChatSlider(value = freqDraft, onValueChange = { freqDraft = it }, valueRange = -2.0f..2.0f)
                 }
 
                 // Presence Penalty
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Presence Penalty", style = MaterialTheme.typography.bodyMedium)
-                        Text(String.format(java.util.Locale.US, "%.2f", presDraft), color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Presence Penalty", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", presDraft),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = presDraft,
+                            onValueChange = {
+                                if (kotlin.math.abs(it - presDraft) >= 0.1f) haptics.perform(HapticPattern.Tick)
+                                presDraft = it
+                            },
+                            valueRange = -2.0f..2.0f
+                        )
                     }
-                    DomChatSlider(value = presDraft, onValueChange = { presDraft = it }, valueRange = -2.0f..2.0f)
                 }
 
                 // Repetition Penalty
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = RoundedCornerShape(16.dp),
+                            fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Repetition Penalty", style = MaterialTheme.typography.bodyMedium)
-                        Text(String.format(java.util.Locale.US, "%.2f", repDraft), color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Repetition Penalty", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.12f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = String.format(java.util.Locale.US, "%.2f", repDraft),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        DomChatSlider(
+                            value = repDraft,
+                            onValueChange = {
+                                if (kotlin.math.abs(it - repDraft) >= 0.05f) haptics.perform(HapticPattern.Tick)
+                                repDraft = it
+                            },
+                            valueRange = 1.0f..2.0f
+                        )
                     }
-                    DomChatSlider(value = repDraft, onValueChange = { repDraft = it }, valueRange = 1.0f..2.0f)
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    DomChatGlassPillButton(text = "Cancel", onClick = { showSamplersSheet = false })
-                    Spacer(Modifier.width(8.dp))
                     DomChatGlassPillButton(
-                        text = "Apply",
-                        accent = true,
+                        text = "Reset to Defaults",
+                        icon = Icons.Rounded.Refresh,
                         onClick = {
-                            onUpdateAssistant(
-                                assistant.copy(
-                                    temperature = tempDraft,
-                                    topK = topKDraft.toInt().takeIf { it > 0 },
-                                    minP = minPDraft.takeIf { it > 0f },
-                                    topP = topPDraft,
-                                    frequencyPenalty = freqDraft.takeIf { it != 0f },
-                                    presencePenalty = presDraft.takeIf { it != 0f },
-                                    repetitionPenalty = repDraft.takeIf { it != 1f }
-                                )
-                            )
-                            showSamplersSheet = false
+                            haptics.perform(HapticPattern.Pop)
+                            tempDraft = 1.0f
+                            topKDraft = 0.0f
+                            minPDraft = 0.0f
+                            topPDraft = 1.0f
+                            freqDraft = 0.0f
+                            presDraft = 0.0f
+                            repDraft = 1.0f
                         }
                     )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        DomChatGlassPillButton(text = "Cancel", onClick = { showSamplersSheet = false })
+                        DomChatGlassPillButton(
+                            text = "Apply",
+                            accent = true,
+                            onClick = {
+                                onUpdateAssistant(
+                                    assistant.copy(
+                                        temperature = tempDraft,
+                                        topK = topKDraft.toInt().takeIf { it > 0 },
+                                        minP = minPDraft.takeIf { it > 0f },
+                                        topP = topPDraft,
+                                        frequencyPenalty = freqDraft.takeIf { it != 0f },
+                                        presencePenalty = presDraft.takeIf { it != 0f },
+                                        repetitionPenalty = repDraft.takeIf { it != 1f }
+                                    )
+                                )
+                                showSamplersSheet = false
+                            }
+                        )
+                    }
                 }
             }
         }

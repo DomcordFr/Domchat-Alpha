@@ -88,6 +88,7 @@ fun ProviderIcon(
                 contentDescription = provider.name,
                 modifier = Modifier.padding(padding),
                 contentScale = ContentScale.Fit,
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
             )
         }
         return
@@ -241,6 +242,7 @@ fun AutoProviderIcon(
                 contentDescription = name,
                 modifier = Modifier.padding(padding),
                 contentScale = ContentScale.Fit,
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
             )
         }
         return
@@ -418,6 +420,7 @@ fun AutoAIIconWithUrl(
                 contentDescription = name,
                 modifier = Modifier.padding(padding),
                 contentScale = ContentScale.Fit,
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
             )
         }
         return

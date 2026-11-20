@@ -58,12 +58,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.platform.LocalConfiguration
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.context.LocalSettings
@@ -82,6 +81,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
+import me.lucid.domchat.ui.theme.frostedGlassBubbleSurface
+import me.lucid.domchat.data.datastore.InterfaceStyle
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -259,14 +262,13 @@ internal fun ActivityTimelineSheet(
     assistantId: String? = null,
     isLive: Boolean = false,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val sheetColor = domChatSheetContainerColor()
-    ModalBottomSheet(
-        containerColor = sheetColor,
+    val configuration = LocalConfiguration.current
+    val maxSheetHeight = (configuration.screenHeightDp * 0.85f).dp
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        sheetGesturesEnabled = false,
         modifier = modifier,
+        maxHeight = maxSheetHeight,
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
@@ -556,22 +558,37 @@ internal fun ActivityTimelinePanel(
 
     Surface(
         shape = AppShapes.InputField,
-        color = if (isGlassy) androidx.compose.ui.graphics.Color.Transparent else timelineContainerColor,
-        border = timelineSpecularBorder,
+        color = androidx.compose.ui.graphics.Color.Transparent,
+        border = null,
         modifier = modifier
             .fillMaxWidth()
             .clip(AppShapes.InputField)
             .then(
-                if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                    Modifier.domChatBlurEffect(
-                        containerColor = timelineContainerColor,
-                        shape = AppShapes.InputField,
-                        blurRadius = bubbleBlur.dp
-                    )
-                } else if (!isTransparentStyle && isGlassy) {
-                    Modifier.background(timelineContainerColor, AppShapes.InputField)
-                } else {
+                if (isTransparentStyle) {
                     Modifier
+                } else when (settings.displaySetting.bubbleInterfaceStyle) {
+                    InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
+                        shape = AppShapes.InputField,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    )
+                    InterfaceStyle.GLASS -> {
+                        val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                            settings.displaySetting.bubbleSpecularIntensity > 0f
+                        }
+                        val bubbleFillColor = if (effectiveAlpha <= 0.02f) {
+                            androidx.compose.ui.graphics.Color.Transparent
+                        } else {
+                            baseTone.copy(alpha = effectiveAlpha)
+                        }
+                        Modifier.liquidGlassBubbleSurface(
+                            shape = AppShapes.InputField,
+                            borderWidth = 0.5.dp,
+                            fillColor = bubbleFillColor,
+                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                            glassMode = settings.displaySetting.liquidGlassMode,
+                        )
+                    }
                 }
             )
             .testTag("activity_timeline_panel")

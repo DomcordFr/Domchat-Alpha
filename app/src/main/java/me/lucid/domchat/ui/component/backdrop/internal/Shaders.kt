@@ -28,13 +28,11 @@ import org.intellij.lang.annotations.Language
 @Language("AGSL")
 private const val RoundedRectSDF = """
 float radiusAt(float2 coord, float4 radii) {
-    if (coord.x >= 0.0) {
-        if (coord.y <= 0.0) return radii.y;
-        else return radii.z;
-    } else {
-        if (coord.y <= 0.0) return radii.x;
-        else return radii.w;
-    }
+    float sx = step(0.0, coord.x);
+    float sy = step(0.0, coord.y);
+    float top = mix(radii.x, radii.y, sx);
+    float bot = mix(radii.w, radii.z, sx);
+    return mix(top, bot, sy);
 }
 
 float sdRoundedRect(float2 coord, float2 halfSize, float radius) {
@@ -46,12 +44,13 @@ float sdRoundedRect(float2 coord, float2 halfSize, float radius) {
 
 float2 gradSdRoundedRect(float2 coord, float2 halfSize, float radius) {
     float2 cornerCoord = abs(coord) - (halfSize - float2(radius));
-    if (cornerCoord.x >= 0.0 || cornerCoord.y >= 0.0) {
-        return sign(coord) * normalize(max(cornerCoord, 0.0));
-    } else {
-        float gradX = step(cornerCoord.y, cornerCoord.x);
-        return sign(coord) * float2(gradX, 1.0 - gradX);
-    }
+    float isOutside = step(0.0, max(cornerCoord.x, cornerCoord.y));
+    float2 maxCorner = max(cornerCoord, 0.0);
+    float len = length(maxCorner);
+    float2 outsideGrad = len > 0.0 ? maxCorner / len : float2(0.0);
+    float gradX = step(cornerCoord.y, cornerCoord.x);
+    float2 insideGrad = float2(gradX, 1.0 - gradX);
+    return sign(coord) * mix(insideGrad, outsideGrad, isOutside);
 }"""
 
 @Language("AGSL")
@@ -79,23 +78,16 @@ float circleMap(float x) {
 
 half4 main(float2 coord) {
     float2 centeredCoord = (coord + offset) - halfSize;
-    float radius = radiusAt(coord, cornerRadii);
+    float radius = radiusAt(centeredCoord, cornerRadii);
     
     float sd = sdRoundedRect(centeredCoord, halfSize, radius);
-    if (-sd >= refractionHeight) {
-        return content.eval(coord);
-    }
+    float mask = step(-sd, refractionHeight);
     sd = min(sd, 0.0);
     
-    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount;
+    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount * mask;
     float gradRadius = min(radius * 1.5, minHalf);
     float2 gradBase = gradSdRoundedRect(centeredCoord, halfSize, gradRadius);
-    float2 grad;
-    if (depthEffect > 0.5) {
-        grad = normalize(gradBase + normalize(centeredCoord));
-    } else {
-        grad = gradBase;
-    }
+    float2 grad = mix(gradBase, normalize(gradBase + normalize(centeredCoord + 1e-5)), step(0.5, depthEffect));
     float2 refractedCoord = coord + d * grad;
     return content.eval(refractedCoord);
 }"""
@@ -175,23 +167,16 @@ float circleMap(float x) {
 
 half4 main(float2 coord) {
     float2 centeredCoord = (coord + offset) - halfSize;
-    float radius = radiusAt(coord, cornerRadii);
+    float radius = radiusAt(centeredCoord, cornerRadii);
     
     float sd = sdRoundedRect(centeredCoord, halfSize, radius);
-    if (-sd >= refractionHeight) {
-        return content.eval(coord);
-    }
+    float mask = step(-sd, refractionHeight);
     sd = min(sd, 0.0);
     
-    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount;
+    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount * mask;
     float gradRadius = min(radius * 1.5, minHalf);
     float2 gradBase = gradSdRoundedRect(centeredCoord, halfSize, gradRadius);
-    float2 grad;
-    if (depthEffect > 0.5) {
-        grad = normalize(gradBase + normalize(centeredCoord));
-    } else {
-        grad = gradBase;
-    }
+    float2 grad = mix(gradBase, normalize(gradBase + normalize(centeredCoord + 1e-5)), step(0.5, depthEffect));
     float2 refractedCoord = coord + d * grad;
     float dispersionIntensity = chromaticAberration * ((centeredCoord.x * centeredCoord.y) / (halfSize.x * halfSize.y));
     float2 dispersedCoord = d * grad * dispersionIntensity;
@@ -216,7 +201,7 @@ $RoundedRectSDF
 
 half4 main(float2 coord) {
     float2 centeredCoord = coord - halfSize;
-    float radius = radiusAt(coord, cornerRadii);
+    float radius = radiusAt(centeredCoord, cornerRadii);
     
     float gradRadius = min(radius * 1.5, minHalf);
     float2 grad = gradSdRoundedRect(centeredCoord, halfSize, gradRadius);
@@ -238,7 +223,7 @@ $RoundedRectSDF
 
 half4 main(float2 coord) {
     float2 centeredCoord = coord - halfSize;
-    float radius = radiusAt(coord, cornerRadii);
+    float radius = radiusAt(centeredCoord, cornerRadii);
     
     float gradRadius = min(radius * 1.5, minHalf);
     float2 grad = gradSdRoundedRect(centeredCoord, halfSize, gradRadius);

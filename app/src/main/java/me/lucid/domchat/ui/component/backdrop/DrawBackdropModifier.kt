@@ -438,8 +438,11 @@ private class DrawBackdropNode(
         val contentChanged = contentVersion != recordedContentVersion
         val hasRecording = recordedBackdropSize != IntSize.Zero
         val offsetChanged = recordedBackdropOffset == null || offset != recordedBackdropOffset
+        // Allow translation compensation to absorb scroll/motion within the padded boundary
+        // instead of re-recording the display list on every single 1px movement.
+        val maxDrift = if (padding > 4f) padding * 0.75f else 48f
         val offsetSignificantlyChanged =
-            recordedBackdropOffset == null || (offset - (recordedBackdropOffset ?: offset)).getDistance() > 1f
+            recordedBackdropOffset == null || (offset - (recordedBackdropOffset ?: offset)).getDistance() > maxDrift
         val baseNeedsRecord = when {
             frozen() && hasRecording && !versionChanged -> geometryChanged || contentChanged
             else -> geometryChanged || versionChanged || contentChanged
@@ -465,7 +468,7 @@ private class DrawBackdropNode(
         // Compensate pure position drift (scroll, drag, sheet entrance) by drawing
         // the baked layer shifted by the offset delta instead of re-recording.
         val drawOffset =
-            if (scale == 1f && hasRecording && recordedBackdropOffset != null) {
+            if (hasRecording && recordedBackdropOffset != null) {
                 recordedBackdropOffset!! - boundedOffset
             } else {
                 Offset.Zero
@@ -475,7 +478,13 @@ private class DrawBackdropNode(
         lastDrawOffset = drawOffset
         if (scale != 1f) {
             scale(1f / scale, pivot = Offset.Zero) {
-                drawLayer(layer)
+                if (drawOffset != Offset.Zero) {
+                    translate(drawOffset.x, drawOffset.y) {
+                        drawLayer(layer)
+                    }
+                } else {
+                    drawLayer(layer)
+                }
             }
         } else {
             if (drawOffset != Offset.Zero) {

@@ -27,9 +27,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,9 +49,11 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 
+private val CDN_IMAGE_REGEX = Regex("""(?<!\()https?://\S+\.(?:png|jpg|jpeg|webp|gif)(?!\))""", RegexOption.IGNORE_CASE)
+private val HTML_IMG_REGEX = Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)
+
 fun formatRoleplayTextWithCdnImages(text: String): String {
-    val imageRegex = Regex("""(?<!\()https?://\S+\.(?:png|jpg|jpeg|webp|gif)(?!\))""", RegexOption.IGNORE_CASE)
-    return text.replace(imageRegex) { match ->
+    return text.replace(CDN_IMAGE_REGEX) { match ->
         "\n![Image](${match.value})\n"
     }
 }
@@ -64,8 +64,7 @@ fun formatRoleplayTextWithCdnImages(text: String): String {
  * Non-img HTML is left as-is for the markdown renderer to handle.
  */
 fun cleanHtmlImgToMarkdown(text: String): String {
-    val imgRegex = Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)
-    return text.replace(imgRegex) { match ->
+    return text.replace(HTML_IMG_REGEX) { match ->
         val url = match.groupValues[1]
         "\n![Image]($url)\n"
     }

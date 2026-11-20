@@ -373,6 +373,10 @@ data class DisplaySetting(
     val bubbleSpecularIntensity: Float = 1.0f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
+    // Chromatic / rainbow optical dispersion around glass specular edges
+    val chromaticDispersionEnabled: Boolean = false,
+    // Convx-style interactive glass: touch spotlight bloom, spring micro-expansion, and elastic drag
+    val interactiveGlassPhysics: Boolean = true,
     // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the
     // legacy per-value sliders (glassAlpha, glassBlur, glassBaseLuminance, chatBubble*).
     val glassPreset: GlassPreset = GlassPreset.CUSTOM,

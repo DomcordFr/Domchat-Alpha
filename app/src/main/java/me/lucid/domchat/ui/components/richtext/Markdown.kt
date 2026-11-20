@@ -1789,18 +1789,23 @@ private fun MarkdownNode(
             val direction = rememberContentDirection(text)
             val streamingReveal = LocalStreamingTextReveal.current
             val rpStyleRules = LocalSettings.current.displaySetting.rpStyleRules
-            val revealText = remember(text, streamingReveal, rpStyleRules) {
+            val baseAnnotatedText = remember(text, rpStyleRules) {
                 buildAnnotatedString {
-                    val outputStart = length
                     appendTextWithCustomPatterns(text, rpStyleRules)
+                }
+            }
+            val revealText = if (streamingReveal != null && streamingReveal.ranges.isNotEmpty()) {
+                AnnotatedString.Builder(baseAnnotatedText).apply {
                     applyStreamingRevealStyle(
                         reveal = streamingReveal,
                         sourceStart = node.startOffset,
                         sourceEnd = node.endOffset,
-                        outputStart = outputStart,
+                        outputStart = 0,
                         outputEnd = length
                     )
-                }
+                }.toAnnotatedString()
+            } else {
+                baseAnnotatedText
             }
             CompositionLocalProvider(LocalLayoutDirection provides direction.toLayoutDirection()) {
                 androidx.compose.foundation.layout.Box(modifier = modifier) {
@@ -2067,7 +2072,7 @@ private fun Paragraph(
     val density = LocalDensity.current
     val rpStyleRules = LocalSettings.current.displaySetting.rpStyleRules
     val streamingReveal = LocalStreamingTextReveal.current
-    val annotatedString = remember(content, rpStyleRules, streamingReveal) {
+    val baseAnnotatedString = remember(content, rpStyleRules) {
         buildAnnotatedString {
             val htmlContext = InlineHtmlStyleContext()
             node.children.fastForEach { child ->
@@ -2081,7 +2086,7 @@ private fun Paragraph(
                     density = density,
                     trim = trim,
                     rpStyleRules = rpStyleRules,
-                    streamingReveal = streamingReveal,
+                    streamingReveal = null,
                     htmlContext = htmlContext,
                 )
             }
@@ -2089,6 +2094,19 @@ private fun Paragraph(
                 addStyle(spanStyle, start, end)
             }
         }
+    }
+    val annotatedString = if (streamingReveal != null && streamingReveal.ranges.isNotEmpty()) {
+        AnnotatedString.Builder(baseAnnotatedString).apply {
+            applyStreamingRevealStyle(
+                reveal = streamingReveal,
+                sourceStart = node.startOffset,
+                sourceEnd = node.endOffset,
+                outputStart = 0,
+                outputEnd = length
+            )
+        }.toAnnotatedString()
+    } else {
+        baseAnnotatedString
     }
     CompositionLocalProvider(LocalLayoutDirection provides paragraphDirection.toLayoutDirection()) {
         val paragraphSpacing = LocalMarkdownParagraphSpacing.current

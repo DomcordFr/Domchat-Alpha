@@ -106,6 +106,7 @@ import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.Select
 import me.lucid.domchat.ui.components.ui.ToastType
+import me.lucid.domchat.ui.components.ui.ToastAction
 import me.lucid.domchat.ui.components.ui.permission.PermissionManager
 import me.lucid.domchat.ui.components.ui.permission.PermissionNotification
 import me.lucid.domchat.ui.components.ui.permission.rememberPermissionState
@@ -160,16 +161,18 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     }
 
     // Keep linked styles consistent with persisted settings (e.g. after a catalog merge).
-    if (linkedStyles && bubbleIsGlass != uiIsGlass) {
-        bubbleIsGlass = uiIsGlass
-        updateDisplaySetting(
-            vm.settings.value.displaySetting.copy(
-                liquidGlassMode = if (uiIsGlass) me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND
-                else me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
-                bubbleInterfaceStyle = if (uiIsGlass) InterfaceStyle.GLASS
-                else InterfaceStyle.FROSTED,
+    LaunchedEffect(linkedStyles, uiIsGlass) {
+        if (linkedStyles && bubbleIsGlass != uiIsGlass) {
+            bubbleIsGlass = uiIsGlass
+            updateDisplaySetting(
+                vm.settings.value.displaySetting.copy(
+                    liquidGlassMode = if (uiIsGlass) me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND
+                    else me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
+                    bubbleInterfaceStyle = if (uiIsGlass) InterfaceStyle.GLASS
+                    else InterfaceStyle.FROSTED,
+                )
             )
-        )
+        }
     }
 
     var amoledDarkMode by rememberAmoledDarkMode()
@@ -539,19 +542,33 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 onClick = {
                                     haptics.perform(HapticPattern.Pop)
                                     uiIsGlass = true
-                                    updateDisplaySetting(
-                                        vm.settings.value.displaySetting.copy(
-                                            liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND
-                                        )
-                                    )
                                     if (linkedStyles) {
                                         bubbleIsGlass = true
                                         updateDisplaySetting(
                                             vm.settings.value.displaySetting.copy(
-                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
+                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
+                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS,
+                                            )
+                                        )
+                                    } else {
+                                        updateDisplaySetting(
+                                            vm.settings.value.displaySetting.copy(
+                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
                                             )
                                         )
                                     }
+                                    toaster.show(
+                                        message = "Switched to Liquid Glass. Restart recommended for full shader reinitialization.",
+                                        type = ToastType.Info,
+                                        action = ToastAction("Restart") {
+                                            val packageManager = context.packageManager
+                                            val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+                                            val componentName = intent?.component
+                                            val mainIntent = android.content.Intent.makeRestartActivityTask(componentName)
+                                            context.startActivity(mainIntent)
+                                            kotlin.system.exitProcess(0)
+                                        }
+                                    )
                                 },
                             )
                             GlassModeTab(
@@ -561,19 +578,33 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 onClick = {
                                     haptics.perform(HapticPattern.Pop)
                                     uiIsGlass = false
-                                    updateDisplaySetting(
-                                        vm.settings.value.displaySetting.copy(
-                                            liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
-                                        )
-                                    )
                                     if (linkedStyles) {
                                         bubbleIsGlass = false
                                         updateDisplaySetting(
                                             vm.settings.value.displaySetting.copy(
-                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
+                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
+                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED,
+                                            )
+                                        )
+                                    } else {
+                                        updateDisplaySetting(
+                                            vm.settings.value.displaySetting.copy(
+                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
                                             )
                                         )
                                     }
+                                    toaster.show(
+                                        message = "Switched to Frosted Glass. Restart recommended for full shader reinitialization.",
+                                        type = ToastType.Info,
+                                        action = ToastAction("Restart") {
+                                            val packageManager = context.packageManager
+                                            val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+                                            val componentName = intent?.component
+                                            val mainIntent = android.content.Intent.makeRestartActivityTask(componentName)
+                                            context.startActivity(mainIntent)
+                                            kotlin.system.exitProcess(0)
+                                        }
+                                    )
                                 },
                             )
                         }
@@ -823,6 +854,60 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         checked = settings.displaySetting.linkChromeToGlass,
                                         onCheckedChange = {
                                             updateDisplaySetting(vm.settings.value.displaySetting.copy(linkChromeToGlass = it))
+                                        }
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Chromatic Dispersion",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        Text(
+                                            text = "Refracts spectral rainbow highlights along glass curvature edges.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.chromaticDispersionEnabled,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(chromaticDispersionEnabled = it))
+                                        }
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Interactive Glass Physics",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        Text(
+                                            text = "Touch spotlight bloom, spring micro-expansion, and Convx elastic drag.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                    HapticSwitch(
+                                        checked = settings.displaySetting.interactiveGlassPhysics,
+                                        onCheckedChange = {
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(interactiveGlassPhysics = it))
                                         }
                                     )
                                 }

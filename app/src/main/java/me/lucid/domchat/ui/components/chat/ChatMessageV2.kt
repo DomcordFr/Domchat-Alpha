@@ -9,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.frostedGlassBubbleSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
 import me.lucid.domchat.utils.safeDrawableResId
@@ -1450,7 +1451,7 @@ private fun UserMessageTurn(
                                 m
                             }
                         } else when (bubbleInterfaceStyle) {
-                            InterfaceStyle.FROSTED -> m.frostedGlassSurface(
+                            InterfaceStyle.FROSTED -> m.frostedGlassBubbleSurface(
                                 shape = shape,
                                 borderWidth = 0.5.dp,
                                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
@@ -1999,7 +2000,13 @@ private fun AssistantMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(assistantSwipeModifier),
+                        .then(assistantSwipeModifier)
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = 550f
+                            )
+                        ),
                     onClick = handleBubbleClick,
                     bubbleModifier = { m, shape, color ->
                         if (isTransparentStyle) {
@@ -2015,7 +2022,7 @@ private fun AssistantMessageTurn(
                                 m
                             }
                         } else when (bubbleInterfaceStyle) {
-                            InterfaceStyle.FROSTED -> m.frostedGlassSurface(
+                            InterfaceStyle.FROSTED -> m.frostedGlassBubbleSurface(
                                 shape = shape,
                                 borderWidth = 0.5.dp,
                                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
@@ -2174,20 +2181,14 @@ private fun AssistantMessageTurn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(assistantSwipeModifier)
-                        .then(
-                            if (!loading) {
-                                Modifier.animateContentSize(
-                                    animationSpec = tween(
-                                        durationMillis = 200,
-                                        easing = LinearOutSlowInEasing
-                                    )
-                                )
-                            } else {
-                                Modifier
-                            }
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = 550f
+                            )
                         ),
-                        verticalArrangement = Arrangement.spacedBy(elementSpacing)
-                    ) {
+                    verticalArrangement = Arrangement.spacedBy(elementSpacing)
+                ) {
                     val activeParts = if (currentTextParts.isNotEmpty()) currentTextParts else allTextBubbles.map { it.second }
                     activeParts.forEachIndexed { index, part ->
                         val userNickname = settings.displaySetting.getActivePersona().name
@@ -2425,16 +2426,25 @@ private fun AssistantThinkingDropdown(
             .then(
                 if (isTransparentStyle) {
                     Modifier
-                } else {
-                    Modifier.liquidGlassSurface(
+                } else when (settings.displaySetting.bubbleInterfaceStyle) {
+                    InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
                         shape = shape,
                         borderWidth = 0.5.dp,
-                        fillColor = if (effectiveAlpha <= 0.02f) {
-                            if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.35f)
-                        } else {
-                            baseTone.copy(alpha = effectiveAlpha)
-                        },
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                     )
+                    InterfaceStyle.GLASS -> {
+                        val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                            settings.displaySetting.bubbleSpecularIntensity > 0f
+                        }
+                        val bubbleFillColor = if (effectiveAlpha <= 0.02f) Color.Transparent else baseTone.copy(alpha = effectiveAlpha)
+                        Modifier.liquidGlassBubbleSurface(
+                            shape = shape,
+                            borderWidth = 0.5.dp,
+                            fillColor = bubbleFillColor,
+                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                            glassMode = settings.displaySetting.liquidGlassMode,
+                        )
+                    }
                 }
             )
             .padding(horizontal = if (isTransparentStyle) 4.dp else 12.dp, vertical = if (isTransparentStyle) 4.dp else 10.dp)

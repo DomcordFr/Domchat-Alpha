@@ -92,6 +92,7 @@ import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.extendColors
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.tts.provider.TTSVoice
 import me.lucid.tts.provider.findTtsVoice
@@ -159,8 +160,9 @@ fun VoiceSelector(
                 ) {
                     DomChatSheetHeader(
                         title = "Select Voice",
-                        subtitle = "Choose TTS voice",
+                        subtitle = null,
                         onCloseClick = { showSheet = false },
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
                     )
                     VoiceList(
                         currentVoice = voiceId,
@@ -208,15 +210,11 @@ fun ColumnScope.VoiceList(
                 }
                 if (filteredVoices.isNotEmpty()) {
                     add(VoiceListItem.Header(provider))
-                    filteredVoices.forEachIndexed { index, voice ->
+                    filteredVoices.forEach { voice ->
                         add(
                             VoiceListItem.VoiceEntry(
                                 voice = voice,
                                 provider = provider,
-                                position = voiceGroupItemPosition(
-                                    index = index,
-                                    groupSize = filteredVoices.size,
-                                ),
                             )
                         )
                     }
@@ -269,23 +267,28 @@ fun ColumnScope.VoiceList(
             .fillMaxSize()
             .weight(1f)
     ) {
-        // Sticky Search Field
+        // Sticky Search Field with liquid glass & clean spacing
         val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
         OutlinedTextField(
             value = searchKeywords,
             onValueChange = { searchKeywords = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 14.dp)
+                .me.lucid.domchat.ui.theme.liquidGlassSurface(
+                    shape = searchFieldShape,
+                    borderWidth = 0.5.dp,
+                    fillColor = Color(0xFF000000).copy(alpha = 0.45f)
+                ),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF000000).copy(alpha = 0.5f),
-                unfocusedContainerColor = Color(0xFF000000).copy(alpha = 0.3f),
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
                 focusedTextColor = Color(0xFFF2F2F7),
                 unfocusedTextColor = Color(0xFFF2F2F7),
                 disabledTextColor = Color(0xFF8A8A96),
                 cursorColor = Color(0xFFF2F2F7),
-                focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
             ),
             leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White.copy(alpha = 0.6f)) },
             trailingIcon = {
@@ -374,11 +377,11 @@ fun ColumnScope.VoiceList(
         // Voice List
         LazyColumn(
             state = lazyListState,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 4.dp,
+                top = 8.dp,
                 bottom = 24.dp,
             ),
             modifier = Modifier
@@ -416,7 +419,6 @@ fun ColumnScope.VoiceList(
                         voice = item.voice,
                         provider = item.provider,
                         selected = currentVoice == item.voice.id,
-                        position = item.position,
                         onSelect = onSelect,
                         modifier = Modifier.animateItem(),
                     )
@@ -426,61 +428,12 @@ fun ColumnScope.VoiceList(
     }
 }
 
-private enum class VoiceItemPosition {
-    FIRST,
-    MIDDLE,
-    LAST,
-    SINGLE,
-}
-
 private sealed class VoiceListItem {
     data class Header(val provider: TTSProviderSetting) : VoiceListItem()
     data class VoiceEntry(
         val voice: TTSVoice,
         val provider: TTSProviderSetting,
-        val position: VoiceItemPosition,
     ) : VoiceListItem()
-}
-
-private data class VoiceItemCornerRadii(
-    val topStart: Dp,
-    val topEnd: Dp,
-    val bottomStart: Dp,
-    val bottomEnd: Dp,
-)
-
-private fun voiceGroupItemPosition(index: Int, groupSize: Int): VoiceItemPosition = when {
-    groupSize <= 1 -> VoiceItemPosition.SINGLE
-    index == 0 -> VoiceItemPosition.FIRST
-    index == groupSize - 1 -> VoiceItemPosition.LAST
-    else -> VoiceItemPosition.MIDDLE
-}
-
-private fun groupedVoiceItemCornerRadii(
-    selected: Boolean,
-    position: VoiceItemPosition,
-): VoiceItemCornerRadii {
-    return when (position) {
-        VoiceItemPosition.FIRST -> VoiceItemCornerRadii(18.dp, 18.dp, 6.dp, 6.dp)
-        VoiceItemPosition.MIDDLE -> VoiceItemCornerRadii(6.dp, 6.dp, 6.dp, 6.dp)
-        VoiceItemPosition.LAST -> VoiceItemCornerRadii(6.dp, 6.dp, 18.dp, 18.dp)
-        VoiceItemPosition.SINGLE -> VoiceItemCornerRadii(18.dp, 18.dp, 18.dp, 18.dp)
-    }
-}
-
-@Composable
-private fun rememberAnimatedGroupedVoiceItemShape(
-    selected: Boolean,
-    position: VoiceItemPosition,
-): RoundedCornerShape {
-    val target = remember(selected, position) {
-        groupedVoiceItemCornerRadii(selected = selected, position = position)
-    }
-    val topStart by animateDpAsState(target.topStart, spring(dampingRatio = 0.5f, stiffness = 400f), label = "voice_top_start")
-    val topEnd by animateDpAsState(target.topEnd, spring(dampingRatio = 0.5f, stiffness = 400f), label = "voice_top_end")
-    val bottomStart by animateDpAsState(target.bottomStart, spring(dampingRatio = 0.5f, stiffness = 400f), label = "voice_bottom_start")
-    val bottomEnd by animateDpAsState(target.bottomEnd, spring(dampingRatio = 0.5f, stiffness = 400f), label = "voice_bottom_end")
-    return RoundedCornerShape(topStart, topEnd, bottomStart, bottomEnd)
 }
 
 @Composable
@@ -511,12 +464,11 @@ private fun VoiceItem(
     voice: TTSVoice,
     provider: TTSProviderSetting,
     selected: Boolean,
-    position: VoiceItemPosition,
     onSelect: (TTSVoice) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val shape = rememberAnimatedGroupedVoiceItemShape(selected = selected, position = position)
+    val shape = RoundedCornerShape(14.dp)
     val containerColor = if (selected) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
     val contentColor = Color(0xFFFFFFFF)
 
@@ -528,7 +480,7 @@ private fun VoiceItem(
             .clip(shape)
             .background(containerColor)
             .border(
-                width = if (selected) 1.dp else 0.5.dp,
+                width = 0.5.dp,
                 brush = if (selected) {
                     me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush
                 } else {

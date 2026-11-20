@@ -78,11 +78,15 @@ import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.components.ui.DomChatMarkdownEditor
 import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
+import me.lucid.domchat.ui.components.ui.ItemPosition
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.theme.AppShapes
@@ -90,6 +94,7 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.appFilterChipBorder
 import me.lucid.domchat.ui.theme.appFilterChipColors
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -306,141 +311,18 @@ fun AssistantGreetingsSubPage(
             }
         } else if (selectedIndex in intros.indices) {
             val currentIntro = intros[selectedIndex]
-            var editorText by remember(selectedIndex, currentIntro) { mutableStateOf(currentIntro) }
-
-            // Write / Preview toggle bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = editorTab == 0,
-                        onClick = {
-                            haptics.perform(HapticPattern.Tick)
-                            editorTab = 0
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Edit,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        label = { Text("Write") },
-                        shape = AppShapes.Chip,
-                        colors = appFilterChipColors(editorTab == 0),
-                        border = appFilterChipBorder(editorTab == 0)
-                    )
-
-                    FilterChip(
-                        selected = editorTab == 1,
-                        onClick = {
-                            haptics.perform(HapticPattern.Tick)
-                            editorTab = 1
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Visibility,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        label = { Text("Preview") },
-                        shape = AppShapes.Chip,
-                        colors = appFilterChipColors(editorTab == 1),
-                        border = appFilterChipBorder(editorTab == 1)
-                    )
-                }
-
-                val wordCount = remember(editorText) {
-                    if (editorText.isBlank()) 0 else editorText.trim().split(Regex("\\s+")).size
-                }
-                Text(
-                    text = "${editorText.length} chars • $wordCount words",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.5f)
-                )
-            }
-
-            // Editor / Preview card
-            Surface(
-                color = Color(0xFF000000),
-                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                shape = AppShapes.CardLarge,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                AnimatedContent(
-                    targetState = editorTab,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "greetingTabs"
-                ) { tab ->
-                    if (tab == 0) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = editorText,
-                                onValueChange = {
-                                    editorText = it
-                                    val updatedIntros = intros.toMutableList()
-                                    updatedIntros[selectedIndex] = it
-                                    updateIntros(updatedIntros, labels)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 320.dp),
-                                minLines = 12,
-                                placeholder = {
-                                    Text(
-                                        text = "Write your character's opening greeting, action, and dialogue in Markdown or plain text...",
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontFamily = FontFamily.Monospace,
-                                            color = Color.White.copy(alpha = 0.45f)
-                                        )
-                                    )
-                                },
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                    fontFamily = FontFamily.Monospace,
-                                    lineHeight = 22.sp,
-                                    color = Color.White
-                                ),
-                                shape = AppShapes.InputField,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    cursorColor = Color.White.copy(alpha = 0.9f)
-                                )
-                            )
-                        }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp)
-                        ) {
-                            if (editorText.isNotBlank()) {
-                                MarkdownBlock(
-                                    content = editorText,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            } else {
-                                Text(
-                                    text = "No message written yet. Switch to 'Write' to compose this initial message.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            DomChatMarkdownEditor(
+                value = currentIntro,
+                onValueChange = { newValue ->
+                    val updatedIntros = intros.toMutableList()
+                    updatedIntros[selectedIndex] = newValue
+                    updateIntros(updatedIntros, labels)
+                },
+                placeholder = "Write your character's opening greeting, action, and dialogue in Markdown...",
+                minLines = 14,
+                showMacros = true,
+                allowImageEmbed = true
+            )
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -474,7 +356,6 @@ fun AssistantGreetingsSubPage(
             onDismissRequest = { showCreateDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            ApplyDialogWindowBlur()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -552,7 +433,6 @@ fun AssistantGreetingsSubPage(
                 onDismissRequest = { manageMenuIndex = null },
                 properties = DialogProperties(usePlatformDefaultWidth = false)
             ) {
-                ApplyDialogWindowBlur()
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -649,7 +529,6 @@ fun AssistantGreetingsSubPage(
             onDismissRequest = { showRenameDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            ApplyDialogWindowBlur()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -722,6 +601,7 @@ fun AssistantGreetingsSubPage(
             visible = true,
             onDismissRequest = { showReorderSheet = false },
             containerColor = Color(0xFF000000),
+            dragHandle = { DomChatSheetDragHandle() }
         ) {
             val listState = rememberLazyListState()
             var localIntros by remember { mutableStateOf(intros) }
@@ -744,40 +624,23 @@ fun AssistantGreetingsSubPage(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Reorder Greetings",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    IconButton(onClick = { showReorderSheet = false }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White
-                        )
-                    }
-                }
-                Text(
-                    text = "Drag greetings to adjust their order. The first greeting is the character's default greeting.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.6f)
+                DomChatSheetHeader(
+                    title = "Reorder Initial Messages",
+                    subtitle = "Drag handle to rearrange greetings, swipe left to delete",
+                    onCloseClick = { showReorderSheet = false },
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(10.dp))
 
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 400.dp),
+                        .heightIn(max = 420.dp)
+                        .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     itemsIndexed(localIntros, key = { index, _ -> "greeting_$index" }) { index, item ->
@@ -786,46 +649,62 @@ fun AssistantGreetingsSubPage(
                             key = "greeting_$index"
                         ) { isDragging ->
                             val label = localLabels.getOrNull(index)?.takeIf { it.isNotBlank() } ?: "Initial #${index + 1}"
-                            Surface(
-                                color = if (isDragging) Color(0xFF1E1E26) else Color(0xFF000000),
-                                shape = RoundedCornerShape(14.dp),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            PhysicsSwipeToDelete(
+                                onDelete = {
+                                    val updatedIntros = localIntros.toMutableList().apply { removeAt(index) }
+                                    val updatedLabels = localLabels.toMutableList().apply {
+                                        if (index in indices) removeAt(index)
+                                    }
+                                    localIntros = updatedIntros
+                                    localLabels = updatedLabels
+                                    updateIntros(updatedIntros, updatedLabels)
+                                    selectedIndex = (selectedIndex - 1).coerceAtLeast(0)
+                                    toaster.show("Deleted $label")
+                                },
+                                position = ItemPosition.ONLY,
                                 modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                            ) { _ ->
+                                Surface(
+                                    color = if (isDragging) Color(0xFF1E1E26) else Color(0xFF000000),
+                                    shape = RoundedCornerShape(14.dp),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = label,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color.White
-                                        )
-                                        if (item.isNotBlank()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = item.take(60).replace("\n", " "),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color.White.copy(alpha = 0.5f),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
+                                                text = label,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color.White
+                                            )
+                                            if (item.isNotBlank()) {
+                                                Text(
+                                                    text = item.take(60).replace("\n", " "),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White.copy(alpha = 0.5f),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                        IconButton(
+                                            onClick = {},
+                                            modifier = Modifier.draggableHandle(
+                                                onDragStarted = { haptics.perform(HapticPattern.Pop) }
+                                            )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.DragHandle,
+                                                contentDescription = "Drag to reorder",
+                                                tint = Color.White.copy(alpha = 0.6f)
                                             )
                                         }
-                                    }
-                                    IconButton(
-                                        onClick = {},
-                                        modifier = Modifier.draggableHandle(
-                                            onDragStarted = { haptics.perform(HapticPattern.Pop) }
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.DragHandle,
-                                            contentDescription = "Drag to reorder",
-                                            tint = Color.White.copy(alpha = 0.6f)
-                                        )
                                     }
                                 }
                             }

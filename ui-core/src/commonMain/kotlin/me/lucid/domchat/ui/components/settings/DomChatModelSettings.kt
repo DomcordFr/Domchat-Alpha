@@ -116,6 +116,7 @@ fun DomChatGroupedModelRow(
     onLongClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit,
     metadata: @Composable () -> Unit = {},
+    titleTrailing: (@Composable RowScope.() -> Unit)? = null,
     tail: @Composable RowScope.() -> Unit = {},
     dragHandle: @Composable (RowScope.() -> Unit)? = null,
 ) {
@@ -178,13 +179,20 @@ fun DomChatGroupedModelRow(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = contentColor,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = contentColor,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    titleTrailing?.invoke(this)
+                }
                 metadata()
             }
             tail()

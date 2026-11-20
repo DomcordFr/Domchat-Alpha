@@ -28,6 +28,9 @@ import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import androidx.compose.material.icons.rounded.Reorder
+import androidx.compose.material.icons.rounded.Download
+import androidx.core.net.toUri
+import me.lucid.domchat.utils.saveToDownloads
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.background
@@ -2038,6 +2041,7 @@ fun CharacterInspectorSheet(
     val cardBorderColor = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
     val haptics = rememberPremiumHaptics()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var viewerImageUrls by remember { mutableStateOf(emptyList<String>()) }
     var viewerOpen by remember { mutableStateOf(false) }
     var viewerCurrentPage by remember { mutableIntStateOf(0) }
@@ -3049,7 +3053,6 @@ fun CharacterInspectorSheet(
             onDismissRequest = { viewerOpen = false },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             val viewerPagerState = rememberPagerState(initialPage = viewerCurrentPage.coerceIn(0, (viewerImageUrls.size - 1).coerceAtLeast(0))) { viewerImageUrls.size }
             Box(
                 modifier = Modifier
@@ -3087,23 +3090,58 @@ fun CharacterInspectorSheet(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                // Close (X) button top-end corner
-                IconButton(
-                    onClick = { viewerOpen = false },
+                // Controls top-end corner: Download + Close
+                Row(
                     modifier = Modifier
-                        .padding(top = 40.dp, end = 20.dp)
-                        .align(Alignment.TopEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.50f))
-                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                        .statusBarsPadding()
+                        .padding(top = 16.dp, end = 16.dp)
+                        .align(Alignment.TopEnd),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Close",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    IconButton(
+                        onClick = {
+                            val currentUrl = viewerImageUrls.getOrNull(viewerPagerState.currentPage)
+                            if (!currentUrl.isNullOrBlank()) {
+                                scope.launch {
+                                    try {
+                                        val uri = currentUrl.toUri()
+                                        val fileName = "character_${System.currentTimeMillis()}.png"
+                                        context.saveToDownloads(uri, fileName)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Download,
+                            contentDescription = "Download Image",
+                            tint = Color.Black,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { viewerOpen = false },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.50f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         }
@@ -3249,46 +3287,46 @@ private fun GroupTabsRow(
     var longPressedGroupId by remember { mutableStateOf<String?>(null) }
     var renameDraft by remember { mutableStateOf("") }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // "All" tab
-        val allLabel = "All ($allCount)"
-        val isAllSelected = selectedGroupId == null
-        Surface(
-            onClick = { onGroupSelected(null) },
-            shape = RoundedCornerShape(20.dp),
-            color = if (isAllSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        item(key = "__all_group__") {
+            val allLabel = "All ($allCount)"
+            val isAllSelected = selectedGroupId == null
+            Surface(
+                onClick = { onGroupSelected(null) },
+                shape = RoundedCornerShape(20.dp),
+                color = if (isAllSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                modifier = Modifier.animateItem()
             ) {
-                Text(
-                    text = allLabel,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = Color.White
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = allLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = Color.White
+                    )
+                }
             }
         }
 
         // Custom group tabs (long-press opens the group action menu)
-        orderedGroups.forEach { groupId ->
+        items(orderedGroups, key = { it }) { groupId ->
             val label = groupNames[groupId] ?: "Group"
             val isSelected = selectedGroupId == groupId
-            val idx = orderedGroups.indexOf(groupId)
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
+                    .animateItem()
                     .combinedClickable(
                         onClick = { onGroupSelected(groupId) },
                         onLongClick = {
@@ -3312,29 +3350,31 @@ private fun GroupTabsRow(
         }
 
         // "+ New" tab
-        Surface(
-            onClick = onNewGroup,
-            shape = RoundedCornerShape(20.dp),
-            color = Color.Transparent,
-            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-            modifier = Modifier
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        item(key = "__new_group__") {
+            Surface(
+                onClick = onNewGroup,
+                shape = RoundedCornerShape(20.dp),
+                color = Color.Transparent,
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                modifier = Modifier.animateItem()
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = "New Group",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = "New",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "New Group",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = "New",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
         }
     }

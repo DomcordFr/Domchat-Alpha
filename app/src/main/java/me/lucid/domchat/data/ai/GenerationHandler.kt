@@ -2166,6 +2166,7 @@ class GenerationHandler(
                 providerSetting = provider,
                 stream = true
             ))
+            var lastEmitTime = 0L
             providerImpl.streamText(
                 providerSetting = provider,
                 messages = internalMessages,
@@ -2195,8 +2196,13 @@ class GenerationHandler(
                         }
                     }
                 }
-                onUpdateMessages(messages)
+                val now = System.currentTimeMillis()
+                if (now - lastEmitTime >= 16L || it.usage != null) {
+                    lastEmitTime = now
+                    onUpdateMessages(messages)
+                }
             }
+            onUpdateMessages(messages)
             // Attach all context sources to the last assistant message after streaming completes
             if (hasContextSources) {
                 messages = messages.mapIndexed { index, message ->

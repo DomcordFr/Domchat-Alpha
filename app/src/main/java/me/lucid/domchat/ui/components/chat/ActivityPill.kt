@@ -85,6 +85,10 @@ import me.lucid.domchat.R
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
+import me.lucid.domchat.ui.theme.frostedGlassBubbleSurface
+import me.lucid.domchat.data.datastore.InterfaceStyle
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.ui.graphics.luminance
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.richtext.updatePreviewAutoFollowPaused
@@ -651,15 +655,28 @@ private fun AnimatedSinglePill(
             )
             .then(
                 if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                    Modifier.liquidGlassSurface(
-                        shape = pillShape,
-                        borderWidth = 0.5.dp,
-                        fillColor = if (effectiveAlpha <= 0.02f) {
-                            if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.35f)
-                        } else {
-                            baseTone.copy(alpha = effectiveAlpha)
-                        },
-                    )
+                    val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                        settings.displaySetting.bubbleSpecularIntensity > 0f
+                    }
+                    val bubbleFillColor = if (effectiveAlpha <= 0.02f) {
+                        if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.35f)
+                    } else {
+                        baseTone.copy(alpha = effectiveAlpha)
+                    }
+                    when (settings.displaySetting.bubbleInterfaceStyle) {
+                        InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
+                            shape = pillShape,
+                            borderWidth = 0.5.dp,
+                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                        )
+                        InterfaceStyle.GLASS -> Modifier.liquidGlassBubbleSurface(
+                            shape = pillShape,
+                            borderWidth = 0.5.dp,
+                            fillColor = bubbleFillColor,
+                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                            glassMode = settings.displaySetting.liquidGlassMode,
+                        )
+                    }
                 } else Modifier
             )
             .clip(pillShape)

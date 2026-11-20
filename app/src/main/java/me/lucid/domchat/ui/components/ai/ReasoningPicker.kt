@@ -218,7 +218,6 @@ fun ReasoningPicker(
                             title = stringResource(id = R.string.reasoning_off),
                             subtitle = stringResource(id = R.string.reasoning_off_desc),
                             onClick = { onUpdateReasoningTokens(0) },
-                            position = ItemPosition.FIRST,
                             isAmoled = isAmoled
                         )
                         ReasoningOptionItem(
@@ -227,7 +226,6 @@ fun ReasoningPicker(
                             title = stringResource(id = R.string.reasoning_auto),
                             subtitle = stringResource(id = R.string.reasoning_auto_desc),
                             onClick = { onUpdateReasoningTokens(-1) },
-                            position = ItemPosition.LAST,
                             isAmoled = isAmoled
                         )
                     }
@@ -247,7 +245,6 @@ fun ReasoningPicker(
                                     title = stringResource(id = R.string.reasoning_off),
                                     subtitle = stringResource(id = R.string.reasoning_off_desc),
                                     onClick = { onUpdateReasoningTokens(0) },
-                                    position = if (showAuto) ItemPosition.FIRST else ItemPosition.SINGLE,
                                     isAmoled = isAmoled
                                 )
                             }
@@ -258,7 +255,6 @@ fun ReasoningPicker(
                                     title = stringResource(id = R.string.reasoning_auto),
                                     subtitle = stringResource(id = R.string.reasoning_auto_desc),
                                     onClick = { onUpdateReasoningTokens(-1) },
-                                    position = if (showOff) ItemPosition.LAST else ItemPosition.SINGLE,
                                     isAmoled = isAmoled
                                 )
                             }
@@ -290,20 +286,13 @@ fun ReasoningPicker(
 
                     if (effortOptions.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            effortOptions.forEachIndexed { index, option ->
-                                val position = when {
-                                    effortOptions.size == 1 -> ItemPosition.SINGLE
-                                    index == 0 -> ItemPosition.FIRST
-                                    index == effortOptions.size - 1 -> ItemPosition.LAST
-                                    else -> ItemPosition.MIDDLE
-                                }
+                            effortOptions.forEach { option ->
                                 ReasoningOptionItem(
                                     selected = currentLevel == option.level,
                                     icon = { Icon(Icons.Rounded.Lightbulb, null, modifier = Modifier.size(20.dp)) },
                                     title = option.title,
                                     subtitle = option.desc,
                                     onClick = { onUpdateReasoningTokens(option.tokens) },
-                                    position = position,
                                     isAmoled = isAmoled
                                 )
                             }
@@ -319,7 +308,6 @@ fun ReasoningPicker(
                             title = stringResource(id = R.string.reasoning_off),
                             subtitle = stringResource(id = R.string.reasoning_off_desc),
                             onClick = { onUpdateReasoningTokens(0) },
-                            position = if (config.minTokens == 0) ItemPosition.FIRST else ItemPosition.SINGLE,
                             isAmoled = isAmoled
                         )
                         if (config.minTokens == 0) {
@@ -329,7 +317,6 @@ fun ReasoningPicker(
                                 title = stringResource(id = R.string.reasoning_auto),
                                 subtitle = stringResource(id = R.string.reasoning_auto_desc),
                                 onClick = { onUpdateReasoningTokens(-1) },
-                                position = ItemPosition.LAST,
                                 isAmoled = isAmoled
                             )
                         }
@@ -347,14 +334,8 @@ fun ReasoningPicker(
                     val presets = config.presetTokens.filter { it in config.minTokens..config.maxTokens }
                     if (presets.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            presets.forEachIndexed { index, tokens ->
+                            presets.forEach { tokens ->
                                 val isSelected = reasoningTokens == tokens
-                                val position = when {
-                                    presets.size == 1 -> ItemPosition.SINGLE
-                                    index == 0 -> ItemPosition.FIRST
-                                    index == presets.size - 1 -> ItemPosition.LAST
-                                    else -> ItemPosition.MIDDLE
-                                }
                                 val formattedTokens = if (tokens >= 1000) "${tokens / 1000}K tokens" else "$tokens tokens"
                                 ReasoningOptionItem(
                                     selected = isSelected,
@@ -362,7 +343,6 @@ fun ReasoningPicker(
                                     title = formattedTokens,
                                     subtitle = stringResource(R.string.assistant_page_thinking_budget),
                                     onClick = { onUpdateReasoningTokens(tokens) },
-                                    position = position,
                                     isAmoled = isAmoled
                                 )
                             }
@@ -375,14 +355,6 @@ fun ReasoningPicker(
 }
 }
 
-// Position in a group for determining corner radius
-private enum class ItemPosition {
-    FIRST,   // Top rounded (24dp top, 10dp bottom)
-    MIDDLE,  // All corners 10dp
-    LAST,    // Bottom rounded (10dp top, 24dp bottom)
-    SINGLE   // All corners 24dp (only item in group)
-}
-
 // Matches SettingGroupItem layout exactly but with selection support
 @Composable
 private fun ReasoningOptionItem(
@@ -391,11 +363,10 @@ private fun ReasoningOptionItem(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    position: ItemPosition = ItemPosition.SINGLE,
     isAmoled: Boolean  // Only use Color.Black when actually in OLED mode
 ) {
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    val itemShape = RoundedCornerShape(18.dp)
+    val itemShape = RoundedCornerShape(16.dp)
     
     val isDark = LocalDarkMode.current
     val rowBackground = if (selected) {
@@ -498,7 +469,7 @@ private fun ReasoningLevelCard(
         containerColor = resolvedContainerColor,
         contentColor = resolvedContentColor
     )
-    val resolvedShape = RoundedCornerShape(18.dp)
+    val resolvedShape = RoundedCornerShape(16.dp)
     val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
     Card(
         onClick = onClick,
