@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.components.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.R
-import me.lucid.domchat.ui.modifier.domChatCardContainerColor
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
 @Composable
@@ -32,25 +32,19 @@ fun SummarizerModelTipBanner(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bannerShape = RoundedCornerShape(18.dp)
+    val bannerShape = RoundedCornerShape(16.dp)
     val isDark = LocalDarkMode.current
-    val borderBrush = Brush.verticalGradient(
-        listOf(
-            Color.White.copy(alpha = if (isDark) 0.22f else 0.12f),
-            Color.White.copy(alpha = if (isDark) 0.06f else 0.03f)
-        )
-    )
+    val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
 
     Surface(
         onClick = onClick,
-        color = Color.Transparent,
+        color = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.40f),
         shape = bannerShape,
-        modifier = modifier
-            .fillMaxWidth()
-            .border(0.5.dp, borderBrush, bannerShape)
+        border = BorderStroke(0.5.dp, borderBrush),
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

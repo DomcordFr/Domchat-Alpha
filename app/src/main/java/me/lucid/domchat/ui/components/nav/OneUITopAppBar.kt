@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 
 /**
  * Samsung One UI-style large collapsible app bar with centered title.
@@ -200,29 +201,36 @@ fun OneUITopAppBar(
             }
         }
 
-        // Bottom fading gradient overlay when scrolled down into collapsed header
-        if (collapseProgress > 0.05f) {
-            val gradientAlpha = ((collapseProgress - 0.05f) / 0.45f).coerceIn(0f, 1f)
-            val fadeHeight = 48.dp
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .offset(y = fadeHeight)
-                    .height(fadeHeight)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF000000).copy(alpha = gradientAlpha),
-                                Color(0xFF000000).copy(alpha = gradientAlpha * 0.75f),
-                                Color(0xFF000000).copy(alpha = gradientAlpha * 0.40f),
-                                Color(0xFF000000).copy(alpha = gradientAlpha * 0.12f),
-                                Color.Transparent
-                            )
+        // Bottom fading gradient overlay: seamless smooth transition into content with subtle blur
+        val gradientAlpha = if (collapseProgress > 0.02f) {
+            ((collapseProgress - 0.02f) / 0.35f).coerceIn(0f, 1f)
+        } else {
+            0.15f
+        }
+        val fadeHeight = 64.dp
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .offset(y = fadeHeight)
+                .height(fadeHeight)
+                .domChatBlurEffect(
+                    containerColor = Color.Transparent,
+                    blurRadius = 12.dp
+                )
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF000000).copy(alpha = gradientAlpha),
+                            Color(0xFF000000).copy(alpha = gradientAlpha * 0.85f),
+                            Color(0xFF000000).copy(alpha = gradientAlpha * 0.60f),
+                            Color(0xFF000000).copy(alpha = gradientAlpha * 0.35f),
+                            Color(0xFF000000).copy(alpha = gradientAlpha * 0.12f),
+                            Color.Transparent
                         )
                     )
-            )
-        }
+                )
+        )
     }
 }
 

@@ -393,11 +393,11 @@ private class DrawBackdropNode(
         val contentVersion = currentBackdropContentVersion()
 
         // Coordinates detached mid-scroll / during item recycling: offset is null.
-        // Never paint black or transparent. Keep painting the last recorded layer at
-        // its last known translation so liquid glass never fails while detached. Only
-        // fall back to a translucent placeholder when there is no cached layer at all.
-        if (offset == null) {
-            if (recordedBackdropSize != IntSize.Zero) {
+        // Also if the backdrop source has not recorded its first frame yet (!sourceHasRecording),
+        // avoid baking transparent pixels into our layer and stay marked dirty.
+        val sourceHasRecording = (backdrop as? LayerBackdrop)?.hasRecording ?: true
+        if (offset == null || !sourceHasRecording) {
+            if (recordedBackdropSize != IntSize.Zero && offset != null && sourceHasRecording) {
                 val drawOffset = lastDrawOffset
                 if (scale != 1f) {
                     scale(1f / scale, pivot = Offset.Zero) {
@@ -415,7 +415,7 @@ private class DrawBackdropNode(
                     }
                 }
             } else {
-                drawRect(Color(0xFF0D0F14).copy(alpha = 0.85f))
+                drawRect(Color(0xFF141520).copy(alpha = 0.85f))
                 surfaceDirty = true
             }
             return false

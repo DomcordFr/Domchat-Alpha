@@ -288,7 +288,7 @@ private fun TemplateCard(
 ) {
     val isDark = LocalDarkMode.current
     val cardShape = AppShapes.CardMedium
-    val cardFill = if (isDark) Color(0xFF141520).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
+    val cardFill = if (isDark) Color(0xFF141520).copy(alpha = 0.70f) else Color.White.copy(alpha = 0.80f)
 
     Card(
         onClick = onClick,
@@ -302,7 +302,7 @@ private fun TemplateCard(
             )
             .liquidInteractiveGlass(),
         shape = cardShape,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        colors = CardDefaults.cardColors(containerColor = cardFill),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -341,7 +341,7 @@ private fun ActionPill(
 ) {
     val pillShape = RoundedCornerShape(24.dp)
     val isDark = LocalDarkMode.current
-    val pillFill = if (isDark) Color(0xFF141520).copy(alpha = 0.60f) else Color.White.copy(alpha = 0.75f)
+    val pillFill = if (isDark) Color(0xFF141520).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.80f)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
@@ -355,7 +355,7 @@ private fun ActionPill(
                 )
                 .liquidInteractiveGlass(),
             shape = pillShape,
-            color = Color.Transparent
+            color = pillFill
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),

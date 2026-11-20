@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
@@ -158,10 +159,9 @@ internal fun SkillsPickerSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = stringResource(R.string.skills_picker_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
+            DomChatSheetHeader(
+                title = stringResource(R.string.skills_picker_title),
+                onCloseClick = onDismiss,
             )
 
             if (userInvocableSkills.isEmpty()) {
@@ -309,7 +309,7 @@ internal fun LorebooksPickerSheet(
                 value = lorebookSearchQuery,
                 onValueChange = { lorebookSearchQuery = it },
                 placeholder = "Search lorebooks...",
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -446,9 +446,9 @@ internal fun PluginsPickerSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.mcp_picker_title),
-                style = MaterialTheme.typography.titleLarge,
+            DomChatSheetHeader(
+                title = stringResource(R.string.mcp_picker_title),
+                onCloseClick = onDismiss,
             )
             if (loading) {
                 Column(

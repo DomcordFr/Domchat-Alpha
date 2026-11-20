@@ -1412,7 +1412,7 @@ private fun AddButton(
         }
     } else {
         IconButton(onClick = handleClick) {
-            Icon(Icons.Rounded.Add, stringResource(R.string.add))
+            Icon(Icons.Rounded.Add, stringResource(R.string.add), tint = Color.White)
         }
     }
 }
@@ -1626,22 +1626,12 @@ private fun ChooseProviderSheet(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFF000000))
-                                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
-                                        .padding(7.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = androidx.compose.ui.res.painterResource(R.drawable.nanogpt_logo),
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
+                                Icon(
+                                    painter = androidx.compose.ui.res.painterResource(R.drawable.nanogpt_logo),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(40.dp)
+                                )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "NanoGPT",
@@ -1660,15 +1650,8 @@ private fun ChooseProviderSheet(
                         }
                     }
 
-                    itemsIndexed(remotePresets.filter { it.name != "NanoGPT" }, key = { _, preset -> preset.name }) { index, preset ->
-                        val position = when {
-                            remotePresets.size == 1 -> ItemPosition.ONLY
-                            index == 0 -> ItemPosition.FIRST
-                            index == remotePresets.lastIndex -> ItemPosition.LAST
-                            else -> ItemPosition.MIDDLE
-                        }
-                        
-                        val shape = position.listItemShape()
+                    items(remotePresets.filter { it.name != "NanoGPT" }, key = { preset -> preset.name }) { preset ->
+                        val shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
                         
                         Surface(
                             onClick = {

@@ -44,12 +44,15 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.ToggleOn
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import me.lucid.domchat.ui.components.ui.DomChatSlider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -57,6 +60,9 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.theme.AppShapes
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -911,10 +917,12 @@ private fun EntryEditorSheet(
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.75f }
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = { dismissEditor() },
+        shape = AppShapes.SettingBottomSheet,
+        containerColor = Color(0xFF000000),
         maxHeight = maxSheetHeight,
         modifier = Modifier.imePadding(),
         dragHandle = {
@@ -931,30 +939,19 @@ private fun EntryEditorSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(
-                        if (entry != null) R.string.lorebook_entry_edit
-                        else R.string.lorebook_entry_add
-                    ),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                AutoSaveIndicator(visible = isAutoSaving)
-                IconButton(
-                    onClick = { dismissEditor() },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.cancel),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
-            }
+            DomChatSheetHeader(
+                title = stringResource(
+                    if (entry != null) R.string.lorebook_entry_edit
+                    else R.string.lorebook_entry_add
+                ),
+                badge = { AutoSaveIndicator(visible = isAutoSaving) },
+                onCloseClick = { dismissEditor() },
+            )
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                thickness = 0.5.dp,
+                color = Color.White.copy(alpha = 0.12f)
+            )
 
             FormItem(
                 label = { Text(stringResource(R.string.lorebook_entry_name)) }
@@ -1187,26 +1184,38 @@ private fun EntryEditorSheet(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        androidx.compose.material3.OutlinedButton(
-                            onClick = { imagePickerLauncher.launch("image/*") }
+                        Button(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White
+                            ),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Icon(
                                 Icons.Rounded.AddPhotoAlternate,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(6.dp))
                             Text(stringResource(R.string.modes_page_add_image))
                         }
-                        androidx.compose.material3.OutlinedButton(
-                            onClick = { documentPickerLauncher.launch(arrayOf("*/*")) }
+                        Button(
+                            onClick = { documentPickerLauncher.launch(arrayOf("*/*")) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White
+                            ),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Icon(
                                 Icons.Rounded.AttachFile,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(6.dp))
                             Text(stringResource(R.string.modes_page_add_file))
                         }
                     }
@@ -1219,10 +1228,10 @@ private fun EntryEditorSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { dismissEditor() }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.cancel), color = Color(0xFFA6A6A6))
                 }
                 Spacer(Modifier.width(8.dp))
-                TextButton(
+                Button(
                     onClick = {
                         // Use captured entryId - if editing, preserve ID; if new, create new ID
                         val savedEntry = LorebookEntry(
@@ -1240,7 +1249,13 @@ private fun EntryEditorSheet(
                         )
                         onSave(savedEntry)
                     },
-                    enabled = prompt.isNotBlank()
+                    enabled = prompt.isNotBlank(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Text(stringResource(R.string.save))
                 }
@@ -1317,10 +1332,12 @@ private fun LorebookEditorSheet(
     me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
+    val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.75f }
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = { dismissEditor() },
+        shape = AppShapes.SettingBottomSheet,
+        containerColor = Color(0xFF000000),
         maxHeight = maxSheetHeight,
         modifier = Modifier.imePadding(),
         dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
@@ -1333,27 +1350,16 @@ private fun LorebookEditorSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.lorebook_edit),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                AutoSaveIndicator(visible = isAutoSaving)
-                IconButton(
-                    onClick = { dismissEditor() },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.cancel),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
-            }
+            DomChatSheetHeader(
+                title = stringResource(R.string.lorebook_edit),
+                badge = { AutoSaveIndicator(visible = isAutoSaving) },
+                onCloseClick = { dismissEditor() }
+            )
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                thickness = 0.5.dp,
+                color = Color.White.copy(alpha = 0.12f)
+            )
 
             // Cover picker + Name input inline
             Row(
@@ -1483,10 +1489,10 @@ private fun LorebookEditorSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { dismissEditor() }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.cancel), color = Color(0xFFA6A6A6))
                 }
                 Spacer(Modifier.width(8.dp))
-                TextButton(
+                Button(
                     onClick = {
                         onSave(lorebook.copy(
                             name = name,
@@ -1495,7 +1501,13 @@ private fun LorebookEditorSheet(
                             tokenBudget = tokenBudget
                         ))
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
                     Text(stringResource(R.string.save))
                 }
@@ -1625,6 +1637,8 @@ private fun AssistantLorebookToggleSheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
+        shape = AppShapes.SettingBottomSheet,
+        containerColor = Color(0xFF000000),
         modifier = Modifier.imePadding(),
         dragHandle = {
             me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
@@ -1636,12 +1650,16 @@ private fun AssistantLorebookToggleSheet(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
+            DomChatSheetHeader(
+                title = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
+                onCloseClick = onDismiss
+            )
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                thickness = 0.5.dp,
+                color = Color.White.copy(alpha = 0.12f)
             )
             
             assistants.forEachIndexed { index, assistant ->

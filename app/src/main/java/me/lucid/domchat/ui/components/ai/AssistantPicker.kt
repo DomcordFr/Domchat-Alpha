@@ -33,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -280,15 +281,7 @@ fun AssistantPickerSheet(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = "Search characters...",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlassSurface(
-                            shape = AppShapes.SearchField,
-                            borderWidth = 0.5.dp,
-                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                            fillColor = if (isDark) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.15f),
-                            glassMode = LiquidGlassMode.BALANCED_BLEND,
-                        ),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }

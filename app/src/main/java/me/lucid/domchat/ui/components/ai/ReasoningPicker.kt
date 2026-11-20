@@ -1,6 +1,13 @@
 package me.lucid.domchat.ui.components.ai
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -205,7 +212,6 @@ fun ReasoningPicker(
             ) {
                 DomChatSheetHeader(
                     title = "Thinking Budget",
-                    subtitle = "Configure model reasoning effort",
                     onCloseClick = onDismissRequest,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -366,22 +372,33 @@ private fun ReasoningOptionItem(
     isAmoled: Boolean  // Only use Color.Black when actually in OLED mode
 ) {
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    val itemShape = RoundedCornerShape(16.dp)
+    val itemShape = RoundedCornerShape(22.dp)
     
     val isDark = LocalDarkMode.current
-    val rowBackground = if (selected) {
+    val targetBg = if (selected) {
         Color(0xFF000000)
     } else {
         if (isDark) Color(0xFF000000).copy(alpha = 0.55f) else domChatCardContainerColor()
     }
+    val animatedBg by animateColorAsState(
+        targetValue = targetBg,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+        label = "reasoning_bg"
+    )
     val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+    val targetBorderWidth = if (selected) 1.dp else 0.5.dp
+    val animatedBorderWidth by animateDpAsState(
+        targetValue = targetBorderWidth,
+        animationSpec = spring(stiffness = 400f),
+        label = "reasoning_border_width"
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(itemShape)
-            .border(if (selected) 1.dp else 0.5.dp, borderBrush, itemShape)
-            .background(rowBackground)
+            .border(animatedBorderWidth, borderBrush, itemShape)
+            .background(animatedBg)
             .clickable {
                 haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
                 onClick()
@@ -397,44 +414,56 @@ private fun ReasoningOptionItem(
             icon()
         }
         Column(
-            modifier = Modifier.weight(1f).padding(end = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                AnimatedVisibility(
+                    visible = selected,
+                    enter = fadeIn(spring(stiffness = 400f)) + scaleIn(spring(stiffness = 400f)),
+                    exit = fadeOut(spring(stiffness = 400f)) + scaleOut(spring(stiffness = 400f))
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = "ACTIVE",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (selected) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (selected) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
             )
-        }
-        if (selected) {
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = Color(0xFF000000),
-                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Text(
-                        text = "ACTIVE",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                        color = Color.White
-                    )
-                }
-            }
         }
     }
 }
@@ -447,7 +476,7 @@ private fun ReasoningLevelCard(
     title: @Composable () -> Unit = {},
     description: @Composable () -> Unit = {},
     onClick: () -> Unit,
-    shape: Shape = RoundedCornerShape(18.dp),
+    shape: Shape = RoundedCornerShape(22.dp),
     containerColor: Color? = null
 ) {
     val amoledMode by rememberAmoledDarkMode()
@@ -455,9 +484,14 @@ private fun ReasoningLevelCard(
     val isAmoled = amoledMode && isDarkMode
     
     val defaultContainerColor = domChatCardContainerColor()
-    val resolvedContainerColor = if (selected) {
+    val targetContainerColor = if (selected) {
         Color(0xFF000000)
     } else (containerColor ?: if (isDarkMode) Color(0xFF000000).copy(alpha = 0.55f) else defaultContainerColor)
+    val animatedContainerColor by animateColorAsState(
+        targetValue = targetContainerColor,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+        label = "reasoning_card_bg"
+    )
     
     val defaultContentColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
     val resolvedContentColor = if (selected) Color.White else defaultContentColor
@@ -466,14 +500,20 @@ private fun ReasoningLevelCard(
 
     val cardElevation = CardDefaults.cardElevation(defaultElevation = elevation)
     val cardColors = CardDefaults.cardColors(
-        containerColor = resolvedContainerColor,
+        containerColor = animatedContainerColor,
         contentColor = resolvedContentColor
     )
-    val resolvedShape = RoundedCornerShape(16.dp)
+    val resolvedShape = RoundedCornerShape(22.dp)
     val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+    val targetBorderWidth = if (selected) 1.dp else 0.5.dp
+    val animatedBorderWidth by animateDpAsState(
+        targetValue = targetBorderWidth,
+        animationSpec = spring(stiffness = 400f),
+        label = "reasoning_card_border_width"
+    )
     Card(
         onClick = onClick,
-        modifier = modifier.border(if (selected) 1.dp else 0.5.dp, borderBrush, resolvedShape),
+        modifier = modifier.border(animatedBorderWidth, borderBrush, resolvedShape),
         shape = resolvedShape,
         elevation = cardElevation,
         colors = cardColors
@@ -490,32 +530,46 @@ private fun ReasoningLevelCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                title()
-                description()
-            }
-            if (selected) {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = "ACTIVE",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                            color = Color.White
-                        )
+                    Box(modifier = Modifier.weight(1f, fill = false)) {
+                        title()
                     }
+                    AnimatedVisibility(
+                        visible = selected,
+                        enter = fadeIn(spring(stiffness = 400f)) + scaleIn(spring(stiffness = 400f)),
+                        exit = fadeOut(spring(stiffness = 400f)) + scaleOut(spring(stiffness = 400f))
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "ACTIVE",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    description()
                 }
             }
         }

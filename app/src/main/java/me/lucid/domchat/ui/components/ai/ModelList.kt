@@ -814,22 +814,21 @@ internal fun ColumnScope.ModelList(
                         .graphicsLayer { alpha = topFadeAlpha }
                 ) {
                     val fadeBase = domChatFloatingSurfaceColor()
-                    // Solid background covering the top half of the search bar area
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(42.dp)
-                            .background(fadeBase)
-                    )
-                    // Strong vertical gradient fade starting from the middle of the search bar area
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(64.dp)
+                            .height(84.dp)
+                            .domChatBlurEffect(
+                                containerColor = Color.Transparent,
+                                blurRadius = 12.dp
+                            )
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
                                         fadeBase,
+                                        fadeBase.copy(alpha = 0.85f),
+                                        fadeBase.copy(alpha = 0.55f),
+                                        fadeBase.copy(alpha = 0.25f),
                                         Color.Transparent
                                     )
                                 )
@@ -846,34 +845,32 @@ internal fun ColumnScope.ModelList(
                     .height(84.dp)
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
             ) {
-                val isDark = LocalDarkMode.current
                 val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-                val searchBg = Color(0xFF000000)
                 val searchBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 OutlinedTextField(
                     value = searchKeywords,
                     onValueChange = { searchKeywords = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(searchFieldShape)
-                        .border(0.5.dp, searchBorder, searchFieldShape)
-                        .domChatBlurEffect(
-                            containerColor = Color(0xFF000000).copy(alpha = 0.12f),
-                            shape = searchFieldShape
+                        .liquidGlassSurface(
+                            shape = searchFieldShape,
+                            fillColor = Color.White.copy(alpha = 0.05f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = searchBorder
                         ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         disabledContainerColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        errorBorderColor = Color.Transparent,
                         focusedTextColor = Color(0xFFF2F2F7),
                         unfocusedTextColor = Color(0xFFF2F2F7),
                         disabledTextColor = Color(0xFF8A8A96),
                         cursorColor = Color(0xFFF2F2F7),
                         errorCursorColor = Color(0xFFEF4444),
-                        focusedBorderColor = Color.White.copy(alpha = 0.30f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        disabledBorderColor = Color.White.copy(alpha = 0.06f),
-                        errorBorderColor = Color(0xFFEF4444),
                         focusedLabelColor = Color(0xFFF2F2F7),
                         unfocusedLabelColor = Color(0xFF8A8A96),
                         focusedPlaceholderColor = Color(0xFF8A8A96),
@@ -1155,7 +1152,7 @@ private fun ModelItem(
                     shape = RoundedCornerShape(10.dp),
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
-                    fillColor = Color.White.copy(alpha = 0.18f)
+                    fillColor = Color.White.copy(alpha = 0.08f)
                 )
             ) {
                 Row(
@@ -1166,13 +1163,13 @@ private fun ModelItem(
                     Icon(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Color.White.copy(alpha = 0.9f),
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
                         text = "ACTIVE",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                        color = Color.White
+                        color = Color.White.copy(alpha = 0.9f)
                     )
                 }
             }
@@ -1181,9 +1178,9 @@ private fun ModelItem(
 
     if(inGroup) {
         val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color(0xFF000000).copy(alpha = 0.40f) else Color.White.copy(alpha = 0.05f)
+            if (select) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.04f)
         } else {
-            if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
+            if (select) Color(0xFF1E1E24) else Color(0xFF000000).copy(alpha = 0.55f)
         }
         DomChatGroupedModelRow(
             title = model.displayName,
@@ -1226,7 +1223,11 @@ private fun ModelItem(
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
-        val resolvedFillColor = Color(0xFF000000)
+        val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
+            if (select) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.04f)
+        } else {
+            if (select) Color(0xFF1E1E24) else Color(0xFF000000)
+        }
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,

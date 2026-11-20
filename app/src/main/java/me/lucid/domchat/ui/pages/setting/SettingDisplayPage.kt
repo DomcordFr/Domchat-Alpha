@@ -252,84 +252,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         )
                     }
 
-                    // Preset themes row
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
-                        Text(
-                            text = "Preset Themes",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = Color.White
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        androidx.compose.foundation.lazy.LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            items(me.lucid.domchat.ui.theme.PresetThemes, key = { it.id }) { preset ->
-                                val isSelected = !settings.dynamicColor && (me.lucid.domchat.ui.theme.normalizePresetThemeId(settings.themeId) == preset.id)
-                                val scheme = preset.getColorScheme(isDark)
-                                Surface(
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        vm.updateSettings(
-                                            settings.copy(
-                                                dynamicColor = false,
-                                                themeId = preset.id
-                                            )
-                                        )
-                                    },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF000000),
-                                    border = BorderStroke(
-                                        width = if (isSelected) 1.5.dp else 0.5.dp,
-                                        brush = if (isSelected) {
-                                            androidx.compose.ui.graphics.SolidColor(scheme.primary)
-                                        } else {
-                                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                                        }
-                                    ),
-                                    modifier = Modifier.width(130.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(14.dp)
-                                                    .clip(androidx.compose.foundation.shape.CircleShape)
-                                                    .background(scheme.primary)
-                                            )
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(14.dp)
-                                                    .clip(androidx.compose.foundation.shape.CircleShape)
-                                                    .background(scheme.secondary)
-                                            )
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(14.dp)
-                                                    .clip(androidx.compose.foundation.shape.CircleShape)
-                                                    .background(scheme.tertiary)
-                                            )
-                                        }
-                                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                            preset.name()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
                     SettingGroupItem(
                         title = "Custom Theme Engine",
                         subtitle = "Build custom color palettes and shader parameters",
@@ -340,9 +262,9 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
                             ) {
                                 Text(
-                                    text = "Coming Soon",
+                                    text = "More coming soon",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (isDark) Color.White else Color(0xFFFFFFFF),
+                                    color = Color.White,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -654,7 +576,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     }
                                     toaster.show(
                                         message = "Switched to Liquid Glass. Restart recommended for full shader reinitialization.",
-                                        type = ToastType.Success,
+                                        type = ToastType.Normal,
                                         action = ToastAction("Restart") {
                                             val packageManager = context.packageManager
                                             val intent = packageManager.getLaunchIntentForPackage(context.packageName)
@@ -690,7 +612,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     }
                                     toaster.show(
                                         message = "Switched to Frosted Glass. Restart recommended for full shader reinitialization.",
-                                        type = ToastType.Success,
+                                        type = ToastType.Normal,
                                         action = ToastAction("Restart") {
                                             val packageManager = context.packageManager
                                             val intent = packageManager.getLaunchIntentForPackage(context.packageName)
@@ -807,18 +729,24 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.glassSpecularIntensity)
                                 }
-                                glassSliderRow(
-                                    label = "UI Glass Specular Highlight",
-                                    valueText = "${(localGlassSpecular * 100).roundToInt()}%",
-                                    value = localGlassSpecular,
-                                    onValueChange = { localGlassSpecular = it },
-                                    onFinished = {
-                                        val rounded = (localGlassSpecular * 100f).roundToInt() / 100f
-                                        localGlassSpecular = rounded
-                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
-                                    },
-                                    valueRange = 0f..1.0f,
-                                )
+                                AnimatedVisibility(
+                                    visible = uiIsGlass,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    glassSliderRow(
+                                        label = "UI Glass Specular Highlight",
+                                        valueText = "${(localGlassSpecular * 100).roundToInt()}%",
+                                        value = localGlassSpecular,
+                                        onValueChange = { localGlassSpecular = it },
+                                        onFinished = {
+                                            val rounded = (localGlassSpecular * 100f).roundToInt() / 100f
+                                            localGlassSpecular = rounded
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
+                                        },
+                                        valueRange = 0f..1.0f,
+                                    )
+                                }
 
                                 var localTint by remember(settings.displaySetting.glassTintColor) {
                                     mutableStateOf(settings.displaySetting.glassTintColor)
@@ -954,58 +882,66 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     )
                                 }
 
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                AnimatedVisibility(
+                                    visible = uiIsGlass,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
                                 ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                        Text(
-                                            text = "Chromatic Dispersion",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                        Text(
-                                            text = "Refracts spectral rainbow highlights along glass curvature edges.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.65f)
-                                        )
-                                    }
-                                    HapticSwitch(
-                                        checked = settings.displaySetting.chromaticDispersionEnabled,
-                                        onCheckedChange = {
-                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(chromaticDispersionEnabled = it))
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                                Text(
+                                                    text = "Chromatic Dispersion",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                                Text(
+                                                    text = "Refracts spectral rainbow highlights along glass curvature edges.",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White.copy(alpha = 0.65f)
+                                                )
+                                            }
+                                            HapticSwitch(
+                                                checked = settings.displaySetting.chromaticDispersionEnabled,
+                                                onCheckedChange = {
+                                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(chromaticDispersionEnabled = it))
+                                                }
+                                            )
                                         }
-                                    )
-                                }
 
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                        Text(
-                                            text = "Interactive Glass Physics",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                        Text(
-                                            text = "Touch spotlight bloom, spring micro-expansion, and elastic tactile drag.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.65f)
-                                        )
-                                    }
-                                    HapticSwitch(
-                                        checked = settings.displaySetting.interactiveGlassPhysics,
-                                        onCheckedChange = {
-                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(interactiveGlassPhysics = it))
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                                Text(
+                                                    text = "Interactive Glass Physics",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                                Text(
+                                                    text = "Touch spotlight bloom, spring micro-expansion, and elastic tactile drag.",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White.copy(alpha = 0.65f)
+                                                )
+                                            }
+                                            HapticSwitch(
+                                                checked = settings.displaySetting.interactiveGlassPhysics,
+                                                onCheckedChange = {
+                                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(interactiveGlassPhysics = it))
+                                                }
+                                            )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -1242,18 +1178,24 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localBubbleSpecular by remember(settings.displaySetting.bubbleSpecularIntensity) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleSpecularIntensity)
                                 }
-                                glassSliderRow(
-                                    label = "Bubble Specular Intensity",
-                                    valueText = "${(localBubbleSpecular * 100).roundToInt()}%",
-                                    value = localBubbleSpecular,
-                                    onValueChange = { localBubbleSpecular = it },
-                                    onFinished = {
-                                        val rounded = (localBubbleSpecular * 100f).roundToInt() / 100f
-                                        localBubbleSpecular = rounded
-                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleSpecularIntensity = localBubbleSpecular))
-                                    },
-                                    valueRange = 0f..1.0f,
-                                )
+                                AnimatedVisibility(
+                                    visible = bubbleIsGlass,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    glassSliderRow(
+                                        label = "Bubble Specular Intensity",
+                                        valueText = "${(localBubbleSpecular * 100).roundToInt()}%",
+                                        value = localBubbleSpecular,
+                                        onValueChange = { localBubbleSpecular = it },
+                                        onFinished = {
+                                            val rounded = (localBubbleSpecular * 100f).roundToInt() / 100f
+                                            localBubbleSpecular = rounded
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleSpecularIntensity = localBubbleSpecular))
+                                        },
+                                        valueRange = 0f..1.0f,
+                                    )
+                                }
 
                                 var localBubbleTintColor by remember(settings.displaySetting.chatBubbleTintColor) {
                                     mutableStateOf(settings.displaySetting.chatBubbleTintColor)
@@ -1406,7 +1348,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
 /**
  * Segmented tab for Liquid / Frosted glass mode with a small centered "glass" subtext.
- * 48dp minimum touch target; never cramps horizontally on mobile.
+ * 48dp minimum touch target; animated transition between active and inactive states.
  */
 @Composable
 private fun RowScope.GlassModeTab(
@@ -1415,20 +1357,34 @@ private fun RowScope.GlassModeTab(
     subtitle: String,
     onClick: () -> Unit,
 ) {
-    val fill = if (selected) Color(0xFF000000) else Color.White.copy(alpha = 0.04f)
-    val border: BorderStroke = if (selected) {
-        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-    } else {
-        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.14f))
-    }
+    val animatedBg by androidx.compose.animation.animateColorAsState(
+        targetValue = if (selected) Color(0xFF000000) else Color.White.copy(alpha = 0.04f),
+        animationSpec = androidx.compose.animation.core.tween(250),
+        label = "glass_tab_bg"
+    )
+    val animatedBorderColor by androidx.compose.animation.animateColorAsState(
+        targetValue = if (selected) Color.White.copy(alpha = 0.40f) else Color.White.copy(alpha = 0.12f),
+        animationSpec = androidx.compose.animation.core.tween(250),
+        label = "glass_tab_border"
+    )
+    val animatedTextColor by androidx.compose.animation.animateColorAsState(
+        targetValue = if (selected) Color.White else Color.White.copy(alpha = 0.66f),
+        animationSpec = androidx.compose.animation.core.tween(250),
+        label = "glass_tab_text"
+    )
+    val animatedSubColor by androidx.compose.animation.animateColorAsState(
+        targetValue = if (selected) Color.White.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.45f),
+        animationSpec = androidx.compose.animation.core.tween(250),
+        label = "glass_tab_sub"
+    )
     Surface(
         modifier = Modifier
             .weight(1f)
             .heightIn(min = 48.dp)
             .clickable(onClick = onClick),
         shape = AppShapes.CardMedium,
-        color = fill,
-        border = border,
+        color = animatedBg,
+        border = BorderStroke(0.5.dp, animatedBorderColor),
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -1439,12 +1395,12 @@ private fun RowScope.GlassModeTab(
             Text(
                 text = label,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (selected) Color.White else Color.White.copy(alpha = 0.66f),
+                color = animatedTextColor,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = if (selected) 0.85f else 0.45f),
+                color = animatedSubColor,
             )
         }
     }
@@ -1452,6 +1408,7 @@ private fun RowScope.GlassModeTab(
 
 /**
  * Label + value row paired with [DomChatSlider] for glass appearance controls.
+ * Uses continuous slider without tick separation dots and padded labels to prevent clipping.
  */
 @Composable
 private fun glassSliderRow(
@@ -1468,7 +1425,11 @@ private fun glassSliderRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp)
+        )
         Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White)
     }
     DomChatSlider(
@@ -1476,7 +1437,7 @@ private fun glassSliderRow(
         onValueChange = onValueChange,
         onValueChangeFinished = onFinished,
         valueRange = valueRange,
-        steps = steps,
+        steps = 0,
     )
 }
 
@@ -1645,14 +1606,18 @@ private fun tintSliderRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp)
+        )
         Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White)
     }
     DomChatSlider(
         value = value,
         onValueChange = onChange,
         valueRange = valueRange,
-        steps = steps,
+        steps = 0,
     )
 }
 

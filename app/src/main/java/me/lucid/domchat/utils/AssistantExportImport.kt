@@ -375,8 +375,11 @@ object AssistantExportImport : KoinComponent {
                 if (file.exists()) file.readBytes() else null
             }
             url.startsWith("http://") || url.startsWith("https://") -> {
-                // Network URL - skip for now (would need async loading)
-                null
+                try {
+                    java.net.URL(url).openStream().use { it.readBytes() }
+                } catch (e: Exception) {
+                    null
+                }
             }
             else -> null
         }
@@ -403,6 +406,24 @@ object AssistantExportImport : KoinComponent {
         }
     }
     
+    private fun ensurePngFormat(bytes: ByteArray, fallbackName: String): ByteArray {
+        if (bytes.size >= 8 && bytes.take(8).toByteArray().contentEquals(PNG_HEADER)) {
+            return bytes
+        }
+        return try {
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            if (bitmap != null) {
+                val png = bitmap.toPngBytes()
+                bitmap.recycle()
+                png
+            } else {
+                createPlaceholderPng(fallbackName)
+            }
+        } catch (e: Exception) {
+            createPlaceholderPng(fallbackName)
+        }
+    }
+
     /**
      * Export an Assistant to Character Card V2 PNG format.
      * The character data is embedded in a tEXt chunk with keyword "chara".
@@ -410,7 +431,7 @@ object AssistantExportImport : KoinComponent {
      */
     suspend fun exportToCharacterCardPng(assistant: Assistant, context: Context): ByteArray? {
         // Get the avatar image based on avatar type
-        val avatarBytes: ByteArray = when (val avatar = assistant.avatar) {
+        val rawBytes: ByteArray = when (val avatar = assistant.avatar) {
             is Avatar.Image -> {
                 val url = avatar.url
                 readUriBytes(context, url) ?: createPlaceholderPng(assistant.name)
@@ -427,6 +448,8 @@ object AssistantExportImport : KoinComponent {
                 createPlaceholderPng(assistant.name)
             }
         }
+
+        val avatarBytes = ensurePngFormat(rawBytes, assistant.name)
         
         // Generate the Character Card V2 JSON
         val cardJson = exportToCharacterCardV2(assistant, context)

@@ -147,7 +147,7 @@ fun DomChatGlassChip(
     modifier: Modifier = Modifier,
     accent: Boolean = false,
 ) {
-    val chipFill = Color(0xFF000000).copy(alpha = 0.35f)
+    val chipFill = if (accent) DomChatAccent.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.08f)
     Surface(
         color = Color.Transparent,
         shape = AppShapes.Tag,
@@ -161,8 +161,8 @@ fun DomChatGlassChip(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = if (accent) DomChatAccent else Color.White.copy(alpha = 0.88f),
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = if (accent) DomChatAccent else Color.White,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
             maxLines = 1,
             softWrap = false,

@@ -591,29 +591,32 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 }
             },
             text = {
-                AnimatedContent(
-                    targetState = editorStep,
-                    transitionSpec = {
-                        val slideSpec = tween<androidx.compose.ui.unit.IntOffset>(260, easing = FastOutSlowInEasing)
-                        val fadeSpec = tween<Float>(220)
-                        if (targetState == EditorStep.LorebookPicker) {
-                            (slideInHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = fadeSpec))
-                                .togetherWith(slideOutHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> -width / 2 } + fadeOut(animationSpec = fadeSpec))
-                        } else {
-                            (slideInHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = fadeSpec))
-                                .togetherWith(slideOutHorizontally(animationSpec = tween(260, easing = FastOutSlowInEasing)) { width -> width / 2 } + fadeOut(animationSpec = fadeSpec))
-                        }.using(
-                            androidx.compose.animation.SizeTransform(clip = false)
-                        )
-                    },
-                    label = "persona_body_step_anim"
-                ) { step ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        when (step) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 380.dp)
+                ) {
+                    AnimatedContent(
+                        targetState = editorStep,
+                        transitionSpec = {
+                            val fadeSpec = tween<Float>(200)
+                            if (targetState == EditorStep.LorebookPicker) {
+                                (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = fadeSpec))
+                                    .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width / 2 } + fadeOut(animationSpec = fadeSpec))
+                            } else {
+                                (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = fadeSpec))
+                                    .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width / 2 } + fadeOut(animationSpec = fadeSpec))
+                            }
+                        },
+                        label = "persona_body_step_anim"
+                    ) { step ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 380.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            when (step) {
                         EditorStep.Persona -> {
                             // Built-in Avatar Picker with Square Crop
                             Row(
@@ -736,7 +739,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(max = 360.dp),
+                                    .height(300.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 if (filteredLorebooks.isEmpty()) {
@@ -810,7 +813,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     }
                 }
             }
-        },
+        }
+    },
             confirmButton = {
                 Button(
                     onClick = {
@@ -824,11 +828,12 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     },
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
-                    )
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
-                    Text("Save")
+                    Text(if (editorStep == EditorStep.LorebookPicker) "Done" else "Save")
                 }
             },
             dismissButton = {

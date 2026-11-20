@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -125,9 +126,22 @@ fun ContextBudgetBottomSheet(
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
     @Composable
-    fun glassCard(shape: Shape) = Modifier
-        .background(Color.White.copy(alpha = 0.06f), shape = shape)
-        .border(0.5.dp, borderBrush, shape = shape)
+    fun glassCard(shape: Shape): Modifier = if (isFrosted) {
+        Modifier.frostedGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.White.copy(alpha = 0.06f),
+        )
+    } else {
+        Modifier.liquidGlassSurface(
+            shape = shape,
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+            fillColor = Color.White.copy(alpha = 0.06f),
+            glassMode = LiquidGlassMode.BALANCED_BLEND,
+        )
+    }
 
     DomChatInWindowBottomSheet(
         visible = true,
@@ -140,17 +154,13 @@ fun ContextBudgetBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 6.dp)
         ) {
             // Unified header: title left, borderless close right, animated dismiss via sheet.
             DomChatSheetHeader(
                 title = if (isPerChatMode) "Chat Context Allocation" else "Global Context Budget",
-                subtitle = "Token window & capacity division sliders",
                 onCloseClick = { onDismissRequest() },
             )
-
-            Spacer(modifier = Modifier.height(14.dp))
 
             Column(
                 modifier = Modifier

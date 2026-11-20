@@ -385,40 +385,36 @@ fun PromptPresetsBottomSheet(
             item {
                 DomChatSheetHeader(
                     title = "Prompt Presets",
+                    onCloseClick = {
+                        if (isEditingOrCreating) {
+                            isEditingOrCreating = false
+                        } else {
+                            onDismissRequest()
+                        }
+                    },
                     actions = {
-                    if (!isEditingOrCreating) {
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                openCreate()
-                            },
-                            shape = CircleShape,
-                            color = Color.Transparent,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = "New Preset",
-                                tint = Color.White.copy(alpha = 0.92f),
-                                modifier = Modifier.padding(8.dp).size(20.dp)
-                            )
+                        if (!isEditingOrCreating) {
+                            Surface(
+                                onClick = {
+                                    haptics.perform(HapticPattern.Pop)
+                                    openCreate()
+                                },
+                                shape = CircleShape,
+                                color = Color.Transparent,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.size(36.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = "New Preset",
+                                    tint = Color.White.copy(alpha = 0.92f),
+                                    modifier = Modifier.padding(8.dp).size(20.dp)
+                                )
+                            }
                         }
-                    } else {
-                        IconButton(
-                            onClick = { isEditingOrCreating = false },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Cancel",
-                                tint = Color.White.copy(alpha = 0.7f),
-                            )
-                        }
-                    }
-                },
-            )
-        }
+                    },
+                )
+            }
 
         item {
             // Search bar at top

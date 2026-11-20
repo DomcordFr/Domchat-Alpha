@@ -1464,6 +1464,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             onDismissRequest = { showExportDialogFor = null },
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
             containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Dialog),
             title = {
                 me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
                 Text(
@@ -1473,9 +1474,15 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DomChatGlassPillButton(
-                        text = "SillyTavern Character Card (PNG)",
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Choose an export format for this character:",
+                        fontSize = 13.sp,
+                        color = Color(0xFFAAAAAA)
+                    )
+
+                    // Option 1: SillyTavern Character Card PNG
+                    Surface(
                         onClick = {
                             val target = char
                             showExportDialogFor = null
@@ -1491,11 +1498,65 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 }
                             }
                         },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF141520).copy(alpha = 0.85f),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Download,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Character Card",
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "PNG",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Embedded avatar for SillyTavern, Agnai & Chub",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF9E9EAA)
+                                )
+                            }
+                        }
+                    }
 
-                    DomChatGlassPillButton(
-                        text = "Character Card V2 (JSON)",
+                    // Option 2: Character Card V2 JSON
+                    Surface(
                         onClick = {
                             val target = char
                             showExportDialogFor = null
@@ -1507,8 +1568,62 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 exportJsonLauncher.launch("${target.name.replace(" ", "_")}.json")
                             }
                         },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF141520).copy(alpha = 0.85f),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Download,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Character Card V2",
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "JSON",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Standard V2 JSON spec with all character data",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF9E9EAA)
+                                )
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {},
@@ -3922,7 +4037,7 @@ private fun CharacterActionPopover(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Share,
+                                    imageVector = Icons.Rounded.Download,
                                     contentDescription = "Export",
                                     tint = Color.White,
                                     modifier = Modifier.size(18.dp)

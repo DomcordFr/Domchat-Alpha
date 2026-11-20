@@ -117,6 +117,7 @@ fun DomChatSheetHeader(
     actions: (@Composable () -> Unit)? = null,
     onCloseClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    showDivider: Boolean = true,
 ) {
     val dismiss = LocalSheetDismiss.current
     Column(modifier = modifier) {
@@ -156,11 +157,13 @@ fun DomChatSheetHeader(
                 )
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp),
-            thickness = 0.5.dp,
-            color = Color.White.copy(alpha = 0.12f),
-        )
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp),
+                thickness = 0.5.dp,
+                color = Color.White.copy(alpha = 0.12f),
+            )
+        }
     }
 }
 

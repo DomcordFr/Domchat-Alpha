@@ -804,12 +804,24 @@ fun SkillEditorSheet(
                 onCloseClick = onDismiss,
             )
 
-            Column(
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+                thickness = 0.5.dp,
+                color = Color.White.copy(alpha = 0.12f),
+            )
+
+            Box(
                 modifier = Modifier
-                    .weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 76.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                 FormItem(label = { Text(stringResource(R.string.skills_page_name)) }) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1088,21 +1100,22 @@ fun SkillEditorSheet(
                 }
             }
 
-            // Smooth bottom chin with gradient
+            // Smooth bottom chin with top transparent to bottom black gradient
             Box(
                 modifier = Modifier
+                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(
                         Brush.verticalGradient(
                             listOf(
                                 Color.Transparent,
-                                Color(0xFF000000).copy(alpha = 0.25f),
-                                Color(0xFF000000).copy(alpha = 0.70f),
+                                Color(0xFF000000).copy(alpha = 0.50f),
+                                Color(0xFF000000).copy(alpha = 0.85f),
                                 Color(0xFF000000),
                             )
                         )
                     )
-                    .padding(top = 12.dp, bottom = 4.dp)
+                    .padding(top = 20.dp, bottom = 8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1168,6 +1181,7 @@ fun SkillEditorSheet(
                         }
                     }
                 }
+            }
             }
         }
     }

@@ -1353,6 +1353,14 @@ private fun UserMessageTurn(
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         // Persona Header: Timestamp + Persona Name + Avatar
+        val isDark = LocalDarkMode.current
+        val headerNameColor = if (isDark) Color(0xFFF4F4F6) else Color(0xFF18181B)
+        val headerTimeColor = if (isDark) Color(0xFFD4D4D8) else Color(0xFF52525B)
+        val textShadow = Shadow(
+            color = if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.45f),
+            offset = Offset(0f, 1f),
+            blurRadius = 3f
+        )
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1360,13 +1368,20 @@ private fun UserMessageTurn(
         ) {
             Text(
                 text = messageTimestamp,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.70f),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    shadow = textShadow
+                ),
+                color = headerTimeColor,
             )
             Text(
                 text = personaName,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    shadow = textShadow
+                ),
+                color = headerNameColor,
             )
             UIAvatar(
                 name = personaName,

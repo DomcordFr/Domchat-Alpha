@@ -761,24 +761,16 @@ private fun ProviderOverviewPage(
                         )
                     }
                 } else {
-                    itemsIndexed(remotePresets, key = { _, preset -> preset.name }) { index, preset ->
-                        val position = when {
-                            remotePresets.size == 1 -> ItemPosition.ONLY
-                            index == 0 -> ItemPosition.FIRST
-                            index == remotePresets.lastIndex -> ItemPosition.LAST
-                            else -> ItemPosition.MIDDLE
-                        }
+                    items(remotePresets, key = { preset -> preset.name }) { preset ->
                         ProviderPresetCard(
                             name = preset.name,
                             description = preset.description,
                             iconUri = preset.customIconUri,
                             isLocal = false,
-                            position = position,
+                            position = ItemPosition.ONLY,
                             onClick = { onSelectProvider(preset.toProviderSetting(), preset) },
                         )
-                        if (position != ItemPosition.LAST && position != ItemPosition.ONLY) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
@@ -1342,7 +1334,7 @@ private fun ProviderPresetCard(
 ) {
     SetupListCard(
         onClick = onClick,
-        shape = groupedCardShape(position),
+        shape = AppShapes.CardMedium,
         minHeight = 72.dp,
     ) {
         if (isLocal) {
@@ -1425,22 +1417,12 @@ private fun ProviderNanoGptCard(onClick: () -> Unit) {
         color = Color(0xFF000000),
         contentColor = Color(0xFFF2F2F7),
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF000000))
-                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(10.dp))
-                .padding(7.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.nanogpt_logo),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        Icon(
+            painter = painterResource(R.drawable.nanogpt_logo),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(40.dp)
+        )
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -1495,22 +1477,12 @@ private fun GuidedProviderCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (provider.name.equals("NanoGPT", ignoreCase = true) || provider.baseUrl.contains("nano-gpt.com")) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(AppShapes.CardMedium)
-                        .background(Color(0xFF000000))
-                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardMedium)
-                        .padding(9.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.nanogpt_logo),
-                        contentDescription = null,
-                        tint = Color(0xFFFFFFFF),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.nanogpt_logo),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(46.dp)
+                )
             } else {
                 AutoAIIconWithUrl(
                     name = provider.name,

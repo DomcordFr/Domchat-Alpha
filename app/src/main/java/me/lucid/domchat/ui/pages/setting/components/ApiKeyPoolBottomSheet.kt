@@ -33,6 +33,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -116,11 +117,16 @@ fun ApiKeyPoolBottomSheet(
         haptics.perform(HapticPattern.Selection)
     }
 
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
-        maxHeight = screenHeight * 0.85f,
+        containerColor = Color(0xFF000000),
+        shape = AppShapes.SettingBottomSheet,
+        maxHeight = maxSheetHeight,
+        dragHandle = {
+            DomChatSheetDragHandle()
+        }
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
@@ -551,14 +557,20 @@ private fun ApiKeyEditDialog(
     var key by remember { mutableStateOf(initialKey) }
     var keyVisible by remember { mutableStateOf(false) }
     val haptics = rememberPremiumHaptics()
+    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
 
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF000000),
-        dragHandle = { DomChatSheetDragHandle() },
+        shape = AppShapes.SettingBottomSheet,
+        maxHeight = maxSheetHeight,
         modifier = Modifier.imePadding(),
+        dragHandle = {
+            DomChatSheetDragHandle()
+        }
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -610,14 +622,22 @@ private fun ApiKeyEditDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(onClick = {
+                    scope.launch {
+                        sheetState.hide()
+                        onDismiss()
+                    }
+                }) {
                     Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
                 }
                 Surface(
                     onClick = {
                         if (key.isNotBlank()) {
                             haptics.perform(HapticPattern.Pop)
-                            onConfirm(name, key)
+                            scope.launch {
+                                sheetState.hide()
+                                onConfirm(name, key)
+                            }
                         }
                     },
                     enabled = key.isNotBlank(),
