@@ -639,15 +639,15 @@ private fun SkillCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .border(0.5.dp, Color.White.copy(alpha = 0.20f), CircleShape)
-                    .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)),
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
+                    .background(Color(0xFF000000)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = ModeIcons.getIcon(skill.icon ?: "category"),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
-                    tint = if (isDark) Color.White else Color.Black
+                    tint = Color.White
                 )
             }
 

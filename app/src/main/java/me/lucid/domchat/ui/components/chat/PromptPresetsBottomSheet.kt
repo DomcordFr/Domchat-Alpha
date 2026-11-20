@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -442,7 +443,7 @@ fun PromptPresetsBottomSheet(
                     .navigationBarsPadding()
                     .nestedScroll(overscrollAbsorber)
                     .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f),
-                contentPadding = PaddingValues(top = 10.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(top = 10.dp, bottom = 44.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
 

@@ -1910,12 +1910,15 @@ fun MinimalChatInput(
                     }
                 )
 
+                val styleScrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { styleScrollState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { styleScrollState.canScrollForward } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true)
-                        .verticalScroll(rememberScrollState()),
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
+                        .verticalScroll(styleScrollState)
+                        .padding(top = 8.dp, bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
 
@@ -2159,12 +2162,15 @@ fun MinimalChatInput(
                     onCloseClick = { showStreamingAnimationSheet = false }
                 )
 
+                val animScrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { animScrollState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { animScrollState.canScrollForward } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true)
-                        .verticalScroll(rememberScrollState()),
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
+                        .verticalScroll(animScrollState)
+                        .padding(top = 8.dp, bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
 
@@ -2286,12 +2292,15 @@ fun MinimalChatInput(
                     onCloseClick = { showAuthorsNoteSheet = false }
                 )
 
+                val noteScrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { noteScrollState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { noteScrollState.canScrollForward } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true)
-                        .verticalScroll(rememberScrollState()),
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
+                        .verticalScroll(noteScrollState)
+                        .padding(top = 8.dp, bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
@@ -2384,12 +2393,15 @@ fun MinimalChatInput(
                     onCloseClick = { showSamplersSheet = false }
                 )
 
+                val samplerScrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { samplerScrollState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { samplerScrollState.canScrollForward } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true)
-                        .verticalScroll(rememberScrollState()),
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
+                        .verticalScroll(samplerScrollState)
+                        .padding(top = 8.dp, bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
 
@@ -2804,12 +2816,15 @@ fun MinimalChatInput(
                     onCloseClick = { showWallpaperSheet = false }
                 )
 
+                val wallpaperScrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { wallpaperScrollState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { wallpaperScrollState.canScrollForward } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true, fadeHeight = 20f)
-                        .verticalScroll(rememberScrollState()),
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 24f)
+                        .verticalScroll(wallpaperScrollState)
+                        .padding(top = 12.dp, bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Status & Action row
@@ -3144,12 +3159,16 @@ fun MinimalChatInput(
                     onCloseClick = { showSearchPicker = false }
                 )
 
+                val searchScrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { searchScrollState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { searchScrollState.canScrollForward } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true)
-                        .verticalScroll(rememberScrollState()),
+                        .padding(horizontal = 20.dp)
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
+                        .verticalScroll(searchScrollState)
+                        .padding(top = 8.dp, bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     SearchPicker(
@@ -3885,15 +3904,15 @@ private fun MinimalPickerContent(
                 .height(400.dp),
         ) { pageIndex ->
             val pageScrollState = rememberScrollState()
-            val canScrollUp by remember { derivedStateOf { pageScrollState.value > 0 } }
-            val canScrollDown by remember { derivedStateOf { pageScrollState.value < pageScrollState.maxValue } }
+            val canScrollUp by remember { derivedStateOf { pageScrollState.canScrollBackward } }
+            val canScrollDown by remember { derivedStateOf { pageScrollState.canScrollForward } }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
                     .padding(horizontal = 16.dp)
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
                     .verticalScroll(pageScrollState)
-                    .padding(top = 10.dp, bottom = 24.dp),
+                    .padding(top = 10.dp, bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 when (pageIndex) {
@@ -4203,16 +4222,29 @@ private fun MinimalPickerContent(
                         val singleActiveSkillIcon = activeSkills.singleOrNull()?.icon
                         MinimalPickerItem(
                             icon = {
-                                Icon(
-                                    imageVector = if (singleActiveSkillIcon != null) {
-                                        ModeIcons.getIcon(singleActiveSkillIcon)
-                                    } else {
-                                        Icons.Rounded.Category
-                                    },
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (skillsActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF000000))
+                                        .border(
+                                            0.5.dp,
+                                            if (skillsActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (singleActiveSkillIcon != null) {
+                                            ModeIcons.getIcon(singleActiveSkillIcon)
+                                        } else {
+                                            Icons.Rounded.Category
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = if (skillsActive) MaterialTheme.colorScheme.primary else Color.White
+                                    )
+                                }
                             },
                             title = stringResource(R.string.minimal_input_skills),
                             subtitle = if (activeSkillsCount > 0) {

@@ -17,6 +17,11 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -210,18 +215,24 @@ private fun SkillSelectionCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = CircleShape,
-                color = if (isEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(40.dp)
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF000000))
+                    .border(
+                        0.5.dp,
+                        if (isEnabled) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = ModeIcons.getIcon(skill.icon ?: "category"),
-                        contentDescription = null,
-                        tint = if (isEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Icon(
+                    imageVector = ModeIcons.getIcon(skill.icon ?: "category"),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else Color.White
+                )
             }
 
             Column(
