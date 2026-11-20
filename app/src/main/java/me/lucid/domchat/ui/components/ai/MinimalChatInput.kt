@@ -5,6 +5,7 @@ import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.ui.motion.pressScale
 import androidx.compose.foundation.border
+import me.lucid.domchat.ui.modifier.fadeEdges
 import android.net.Uri
 import android.util.Log
 import android.view.View
@@ -1720,9 +1721,14 @@ fun MinimalChatInput(
         ) {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .fillMaxHeight(0.85f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                DomChatSheetHeader(
+                    title = "Select Model",
+                    onCloseClick = { showModelPickerSheet = false }
+                )
                 ModelList(
                     currentModel = assistant.chatModelId ?: settings.chatModelId,
                     providers = filteredProviders,
@@ -1853,49 +1859,29 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                // Header row with title and "Reset to Global"
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Text Styling",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                DomChatSheetHeader(
+                    title = "Text Styling",
+                    onCloseClick = { showTextStylingDialog = false },
+                    actions = {
                         DomChatGlassPillButton(
                             text = "Reset to Global",
                             icon = Icons.Rounded.Refresh,
                             onClick = { resetToGlobal() },
                             modifier = Modifier.height(30.dp),
                         )
-                        IconButton(
-                            onClick = { showTextStylingDialog = false },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Close",
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
                     }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    color = Color.White.copy(alpha = 0.12f)
                 )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
 
                 Text(
                     text = "Tap a style to configure its color and settings",
@@ -2091,18 +2077,17 @@ fun MinimalChatInput(
                         }
                     }
                 }
+            }
 
-                Spacer(Modifier.height(8.dp))
-                Button(
+            Spacer(Modifier.height(8.dp))
+                DomChatGlassPillButton(
+                    text = "Done",
                     onClick = {
                         showTextStylingDialog = false
                         haptics.perform(HapticPattern.Pop)
                     },
-                    modifier = Modifier.align(Alignment.End),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Done")
-                }
+                    modifier = Modifier.align(Alignment.End).padding(end = 20.dp).height(36.dp)
+                )
             }
         }
     }
@@ -2129,36 +2114,21 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                // Header row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "AI Streaming Animation",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(
-                        onClick = { showStreamingAnimationSheet = false }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
-                    color = Color.White.copy(alpha = 0.12f)
+                DomChatSheetHeader(
+                    title = "AI Streaming Animation",
+                    onCloseClick = { showStreamingAnimationSheet = false }
                 )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
 
                 Text(
                     text = "Customize how AI replies appear during streaming: fade in smoothly vs snapping word by word.",
@@ -2238,7 +2208,8 @@ fun MinimalChatInput(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(
+                    DomChatGlassPillButton(
+                        text = "Apply",
                         onClick = {
                             val newUi = currentUi.copy(
                                 enableStreamingFadeIn = fadeInDraft,
@@ -2248,13 +2219,13 @@ fun MinimalChatInput(
                             )
                             onUpdateAssistant(assistant.copy(uiSettings = newUi))
                             showStreamingAnimationSheet = false
-                        }
-                    ) {
-                        Text("Apply")
-                    }
+                        },
+                        modifier = Modifier.height(36.dp)
+                    )
                 }
             }
         }
+    }
     }
 
     if (showAuthorsNoteSheet) {
@@ -2267,94 +2238,81 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(bottom = 16.dp)
+                    .imePadding()
             ) {
-                // Header row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Author's Note",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(
-                        onClick = { showAuthorsNoteSheet = false }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
-                    color = Color.White.copy(alpha = 0.12f)
+                DomChatSheetHeader(
+                    title = "Author's Note",
+                    onCloseClick = { showAuthorsNoteSheet = false }
                 )
 
-                Text(
-                    text = "Injected into context depth to guide tone, scenario, or persona behavior.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.65f)
-                )
-                OutlinedTextField(
-                    value = noteDraft,
-                    onValueChange = { noteDraft = it },
-                    label = { Text("Author's Note Directive") },
-                    placeholder = { Text("[Writing style: vivid, slow-burn, emotional]") },
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 100.dp, max = 220.dp),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Injected into context depth to guide tone, scenario, or persona behavior.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.65f)
+                    )
+                    OutlinedTextField(
+                        value = noteDraft,
+                        onValueChange = { noteDraft = it },
+                        label = { Text("Author's Note Directive") },
+                        placeholder = { Text("[Writing style: vivid, slow-burn, emotional]") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp, max = 220.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Injection Depth",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "${depthDraft.toInt()} messages from bottom",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        DomChatSlider(
+                            value = depthDraft,
+                            onValueChange = { depthDraft = it },
+                            valueRange = 0f..10f,
+                            steps = 9
+                        )
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Injection Depth",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "${depthDraft.toInt()} messages from bottom",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    DomChatSlider(
-                        value = depthDraft,
-                        onValueChange = { depthDraft = it },
-                        valueRange = 0f..10f,
-                        steps = 9
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = { showAuthorsNoteSheet = false }) {
-                        Text("Cancel")
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            onUpdateAssistant(
-                                assistant.copy(
-                                    authorsNote = noteDraft.trim().takeIf { it.isNotEmpty() },
-                                    authorsNoteDepth = depthDraft.toInt()
-                                )
-                            )
-                            showAuthorsNoteSheet = false
+                        TextButton(onClick = { showAuthorsNoteSheet = false }) {
+                            Text("Cancel", color = Color.White.copy(alpha = 0.7f))
                         }
-                    ) {
-                        Text("Save")
+                        Spacer(Modifier.width(8.dp))
+                        DomChatGlassPillButton(
+                            text = "Save",
+                            onClick = {
+                                onUpdateAssistant(
+                                    assistant.copy(
+                                        authorsNote = noteDraft.trim().takeIf { it.isNotEmpty() },
+                                        authorsNoteDepth = depthDraft.toInt()
+                                    )
+                                )
+                                showAuthorsNoteSheet = false
+                            },
+                            modifier = Modifier.height(36.dp)
+                        )
                     }
                 }
             }
@@ -2377,36 +2335,21 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                // Header row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Samplers & Generation",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(
-                        onClick = { showSamplersSheet = false }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
-                    color = Color.White.copy(alpha = 0.12f)
+                DomChatSheetHeader(
+                    title = "Samplers & Generation",
+                    onCloseClick = { showSamplersSheet = false }
                 )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
 
                 // Temperature
                 Surface(
@@ -2792,6 +2735,7 @@ fun MinimalChatInput(
             }
         }
     }
+}
 
     if (showWallpaperSheet) {
         val convId = conversation.id.toString()
@@ -2809,173 +2753,227 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState())
-                    .animateContentSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                // Header row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Per Chat Wallpaper",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(
-                        onClick = { showWallpaperSheet = false }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                DomChatGlassChip(
-                    text = if (existingConfig != null) "Set for this chat" else "No wallpaper set",
-                    accent = existingConfig != null
+                DomChatSheetHeader(
+                    title = "Per Chat Wallpaper",
+                    onCloseClick = { showWallpaperSheet = false }
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true, fadeHeight = 20f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    DomChatGlassPillButton(
-                        text = "Choose Wallpaper",
-                        onClick = {
-                            wallpaperPicker.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    // Status & Action row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        DomChatGlassChip(
+                            text = if (chatBgDraft != null) "Active for this chat" else "Using global wallpaper",
+                            accent = chatBgDraft != null
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            DomChatGlassPillButton(
+                                text = if (chatBgDraft == null) "Choose" else "Change",
+                                onClick = {
+                                    wallpaperPicker.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                }
                             )
-                        },
-                        modifier = Modifier.widthIn(max = 200.dp)
-                    )
-                    if (chatBgDraft != null) {
-                        DomChatGlassPillButton(
-                            text = "Remove",
-                            destructive = true,
-                            onClick = {
-                                chatBgDraft = null
+                            if (chatBgDraft != null) {
+                                DomChatGlassPillButton(
+                                    text = "Reset",
+                                    destructive = true,
+                                    onClick = { chatBgDraft = null }
+                                )
                             }
+                        }
+                    }
+
+                    // Live Wallpaper Preview Card
+                    val activeWpUri = chatBgDraft ?: settings.displaySetting.globalBackground
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clip(AppShapes.CardMedium)
+                            .border(
+                                BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                AppShapes.CardMedium
+                            )
+                            .background(Color(0xFF000000))
+                    ) {
+                        if (!activeWpUri.isNullOrBlank()) {
+                            AsyncImage(
+                                model = activeWpUri,
+                                contentDescription = "Wallpaper preview",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                            // Live dim overlay
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Color.Black.copy(
+                                            alpha = dimDraft.coerceIn(0f, 0.95f)
+                                        )
+                                    )
+                            )
+                            // Live blur overlay
+                            if (blurDraft > 0f) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(
+                                                        alpha = (blurDraft / 200f).coerceIn(0f, 0.5f)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                )
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No wallpaper selected (Pure OLED)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+
+                    // Blur Mode Segmented Tabs: Full Image vs Bottom Fade
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Blur Mode",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color.White
                         )
-                    }
-                }
-
-                // Blur Mode: Full Image vs Bottom Fade (animated glassy toggle tabs)
-                val fullTabBg by animateColorAsState(
-                    targetValue = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                    animationSpec = androidx.compose.animation.core.tween(180),
-                    label = "wallpaper_blur_mode_full_tab_bg"
-                )
-                val bottomFadeTabBg by animateColorAsState(
-                    targetValue = if (blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                    animationSpec = androidx.compose.animation.core.tween(180),
-                    label = "wallpaper_blur_mode_bottom_fade_tab_bg"
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Blur Mode", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = fullTabBg,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        ) {
-                            Text(
-                                "Full Image",
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                                color = Color.White
-                            )
-                        }
-
-                        Surface(
-                            onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            color = bottomFadeTabBg,
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        ) {
-                            Text(
-                                "Bottom Fade",
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-
-                // Blur slider (expanded up to 100dp)
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = if (isDarkMode) Color.White else Color.White)
-                        Text("${blurDraft.toInt()} dp", color = MaterialTheme.colorScheme.primary)
-                    }
-                    DomChatSlider(
-                        value = blurDraft,
-                        onValueChange = { blurDraft = it },
-                        valueRange = 0f..100f
-                    )
-                }
-
-                // If Bottom Fade, show Blur Height Reach slider
-                AnimatedVisibility(
-                    visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
-                    enter = expandVertically(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) +
-                            fadeIn(animationSpec = tween(200)),
-                    exit = shrinkVertically(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) +
-                           fadeOut(animationSpec = tween(180)),
-                ) {
-                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                            Text("${(blurHeightFractionDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
+                            val isFull = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL
+                            Surface(
+                                onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
+                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                                shape = AppShapes.CardMedium,
+                                color = Color(0xFF000000),
+                                border = if (isFull) BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
+                                         else BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        "Full Image",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = if (isFull) FontWeight.Bold else FontWeight.Medium),
+                                        color = if (isFull) Color.White else Color.White.copy(alpha = 0.60f)
+                                    )
+                                }
+                            }
+
+                            val isBottomFade = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE
+                            Surface(
+                                onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
+                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                                shape = AppShapes.CardMedium,
+                                color = Color(0xFF000000),
+                                border = if (isBottomFade) BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
+                                         else BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        "Bottom Fade",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = if (isBottomFade) FontWeight.Bold else FontWeight.Medium),
+                                        color = if (isBottomFade) Color.White else Color.White.copy(alpha = 0.60f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Background Blur Slider
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Background Blur", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                            Text("${blurDraft.toInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
                         }
                         DomChatSlider(
-                            value = blurHeightFractionDraft,
-                            onValueChange = { blurHeightFractionDraft = it },
-                            valueRange = 0.05f..1.0f
+                            value = blurDraft,
+                            onValueChange = { blurDraft = it },
+                            valueRange = 0f..100f
                         )
                     }
-                }
 
-                // Dim slider
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    // Blur Height Reach (only when Bottom Fade)
+                    AnimatedVisibility(
+                        visible = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE,
+                        enter = expandVertically(spring(0.85f, 380f)) + fadeIn(tween(200)),
+                        exit = shrinkVertically(spring(0.85f, 380f)) + fadeOut(tween(180))
                     ) {
-                        Text("Background Dim", style = MaterialTheme.typography.bodyMedium)
-                        Text("${(dimDraft * 100).toInt()}%", color = MaterialTheme.colorScheme.primary)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Blur Height Reach", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                Text("${(blurHeightFractionDraft * 100).toInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                            }
+                            DomChatSlider(
+                                value = blurHeightFractionDraft,
+                                onValueChange = { blurHeightFractionDraft = it },
+                                valueRange = 0.05f..1.0f
+                            )
+                        }
                     }
-                    DomChatSlider(
-                        value = dimDraft,
-                        onValueChange = { dimDraft = it },
-                        valueRange = 0f..0.95f
-                    )
-                }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
+                    // Background Dim Slider
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Background Dim", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                            Text("${(dimDraft * 100).toInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                        }
+                        DomChatSlider(
+                            value = dimDraft,
+                            onValueChange = { dimDraft = it },
+                            valueRange = 0f..0.95f
+                        )
+                    }
+
+                    // Save / Apply Button
                     Surface(
                         onClick = {
                             val updatedConfig = me.lucid.domchat.data.datastore.ConversationWallpaperConfig(
@@ -3002,22 +3000,21 @@ fun MinimalChatInput(
                             }
                             showWallpaperSheet = false
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
                         shape = AppShapes.ButtonPill,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush),
                     ) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Save for this chat",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                text = "Apply to This Chat",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                 color = Color.White,
-                                textAlign = TextAlign.Center,
                             )
                         }
                     }
@@ -3079,28 +3076,34 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .padding(bottom = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(bottom = 16.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.search_picker_title),
-                    style = MaterialTheme.typography.titleLarge
+                DomChatSheetHeader(
+                    title = stringResource(R.string.search_picker_title),
+                    onCloseClick = { showSearchPicker = false }
                 )
-                
-                SearchPicker(
-                    enableSearch = enableSearch,
-                    settings = settings,
-                    model = currentChatModel,
-                    preferBuiltInSearch = assistant.preferBuiltInSearch,
-                    onTogglePreferBuiltInSearch = { enabled ->
-                        onUpdateAssistant(assistant.copy(preferBuiltInSearch = enabled))
-                    },
-                    onToggleSearch = onToggleSearch,
-                    onUpdateSearchService = onUpdateSearchService,
-                    onDismiss = { showSearchPicker = false }
-                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SearchPicker(
+                        enableSearch = enableSearch,
+                        settings = settings,
+                        model = currentChatModel,
+                        preferBuiltInSearch = assistant.preferBuiltInSearch,
+                        onTogglePreferBuiltInSearch = { enabled ->
+                            onUpdateAssistant(assistant.copy(preferBuiltInSearch = enabled))
+                        },
+                        onToggleSearch = onToggleSearch,
+                        onUpdateSearchService = onUpdateSearchService,
+                        onDismiss = { showSearchPicker = false }
+                    )
+                }
             }
         }
     }
@@ -3760,19 +3763,28 @@ private fun MinimalPickerContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(bottom = 16.dp)
     ) {
+        DomChatSheetHeader(
+            title = "Add to Chat",
+            onCloseClick = onDismiss
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .liquidGlassSurface(
-                    shape = RoundedCornerShape(16.dp),
-                    fillColor = Color(0xFF000000).copy(alpha = 0.08f),
-                    borderWidth = 0.5.dp,
-                    specularBrush = SolidColor(Color.White.copy(alpha = 0.08f)),
-                )
+                .padding(horizontal = 16.dp, vertical = 6.dp)
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlassSurface(
+                        shape = RoundedCornerShape(16.dp),
+                        fillColor = Color(0xFF000000).copy(alpha = 0.55f),
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    )
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -3801,18 +3813,21 @@ private fun MinimalPickerContent(
                 }
             }
         }
+    }
 
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(350.dp)
+                .fadeEdges(fadeTop = true, fadeBottom = true)
         ) { pageIndex ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(horizontal = 16.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 when (pageIndex) {
                 0 -> {
@@ -4439,31 +4454,30 @@ private fun MinimalFileButtonGrouped(
     }
 }
 
-// Grouped file button icon-only variant (no text label) for compact picker display
+// Grouped file button with liquid glass and clean title-only display
 @Composable
 private fun MinimalPickerItem(
     icon: @Composable () -> Unit,
     title: String,
-    subtitle: String,
+    subtitle: String = "",
     onClick: () -> Unit
 ) {
-    val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val interactionSource = remember { MutableInteractionSource() }
-    val itemShape = RoundedCornerShape(14.dp)
+    val itemShape = RoundedCornerShape(16.dp)
     Surface(
         onClick = onClick,
         interactionSource = interactionSource,
         color = Color.Transparent,
-        contentColor = if (isDark) Color(0xFFF2F2F7) else Color.White,
+        contentColor = Color.White,
         shape = itemShape,
         border = null,
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(52.dp)
             .pressScale(interactionSource)
             .liquidGlassSurface(
                 shape = itemShape,
-                fillColor = Color(0xFF000000).copy(alpha = 0.40f),
+                fillColor = Color(0xFF000000).copy(alpha = 0.55f),
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
             )
@@ -4476,27 +4490,19 @@ private fun MinimalPickerItem(
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Box(
-                modifier = Modifier.size(26.dp),
+                modifier = Modifier.size(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 icon()
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (isDark) Color(0xFFF2F2F7) else Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.55f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

@@ -301,9 +301,9 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 Surface(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
-                                    color = if (selected) Color(0xFF141416) else Color(0xFF000000),
+                                    color = Color(0xFF000000),
                                     border = if (selected) {
-                                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.38f))
+                                        BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
                                     } else {
                                         BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                     },
@@ -320,7 +320,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                         ),
-                                        color = if (selected) Color.White else Color.White.copy(alpha = 0.65f)
+                                        color = if (selected) Color.White else Color.White.copy(alpha = 0.60f)
                                     )
                                 }
                             }
@@ -334,9 +334,9 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                 Surface(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
-                                    color = if (selected) Color(0xFF141416) else Color(0xFF000000),
+                                    color = Color(0xFF000000),
                                     border = if (selected) {
-                                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.38f))
+                                        BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
                                     } else {
                                         BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                     },
@@ -353,7 +353,7 @@ fun SettingContextBudgetPage(vm: SettingVM = koinViewModel()) {
                                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                         ),
-                                        color = if (selected) Color.White else Color.White.copy(alpha = 0.65f)
+                                        color = if (selected) Color.White else Color.White.copy(alpha = 0.60f)
                                     )
                                 }
                             }

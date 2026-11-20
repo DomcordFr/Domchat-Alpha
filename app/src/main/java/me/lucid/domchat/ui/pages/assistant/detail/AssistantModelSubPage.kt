@@ -208,9 +208,10 @@ fun AssistantModelSubPage(
                     Column(modifier = Modifier.padding(16.dp)) {
                         DomChatSlider(
                             value = assistant.temperature ?: 1.0f,
-                            onValueChange = { onUpdate(assistant.copy(temperature = it.toFixed(2).toFloatOrNull() ?: 0.6f)) },
+                            onValueChange = { onUpdate(assistant.copy(temperature = it.toFixed(2).toFloatOrNull() ?: 1.0f)) },
                             valueRange = 0f..2f,
-                            steps = 19,
+                            steps = 39,
+                            stickyPoints = listOf(0.0f, 0.7f, 1.0f, 1.2f, 1.5f, 2.0f),
                             modifier = Modifier.fillMaxWidth()
                         )
                         Row(
@@ -266,7 +267,8 @@ fun AssistantModelSubPage(
                             value = assistant.topP ?: 0.9f,
                             onValueChange = { onUpdate(assistant.copy(topP = it.toFixed(2).toFloatOrNull() ?: 0.9f)) },
                             valueRange = 0f..1f,
-                            steps = 9,
+                            steps = 19,
+                            stickyPoints = listOf(0.0f, 0.7f, 0.9f, 0.95f, 1.0f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -302,12 +304,11 @@ fun AssistantModelSubPage(
                             value = (assistant.topK ?: 40).toFloat(),
                             onValueChange = {
                                 val intVal = it.toInt().coerceAtLeast(1)
-                                if (intVal != (assistant.topK ?: 40)) {
-                                    haptics.perform(HapticPattern.Tick)
-                                }
                                 onUpdate(assistant.copy(topK = intVal))
                             },
                             valueRange = 1f..100f,
+                            steps = 99,
+                            stickyPoints = listOf(20f, 40f, 50f, 80f, 100f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -343,7 +344,8 @@ fun AssistantModelSubPage(
                             value = assistant.minP ?: 0.05f,
                             onValueChange = { onUpdate(assistant.copy(minP = it.toFixed(2).toFloatOrNull() ?: 0.05f)) },
                             valueRange = 0f..1f,
-                            steps = 19,
+                            steps = 39,
+                            stickyPoints = listOf(0.0f, 0.05f, 0.10f, 0.20f, 1.0f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -380,6 +382,7 @@ fun AssistantModelSubPage(
                             onValueChange = { onUpdate(assistant.copy(repetitionPenalty = it.toFixed(2).toFloatOrNull() ?: 1.1f)) },
                             valueRange = 1.0f..2.0f,
                             steps = 19,
+                            stickyPoints = listOf(1.0f, 1.05f, 1.10f, 1.15f, 1.20f, 1.50f, 2.0f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -416,6 +419,7 @@ fun AssistantModelSubPage(
                             onValueChange = { onUpdate(assistant.copy(frequencyPenalty = it.toFixed(2).toFloatOrNull() ?: 0.5f)) },
                             valueRange = -2.0f..2.0f,
                             steps = 39,
+                            stickyPoints = listOf(-2.0f, -1.0f, 0.0f, 0.5f, 1.0f, 2.0f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -452,6 +456,7 @@ fun AssistantModelSubPage(
                             onValueChange = { onUpdate(assistant.copy(presencePenalty = it.toFixed(2).toFloatOrNull() ?: 0.5f)) },
                             valueRange = -2.0f..2.0f,
                             steps = 39,
+                            stickyPoints = listOf(-2.0f, -1.0f, 0.0f, 0.5f, 1.0f, 2.0f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

@@ -1097,12 +1097,7 @@ private fun ModelSectionHeader(
     ) {
         if (isNanoGPT) {
             Box(
-                modifier = Modifier
-                    .size(18.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF000000))
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
-                    .padding(3.dp),
+                modifier = Modifier.size(18.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

@@ -29,6 +29,7 @@ import kotlin.math.roundToInt
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import androidx.compose.material.icons.rounded.Reorder
 import androidx.compose.material.icons.rounded.Download
+import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.core.net.toUri
 import me.lucid.domchat.utils.saveToDownloads
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
@@ -520,23 +521,29 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    scope.launch {
-                        val newChar = Assistant(name = "New Character")
-                        vm.addAssistant(newChar)
-                        navController.navigate(Screen.AssistantDetail(id = newChar.id.toString()))
-                    }
-                },
-                containerColor = Color.White,
-                contentColor = Color.Black,
-                shape = CircleShape,
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF000000))
+                    .border(1.dp, LiquidGlassTokens.SpecularBorderBrush, CircleShape)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        scope.launch {
+                            val newChar = Assistant(name = "New Character")
+                            vm.addAssistant(newChar)
+                            navController.navigate(Screen.AssistantDetail(id = newChar.id.toString()))
+                        }
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Add,
                     contentDescription = "Add Character",
-                    tint = Color.Black,
-                    modifier = Modifier.size(20.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -1463,7 +1470,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         AlertDialog(
             onDismissRequest = { showExportDialogFor = null },
             shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
+            containerColor = Color(0xFF000000),
             modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Dialog),
             title = {
                 me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -1499,7 +1506,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             }
                         },
                         shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFF141520).copy(alpha = 0.85f),
+                        color = Color(0xFF000000),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -1569,7 +1576,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             }
                         },
                         shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFF141520).copy(alpha = 0.85f),
+                        color = Color(0xFF000000),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -2420,16 +2427,23 @@ fun CharacterInspectorSheet(
                             Text("Start Chat", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
 
-                        OutlinedButton(
+                        Surface(
                             onClick = onEdit,
-                            modifier = Modifier.height(48.dp),
                             shape = RoundedCornerShape(14.dp),
-                            border = BorderStroke(0.5.dp, cardBorderColor),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = contentTextColor
-                            )
+                            color = Color.Transparent,
+                            modifier = Modifier
+                                .height(48.dp)
+                                .width(48.dp)
+                                .liquidGlassSurface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    borderWidth = 0.5.dp,
+                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                )
                         ) {
-                            Icon(Icons.Rounded.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
                         }
                     }
 
@@ -2440,28 +2454,54 @@ fun CharacterInspectorSheet(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedButton(
+                        Surface(
                             onClick = onExport,
-                            modifier = Modifier.weight(1f).height(40.dp),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(0.5.dp, cardBorderColor),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = contentTextColor)
+                            color = Color.Transparent,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .liquidGlassSurface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    borderWidth = 0.5.dp,
+                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                )
                         ) {
-                            Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(15.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Export", fontSize = 12.5.sp)
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Rounded.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Export", fontSize = 12.5.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                            }
                         }
 
-                        OutlinedButton(
+                        Surface(
                             onClick = onDuplicate,
-                            modifier = Modifier.weight(1f).height(40.dp),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(0.5.dp, cardBorderColor),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = contentTextColor)
+                            color = Color.Transparent,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .liquidGlassSurface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    borderWidth = 0.5.dp,
+                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                )
                         ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(15.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Clone", fontSize = 12.5.sp)
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Rounded.ContentCopy, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Clone", fontSize = 12.5.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                            }
                         }
 
                         Button(
@@ -4023,11 +4063,16 @@ private fun CharacterActionPopover(
                         Surface(
                             onClick = { onExport() },
                             shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFF000000),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            color = Color.Transparent,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(48.dp)
+                                .liquidGlassSurface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    borderWidth = 0.5.dp,
+                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                )
                         ) {
                             Row(
                                 modifier = Modifier

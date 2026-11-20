@@ -121,6 +121,21 @@ fun AssistantProfileSubPage(
         // ═══════════════════════════════════════════════════════════════════
         SettingsGroup(title = stringResource(R.string.assistant_profile_identity)) {
             SettingGroupInputItem(
+                title = "Character Name",
+                subtitle = "Base bot name used by system and card metadata",
+                content = {
+                    DebouncedTextField(
+                        value = assistant.name,
+                        onValueChange = { onUpdate(assistant.copy(name = it)) },
+                        stateKey = "${assistant.id}_name",
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        maxLines = 5,
+                        placeholder = stringResource(R.string.assistant_page_name_placeholder)
+                    )
+                }
+            )
+            SettingGroupInputItem(
                 title = "Display Name",
                 subtitle = "Name shown in Hub, lists, and character header",
                 content = {
@@ -129,7 +144,8 @@ fun AssistantProfileSubPage(
                         onValueChange = { onUpdate(assistant.copy(displayName = it.takeIf { it.isNotBlank() })) },
                         stateKey = "${assistant.id}_display",
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
+                        singleLine = false,
+                        maxLines = 5,
                         placeholder = stringResource(R.string.assistant_page_name_placeholder)
                     )
                 }
@@ -143,7 +159,8 @@ fun AssistantProfileSubPage(
                         onValueChange = { onUpdate(assistant.copy(chatName = it.takeIf { it.isNotBlank() })) },
                         stateKey = "${assistant.id}_chat",
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
+                        singleLine = false,
+                        maxLines = 5,
                         placeholder = stringResource(R.string.assistant_page_chat_name_placeholder)
                     )
                 }

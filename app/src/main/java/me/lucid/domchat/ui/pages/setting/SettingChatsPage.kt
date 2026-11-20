@@ -924,8 +924,6 @@ fun SettingChatsPage(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
-
                 // Header Card
                 Surface(
                     color = Color(0xFF000000),

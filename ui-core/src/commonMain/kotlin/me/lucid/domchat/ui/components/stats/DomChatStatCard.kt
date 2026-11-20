@@ -113,6 +113,7 @@ fun DomChatStatCard(
     subtitle: String? = null,
     border: BorderStroke? = null,
     iconBackgroundColor: Color = Color(0xFF000000),
+    iconBorder: BorderStroke? = null,
 ) {
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val defaultBorder = BorderStroke(
@@ -154,7 +155,7 @@ fun DomChatStatCard(
                     .size(36.dp)
                     .clip(AppShapes.Chip)
                     .background(iconBackgroundColor)
-                    .border(BorderStroke(0.5.dp, defaultBorder.brush), AppShapes.Chip),
+                    .border(iconBorder ?: BorderStroke(0.5.dp, defaultBorder.brush), AppShapes.Chip),
                 contentAlignment = Alignment.Center,
             ) {
                 icon()

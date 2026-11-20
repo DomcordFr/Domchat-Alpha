@@ -288,7 +288,7 @@ private fun TemplateCard(
 ) {
     val isDark = LocalDarkMode.current
     val cardShape = AppShapes.CardMedium
-    val cardFill = if (isDark) Color(0xFF141520).copy(alpha = 0.70f) else Color.White.copy(alpha = 0.80f)
+    val cardFill = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.90f)
 
     Card(
         onClick = onClick,
@@ -315,13 +315,14 @@ private fun TemplateCard(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (isDark) Color.White else MaterialTheme.colorScheme.primary
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
+                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -340,7 +341,7 @@ private fun ActionPill(
 ) {
     val pillShape = RoundedCornerShape(24.dp)
     val isDark = LocalDarkMode.current
-    val pillFill = if (isDark) Color(0xFF141520).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.80f)
+    val pillFill = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.90f)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
@@ -368,10 +369,13 @@ private fun ActionPill(
                 )
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    color = if (isDark) Color.White.copy(alpha = 0.95f) else Color.Black.copy(alpha = 0.85f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
     }
 }
+

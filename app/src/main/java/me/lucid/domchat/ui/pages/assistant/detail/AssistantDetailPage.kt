@@ -540,7 +540,7 @@ fun AssistantDetailPage(
             composable(AssistantDetailRoutes.CONTEXT_MANAGEMENT) {
                 AssistantContextManagementSubPage(
                     assistant = assistant,
-                    hasSummarizerModelConfigured = false,
+                    hasSummarizerModelConfigured = settings.summarizerModelId != null,
                     onUpdate = { onUpdate(it) },
                     onNavigateToLorebooks = { navController.navigate(AssistantDetailRoutes.LOREBOOKS) },
                     onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
@@ -673,12 +673,14 @@ private fun AssistantDetailHome(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            val resolvedHeaderName = (assistant.displayName ?: assistant.name).ifBlank { stringResource(R.string.assistant_page_default_assistant) }
             Text(
-                text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-                style = MaterialTheme.typography.headlineMedium,
+                text = resolvedHeaderName,
+                style = if (resolvedHeaderName.length > 30) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 20.dp)
             )
 
             if (assistant.systemPrompt.isNotBlank()) {

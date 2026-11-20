@@ -28,6 +28,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -1354,8 +1356,8 @@ private fun UserMessageTurn(
     ) {
         // Persona Header: Timestamp + Persona Name + Avatar
         val isDark = LocalDarkMode.current
-        val headerNameColor = if (isDark) Color(0xFFF4F4F6) else Color(0xFF18181B)
-        val headerTimeColor = if (isDark) Color(0xFFD4D4D8) else Color(0xFF52525B)
+        val headerNameColor = if (isDark) Color.White else Color(0xFF18181B)
+        val headerTimeColor = if (isDark) Color.White.copy(alpha = 0.85f) else Color(0xFF52525B)
         val textShadow = Shadow(
             color = if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.45f),
             offset = Offset(0f, 1f),
@@ -1450,7 +1452,13 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(swipeModifier),
+                        .then(swipeModifier)
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = 0.86f,
+                                stiffness = 140f
+                            )
+                        ),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onToggleToolbar()
@@ -1522,12 +1530,12 @@ private fun UserMessageTurn(
                         targetState = node.selectIndex,
                         transitionSpec = {
                             val forward = targetState >= initialState
-                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
-                                if (forward) width / 4 else -width / 4
-                            } + fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
-                                if (forward) -width / 4 else width / 4
-                            } + fadeOut(animationSpec = tween(160, easing = FastOutLinearInEasing)))
+                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
+                                if (forward) width / 3 else -width / 3
+                            } + scaleIn(initialScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
+                                if (forward) -width / 3 else width / 3
+                            } + scaleOut(targetScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
                         },
                         label = "UserMessageVersionAnimatedContent"
                     ) { targetIdx ->
@@ -1860,8 +1868,8 @@ private fun AssistantMessageTurn(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         val isDark = LocalDarkMode.current
-                        val headerNameColor = if (isDark) Color(0xFFF4F4F6) else Color(0xFF18181B)
-                        val headerTimeColor = if (isDark) Color(0xFFD4D4D8) else Color(0xFF52525B)
+                        val headerNameColor = if (isDark) Color.White else Color(0xFF18181B)
+                        val headerTimeColor = if (isDark) Color.White.copy(alpha = 0.85f) else Color(0xFF52525B)
                         val textShadow = Shadow(
                             color = if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.45f),
                             offset = Offset(0f, 1f),
@@ -1947,8 +1955,8 @@ private fun AssistantMessageTurn(
                         }
                         if (showModelName) {
                             val isDark = LocalDarkMode.current
-                            val headerNameColor = if (isDark) Color(0xFFF4F4F6) else Color(0xFF18181B)
-                            val headerTimeColor = if (isDark) Color(0xFFD4D4D8) else Color(0xFF52525B)
+                            val headerNameColor = if (isDark) Color.White else Color(0xFF18181B)
+                            val headerTimeColor = if (isDark) Color.White.copy(alpha = 0.85f) else Color(0xFF52525B)
                             val textShadow = Shadow(
                                 color = if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.45f),
                                 offset = Offset(0f, 1f),
@@ -2020,8 +2028,8 @@ private fun AssistantMessageTurn(
                         .then(assistantSwipeModifier)
                         .animateContentSize(
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = 550f
+                                dampingRatio = 0.86f,
+                                stiffness = 140f
                             )
                         ),
                     onClick = handleBubbleClick,
@@ -2064,12 +2072,12 @@ private fun AssistantMessageTurn(
                         targetState = assistantNode.selectIndex,
                         transitionSpec = {
                             val forward = targetState >= initialState
-                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
-                                if (forward) width / 4 else -width / 4
-                            } + fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
-                                if (forward) -width / 4 else width / 4
-                            } + fadeOut(animationSpec = tween(160, easing = FastOutLinearInEasing)))
+                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
+                                if (forward) width / 3 else -width / 3
+                            } + scaleIn(initialScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
+                                if (forward) -width / 3 else width / 3
+                            } + scaleOut(targetScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
                         },
                         label = "ChatMessageVersionAnimatedContent"
                     ) { targetIdx ->
@@ -2186,8 +2194,12 @@ private fun AssistantMessageTurn(
                 targetState = assistantNode.selectIndex,
                 transitionSpec = {
                     val isForward = targetState > initialState
-                    (slideInHorizontally(animationSpec = tween(220)) { width -> if (isForward) width / 5 else -width / 5 } + fadeIn(animationSpec = tween(220))) togetherWith
-                        (slideOutHorizontally(animationSpec = tween(220)) { width -> if (isForward) -width / 5 else width / 5 } + fadeOut(animationSpec = tween(220)))
+                    (slideInHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width -> if (isForward) width / 3 else -width / 3 } +
+                        scaleIn(initialScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) +
+                        fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
+                        (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width -> if (isForward) -width / 3 else width / 3 } +
+                        scaleOut(targetScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) +
+                        fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
                 },
                 label = "assistant_message_content_switch"
             ) { targetIdx ->
@@ -2199,8 +2211,8 @@ private fun AssistantMessageTurn(
                         .then(assistantSwipeModifier)
                         .animateContentSize(
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = 550f
+                                dampingRatio = 0.86f,
+                                stiffness = 140f
                             )
                         ),
                     verticalArrangement = Arrangement.spacedBy(elementSpacing)
@@ -2438,6 +2450,12 @@ private fun AssistantThinkingDropdown(
     Column(
         modifier = modifier
             .widthIn(max = maxWidth)
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = 0.86f,
+                    stiffness = 120f
+                )
+            )
             .clip(shape)
             .then(
                 if (isTransparentStyle) {
@@ -2507,10 +2525,19 @@ private fun AssistantThinkingDropdown(
 
         AnimatedVisibility(
             visible = expanded,
-            enter = expandVertically(spring(0.82f, 300f)) + fadeIn(spring(1f, 1300f)),
-            exit = shrinkVertically(spring(0.82f, 300f)) + fadeOut(spring(1f, 1300f))
+            enter = expandVertically(spring(dampingRatio = 0.88f, stiffness = 200f)) + fadeIn(tween(260)),
+            exit = shrinkVertically(spring(dampingRatio = 0.88f, stiffness = 200f)) + fadeOut(tween(200))
         ) {
-            Column(modifier = Modifier.padding(top = 8.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = 0.86f,
+                            stiffness = 120f
+                        )
+                    )
+            ) {
                 MarkdownBlock(
                     content = totalReasoningText,
                     paragraphSpacing = 8.dp,

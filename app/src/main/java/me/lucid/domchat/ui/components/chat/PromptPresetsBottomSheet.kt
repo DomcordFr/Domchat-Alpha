@@ -25,6 +25,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Velocity
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.modifier.fadeEdges
 import java.util.Locale
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.foundation.layout.Arrangement
@@ -122,13 +123,12 @@ private fun PositionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selectedColor = MaterialTheme.colorScheme.primary
     Surface(
         onClick = onClick,
-        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.06f),
+        color = Color(0xFF000000),
         shape = RoundedCornerShape(12.dp),
         border = if (selected) {
-            BorderStroke(0.5.dp, selectedColor)
+            BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
         } else {
             BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
         },
@@ -147,14 +147,14 @@ private fun PositionButton(
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     fontSize = 12.5.sp
                 ),
-                color = if (selected) selectedColor else Color.White,
+                color = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
                 maxLines = 1,
             )
             if (selected) {
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Selected",
-                    tint = selectedColor,
+                    tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -180,7 +180,7 @@ fun PromptPresetsBottomSheet(
 
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
-    val presetCardFill = if (isDark) Color(0xFFFFFFFF).copy(alpha = 0.05f) else Color.White.copy(alpha = 0.18f)
+    val presetCardFill = Color(0xFF000000).copy(alpha = 0.55f)
     @Composable
     fun glassSurface(shape: Shape): Modifier = if (isFrosted) {
         Modifier.frostedGlassSurface(
@@ -374,57 +374,63 @@ fun PromptPresetsBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
     ) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
-                .navigationBarsPadding()
-                .nestedScroll(overscrollAbsorber),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(bottom = 16.dp)
         ) {
-            item {
-                DomChatSheetHeader(
-                    title = "Prompt Presets",
-                    onCloseClick = {
-                        if (isEditingOrCreating) {
-                            isEditingOrCreating = false
-                        } else {
-                            onDismissRequest()
+            DomChatSheetHeader(
+                title = "Prompt Presets",
+                onCloseClick = {
+                    if (isEditingOrCreating) {
+                        isEditingOrCreating = false
+                    } else {
+                        onDismissRequest()
+                    }
+                },
+                actions = {
+                    if (!isEditingOrCreating) {
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                openCreate()
+                            },
+                            shape = CircleShape,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = "New Preset",
+                                tint = Color.White.copy(alpha = 0.92f),
+                                modifier = Modifier.padding(8.dp).size(20.dp)
+                            )
                         }
-                    },
-                    actions = {
-                        if (!isEditingOrCreating) {
-                            Surface(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    openCreate()
-                                },
-                                shape = CircleShape,
-                                color = Color.Transparent,
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier.size(36.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Add,
-                                    contentDescription = "New Preset",
-                                    tint = Color.White.copy(alpha = 0.92f),
-                                    modifier = Modifier.padding(8.dp).size(20.dp)
-                                )
-                            }
-                        }
-                    },
-                )
+                    }
+                },
+            )
+
+            if (!isEditingOrCreating) {
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp)) {
+                    DomChatSearchBar(
+                        value = presetSearchQuery,
+                        onValueChange = { presetSearchQuery = it },
+                        placeholder = "Search presets...",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
-        item {
-            // Search bar at top
-            DomChatSearchBar(
-                value = presetSearchQuery,
-                onValueChange = { presetSearchQuery = it },
-                placeholder = "Search presets...",
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            )
-        }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .navigationBarsPadding()
+                    .nestedScroll(overscrollAbsorber)
+                    .fadeEdges(fadeTop = true, fadeBottom = true),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
 
         item {
             // Action & scope controls: stable 2-row layout with Enable/Disable above scope & reset
@@ -831,6 +837,7 @@ fun PromptPresetsBottomSheet(
             Spacer(modifier = Modifier.height(14.dp))
         }
     }
+}
 
     // Preset delete confirmation dialog (glassy black, destructive)
     DomChatDestructiveConfirmDialog(

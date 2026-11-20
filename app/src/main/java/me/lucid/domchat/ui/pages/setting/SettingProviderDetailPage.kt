@@ -1763,6 +1763,7 @@ private fun ModelSettingsForm(
                                 }
                             )
                         }
+                        Spacer(modifier = Modifier.height(88.dp))
                     }
                 }
 
@@ -1803,6 +1804,7 @@ private fun ModelSettingsForm(
                                 onModelChange = onModelChange,
                             )
                         }
+                        Spacer(modifier = Modifier.height(88.dp))
                     }
                 }
             }
@@ -1968,8 +1970,6 @@ private fun ModelPickerSheet(
                 },
                 onCloseClick = onDismissRequest
             )
-
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
 
             androidx.compose.material3.OutlinedTextField(
                 value = filterText,
@@ -2206,8 +2206,6 @@ private fun AddNewModelSheet(
                 onCloseClick = onDismissRequest
             )
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
-
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -2215,9 +2213,7 @@ private fun AddNewModelSheet(
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 76.dp)
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     ModelSettingsForm(
                         model = modelState,
@@ -2233,15 +2229,13 @@ private fun AddNewModelSheet(
                         .fillMaxWidth()
                         .background(
                             Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    Color(0xFF000000).copy(alpha = 0.50f),
-                                    Color(0xFF000000).copy(alpha = 0.85f),
-                                    Color(0xFF000000),
-                                )
+                                0.0f to Color.Transparent,
+                                0.30f to Color(0xFF000000).copy(alpha = 0.50f),
+                                0.65f to Color(0xFF000000).copy(alpha = 0.90f),
+                                1.0f to Color(0xFF000000),
                             )
                         )
-                        .padding(horizontal = 4.dp, vertical = 12.dp)
+                        .padding(top = 48.dp, bottom = 12.dp, start = 4.dp, end = 4.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -3525,8 +3519,6 @@ private fun EditModelSheet(
                 onCloseClick = onDismissRequest
             )
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
-
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -3534,9 +3526,7 @@ private fun EditModelSheet(
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 76.dp)
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     ModelSettingsForm(
                         model = editingModel,
@@ -3552,15 +3542,13 @@ private fun EditModelSheet(
                         .fillMaxWidth()
                         .background(
                             Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    Color(0xFF000000).copy(alpha = 0.50f),
-                                    Color(0xFF000000).copy(alpha = 0.85f),
-                                    Color(0xFF000000),
-                                )
+                                0.0f to Color.Transparent,
+                                0.30f to Color(0xFF000000).copy(alpha = 0.50f),
+                                0.65f to Color(0xFF000000).copy(alpha = 0.90f),
+                                1.0f to Color(0xFF000000),
                             )
                         )
-                        .padding(horizontal = 4.dp, vertical = 12.dp)
+                        .padding(top = 48.dp, bottom = 12.dp, start = 4.dp, end = 4.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

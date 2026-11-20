@@ -945,11 +945,6 @@ private fun EntryEditorSheet(
                 badge = { AutoSaveIndicator(visible = isAutoSaving) },
                 onCloseClick = { dismissEditor() },
             )
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                thickness = 0.5.dp,
-                color = Color.White.copy(alpha = 0.12f)
-            )
 
             FormItem(
                 label = { Text(stringResource(R.string.lorebook_entry_name)) }
@@ -1353,11 +1348,6 @@ private fun LorebookEditorSheet(
                 badge = { AutoSaveIndicator(visible = isAutoSaving) },
                 onCloseClick = { dismissEditor() }
             )
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                thickness = 0.5.dp,
-                color = Color.White.copy(alpha = 0.12f)
-            )
 
             // Cover picker + Name input inline
             Row(
@@ -1654,12 +1644,7 @@ private fun AssistantLorebookToggleSheet(
                 title = lorebook.name.ifEmpty { stringResource(R.string.lorebooks_page_unnamed) },
                 onCloseClick = onDismiss
             )
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                thickness = 0.5.dp,
-                color = Color.White.copy(alpha = 0.12f)
-            )
-            
+
             assistants.forEachIndexed { index, assistant ->
                 val isEnabled = assistant.enabledLorebookIds.contains(lorebook.id)
                 

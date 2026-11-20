@@ -1615,7 +1615,7 @@ private fun ChooseProviderSheet(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(24.dp)),
+                                .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.CardMedium),
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
                             color = Color(0xFF000000),
                         ) {

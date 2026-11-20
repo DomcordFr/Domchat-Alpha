@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.OutlinedTextField
@@ -207,14 +208,19 @@ fun ReasoningPicker(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                    .padding(bottom = 16.dp),
             ) {
                 DomChatSheetHeader(
                     title = "Thinking Budget",
                     onCloseClick = onDismissRequest,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 6.dp)
+                        .fadeEdges(fadeTop = true, fadeBottom = true)
+                        .verticalScroll(rememberScrollState()),
+                ) {
                 when (config.type) {
                 ReasoningModeType.BINARY -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -354,10 +360,11 @@ fun ReasoningPicker(
                             }
                         }
                     }
-                }
             }
         }
     }
+}
+}
 }
 }
 
@@ -372,7 +379,7 @@ private fun ReasoningOptionItem(
     isAmoled: Boolean  // Only use Color.Black when actually in OLED mode
 ) {
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
-    val itemShape = RoundedCornerShape(26.dp)
+    val itemShape = RoundedCornerShape(22.dp)
     
     val isDark = LocalDarkMode.current
     val targetBg = if (selected) {
@@ -382,33 +389,33 @@ private fun ReasoningOptionItem(
     }
     val animatedBg by animateColorAsState(
         targetValue = targetBg,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+        animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
         label = "reasoning_bg"
     )
     val animatedTitleColor by animateColorAsState(
         targetValue = if (selected) Color.White else (if (isDark) Color(0xFFEEEEEE) else MaterialTheme.colorScheme.onSurface),
-        animationSpec = spring(stiffness = 400f),
+        animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
         label = "reasoning_title_color"
     )
     val animatedSubtitleColor by animateColorAsState(
         targetValue = if (selected) Color.White.copy(alpha = 0.75f) else (if (isDark) Color(0xFFAAAAAA) else MaterialTheme.colorScheme.onSurfaceVariant),
-        animationSpec = spring(stiffness = 400f),
+        animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
         label = "reasoning_subtitle_color"
     )
     val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
-    val targetBorderWidth = if (selected) 1.dp else 0.5.dp
-    val animatedBorderWidth by animateDpAsState(
-        targetValue = targetBorderWidth,
-        animationSpec = spring(stiffness = 400f),
-        label = "reasoning_border_width"
-    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(itemShape)
-            .border(animatedBorderWidth, borderBrush, itemShape)
+            .border(0.5.dp, borderBrush, itemShape)
             .background(animatedBg)
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = 0.85f,
+                    stiffness = 300f
+                )
+            )
             .clickable {
                 haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
                 onClick()
@@ -441,8 +448,8 @@ private fun ReasoningOptionItem(
                 )
                 AnimatedVisibility(
                     visible = selected,
-                    enter = fadeIn(spring(stiffness = 400f)) + scaleIn(spring(stiffness = 400f)),
-                    exit = fadeOut(spring(stiffness = 400f)) + scaleOut(spring(stiffness = 400f))
+                    enter = fadeIn(spring(dampingRatio = 0.85f, stiffness = 300f)) + scaleIn(spring(dampingRatio = 0.85f, stiffness = 300f)),
+                    exit = fadeOut(spring(dampingRatio = 0.85f, stiffness = 300f)) + scaleOut(spring(dampingRatio = 0.85f, stiffness = 300f))
                 ) {
                     Surface(
                         shape = RoundedCornerShape(10.dp),

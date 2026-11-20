@@ -39,9 +39,9 @@ fun SummarizerModelTipBanner(
 
     Surface(
         onClick = onClick,
-        color = if (isEmbedded) Color.Transparent else (if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.40f)),
+        color = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.60f),
         shape = bannerShape,
-        border = if (isEmbedded) null else BorderStroke(0.5.dp, borderBrush),
+        border = BorderStroke(0.5.dp, borderBrush),
         modifier = modifier.fillMaxWidth()
     ) {
         Row(

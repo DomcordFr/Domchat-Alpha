@@ -115,7 +115,6 @@ import me.lucid.domchat.ui.components.ui.permission.rememberPermissionState
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
-import me.lucid.domchat.ui.hooks.rememberColorMode
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.rememberSharedPreferenceBoolean
 import androidx.compose.foundation.BorderStroke
@@ -128,7 +127,6 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupInputItem
-import me.lucid.domchat.ui.theme.ColorMode
 import me.lucid.domchat.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.ui.window.DialogProperties
@@ -210,343 +208,14 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Chat Message Styles with Visual Representation
-            item {
-                SettingsGroup(
-                    title = "Chat Message Layout & Roleplay Style"
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        me.lucid.domchat.ui.components.chat.ChatMessageStyleSelector(
-                            selectedStyle = settings.displaySetting.chatMessageStyle,
-                            onStyleSelected = { newStyle ->
-                                vm.updateSettings(
-                                    settings.copy(
-                                        displaySetting = vm.settings.value.displaySetting.copy(chatMessageStyle = newStyle)
-                                    )
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-
-            // Theme & Interface Customization
-            item {
-                val isDark = LocalDarkMode.current
-                
-                SettingsGroup(
-                    title = stringResource(R.string.setting_page_theme_setting)
-                ) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                        SettingGroupItem(
-                            title = "Dynamic Color",
-                            subtitle = "Harmonize palette with device wallpaper accent colors",
-                            trailing = {
-                                HapticSwitch(
-                                    checked = settings.dynamicColor,
-                                    onCheckedChange = {
-                                        vm.updateSettings(settings.copy(dynamicColor = it))
-                                    }
-                                )
-                            }
-                        )
-                    }
-
-                    SettingGroupItem(
-                        title = "Custom Theme Engine",
-                        subtitle = "Build custom color palettes and shader parameters",
-                        trailing = {
-                            Surface(
-                                color = Color(0xFF000000),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
-                            ) {
-                                Text(
-                                    text = "More coming soon",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    )
-                }
-            }
-
-            // Global Wallpaper & Atmosphere
-            item {
-                val globalBg = settings.displaySetting.globalBackground
-                val globalDim = settings.displaySetting.globalBackgroundDim
-                val globalBlur = settings.displaySetting.globalBackgroundBlur
-                val globalWallpaperPicker = rememberLauncherForActivityResult(
-                    ActivityResultContracts.PickVisualMedia()
-                ) { uri ->
-                    if (uri != null) {
-                        val localPath = me.lucid.domchat.utils.ImageUtils.copyImageToAppStorage(
-                            context = context,
-                            sourceUri = uri,
-                            subDir = "wallpapers",
-                            fileName = "wp_global_${System.currentTimeMillis()}.jpg"
-                        )
-                        if (localPath != null) {
-                            haptics.perform(HapticPattern.Pop)
-                            updateDisplaySetting(
-                                vm.settings.value.displaySetting.copy(globalBackground = localPath)
-                            )
-                        }
-                    }
-                }
-
-                SettingsGroup(
-                    title = "Wallpaper & Atmosphere"
-                ) {
-                    SettingGroupItem(
-                        title = "Global Wallpaper",
-                        subtitle = if (globalBg.isNullOrBlank()) "No wallpaper set (pure OLED canvas)" else "Custom wallpaper active across all chats",
-                        trailing = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (!globalBg.isNullOrBlank()) {
-                                    IconButton(
-                                        onClick = {
-                                            haptics.perform(HapticPattern.Pop)
-                                            updateDisplaySetting(
-                                                vm.settings.value.displaySetting.copy(globalBackground = null)
-                                            )
-                                        }
-                                    ) {
-                                        Icon(
-                                            Icons.Rounded.Delete,
-                                            contentDescription = "Remove Wallpaper",
-                                            tint = Color(0xFFFF453A)
-                                        )
-                                    }
-                                }
-                                DomChatGlassPillButton(
-                                    text = if (globalBg.isNullOrBlank()) "Choose" else "Change",
-                                    onClick = {
-                                        globalWallpaperPicker.launch(
-                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    )
-
-                    // Live Wallpaper Preview Card under Global Wallpaper
-                    if (!globalBg.isNullOrBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(140.dp)
-.clip(AppShapes.CardMedium)
-                                    .border(
-                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                                        AppShapes.CardMedium
-                                    )
-                                    .background(Color(0xFF000000))
-                            ) {
-                                AsyncImage(
-                                    model = globalBg,
-                                    contentDescription = "Global wallpaper preview",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop,
-                                )
-                                // Live dim overlay applied to preview
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Color.Black.copy(
-                                                alpha = globalDim.coerceIn(0f, 0.95f)
-                                            )
-                                        )
-                                )
-                                // Live blur overlay (bottom scrim) applied to preview
-                                if (globalBlur > 0f) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    colors = listOf(
-                                                        Color.Transparent,
-                                                        Color.Black.copy(
-                                                            alpha = (globalBlur / 200f).coerceIn(0f, 0.5f)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Progressive Disclosure: Dimming and Blur sliders only show when wallpaper is set
-                    AnimatedVisibility(visible = !globalBg.isNullOrBlank()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            var localDim by remember(globalDim) { mutableFloatStateOf(globalDim) }
-                            var localBlur by remember(globalBlur) { mutableFloatStateOf(globalBlur) }
-                            var localFadeHeight by remember(settings.displaySetting.globalBackgroundBlurHeightFraction) {
-                                mutableFloatStateOf(settings.displaySetting.globalBackgroundBlurHeightFraction)
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Wallpaper Dimming", style = MaterialTheme.typography.bodyMedium)
-                                Text("${(localDim * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localDim,
-                                onValueChange = {
-                                    if ((it * 100).toInt() != (localDim * 100).toInt()) {
-                                        haptics.perform(HapticPattern.Tick)
-                                    }
-                                    localDim = it
-                                },
-                                onValueChangeFinished = {
-                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundDim = localDim))
-                                },
-                                valueRange = 0f..0.95f
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Wallpaper Blur", style = MaterialTheme.typography.bodyMedium)
-                                Text("${localBlur.roundToInt()} dp", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                            }
-                            DomChatSlider(
-                                value = localBlur,
-                                onValueChange = {
-                                    if (it.roundToInt() != localBlur.roundToInt()) {
-                                        haptics.perform(HapticPattern.Tick)
-                                    }
-                                    localBlur = it
-                                },
-                                onValueChangeFinished = {
-                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlur = localBlur))
-                                },
-                                valueRange = 0f..100f
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Blur Style", style = MaterialTheme.typography.bodyMedium)
-                                Select(
-                                    options = BackgroundBlurMode.entries,
-                                    selectedOption = settings.displaySetting.backgroundBlurMode,
-                                    onOptionSelected = {
-                                        haptics.perform(HapticPattern.Tick)
-                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(backgroundBlurMode = it))
-                                    },
-                                    optionToString = { mode ->
-                                        when (mode) {
-                                            BackgroundBlurMode.FULL -> "Full Image"
-                                            BackgroundBlurMode.BOTTOM_FADE -> "Bottom Fade"
-                                        }
-                                    },
-                                    modifier = Modifier.wrapContentWidth()
-                                )
-                            }
-
-                            if (settings.displaySetting.backgroundBlurMode == BackgroundBlurMode.BOTTOM_FADE) {
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = expandVertically() + fadeIn(),
-                                    exit = shrinkVertically() + fadeOut(),
-                                ) {
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = "Fade Blur Height",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            Text("${(localFadeHeight * 100).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = Color.White)
-                                        }
-                                        DomChatSlider(
-                                            value = localFadeHeight,
-                                            onValueChange = {
-                                                if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
-                                                    haptics.perform(HapticPattern.Tick)
-                                                }
-                                                localFadeHeight = it
-                                            },
-                                            onValueChangeFinished = {
-                                                updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
-                                            },
-                                            valueRange = 0.10f..1.0f
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Animation Speed
-            item {
-                SettingsGroup(
-                    title = "Animation Speed"
-                ) {
-                    SettingGroupItem(
-                        title = "Animation Speed",
-                        subtitle = "${settings.displaySetting.animationSpeed.title} (${settings.displaySetting.animationSpeed.subtitle})",
-                        trailing = {
-                            Select(
-                                options = AnimationSpeedLevel.entries,
-                                selectedOption = settings.displaySetting.animationSpeed,
-                                onOptionSelected = {
-                                    haptics.perform(HapticPattern.Tick)
-                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(animationSpeed = it))
-                                },
-                                optionToString = { it.title },
-                                modifier = Modifier.wrapContentWidth()
-                            )
-                        }
-                    )
-                }
-            }
-
             // =====================================================================
-            // Section 1: UI Appearance
+            // Section 1: Glass & Interface Appearance
             // =====================================================================
             item {
                 SettingsGroup(
-                    title = "UI Appearance"
+                    title = "Glass & Interface Appearance"
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)) {
                         // Glass mode segmented tabs: Liquid / Frosted, each showing a "glass" subtext.
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -625,9 +294,23 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 },
                             )
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                    SettingGroupItem(
+                        title = "Link UI & Bubbles",
+                        subtitle = "Synchronize glass style changes across UI and chat bubbles",
+                        trailing = {
+                            HapticSwitch(
+                                checked = linkedStyles,
+                                onCheckedChange = {
+                                    linkedStyles = it
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(linkUiAndBubbleStyle = it))
+                                }
+                            )
+                        }
+                    )
 
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -919,48 +602,26 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             }
                         }
                     }
-                }
-            }
 
-            item {
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    color = Color.White.copy(alpha = 0.08f),
-                )
-            }
-
-            // Link UI & Bubbles switch (placed between the two appearance sections)
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                        Text("Link UI & Bubbles", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            "When on, changing UI or Bubble glass style applies to both.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.65f)
-                        )
-                    }
-                    HapticSwitch(
-                        checked = linkedStyles,
-                        onCheckedChange = {
-                            linkedStyles = it
-                            updateDisplaySetting(vm.settings.value.displaySetting.copy(linkUiAndBubbleStyle = it))
+                    SettingGroupItem(
+                        title = "Custom Theme Engine",
+                        subtitle = "Build custom color palettes and shader parameters",
+                        trailing = {
+                            Surface(
+                                color = Color(0xFF000000),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                            ) {
+                                Text(
+                                    text = "More coming soon",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
                         }
                     )
                 }
-            }
-
-            item {
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    color = Color.White.copy(alpha = 0.08f),
-                )
             }
 
             // =====================================================================
@@ -970,66 +631,59 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 SettingsGroup(
                     title = "Chat Bubbles Appearance"
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // Glass mode segmented tabs: Liquid / Frosted, each showing a "glass" subtext.
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            GlassModeTab(
-                                selected = bubbleIsGlass,
-                                label = "Liquid",
-                                subtitle = "glass",
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    if (linkedStyles) {
-                                        uiIsGlass = true
-                                        bubbleIsGlass = true
-                                        updateDisplaySetting(
-                                            vm.settings.value.displaySetting.copy(
-                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
-                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS,
-                                            )
-                                        )
-                                    } else {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        me.lucid.domchat.ui.components.chat.ChatMessageStyleSelector(
+                            selectedStyle = settings.displaySetting.chatMessageStyle,
+                            onStyleSelected = { newStyle ->
+                                vm.updateSettings(
+                                    settings.copy(
+                                        displaySetting = vm.settings.value.displaySetting.copy(chatMessageStyle = newStyle)
+                                    )
+                                )
+                            }
+                        )
+                    }
+
+                    if (!linkedStyles) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                            // Glass mode segmented tabs: Liquid / Frosted, each showing a "glass" subtext.
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                GlassModeTab(
+                                    selected = bubbleIsGlass,
+                                    label = "Liquid",
+                                    subtitle = "glass",
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
                                         bubbleIsGlass = true
                                         updateDisplaySetting(
                                             vm.settings.value.displaySetting.copy(
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.GLASS
                                             )
                                         )
-                                    }
-                                },
-                            )
-                            GlassModeTab(
-                                selected = !bubbleIsGlass,
-                                label = "Frosted",
-                                subtitle = "glass",
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    if (linkedStyles) {
-                                        uiIsGlass = false
-                                        bubbleIsGlass = false
-                                        updateDisplaySetting(
-                                            vm.settings.value.displaySetting.copy(
-                                                liquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED,
-                                                bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED,
-                                            )
-                                        )
-                                    } else {
+                                    },
+                                )
+                                GlassModeTab(
+                                    selected = !bubbleIsGlass,
+                                    label = "Frosted",
+                                    subtitle = "glass",
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
                                         bubbleIsGlass = false
                                         updateDisplaySetting(
                                             vm.settings.value.displaySetting.copy(
                                                 bubbleInterfaceStyle = me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED
                                             )
                                         )
-                                    }
-                                },
-                            )
+                                    },
+                                )
+                            }
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1242,16 +896,233 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
+            // =====================================================================
+            // Section 3: Wallpaper & Atmosphere
+            // =====================================================================
+            item {
+                val globalBg = settings.displaySetting.globalBackground
+                val globalDim = settings.displaySetting.globalBackgroundDim
+                val globalBlur = settings.displaySetting.globalBackgroundBlur
+                val globalWallpaperPicker = rememberLauncherForActivityResult(
+                    ActivityResultContracts.PickVisualMedia()
+                ) { uri ->
+                    if (uri != null) {
+                        val localPath = me.lucid.domchat.utils.ImageUtils.copyImageToAppStorage(
+                            context = context,
+                            sourceUri = uri,
+                            subDir = "wallpapers",
+                            fileName = "wp_global_${System.currentTimeMillis()}.jpg"
+                        )
+                        if (localPath != null) {
+                            haptics.perform(HapticPattern.Pop)
+                            updateDisplaySetting(
+                                vm.settings.value.displaySetting.copy(globalBackground = localPath)
+                            )
+                        }
+                    }
+                }
 
+                SettingsGroup(
+                    title = "Wallpaper & Atmosphere"
+                ) {
+                    SettingGroupItem(
+                        title = "Global Wallpaper",
+                        subtitle = if (globalBg.isNullOrBlank()) "No wallpaper set (pure OLED canvas)" else "Custom wallpaper active across all chats",
+                        trailing = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (!globalBg.isNullOrBlank()) {
+                                    IconButton(
+                                        onClick = {
+                                            haptics.perform(HapticPattern.Pop)
+                                            updateDisplaySetting(
+                                                vm.settings.value.displaySetting.copy(globalBackground = null)
+                                            )
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.Delete,
+                                            contentDescription = "Remove Wallpaper",
+                                            tint = Color(0xFFFF453A)
+                                        )
+                                    }
+                                }
+                                DomChatGlassPillButton(
+                                    text = if (globalBg.isNullOrBlank()) "Choose" else "Change",
+                                    onClick = {
+                                        globalWallpaperPicker.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    )
 
-            // Basic Settings
+                    // Live Wallpaper Preview Card under Global Wallpaper
+                    if (!globalBg.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp)
+                                    .clip(AppShapes.CardMedium)
+                                    .border(
+                                        BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                                        AppShapes.CardMedium
+                                    )
+                                    .background(Color(0xFF000000))
+                            ) {
+                                AsyncImage(
+                                    model = globalBg,
+                                    contentDescription = "Global wallpaper preview",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                )
+                                // Live dim overlay applied to preview
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Color.Black.copy(
+                                                alpha = globalDim.coerceIn(0f, 0.95f)
+                                            )
+                                        )
+                                )
+                                // Live blur overlay (bottom scrim) applied to preview
+                                if (globalBlur > 0f) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(
+                                                            alpha = (globalBlur / 200f).coerceIn(0f, 0.5f)
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Progressive Disclosure: Dimming and Blur sliders only show when wallpaper is set
+                    AnimatedVisibility(visible = !globalBg.isNullOrBlank()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            var localDim by remember(globalDim) { mutableFloatStateOf(globalDim) }
+                            var localBlur by remember(globalBlur) { mutableFloatStateOf(globalBlur) }
+                            var localFadeHeight by remember(settings.displaySetting.globalBackgroundBlurHeightFraction) {
+                                mutableFloatStateOf(settings.displaySetting.globalBackgroundBlurHeightFraction)
+                            }
+
+                            glassSliderRow(
+                                label = "Wallpaper Dimming",
+                                valueText = "${(localDim * 100).roundToInt()}%",
+                                value = localDim,
+                                onValueChange = {
+                                    if ((it * 100).toInt() != (localDim * 100).toInt()) {
+                                        haptics.perform(HapticPattern.Tick)
+                                    }
+                                    localDim = it
+                                },
+                                onFinished = {
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundDim = localDim))
+                                },
+                                valueRange = 0f..0.95f
+                            )
+
+                            glassSliderRow(
+                                label = "Wallpaper Blur",
+                                valueText = "${localBlur.roundToInt()} dp",
+                                value = localBlur,
+                                onValueChange = {
+                                    if (it.roundToInt() != localBlur.roundToInt()) {
+                                        haptics.perform(HapticPattern.Tick)
+                                    }
+                                    localBlur = it
+                                },
+                                onFinished = {
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlur = localBlur))
+                                },
+                                valueRange = 0f..100f
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Blur Style", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                                Select(
+                                    options = BackgroundBlurMode.entries,
+                                    selectedOption = settings.displaySetting.backgroundBlurMode,
+                                    onOptionSelected = {
+                                        haptics.perform(HapticPattern.Tick)
+                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(backgroundBlurMode = it))
+                                    },
+                                    optionToString = { mode ->
+                                        when (mode) {
+                                            BackgroundBlurMode.FULL -> "Full Image"
+                                            BackgroundBlurMode.BOTTOM_FADE -> "Bottom Fade"
+                                        }
+                                    },
+                                    modifier = Modifier.wrapContentWidth()
+                                )
+                            }
+
+                            if (settings.displaySetting.backgroundBlurMode == BackgroundBlurMode.BOTTOM_FADE) {
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut(),
+                                ) {
+                                    glassSliderRow(
+                                        label = "Fade Blur Height",
+                                        valueText = "${(localFadeHeight * 100).roundToInt()}%",
+                                        value = localFadeHeight,
+                                        onValueChange = {
+                                            if ((it * 100).toInt() != (localFadeHeight * 100).toInt()) {
+                                                haptics.perform(HapticPattern.Tick)
+                                            }
+                                            localFadeHeight = it
+                                        },
+                                        onFinished = {
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(globalBackgroundBlurHeightFraction = localFadeHeight))
+                                        },
+                                        valueRange = 0.10f..1.0f
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // =====================================================================
+            // Section 4: Chat Layout & Experience
+            // =====================================================================
             item {
                 var createNewConversationOnStart by rememberSharedPreferenceBoolean(
                     "create_new_conversation_on_start",
                     true
                 )
                 SettingsGroup(
-                    title = stringResource(R.string.setting_page_basic_settings)
+                    title = "Chat Layout & Experience"
                 ) {
                     SettingGroupItem(
                         title = stringResource(R.string.setting_display_page_create_new_conversation_on_start_title),
@@ -1265,6 +1136,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             )
                         }
                     )
+
                     SettingGroupItem(
                         title = stringResource(R.string.setting_display_page_notification_message_generated),
                         subtitle = stringResource(R.string.setting_display_page_notification_message_generated_desc),
@@ -1280,6 +1152,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             )
                         }
                     )
+
                     SettingGroupItem(
                         title = stringResource(R.string.setting_display_check_updates_title),
                         subtitle = stringResource(R.string.setting_display_check_updates_desc),
@@ -1295,26 +1168,31 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
-//            item {
-//                ListItem(
-//                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-//                    headlineContent = {
-//                        Text(stringResource(R.string.setting_display_page_developer_mode))
-//                    },
-//                    supportingContent = {
-//                        Text(stringResource(R.string.setting_display_page_developer_mode_desc))
-//                    },
-//                    trailingContent = {
-//                        HapticSwitch(
-//                            checked = settings.developerMode,
-//                            onCheckedChange = {
-//                                vm.updateSettings(settings.copy(developerMode = it))
-//                            }
-//                        )
-//                    },
-//                )
-//            }
-
+            // =====================================================================
+            // Section 5: Motion & Animations
+            // =====================================================================
+            item {
+                SettingsGroup(
+                    title = "Motion & Animations"
+                ) {
+                    SettingGroupItem(
+                        title = "Animation Speed",
+                        subtitle = "${settings.displaySetting.animationSpeed.title} (${settings.displaySetting.animationSpeed.subtitle})",
+                        trailing = {
+                            Select(
+                                options = AnimationSpeedLevel.entries,
+                                selectedOption = settings.displaySetting.animationSpeed,
+                                onOptionSelected = {
+                                    haptics.perform(HapticPattern.Tick)
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(animationSpeed = it))
+                                },
+                                optionToString = { it.title },
+                                modifier = Modifier.wrapContentWidth()
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -1330,50 +1208,31 @@ private fun RowScope.GlassModeTab(
     subtitle: String,
     onClick: () -> Unit,
 ) {
-    val animatedBg by androidx.compose.animation.animateColorAsState(
-        targetValue = if (selected) Color(0xFF000000) else Color.White.copy(alpha = 0.04f),
-        animationSpec = androidx.compose.animation.core.tween(250),
-        label = "glass_tab_bg"
-    )
-    val animatedBorderColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (selected) Color.White.copy(alpha = 0.40f) else Color.White.copy(alpha = 0.12f),
-        animationSpec = androidx.compose.animation.core.tween(250),
-        label = "glass_tab_border"
-    )
-    val animatedTextColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (selected) Color.White else Color.White.copy(alpha = 0.66f),
-        animationSpec = androidx.compose.animation.core.tween(250),
-        label = "glass_tab_text"
-    )
-    val animatedSubColor by androidx.compose.animation.animateColorAsState(
-        targetValue = if (selected) Color.White.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.45f),
-        animationSpec = androidx.compose.animation.core.tween(250),
-        label = "glass_tab_sub"
-    )
     Surface(
         modifier = Modifier
             .weight(1f)
-            .heightIn(min = 48.dp)
+            .heightIn(min = 52.dp)
             .clickable(onClick = onClick),
         shape = AppShapes.CardMedium,
-        color = animatedBg,
-        border = BorderStroke(0.5.dp, animatedBorderColor),
+        color = Color(0xFF000000),
+        border = if (selected) BorderStroke(1.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush)
+                 else BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
         tonalElevation = 0.dp,
     ) {
         Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = animatedTextColor,
+                color = if (selected) Color.White else Color.White.copy(alpha = 0.60f),
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = animatedSubColor,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selected) Color.White.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.40f),
             )
         }
     }
@@ -1393,25 +1252,40 @@ private fun glassSliderRow(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
+            )
+            Text(
+                text = valueText,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                textAlign = TextAlign.End
+            )
+        }
+        DomChatSlider(
+            value = value,
+            onValueChange = onValueChange,
+            onValueChangeFinished = onFinished,
+            valueRange = valueRange,
+            steps = 0,
         )
-        Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White)
     }
-    DomChatSlider(
-        value = value,
-        onValueChange = onValueChange,
-        onValueChangeFinished = onFinished,
-        valueRange = valueRange,
-        steps = 0,
-    )
 }
 
 /**
@@ -1574,72 +1448,36 @@ private fun tintSliderRow(
     steps: Int,
     onChange: (Float) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp)
-        )
-        Text(valueText, style = MaterialTheme.typography.labelMedium, color = Color.White)
-    }
-    DomChatSlider(
-        value = value,
-        onValueChange = onChange,
-        valueRange = valueRange,
-        steps = 0,
-    )
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.RowScope.InterfaceStyleCard(
-    selected: Boolean,
-    label: String,
-    subtitle: String,
-    icon: @Composable () -> Unit,
-    onClick: () -> Unit,
-) {
-    val fill = if (selected) Color(0xFF000000) else Color.White.copy(alpha = 0.04f)
-    val border: BorderStroke = if (selected) {
-        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-    } else {
-        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.14f))
-    }
-    val titleColor = if (selected) Color.White else Color.White.copy(alpha = 0.66f)
-    val subtitleColor = Color.White.copy(alpha = if (selected) 0.85f else 0.45f)
-
-    Surface(
+    Column(
         modifier = Modifier
-            .weight(1f)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = fill,
-        border = border,
-        tonalElevation = 0.dp,
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = titleColor,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White,
+                modifier = Modifier.weight(1f).padding(end = 12.dp)
             )
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = subtitleColor,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
+                text = valueText,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+                textAlign = TextAlign.End
             )
         }
+        DomChatSlider(
+            value = value,
+            onValueChange = onChange,
+            valueRange = valueRange,
+            steps = 0,
+        )
     }
 }
 

@@ -16,8 +16,10 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -542,13 +544,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 AnimatedContent(
                     targetState = editorStep,
                     transitionSpec = {
-                        if (targetState == EditorStep.LorebookPicker) {
-                            (slideInHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> width / 3 } + fadeIn(animationSpec = tween(180)))
-                                .togetherWith(slideOutHorizontally(animationSpec = tween(180, easing = FastOutSlowInEasing)) { width -> -width / 3 } + fadeOut(animationSpec = tween(140)))
-                        } else {
-                            (slideInHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> -width / 3 } + fadeIn(animationSpec = tween(180)))
-                                .togetherWith(slideOutHorizontally(animationSpec = tween(180, easing = FastOutSlowInEasing)) { width -> width / 3 } + fadeOut(animationSpec = tween(140)))
-                        }
+                        fadeIn(animationSpec = tween(160)) togetherWith fadeOut(animationSpec = tween(140))
                     },
                     label = "persona_title_step_anim"
                 ) { step ->
@@ -594,26 +590,20 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 380.dp)
+                        .height(440.dp)
                 ) {
                     AnimatedContent(
                         targetState = editorStep,
                         transitionSpec = {
-                            val fadeSpec = tween<Float>(200)
-                            if (targetState == EditorStep.LorebookPicker) {
-                                (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width } + fadeIn(animationSpec = fadeSpec))
-                                    .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width / 2 } + fadeOut(animationSpec = fadeSpec))
-                            } else {
-                                (slideInHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> -width } + fadeIn(animationSpec = fadeSpec))
-                                    .togetherWith(slideOutHorizontally(animationSpec = tween(240, easing = FastOutSlowInEasing)) { width -> width / 2 } + fadeOut(animationSpec = fadeSpec))
-                            }
+                            (fadeIn(animationSpec = tween(150)) togetherWith fadeOut(animationSpec = tween(130)))
+                                .using(SizeTransform(clip = false) { _, _ -> snap() })
                         },
                         label = "persona_body_step_anim"
                     ) { step ->
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 380.dp),
+                                .fillMaxHeight(),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             when (step) {

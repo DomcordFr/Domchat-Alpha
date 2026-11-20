@@ -457,8 +457,30 @@ object AssistantExportImport : KoinComponent {
         // Base64 encode the JSON (as per spec)
         val base64Data = base64Encode(cardJson.toByteArray(Charsets.UTF_8))
         
-        // Embed the data into the PNG
-        return embedTextChunkInPng(avatarBytes, "chara", base64Data)
+        // Embed the data into the PNG with fallbacks so export never fails
+        var embedded = embedTextChunkInPng(avatarBytes, "chara", base64Data)
+        if (embedded == null) {
+            // Fallback 1: Re-encode through BitmapFactory to sanitize PNG chunk structure
+            val sanitized = try {
+                val bmp = BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.size)
+                if (bmp != null) {
+                    val png = bmp.toPngBytes()
+                    bmp.recycle()
+                    png
+                } else null
+            } catch (e: Exception) {
+                null
+            }
+            if (sanitized != null) {
+                embedded = embedTextChunkInPng(sanitized, "chara", base64Data)
+            }
+        }
+        if (embedded == null) {
+            // Fallback 2: Generate guaranteed valid placeholder PNG
+            val placeholder = createPlaceholderPng(assistant.name)
+            embedded = embedTextChunkInPng(placeholder, "chara", base64Data)
+        }
+        return embedded
     }
     
     /**
@@ -592,6 +614,10 @@ object AssistantExportImport : KoinComponent {
             
             if (type == "IEND") {
                 iendPosition = offset
+                break
+            }
+
+            if (length < 0 || offset + 12L + length > pngBytes.size) {
                 break
             }
             

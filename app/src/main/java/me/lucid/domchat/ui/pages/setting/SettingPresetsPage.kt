@@ -105,13 +105,12 @@ private fun PositionButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val selectedColor = MaterialTheme.colorScheme.primary
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        color = if (selected) selectedColor.copy(alpha = 0.20f) else Color(0xFF000000),
+        color = Color(0xFF000000),
         border = if (selected) {
-            BorderStroke(0.5.dp, selectedColor)
+            BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
         } else {
             BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
         },
@@ -130,14 +129,14 @@ private fun PositionButton(
                     fontSize = 12.5.sp,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                 ),
-                color = if (selected) selectedColor else Color.White,
+                color = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
                 maxLines = 1,
             )
             if (selected) {
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Selected",
-                    tint = selectedColor,
+                    tint = Color.White,
                     modifier = Modifier.size(18.dp)
                 )
             }

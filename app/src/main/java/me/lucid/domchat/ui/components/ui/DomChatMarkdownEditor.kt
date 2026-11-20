@@ -14,7 +14,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.togetherWith
 import kotlin.math.roundToInt
 import androidx.compose.foundation.BorderStroke
@@ -298,12 +299,9 @@ fun DomChatMarkdownEditor(
             }
         }
 
-        // Markdown Toolbar (visible in Write mode with smooth vertical expand/collapse)
-        AnimatedVisibility(
-            visible = selectedTab == 0,
-            enter = expandVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 450f)) + fadeIn(tween(180)),
-            exit = shrinkVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 450f)) + fadeOut(tween(140)),
-        ) {
+        // Markdown Toolbar (displayed inside Write tab without height collapse)
+        @Composable
+        fun MarkdownEditorToolbar() {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -514,16 +512,83 @@ fun DomChatMarkdownEditor(
             }
         }
 
-        // Editor Body with smooth crossfade and height settling
+        // Fixed-height stationary toolbar / preview header container
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+        ) {
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(150, easing = LinearOutSlowInEasing))).togetherWith(
+                        fadeOut(animationSpec = tween(120, easing = FastOutLinearInEasing))
+                    ).using(
+                        SizeTransform(clip = false) { _, _ -> snap() }
+                    )
+                },
+                label = "markdown_editor_toolbar_switch"
+            ) { tab ->
+                if (tab == 0) {
+                    MarkdownEditorToolbar()
+                } else {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .liquidGlassSurface(
+                                shape = RoundedCornerShape(12.dp),
+                                borderWidth = 0.5.dp,
+                                fillColor = Color(0xFF000000).copy(alpha = 0.40f)
+                            ),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.Transparent
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Visibility,
+                                    contentDescription = null,
+                                    tint = Color.White.copy(alpha = 0.70f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Previewing Formatted Styles",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                            Text(
+                                text = "Live Markdown AST",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.45f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Editor Body with smooth in-place crossfade
         AnimatedContent(
             targetState = selectedTab,
             transitionSpec = {
-                fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing)) togetherWith
-                    fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing))
+                (fadeIn(animationSpec = tween(180, easing = LinearOutSlowInEasing))).togetherWith(
+                    fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing))
+                ).using(
+                    SizeTransform(clip = false) { _, _ -> snap() }
+                )
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(animationSpec = spring(dampingRatio = 0.85f, stiffness = 450f)),
+            modifier = Modifier.fillMaxWidth(),
             label = "markdown_editor_content"
         ) { tab ->
             if (tab == 0) {
@@ -570,10 +635,16 @@ fun DomChatMarkdownEditor(
                     Box(modifier = Modifier.padding(16.dp)) {
                         val previewText = textFieldState.text.toString()
                         if (previewText.isNotBlank()) {
-                            MarkdownBlock(
-                                content = previewText,
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            androidx.compose.runtime.key(previewText) {
+                                MarkdownBlock(
+                                    content = previewText,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = Color.White,
+                                        lineHeight = 22.sp
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         } else {
                             Text(
                                 text = "Nothing to preview yet. Switch to 'Write' to compose.",

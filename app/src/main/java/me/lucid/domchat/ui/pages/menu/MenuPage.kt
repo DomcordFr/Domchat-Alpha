@@ -673,7 +673,7 @@ private fun StatCard(
     title: String,
     value: String,
     icon: DomChatStatIcon,
-    accentColor: Color,
+    accentColor: Color = Color.White,
     modifier: Modifier = Modifier,
     subtitle: String? = null
 ) {
@@ -691,6 +691,7 @@ private fun StatCard(
         contentColor = contentColor,
         border = borderStroke,
         iconBackgroundColor = Color(0xFF000000),
+        iconBorder = borderStroke,
         modifier = modifier,
         subtitle = subtitle,
         icon = { me.lucid.domchat.ui.components.stats.DomChatStatIconGlyph(icon, tint = Color.White) },

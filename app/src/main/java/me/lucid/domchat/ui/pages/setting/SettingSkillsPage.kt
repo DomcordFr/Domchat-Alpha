@@ -804,12 +804,6 @@ fun SkillEditorSheet(
                 onCloseClick = onDismiss,
             )
 
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
-                thickness = 0.5.dp,
-                color = Color.White.copy(alpha = 0.12f),
-            )
-
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -1100,22 +1094,20 @@ fun SkillEditorSheet(
                 }
             }
 
-            // Smooth bottom chin with top transparent to bottom black gradient
+            // Smooth bottom chin with wide transparent to black gradient
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(
                         Brush.verticalGradient(
-                            listOf(
-                                Color.Transparent,
-                                Color(0xFF000000).copy(alpha = 0.50f),
-                                Color(0xFF000000).copy(alpha = 0.85f),
-                                Color(0xFF000000),
-                            )
+                            0.0f to Color.Transparent,
+                            0.25f to Color(0xFF000000).copy(alpha = 0.20f),
+                            0.60f to Color(0xFF000000).copy(alpha = 0.75f),
+                            1.0f to Color(0xFF000000),
                         )
                     )
-                    .padding(top = 20.dp, bottom = 8.dp)
+                    .padding(top = 48.dp, bottom = 12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

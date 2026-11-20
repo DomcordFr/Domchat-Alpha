@@ -915,6 +915,11 @@ fun ChatPage(
         )
     }
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
+    var isSwitchingConversations by remember(conversation.id) { mutableStateOf(true) }
+    LaunchedEffect(conversation.id) {
+        delay(360L)
+        isSwitchingConversations = false
+    }
     var chatAnimationsEnabled by remember(conversation.id) { mutableStateOf(false) }
     LaunchedEffect(conversation.id) {
         delay(startupWallpaperPauseMs.toLong())
@@ -1719,8 +1724,16 @@ private fun ChatPageContent(
                             if (initialState == targetState) {
                                 fadeIn(animationSpec = tween(0)) togetherWith fadeOut(animationSpec = tween(0))
                             } else {
-                                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
-                                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
+                                (fadeIn(animationSpec = tween(400, easing = LinearOutSlowInEasing)) +
+                                    slideInHorizontally(
+                                        animationSpec = spring(dampingRatio = 0.85f, stiffness = 180f),
+                                        initialOffsetX = { fullWidth -> (fullWidth * 0.12f).toInt() }
+                                    )) togetherWith
+                                (fadeOut(animationSpec = tween(350, easing = FastOutLinearInEasing)) +
+                                    slideOutHorizontally(
+                                        animationSpec = tween(350, easing = FastOutLinearInEasing),
+                                        targetOffsetX = { fullWidth -> -(fullWidth * 0.08f).toInt() }
+                                    ))
                             }
                         },
                         label = "chat_conversation_content",
@@ -2343,9 +2356,9 @@ private fun ChatPageContent(
 
                 // Smooth glassy loading animation when switching conversations
                 AnimatedVisibility(
-                    visible = !chatListReady || !conversationInitialized,
-                    enter = fadeIn(animationSpec = tween(150)),
-                    exit = fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing)),
+                    visible = !chatListReady || !conversationInitialized || isSwitchingConversations,
+                    enter = fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)),
+                    exit = fadeOut(animationSpec = tween(320, easing = FastOutLinearInEasing)),
                     modifier = Modifier
                         .align(Alignment.Center)
                         .padding(horizontal = 24.dp)

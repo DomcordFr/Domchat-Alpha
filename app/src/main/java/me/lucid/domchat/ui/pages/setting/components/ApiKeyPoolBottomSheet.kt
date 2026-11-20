@@ -36,10 +36,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.layout.imePadding
-import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import androidx.compose.material3.OutlinedTextField
@@ -117,18 +119,24 @@ fun ApiKeyPoolBottomSheet(
         haptics.perform(HapticPattern.Selection)
     }
 
-    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
-    DomChatInWindowBottomSheet(
-        visible = true,
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF000000),
-        shape = AppShapes.SettingBottomSheet,
-        maxHeight = maxSheetHeight,
-        dragHandle = {
-            DomChatSheetDragHandle()
-        }
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
     ) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = onDismiss,
+            containerColor = Color(0xFF000000),
+            shape = AppShapes.SettingBottomSheet,
+            dragHandle = {
+                DomChatSheetDragHandle()
+            },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
+        ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -136,26 +144,10 @@ fun ApiKeyPoolBottomSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header Row: Title, Settings Button (white in dark mode), Plus Button (white in dark mode)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.api_key_pool_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = provider.name.ifBlank { "Provider" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.65f),
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            DomChatSheetHeader(
+                title = stringResource(R.string.api_key_pool_title),
+                subtitle = provider.name.ifBlank { "Provider" },
+                actions = {
                     IconButton(
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
@@ -165,8 +157,8 @@ fun ApiKeyPoolBottomSheet(
                         Icon(
                             imageVector = Icons.Rounded.Tune,
                             contentDescription = stringResource(R.string.api_key_pool_settings_title),
-                            tint = if (isDark) Color.White else Color.White.copy(alpha = 0.65f),
-                            modifier = Modifier.size(24.dp),
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp),
                         )
                     }
 
@@ -179,12 +171,18 @@ fun ApiKeyPoolBottomSheet(
                         Icon(
                             imageVector = Icons.Rounded.Add,
                             contentDescription = stringResource(R.string.api_key_pool_add_key),
-                            tint = if (isDark) Color.White else Color.White,
-                            modifier = Modifier.size(28.dp),
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp),
                         )
                     }
-                }
-            }
+                },
+                onCloseClick = {
+                    scope.launch {
+                        sheetState.hide()
+                        onDismiss()
+                    }
+                },
+            )
 
             if (pool.isEmpty()) {
                 // Empty state
@@ -317,6 +315,7 @@ fun ApiKeyPoolBottomSheet(
             }
         }
     }
+}
 
     // Pool Settings Dialog
     if (showSettingsDialog) {
@@ -557,20 +556,24 @@ private fun ApiKeyEditDialog(
     var key by remember { mutableStateOf(initialKey) }
     var keyVisible by remember { mutableStateOf(false) }
     val haptics = rememberPremiumHaptics()
-    val maxSheetHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
-
-    DomChatInWindowBottomSheet(
-        visible = true,
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF000000),
-        shape = AppShapes.SettingBottomSheet,
-        maxHeight = maxSheetHeight,
-        modifier = Modifier.imePadding(),
-        dragHandle = {
-            DomChatSheetDragHandle()
-        }
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
     ) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+        DomChatInWindowBottomSheet(
+            visible = true,
+            onDismissRequest = onDismiss,
+            containerColor = Color(0xFF000000),
+            shape = AppShapes.SettingBottomSheet,
+            dragHandle = {
+                DomChatSheetDragHandle()
+            },
+            modifier = Modifier.imePadding(),
+        ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -654,4 +657,5 @@ private fun ApiKeyEditDialog(
             }
         }
     }
+}
 }
