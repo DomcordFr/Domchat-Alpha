@@ -219,8 +219,7 @@ fun DomChatSearchBar(
                         specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                     )
                 }
-            )
-            .liquidInteractiveGlass(scaleLiftDp = 1.dp, elasticDrag = false),
+            ),
         enabled = true,
         readOnly = false,
         textStyle = textStyle,

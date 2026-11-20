@@ -622,22 +622,14 @@ private fun ApiKeyEditDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                }) {
+                TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
                 }
                 Surface(
                     onClick = {
                         if (key.isNotBlank()) {
                             haptics.perform(HapticPattern.Pop)
-                            scope.launch {
-                                sheetState.hide()
-                                onConfirm(name, key)
-                            }
+                            onConfirm(name, key)
                         }
                     },
                     enabled = key.isNotBlank(),

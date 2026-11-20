@@ -299,8 +299,7 @@ private fun TemplateCard(
                 fillColor = cardFill,
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            )
-            .liquidInteractiveGlass(),
+            ),
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = cardFill),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -352,8 +351,7 @@ private fun ActionPill(
                     fillColor = pillFill,
                     borderWidth = 0.5.dp,
                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                )
-                .liquidInteractiveGlass(),
+                ),
             shape = pillShape,
             color = pillFill
         ) {

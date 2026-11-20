@@ -914,33 +914,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                                 }
                                             )
                                         }
-
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 8.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                                Text(
-                                                    text = "Interactive Glass Physics",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                )
-                                                Text(
-                                                    text = "Touch spotlight bloom, spring micro-expansion, and elastic tactile drag.",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = Color.White.copy(alpha = 0.65f)
-                                                )
-                                            }
-                                            HapticSwitch(
-                                                checked = settings.displaySetting.interactiveGlassPhysics,
-                                                onCheckedChange = {
-                                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(interactiveGlassPhysics = it))
-                                                }
-                                            )
-                                        }
                                     }
                                 }
                             }

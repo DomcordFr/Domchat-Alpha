@@ -887,8 +887,7 @@ fun MinimalChatInput(
                                         isFloatingControl = true
                                     )
                                 }
-                            )
-                            .liquidInteractiveGlass(scaleLiftDp = 2.dp),
+                            ),
                     ) {
                         Icon(
                             imageVector = if (sttRecording) RoundedStopIcon else Icons.Rounded.Add,
@@ -923,8 +922,7 @@ fun MinimalChatInput(
                                     isFloatingControl = true
                                 )
                             }
-                        )
-                        .liquidInteractiveGlass(scaleLiftDp = 1.dp, elasticDrag = false),
+                        ),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth()

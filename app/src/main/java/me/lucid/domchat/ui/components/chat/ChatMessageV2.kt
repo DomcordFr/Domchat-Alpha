@@ -1450,8 +1450,7 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(swipeModifier)
-                        .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true),
+                        .then(swipeModifier),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onToggleToolbar()
@@ -1522,14 +1521,13 @@ private fun UserMessageTurn(
                     AnimatedContent(
                         targetState = node.selectIndex,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(220)) +
-                                slideInHorizontally(animationSpec = tween(220)) { width ->
-                                    if (targetState > initialState) width / 5 else -width / 5
-                                }) togetherWith
-                            (fadeOut(animationSpec = tween(220)) +
-                                slideOutHorizontally(animationSpec = tween(220)) { width ->
-                                    if (targetState > initialState) -width / 5 else width / 5
-                                })
+                            val forward = targetState >= initialState
+                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
+                                if (forward) width / 4 else -width / 4
+                            } + fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
+                                if (forward) -width / 4 else width / 4
+                            } + fadeOut(animationSpec = tween(160, easing = FastOutLinearInEasing)))
                         },
                         label = "UserMessageVersionAnimatedContent"
                     ) { targetIdx ->
@@ -2020,7 +2018,6 @@ private fun AssistantMessageTurn(
                     modifier = Modifier
                         .widthIn(max = maxWidth)
                         .then(assistantSwipeModifier)
-                        .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
                         .animateContentSize(
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
@@ -2066,14 +2063,13 @@ private fun AssistantMessageTurn(
                     AnimatedContent(
                         targetState = assistantNode.selectIndex,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(220)) +
-                                slideInHorizontally(animationSpec = tween(220)) { width ->
-                                    if (targetState > initialState) width / 5 else -width / 5
-                                }) togetherWith
-                            (fadeOut(animationSpec = tween(220)) +
-                                slideOutHorizontally(animationSpec = tween(220)) { width ->
-                                    if (targetState > initialState) -width / 5 else width / 5
-                                })
+                            val forward = targetState >= initialState
+                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
+                                if (forward) width / 4 else -width / 4
+                            } + fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f)) { width ->
+                                if (forward) -width / 4 else width / 4
+                            } + fadeOut(animationSpec = tween(160, easing = FastOutLinearInEasing)))
                         },
                         label = "ChatMessageVersionAnimatedContent"
                     ) { targetIdx ->
@@ -2467,7 +2463,6 @@ private fun AssistantThinkingDropdown(
                     }
                 }
             )
-            .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
             .padding(horizontal = if (isTransparentStyle) 4.dp else 12.dp, vertical = if (isTransparentStyle) 4.dp else 10.dp)
     ) {
         Row(

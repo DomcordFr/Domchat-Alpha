@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -555,11 +556,15 @@ private fun StatCardSkeleton(modifier: Modifier = Modifier) {
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            SkeletonBlock(
+            Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(AppShapes.Chip),
-                color = contentColor
+                    .clip(AppShapes.Chip)
+                    .background(Color(0xFF000000))
+                    .border(
+                        BorderStroke(0.5.dp, if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder),
+                        AppShapes.Chip
+                    )
             )
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -685,10 +690,10 @@ private fun StatCard(
         containerColor = containerColor,
         contentColor = contentColor,
         border = borderStroke,
-        iconBackgroundColor = accentColor.copy(alpha = if (isDark) 0.18f else 0.12f),
+        iconBackgroundColor = Color(0xFF000000),
         modifier = modifier,
         subtitle = subtitle,
-        icon = { me.lucid.domchat.ui.components.stats.DomChatStatIconGlyph(icon, tint = accentColor) },
+        icon = { me.lucid.domchat.ui.components.stats.DomChatStatIconGlyph(icon, tint = Color.White) },
     )
 }
 

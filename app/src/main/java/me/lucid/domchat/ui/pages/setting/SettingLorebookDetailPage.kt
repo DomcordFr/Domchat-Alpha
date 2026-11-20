@@ -114,8 +114,6 @@ import me.lucid.domchat.ui.components.ui.ToastAction
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import me.lucid.domchat.ui.theme.AppShapes
-import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.OwnedFileDirectory
 import me.lucid.domchat.utils.getFileNameFromUri

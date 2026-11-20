@@ -4,6 +4,7 @@ import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
@@ -12,6 +13,9 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -64,6 +68,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FilledIconButton
@@ -1139,7 +1144,6 @@ fun ChatPage(
                                             current = conversation,
                                             settings = setting,
                                             onExpand = { isWidePanelCollapsed = false },
-                                            onOpenImageGen = { navController.navigate(Screen.ImageGen) },
                                             onOpenStatistics = { navController.navigate(Screen.Menu) },
                                             onOpenSettings = { navController.navigate(Screen.Setting) },
                                             onOpenAssistant = {
@@ -1713,7 +1717,8 @@ private fun ChatPageContent(
                             if (initialState == targetState) {
                                 fadeIn(animationSpec = tween(0)) togetherWith fadeOut(animationSpec = tween(0))
                             } else {
-                                fadeIn(animationSpec = tween(150)) togetherWith fadeOut(animationSpec = tween(110))
+                                fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
+                                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))
                             }
                         },
                         label = "chat_conversation_content",
@@ -1734,6 +1739,11 @@ private fun ChatPageContent(
                         } else {
                             searchQuerySnapshots[targetConversationId]
                         }
+                        val contentAlpha by animateFloatAsState(
+                            targetValue = if (targetConversationId != conversation.id || chatListReady) 1f else 0f,
+                            animationSpec = tween(durationMillis = 200, easing = LinearOutSlowInEasing),
+                            label = "chatContentAlpha"
+                        )
                         CompositionLocalProvider(
                             LocalChatAnimationsEnabled provides chatAnimationsEnabled,
                             LocalActiveChatMessageAction provides { activeChatMessageAction = it },
@@ -1744,7 +1754,7 @@ private fun ChatPageContent(
                                     .domChatBlurSource()
                                     .layerBackdrop(contentBackdrop)
                                     .graphicsLayer {
-                                        alpha = if (targetConversationId != conversation.id || chatListReady) 1f else 0f
+                                        alpha = contentAlpha
                                     }
                             ) {
                                 if (renderBackground) {
@@ -1989,9 +1999,6 @@ private fun ChatPageContent(
                                 onTemplateClick = { prompt ->
                                     // Set text and focus the input field to show keyboard
                                     inputState.setMessageTextAndFocus(prompt, scope)
-                                },
-                                onNavigateToImageGen = {
-                                    navController.navigate(Screen.ImageGen)
                                 },
                                 onAvatarClick = {
                                     showHeaderAssistantPicker = true
@@ -2332,6 +2339,19 @@ private fun ChatPageContent(
                 )
                 }
 
+                // Smooth glassy loading animation when switching conversations
+                AnimatedVisibility(
+                    visible = targetConversationId == conversation.id && (!chatListReady || !conversationInitialized),
+                    enter = fadeIn(animationSpec = tween(150)),
+                    exit = fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing)),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 24.dp)
+                ) {
+                    ChatSwitchLoadingIndicator(
+                        assistant = currentAssistant,
+                    )
+                }
                 }
             }
             }
@@ -4778,3 +4798,61 @@ private fun CompactionBadge(
         }
     }
 }
+
+@Composable
+private fun ChatSwitchLoadingIndicator(
+    assistant: Assistant,
+    modifier: Modifier = Modifier,
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "chat_loading_pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "chat_loading_glow"
+    )
+
+    Surface(
+        modifier = modifier
+            .liquidGlassSurface(
+                shape = RoundedCornerShape(24.dp),
+                borderWidth = 0.5.dp,
+                fillColor = Color(0xFF000000).copy(alpha = 0.70f),
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            ),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.Transparent,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .graphicsLayer { alpha = pulseAlpha },
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    trackColor = Color.White.copy(alpha = 0.15f),
+                )
+            }
+            Text(
+                text = if (assistant.name.isNotBlank()) "Opening ${assistant.name}..." else "Loading chat...",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.90f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+

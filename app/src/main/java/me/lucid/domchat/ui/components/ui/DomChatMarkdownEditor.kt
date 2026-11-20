@@ -5,11 +5,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import kotlin.math.roundToInt
 import androidx.compose.foundation.BorderStroke
@@ -42,12 +47,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
+import androidx.compose.material.icons.automirrored.rounded.FormatListNumbered
+import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FormatBold
 import androidx.compose.material.icons.rounded.FormatItalic
 import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.FormatStrikethrough
+import androidx.compose.material.icons.rounded.HorizontalRule
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.Terminal
+import androidx.compose.material.icons.rounded.Title
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -286,8 +299,12 @@ fun DomChatMarkdownEditor(
             }
         }
 
-        // Markdown Toolbar (visible in Write mode)
-        if (selectedTab == 0) {
+        // Markdown Toolbar (visible in Write mode with smooth vertical expand/collapse)
+        AnimatedVisibility(
+            visible = selectedTab == 0,
+            enter = expandVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 450f)) + fadeIn(tween(180)),
+            exit = shrinkVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 450f)) + fadeOut(tween(140)),
+        ) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -308,6 +325,13 @@ fun DomChatMarkdownEditor(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     EditorToolbarButton(
+                        icon = Icons.Rounded.Title,
+                        tooltip = "Heading",
+                        onClick = {
+                            insertOrWrap("### ", "", "Heading")
+                        }
+                    )
+                    EditorToolbarButton(
                         icon = Icons.Rounded.FormatBold,
                         tooltip = "Bold",
                         onClick = {
@@ -322,10 +346,80 @@ fun DomChatMarkdownEditor(
                         }
                     )
                     EditorToolbarButton(
-                        icon = Icons.Rounded.Code,
-                        tooltip = "Code",
+                        icon = Icons.Rounded.FormatStrikethrough,
+                        tooltip = "Strikethrough",
                         onClick = {
-                            insertOrWrap("`", "`", "code")
+                            insertOrWrap("~~", "~~", "strikethrough")
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.AutoMirrored.Rounded.FormatListBulleted,
+                        tooltip = "Bulleted List",
+                        onClick = {
+                            haptics.perform(HapticPattern.Tick)
+                            textFieldState.edit {
+                                val sel = selection
+                                val start = minOf(sel.start, sel.end)
+                                val end = maxOf(sel.start, sel.end)
+                                val current = toString()
+                                if (start == end) {
+                                    val prefix = if (start > 0 && current[start - 1] != '\n') "\n- " else "- "
+                                    replace(start, end, "${prefix}item")
+                                    selection = TextRange(start + prefix.length, start + prefix.length + 4)
+                                } else {
+                                    val selectedText = current.substring(start, end)
+                                    val list = selectedText.lines().joinToString("\n") { line -> if (line.startsWith("- ")) line else "- $line" }
+                                    replace(start, end, list)
+                                    selection = TextRange(start, start + list.length)
+                                }
+                            }
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.AutoMirrored.Rounded.FormatListNumbered,
+                        tooltip = "Numbered List",
+                        onClick = {
+                            haptics.perform(HapticPattern.Tick)
+                            textFieldState.edit {
+                                val sel = selection
+                                val start = minOf(sel.start, sel.end)
+                                val end = maxOf(sel.start, sel.end)
+                                val current = toString()
+                                if (start == end) {
+                                    val prefix = if (start > 0 && current[start - 1] != '\n') "\n1. " else "1. "
+                                    replace(start, end, "${prefix}item")
+                                    selection = TextRange(start + prefix.length, start + prefix.length + 4)
+                                } else {
+                                    val selectedText = current.substring(start, end)
+                                    var num = 1
+                                    val list = selectedText.lines().joinToString("\n") { line -> "${num++}. $line" }
+                                    replace(start, end, list)
+                                    selection = TextRange(start, start + list.length)
+                                }
+                            }
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.Rounded.Checklist,
+                        tooltip = "Checklist",
+                        onClick = {
+                            haptics.perform(HapticPattern.Tick)
+                            textFieldState.edit {
+                                val sel = selection
+                                val start = minOf(sel.start, sel.end)
+                                val end = maxOf(sel.start, sel.end)
+                                val current = toString()
+                                if (start == end) {
+                                    val prefix = if (start > 0 && current[start - 1] != '\n') "\n- [ ] " else "- [ ] "
+                                    replace(start, end, "${prefix}task")
+                                    selection = TextRange(start + prefix.length, start + prefix.length + 4)
+                                } else {
+                                    val selectedText = current.substring(start, end)
+                                    val list = selectedText.lines().joinToString("\n") { line -> "- [ ] $line" }
+                                    replace(start, end, list)
+                                    selection = TextRange(start, start + list.length)
+                                }
+                            }
                         }
                     )
                     EditorToolbarButton(
@@ -348,6 +442,43 @@ fun DomChatMarkdownEditor(
                                     replace(start, end, quoted)
                                     selection = TextRange(start, start + quoted.length)
                                 }
+                            }
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.Rounded.Code,
+                        tooltip = "Code",
+                        onClick = {
+                            insertOrWrap("`", "`", "code")
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.Rounded.Terminal,
+                        tooltip = "Code Block",
+                        onClick = {
+                            insertOrWrap("```\n", "\n```", "code")
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.Rounded.Link,
+                        tooltip = "Link",
+                        onClick = {
+                            insertOrWrap("[", "](url)", "title")
+                        }
+                    )
+                    EditorToolbarButton(
+                        icon = Icons.Rounded.HorizontalRule,
+                        tooltip = "Horizontal Rule",
+                        onClick = {
+                            haptics.perform(HapticPattern.Tick)
+                            textFieldState.edit {
+                                val sel = selection
+                                val start = minOf(sel.start, sel.end)
+                                val end = maxOf(sel.start, sel.end)
+                                val current = toString()
+                                val hr = if (start > 0 && current[start - 1] != '\n') "\n---\n" else "---\n"
+                                replace(start, end, hr)
+                                selection = TextRange(start + hr.length)
                             }
                         }
                     )
@@ -384,13 +515,16 @@ fun DomChatMarkdownEditor(
             }
         }
 
-        // Editor Body
+        // Editor Body with smooth crossfade and height settling
         AnimatedContent(
             targetState = selectedTab,
             transitionSpec = {
-                (fadeIn(tween(220)) + slideInHorizontally(tween(220)) { if (targetState > initialState) it / 6 else -it / 6 }) togetherWith
-                    (fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { if (targetState > initialState) -it / 6 else it / 6 })
+                fadeIn(animationSpec = tween(200, easing = LinearOutSlowInEasing)) togetherWith
+                    fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing))
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(animationSpec = spring(dampingRatio = 0.85f, stiffness = 450f)),
             label = "markdown_editor_content"
         ) { tab ->
             if (tab == 0) {

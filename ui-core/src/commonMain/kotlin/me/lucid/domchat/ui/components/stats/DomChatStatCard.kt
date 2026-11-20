@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.components.stats
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -111,7 +112,7 @@ fun DomChatStatCard(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     border: BorderStroke? = null,
-    iconBackgroundColor: Color = contentColor.copy(alpha = 0.15f),
+    iconBackgroundColor: Color = Color(0xFF000000),
 ) {
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val defaultBorder = BorderStroke(
@@ -152,7 +153,8 @@ fun DomChatStatCard(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(AppShapes.Chip)
-                    .background(iconBackgroundColor),
+                    .background(iconBackgroundColor)
+                    .border(BorderStroke(0.5.dp, defaultBorder.brush), AppShapes.Chip),
                 contentAlignment = Alignment.Center,
             ) {
                 icon()

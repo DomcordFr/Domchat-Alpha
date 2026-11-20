@@ -407,24 +407,6 @@ fun ChatDrawerContent(
                             },
                         )
                         DomChatDrawerQuickAction(
-                            label = stringResource(R.string.chat_drawer_imagine),
-                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
-                            containerColor = Color.Transparent,
-                            onClick = {
-                                navController.navigate(Screen.ImageGen)
-                                dismissDrawerAfterSelection()
-                            },
-                            onHaptic = { haptics.perform(HapticPattern.Tick) },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Image,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            },
-                        )
-                        DomChatDrawerQuickAction(
                             label = stringResource(R.string.menu_statistics_title),
                             modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
                             containerColor = Color.Transparent,
@@ -465,7 +447,6 @@ fun ChatDrawerContent(
                                     borderWidth = 0.5.dp,
                                     specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
                                 )
-                                .liquidInteractiveGlass(scaleLiftDp = 2.dp)
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
                                     // Await drawer close animation completion before opening the
@@ -645,7 +626,7 @@ fun CollapsedChatSideRail(
     current: Conversation,
     settings: Settings,
     onExpand: () -> Unit,
-    onOpenImageGen: () -> Unit,
+    onOpenImageGen: () -> Unit = {},
     onOpenStatistics: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAssistant: () -> Unit,
@@ -685,14 +666,6 @@ fun CollapsedChatSideRail(
                 modifier = Modifier.clip(me.lucid.domchat.ui.theme.AppShapes.CardMedium),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                DrawerAction(
-                    icon = { Icon(Icons.Rounded.Image, null) },
-                    label = { Text(stringResource(R.string.chat_drawer_imagine)) },
-                    onClick = onOpenImageGen,
-                    containerColor = domChatChromeSurfaceColor(),
-                    shape = RoundedCornerShape(10.dp),
-                    size = 48.dp
-                )
                 DrawerAction(
                     icon = { DomChatBarChartIcon(contentDescription = null) },
                     label = { Text(stringResource(R.string.menu_statistics_title)) },
