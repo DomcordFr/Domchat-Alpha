@@ -917,7 +917,7 @@ fun ChatPage(
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
     var isSwitchingConversations by remember(conversation.id) { mutableStateOf(true) }
     LaunchedEffect(conversation.id) {
-        delay(360L)
+        delay(550L)
         isSwitchingConversations = false
     }
     var chatAnimationsEnabled by remember(conversation.id) { mutableStateOf(false) }
@@ -2357,17 +2357,16 @@ private fun ChatPageContent(
                 )
                 }
 
-                // Smooth glassy loading animation when switching conversations
+                // Smooth fullscreen glassy loading animation when switching conversations
                 AnimatedVisibility(
                     visible = !chatListReady || !conversationInitialized || isSwitchingConversations,
-                    enter = fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)),
-                    exit = fadeOut(animationSpec = tween(320, easing = FastOutLinearInEasing)),
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 24.dp)
+                    enter = fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing)),
+                    exit = fadeOut(animationSpec = tween(420, easing = FastOutLinearInEasing)),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     ChatSwitchLoadingIndicator(
                         assistant = currentAssistant,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
                 }
@@ -4827,49 +4826,88 @@ private fun ChatSwitchLoadingIndicator(
         initialValue = 0.5f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = LinearOutSlowInEasing),
+            animation = tween(1000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "chat_loading_glow"
     )
+    val scalePulse by infiniteTransition.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "chat_avatar_pulse"
+    )
 
-    Surface(
+    Box(
         modifier = modifier
-            .liquidGlassSurface(
-                shape = RoundedCornerShape(24.dp),
-                borderWidth = 0.5.dp,
-                fillColor = Color(0xFF000000).copy(alpha = 0.70f),
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-            ),
-        shape = RoundedCornerShape(24.dp),
-        color = Color.Transparent,
+            .fillMaxSize()
+            .background(Color(0xFF000000).copy(alpha = 0.85f)),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
         ) {
+            // Glowing Assistant Avatar
             Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .graphicsLayer { alpha = pulseAlpha },
+                    .size(72.dp)
+                    .graphicsLayer {
+                        scaleX = scalePulse
+                        scaleY = scalePulse
+                    }
+                    .liquidGlassSurface(
+                        shape = CircleShape,
+                        borderWidth = 1.dp,
+                        fillColor = Color(0xFF000000).copy(alpha = 0.65f),
+                        specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = Color.White.copy(alpha = 0.9f),
-                    trackColor = Color.White.copy(alpha = 0.15f),
+                me.lucid.domchat.ui.components.ui.UIAvatar(
+                    name = assistant.effectiveChatName,
+                    value = assistant.avatar,
+                    modifier = Modifier.size(64.dp),
+                    onClick = null,
                 )
             }
-            Text(
-                text = if (assistant.name.isNotBlank()) "Opening ${assistant.name}..." else "Loading chat...",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = Color.White.copy(alpha = 0.90f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = assistant.name.ifBlank { "Chat" },
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.graphicsLayer { alpha = pulseAlpha }
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White.copy(alpha = 0.85f),
+                        trackColor = Color.White.copy(alpha = 0.12f),
+                    )
+                    Text(
+                        text = "Loading conversation...",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.70f)
+                        )
+                    )
+                }
+            }
         }
     }
 }

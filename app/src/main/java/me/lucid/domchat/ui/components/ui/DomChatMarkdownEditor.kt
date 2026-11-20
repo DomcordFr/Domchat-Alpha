@@ -14,6 +14,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.togetherWith
@@ -521,9 +523,13 @@ fun DomChatMarkdownEditor(
             AnimatedContent(
                 targetState = selectedTab,
                 transitionSpec = {
-                    (fadeIn(animationSpec = tween(150, easing = LinearOutSlowInEasing))).togetherWith(
-                        fadeOut(animationSpec = tween(120, easing = FastOutLinearInEasing))
-                    ).using(
+                    if (targetState == 1) {
+                        (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it / 3 } + fadeIn(tween(180))) togetherWith
+                        (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it / 3 } + fadeOut(tween(140)))
+                    } else {
+                        (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it / 3 } + fadeIn(tween(180))) togetherWith
+                        (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it / 3 } + fadeOut(tween(140)))
+                    }.using(
                         SizeTransform(clip = false) { _, _ -> snap() }
                     )
                 },
@@ -578,13 +584,17 @@ fun DomChatMarkdownEditor(
             }
         }
 
-        // Editor Body with smooth in-place crossfade
+        // Editor Body with smooth sliding transition between Write and Preview
         AnimatedContent(
             targetState = selectedTab,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(180, easing = LinearOutSlowInEasing))).togetherWith(
-                    fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing))
-                ).using(
+                if (targetState == 1) {
+                    (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it / 2 } + fadeIn(tween(200))) togetherWith
+                    (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it / 2 } + fadeOut(tween(160)))
+                } else {
+                    (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it / 2 } + fadeIn(tween(200))) togetherWith
+                    (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it / 2 } + fadeOut(tween(160)))
+                }.using(
                     SizeTransform(clip = false) { _, _ -> snap() }
                 )
             },

@@ -337,7 +337,10 @@ private fun ToastContent(
     toast: Toast,
     onDismiss: () -> Unit
 ) {
-    val (containerColor, contentColor, icon) = getToastColors(toast.type)
+    val isRestartToast = toast.message.contains("restart", ignoreCase = true) ||
+                         toast.action?.label?.contains("restart", ignoreCase = true) == true
+    val (containerColor, defaultContentColor, icon) = getToastColors(toast.type)
+    val contentColor = if (isRestartToast) Color(0xFF34C759) else defaultContentColor
     var isExpanded by remember { mutableStateOf(false) }
     val isLongMessage = toast.message.length > 80
 
@@ -348,8 +351,8 @@ private fun ToastContent(
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 0.5.dp,
-            brush = if (toast.type == ToastType.Success) {
-                androidx.compose.ui.graphics.SolidColor(Color(0xFF34D399).copy(alpha = 0.5f))
+            brush = if (isRestartToast || toast.type == ToastType.Success) {
+                androidx.compose.ui.graphics.SolidColor(Color(0xFF34C759).copy(alpha = 0.5f))
             } else {
                 me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
             }

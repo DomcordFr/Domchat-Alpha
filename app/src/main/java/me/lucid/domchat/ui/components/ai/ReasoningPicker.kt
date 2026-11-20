@@ -203,23 +203,25 @@ fun ReasoningPicker(
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = onDismissRequest,
-            containerColor = Color(0xFF000000),
+            containerColor = Color.Unspecified,
             dragHandle = { DomChatSheetDragHandle() },
             maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp),
             ) {
                 DomChatSheetHeader(
                     title = "Thinking Budget",
+                    subtitle = "Configure model reasoning depth",
                     onCloseClick = onDismissRequest,
                 )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 6.dp)
+                        .padding(vertical = 6.dp)
                         .fadeEdges(fadeTop = true, fadeBottom = true)
                         .verticalScroll(rememberScrollState()),
                 ) {

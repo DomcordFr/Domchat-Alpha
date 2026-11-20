@@ -4036,26 +4036,6 @@ private fun CharacterActionPopover(
                         }
                     }
 
-                    if (characterGroupId != null) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            DomChatGlassPillButton(
-                                text = "Remove from group",
-                                onClick = { onMoveToGroup(null) },
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            DomChatGlassPillButton(
-                                text = "Delete group",
-                                destructive = true,
-                                onClick = { onDeleteGroup(characterGroupId) },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),

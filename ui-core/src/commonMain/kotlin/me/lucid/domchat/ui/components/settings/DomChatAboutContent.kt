@@ -154,29 +154,6 @@ fun DomChatAboutContent(
                 darkTheme = darkTheme,
             )
         }
-        Spacer(Modifier.height(32.dp))
-        Surface(
-            shape = RoundedCornerShape(50),
-            color = Color(0xFF000000),
-            border = BorderStroke(
-                0.5.dp,
-                Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.22f),
-                        Color.White.copy(alpha = 0.06f),
-                        Color.Transparent,
-                    )
-                )
-            ),
-        ) {
-            Text(
-                text = "$appName ${if (versionName.startsWith("v")) versionName else "v$versionName"}",
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-            )
-        }
         Spacer(Modifier.height(24.dp))
     }
 }

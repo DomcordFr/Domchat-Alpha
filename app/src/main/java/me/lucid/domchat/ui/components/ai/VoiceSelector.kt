@@ -149,7 +149,7 @@ fun VoiceSelector(
             DomChatInWindowBottomSheet(
                 visible = true,
                 onDismissRequest = { showSheet = false },
-                containerColor = Color(0xFF000000),
+                containerColor = Color.Unspecified,
                 dragHandle = { DomChatSheetDragHandle() },
                 maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
@@ -162,7 +162,7 @@ fun VoiceSelector(
                 ) {
                     DomChatSheetHeader(
                         title = "Select Voice",
-                        subtitle = null,
+                        subtitle = "Select voice model for spoken messages",
                         onCloseClick = { showSheet = false },
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
                     )

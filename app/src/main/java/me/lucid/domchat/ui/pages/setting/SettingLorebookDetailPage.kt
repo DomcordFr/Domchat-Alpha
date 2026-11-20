@@ -1220,8 +1220,16 @@ private fun EntryEditorSheet(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = { dismissEditor() }) {
-                    Text(stringResource(R.string.cancel), color = Color(0xFFA6A6A6))
+                Button(
+                    onClick = { dismissEditor() },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color(0xFFA6A6A6)
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
                 Spacer(Modifier.width(8.dp))
                 Button(
@@ -1476,8 +1484,16 @@ private fun LorebookEditorSheet(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = { dismissEditor() }) {
-                    Text(stringResource(R.string.cancel), color = Color(0xFFA6A6A6))
+                Button(
+                    onClick = { dismissEditor() },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color(0xFFA6A6A6)
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
                 Spacer(Modifier.width(8.dp))
                 Button(

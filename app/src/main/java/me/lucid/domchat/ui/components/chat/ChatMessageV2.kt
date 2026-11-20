@@ -1189,8 +1189,6 @@ fun ChatMessageTurn(
                     onBubbleClick = {
                         if (timelineOpen) {
                             timelineOpen = false
-                        } else if (isLastTurn) {
-                            showActionsSheet = true
                         } else {
                             actionsExpanded = !actionsExpanded
                         }
@@ -1206,6 +1204,7 @@ fun ChatMessageTurn(
                     ttsProviderOverride = ttsProviderOverride,
                     isIntroMessage = isIntroMessage,
                     onAddCustomGreeting = onAddCustomGreeting,
+                    onEdit = onEdit,
                     modifier = modifier
                 )
             }
@@ -1589,72 +1588,74 @@ private fun UserMessageTurn(
                 animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
             ) + fadeOut()
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 4.dp)
-            ) {
-                if (versionIndices.size > 1) {
-                    me.lucid.domchat.ui.components.message.ChatMessageBranchSelector(
-                        node = node,
-                        onUpdate = onUpdate,
-                    )
-                }
-
-                // Copy button
-                Box(
-                    modifier = Modifier
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .clickable {
-                            haptics.perform(HapticPattern.Pop)
-                            onCopy()
-                        }
-                        .padding(8.dp)
+            CompositionLocalProvider(LocalContentColor provides Color.White) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
                 ) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Rounded.ContentCopy,
-                        contentDescription = stringResource(R.string.copy),
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                // Regenerate button
-                if (showRegenerate) {
+                    if (versionIndices.size > 1) {
+                        me.lucid.domchat.ui.components.message.ChatMessageBranchSelector(
+                            node = node,
+                            onUpdate = onUpdate,
+                        )
+                    }
+
+                    // Copy button
                     Box(
                         modifier = Modifier
                             .clip(androidx.compose.foundation.shape.CircleShape)
                             .clickable {
                                 haptics.perform(HapticPattern.Pop)
-                                onRegenerate()
+                                onCopy()
                             }
                             .padding(8.dp)
                     ) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Rounded.Refresh,
-                            contentDescription = stringResource(R.string.regenerate),
+                            imageVector = androidx.compose.material.icons.Icons.Rounded.ContentCopy,
+                            contentDescription = stringResource(R.string.copy),
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White
                         )
                     }
-                }
-                
-                // More options button
-                Box(
-                    modifier = Modifier
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .clickable {
-                            haptics.perform(HapticPattern.Pop)
-                            onOpenMenu()
+                    
+                    // Regenerate button
+                    if (showRegenerate) {
+                        Box(
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .clickable {
+                                    haptics.perform(HapticPattern.Pop)
+                                    onRegenerate()
+                                }
+                                .padding(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Rounded.Refresh,
+                                contentDescription = stringResource(R.string.regenerate),
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.White
+                            )
                         }
-                        .padding(8.dp)
-                ) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Rounded.MoreHoriz,
-                        contentDescription = stringResource(R.string.more_options),
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    }
+                    
+                    // More options button
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .clickable {
+                                haptics.perform(HapticPattern.Pop)
+                                onOpenMenu()
+                            }
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Rounded.MoreHoriz,
+                            contentDescription = stringResource(R.string.more_options),
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
+                        )
+                    }
                 }
             }
         }
@@ -1701,6 +1702,7 @@ private fun AssistantMessageTurn(
     ttsProviderOverride: me.lucid.tts.provider.TTSProviderSetting?,
     isIntroMessage: Boolean = false,
     onAddCustomGreeting: () -> Unit = {},
+    onEdit: ((MessageNode) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isTimelineLive = loading && isLastTurn
@@ -2184,9 +2186,11 @@ private fun AssistantMessageTurn(
                 .filter { it.reasoning.isNotBlank() }
 
             if (reasoningParts.isNotEmpty()) {
+                val isReasoningActive = reasoningParts.any { it.finishedAt == null } || (isTurnActive && loading)
                 AssistantThinkingDropdown(
                     reasoningParts = reasoningParts,
                     maxWidth = maxWidth,
+                    isStreaming = isReasoningActive,
                 )
             }
 
@@ -2267,7 +2271,7 @@ private fun AssistantMessageTurn(
         }
         
         // Action buttons
-        val showActions = !isTurnActive && (isLastTurn || actionsExpanded)
+        val showActions = !isTurnActive && actionsExpanded
         
         AnimatedVisibility(
             visible = showActions,
@@ -2290,6 +2294,7 @@ private fun AssistantMessageTurn(
                     onModeClick = onModeClick,
                     onMemoryClick = onMemoryClick,
                     ttsProviderOverride = ttsProviderOverride,
+                    onEdit = { onEdit?.invoke(group.lastNode) },
                 )
             }
         }
@@ -2404,6 +2409,7 @@ private fun TokenStatisticsInline(
 private fun AssistantThinkingDropdown(
     reasoningParts: List<UIMessagePart.Reasoning>,
     maxWidth: androidx.compose.ui.unit.Dp,
+    isStreaming: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -2453,10 +2459,9 @@ private fun AssistantThinkingDropdown(
             .animateContentSize(
                 animationSpec = spring(
                     dampingRatio = 0.86f,
-                    stiffness = 120f
+                    stiffness = 140f
                 )
             )
-            .clip(shape)
             .then(
                 if (isTransparentStyle) {
                     Modifier
@@ -2530,17 +2535,12 @@ private fun AssistantThinkingDropdown(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(top = 8.dp)
-                    .animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = 0.86f,
-                            stiffness = 120f
-                        )
-                    )
+                    .padding(top = 8.dp, bottom = 6.dp)
             ) {
                 MarkdownBlock(
                     content = totalReasoningText,
                     paragraphSpacing = 8.dp,
+                    streamingTextReveal = isStreaming,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = resolvedContentColor.copy(alpha = 0.85f),
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic

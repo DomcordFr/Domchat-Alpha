@@ -16,6 +16,7 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.togetherWith
@@ -544,7 +545,13 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 AnimatedContent(
                     targetState = editorStep,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(160)) togetherWith fadeOut(animationSpec = tween(140))
+                        if (targetState == EditorStep.LorebookPicker) {
+                            (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it / 3 } + fadeIn(tween(200))) togetherWith
+                            (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it / 3 } + fadeOut(tween(160)))
+                        } else {
+                            (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it / 3 } + fadeIn(tween(200))) togetherWith
+                            (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it / 3 } + fadeOut(tween(160)))
+                        }
                     },
                     label = "persona_title_step_anim"
                 ) { step ->
@@ -595,8 +602,13 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     AnimatedContent(
                         targetState = editorStep,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(150)) togetherWith fadeOut(animationSpec = tween(130)))
-                                .using(SizeTransform(clip = false) { _, _ -> snap() })
+                            if (targetState == EditorStep.LorebookPicker) {
+                                (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it } + fadeIn(tween(200))) togetherWith
+                                (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it } + fadeOut(tween(160)))
+                            } else {
+                                (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { -it } + fadeIn(tween(200))) togetherWith
+                                (slideOutHorizontally(spring(dampingRatio = 0.85f, stiffness = 300f)) { it } + fadeOut(tween(160)))
+                            }.using(SizeTransform(clip = false) { _, _ -> snap() })
                         },
                         label = "persona_body_step_anim"
                     ) { step ->
@@ -827,13 +839,21 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    when (editorStep) {
-                        EditorStep.Persona -> showEditor = false
-                        EditorStep.LorebookPicker -> editorStep = EditorStep.Persona
-                    }
-                }) {
-                    Text("Cancel", color = Color(0xFFA6A6A6))
+                Button(
+                    onClick = {
+                        when (editorStep) {
+                            EditorStep.Persona -> showEditor = false
+                            EditorStep.LorebookPicker -> editorStep = EditorStep.Persona
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color(0xFFA6A6A6)
+                    ),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Text("Cancel")
                 }
             }
         )

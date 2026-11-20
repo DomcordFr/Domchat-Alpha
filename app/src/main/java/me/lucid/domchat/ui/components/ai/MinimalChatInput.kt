@@ -161,6 +161,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -631,6 +632,8 @@ fun MinimalChatInput(
         haptics.perform(HapticPattern.Pop)
     }
 
+    var lastSendClickTimestamp by remember { mutableLongStateOf(0L) }
+
     fun sendMessage() {
         if (isQuestionnaireActive) {
             val question = currentQuestion
@@ -645,9 +648,25 @@ fun MinimalChatInput(
             denyPendingToolWithInstruction()
             return
         }
-        keyboardController?.hide()
-        haptics.perform(HapticPattern.Send)
-        if (state.loading) onCancelClick() else onSendClick()
+        val now = android.os.SystemClock.uptimeMillis()
+        if (state.loading) {
+            // Guard against rapid double click cancelling newly initiated response
+            if (now - lastSendClickTimestamp < 1000L) {
+                return
+            }
+            keyboardController?.hide()
+            haptics.perform(HapticPattern.Send)
+            onCancelClick()
+        } else {
+            // Guard against rapid double click sending duplicate message
+            if (now - lastSendClickTimestamp < 800L) {
+                return
+            }
+            lastSendClickTimestamp = now
+            keyboardController?.hide()
+            haptics.perform(HapticPattern.Send)
+            onSendClick()
+        }
     }
 
     fun replaceCroppedImage(original: PendingImageCrop, croppedUri: Uri) {
@@ -1722,11 +1741,14 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.85f),
+                    .fillMaxHeight(0.85f)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 DomChatSheetHeader(
                     title = "Select Model",
+                    subtitle = "Choose AI model for current conversation",
                     onCloseClick = { showModelPickerSheet = false }
                 )
                 ModelList(
@@ -1859,10 +1881,12 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp)
             ) {
                 DomChatSheetHeader(
                     title = "Text Styling",
+                    subtitle = "Customize appearance for italics & markdown",
                     onCloseClick = { showTextStylingDialog = false },
                     actions = {
                         DomChatGlassPillButton(
@@ -1877,7 +1901,7 @@ fun MinimalChatInput(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .padding(vertical = 8.dp)
                         .fadeEdges(fadeTop = true, fadeBottom = true)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -2114,17 +2138,19 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp)
             ) {
                 DomChatSheetHeader(
                     title = "AI Streaming Animation",
+                    subtitle = "Customize response fade and streaming dynamics",
                     onCloseClick = { showStreamingAnimationSheet = false }
                 )
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .padding(vertical = 8.dp)
                         .fadeEdges(fadeTop = true, fadeBottom = true)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -2238,18 +2264,20 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp)
                     .imePadding()
             ) {
                 DomChatSheetHeader(
                     title = "Author's Note",
+                    subtitle = "Inject directives into conversation depth",
                     onCloseClick = { showAuthorsNoteSheet = false }
                 )
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .padding(vertical = 8.dp)
                         .fadeEdges(fadeTop = true, fadeBottom = true)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -2335,17 +2363,19 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp)
             ) {
                 DomChatSheetHeader(
                     title = "Samplers & Generation",
+                    subtitle = "Fine-tune model temperature, Top-P, and penalties",
                     onCloseClick = { showSamplersSheet = false }
                 )
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .padding(vertical = 8.dp)
                         .fadeEdges(fadeTop = true, fadeBottom = true)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -2753,17 +2783,19 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp)
             ) {
                 DomChatSheetHeader(
-                    title = "Per Chat Wallpaper",
+                    title = "Per-Chat Wallpaper",
+                    subtitle = "Override global background for this conversation",
                     onCloseClick = { showWallpaperSheet = false }
                 )
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                        .padding(vertical = 12.dp)
                         .fadeEdges(fadeTop = true, fadeBottom = true, fadeHeight = 20f)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -2872,11 +2904,17 @@ fun MinimalChatInput(
                             val isFull = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.FULL
                             Surface(
                                 onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.FULL },
-                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 44.dp)
+                                    .liquidGlassSurface(
+                                        shape = AppShapes.CardMedium,
+                                        fillColor = if (isFull) Color(0xFF000000).copy(alpha = 0.50f) else Color(0xFF000000).copy(alpha = 0.20f),
+                                        borderWidth = if (isFull) 1.dp else 0.5.dp,
+                                        specularBrush = if (isFull) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                    ),
                                 shape = AppShapes.CardMedium,
-                                color = Color(0xFF000000),
-                                border = if (isFull) BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
-                                         else BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                color = Color.Transparent,
                             ) {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text(
@@ -2890,11 +2928,17 @@ fun MinimalChatInput(
                             val isBottomFade = blurModeDraft == me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE
                             Surface(
                                 onClick = { blurModeDraft = me.lucid.domchat.data.model.BackgroundBlurMode.BOTTOM_FADE },
-                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 44.dp)
+                                    .liquidGlassSurface(
+                                        shape = AppShapes.CardMedium,
+                                        fillColor = if (isBottomFade) Color(0xFF000000).copy(alpha = 0.50f) else Color(0xFF000000).copy(alpha = 0.20f),
+                                        borderWidth = if (isBottomFade) 1.dp else 0.5.dp,
+                                        specularBrush = if (isBottomFade) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                                    ),
                                 shape = AppShapes.CardMedium,
-                                color = Color(0xFF000000),
-                                border = if (isBottomFade) BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
-                                         else BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                color = Color.Transparent,
                             ) {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text(
@@ -3002,10 +3046,15 @@ fun MinimalChatInput(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
+                            .height(48.dp)
+                            .liquidGlassSurface(
+                                shape = AppShapes.ButtonPill,
+                                fillColor = Color(0xFF000000).copy(alpha = 0.35f),
+                                borderWidth = 1.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                            ),
                         shape = AppShapes.ButtonPill,
-                        color = Color(0xFF000000),
-                        border = BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush),
+                        color = Color.Transparent,
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -3767,7 +3816,9 @@ private fun MinimalPickerContent(
     ) {
         DomChatSheetHeader(
             title = "Add to Chat",
-            onCloseClick = onDismiss
+            subtitle = "Quick attachments, roleplay tools & model controls",
+            onCloseClick = onDismiss,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
 
         Box(
@@ -3780,7 +3831,7 @@ private fun MinimalPickerContent(
                     .fillMaxWidth()
                     .liquidGlassSurface(
                         shape = RoundedCornerShape(16.dp),
-                        fillColor = Color(0xFF000000).copy(alpha = 0.55f),
+                        fillColor = Color(0xFF000000).copy(alpha = 0.25f),
                         borderWidth = 0.5.dp,
                         specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                     )
@@ -3819,7 +3870,7 @@ private fun MinimalPickerContent(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(350.dp)
+                .height(380.dp)
                 .fadeEdges(fadeTop = true, fadeBottom = true)
         ) { pageIndex ->
             Column(
@@ -4454,7 +4505,7 @@ private fun MinimalFileButtonGrouped(
     }
 }
 
-// Grouped file button with liquid glass and clean title-only display
+// Grouped file button with translucent liquid glass and title + subtitle display
 @Composable
 private fun MinimalPickerItem(
     icon: @Composable () -> Unit,
@@ -4462,47 +4513,61 @@ private fun MinimalPickerItem(
     subtitle: String = "",
     onClick: () -> Unit
 ) {
+    val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val interactionSource = remember { MutableInteractionSource() }
     val itemShape = RoundedCornerShape(16.dp)
     Surface(
         onClick = onClick,
         interactionSource = interactionSource,
         color = Color.Transparent,
-        contentColor = Color.White,
+        contentColor = if (isDark) Color(0xFFF2F2F7) else Color.White,
         shape = itemShape,
         border = null,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .heightIn(min = 60.dp)
             .pressScale(interactionSource)
             .liquidGlassSurface(
                 shape = itemShape,
-                fillColor = Color(0xFF000000).copy(alpha = 0.55f),
+                fillColor = if (isDark) Color(0xFF000000).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.45f),
                 borderWidth = 0.5.dp,
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
             )
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 14.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Box(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(26.dp),
                 contentAlignment = Alignment.Center
             ) {
                 icon()
             }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (isDark) Color(0xFFF2F2F7) else Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (subtitle.isNotBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.65f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }

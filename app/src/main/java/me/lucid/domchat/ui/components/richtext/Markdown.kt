@@ -71,6 +71,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
@@ -509,57 +510,89 @@ private val STANDARD_PATTERNS = setOf(
     "==", "++", "<mark>", "<u>"
 )
 
+private val INLINE_BOLD_ITALIC_REGEX = Regex("""\*\*\*([^*\n]+?)\*\*\*""")
+private val INLINE_BOLD_REGEX = Regex("""\*\*([^*\n]+?)\*\*""")
+
 /**
- * Append text to AnnotatedString.Builder, scanning for custom RP patterns.
- * Custom patterns are those NOT in STANDARD_PATTERNS (which are handled by the markdown AST).
- * For each custom pattern, builds a regex like `pattern(.+?)pattern` and applies the color.
+ * Append text to AnnotatedString.Builder, scanning for custom RP patterns
+ * and inline bold **text** fallbacks that were left unparsed by the AST.
  */
 private fun AnnotatedString.Builder.appendTextWithCustomPatterns(
     text: String,
     rpStyleRules: List<RpStyleRule>
 ) {
-    // Get custom patterns only (exclude standard markdown patterns)
+    val strongRule = rpStyleRules.find { it.pattern == "**" && it.enabled }
+    val strongColor = strongRule?.let { runCatching { Color(android.graphics.Color.parseColor(it.colorHex)) }.getOrNull() }
+
     val customRules = rpStyleRules.filter { it.enabled && it.pattern !in STANDARD_PATTERNS }
     
-    if (customRules.isEmpty()) {
+    // Quick exit if neither custom patterns nor bold markdown delimiters exist
+    if (customRules.isEmpty() && !text.contains("**")) {
         append(text)
         return
     }
-    
-    // Build a combined regex for all custom patterns
-    // Each pattern matches: pattern + content + pattern (non-greedy)
-    val patternRegexes = customRules.mapNotNull { rule ->
-        val escaped = Regex.escape(rule.pattern)
-        runCatching {
-            val color = Color(android.graphics.Color.parseColor(rule.colorHex))
-            Regex("$escaped(.+?)$escaped") to color
-        }.getOrNull()
-    }
-    
-    if (patternRegexes.isEmpty()) {
-        append(text)
-        return
-    }
-    
-    // Find all matches from all patterns
-    data class Match(val range: IntRange, val content: String, val color: Color)
-    val allMatches = mutableListOf<Match>()
-    
-    patternRegexes.forEach { (regex, color) ->
-        regex.findAll(text).forEach { matchResult ->
-            allMatches.add(Match(
+
+    data class StyledMatch(val range: IntRange, val content: String, val style: SpanStyle)
+    val allMatches = mutableListOf<StyledMatch>()
+
+    // 1. Scan for inline bold & italic fallback
+    INLINE_BOLD_ITALIC_REGEX.findAll(text).forEach { matchResult ->
+        allMatches.add(
+            StyledMatch(
                 range = matchResult.range,
                 content = matchResult.groupValues[1],
-                color = color
-            ))
+                style = SpanStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic,
+                    fontSynthesis = FontSynthesis.All,
+                    color = strongColor ?: Color.Unspecified
+                )
+            )
+        )
+    }
+
+    // 2. Scan for inline bold fallback
+    INLINE_BOLD_REGEX.findAll(text).forEach { matchResult ->
+        allMatches.add(
+            StyledMatch(
+                range = matchResult.range,
+                content = matchResult.groupValues[1],
+                style = SpanStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSynthesis = FontSynthesis.All,
+                    color = strongColor ?: Color.Unspecified
+                )
+            )
+        )
+    }
+
+    // 3. Scan for custom RP patterns
+    customRules.forEach { rule ->
+        val escaped = Regex.escape(rule.pattern)
+        val color = runCatching { Color(android.graphics.Color.parseColor(rule.colorHex)) }.getOrNull()
+        if (color != null) {
+            Regex("$escaped(.+?)$escaped").findAll(text).forEach { matchResult ->
+                allMatches.add(
+                    StyledMatch(
+                        range = matchResult.range,
+                        content = matchResult.groupValues[1],
+                        style = SpanStyle(color = color)
+                    )
+                )
+            }
         }
     }
-    
-    // Sort by start position
-    allMatches.sortBy { it.range.first }
-    
-    // Remove overlapping matches (keep earlier ones)
-    val nonOverlapping = mutableListOf<Match>()
+
+    if (allMatches.isEmpty()) {
+        append(text)
+        return
+    }
+
+    // Sort by start position, prefer longer match on start tie
+    allMatches.sortWith(compareBy({ it.range.first }, { -it.range.last }))
+
+    // Remove overlapping matches (keep earlier/longer ones)
+    val nonOverlapping = mutableListOf<StyledMatch>()
     var lastEnd = -1
     allMatches.forEach { match ->
         if (match.range.first > lastEnd) {
@@ -567,22 +600,19 @@ private fun AnnotatedString.Builder.appendTextWithCustomPatterns(
             lastEnd = match.range.last
         }
     }
-    
+
     // Build the annotated string
     var currentIndex = 0
     nonOverlapping.forEach { match ->
-        // Append text before this match
         if (match.range.first > currentIndex) {
             append(text.substring(currentIndex, match.range.first))
         }
-        // Append the styled content (without the pattern delimiters)
-        withStyle(SpanStyle(color = match.color)) {
+        withStyle(match.style) {
             append(match.content)
         }
         currentIndex = match.range.last + 1
     }
-    
-    // Append remaining text
+
     if (currentIndex < text.length) {
         append(text.substring(currentIndex))
     }
@@ -1582,7 +1612,7 @@ private fun MarkdownNode(
         }
 
         MarkdownElementTypes.STRONG -> {
-            ProvideTextStyle(TextStyle(fontWeight = FontWeight.Bold)) {
+            ProvideTextStyle(LocalTextStyle.current.copy(fontWeight = FontWeight.Bold, fontSynthesis = FontSynthesis.All)) {
                 node.children.fastForEach { child ->
                     MarkdownNode(
                         node = child, content = content, modifier = modifier, onClickCitation = onClickCitation
@@ -2310,7 +2340,7 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
             // Check for RP color rule for pattern "**" (strong emphasis)
             val strongRule = rpStyleRules.find { it.pattern == "**" && it.enabled }
             val strongColor = strongRule?.let { runCatching { Color(android.graphics.Color.parseColor(it.colorHex)) }.getOrNull() }
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = strongColor ?: Color.Unspecified)) {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSynthesis = FontSynthesis.All, color = strongColor ?: Color.Unspecified)) {
                 node.children.trim(MarkdownTokenTypes.EMPH, 2).fastForEach {
                     appendMarkdownNodeContent(
                         node = it,

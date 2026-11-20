@@ -119,7 +119,7 @@ fun ChatMessageStyleSelector(
                                 .size(24.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (isSelected) Color(0xFF3B82F6)
+                                    if (isSelected) Color.White
                                     else if (isDark) Color.White.copy(0.08f)
                                     else Color.Black.copy(0.05f)
                                 )
@@ -134,7 +134,7 @@ fun ChatMessageStyleSelector(
                                 Icon(
                                     imageVector = Icons.Rounded.Check,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = Color.Black,
                                     modifier = Modifier.size(14.dp)
                                 )
                             }

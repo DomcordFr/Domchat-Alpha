@@ -98,6 +98,7 @@ fun ColumnScope.ChatMessageActionButtons(
     onModeClick: ((me.lucid.ai.ui.UsedMode) -> Unit)? = null,
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)? = null,
     ttsProviderOverride: TTSProviderSetting? = null,
+    onEdit: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val settings = LocalSettings.current
@@ -173,26 +174,15 @@ fun ColumnScope.ChatMessageActionButtons(
             )
         }
 
-        if (message.role == MessageRole.ASSISTANT) {
-            val tts = LocalTTSState.current
-            val isSpeaking by tts.isSpeaking.collectAsState()
-            val isAvailable by tts.isAvailable.collectAsState()
-            DomChatTtsAction(
-                isSpeaking = isSpeaking,
-                isAvailable = isAvailable,
-                contentDescription = stringResource(R.string.tts),
-                onClick = {
-                    if (!isSpeaking) {
-                        tts.speak(
-                            text = message.toContentText(),
-                            overrideSetting = ttsProviderOverride,
-                        )
-                    } else {
-                        tts.stop()
-                    }
-                },
-            )
-        }
+        Icon(
+            imageVector = Icons.Rounded.Edit,
+            contentDescription = stringResource(R.string.edit),
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable { onEdit() }
+                .padding(8.dp)
+                .size(16.dp)
+        )
 
         Icon(
             imageVector = Icons.Rounded.MoreHoriz,
@@ -223,10 +213,11 @@ fun ChatMessageActionsSheet(
     message: UIMessage,
     model: Model?,
     onDelete: () -> Unit,
-    onEdit: () -> Unit,
+    onEdit: () -> Unit = {},
     onFork: () -> Unit,
     onSelectAndCopy: () -> Unit,
     onWebViewPreview: () -> Unit,
+    ttsProviderOverride: TTSProviderSetting? = null,
     onDismissRequest: () -> Unit
 ) {
     val haptics = rememberPremiumHaptics()
@@ -264,15 +255,32 @@ fun ChatMessageActionsSheet(
                     },
                 )
             }
-            MessageActionGlassItem(
-                label = stringResource(R.string.edit),
-                icon = { Icon(Icons.Rounded.Edit, null, modifier = Modifier.size(20.dp)) },
-                onClick = {
-                    haptics.perform(HapticPattern.Pop)
-                    onDismissRequest()
-                    onEdit()
-                },
-            )
+            if (message.role == MessageRole.ASSISTANT) {
+                val tts = LocalTTSState.current
+                val isSpeaking by tts.isSpeaking.collectAsState()
+                MessageActionGlassItem(
+                    label = if (isSpeaking) "Stop TTS" else stringResource(R.string.tts),
+                    icon = {
+                        Icon(
+                            imageVector = if (isSpeaking) Icons.Rounded.StopCircle else Icons.AutoMirrored.Rounded.VolumeUp,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        if (!isSpeaking) {
+                            tts.speak(
+                                text = message.toContentText(),
+                                overrideSetting = ttsProviderOverride,
+                            )
+                        } else {
+                            tts.stop()
+                        }
+                        onDismissRequest()
+                    }
+                )
+            }
             MessageActionGlassItem(
                 label = stringResource(R.string.create_fork),
                 icon = { Icon(Icons.AutoMirrored.Rounded.CallSplit, null, modifier = Modifier.size(20.dp)) },

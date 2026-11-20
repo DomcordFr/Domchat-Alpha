@@ -183,6 +183,11 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
 
+    var hasInitializedAdvanced by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        hasInitializedAdvanced = true
+    }
+
     val permissionState = rememberPermissionState(
         permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) setOf(
             PermissionNotification
@@ -339,7 +344,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         AnimatedVisibility(
                             visible = settings.displaySetting.isAdvancedGlassEnabled,
-                            enter = expandVertically() + fadeIn(),
+                            enter = if (hasInitializedAdvanced) expandVertically() + fadeIn() else androidx.compose.animation.EnterTransition.None,
                             exit = shrinkVertically() + fadeOut(),
                         ) {
                             Column(
@@ -533,44 +538,16 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..60f,
                                 )
 
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    color = Color.White.copy(alpha = 0.08f)
-                                )
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
-                                        Text(
-                                            text = "Link Chrome to Glass",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                        Text(
-                                            text = "Side menu and popovers follow glass opacity, blur, and tone.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.65f)
-                                        )
-                                    }
-                                    HapticSwitch(
-                                        checked = settings.displaySetting.linkChromeToGlass,
-                                        onCheckedChange = {
-                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(linkChromeToGlass = it))
-                                        }
-                                    )
-                                }
-
                                 AnimatedVisibility(
                                     visible = uiIsGlass,
                                     enter = expandVertically() + fadeIn(),
                                     exit = shrinkVertically() + fadeOut()
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(vertical = 8.dp),
+                                            color = Color.White.copy(alpha = 0.08f)
+                                        )
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -602,25 +579,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             }
                         }
                     }
-
-                    SettingGroupItem(
-                        title = "Custom Theme Engine",
-                        subtitle = "Build custom color palettes and shader parameters",
-                        trailing = {
-                            Surface(
-                                color = Color(0xFF000000),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
-                            ) {
-                                Text(
-                                    text = "More coming soon",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    )
                 }
             }
 
@@ -712,7 +670,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         AnimatedVisibility(
                             visible = settings.displaySetting.isAdvancedGlassEnabled,
-                            enter = expandVertically() + fadeIn(),
+                            enter = if (hasInitializedAdvanced) expandVertically() + fadeIn() else androidx.compose.animation.EnterTransition.None,
                             exit = shrinkVertically() + fadeOut(),
                         ) {
                             Column(

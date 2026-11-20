@@ -261,12 +261,13 @@ fun ModelSelector(
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight(0.88f)
-                        .padding(horizontal = 20.dp, vertical = 6.dp),
+                        .padding(vertical = 6.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     DomChatSheetHeader(
                         title = sheetTitle,
                         onCloseClick = { popup = false },
+                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                     val modelMetadataResolver = org.koin.compose.koinInject<me.lucid.domchat.data.ai.models.ModelMetadataResolver>()
                     val filteredProviderSettings = providers.fastFilter {
@@ -1146,8 +1147,8 @@ private fun ModelItem(
                 modifier = Modifier.liquidGlassSurface(
                     shape = RoundedCornerShape(10.dp),
                     borderWidth = 0.5.dp,
-                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
-                    fillColor = Color.White.copy(alpha = 0.08f)
+                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                    fillColor = Color(0xFF000000)
                 )
             ) {
                 Row(
@@ -1158,13 +1159,13 @@ private fun ModelItem(
                     Icon(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.9f),
+                        tint = Color.White,
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
                         text = "ACTIVE",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Color.White
                     )
                 }
             }
@@ -1172,11 +1173,7 @@ private fun ModelItem(
     }
 
     if(inGroup) {
-        val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.04f)
-        } else {
-            if (select) Color(0xFF1E1E24) else Color(0xFF000000).copy(alpha = 0.55f)
-        }
+        val rowContainerColor = if (select) Color(0xFF000000) else if (style == ModelPickerStyle.LIQUID_GLASS) Color.White.copy(alpha = 0.04f) else Color(0xFF000000).copy(alpha = 0.55f)
         DomChatGroupedModelRow(
             title = model.displayName,
             selected = select,
@@ -1218,11 +1215,7 @@ private fun ModelItem(
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
-        val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.04f)
-        } else {
-            if (select) Color(0xFF1E1E24) else Color(0xFF000000)
-        }
+        val resolvedFillColor = if (select) Color(0xFF000000) else if (style == ModelPickerStyle.LIQUID_GLASS) Color.White.copy(alpha = 0.04f) else Color(0xFF000000)
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,

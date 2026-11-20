@@ -355,12 +355,12 @@ fun DomChatInWindowBottomSheet(
             launch {
                 scrimAlpha.animateTo(
                     0f,
-                    animationSpec = spring(dampingRatio = 0.88f, stiffness = 450f)
+                    animationSpec = spring(dampingRatio = 0.88f, stiffness = motionPolicy.pressStiffness(450f))
                 )
             }
             offsetY.animateTo(
                 targetValue = sheetHeightPx.coerceAtLeast(1200f),
-                animationSpec = spring(dampingRatio = 0.84f, stiffness = 420f)
+                animationSpec = spring(dampingRatio = 0.84f, stiffness = motionPolicy.pressStiffness(420f))
             )
             onDismissRequest()
         }
@@ -370,12 +370,12 @@ fun DomChatInWindowBottomSheet(
         launch {
             scrimAlpha.animateTo(
                 1f,
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = motionPolicy.pressStiffness(400f))
             )
         }
         offsetY.animateTo(
             0f,
-            animationSpec = spring(dampingRatio = 0.82f, stiffness = 400f)
+            animationSpec = spring(dampingRatio = 0.82f, stiffness = motionPolicy.pressStiffness(400f))
         )
     }
 
