@@ -39,6 +39,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
@@ -235,9 +236,102 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                 SettingsGroup(
                     title = stringResource(R.string.setting_page_theme_setting)
                 ) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        SettingGroupItem(
+                            title = "Dynamic Color",
+                            subtitle = "Harmonize palette with device wallpaper accent colors",
+                            trailing = {
+                                HapticSwitch(
+                                    checked = settings.dynamicColor,
+                                    onCheckedChange = {
+                                        vm.updateSettings(settings.copy(dynamicColor = it))
+                                    }
+                                )
+                            }
+                        )
+                    }
+
+                    // Preset themes row
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "Preset Themes",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color.White
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        androidx.compose.foundation.lazy.LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(me.lucid.domchat.ui.theme.PresetThemes, key = { it.id }) { preset ->
+                                val isSelected = !settings.dynamicColor && (me.lucid.domchat.ui.theme.normalizePresetThemeId(settings.themeId) == preset.id)
+                                val scheme = preset.getColorScheme(isDark)
+                                Surface(
+                                    onClick = {
+                                        haptics.perform(HapticPattern.Pop)
+                                        vm.updateSettings(
+                                            settings.copy(
+                                                dynamicColor = false,
+                                                themeId = preset.id
+                                            )
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(
+                                        width = if (isSelected) 1.5.dp else 0.5.dp,
+                                        brush = if (isSelected) {
+                                            androidx.compose.ui.graphics.SolidColor(scheme.primary)
+                                        } else {
+                                            me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                                        }
+                                    ),
+                                    modifier = Modifier.width(130.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(14.dp)
+                                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                                    .background(scheme.primary)
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(14.dp)
+                                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                                    .background(scheme.secondary)
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(14.dp)
+                                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                                    .background(scheme.tertiary)
+                                            )
+                                        }
+                                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                            preset.name()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     SettingGroupItem(
-                        title = "Themes",
-                        subtitle = "OLED Liquid Glass",
+                        title = "Custom Theme Engine",
+                        subtitle = "Build custom color palettes and shader parameters",
                         trailing = {
                             Surface(
                                 color = Color(0xFF000000),
@@ -559,7 +653,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     }
                                     toaster.show(
                                         message = "Switched to Liquid Glass. Restart recommended for full shader reinitialization.",
-                                        type = ToastType.Info,
+                                        type = ToastType.Success,
                                         action = ToastAction("Restart") {
                                             val packageManager = context.packageManager
                                             val intent = packageManager.getLaunchIntentForPackage(context.packageName)
@@ -595,7 +689,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     }
                                     toaster.show(
                                         message = "Switched to Frosted Glass. Restart recommended for full shader reinitialization.",
-                                        type = ToastType.Info,
+                                        type = ToastType.Success,
                                         action = ToastAction("Restart") {
                                             val packageManager = context.packageManager
                                             val intent = packageManager.getLaunchIntentForPackage(context.packageName)
@@ -618,7 +712,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                 Text(
                                     text = "Advanced Appearance",
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
@@ -690,20 +784,23 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 var localDepthScale by remember(settings.displaySetting.glassDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.glassDepthScale)
                                 }
-                                if (uiIsGlass) {
-                                glassSliderRow(
-                                    label = "UI Glass Depth / Refraction",
-                                    valueText = "${localDepthScale.roundToInt()}x",
-                                    value = localDepthScale,
-                                    onValueChange = { localDepthScale = it },
-                                    onFinished = {
-                                        val rounded = (localDepthScale * 10f).roundToInt() / 10f
-                                        localDepthScale = rounded
-                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(glassDepthScale = localDepthScale))
-                                    },
-                                    valueRange = 0f..2.5f,
-                                    steps = 25,
-                                )
+                                AnimatedVisibility(
+                                    visible = uiIsGlass,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    glassSliderRow(
+                                        label = "UI Glass Depth / Refraction",
+                                        valueText = "${localDepthScale.roundToInt()}x",
+                                        value = localDepthScale,
+                                        onValueChange = { localDepthScale = it },
+                                        onFinished = {
+                                            val rounded = (localDepthScale * 10f).roundToInt() / 10f
+                                            localDepthScale = rounded
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(glassDepthScale = localDepthScale))
+                                        },
+                                        valueRange = 0f..2.5f,
+                                    )
                                 }
 
                                 var localGlassSpecular by remember(settings.displaySetting.glassSpecularIntensity) {
@@ -720,7 +817,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         updateDisplaySetting(vm.settings.value.displaySetting.copy(glassSpecularIntensity = localGlassSpecular))
                                     },
                                     valueRange = 0f..1.0f,
-                                    steps = 100,
                                 )
 
                                 var localTint by remember(settings.displaySetting.glassTintColor) {
@@ -807,7 +903,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         updateDisplaySetting(vm.settings.value.displaySetting.copy(barGradientDensity = localBarGradientDensity))
                                     },
                                     valueRange = 0f..1.0f,
-                                    steps = 100,
                                 )
 
                                 var localBarGradientBlur by remember(settings.displaySetting.barGradientBlur) {
@@ -838,7 +933,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                         Text(
                                             text = "Link Chrome to Glass",
                                             style = MaterialTheme.typography.bodyMedium,
@@ -865,7 +960,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                         Text(
                                             text = "Chromatic Dispersion",
                                             style = MaterialTheme.typography.bodyMedium,
@@ -892,14 +987,14 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                         Text(
                                             text = "Interactive Glass Physics",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.SemiBold,
                                         )
                                         Text(
-                                            text = "Touch spotlight bloom, spring micro-expansion, and Convx elastic drag.",
+                                            text = "Touch spotlight bloom, spring micro-expansion, and elastic tactile drag.",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Color.White.copy(alpha = 0.65f)
                                         )
@@ -933,7 +1028,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                         Text("Link UI & Bubbles", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                         Text(
                             "When on, changing UI or Bubble glass style applies to both.",
@@ -1032,7 +1127,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                 Text(
                                     text = "Advanced Appearance",
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
@@ -1119,26 +1214,28 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         updateDisplaySetting(vm.settings.value.displaySetting.copy(chatBubbleTone = localBubbleTone))
                                     },
                                     valueRange = 0f..1.0f,
-                                    steps = 100,
                                 )
 
                                 var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)
                                 }
-                                if (bubbleIsGlass) {
-                                glassSliderRow(
-                                    label = "Bubble Depth / Refraction",
-                                    valueText = "${localBubbleDepth.roundToInt()}x",
-                                    value = localBubbleDepth,
-                                    onValueChange = { localBubbleDepth = it },
-                                    onFinished = {
-                                        val rounded = (localBubbleDepth * 10f).roundToInt() / 10f
-                                        localBubbleDepth = rounded
-                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleDepthScale = localBubbleDepth))
-                                    },
-                                    valueRange = 0f..2.5f,
-                                    steps = 25,
-                                )
+                                AnimatedVisibility(
+                                    visible = bubbleIsGlass,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    glassSliderRow(
+                                        label = "Bubble Depth / Refraction",
+                                        valueText = "${localBubbleDepth.roundToInt()}x",
+                                        value = localBubbleDepth,
+                                        onValueChange = { localBubbleDepth = it },
+                                        onFinished = {
+                                            val rounded = (localBubbleDepth * 10f).roundToInt() / 10f
+                                            localBubbleDepth = rounded
+                                            updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleDepthScale = localBubbleDepth))
+                                        },
+                                        valueRange = 0f..2.5f,
+                                    )
                                 }
 
                                 var localBubbleSpecular by remember(settings.displaySetting.bubbleSpecularIntensity) {
@@ -1155,7 +1252,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                         updateDisplaySetting(vm.settings.value.displaySetting.copy(bubbleSpecularIntensity = localBubbleSpecular))
                                     },
                                     valueRange = 0f..1.0f,
-                                    steps = 100,
                                 )
 
                                 var localBubbleTintColor by remember(settings.displaySetting.chatBubbleTintColor) {
@@ -1167,7 +1263,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
                                         Text(
                                             text = "Bubble Tint Color",
                                             style = MaterialTheme.typography.bodyMedium,
@@ -1385,7 +1481,7 @@ private fun glassSliderRow(
 
 /**
  * HSV / Hex color picker dialog for glass and bubble tint washes
- * (Convx-style color wheel replacement: sliders + hex input + preview swatch).
+ * (Color wheel replacement: sliders + hex input + preview swatch).
  */
 @Composable
 private fun TintColorPickerDialog(

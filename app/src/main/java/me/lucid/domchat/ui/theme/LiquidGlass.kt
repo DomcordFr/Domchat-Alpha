@@ -243,7 +243,7 @@ fun Modifier.liquidGlass(
                 refractionAmount = amountPx,
                 depthEffect = depthEffect,
                 chromaticAberration = display.chromaticDispersionEnabled,
-                chromaticAberrationAmount = 0.65f,
+                chromaticAberrationAmount = if (display.chromaticDispersionEnabled) 0.65f else 0f,
             )
         }
     }
@@ -422,7 +422,7 @@ fun Modifier.liquidGlassBubbleSurface(
                 refractionAmount = amountPx,
                 depthEffect = true,
                 chromaticAberration = display.chromaticDispersionEnabled,
-                chromaticAberrationAmount = 0.65f,
+                chromaticAberrationAmount = if (display.chromaticDispersionEnabled) 0.65f else 0f,
             )
         }
     }
@@ -627,12 +627,12 @@ fun LiquidGlassCard(
 }
 
 /**
- * Convx-Grade Interactive Liquid Glass Modifier:
+ * Interactive Liquid Glass Modifier:
  * - Dynamic touch highlight following finger during drag/hold with BlendMode.Plus.
  * - Micro-expansion on press (1.02x - 1.04x) with spring damping.
  * - Elastic micro-translation response with tanh soft-clamping.
  */
-fun Modifier.convxInteractiveGlass(
+fun Modifier.liquidInteractiveGlass(
     enabled: Boolean = true,
     scaleLiftDp: Dp = 4.dp,
     elasticDrag: Boolean = true,
@@ -722,15 +722,3 @@ fun Modifier.convxInteractiveGlass(
             }
         }
 }
-
-/**
- * Fluid touch modifier backwards-compatible with Convx-grade interactive liquid glass.
- */
-fun Modifier.convxFluidTouch(
-    bloomAlpha: Float = 0.22f,
-    bloomRadiusDp: Float = 40f
-): Modifier = convxInteractiveGlass(
-    spotAlpha = bloomAlpha,
-    scaleLiftDp = 3.dp,
-    elasticDrag = true
-)

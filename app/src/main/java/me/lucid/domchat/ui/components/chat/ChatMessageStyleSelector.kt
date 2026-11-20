@@ -149,44 +149,49 @@ fun ChatMessageStyleSelector(
                             .fillMaxWidth()
                             .height(84.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        Color(0xFF141524).copy(alpha = 0.70f),
-                                        Color(0xFF090A12).copy(alpha = 0.90f)
-                                    )
-                                )
-                            )
+                            .background(Color(0xFF000000))
                             .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(14.dp))
                             .padding(horizontal = 10.dp, vertical = 8.dp)
                     ) {
                         when (style) {
                             ChatMessageStyle.BUBBLES -> {
-                                // Semi-transparent Liquid Glass bubbles
+                                // Modern AMOLED Liquid Glass bubbles
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    // AI message - frosted glass
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color.White.copy(alpha = 0.12f))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(12.dp))
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    // AI message - specular black glass bubble
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Text("\"Step closer...\" she whispered softly.", fontSize = 10.5.sp, color = Color(0xFFF0F0FF))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .clip(CircleShape)
+                                                .background(Color.White.copy(alpha = 0.15f))
+                                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(Color(0xFF000000))
+                                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
+                                                .padding(horizontal = 9.dp, vertical = 4.dp)
+                                        ) {
+                                            Text("\"Step closer...\" she whispered softly.", fontSize = 10.sp, color = Color.White)
+                                        }
                                     }
-                                    // User message - glowing sapphire glass
+                                    // User message - right-aligned specular glass bubble
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.End)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFF3B82F6).copy(alpha = 0.28f))
-                                            .border(0.5.dp, Color(0xFF60A5FA).copy(alpha = 0.65f), RoundedCornerShape(12.dp))
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                                            .background(Color(0xFF000000))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(12.dp))
+                                            .padding(horizontal = 9.dp, vertical = 4.dp)
                                     ) {
-                                        Text("*I took a breath and stepped forward.*", fontSize = 10.sp, color = Color.White)
+                                        Text("*I took a breath and stepped forward.*", fontSize = 9.5.sp, color = Color.White.copy(alpha = 0.9f))
                                     }
                                 }
                             }
@@ -198,36 +203,36 @@ fun ChatMessageStyleSelector(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomEnd = 10.dp, bottomStart = 3.dp))
-                                            .background(Color(0xFF222436).copy(alpha = 0.85f))
-                                            .border(0.5.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomEnd = 10.dp, bottomStart = 3.dp))
+                                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 12.dp, bottomStart = 3.dp))
+                                            .background(Color.White.copy(alpha = 0.08f))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 12.dp, bottomStart = 3.dp))
                                             .padding(horizontal = 9.dp, vertical = 4.dp)
                                     ) {
-                                        Text("\"Step closer...\" she whispered softly.", fontSize = 10.5.sp, color = Color(0xFFE2E4F0))
+                                        Text("\"Step closer...\" she whispered softly.", fontSize = 10.sp, color = Color.White)
                                     }
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.End)
-                                            .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomEnd = 3.dp, bottomStart = 10.dp))
-                                            .background(Color(0xFF2563EB).copy(alpha = 0.85f))
-                                            .border(0.5.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp, bottomEnd = 3.dp, bottomStart = 10.dp))
+                                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 3.dp, bottomStart = 12.dp))
+                                            .background(Color.White.copy(alpha = 0.18f))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderBrush, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 3.dp, bottomStart = 12.dp))
                                             .padding(horizontal = 9.dp, vertical = 4.dp)
                                     ) {
-                                        Text("*I took a breath and stepped forward.*", fontSize = 10.sp, color = Color.White)
+                                        Text("*I took a breath and stepped forward.*", fontSize = 9.5.sp, color = Color.White)
                                     }
                                 }
                             }
                             ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR -> {
-                                // Immersive roleplay text with bottom-to-top blur fade
+                                // Immersive borderless roleplay with subtle bottom gradient
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .fillMaxHeight(0.75f)
+                                            .fillMaxHeight(0.60f)
                                             .align(Alignment.BottomCenter)
                                             .background(
                                                 Brush.verticalGradient(
-                                                    listOf(Color.Transparent, Color(0xFF0A0B14).copy(0.6f), Color(0xFF0A0B14).copy(0.95f))
+                                                    listOf(Color.Transparent, Color(0xFF000000).copy(0.7f), Color(0xFF000000).copy(0.95f))
                                                 )
                                             )
                                     )
@@ -237,14 +242,14 @@ fun ChatMessageStyleSelector(
                                     ) {
                                         Text(
                                             text = "\"Step closer...\" she whispered softly.",
-                                            fontSize = 10.5.sp,
+                                            fontSize = 10.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
                                         )
                                         Text(
                                             text = "*I took a breath, meeting her gaze across the room.*",
-                                            fontSize = 10.sp,
-                                            color = Color(0xFFB8B9CC)
+                                            fontSize = 9.5.sp,
+                                            color = Color.White.copy(alpha = 0.7f)
                                         )
                                     }
                                 }

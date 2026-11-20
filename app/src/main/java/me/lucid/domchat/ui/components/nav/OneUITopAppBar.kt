@@ -1,5 +1,12 @@
 package me.lucid.domchat.ui.components.nav
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -130,13 +137,22 @@ fun OneUITopAppBar(
                 // Collapsed title (appears when scrolled)
                 Box(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
                     if (collapsedTitleAlpha > 0f) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = collapsedTitleAlpha)
-                        )
+                        AnimatedContent(
+                            targetState = title,
+                            transitionSpec = {
+                                (fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 3 }) togetherWith
+                                    (fadeOut(tween(180)) + slideOutVertically(tween(180)) { -it / 3 })
+                            },
+                            label = "collapsed_top_bar_title"
+                        ) { currentTitle ->
+                            Text(
+                                text = currentTitle,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = collapsedTitleAlpha)
+                            )
+                        }
                     }
                 }
                 
@@ -158,19 +174,28 @@ fun OneUITopAppBar(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.displaySmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 32.sp,
-                            lineHeight = 38.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                    )
+                    AnimatedContent(
+                        targetState = title,
+                        transitionSpec = {
+                            (fadeIn(tween(240)) + slideInVertically(tween(240)) { it / 4 }) togetherWith
+                                (fadeOut(tween(180)) + slideOutVertically(tween(180)) { -it / 4 })
+                        },
+                        label = "expanded_top_bar_title"
+                    ) { currentTitle ->
+                        Text(
+                            text = currentTitle,
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 32.sp,
+                                lineHeight = 38.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        )
+                    }
                 }
             }
         }

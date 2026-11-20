@@ -248,7 +248,7 @@ fun ConversationList(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     top = 4.dp,
-                    bottom = if (bottomContent != null) 58.dp else 8.dp,
+                    bottom = if (bottomContent != null) 84.dp else 8.dp,
                 ),
             ) {
                 if (!isSearchExpanded && quickActions != null) {
@@ -530,15 +530,39 @@ fun ConversationList(
 
 
 
+        if (bottomContent != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(96.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color(0xFF000000).copy(alpha = 0.65f),
+                                Color(0xFF000000).copy(alpha = 0.95f),
+                            )
+                        )
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {} // Intercept touches to prevent accidental clicks on chat list
+                    )
+                    .zIndex(1.5f)
+            )
+        }
+
         Box(
-    modifier = Modifier
-        .align(Alignment.BottomCenter)
-        .fillMaxWidth()
-        .padding(horizontal = 8.dp, vertical = 8.dp)
-        .zIndex(2f)
-) {
-    bottomContent?.invoke()
-}
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .zIndex(2f)
+        ) {
+            bottomContent?.invoke()
+        }
     }
 }
 

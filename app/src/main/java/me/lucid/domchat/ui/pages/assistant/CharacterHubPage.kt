@@ -3301,7 +3301,7 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = if (isAllSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.animateItem()
+                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
@@ -3326,7 +3326,7 @@ private fun GroupTabsRow(
                 color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
-                    .animateItem()
+                    .animateItem(fadeInSpec = null, fadeOutSpec = null)
                     .combinedClickable(
                         onClick = { onGroupSelected(groupId) },
                         onLongClick = {
@@ -3356,7 +3356,7 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.animateItem()
+                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),

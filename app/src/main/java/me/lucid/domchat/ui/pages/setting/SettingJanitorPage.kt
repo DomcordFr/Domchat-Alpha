@@ -1426,6 +1426,8 @@ private fun JanitorCharacterInspectorSheet(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     // 3 Inspection Tabs (Notes, Personality, Greetings)
                     Row(
                         modifier = Modifier

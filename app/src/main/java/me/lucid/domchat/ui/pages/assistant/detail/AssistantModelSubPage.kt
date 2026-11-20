@@ -19,6 +19,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.components.ui.DebouncedTextField
 import me.lucid.domchat.ui.motion.ExpandableContent
 import androidx.compose.material3.Text
@@ -61,6 +63,7 @@ fun AssistantModelSubPage(
     catalogSnapshot: ModelCatalogSnapshot? = null,
     onUpdate: (Assistant) -> Unit
 ) {
+    val haptics = rememberPremiumHaptics()
     var maxTokensPending by remember { mutableStateOf(false) }
     val currentModel = remember(assistant.chatModelId, providers) {
         providers.flatMap { it.models }.firstOrNull { it.id == assistant.chatModelId }
@@ -297,9 +300,14 @@ fun AssistantModelSubPage(
                     Column(modifier = Modifier.padding(16.dp)) {
                         DomChatSlider(
                             value = (assistant.topK ?: 40).toFloat(),
-                            onValueChange = { onUpdate(assistant.copy(topK = it.toInt().coerceAtLeast(1))) },
+                            onValueChange = {
+                                val intVal = it.toInt().coerceAtLeast(1)
+                                if (intVal != (assistant.topK ?: 40)) {
+                                    haptics.perform(HapticPattern.Tick)
+                                }
+                                onUpdate(assistant.copy(topK = intVal))
+                            },
                             valueRange = 1f..100f,
-                            steps = 99,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

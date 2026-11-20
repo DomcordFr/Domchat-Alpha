@@ -76,6 +76,7 @@ import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.ui.theme.liquidGlassBorderBrush
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.LiquidGlassMode
@@ -191,12 +192,32 @@ fun DomChatSearchBar(
         unfocusedLabelColor = Color.White.copy(alpha = 0.45f),
     )
 
+    val settings = LocalSettings.current
+    val isLiquidGlass = settings.displaySetting.liquidGlassMode != LiquidGlassMode.SOFT_FROSTED
+
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(52.dp)
+            .then(
+                if (isLiquidGlass) {
+                    Modifier.liquidGlassSurface(
+                        shape = AppShapes.SearchField,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        isFloatingControl = true
+                    )
+                } else {
+                    Modifier.frostedGlassSurface(
+                        shape = AppShapes.SearchField,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    )
+                }
+            )
+            .liquidInteractiveGlass(scaleLiftDp = 1.dp, elasticDrag = false),
         enabled = true,
         readOnly = false,
         textStyle = textStyle,
@@ -250,8 +271,8 @@ fun DomChatSearchBar(
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         colors = colors,
                         shape = AppShapes.SearchField,
-                        focusedBorderThickness = OutlinedTextFieldDefaults.FocusedBorderThickness,
-                        unfocusedBorderThickness = OutlinedTextFieldDefaults.UnfocusedBorderThickness,
+                        focusedBorderThickness = 0.dp,
+                        unfocusedBorderThickness = 0.dp,
                     )
                 },
             )

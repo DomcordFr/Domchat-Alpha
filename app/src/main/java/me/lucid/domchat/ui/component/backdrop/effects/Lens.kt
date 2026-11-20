@@ -1,9 +1,7 @@
 /*
- * Ported from Convx (com.convx.music.ui.component.backdrop.effects.Lens)
  * Originally vendored from Kyant0/backdrop v2.0.0 (io.github.kyant0:backdrop)
  * https://github.com/Kyant0/backdrop — Copyright 2025 Kyant0, Apache License 2.0
  *
- * Adapted package name com.convx.music.ui.component.backdrop -> me.lucid.domchat.ui.component.backdrop.
  */
 package me.lucid.domchat.ui.component.backdrop.effects
 
@@ -38,7 +36,7 @@ fun BackdropEffectScope.lens(
     val cornerRadii = cornerRadii
     val effect =
         if (cornerRadii != null) {
-            val dispersion = chromaticAberrationAmount.coerceIn(0f, 1f)
+            val dispersion = if (chromaticAberration) chromaticAberrationAmount.coerceIn(0f, 1f) else 0f
             val shader =
                 if (dispersion <= 0f) {
                     obtainRuntimeShader(

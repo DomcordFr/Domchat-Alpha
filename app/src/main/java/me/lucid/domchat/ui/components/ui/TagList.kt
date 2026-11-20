@@ -15,8 +15,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.appFieldColors
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,38 +63,54 @@ fun TagsInput(
     ) {
         // 显示已选择的tags
         selectedTags.fastForEach { tag ->
-            InputChip(onClick = {}, label = {
-                Text(tag.name)
-            }, selected = false, trailingIcon = {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clickable {
-                            onValueChange(
-                                value.filter { it != tag.id }, tags
-                            )
-                        },
-                    tint = Color.White.copy(alpha = 0.65f)
-                )
-            })
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                modifier = Modifier.clip(RoundedCornerShape(12.dp))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = tag.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clickable {
+                                onValueChange(
+                                    value.filter { it != tag.id }, tags
+                                )
+                            },
+                        tint = Color.White.copy(alpha = 0.65f)
+                    )
+                }
+            }
         }
 
         // 添加按钮
         Surface(
             shape = CircleShape,
-            tonalElevation = 2.dp,
+            color = Color(0xFF000000),
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable { showAddDialog = true }) {
+                .clickable { showAddDialog = true }
+        ) {
             Icon(
                 Icons.Rounded.Add,
                 contentDescription = stringResource(R.string.add),
                 modifier = Modifier
-                    .padding(6.dp)
+                    .padding(8.dp)
                     .size(16.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
         }
     }
@@ -102,111 +123,157 @@ fun TagsInput(
         // 获取未选择的标签
         val unselectedTags = tags.filter { tag -> !value.contains(tag.id) }
 
-        AlertDialog(onDismissRequest = {
-            showAddDialog = false
-            tagName = ""
-            showError = false
-        }, title = {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-            Text(stringResource(R.string.tag_input_dialog_title))
-        }, text = {
-            Column {
-                // 显示现有标签列表（如果有未选择的标签）
-                if (unselectedTags.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.tag_input_dialog_existing_tags),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.65f)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        unselectedTags.forEach { tag ->
-                            InputChip(
-                                onClick = {
-                                    onValueChange(value + tag.id, tags)
-                                    showAddDialog = false
-                                    tagName = ""
-                                    showError = false
-                                }, label = { Text(tag.name) }, selected = false
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = stringResource(R.string.tag_input_dialog_create_new),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.65f)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // 输入新标签名称
-                OutlinedTextField(
-                    value = tagName,
-                    onValueChange = {
-                        tagName = it
-                        showError = false
-                    },
-                    label = { Text(stringResource(R.string.tag_input_dialog_label)) },
-                    placeholder = { Text(stringResource(R.string.tag_input_dialog_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = showError,
-                    shape = me.lucid.domchat.ui.theme.AppShapes.InputField
+        AlertDialog(
+            onDismissRequest = {
+                showAddDialog = false
+                tagName = ""
+                showError = false
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = Color(0xFF000000),
+            tonalElevation = 0.dp,
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(24.dp)),
+            title = {
+                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
+                Text(
+                    text = stringResource(R.string.tag_input_dialog_title),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
                 )
+            },
+            text = {
+                Column {
+                    // 显示现有标签列表（如果有未选择的标签）
+                    if (unselectedTags.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.tag_input_dialog_existing_tags),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                // 显示错误信息
-                if (showError) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            unselectedTags.forEach { tag ->
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            onValueChange(value + tag.id, tags)
+                                            showAddDialog = false
+                                            tagName = ""
+                                            showError = false
+                                        }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Add,
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.65f),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(
+                                            text = tag.name,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = stringResource(R.string.tag_input_dialog_create_new),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    // 输入新标签名称
+                    OutlinedTextField(
+                        value = tagName,
+                        onValueChange = {
+                            tagName = it
+                            showError = false
+                        },
+                        label = { Text(stringResource(R.string.tag_input_dialog_label)) },
+                        placeholder = { Text(stringResource(R.string.tag_input_dialog_placeholder)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = showError,
+                        shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                        colors = appFieldColors()
+                    )
+
+                    // 显示错误信息
+                    if (showError) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.tag_input_dialog_tag_exists),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (tagName.isNotBlank()) {
+                            val trimmedName = tagName.trim()
+                            // 检查是否已存在同名标签
+                            val existingTag =
+                                tags.find { it.name.equals(trimmedName, ignoreCase = true) }
+                            if (existingTag != null) {
+                                // 如果存在同名标签，显示错误信息
+                                showError = true
+                            } else {
+                                // 创建新标签
+                                val newTag = Tag(id = Uuid.random(), name = trimmedName)
+                                onValueChange(value + newTag.id, tags + newTag)
+                                showAddDialog = false
+                                tagName = ""
+                                showError = false
+                            }
+                        }
+                    },
+                    enabled = tagName.isNotBlank()
+                ) {
                     Text(
-                        text = stringResource(R.string.tag_input_dialog_tag_exists),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
+                        stringResource(R.string.confirm),
+                        color = if (tagName.isNotBlank()) Color.White else Color.White.copy(alpha = 0.35f)
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showAddDialog = false
+                        tagName = ""
+                        showError = false
+                    }
+                ) {
+                    Text(
+                        stringResource(R.string.cancel),
+                        color = Color.White.copy(alpha = 0.65f)
                     )
                 }
             }
-        }, confirmButton = {
-            TextButton(
-                onClick = {
-                    if (tagName.isNotBlank()) {
-                        val trimmedName = tagName.trim()
-                        // 检查是否已存在同名标签
-                        val existingTag =
-                            tags.find { it.name.equals(trimmedName, ignoreCase = true) }
-                        if (existingTag != null) {
-                            // 如果存在同名标签，显示错误信息
-                            showError = true
-                        } else {
-                            // 创建新标签
-                            val newTag = Tag(id = Uuid.random(), name = trimmedName)
-                            onValueChange(value + newTag.id, tags + newTag)
-                            showAddDialog = false
-                            tagName = ""
-                            showError = false
-                        }
-                    }
-                }, enabled = tagName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.confirm))
-            }
-        }, dismissButton = {
-            TextButton(
-                onClick = {
-                    showAddDialog = false
-                    tagName = ""
-                    showError = false
-                }) {
-                Text(stringResource(R.string.cancel))
-            }
-        })
+        )
     }
 }

@@ -4,6 +4,7 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatChromeSurfaceColor
 
@@ -464,6 +465,7 @@ fun ChatDrawerContent(
                                     borderWidth = 0.5.dp,
                                     specularBrush = if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder,
                                 )
+                                .liquidInteractiveGlass(scaleLiftDp = 2.dp)
                                 .clickable {
                                     haptics.perform(HapticPattern.Pop)
                                     // Await drawer close animation completion before opening the
@@ -748,11 +750,13 @@ private fun DrawerAction(
     DomChatDrawerAction(
         onClick = onClick,
         onHaptic = { haptics.perform(HapticPattern.Pop) },
-        modifier = modifier.liquidGlassSurface(
-            shape = shape,
-            borderWidth = 0.5.dp,
-            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-        ),
+        modifier = modifier
+            .liquidGlassSurface(
+                shape = shape,
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+            )
+            .liquidInteractiveGlass(scaleLiftDp = 2.dp),
         containerColor = containerColor,
         border = border,
         shape = shape,

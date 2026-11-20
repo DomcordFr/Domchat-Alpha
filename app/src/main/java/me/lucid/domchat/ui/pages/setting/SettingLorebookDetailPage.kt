@@ -56,14 +56,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -395,16 +394,15 @@ fun SettingLorebookDetailPage(
                                 .padding(horizontal = 24.dp, vertical = 8.dp)
                         )
                     }
-                    
                     // Search bar
                     if (lorebook.entries.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
                             placeholder = { Text(stringResource(R.string.lorebook_search_entries_placeholder)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp)
                                 .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
                             shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
@@ -776,7 +774,6 @@ private fun EntryEditorSheet(
     onSave: (LorebookEntry) -> Unit,
     onAutoSave: ((LorebookEntry) -> Unit)? = null
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val appStorageRepository: AppStorageRepository = koinInject()
@@ -910,22 +907,13 @@ private fun EntryEditorSheet(
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
-    ModalBottomSheet(
-        containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
-        contentColor = Color(0xFFF2F2F7),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = { dismissEditor() },
-        sheetState = sheetState,
+        maxHeight = maxSheetHeight,
+        modifier = Modifier.imePadding(),
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                        sheetState.hide()
-                        dismissEditor()
-                    }
-                }
-            )
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         },
     ) {
         me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
@@ -1261,9 +1249,7 @@ private fun LorebookEditorSheet(
     lorebook: Lorebook,
     onDismiss: (List<String>) -> Unit,
     onSave: (Lorebook) -> Unit,
-    onAutoSave: ((Lorebook) -> Unit)? = null
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val appStorageRepository: AppStorageRepository = koinInject()
@@ -1326,13 +1312,11 @@ private fun LorebookEditorSheet(
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val maxSheetHeight = with(density) { configuration.screenHeightDp.dp * 0.85f }
-    ModalBottomSheet(
-        containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
-        contentColor = Color(0xFFF2F2F7),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = { dismissEditor() },
-        sheetState = sheetState,
+        maxHeight = maxSheetHeight,
+        modifier = Modifier.imePadding(),
         dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
     ) {
         Column(
@@ -1632,26 +1616,12 @@ private fun AssistantLorebookToggleSheet(
     val cornerRadius = 28.dp
     val smallCorner = 8.dp
     val isDarkMode = LocalDarkMode.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-    ModalBottomSheet(
-        containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet).imePadding(),
-        contentColor = Color(0xFFF2F2F7),
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
+        modifier = Modifier.imePadding(),
         dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                }
-            )
+            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
         }
     ) {
         Column(

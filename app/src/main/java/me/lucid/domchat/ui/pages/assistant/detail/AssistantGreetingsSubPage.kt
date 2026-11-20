@@ -1,8 +1,13 @@
 package me.lucid.domchat.ui.pages.assistant.detail
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -195,6 +200,7 @@ fun AssistantGreetingsSubPage(
 
                 Box(
                     modifier = Modifier
+                        .animateContentSize(spring(dampingRatio = 0.8f, stiffness = 400f))
                         .height(40.dp)
                         .clip(AppShapes.ButtonPill)
                         .combinedClickable(
@@ -310,19 +316,30 @@ fun AssistantGreetingsSubPage(
                 }
             }
         } else if (selectedIndex in intros.indices) {
-            val currentIntro = intros[selectedIndex]
-            DomChatMarkdownEditor(
-                value = currentIntro,
-                onValueChange = { newValue ->
-                    val updatedIntros = intros.toMutableList()
-                    updatedIntros[selectedIndex] = newValue
-                    updateIntros(updatedIntros, labels)
+            AnimatedContent(
+                targetState = selectedIndex,
+                transitionSpec = {
+                    (fadeIn(tween(220)) + slideInHorizontally(tween(220)) { if (targetState > initialState) it / 6 else -it / 6 }) togetherWith
+                        (fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { if (targetState > initialState) -it / 6 else it / 6 })
                 },
-                placeholder = "Write your character's opening greeting, action, and dialogue in Markdown...",
-                minLines = 14,
-                showMacros = true,
-                allowImageEmbed = true
-            )
+                label = "greeting_editor_transition"
+            ) { targetIndex ->
+                if (targetIndex in intros.indices) {
+                    val currentIntro = intros[targetIndex]
+                    DomChatMarkdownEditor(
+                        value = currentIntro,
+                        onValueChange = { newValue ->
+                            val updatedIntros = intros.toMutableList()
+                            updatedIntros[targetIndex] = newValue
+                            updateIntros(updatedIntros, labels)
+                        },
+                        placeholder = "Write your character's opening greeting, action, and dialogue in Markdown...",
+                        minLines = 14,
+                        showMacros = true,
+                        allowImageEmbed = true
+                    )
+                }
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════════

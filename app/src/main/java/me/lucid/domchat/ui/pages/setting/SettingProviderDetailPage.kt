@@ -208,7 +208,6 @@ import me.lucid.domchat.ui.pages.backup.ExportKeySelectionDialog
 import androidx.compose.foundation.layout.widthIn
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.theme.liquidGlassSurface
-import me.lucid.domchat.ui.theme.convxFluidTouch
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.AppShapes
 import androidx.compose.ui.graphics.SolidColor
@@ -691,52 +690,30 @@ private fun ProviderDetailBottomBar(
         contentAlignment = Alignment.Center
     ) {
         val barShape = RoundedCornerShape(32.dp)
-        val barModifier = if (isLiquidGlass) {
-            Modifier
-                .liquidGlassSurface(
-                    shape = barShape,
-                    borderWidth = 0.5.dp,
-                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                    isFloatingControl = true
-                )
-                .convxFluidTouch(bloomAlpha = 0.20f, bloomRadiusDp = 52f)
-        } else {
-            Modifier
-                .clip(barShape)
-                .background(Color(0xFF000000))
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, barShape)
-        }
-
         Surface(
             shape = barShape,
-            color = if (isLiquidGlass) Color.Transparent else Color(0xFF000000),
-            modifier = barModifier
+            color = Color(0xFF000000),
+            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            modifier = Modifier.clip(barShape)
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Tab 0: Configuration / Settings
+                val tab0Alpha by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (isPage0) 0.22f else 0f,
+                    animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 400f)
+                )
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = if (isPage0 && isLiquidGlass) {
-                        Color.White.copy(alpha = 0.22f)
-                    } else Color.Transparent,
-                    border = if (isPage0 && isLiquidGlass) {
-                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
-                    } else null,
-                    modifier = Modifier.combinedClickable(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            scope.launch { pager.animateScrollToPage(0) }
-                        },
-                        onLongClick = if (isLiquidGlass) {
-                            {
-                                haptics.perform(HapticPattern.Thud)
-                            }
-                        } else null
-                    )
+                    color = Color.White.copy(alpha = tab0Alpha),
+                    border = if (isPage0) BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f)) else null,
+                    modifier = Modifier.clickable {
+                        haptics.perform(HapticPattern.Pop)
+                        scope.launch { pager.animateScrollToPage(0) }
+                    }
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -759,25 +736,18 @@ private fun ProviderDetailBottomBar(
                 }
 
                 // Tab 1: Models (with count badge)
+                val tab1Alpha by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (isPage1) 0.22f else 0f,
+                    animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 400f)
+                )
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = if (isPage1 && isLiquidGlass) {
-                        Color.White.copy(alpha = 0.22f)
-                    } else Color.Transparent,
-                    border = if (isPage1 && isLiquidGlass) {
-                        BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
-                    } else null,
-                    modifier = Modifier.combinedClickable(
-                        onClick = {
-                            haptics.perform(HapticPattern.Pop)
-                            scope.launch { pager.animateScrollToPage(1) }
-                        },
-                        onLongClick = if (isLiquidGlass) {
-                            {
-                                haptics.perform(HapticPattern.Thud)
-                            }
-                        } else null
-                    )
+                    color = Color.White.copy(alpha = tab1Alpha),
+                    border = if (isPage1) BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f)) else null,
+                    modifier = Modifier.clickable {
+                        haptics.perform(HapticPattern.Pop)
+                        scope.launch { pager.animateScrollToPage(1) }
+                    }
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -915,16 +885,29 @@ private fun SettingProviderConfigPage(
             }
 
             if (internalProvider is ProviderSetting.OpenAI) {
-                SettingProviderBalanceOption(
-                    provider = internalProvider,
-                    balanceOption = internalProvider.balanceOption,
-                    onEdit = { 
-                        val updated = internalProvider.copyProvider(balanceOption = it)
-                        internalProvider = updated
-                        onEdit(updated)  // Auto-save like other config fields
+                Card(
+                    shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF000000)
+                    ),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SettingProviderBalanceOption(
+                            provider = internalProvider,
+                            balanceOption = internalProvider.balanceOption,
+                            onEdit = { 
+                                val updated = internalProvider.copyProvider(balanceOption = it)
+                                internalProvider = updated
+                                onEdit(updated)  // Auto-save like other config fields
+                            }
+                        )
+                        ProviderBalanceText(providerSetting = provider, style = MaterialTheme.typography.labelSmall)
                     }
-                )
-                ProviderBalanceText(providerSetting = provider, style = MaterialTheme.typography.labelSmall)
+                }
             }
 
             // SiliconFlow icon

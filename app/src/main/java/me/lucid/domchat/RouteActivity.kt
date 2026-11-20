@@ -110,7 +110,6 @@ import me.lucid.domchat.ui.pages.webview.WebViewPage
 import me.lucid.domchat.ui.pages.setting.SettingAndroidIntegrationPage
 import me.lucid.domchat.ui.pages.setting.SettingUICustomizationPage
 import me.lucid.domchat.ui.pages.setting.SettingFontsPage
-import me.lucid.domchat.ui.pages.setting.TestingSettingsPage
 import me.lucid.domchat.ui.pages.setting.AdaptiveSettingsScaffold
 import me.lucid.domchat.ui.pages.setting.SettingsDestination
 import me.lucid.domchat.share.ResolvedSharePayload
@@ -1080,10 +1079,6 @@ class RouteActivity : ComponentActivity() {
                         }
                     }
 
-                    composable<Screen.SettingTesting> {
-                        TestingSettingsPage()
-                    }
-
                     composable<Screen.SettingChatStorage> {
                         AdaptiveSettingsScaffold(selected = SettingsDestination.ChatStorage) {
                             SettingChatStoragePage()
@@ -1483,9 +1478,6 @@ sealed interface Screen {
 
     @Serializable
     data object SettingAbout : Screen
-
-    @Serializable
-    data object SettingTesting : Screen
 
     @Serializable
     data object SettingChatStorage : Screen

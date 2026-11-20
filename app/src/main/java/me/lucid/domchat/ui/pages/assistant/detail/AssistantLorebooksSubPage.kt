@@ -119,16 +119,49 @@ fun AssistantLorebooksSubPage(
             colors = appFieldColors()
         )
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Attached Lorebooks (${assistant.enabledLorebookIds.size}/${lorebooks.size})",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            DomChatGlassPillButton(
+                text = "+ Create",
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    navController.navigate(me.lucid.domchat.Screen.SettingLorebooks)
+                }
+            )
+        }
+
         // ═══════════════════════════════════════════════════════════════════
         // LOREBOOKS LIST (Black background glassy card design with toggles)
         // ═══════════════════════════════════════════════════════════════════
         if (lorebooks.isEmpty()) {
-            EmptyStateCard(
-                icon = Icons.Rounded.Book,
-                title = stringResource(R.string.assistant_lorebooks_empty),
-                description = stringResource(R.string.assistant_lorebooks_empty_hint),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                EmptyStateCard(
+                    icon = Icons.Rounded.Book,
+                    title = stringResource(R.string.assistant_lorebooks_empty),
+                    description = stringResource(R.string.assistant_lorebooks_empty_hint),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                DomChatGlassPillButton(
+                    text = "Create Lorebook",
+                    onClick = {
+                        haptics.perform(HapticPattern.Pop)
+                        navController.navigate(me.lucid.domchat.Screen.SettingLorebooks)
+                    }
+                )
+            }
         } else if (filteredLorebooks.isEmpty()) {
             Box(
                 modifier = Modifier

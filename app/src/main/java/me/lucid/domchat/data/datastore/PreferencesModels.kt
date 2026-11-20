@@ -375,7 +375,7 @@ data class DisplaySetting(
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
     // Chromatic / rainbow optical dispersion around glass specular edges
     val chromaticDispersionEnabled: Boolean = false,
-    // Convx-style interactive glass: touch spotlight bloom, spring micro-expansion, and elastic drag
+    // Tactile interactive glass: touch spotlight bloom, spring micro-expansion, and elastic drag
     val interactiveGlassPhysics: Boolean = true,
     // Liquid Glass preset selection (CLEAR / DARK / FROSTED / CUSTOM). CUSTOM keeps the
     // legacy per-value sliders (glassAlpha, glassBlur, glassBaseLuminance, chatBubble*).

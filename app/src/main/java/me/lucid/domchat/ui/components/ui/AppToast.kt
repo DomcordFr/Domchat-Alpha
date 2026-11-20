@@ -348,7 +348,11 @@ private fun ToastContent(
         tonalElevation = 0.dp,
         border = androidx.compose.foundation.BorderStroke(
             width = 0.5.dp,
-            brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+            brush = if (toast.type == ToastType.Success) {
+                androidx.compose.ui.graphics.SolidColor(Color(0xFF34D399).copy(alpha = 0.5f))
+            } else {
+                me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+            }
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -449,8 +453,8 @@ private fun getToastColors(type: ToastType): Triple<Color, Color, ImageVector?> 
             )
         }
         ToastType.Success -> Triple(
-            base,
-            Color(0xFF7EE2A8),
+            Color(0xFF092014),
+            Color(0xFF34D399),
             Icons.Default.CheckCircle
         )
         ToastType.Info -> Triple(

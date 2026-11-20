@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.components.ai
 
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.frostedGlassSurface
+import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.ui.motion.pressScale
 import androidx.compose.foundation.border
 import android.net.Uri
@@ -886,7 +887,8 @@ fun MinimalChatInput(
                                         isFloatingControl = true
                                     )
                                 }
-                            ),
+                            )
+                            .liquidInteractiveGlass(scaleLiftDp = 2.dp),
                     ) {
                         Icon(
                             imageVector = if (sttRecording) RoundedStopIcon else Icons.Rounded.Add,
@@ -921,7 +923,8 @@ fun MinimalChatInput(
                                     isFloatingControl = true
                                 )
                             }
-                        ),
+                        )
+                        .liquidInteractiveGlass(scaleLiftDp = 1.dp, elasticDrag = false),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth()

@@ -278,14 +278,6 @@ fun SettingPage(
                 icon = Icons.Rounded.Info,
                 target = Screen.SettingAbout,
                 keywords = listOf("about", "version", "update", "github", "license")
-            ),
-            SettingNavItem(
-                title = "Testing",
-                subtitle = "Inject mock lorebooks and character cards for QA flows",
-                category = "System & About",
-                icon = Icons.Rounded.BugReport,
-                target = Screen.SettingTesting,
-                keywords = listOf("testing", "mock", "qa", "debug")
             )
         )
     }

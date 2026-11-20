@@ -12,6 +12,7 @@ import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.frostedGlassBubbleSurface
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
+import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.utils.safeDrawableResId
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
@@ -1472,6 +1473,7 @@ private fun UserMessageTurn(
                             }
                         }
                     }
+                    .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
                 ) {
                     var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
                     var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
@@ -2043,6 +2045,7 @@ private fun AssistantMessageTurn(
                             }
                         }
                     }
+                    .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
                 ) {
                     AnimatedContent(
                         targetState = assistantNode.selectIndex,
@@ -2448,6 +2451,7 @@ private fun AssistantThinkingDropdown(
                     }
                 }
             )
+            .liquidInteractiveGlass(scaleLiftDp = 2.dp, elasticDrag = true)
             .padding(horizontal = if (isTransparentStyle) 4.dp else 12.dp, vertical = if (isTransparentStyle) 4.dp else 10.dp)
     ) {
         Row(
