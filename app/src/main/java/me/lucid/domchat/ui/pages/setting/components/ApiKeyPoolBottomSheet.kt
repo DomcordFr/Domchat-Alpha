@@ -176,12 +176,7 @@ fun ApiKeyPoolBottomSheet(
                         )
                     }
                 },
-                onCloseClick = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                },
+                onCloseClick = onDismiss,
             )
 
             if (pool.isEmpty()) {

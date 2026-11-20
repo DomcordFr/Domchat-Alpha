@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.components.ai
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
@@ -8,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -411,7 +413,7 @@ private fun ReasoningOptionItem(
             .border(0.5.dp, borderBrush, itemShape)
             .background(animatedBg)
             .animateContentSize(
-                animationSpec = spring(
+                animationSpec = spring<IntSize>(
                     dampingRatio = 0.85f,
                     stiffness = 300f
                 )
