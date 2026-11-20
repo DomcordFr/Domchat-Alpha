@@ -1254,6 +1254,7 @@ private fun LorebookEditorSheet(
     lorebook: Lorebook,
     onDismiss: (List<String>) -> Unit,
     onSave: (Lorebook) -> Unit,
+    onAutoSave: ((Lorebook) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

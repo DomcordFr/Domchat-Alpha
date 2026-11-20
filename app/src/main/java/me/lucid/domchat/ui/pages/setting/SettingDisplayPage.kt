@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.rounded.Edit

@@ -1204,7 +1204,7 @@ object AssistantExportImport : KoinComponent {
             }
             if (newTagsToRegister.isNotEmpty()) {
                 kotlinx.coroutines.runBlocking {
-                    settingsStore.updateSettings { it.copy(assistantTags = it.assistantTags + newTagsToRegister) }
+                    settingsStore.update { current -> current.copy(assistantTags = current.assistantTags + newTagsToRegister) }
                 }
             }
 

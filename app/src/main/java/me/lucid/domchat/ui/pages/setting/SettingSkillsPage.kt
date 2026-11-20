@@ -784,7 +784,6 @@ fun SkillEditorSheet(
         visible = true,
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF000000),
-        shape = sheetShape,
         dragHandle = {
             DomChatSheetDragHandle()
         },
@@ -1621,7 +1620,6 @@ private fun SkillExportDialog(
         visible = true,
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF000000),
-        shape = sheetShape,
         dragHandle = { DomChatSheetDragHandle() },
         modifier = Modifier.imePadding(),
     ) {

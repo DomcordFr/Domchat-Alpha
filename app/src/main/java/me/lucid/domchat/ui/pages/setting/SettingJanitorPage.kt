@@ -195,6 +195,7 @@ data class JanitorExtractResponse(
     @SerialName("description") val description: String? = null,
     @SerialName("clean_description") val cleanDescription: String? = null,
     @SerialName("scenario") val scenario: String? = null,
+    @SerialName("example_dialogue") val exampleDialogue: String? = null,
     @SerialName("firstMessage") val firstMessage: String? = null,
     @SerialName("character_version") val characterVersion: String? = null,
     @SerialName("tags") val tags: List<String> = emptyList(),
@@ -2010,8 +2011,8 @@ private fun extractToAssistant(extract: JanitorExtractResponse, settings: Settin
         creator = creator,
         creatorNotes = creatorNotes,
         characterVersion = extract.characterVersion ?: "",
-        scenario = extract.scenario.takeIf { it?.isNotBlank() == true },
-        exampleDialogue = extract.exampleDialogue.takeIf { it?.isNotBlank() == true },
+        scenario = extract.scenario?.takeIf { it.isNotBlank() },
+        exampleDialogue = extract.exampleDialogue?.takeIf { it.isNotBlank() },
         tags = registeredTagIds,
     )
 }

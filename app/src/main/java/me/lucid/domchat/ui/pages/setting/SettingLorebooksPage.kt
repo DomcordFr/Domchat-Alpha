@@ -112,11 +112,9 @@ import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.appFieldColors
 import me.lucid.domchat.ui.theme.LocalDarkMode
-import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import me.lucid.domchat.utils.LorebookExportImport
 import me.lucid.domchat.utils.OwnedFileDirectory
