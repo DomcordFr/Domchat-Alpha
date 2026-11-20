@@ -1588,74 +1588,72 @@ private fun UserMessageTurn(
                 animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)
             ) + fadeOut()
         ) {
-            CompositionLocalProvider(LocalContentColor provides Color.White) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    if (versionIndices.size > 1) {
-                        me.lucid.domchat.ui.components.message.ChatMessageBranchSelector(
-                            node = node,
-                            onUpdate = onUpdate,
-                        )
-                    }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                if (versionIndices.size > 1) {
+                    me.lucid.domchat.ui.components.message.ChatMessageBranchSelector(
+                        node = node,
+                        onUpdate = onUpdate,
+                    )
+                }
 
-                    // Copy button
-                    Box(
-                        modifier = Modifier
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .clickable {
-                                haptics.perform(HapticPattern.Pop)
-                                onCopy()
-                            }
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Rounded.ContentCopy,
-                            contentDescription = stringResource(R.string.copy),
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.White
-                        )
-                    }
-                    
-                    // Regenerate button
-                    if (showRegenerate) {
-                        Box(
-                            modifier = Modifier
-                                .clip(androidx.compose.foundation.shape.CircleShape)
-                                .clickable {
-                                    haptics.perform(HapticPattern.Pop)
-                                    onRegenerate()
-                                }
-                                .padding(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Rounded.Refresh,
-                                contentDescription = stringResource(R.string.regenerate),
-                                modifier = Modifier.size(16.dp),
-                                tint = Color.White
-                            )
+                // Copy button
+                Box(
+                    modifier = Modifier
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .clickable {
+                            haptics.perform(HapticPattern.Pop)
+                            onCopy()
                         }
-                    }
-                    
-                    // More options button
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Rounded.ContentCopy,
+                        contentDescription = stringResource(R.string.copy),
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
+                    )
+                }
+                
+                // Regenerate button
+                if (showRegenerate) {
                     Box(
                         modifier = Modifier
                             .clip(androidx.compose.foundation.shape.CircleShape)
                             .clickable {
                                 haptics.perform(HapticPattern.Pop)
-                                onOpenMenu()
+                                onRegenerate()
                             }
                             .padding(8.dp)
                     ) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Rounded.MoreHoriz,
-                            contentDescription = stringResource(R.string.more_options),
+                            imageVector = androidx.compose.material.icons.Icons.Rounded.Refresh,
+                            contentDescription = stringResource(R.string.regenerate),
                             modifier = Modifier.size(16.dp),
                             tint = Color.White
                         )
                     }
+                }
+                
+                // More options button
+                Box(
+                    modifier = Modifier
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .clickable {
+                            haptics.perform(HapticPattern.Pop)
+                            onOpenMenu()
+                        }
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Rounded.MoreHoriz,
+                        contentDescription = stringResource(R.string.more_options),
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
+                    )
                 }
             }
         }
