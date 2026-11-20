@@ -69,6 +69,8 @@ import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.theme.liquidGlassSurface
+import androidx.compose.runtime.derivedStateOf
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.ui.modifier.domChatCardContainerColor
@@ -218,12 +220,15 @@ fun ReasoningPicker(
                     subtitle = "Configure model reasoning depth",
                     onCloseClick = onDismissRequest,
                 )
+                val scrollState = rememberScrollState()
+                val canScrollUp by remember { derivedStateOf { scrollState.value > 0 } }
+                val canScrollDown by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 6.dp)
-                        .fadeEdges(fadeTop = true, fadeBottom = true)
-                        .verticalScroll(rememberScrollState()),
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f)
+                        .verticalScroll(scrollState)
+                        .padding(top = 8.dp, bottom = 20.dp),
                 ) {
                 when (config.type) {
                 ReasoningModeType.BINARY -> {
@@ -386,16 +391,7 @@ private fun ReasoningOptionItem(
     val itemShape = RoundedCornerShape(22.dp)
     
     val isDark = LocalDarkMode.current
-    val targetBg = if (selected) {
-        Color(0xFF000000)
-    } else {
-        if (isDark) Color(0xFF000000).copy(alpha = 0.55f) else domChatCardContainerColor()
-    }
-    val animatedBg by animateColorAsState(
-        targetValue = targetBg,
-        animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
-        label = "reasoning_bg"
-    )
+    val fill = if (selected) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
     val animatedTitleColor by animateColorAsState(
         targetValue = if (selected) Color.White else (if (isDark) Color(0xFFEEEEEE) else MaterialTheme.colorScheme.onSurface),
         animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
@@ -411,19 +407,23 @@ private fun ReasoningOptionItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .liquidGlassSurface(
+                shape = itemShape,
+                fillColor = fill,
+                borderWidth = if (selected) 1.dp else 0.5.dp,
+                specularBrush = borderBrush,
+            )
             .clip(itemShape)
-            .border(0.5.dp, borderBrush, itemShape)
-            .background(animatedBg)
+            .clickable {
+                haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
+                onClick()
+            }
             .animateContentSize(
                 animationSpec = spring<IntSize>(
                     dampingRatio = 0.85f,
                     stiffness = 300f
                 )
             )
-            .clickable {
-                haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
-                onClick()
-            }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)

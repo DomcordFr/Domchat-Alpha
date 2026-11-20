@@ -975,24 +975,35 @@ fun MinimalChatInput(
                             )
                         }
 
-                        // Editing indicator - shown when editing a message
-                        if (!isQuestionnaireActive && !isToolApprovalActive && state.isEditing()) {
-                            Surface(
-                                color = if (LocalDarkMode.current) 
-                                    Color(0xFF000000)  // Darker in dark mode
-                                else 
-                                    Color(0xFF000000),  // Darker in light mode
-                                shape = RoundedCornerShape(16.dp),  // Optical roundness: 24dp outer - 8dp padding = 16dp
-                                modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 8.dp, bottom = 4.dp)  // Aligned with text
+                        // Editing indicator - shown when editing a message, animated in subtly with liquid glass
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !isQuestionnaireActive && !isToolApprovalActive && state.isEditing(),
+                            enter = fadeIn(spring(dampingRatio = 0.85f, stiffness = 300f)) +
+                                    androidx.compose.animation.expandVertically(spring(dampingRatio = 0.85f, stiffness = 300f)),
+                            exit = fadeOut(spring(dampingRatio = 0.85f, stiffness = 300f)) +
+                                   androidx.compose.animation.shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 300f)),
+                            modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 8.dp, bottom = 4.dp),
+                        ) {
+                            val badgeShape = RoundedCornerShape(14.dp)
+                            Box(
+                                modifier = Modifier
+                                    .liquidGlassSurface(
+                                        shape = badgeShape,
+                                        fillColor = Color.White.copy(alpha = 0.08f),
+                                        borderWidth = 0.5.dp,
+                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    )
+                                    .clip(badgeShape)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    modifier = Modifier.padding(start = 10.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = stringResource(R.string.editing),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        modifier = Modifier.padding(end = 8.dp)
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                        color = Color.White.copy(alpha = 0.90f),
+                                        modifier = Modifier.padding(end = 4.dp)
                                     )
                                     IconButton(
                                         onClick = {
@@ -1004,6 +1015,7 @@ fun MinimalChatInput(
                                         Icon(
                                             imageVector = Icons.Rounded.Close,
                                             contentDescription = stringResource(R.string.cancel),
+                                            tint = Color.White.copy(alpha = 0.70f),
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -3870,14 +3882,18 @@ private fun MinimalPickerContent(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(380.dp)
-                .fadeEdges(fadeTop = true, fadeBottom = true)
+                .height(400.dp),
         ) { pageIndex ->
+            val pageScrollState = rememberScrollState()
+            val canScrollUp by remember { derivedStateOf { pageScrollState.value > 0 } }
+            val canScrollDown by remember { derivedStateOf { pageScrollState.value < pageScrollState.maxValue } }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(pageScrollState)
+                    .padding(top = 10.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 when (pageIndex) {

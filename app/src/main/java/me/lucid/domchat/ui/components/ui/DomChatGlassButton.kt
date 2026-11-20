@@ -91,23 +91,35 @@ private fun DomChatGlassPillButtonContent(
     text: String,
     content: (@Composable RowScope.() -> Unit)? = null,
 ) {
-    // Destructive actions render as a solid red filled button (never a subtle tint or
-    // thin border). Everything else stays translucent frosted glass.
-    val bgColor = containerColor.takeIf { it != null } ?: when {
-        destructive -> Color(DOMCHAT_DESTRUCTIVE)
-        else -> Color(0xFF000000).copy(alpha = 0.15f)
-    }
+    val shape = if (destructive) RoundedCornerShape(16.dp) else AppShapes.ButtonPill
     val resolvedTextColor = contentColor.takeIf { it != null } ?: Color.White
     val resolvedIconTint = resolvedTextColor
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val surfaceModifier = if (destructive) {
+        modifier
+    } else {
+        val glassFill = containerColor.takeIf { it != null }
+            ?: if (accent) Color.White.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.08f)
+        modifier.liquidGlassSurface(
+            shape = shape,
+            fillColor = if (enabled) glassFill else glassFill.copy(alpha = 0.4f),
+            borderWidth = 0.5.dp,
+            specularBrush = borderBrush,
+        )
+    }
+
     Surface(
         onClick = onClick,
         enabled = enabled,
-        shape = if (destructive) RoundedCornerShape(16.dp) else AppShapes.ButtonPill,
-        color = if (enabled) bgColor else bgColor.copy(alpha = 0.5f),
-        border = if (destructive) null else BorderStroke(0.5.dp, borderBrush),
+        shape = shape,
+        color = if (destructive) {
+            val dColor = Color(DOMCHAT_DESTRUCTIVE)
+            if (enabled) dColor else dColor.copy(alpha = 0.5f)
+        } else {
+            Color.Transparent
+        },
         tonalElevation = 0.dp,
-        modifier = modifier,
+        modifier = surfaceModifier,
     ) {
         Row(
             modifier = Modifier.padding(contentPadding),

@@ -86,6 +86,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -2063,12 +2064,13 @@ private fun ModelPickerSheet(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
+                    val listState = rememberLazyListState()
+                    val canScrollUp by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 } }
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .fadeEdges(fadeTop = true, fadeBottom = false, fadeHeight = 72f),
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
-                        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
+                        contentPadding = PaddingValues(top = 64.dp, bottom = 28.dp)
                     ) {
                         items(filteredModels, key = { it.modelId }) { model ->
                         val isSelected = selectedModelMap.containsKey(model.modelId)
@@ -2128,7 +2130,8 @@ private fun ModelPickerSheet(
                     }
                 }
 
-                // Soft top blend overlay with subtle blur
+                // Soft top blend overlay with subtle blur - only visible when scrolled
+                if (canScrollUp) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2151,6 +2154,7 @@ private fun ModelPickerSheet(
                                 )
                             )
                     )
+                }
                 }
             }
         }
@@ -2241,11 +2245,14 @@ private fun AddNewModelSheet(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        OutlinedButton(
+                        Button(
                             onClick = onDismissRequest,
                             modifier = Modifier.weight(1f),
                             shape = AppShapes.CardLarge,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White
+                            ),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Text(stringResource(R.string.cancel))
@@ -3554,11 +3561,14 @@ private fun EditModelSheet(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        OutlinedButton(
+                        Button(
                             onClick = onDismissRequest,
                             modifier = Modifier.weight(1f),
                             shape = AppShapes.CardLarge,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color.White
+                            ),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                         ) {
                             Text(stringResource(R.string.cancel))

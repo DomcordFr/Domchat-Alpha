@@ -1144,6 +1144,7 @@ fun ChatMessageTurn(
                     maxWidth = maxBubbleWidth,
                     showToolbar = showUserToolbar,
                     onToggleToolbar = { showUserToolbar = !showUserToolbar },
+                    onEdit = { onEdit(actionTargetNode) },
                     onCopy = { context.copyMessageToClipboard(group.lastNode.currentMessage) },
                     onRegenerate = { onRegenerate(group.lastNode) },
                     onOpenMenu = { showActionsSheet = true },
@@ -1282,6 +1283,7 @@ private fun UserMessageTurn(
     maxWidth: androidx.compose.ui.unit.Dp,
     showToolbar: Boolean,
     onToggleToolbar: () -> Unit,
+    onEdit: () -> Unit = {},
     onCopy: () -> Unit,
     onRegenerate: () -> Unit,
     onOpenMenu: () -> Unit,
@@ -1529,12 +1531,12 @@ private fun UserMessageTurn(
                         targetState = node.selectIndex,
                         transitionSpec = {
                             val forward = targetState >= initialState
-                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
-                                if (forward) width / 3 else -width / 3
-                            } + scaleIn(initialScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
-                                if (forward) -width / 3 else width / 3
-                            } + scaleOut(targetScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
+                            (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
+                                if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
+                            } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
+                                if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
+                            } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
                         },
                         label = "UserMessageVersionAnimatedContent"
                     ) { targetIdx ->
@@ -1597,6 +1599,24 @@ private fun UserMessageTurn(
                     me.lucid.domchat.ui.components.message.ChatMessageBranchSelector(
                         node = node,
                         onUpdate = onUpdate,
+                    )
+                }
+
+                // Edit button
+                Box(
+                    modifier = Modifier
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .clickable {
+                            haptics.perform(HapticPattern.Pop)
+                            onEdit()
+                        }
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Rounded.Edit,
+                        contentDescription = stringResource(R.string.edit),
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
                     )
                 }
 
@@ -2072,12 +2092,12 @@ private fun AssistantMessageTurn(
                         targetState = assistantNode.selectIndex,
                         transitionSpec = {
                             val forward = targetState >= initialState
-                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
-                                if (forward) width / 3 else -width / 3
-                            } + scaleIn(initialScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width ->
-                                if (forward) -width / 3 else width / 3
-                            } + scaleOut(targetScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
+                            (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
+                                if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
+                            } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
+                            (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
+                                if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
+                            } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
                         },
                         label = "ChatMessageVersionAnimatedContent"
                     ) { targetIdx ->
@@ -2196,12 +2216,12 @@ private fun AssistantMessageTurn(
                 targetState = assistantNode.selectIndex,
                 transitionSpec = {
                     val isForward = targetState > initialState
-                    (slideInHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width -> if (isForward) width / 3 else -width / 3 } +
-                        scaleIn(initialScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) +
-                        fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
-                        (slideOutHorizontally(animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) { width -> if (isForward) -width / 3 else width / 3 } +
-                        scaleOut(targetScale = 0.95f, animationSpec = spring(dampingRatio = 0.84f, stiffness = 200f)) +
-                        fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
+                    (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
+                        if (isForward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
+                    } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
+                    (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
+                        if (isForward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
+                    } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
                 },
                 label = "assistant_message_content_switch"
             ) { targetIdx ->

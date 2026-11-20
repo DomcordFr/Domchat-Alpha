@@ -29,7 +29,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -95,6 +98,8 @@ fun CharacterNotesBottomSheet(
 ) {
     val isDark = LocalDarkMode.current
     val scrollState = rememberScrollState()
+    val canScrollUp by remember { derivedStateOf { scrollState.value > 0 } }
+    val canScrollDown by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
 
     // Absorb boundary overscrolls and fling velocity so ModalBottomSheet never freaks out, bounces, or jitters
     val overscrollAbsorber = remember {
@@ -187,16 +192,17 @@ fun CharacterNotesBottomSheet(
                 color = if (isDark) Color.White.copy(alpha = 0.08f) else Color(0xFFE5E5E5),
                 thickness = 0.5.dp
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Scrollable Content with Text Selection Support and boundary overscroll protection
+            // Scrollable Content with Text Selection Support, smooth edge fading, and boundary overscroll protection
             SelectionContainer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 520.dp)
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f)
                     .nestedScroll(overscrollAbsorber)
                     .verticalScroll(scrollState)
-                    .padding(bottom = 32.dp)
+                    .padding(top = 6.dp, bottom = 32.dp)
             ) {
                 val formattedNotes = formatRoleplayTextWithCdnImages(notes.ifBlank { "No creator notes provided." })
                 MarkdownBlock(

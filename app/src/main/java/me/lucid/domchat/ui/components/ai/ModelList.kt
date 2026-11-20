@@ -255,12 +255,12 @@ fun ModelSelector(
                 },
                 containerColor = Color(0xFF000000),
                 dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
-                maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
+                maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.94f).dp,
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.88f)
+                        .fillMaxHeight(0.94f)
                         .padding(vertical = 6.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -579,7 +579,7 @@ internal fun ColumnScope.ModelList(
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    top = 84.dp, // Leave space for top floating search bar
+                    top = 104.dp, // Generous spacing so first item sits below search bar & gradient without being faded out
                     bottom = 100.dp // Leave space for bottom floating provider options
                 ),
                 modifier = Modifier
@@ -806,7 +806,7 @@ internal fun ColumnScope.ModelList(
                 }
             }
 
-            // Top fade overlay (combines a solid background and a vertical gradient below it)
+            // Top fade overlay (combines a solid background behind search and a vertical gradient extending below it)
             if (topFadeAlpha > 0f) {
                 Column(
                     modifier = Modifier
@@ -814,24 +814,21 @@ internal fun ColumnScope.ModelList(
                         .fillMaxWidth()
                         .graphicsLayer { alpha = topFadeAlpha }
                 ) {
-                    val fadeBase = domChatFloatingSurfaceColor()
+                    val fadeBase = if (style == ModelPickerStyle.LIQUID_GLASS) Color(0xFF000000).copy(alpha = 0.55f) else domChatFloatingSurfaceColor()
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(84.dp)
+                            .height(116.dp)
                             .domChatBlurEffect(
                                 containerColor = Color.Transparent,
                                 blurRadius = 12.dp
                             )
                             .background(
                                 brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        fadeBase,
-                                        fadeBase.copy(alpha = 0.85f),
-                                        fadeBase.copy(alpha = 0.55f),
-                                        fadeBase.copy(alpha = 0.25f),
-                                        Color.Transparent
-                                    )
+                                    0.0f to fadeBase,
+                                    0.65f to fadeBase.copy(alpha = 0.85f),
+                                    0.82f to fadeBase.copy(alpha = 0.45f),
+                                    1.0f to Color.Transparent
                                 )
                             )
                     )
@@ -1173,7 +1170,11 @@ private fun ModelItem(
     }
 
     if(inGroup) {
-        val rowContainerColor = if (select) Color(0xFF000000) else if (style == ModelPickerStyle.LIQUID_GLASS) Color.White.copy(alpha = 0.04f) else Color(0xFF000000).copy(alpha = 0.55f)
+        val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
+            if (select) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
+        } else {
+            if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
+        }
         DomChatGroupedModelRow(
             title = model.displayName,
             selected = select,
@@ -1215,7 +1216,11 @@ private fun ModelItem(
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
-        val resolvedFillColor = if (select) Color(0xFF000000) else if (style == ModelPickerStyle.LIQUID_GLASS) Color.White.copy(alpha = 0.04f) else Color(0xFF000000)
+        val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
+            if (select) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
+        } else {
+            Color(0xFF000000)
+        }
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,

@@ -917,7 +917,7 @@ fun ChatPage(
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
     var isSwitchingConversations by remember(conversation.id) { mutableStateOf(true) }
     LaunchedEffect(conversation.id) {
-        delay(550L)
+        delay(900L)
         isSwitchingConversations = false
     }
     var chatAnimationsEnabled by remember(conversation.id) { mutableStateOf(false) }
@@ -2360,8 +2360,8 @@ private fun ChatPageContent(
                 // Smooth fullscreen glassy loading animation when switching conversations
                 AnimatedVisibility(
                     visible = !chatListReady || !conversationInitialized || isSwitchingConversations,
-                    enter = fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing)),
-                    exit = fadeOut(animationSpec = tween(420, easing = FastOutLinearInEasing)),
+                    enter = fadeIn(animationSpec = tween(400, easing = LinearOutSlowInEasing)),
+                    exit = fadeOut(animationSpec = tween(600, easing = FastOutLinearInEasing)),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     ChatSwitchLoadingIndicator(
@@ -2601,22 +2601,24 @@ private fun CustomGreetingDialog(
                 .imePadding(),
             contentAlignment = Alignment.Center
         ) {
+            val dialogShape = RoundedCornerShape(24.dp)
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF000000),
-                tonalElevation = 12.dp,
+                shape = dialogShape,
+                color = Color.Transparent,
+                tonalElevation = 0.dp,
                 modifier = Modifier
                     .wrapContentHeight()
                     .widthIn(max = 420.dp)
-                    .border(
-                        0.5.dp,
-                        LiquidGlassTokens.SpecularBorderSubtle,
-                        RoundedCornerShape(16.dp)
+                    .liquidGlassSurface(
+                        shape = dialogShape,
+                        fillColor = Color(0xFF000000).copy(alpha = 0.70f),
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderBrush,
                     ),
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(20.dp)
+                        .padding(22.dp)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
@@ -2642,9 +2644,9 @@ private fun CustomGreetingDialog(
                         minLines = 6,
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF000000),
-                            unfocusedContainerColor = Color(0xFF000000),
-                            disabledContainerColor = Color(0xFF000000),
+                            focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                            disabledContainerColor = Color.White.copy(alpha = 0.02f),
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
                             focusedBorderColor = Color.White.copy(alpha = 0.35f),
@@ -2658,20 +2660,17 @@ private fun CustomGreetingDialog(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        TextButton(
+                        DomChatGlassPillButton(
+                            text = stringResource(R.string.cancel),
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
                                 onDismissRequest()
                             },
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = Color.White.copy(alpha = 0.7f),
-                            ),
-                        ) {
-                            Text(text = stringResource(R.string.cancel))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
                         DomChatGlassPillButton(
                             text = stringResource(R.string.save),
+                            accent = true,
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
                                 onSave(greetingText)
@@ -4826,7 +4825,7 @@ private fun ChatSwitchLoadingIndicator(
         initialValue = 0.5f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearOutSlowInEasing),
+            animation = tween(2000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "chat_loading_glow"
@@ -4835,7 +4834,7 @@ private fun ChatSwitchLoadingIndicator(
         initialValue = 0.96f,
         targetValue = 1.04f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearOutSlowInEasing),
+            animation = tween(2400, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "chat_avatar_pulse"
@@ -4844,7 +4843,7 @@ private fun ChatSwitchLoadingIndicator(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF000000).copy(alpha = 0.85f)),
+            .background(Color(0xFF000000)),
         contentAlignment = Alignment.Center
     ) {
         Column(

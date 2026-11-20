@@ -71,6 +71,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -123,16 +124,17 @@ private fun PositionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val btnShape = RoundedCornerShape(12.dp)
     Surface(
         onClick = onClick,
-        color = Color(0xFF000000),
-        shape = RoundedCornerShape(12.dp),
-        border = if (selected) {
-            BorderStroke(1.dp, LiquidGlassTokens.SpecularBorderBrush)
-        } else {
-            BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-        },
-        modifier = modifier,
+        color = Color.Transparent,
+        shape = btnShape,
+        modifier = modifier.liquidGlassSurface(
+            shape = btnShape,
+            fillColor = if (selected) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.05f),
+            borderWidth = if (selected) 1.dp else 0.5.dp,
+            specularBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+        ),
     ) {
         Row(
             modifier = Modifier
@@ -180,7 +182,7 @@ fun PromptPresetsBottomSheet(
 
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
     val isFrosted = settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED
-    val presetCardFill = Color(0xFF000000).copy(alpha = 0.55f)
+    val presetCardFill = Color.White.copy(alpha = 0.05f)
     @Composable
     fun glassSurface(shape: Shape): Modifier = if (isFrosted) {
         Modifier.frostedGlassSurface(
@@ -381,6 +383,7 @@ fun PromptPresetsBottomSheet(
         ) {
             DomChatSheetHeader(
                 title = "Prompt Presets",
+                modifier = Modifier.padding(horizontal = 20.dp),
                 onCloseClick = {
                     if (isEditingOrCreating) {
                         isEditingOrCreating = false
@@ -396,9 +399,15 @@ fun PromptPresetsBottomSheet(
                                 openCreate()
                             },
                             shape = CircleShape,
-                            color = Color(0xFF000000),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            modifier = Modifier.size(36.dp),
+                            color = Color.Transparent,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .liquidGlassSurface(
+                                    shape = CircleShape,
+                                    fillColor = Color.White.copy(alpha = 0.08f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                ),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Add,
@@ -422,13 +431,18 @@ fun PromptPresetsBottomSheet(
                 }
             }
 
+            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+            val canScrollUp by remember { androidx.compose.runtime.derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 } }
+            val canScrollDown by remember { androidx.compose.runtime.derivedStateOf { listState.canScrollForward } }
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .navigationBarsPadding()
                     .nestedScroll(overscrollAbsorber)
-                    .fadeEdges(fadeTop = true, fadeBottom = true),
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f),
+                contentPadding = PaddingValues(top = 10.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
 

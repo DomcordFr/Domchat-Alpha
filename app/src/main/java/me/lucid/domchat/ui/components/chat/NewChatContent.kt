@@ -301,7 +301,7 @@ private fun TemplateCard(
                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
             ),
         shape = cardShape,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        colors = CardDefaults.cardColors(containerColor = cardFill),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -354,7 +354,7 @@ private fun ActionPill(
                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                 ),
             shape = pillShape,
-            color = Color.Transparent
+            color = pillFill
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),

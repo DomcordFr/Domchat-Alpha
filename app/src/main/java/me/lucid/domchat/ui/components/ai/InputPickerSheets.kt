@@ -22,6 +22,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Card
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.derivedStateOf
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -151,12 +154,16 @@ internal fun SkillsPickerSheet(
         onDismissRequest = onDismiss,
         maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
     ) {
+        val scrollState = rememberScrollState()
+        val canScrollUp by remember { derivedStateOf { scrollState.value > 0 } }
+        val canScrollDown by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f)
+                .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp),
+                .padding(top = 8.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             DomChatSheetHeader(
@@ -199,60 +206,63 @@ internal fun SkillsPickerSheet(
                         )
                     }
 
-                    CompositionLocalProvider(LocalAbsoluteTonalElevation provides if (amoledMode && isDarkMode) 0.dp else LocalAbsoluteTonalElevation.current) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            ),
-                            shape = shape
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .liquidGlassSurface(
+                                shape = shape,
+                                fillColor = if (isEnabled) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.04f),
+                                borderWidth = 0.5.dp,
+                                specularBrush = if (isEnabled) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
+                            )
+                            .clip(shape)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 80.dp)
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 80.dp)
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = ModeIcons.getIcon(skill.icon ?: "category"),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            Icon(
+                                imageVector = ModeIcons.getIcon(skill.icon ?: "category"),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = if (isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = skill.name.ifEmpty { stringResource(R.string.skills_page_unnamed) },
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = skill.name.ifEmpty { stringResource(R.string.skills_page_unnamed) },
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    Text(
-                                        text = when {
-                                            skill.description.isNotBlank() -> skill.description
-                                            skill.instructions.isNotBlank() -> skill.instructions.take(50) + if (skill.instructions.length > 50) "..." else ""
-                                            else -> stringResource(R.string.skills_page_empty_desc)
-                                        },
-                                        maxLines = 1,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-
-                                HapticSwitch(
-                                    checked = isEnabled,
-                                    onCheckedChange = { newEnabled ->
-                                        val newEnabledIds = if (newEnabled) {
-                                            localEnabledIds + skill.id
-                                        } else {
-                                            localEnabledIds - skill.id
-                                        }
-                                        localEnabledIds = newEnabledIds
-                                        onUpdateConversation(
-                                            conversation.copy(enabledModeIds = newEnabledIds + SKILL_SELECTION_OVERRIDE_ID)
-                                        )
-                                    }
+                                Text(
+                                    text = when {
+                                        skill.description.isNotBlank() -> skill.description
+                                        skill.instructions.isNotBlank() -> skill.instructions.take(50) + if (skill.instructions.length > 50) "..." else ""
+                                        else -> stringResource(R.string.skills_page_empty_desc)
+                                    },
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+
+                            HapticSwitch(
+                                checked = isEnabled,
+                                onCheckedChange = { newEnabled ->
+                                    val newEnabledIds = if (newEnabled) {
+                                        localEnabledIds + skill.id
+                                    } else {
+                                        localEnabledIds - skill.id
+                                    }
+                                    localEnabledIds = newEnabledIds
+                                    onUpdateConversation(
+                                        conversation.copy(enabledModeIds = newEnabledIds + SKILL_SELECTION_OVERRIDE_ID)
+                                    )
+                                }
+                            )
                         }
                     }
                 }
