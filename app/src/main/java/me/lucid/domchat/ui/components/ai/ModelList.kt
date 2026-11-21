@@ -87,6 +87,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.modifier.fadeEdges
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.modifier.domChatFloatingSurfaceColor
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -571,6 +572,9 @@ internal fun ColumnScope.ModelList(
             }
     }
 
+    val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+    val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
+
     Box(
         modifier = Modifier
             .weight(1f)
@@ -583,12 +587,13 @@ internal fun ColumnScope.ModelList(
                 contentPadding = PaddingValues(
                     start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
                     end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
-                    top = if (style == ModelPickerStyle.LIQUID_GLASS) 68.dp else 104.dp,
+                    top = if (style == ModelPickerStyle.LIQUID_GLASS) 74.dp else 112.dp,
                     bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 24.dp else 100.dp
                 ),
 
                 modifier = Modifier
                     .fillMaxSize()
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f)
                     .onGloballyPositioned { coordinates ->
                         viewportHeight = coordinates.size.height
                     },
@@ -751,6 +756,7 @@ internal fun ColumnScope.ModelList(
                                 tail = {
                                     IconButton(
                                         onClick = {
+                                            val willBeFavorite = !item.isFavorite
                                             coroutineScope.launch {
                                                 settingsStore.update { settings ->
                                                     if (item.isFavorite) {
@@ -763,6 +769,9 @@ internal fun ColumnScope.ModelList(
                                                             favoriteModels = settings.favoriteModels + item.model.id
                                                         )
                                                     }
+                                                }
+                                                if (willBeFavorite) {
+                                                    lazyListState.animateScrollToItem(0)
                                                 }
                                             }
                                         }
@@ -798,49 +807,7 @@ internal fun ColumnScope.ModelList(
                 }
             }
 
-            // 2. Strong Top Fade and Floating Search Bar Background (fades in/out depending on scroll position)
-            val density = androidx.compose.ui.platform.LocalDensity.current
-            val thresholdPx = remember { with(density) { 24.dp.toPx() } }
-            val topFadeAlpha by remember {
-                derivedStateOf {
-                    if (lazyListState.firstVisibleItemIndex > 0) {
-                        1f
-                    } else {
-                        (lazyListState.firstVisibleItemScrollOffset / thresholdPx).coerceIn(0f, 1f)
-                    }
-                }
-            }
-
-            // Top fade overlay (combines a solid background behind search and a vertical gradient extending below it)
-            if (topFadeAlpha > 0f) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .graphicsLayer { alpha = topFadeAlpha }
-                ) {
-                    val fadeBase = if (style == ModelPickerStyle.LIQUID_GLASS) Color(0xFF000000).copy(alpha = 0.55f) else domChatFloatingSurfaceColor()
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(if (style == ModelPickerStyle.LIQUID_GLASS) 68.dp else 116.dp)
-                            .domChatBlurEffect(
-                                containerColor = Color.Transparent,
-                                blurRadius = 12.dp
-                            )
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    0.0f to fadeBase,
-                                    0.65f to fadeBase.copy(alpha = 0.85f),
-                                    0.82f to fadeBase.copy(alpha = 0.45f),
-                                    1.0f to Color.Transparent
-                                )
-                            )
-                    )
-                }
-            }
-
-            // Search field
+            // Floating Search field
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)

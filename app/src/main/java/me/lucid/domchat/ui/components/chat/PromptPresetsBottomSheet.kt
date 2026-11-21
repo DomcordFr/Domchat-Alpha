@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.components.chat
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -467,6 +468,7 @@ fun PromptPresetsBottomSheet(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .animateContentSize(spring(dampingRatio = 0.82f, stiffness = 400f))
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -516,28 +518,49 @@ fun PromptPresetsBottomSheet(
                             )
                             Box(
                                 modifier = Modifier
-                                    .background(
-                                        if (isChatSpecific) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.06f),
-                                        RoundedCornerShape(8.dp)
+                                    .liquidGlassSurface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        fillColor = if (isChatSpecific) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.06f),
+                                        borderWidth = 0.5.dp,
+                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                     )
                                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 8.dp, vertical = 3.dp)
                             ) {
-                                Text(
-                                    text = if (isChatSpecific) "This Chat" else "Global",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (isChatSpecific) Color.White else Color.White.copy(alpha = 0.85f)
-                                )
+                                AnimatedContent(
+                                    targetState = isChatSpecific,
+                                    transitionSpec = {
+                                        fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                                    },
+                                    label = "scope_badge_text"
+                                ) { chatSpecific ->
+                                    Text(
+                                        text = if (chatSpecific) "This Chat" else "Global",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = if (chatSpecific) Color.White else Color.White.copy(alpha = 0.85f)
+                                    )
+                                }
                             }
                         }
 
-                        if (isChatSpecific) {
+                        AnimatedVisibility(
+                            visible = isChatSpecific,
+                            enter = fadeIn(tween(200)) + expandHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f)),
+                            exit = fadeOut(tween(150)) + shrinkHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f))
+                        ) {
                             Surface(
                                 onClick = { resetToGlobal() },
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.08f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                color = Color.Transparent,
+                                modifier = Modifier
+                                    .liquidGlassSurface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        fillColor = Color.White.copy(alpha = 0.10f),
+                                        borderWidth = 0.5.dp,
+                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                    )
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

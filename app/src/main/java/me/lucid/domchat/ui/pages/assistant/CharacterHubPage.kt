@@ -4113,7 +4113,7 @@ private fun CharacterActionPopover(
                                         }
                                         Spacer(modifier = Modifier.height(2.dp))
                                         Text(
-                                            text = "Standard V2 JSON spec with all character data",
+                                            text = "Standard V2 JSON spec",
                                             fontSize = 12.sp,
                                             color = Color(0xFF9E9EAA)
                                         )

@@ -1081,12 +1081,13 @@ internal fun AddSearchServiceSheet(
 
     DomChatInWindowBottomSheet(
         containerColor = Color(0xFF000000),
-        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.72f).dp,
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         onDismissRequest = onDismissRequest,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.85f)
                 .navigationBarsPadding()
                 .imePadding()
         ) {

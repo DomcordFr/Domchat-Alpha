@@ -164,6 +164,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
 
     // State for TTS text filter settings dialog
     var showFilterSettingsDialog by remember { mutableStateOf(false) }
+    var showAddTtsProviderSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -191,16 +192,10 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                 }
 
                 AddTTSProviderButton(
-                    catalogSnapshot = catalogSnapshot,
                     enableHaptics = settings.displaySetting.enableUIHaptics,
-                    asFab = true
-                ) {
-                    vm.updateSettings(
-                        settings.copy(
-                            ttsProviders = listOf(it.withDefaultVoices()) + settings.ttsProviders
-                        )
-                    )
-                }
+                    asFab = true,
+                    onClick = { showAddTtsProviderSheet = true }
+                )
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -541,6 +536,22 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         )
                     )
                 )
+            }
+        )
+    }
+
+    if (showAddTtsProviderSheet) {
+        AddTTSProviderSheet(
+            visible = true,
+            catalogSnapshot = catalogSnapshot,
+            onDismissRequest = { showAddTtsProviderSheet = false },
+            onAdd = { newProvider ->
+                vm.updateSettings(
+                    settings.copy(
+                        ttsProviders = listOf(newProvider.withDefaultVoices()) + settings.ttsProviders
+                    )
+                )
+                showAddTtsProviderSheet = false
             }
         )
     }
@@ -1209,234 +1220,260 @@ private fun TtsFilterRuleEditDialog(
 }
 @Composable
 internal fun AddTTSProviderButton(
-    catalogSnapshot: ModelCatalogSnapshot?,
     enableHaptics: Boolean = true,
     asFab: Boolean = false,
-    onAdd: (TTSProviderSetting) -> Unit
+    onClick: (() -> Unit)? = null,
+    catalogSnapshot: ModelCatalogSnapshot? = null,
+    onAdd: ((TTSProviderSetting) -> Unit)? = null
 ) {
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-
+    var showInternalSheet by remember { mutableStateOf(false) }
     val haptics = rememberPremiumHaptics(enabled = enableHaptics)
 
-    val openTtsProviderSheet = {
+    val handleOpen = {
         haptics.perform(HapticPattern.Pop)
-        searchQuery = ""
-        showBottomSheet = true
+        if (onClick != null) {
+            onClick()
+        } else {
+            showInternalSheet = true
+        }
     }
 
-    val isDark = me.lucid.domchat.ui.theme.LocalDarkMode.current
     if (asFab) {
         FloatingActionButton(
-            onClick = openTtsProviderSheet,
+            onClick = handleOpen,
             shape = CircleShape,
-            containerColor = Color(0xFFFFFFFF),
-            contentColor = Color(0xFF000000)
+            containerColor = Color(0xFF000000),
+            contentColor = Color.White,
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
         ) {
-            Icon(Icons.Rounded.Add, stringResource(R.string.setting_tts_page_add_provider_content_description))
+            Icon(Icons.Rounded.Add, stringResource(R.string.setting_tts_page_add_provider_content_description), tint = Color.White)
         }
     } else {
-        IconButton(onClick = openTtsProviderSheet) {
-            Icon(Icons.Rounded.Add, stringResource(R.string.setting_tts_page_add_provider_content_description))
+        IconButton(onClick = handleOpen) {
+            Icon(Icons.Rounded.Add, stringResource(R.string.setting_tts_page_add_provider_content_description), tint = Color.White)
         }
     }
 
-    if (showBottomSheet) {
-        val allTtsPresets = remember(catalogSnapshot) {
-            catalogSnapshot?.toTTSProviderPresets() ?: FALLBACK_TTS_PROVIDER_PRESETS
-        }        
-        // Filter presets based on search
-        val filteredPresets = if (searchQuery.isBlank()) {
-            allTtsPresets
-        } else {
-            allTtsPresets.filter { preset ->
-                preset.name.contains(searchQuery, ignoreCase = true) ||
-                    preset.description.contains(searchQuery, ignoreCase = true)
-            }
+    if (onClick == null && onAdd != null) {
+        AddTTSProviderSheet(
+            visible = showInternalSheet,
+            catalogSnapshot = catalogSnapshot,
+            onDismissRequest = { showInternalSheet = false },
+            onAdd = onAdd
+        )
+    }
+}
+
+@Composable
+internal fun AddTTSProviderSheet(
+    visible: Boolean,
+    catalogSnapshot: ModelCatalogSnapshot?,
+    onDismissRequest: () -> Unit,
+    onAdd: (TTSProviderSetting) -> Unit
+) {
+    if (!visible) return
+    var searchQuery by remember { mutableStateOf("") }
+    val haptics = rememberPremiumHaptics()
+
+    val allTtsPresets = remember(catalogSnapshot) {
+        catalogSnapshot?.toTTSProviderPresets() ?: FALLBACK_TTS_PROVIDER_PRESETS
+    }        
+    // Filter presets based on search
+    val filteredPresets = if (searchQuery.isBlank()) {
+        allTtsPresets
+    } else {
+        allTtsPresets.filter { preset ->
+            preset.name.contains(searchQuery, ignoreCase = true) ||
+                preset.description.contains(searchQuery, ignoreCase = true)
         }
-        
-        DomChatInWindowBottomSheet(
-            containerColor = Color(0xFF000000),
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
-            onDismissRequest = {
-                showBottomSheet = false
-            },
+    }
+    
+    DomChatInWindowBottomSheet(
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+        onDismissRequest = onDismissRequest,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .fillMaxHeight(0.85f)
+                .clipToBounds()
         ) {
-            Column(
+            // Header Row: title + close button
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .fillMaxHeight(0.85f)
-                    .clipToBounds()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Title
                 Text(
                     text = stringResource(R.string.setting_tts_page_add_provider),
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-                
-                // Search bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                    singleLine = true,
-                    colors = appFieldColors(),
-                    leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                    trailingIcon = if (searchQuery.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
-                            }
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.cancel),
+                        tint = Color.White
+                    )
+                }
+            }
+            
+            // Search bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                singleLine = true,
+                colors = appFieldColors(),
+                leadingIcon = { Icon(Icons.Rounded.Search, null) },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
                         }
-                    } else null
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
+                    }
+                } else null
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Card(
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        onAdd(TTSProviderSetting.OpenAI(name = "Custom TTS"))
-                        showBottomSheet = false
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF000000),
-                        contentColor = Color(0xFFF2F2F7)
-                    ),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium
+            Card(
+                onClick = {
+                    haptics.perform(HapticPattern.Pop)
+                    onAdd(TTSProviderSetting.OpenAI(name = "Custom TTS"))
+                    onDismissRequest()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF000000),
+                    contentColor = Color(0xFFF2F2F7)
+                ),
+                shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp),
-                            tint = Color(0xFFFFFFFF)
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = Color(0xFFFFFFFF)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Custom OpenAI-compatible TTS",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFFFFFFFF)
                         )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Custom OpenAI-compatible TTS",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFFFFFFFF)
-                            )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CompositionLocalProvider(
+                LocalOverscrollFactory provides null
+            ) {
+                val lazyListState = rememberLazyListState()
+                val nestedScrollConnection = remember {
+                    object : NestedScrollConnection {
+                        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                            if (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0) {
+                                return Offset.Zero
+                            }
+                            return Offset.Zero
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CompositionLocalProvider(
-                    LocalOverscrollFactory provides null
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clipToBounds()
+                        .nestedScroll(nestedScrollConnection),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
-                    val lazyListState = rememberLazyListState()
-                    val nestedScrollConnection = remember {
-                        object : NestedScrollConnection {
-                            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                                if (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0) {
-                                    return Offset.Zero
+                    itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { index, preset ->
+                        val shape = AppShapes.CardMedium
+
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                val newProvider = preset.toTTSProviderSetting()
+                                onAdd(newProvider)
+                                onDismissRequest()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = shape,
+                            color = androidx.compose.ui.graphics.Color(0xFF000000),
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (preset.isLocal) {
+                                    Box(
+                                        modifier = Modifier.size(40.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.PhoneAndroid,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = Color.White,
+                                        )
+                                    }
+                                } else {
+                                    AutoAIIconWithUrl(
+                                        name = preset.name,
+                                        customIconUri = preset.customIconUri,
+                                        modifier = Modifier.size(40.dp),
+                                        contentColor = Color.White,
+                                    )
                                 }
-                                return Offset.Zero
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = preset.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White,
+                                    )
+                                }
+
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    if (preset.isLocal) {
+                                        Tag(type = TagType.SUCCESS) {
+                                            Text(stringResource(R.string.local_label))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                    LazyColumn(
-                        state = lazyListState,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clipToBounds()
-                            .nestedScroll(nestedScrollConnection),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { index, preset ->
-                            val position = when {
-                                filteredPresets.size == 1 -> ItemPosition.ONLY
-                                index == 0 -> ItemPosition.FIRST
-                                index == filteredPresets.lastIndex -> ItemPosition.LAST
-                                else -> ItemPosition.MIDDLE
-                            }
 
-                            val shape = AppShapes.CardMedium
-
-                            Surface(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    val newProvider = preset.toTTSProviderSetting()
-                                    onAdd(newProvider)
-                                    showBottomSheet = false
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF000000),
-                                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    if (preset.isLocal) {
-                                        Box(
-                                            modifier = Modifier.size(40.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.PhoneAndroid,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(24.dp),
-                                                tint = Color.White,
-                                            )
-                                        }
-                                    } else {
-                                        AutoAIIconWithUrl(
-                                            name = preset.name,
-                                            customIconUri = preset.customIconUri,
-                                            modifier = Modifier.size(40.dp),
-                                            contentColor = Color.White,
-                                        )
-                                    }
-
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = preset.name,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = Color.White,
-                                        )
-                                    }
-
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        if (preset.isLocal) {
-                                            Tag(type = TagType.SUCCESS) {
-                                                Text(stringResource(R.string.local_label))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }

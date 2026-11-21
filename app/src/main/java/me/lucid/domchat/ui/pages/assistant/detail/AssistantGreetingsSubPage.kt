@@ -363,7 +363,11 @@ fun AssistantGreetingsSubPage(
         // BEHAVIOR SETTINGS
         // ═══════════════════════════════════════════════════════════════════
         if (intros.size > 1) {
-            SettingsGroup(title = "Greeting Behavior") {
+            SettingsGroup(
+                title = "Greeting Behavior",
+                horizontalPadding = 0.dp,
+                titleStartPadding = 0.dp
+            ) {
                 SettingGroupItem(
                     title = "Cycle Intros on New Chat",
                     subtitle = "Automatically select the next alternate greeting each time a new conversation is started.",

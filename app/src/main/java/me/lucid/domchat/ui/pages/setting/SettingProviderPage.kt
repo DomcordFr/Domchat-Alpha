@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.setting
 
 import android.net.Uri
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -224,6 +225,8 @@ fun SettingProviderPage(
     var showTtsFilterSettings by remember { mutableStateOf(false) }
     var editingSearchService by remember { mutableStateOf<SearchServiceOptions?>(null) }
     var showAddProviderSheet by remember { mutableStateOf(false) }
+    var showAddSearchSheet by remember { mutableStateOf(false) }
+    var showAddTtsSheet by remember { mutableStateOf(false) }
     val providerPresets = remember(catalogSnapshot, settings.providers) {
         (catalogSnapshot?.toProviderPresets()?.takeIf { it.isNotEmpty() }
             ?: FALLBACK_PROVIDER_PRESETS
@@ -372,30 +375,17 @@ fun SettingProviderPage(
                         )
 
                         ProvidersTab.Search -> AddSearchServiceButton(
-                        enableHaptics = settings.displaySetting.enableUIHaptics,
-                        catalogSnapshot = catalogSnapshot,
-                        asFab = true
-                    ) { newService ->
-                        vm.updateSettings(
-                            settings.copy(
-                                searchServices = listOf(newService) + settings.searchServices
-                            )
+                            enableHaptics = settings.displaySetting.enableUIHaptics,
+                            asFab = true,
+                            onClick = { showAddSearchSheet = true }
                         )
-                    }
 
-                    ProvidersTab.Tts -> AddTTSProviderButton(
-                        catalogSnapshot = catalogSnapshot,
-                        enableHaptics = settings.displaySetting.enableUIHaptics,
-                        asFab = true
-                    ) { newProvider ->
-                        val providerToAdd = newProvider.withDefaultVoices()
-                        vm.updateSettings(
-                            settings.copy(
-                                ttsProviders = listOf(providerToAdd) + settings.ttsProviders
-                            )
+                        ProvidersTab.Tts -> AddTTSProviderButton(
+                            enableHaptics = settings.displaySetting.enableUIHaptics,
+                            asFab = true,
+                            onClick = { showAddTtsSheet = true }
                         )
                     }
-                }
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -588,6 +578,39 @@ fun SettingProviderPage(
             onSelectCustom = {
                 showAddProviderSheet = false
                 customDialogState.open(ProviderSetting.OpenAI())
+            }
+        )
+    }
+
+    if (showAddSearchSheet) {
+        AddSearchServiceSheet(
+            visible = true,
+            catalogSnapshot = catalogSnapshot,
+            onDismissRequest = { showAddSearchSheet = false },
+            onAdd = { newService ->
+                vm.updateSettings(
+                    settings.copy(
+                        searchServices = listOf(newService) + settings.searchServices
+                    )
+                )
+                showAddSearchSheet = false
+            }
+        )
+    }
+
+    if (showAddTtsSheet) {
+        AddTTSProviderSheet(
+            visible = true,
+            catalogSnapshot = catalogSnapshot,
+            onDismissRequest = { showAddTtsSheet = false },
+            onAdd = { newProvider ->
+                val providerToAdd = newProvider.withDefaultVoices()
+                vm.updateSettings(
+                    settings.copy(
+                        ttsProviders = listOf(providerToAdd) + settings.ttsProviders
+                    )
+                )
+                showAddTtsSheet = false
             }
         )
     }
@@ -1451,6 +1474,7 @@ private fun ChooseProviderSheet(
     DomChatGlassBottomSheet(
         visible = visible,
         containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         dragHandle = { DomChatSheetDragHandle() },
         onDismissRequest = onDismissRequest
     ) {
