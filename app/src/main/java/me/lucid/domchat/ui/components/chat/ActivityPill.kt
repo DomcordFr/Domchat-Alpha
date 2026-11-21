@@ -699,12 +699,8 @@ private fun AnimatedSinglePill(
         AnimatedContent(
             targetState = requestedContentState,
             transitionSpec = {
-                if (wasCompletedInitially && targetState !is SinglePillContentState.ExpandedTimeline && initialState !is SinglePillContentState.ExpandedTimeline) {
-                    EnterTransition.None togetherWith ExitTransition.None
-                } else {
-                    (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
-                        PILL_MORPH_SPEC
-                    }
+                (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
+                    PILL_MORPH_SPEC
                 }
             },
             contentAlignment = Alignment.TopStart,

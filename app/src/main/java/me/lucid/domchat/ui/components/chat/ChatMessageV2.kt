@@ -1387,18 +1387,23 @@ private fun UserMessageTurn(
                 ),
                 color = headerNameColor,
             )
+            val onUserAvatarClick: () -> Unit = {
+                haptics.perform(HapticPattern.Pop)
+                val avatarUrl = when (personaAvatar) {
+                    is Avatar.Image -> personaAvatar.url
+                    is Avatar.Resource -> "android.resource://${context.packageName}/${safeDrawableResId(context, personaAvatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
+                    else -> settings.displaySetting.userAvatarUri.takeIf { it.isNotBlank() }
+                }
+                if (avatarUrl != null) {
+                    previewUserAvatarUrl = avatarUrl
+                }
+            }
+
             UIAvatar(
                 name = personaName,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable {
-                        when (personaAvatar) {
-                            is Avatar.Image -> previewUserAvatarUrl = personaAvatar.url
-                            is Avatar.Resource -> previewUserAvatarUrl = "android.resource://${context.packageName}/${safeDrawableResId(context, personaAvatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
-                            else -> Unit
-                        }
-                    },
+                modifier = Modifier.size(28.dp),
                 value = personaAvatar,
+                onClick = onUserAvatarClick,
             )
         }
 
@@ -1852,7 +1857,7 @@ private fun AssistantMessageTurn(
                     Modifier.animateContentSize(
                         animationSpec = spring(
                             dampingRatio = 0.88f,
-                            stiffness = 110f
+                            stiffness = 220f
                         )
                     )
                 } else {
@@ -2475,7 +2480,7 @@ private fun AssistantThinkingDropdown(
     val reasoningMotionSpec = remember {
         spring<androidx.compose.ui.unit.IntSize>(
             dampingRatio = 0.88f,
-            stiffness = 110f
+            stiffness = 220f
         )
     }
 
@@ -2552,13 +2557,13 @@ private fun AssistantThinkingDropdown(
         AnimatedVisibility(
             visible = expanded,
             enter = expandVertically(
-                animationSpec = spring(dampingRatio = 0.88f, stiffness = 110f),
+                animationSpec = spring(dampingRatio = 0.88f, stiffness = 220f),
                 expandFrom = Alignment.Top
-            ) + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing)),
+            ) + fadeIn(animationSpec = tween(240, easing = LinearOutSlowInEasing)),
             exit = shrinkVertically(
-                animationSpec = spring(dampingRatio = 0.88f, stiffness = 110f),
+                animationSpec = spring(dampingRatio = 0.88f, stiffness = 220f),
                 shrinkTowards = Alignment.Top
-            ) + fadeOut(animationSpec = tween(240, easing = LinearOutSlowInEasing))
+            ) + fadeOut(animationSpec = tween(200, easing = LinearOutSlowInEasing))
         ) {
             Column(
                 modifier = Modifier

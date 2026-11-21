@@ -4251,32 +4251,7 @@ private fun MinimalPickerContent(
                     )
                     
                     // Skills card hidden from plus icon menu per user request
-
-                    if (settings.mcpServers.isNotEmpty()) {
-                        val availablePluginIds = settings.mcpServers
-                            .filter { it.commonOptions.enable }
-                            .map { it.id }
-                            .toSet()
-                        val activePluginsCount = assistant.mcpServers.intersect(availablePluginIds).size
-                        val pluginsActive = activePluginsCount > 0
-                        MinimalPickerItem(
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Extension,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (pluginsActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f),
-                                )
-                            },
-                            title = stringResource(R.string.minimal_input_plugins),
-                            subtitle = if (pluginsActive) {
-                                stringResource(R.string.plugins_picker_active_count, activePluginsCount)
-                            } else {
-                                stringResource(R.string.minimal_input_plugins_desc)
-                            },
-                            onClick = onOpenPluginsPicker
-                        )
-                    }
+                    // Plugins card removed from plus icon menu per user request
                     
                 }
             }

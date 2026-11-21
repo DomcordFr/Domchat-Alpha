@@ -1186,8 +1186,8 @@ private fun JanitorCharacterInspectorSheet(
                             .align(Alignment.TopEnd)
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.50f))
-                            .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                            .background(Color(0xFF000000))
+                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
@@ -1501,38 +1501,49 @@ private fun JanitorCharacterInspectorSheet(
                                         .border(0.5.dp, cardBorderColor, RoundedCornerShape(16.dp))
                                         .padding(16.dp),
                                 ) {
-                                    val notesContent = rawNotes
-                                    if (notesContent.isNotBlank()) {
-                                        val hasHtml = remember(notesContent) {
-                                            notesContent.contains("<p", ignoreCase = true) ||
-                                            notesContent.contains("<div", ignoreCase = true) ||
-                                            notesContent.contains("<img", ignoreCase = true) ||
-                                            notesContent.contains("<span", ignoreCase = true) ||
-                                            notesContent.contains("<center", ignoreCase = true) ||
-                                            notesContent.contains("<h1", ignoreCase = true) ||
-                                            notesContent.contains("<h2", ignoreCase = true) ||
-                                            notesContent.contains("<h3", ignoreCase = true) ||
-                                            notesContent.contains("<br", ignoreCase = true) ||
-                                            notesContent.contains("<hr", ignoreCase = true)
-                                        }
-                                        if (hasHtml) {
-                                            // SimpleHtmlBlock renders  tags natively via RenderImage.
-                                            SimpleHtmlBlock(html = notesContent)
-                                        } else {
-                                            // Convert bare image URLs to Markdown image syntax so every
-                                            // embedded image renders in-place via MarkdownBlock.
-                                            MarkdownBlock(
-                                                content = formatRoleplayTextWithCdnImages(
-                                                    sanitizeHtml(notesContent)
-                                                )
-                                            )
+                                    if (isExtractLoading) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(100.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            JanitorOrbitalLoader(modifier = Modifier.size(36.dp))
                                         }
                                     } else {
-                                        Text(
-                                            text = "No notes available.",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.White.copy(alpha = 0.5f),
-                                        )
+                                        val notesContent = rawNotes
+                                        if (notesContent.isNotBlank()) {
+                                            val hasHtml = remember(notesContent) {
+                                                notesContent.contains("<p", ignoreCase = true) ||
+                                                notesContent.contains("<div", ignoreCase = true) ||
+                                                notesContent.contains("<img", ignoreCase = true) ||
+                                                notesContent.contains("<span", ignoreCase = true) ||
+                                                notesContent.contains("<center", ignoreCase = true) ||
+                                                notesContent.contains("<h1", ignoreCase = true) ||
+                                                notesContent.contains("<h2", ignoreCase = true) ||
+                                                notesContent.contains("<h3", ignoreCase = true) ||
+                                                notesContent.contains("<br", ignoreCase = true) ||
+                                                notesContent.contains("<hr", ignoreCase = true)
+                                            }
+                                            if (hasHtml) {
+                                                // SimpleHtmlBlock renders  tags natively via RenderImage.
+                                                SimpleHtmlBlock(html = notesContent)
+                                            } else {
+                                                // Convert bare image URLs to Markdown image syntax so every
+                                                // embedded image renders in-place via MarkdownBlock.
+                                                MarkdownBlock(
+                                                    content = formatRoleplayTextWithCdnImages(
+                                                        sanitizeHtml(notesContent)
+                                                    )
+                                                )
+                                            }
+                                        } else {
+                                            Text(
+                                                text = "No notes available.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White.copy(alpha = 0.5f),
+                                            )
+                                        }
                                     }
                                 }
                             }

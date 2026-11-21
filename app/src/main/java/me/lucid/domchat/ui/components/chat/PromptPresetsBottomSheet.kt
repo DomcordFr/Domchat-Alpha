@@ -91,6 +91,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -520,7 +521,9 @@ fun PromptPresetsBottomSheet(
                                     color = Color.White.copy(alpha = 0.55f)
                                 )
                                 Box(
+                                    contentAlignment = Alignment.Center,
                                     modifier = Modifier
+                                        .height(24.dp)
                                         .liquidGlassSurface(
                                             shape = RoundedCornerShape(8.dp),
                                             fillColor = if (isChatSpecific) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.06f),
@@ -528,18 +531,21 @@ fun PromptPresetsBottomSheet(
                                             specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                         )
                                         .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                        .padding(horizontal = 8.dp)
                                 ) {
                                     AnimatedContent(
                                         targetState = isChatSpecific,
+                                        contentAlignment = Alignment.Center,
                                         transitionSpec = {
                                             fadeIn(tween(200)) togetherWith fadeOut(tween(150))
                                         },
                                         label = "scope_badge_text"
                                     ) { chatSpecific ->
                                         Text(
-                                            text = if (chatSpecific) "This Chat" else "Global",
+                                            text = if (chatSpecific) "Using Chat" else "Global",
                                             fontSize = 11.sp,
+                                            lineHeight = 13.sp,
+                                            textAlign = TextAlign.Center,
                                             fontWeight = FontWeight.Medium,
                                             color = if (chatSpecific) Color.White else Color.White.copy(alpha = 0.85f)
                                         )
@@ -557,6 +563,7 @@ fun PromptPresetsBottomSheet(
                                     shape = RoundedCornerShape(8.dp),
                                     color = Color.Transparent,
                                     modifier = Modifier
+                                        .height(24.dp)
                                         .liquidGlassSurface(
                                             shape = RoundedCornerShape(8.dp),
                                             fillColor = Color.White.copy(alpha = 0.10f),
@@ -566,7 +573,7 @@ fun PromptPresetsBottomSheet(
                                         .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        modifier = Modifier.padding(horizontal = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
@@ -579,6 +586,8 @@ fun PromptPresetsBottomSheet(
                                         Text(
                                             text = "Reset",
                                             fontSize = 11.sp,
+                                            lineHeight = 13.sp,
+                                            textAlign = TextAlign.Center,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
                                         )

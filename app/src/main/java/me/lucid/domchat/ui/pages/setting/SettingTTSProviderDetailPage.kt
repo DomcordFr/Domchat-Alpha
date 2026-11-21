@@ -157,13 +157,11 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 TopAppBar(
                     navigationIcon = { BackButton() },
                     title = {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            TTSProviderIcon(provider = provider, catalogSnapshot = catalogSnapshot, modifier = Modifier.size(24.dp))
-                            Text(provider.name.ifBlank { if (provider is TTSProviderSetting.SystemTTS || provider.id == DEFAULT_SYSTEM_TTS_ID) "System TTS" else "TTS Provider" }, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
+                        Text(
+                            text = provider.name.ifBlank { if (provider is TTSProviderSetting.SystemTTS || provider.id == DEFAULT_SYSTEM_TTS_ID) "System TTS" else "TTS Provider" },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 )
             },
@@ -341,6 +339,33 @@ private fun TtsProviderConfigTab(
                     scrollable = false,
                     onValueChange = onUpdateProvider,
                 )
+                if (provider is TTSProviderSetting.SystemTTS || provider.id == DEFAULT_SYSTEM_TTS_ID) {
+                    Row(
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Tag(type = TagType.SUCCESS) {
+                            Text(stringResource(R.string.local_label))
+                        }
+                        Surface(
+                            shape = AppShapes.Tag,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${provider.voices.size} voices",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

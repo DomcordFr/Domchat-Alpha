@@ -1536,7 +1536,7 @@ private fun TTSProviderItemContent(
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = provider.name.ifEmpty { stringResource(R.string.setting_tts_page_default_name) },
@@ -1545,6 +1545,32 @@ private fun TTSProviderItemContent(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (provider is TTSProviderSetting.SystemTTS || provider.id == me.lucid.domchat.data.datastore.DEFAULT_SYSTEM_TTS_ID) {
+                    Tag(type = TagType.SUCCESS) {
+                        Text(stringResource(R.string.local_label))
+                    }
+                }
+                Surface(
+                    shape = me.lucid.domchat.ui.theme.AppShapes.Tag,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${provider.voices.size} voices",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
         }
         
         dragHandle()

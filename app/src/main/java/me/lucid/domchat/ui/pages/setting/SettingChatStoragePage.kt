@@ -2,8 +2,17 @@
 
 package me.lucid.domchat.ui.pages.setting
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.draw.rotate
 
 import android.content.Context
@@ -317,75 +326,86 @@ fun SettingChatStoragePage(
                 ) {
                     val primaryCategories = appStorageSnapshot.categories.filter { it.isPrimaryStorageCategory() }
                     val secondaryCategories = appStorageSnapshot.categories.filterNot { it.isPrimaryStorageCategory() }
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if (appStorageSnapshot.isScanning && appStorageSnapshot.categories.isEmpty()) {
-                            SettingGroupItem(
-                                title = stringResource(R.string.setting_chat_storage_scanning_title),
-                                subtitle = stringResource(R.string.setting_chat_storage_scanning_desc),
-                                icon = { Icon(Icons.Rounded.Storage, null) },
-                            )
-                        } else {
-                            primaryCategories.forEach { category ->
-                                StorageCategoryRow(
-                                    category = category,
-                                    haptics = haptics,
-                                    appStorageRepository = appStorageRepository,
-                                    toaster = toaster,
-                                    onInspect = if (category.id == CATEGORY_OTHER_UPLOADS) {
-                                        {
-                                            showOtherUploadsInspector = true
-                                            loadOtherUploads()
-                                        }
-                                    } else {
-                                        null
-                                    },
-                                )
-                            }
-                            if (secondaryCategories.isNotEmpty()) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.animateContentSize(spring(dampingRatio = 0.85f, stiffness = 300f))
+                    ) {
+                        AnimatedContent(
+                            targetState = appStorageSnapshot.isScanning && appStorageSnapshot.categories.isEmpty(),
+                            transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+                            label = "storage_categories_animated"
+                        ) { isInitialScanning ->
+                            if (isInitialScanning) {
                                 SettingGroupItem(
-                                    title = if (showAllStorageCategories) {
-                                        stringResource(R.string.setting_chat_storage_hide_more_categories)
-                                    } else {
-                                        stringResource(R.string.setting_chat_storage_show_more_categories)
-                                    },
-                                    subtitle = if (showAllStorageCategories) {
-                                        stringResource(R.string.setting_chat_storage_hide_more_categories_desc)
-                                    } else {
-                                        stringResource(
-                                            R.string.setting_chat_storage_more_categories_count,
-                                            secondaryCategories.size
-                                        )
-                                    },
-                                    icon = { Icon(Icons.Rounded.FolderOpen, null) },
-                                    trailing = {
-                                        Icon(
-                                            imageVector = Icons.Rounded.KeyboardArrowDown,
-                                            contentDescription = null,
-                                            modifier = Modifier.rotate(storageArrowRotation),
-                                        )
-                                    },
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        showAllStorageCategories = !showAllStorageCategories
-                                    }
+                                    title = stringResource(R.string.setting_chat_storage_scanning_title),
+                                    subtitle = stringResource(R.string.setting_chat_storage_scanning_desc),
+                                    icon = { Icon(Icons.Rounded.Storage, null) },
                                 )
-                                ExpandableContent(visible = showAllStorageCategories) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        secondaryCategories.forEach { category ->
-                                            StorageCategoryRow(
-                                                category = category,
-                                                haptics = haptics,
-                                                appStorageRepository = appStorageRepository,
-                                                toaster = toaster,
-                                                onInspect = if (category.id == CATEGORY_OTHER_UPLOADS) {
-                                                    {
-                                                        showOtherUploadsInspector = true
-                                                        loadOtherUploads()
-                                                    }
-                                                } else {
-                                                    null
-                                                },
-                                            )
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    primaryCategories.forEach { category ->
+                                        StorageCategoryRow(
+                                            category = category,
+                                            haptics = haptics,
+                                            appStorageRepository = appStorageRepository,
+                                            toaster = toaster,
+                                            onInspect = if (category.id == CATEGORY_OTHER_UPLOADS) {
+                                                {
+                                                    showOtherUploadsInspector = true
+                                                    loadOtherUploads()
+                                                }
+                                            } else {
+                                                null
+                                            },
+                                        )
+                                    }
+                                    if (secondaryCategories.isNotEmpty()) {
+                                        SettingGroupItem(
+                                            title = if (showAllStorageCategories) {
+                                                stringResource(R.string.setting_chat_storage_hide_more_categories)
+                                            } else {
+                                                stringResource(R.string.setting_chat_storage_show_more_categories)
+                                            },
+                                            subtitle = if (showAllStorageCategories) {
+                                                stringResource(R.string.setting_chat_storage_hide_more_categories_desc)
+                                            } else {
+                                                stringResource(
+                                                    R.string.setting_chat_storage_more_categories_count,
+                                                    secondaryCategories.size
+                                                )
+                                            },
+                                            icon = { Icon(Icons.Rounded.FolderOpen, null) },
+                                            trailing = {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.rotate(storageArrowRotation),
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                showAllStorageCategories = !showAllStorageCategories
+                                            }
+                                        )
+                                        ExpandableContent(visible = showAllStorageCategories) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                secondaryCategories.forEach { category ->
+                                                    StorageCategoryRow(
+                                                        category = category,
+                                                        haptics = haptics,
+                                                        appStorageRepository = appStorageRepository,
+                                                        toaster = toaster,
+                                                        onInspect = if (category.id == CATEGORY_OTHER_UPLOADS) {
+                                                            {
+                                                                showOtherUploadsInspector = true
+                                                                loadOtherUploads()
+                                                            }
+                                                        } else {
+                                                            null
+                                                        },
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -997,37 +1017,54 @@ private fun AppStorageHeroCard(
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color.White,
                 )
-                Text(
-                    text = if (snapshot.isScanning) {
-                        stringResource(R.string.setting_storage_scanning)
-                    } else {
-                        snapshot.totalBytes.fileSizeToString()
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White.copy(alpha = 0.88f),
-                )
+                AnimatedContent(
+                    targetState = snapshot.isScanning,
+                    transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+                    label = "hero_total_bytes"
+                ) { isScanning ->
+                    Text(
+                        text = if (isScanning) {
+                            stringResource(R.string.setting_storage_scanning)
+                        } else {
+                            snapshot.totalBytes.fileSizeToString()
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White.copy(alpha = 0.88f),
+                    )
+                }
             }
         }
 
         Column(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .animateContentSize(spring(dampingRatio = 0.85f, stiffness = 300f)),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                text = if (snapshot.isScanning) {
-                    stringResource(R.string.setting_chat_storage_chat_usage_scanning)
-                } else {
-                    stringResource(
-                        R.string.setting_chat_storage_chat_usage_value,
-                        snapshot.chatBytes.fileSizeToString(),
-                        snapshot.chatCount
-                    )
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.65f),
-            )
-            if (!snapshot.isScanning) {
+            AnimatedContent(
+                targetState = snapshot.isScanning,
+                transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+                label = "hero_chat_usage"
+            ) { isScanning ->
+                Text(
+                    text = if (isScanning) {
+                        stringResource(R.string.setting_chat_storage_chat_usage_scanning)
+                    } else {
+                        stringResource(
+                            R.string.setting_chat_storage_chat_usage_value,
+                            snapshot.chatBytes.fileSizeToString(),
+                            snapshot.chatCount
+                        )
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.65f),
+                )
+            }
+            AnimatedVisibility(
+                visible = !snapshot.isScanning,
+                enter = fadeIn(tween(300)) + expandVertically(spring(dampingRatio = 0.85f, stiffness = 300f)),
+                exit = fadeOut(tween(200)) + shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 300f))
+            ) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),

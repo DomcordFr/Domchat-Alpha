@@ -561,21 +561,28 @@ private fun McpConnectionsSheet(
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                shape = RoundedCornerShape(14.dp),
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White) },
-                trailingIcon = if (searchQuery.isNotEmpty()) {
-                    { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = Color.White) } }
-                } else null,
-                placeholder = { Text("Search connections", color = Color.White.copy(alpha = 0.65f)) },
-                colors = appFieldColors(),
-            )
+                    .padding(horizontal = 20.dp)
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
+                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White) },
+                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                        { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = Color.White) } }
+                    } else null,
+                    placeholder = { Text("Search connections", color = Color.White.copy(alpha = 0.65f)) },
+                    colors = appFieldColors(),
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 

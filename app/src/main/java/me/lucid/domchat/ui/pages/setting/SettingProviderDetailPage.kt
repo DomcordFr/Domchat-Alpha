@@ -1408,6 +1408,7 @@ private fun ModelList(
         consequence = stringResource(R.string.setting_provider_delete_model_consequence),
         onDismiss = { pendingDeleteModel = null },
         onConfirm = {
+            haptics.perform(HapticPattern.Pop)
             pendingDeleteModel?.let { model ->
                 onUpdateProvider(providerSetting.delModel(model))
             }
@@ -2005,6 +2006,7 @@ private fun ModelPickerSheet(
                     )
                     TextButton(
                         onClick = {
+                            haptics.perform(HapticPattern.Pop)
                             if (allFilteredSelected) {
                                 val toRemove = filteredModels.mapNotNull { selectedModelMap[it.modelId] }
                                 onRemoveModels(toRemove)
@@ -2067,6 +2069,7 @@ private fun ModelPickerSheet(
                         val isSelected = selectedModelMap.containsKey(model.modelId) || selectedModelMap.containsKey(model.modelId.lowercase())
                         Surface(
                             onClick = {
+                                haptics.perform(HapticPattern.Pop)
                                 if (isSelected) {
                                     val current = selectedModelMap[model.modelId] ?: selectedModelMap[model.modelId.lowercase()] ?: model
                                     onRemoveModel(current)
@@ -2179,6 +2182,7 @@ private fun AddNewModelSheet(
 ) {
     var modelState by remember { mutableStateOf(Model()) }
     val modelMetadataResolver = koinInject<ModelMetadataResolver>()
+    val haptics = rememberPremiumHaptics()
 
     DomChatGlassBottomSheet(
         visible = true,
@@ -2220,6 +2224,20 @@ private fun AddNewModelSheet(
 
                 Box(
                     modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to Color(0xFF000000),
+                                0.60f to Color(0xFF000000).copy(alpha = 0.60f),
+                                1.0f to Color.Transparent,
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .background(
@@ -2250,6 +2268,7 @@ private fun AddNewModelSheet(
                         }
                         Button(
                             onClick = {
+                                haptics.perform(HapticPattern.Pop)
                                 val trimmedId = modelState.modelId.trim()
                                 if (trimmedId.isNotBlank()) {
                                     val isVision = me.lucid.ai.provider.isVisionSupportedModel(trimmedId)
@@ -3486,6 +3505,7 @@ private fun EditModelSheet(
     onDismissRequest: () -> Unit,
 ) {
     var editingModel by remember(model) { mutableStateOf(model.copy()) }
+    val haptics = rememberPremiumHaptics()
 
     DomChatGlassBottomSheet(
         visible = true,
@@ -3527,6 +3547,20 @@ private fun EditModelSheet(
 
                 Box(
                     modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to Color(0xFF000000),
+                                0.60f to Color(0xFF000000).copy(alpha = 0.60f),
+                                1.0f to Color.Transparent,
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .background(
@@ -3557,6 +3591,7 @@ private fun EditModelSheet(
                         }
                         Button(
                             onClick = {
+                                haptics.perform(HapticPattern.Pop)
                                 if (editingModel.displayName.isNotBlank()) {
                                     onEditModel(editingModel)
                                 }

@@ -168,6 +168,7 @@ fun ModelSelector(
 ) {
     var popup by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val haptics = rememberPremiumHaptics()
     val model = providers.findModelById(modelId ?: Uuid.random())
     // Backend visibility only applies to chat models. Embedding, STT, and image models are chosen
     // from feature-specific settings rather than the chat picker.
@@ -227,6 +228,7 @@ fun ModelSelector(
             ) {
                 IconButton(
                     onClick = {
+                        haptics.perform(HapticPattern.Pop)
                         onClear?.invoke() ?: onSelect(Model())
                     }
                 ) {
@@ -1183,7 +1185,7 @@ private fun ModelItem(
         val topEnd by animateDpAsState(target.topEnd, spring(dampingRatio = 0.5f, stiffness = 400f))
         val bottomStart by animateDpAsState(target.bottomStart, spring(dampingRatio = 0.5f, stiffness = 400f))
         val bottomEnd by animateDpAsState(target.bottomEnd, spring(dampingRatio = 0.5f, stiffness = 400f))
-        val rowShape = if (isLiquidGlass) RoundedCornerShape(18.dp) else RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
+        val rowShape = RoundedCornerShape(18.dp)
         val glassModifier = if (isLiquidGlass) {
             modifier.liquidGlassSurface(
                 shape = rowShape,
@@ -1203,7 +1205,7 @@ private fun ModelItem(
             containerColor = rowContainerColor,
             drawBackground = !isLiquidGlass,
             drawBorder = !isLiquidGlass,
-            uniformCorners = isLiquidGlass,
+            uniformCorners = true,
             onLongClick = {
                 onDismiss()
                 navController.navigate(Screen.SettingProviderDetail(providerSetting.id.toString()))

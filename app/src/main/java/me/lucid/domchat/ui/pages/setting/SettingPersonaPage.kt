@@ -19,6 +19,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.BorderStroke
@@ -162,6 +163,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
 
     val activePersona = settings.displaySetting.getActivePersona()
     var searchQuery by remember { mutableStateOf("") }
+    var isInitialized by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(120)
+        isInitialized = true
+    }
 
     // Editor state
     var showEditor by remember { mutableStateOf(false) }
@@ -360,7 +366,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 val surfaceColor = Color(0xFF000000)
                 val borderWidth by animateDpAsState(
                     targetValue = if (isActive) 1.dp else 0.5.dp,
-                    animationSpec = tween(durationMillis = 240),
+                    animationSpec = if (isInitialized) tween(durationMillis = 240) else snap(),
                     label = "persona_card_border_width"
                 )
                 val borderBrush = if (isActive) {
@@ -425,7 +431,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
 
                                     AnimatedVisibility(
                                         visible = isActive,
-                                        enter = fadeIn(tween(200)) + expandHorizontally(spring(stiffness = 380f)),
+                                        enter = if (isInitialized) (fadeIn(tween(200)) + expandHorizontally(spring(stiffness = 380f))) else EnterTransition.None,
                                         exit = fadeOut(tween(150)) + shrinkHorizontally(spring(stiffness = 380f))
                                     ) {
                                         Surface(

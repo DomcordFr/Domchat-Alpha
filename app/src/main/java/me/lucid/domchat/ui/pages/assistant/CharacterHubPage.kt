@@ -2799,8 +2799,8 @@ fun CharacterInspectorSheet(
                     .align(Alignment.TopEnd)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.50f))
-                    .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                    .background(Color(0xFF000000))
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
@@ -3265,11 +3265,16 @@ private fun GroupTabsRow(
     val orderedGroups = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
     var longPressedGroupId by remember { mutableStateOf<String?>(null) }
     var renameDraft by remember { mutableStateOf("") }
+    var isInitialized by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(120)
+        isInitialized = true
+    }
 
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // "All" tab
         item(key = "__all_group__") {
@@ -3280,10 +3285,10 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = if (isAllSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
+                modifier = if (isInitialized) Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null) else Modifier
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -3304,8 +3309,7 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier
-                    .animateItem(fadeInSpec = null, fadeOutSpec = null)
+                modifier = (if (isInitialized) Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null) else Modifier)
                     .combinedClickable(
                         onClick = { onGroupSelected(groupId) },
                         onLongClick = {
@@ -3315,7 +3319,7 @@ private fun GroupTabsRow(
                     )
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -3335,10 +3339,10 @@ private fun GroupTabsRow(
                 shape = RoundedCornerShape(20.dp),
                 color = Color.Transparent,
                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
+                modifier = if (isInitialized) Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null) else Modifier
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -3347,6 +3351,7 @@ private fun GroupTabsRow(
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "New",
                         style = MaterialTheme.typography.bodyMedium,
