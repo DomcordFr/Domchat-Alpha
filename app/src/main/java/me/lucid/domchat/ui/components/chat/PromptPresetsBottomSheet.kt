@@ -62,6 +62,7 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Psychology
 import kotlin.math.roundToInt
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -449,7 +450,7 @@ fun PromptPresetsBottomSheet(
             ) {
 
         item {
-            val allEnabled = presets.isNotEmpty() && presets.all { it.id in effectiveEnabledIds }
+            val allEnabled = allPresets.isNotEmpty() && allPresets.all { it.id in effectiveEnabledIds }
             val cardShape = RoundedCornerShape(18.dp)
             Surface(
                 color = Color.Transparent,
@@ -482,7 +483,7 @@ fun PromptPresetsBottomSheet(
                                 color = Color.White
                             )
                             Text(
-                                text = "${effectiveEnabledIds.size} of ${presets.size} active",
+                                text = "${effectiveEnabledIds.size} of ${allPresets.size} active",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.65f)
                             )

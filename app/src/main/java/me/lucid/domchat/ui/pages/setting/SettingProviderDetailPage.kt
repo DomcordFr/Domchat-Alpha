@@ -1902,7 +1902,7 @@ private fun ModelPickerSheet(
             }
         }
         var resolvedModels by remember(models) { mutableStateOf(models) }
-        LaunchedEffect(models, parentProvider.id, parentProvider.type) {
+        LaunchedEffect(models, parentProvider.id) {
             if (models.isNotEmpty()) {
                 val resolved = withContext(Dispatchers.Default) {
                     resolveProviderModels(modelMetadataResolver, parentProvider, models)

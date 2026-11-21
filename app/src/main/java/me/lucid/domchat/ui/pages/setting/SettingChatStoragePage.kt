@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -521,7 +522,7 @@ fun SettingChatStoragePage(
                                 color = Color(0xFF000000),
                                 border = BorderStroke(
                                     0.5.dp,
-                                    if (canClean) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle.copy(alpha = 0.3f)
+                                    if (canClean) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle else androidx.compose.ui.graphics.SolidColor(Color.White.copy(alpha = 0.05f))
                                 ),
                             ) {
                                 Row(
