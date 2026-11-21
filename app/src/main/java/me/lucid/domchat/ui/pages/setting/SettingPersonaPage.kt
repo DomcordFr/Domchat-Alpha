@@ -849,11 +849,11 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF000000),
-                        contentColor = Color(0xFFA6A6A6)
+                        contentColor = Color.White
                     ),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
-                    Text("Cancel")
+                    Text("Cancel", color = Color.White)
                 }
             }
         )

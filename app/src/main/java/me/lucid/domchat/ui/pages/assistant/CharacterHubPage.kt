@@ -32,7 +32,7 @@ import androidx.compose.material.icons.rounded.Download
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import androidx.core.net.toUri
 import me.lucid.domchat.utils.saveToDownloads
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -77,6 +77,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FilterAlt
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Notes
 import androidx.compose.material.icons.rounded.Search
@@ -1497,7 +1498,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             Box(
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                                    .background(Color(0xFF000000), CircleShape)
                                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -1519,7 +1520,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Box(
                                         modifier = Modifier
-                                            .background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                                            .background(Color(0xFF000000), RoundedCornerShape(6.dp))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
@@ -1567,7 +1569,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             Box(
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                                    .background(Color(0xFF000000), CircleShape)
                                     .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -1589,7 +1591,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Box(
                                         modifier = Modifier
-                                            .background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                                            .background(Color(0xFF000000), RoundedCornerShape(6.dp))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
@@ -1667,10 +1670,29 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 characterToMove = null
                 showMoveToGroupDialog = false
             },
-            onExport = {
-                showExportDialogFor = char
-                characterToMove = null
-                showMoveToGroupDialog = false
+            onExportPng = {
+                val target = char
+                scope.launch {
+                    val bytes = withContext(Dispatchers.IO) {
+                        AssistantExportImport.exportToCharacterCardPng(target, context)
+                    }
+                    if (bytes != null) {
+                        pendingExportBytes = bytes
+                        exportPngLauncher.launch("${target.name.replace(" ", "_")}.png")
+                    } else {
+                        toaster?.show("Failed to create PNG card with avatar", ToastType.Error)
+                    }
+                }
+            },
+            onExportJson = {
+                val target = char
+                scope.launch {
+                    val jsonStr = withContext(Dispatchers.IO) {
+                        AssistantExportImport.exportToCharacterCardV2(target, context)
+                    }
+                    pendingExportJson = jsonStr
+                    exportJsonLauncher.launch("${target.name.replace(" ", "_")}.json")
+                }
             },
             onMoveToGroup = { groupId ->
                 val newGroupId = if (groupId.isNullOrBlank()) null else groupId
@@ -3214,23 +3236,25 @@ fun CharacterInspectorSheet(
                     )
                 }
                 // Close button top-end
-                IconButton(
+                Surface(
                     onClick = { viewerOpen = false },
+                    shape = CircleShape,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .statusBarsPadding()
                         .padding(top = 16.dp, end = 16.dp)
                         .align(Alignment.TopEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.50f))
-                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                        .size(44.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Close",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
 
                 // Download button bottom-end (matching chat)
@@ -3250,19 +3274,20 @@ fun CharacterInspectorSheet(
                         }
                     },
                     shape = CircleShape,
-                    color = Color.White,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .navigationBarsPadding()
                         .padding(bottom = 24.dp, end = 24.dp)
                         .align(Alignment.BottomEnd)
-                        .size(48.dp)
+                        .size(44.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Download,
                             contentDescription = "Download Image",
-                            tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -3542,7 +3567,8 @@ private fun GroupTabsRow(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.08f)),
+                                        .background(Color(0xFF000000))
+                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
@@ -3664,6 +3690,9 @@ private fun GroupReorderSheet(
         onReorder(list)
     }
 
+    val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+    val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
+
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
@@ -3681,6 +3710,11 @@ private fun GroupReorderSheet(
                 subtitle = "Drag handle to rearrange groups, swipe left to delete",
                 onCloseClick = onDismissRequest,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.1f)
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -3703,6 +3737,7 @@ private fun GroupReorderSheet(
                     state = lazyListState,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 24f)
                         .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -3891,7 +3926,8 @@ private fun CharacterActionPopover(
     groupNames: Map<String, String>,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    onExport: () -> Unit,
+    onExportPng: () -> Unit,
+    onExportJson: () -> Unit,
     onMoveToGroup: (String?) -> Unit,
     onDeleteGroup: (String) -> Unit
 ) {
@@ -3916,157 +3952,349 @@ private fun CharacterActionPopover(
                     .widthIn(max = 440.dp)
                     .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.82f).dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.weight(1f)
+                var isExporting by remember { mutableStateOf(false) }
+                AnimatedContent(
+                    targetState = isExporting,
+                    transitionSpec = {
+                        if (targetState) {
+                            slideIntoContainer(androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300)) togetherWith
+                                slideOutOfContainer(androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300))
+                        } else {
+                            slideIntoContainer(androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300)) togetherWith
+                                slideOutOfContainer(androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300))
+                        }
+                    },
+                    label = "character_action_popover_view"
+                ) { showExport ->
+                    if (!showExport) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                FullCharacterCardImage(
-                                    name = assistant.effectiveDisplayName,
-                                    avatar = assistant.avatar,
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(12.dp))
+                                    ) {
+                                        FullCharacterCardImage(
+                                            name = assistant.effectiveDisplayName,
+                                            avatar = assistant.avatar,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = assistant.effectiveDisplayName,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = "Manage groups & character",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+                                IconButton(onClick = onDismiss) {
+                                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                                }
                             }
-                            Column {
-                                Text(
-                                    text = assistant.effectiveDisplayName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    text = "Manage groups & character",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.65f)
-                                )
-                            }
-                        }
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
-                        }
-                    }
 
-                    HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.1f))
+                            HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.1f))
 
-                    Text(
-                        text = "Assign to group",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White.copy(alpha = 0.85f)
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val isAll = characterGroupId == null
-                        GroupActionChip(
-                            text = "All",
-                            selected = isAll,
-                            onClick = { onMoveToGroup(null) }
-                        )
-                        groupNames.forEach { (groupId, groupName) ->
-                            val isSelected = characterGroupId == groupId
-                            GroupActionChip(
-                                text = groupName,
-                                selected = isSelected,
-                                onClick = { onMoveToGroup(groupId) }
+                            Text(
+                                text = "Assign to group",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White.copy(alpha = 0.85f)
                             )
-                        }
-                    }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            onClick = { onExport() },
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color.Transparent,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                                .liquidGlassSurface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    borderWidth = 0.5.dp,
-                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                )
-                        ) {
                             Row(
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 12.dp),
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Download,
-                                    contentDescription = "Export",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                val isAll = characterGroupId == null
+                                GroupActionChip(
+                                    text = "All",
+                                    selected = isAll,
+                                    onClick = { onMoveToGroup(null) }
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Export",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White
-                                )
+                                groupNames.forEach { (groupId, groupName) ->
+                                    val isSelected = characterGroupId == groupId
+                                    GroupActionChip(
+                                        text = groupName,
+                                        selected = isSelected,
+                                        onClick = { onMoveToGroup(groupId) }
+                                    )
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    onClick = { isExporting = true },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color.Transparent,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .liquidGlassSurface(
+                                            shape = RoundedCornerShape(16.dp),
+                                            borderWidth = 0.5.dp,
+                                            fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                        )
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Download,
+                                            contentDescription = "Export",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Export",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    onClick = { onDelete() },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color(0xFFE53935),
+                                    border = null,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Delete,
+                                            contentDescription = "Delete",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Delete",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            color = Color.White
+                                        )
+                                    }
+                                }
                             }
                         }
-
-                        Surface(
-                            onClick = { onDelete() },
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFFE53935),
-                            border = null,
+                    } else {
+                        Column(
                             modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 12.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Delete,
-                                    contentDescription = "Delete",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Delete",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = Color.White
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    IconButton(onClick = { isExporting = false }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                            contentDescription = "Back",
+                                            tint = Color.White
+                                        )
+                                    }
+                                    Text(
+                                        text = "Export ${assistant.effectiveDisplayName}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                IconButton(onClick = onDismiss) {
+                                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.1f))
+
+                            Text(
+                                text = "Choose an export format for this character:",
+                                fontSize = 13.sp,
+                                color = Color(0xFFAAAAAA)
+                            )
+
+                            // Option 1: SillyTavern PNG
+                            Surface(
+                                onClick = {
+                                    onExportPng()
+                                    onDismiss()
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .background(Color(0xFF000000), CircleShape)
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Download,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "Character Card",
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .background(Color(0xFF000000), RoundedCornerShape(6.dp))
+                                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = "PNG",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Embedded avatar for SillyTavern, Agnai & Chub",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF9E9EAA)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Option 2: JSON
+                            Surface(
+                                onClick = {
+                                    onExportJson()
+                                    onDismiss()
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .background(Color(0xFF000000), CircleShape)
+                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Download,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "Character Card V2",
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .background(Color(0xFF000000), RoundedCornerShape(6.dp))
+                                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = "JSON",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Standard V2 JSON spec with all character data",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF9E9EAA)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

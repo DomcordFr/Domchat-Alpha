@@ -123,22 +123,18 @@ fun TTSProviderConfigure(
             }
             
             // Name
-            FormItem(
+            OutlinedTextField(
+                value = setting.name,
+                onValueChange = { newName ->
+                    onValueChange(setting.copyProvider(name = newName))
+                },
+                modifier = Modifier.weight(1f),
                 label = { Text(stringResource(R.string.setting_tts_page_name)) },
-                description = { Text(stringResource(R.string.setting_tts_page_name_description)) },
-                modifier = Modifier.weight(1f)
-            ) {
-                OutlinedTextField(
-                    value = setting.name,
-                    onValueChange = { newName ->
-                        onValueChange(setting.copyProvider(name = newName))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(R.string.setting_tts_page_name_placeholder)) },
-                    shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    colors = appFieldColors(),
-                )
-            }
+                placeholder = { Text(stringResource(R.string.setting_tts_page_name_placeholder)) },
+                shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                colors = appFieldColors(),
+                singleLine = true,
+            )
         }
         // Provider-specific fields
         when (setting) {

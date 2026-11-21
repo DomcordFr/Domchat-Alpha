@@ -1,6 +1,8 @@
 package me.lucid.domchat.ui.pages.backup
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.utils.PermissionChecker
 
 import androidx.annotation.StringRes
@@ -42,7 +44,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -52,7 +54,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -552,8 +553,9 @@ singleLine = true,
                     showBackupFiles = true
                 },
                 shape = CircleShape,
-                containerColor = Color(0xFFFFFFFF),
-                contentColor = Color(0xFF000000)
+                containerColor = Color(0xFF000000),
+                contentColor = Color.White,
+                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             ) {
                 Icon(
                     Icons.Rounded.SystemUpdateAlt,
@@ -584,13 +586,14 @@ singleLine = true,
                     }
                 },
                 shape = CircleShape,
-                containerColor = Color.White,
-                contentColor = Color.Black,
+                containerColor = Color(0xFF000000),
+                contentColor = Color.White,
+                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
             ) {
                 if (isBackingUp) {
                     CircularWavyProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = Color.Black,
+                        color = Color.White,
                     )
                 } else {
                     Icon(
@@ -603,22 +606,13 @@ singleLine = true,
     }
 
     if (showBackupFiles) {
-        ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
             containerColor = Color(0xFF000000),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-            tonalElevation = 0.dp,
-            dragHandle = {
-                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-            },
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.82f).dp,
             onDismissRequest = {
                 showBackupFiles = false
             },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
         ) {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -808,18 +802,14 @@ singleLine = true,
                 }
             },
             dismissButton = {
-                TextButton(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
-                    contentColor = Color(0xFF000000)
-                    ),
-
+                DomChatGlassPillButton(
+                    text = stringResource(R.string.backup_restore_skip),
+                    containerColor = Color(0xFF000000),
                     onClick = {
                         showPermissionDialog = false
                         showRestartDialog = true
                     }
-                ) {
-                    Text(stringResource(R.string.backup_restore_skip))
-                }
+                )
             }
         )
     }
@@ -885,42 +875,18 @@ private fun BackupItemCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(
-                onClick = {
-                    onDelete(item)
-                },
+            DomChatGlassPillButton(
+                text = stringResource(R.string.backup_page_delete),
+                destructive = true,
                 enabled = !isRestoring,
-                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                    contentColor = Color(0xFFEF4444)
-                )
-            ) {
-                Text(stringResource(R.string.backup_page_delete), fontWeight = FontWeight.SemiBold)
-            }
-            Button(
-                onClick = {
-                    onRestore(item)
-                },
+                onClick = { onDelete(item) }
+            )
+            DomChatGlassPillButton(
+                text = if (isRestoring) stringResource(R.string.backup_page_restoring) else stringResource(R.string.backup_page_restore_now),
                 enabled = !isRestoring,
-                shape = RoundedCornerShape(12.dp),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black,
-                    disabledContainerColor = Color.White.copy(alpha = 0.12f),
-                    disabledContentColor = Color.White.copy(alpha = 0.35f),
-                )
-            ) {
-                if (isRestoring) {
-                    CircularWavyProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = Color.Black
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
-                Text(
-                    if (isRestoring) stringResource(R.string.backup_page_restoring) else stringResource(R.string.backup_page_restore_now),
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                containerColor = Color(0xFF000000),
+                onClick = { onRestore(item) }
+            )
         }
     }
 }
@@ -1345,18 +1311,14 @@ private fun ImportExportPage(
                 }
             },
             dismissButton = {
-                TextButton(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
-                    contentColor = Color(0xFF000000)
-                    ),
-
+                DomChatGlassPillButton(
+                    text = stringResource(R.string.backup_restore_skip),
+                    containerColor = Color(0xFF000000),
                     onClick = {
                         showPermissionDialog = false
                         showRestartDialog = true
                     }
-                ) {
-                    Text(stringResource(R.string.backup_restore_skip))
-                }
+                )
             }
         )
     }

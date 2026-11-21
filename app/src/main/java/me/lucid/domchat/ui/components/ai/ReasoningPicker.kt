@@ -260,34 +260,6 @@ fun ReasoningPicker(
                     val showOff = supported.contains("off")
                     val showAuto = supported.contains("auto")
 
-                    if (showOff || showAuto) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            if (showOff) {
-                                ReasoningOptionItem(
-                                    selected = currentLevel == ReasoningLevel.OFF,
-                                    icon = { Icon(Icons.Rounded.LightbulbCircle, null, modifier = Modifier.size(20.dp)) },
-                                    title = stringResource(id = R.string.reasoning_off),
-                                    subtitle = stringResource(id = R.string.reasoning_off_desc),
-                                    onClick = { onUpdateReasoningTokens(0) },
-                                    isAmoled = isAmoled,
-                                    isChatPage = isChatPage
-                                )
-                            }
-                            if (showAuto) {
-                                ReasoningOptionItem(
-                                    selected = currentLevel == ReasoningLevel.AUTO,
-                                    icon = { Icon(Icons.Rounded.AutoAwesome, null, modifier = Modifier.size(20.dp)) },
-                                    title = stringResource(id = R.string.reasoning_auto),
-                                    subtitle = stringResource(id = R.string.reasoning_auto_desc),
-                                    onClick = { onUpdateReasoningTokens(-1) },
-                                    isAmoled = isAmoled,
-                                    isChatPage = isChatPage
-                                )
-                            }
-                        }
-                    }
-
-
                     data class EffortOption(
                         val level: ReasoningLevel,
                         val tokens: Int,
@@ -310,19 +282,39 @@ fun ReasoningPicker(
                         }
                     }
 
-                    if (effortOptions.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            effortOptions.forEach { option ->
-                                ReasoningOptionItem(
-                                    selected = currentLevel == option.level,
-                                    icon = { Icon(Icons.Rounded.Lightbulb, null, modifier = Modifier.size(20.dp)) },
-                                    title = option.title,
-                                    subtitle = option.desc,
-                                    onClick = { onUpdateReasoningTokens(option.tokens) },
-                                    isAmoled = isAmoled,
-                                    isChatPage = isChatPage
-                                )
-                            }
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (showOff) {
+                            ReasoningOptionItem(
+                                selected = currentLevel == ReasoningLevel.OFF,
+                                icon = { Icon(Icons.Rounded.LightbulbCircle, null, modifier = Modifier.size(20.dp)) },
+                                title = stringResource(id = R.string.reasoning_off),
+                                subtitle = stringResource(id = R.string.reasoning_off_desc),
+                                onClick = { onUpdateReasoningTokens(0) },
+                                isAmoled = isAmoled,
+                                isChatPage = isChatPage
+                            )
+                        }
+                        if (showAuto) {
+                            ReasoningOptionItem(
+                                selected = currentLevel == ReasoningLevel.AUTO,
+                                icon = { Icon(Icons.Rounded.AutoAwesome, null, modifier = Modifier.size(20.dp)) },
+                                title = stringResource(id = R.string.reasoning_auto),
+                                subtitle = stringResource(id = R.string.reasoning_auto_desc),
+                                onClick = { onUpdateReasoningTokens(-1) },
+                                isAmoled = isAmoled,
+                                isChatPage = isChatPage
+                            )
+                        }
+                        effortOptions.forEach { option ->
+                            ReasoningOptionItem(
+                                selected = currentLevel == option.level,
+                                icon = { Icon(Icons.Rounded.Lightbulb, null, modifier = Modifier.size(20.dp)) },
+                                title = option.title,
+                                subtitle = option.desc,
+                                onClick = { onUpdateReasoningTokens(option.tokens) },
+                                isAmoled = isAmoled,
+                                isChatPage = isChatPage
+                            )
                         }
                     }
                 }

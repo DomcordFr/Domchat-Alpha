@@ -916,7 +916,7 @@ fun ChatPage(
         delay(1200L)
         isSwitchingConversations = false
     }
-    val isChatSwitching = isSwitchingConversations || !chatListReady || !conversationInitialized || (target.id != conversation.id.toString())
+    val isChatSwitching = settings.displaySetting.enableChatSwitchAnimation && (isSwitchingConversations || !chatListReady || !conversationInitialized || (target.id != conversation.id.toString()))
 
     // Safely handle back navigation when switching / animating into a chat
     BackHandler(enabled = isChatSwitching) {

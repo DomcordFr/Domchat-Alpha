@@ -44,14 +44,19 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.DomChatSearchBar
+import me.lucid.domchat.ui.components.common.fadeEdges
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
@@ -63,7 +68,6 @@ import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -611,176 +615,19 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         )
     }
     
-    // Edit Search Service Bottom Sheet
-    editingService?.let { service ->
-        val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        val scope = androidx.compose.runtime.rememberCoroutineScope()
-        var currentService by remember(service) { mutableStateOf(service) }
-
-        ModalBottomSheet(
-containerColor = Color(0xFF000000),
-shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-contentColor = Color(0xFFF2F2F7),
-            onDismissRequest = {
-                editingService = null
-            },
-            sheetState = bottomSheetState,
-            dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                            bottomSheetState.hide()
-                            editingService = null
-                        }
-                }
-            )
-        }
-        ) {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .fillMaxHeight(0.8f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                SearchServiceEditHeader(
-                    service = currentService,
-                    catalogSnapshot = catalogSnapshot,
-                )
-                
-                // Configuration options based on service type
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clipToBounds(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item {
-                        when (currentService) {
-                            is SearchServiceOptions.TavilyOptions -> {
-                                TavilyOptions(currentService as SearchServiceOptions.TavilyOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.ExaOptions -> {
-                                ExaOptions(currentService as SearchServiceOptions.ExaOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.ZhipuOptions -> {
-                                ZhipuOptions(currentService as SearchServiceOptions.ZhipuOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.SearXNGOptions -> {
-                                SearXNGOptions(currentService as SearchServiceOptions.SearXNGOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.LinkUpOptions -> {
-                                SearchLinkUpOptions(currentService as SearchServiceOptions.LinkUpOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.BraveOptions -> {
-                                BraveOptions(currentService as SearchServiceOptions.BraveOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.MetasoOptions -> {
-                                MetasoOptions(currentService as SearchServiceOptions.MetasoOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.OllamaOptions -> {
-                                OllamaOptions(currentService as SearchServiceOptions.OllamaOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.PerplexityOptions -> {
-                                PerplexityOptions(currentService as SearchServiceOptions.PerplexityOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.GrokOptions -> {
-                                GrokOptions(currentService as SearchServiceOptions.GrokOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.KeylessOptions -> {
-                                KeylessOptionsDescription()
-                            }
-                            is SearchServiceOptions.BingLocalOptions -> {
-                                // No configuration needed for Bing
-                                Text(
-                                    text = stringResource(R.string.setting_search_bing_no_config),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.65f)
-                                )
-                            }
-                            is SearchServiceOptions.FirecrawlOptions -> {
-                                FirecrawlOptions(currentService as SearchServiceOptions.FirecrawlOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.JinaOptions -> {
-                                JinaOptions(currentService as SearchServiceOptions.JinaOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.BochaOptions -> {
-                                BochaOptions(currentService as SearchServiceOptions.BochaOptions) {
-                                    currentService = it
-                                }
-                            }
-                            is SearchServiceOptions.NanoGPTOptions -> {
-                                NanoGPTOptions(currentService as SearchServiceOptions.NanoGPTOptions) {
-                                    currentService = it
-                                }
-                            }
-                        }
-                        
-                        if (currentService !is SearchServiceOptions.KeylessOptions) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                                SearchServiceDescription(currentService)
-                            }
-                        }
-                    }
-                }
-
-                // Action buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TextButton(
-                        onClick = {
-                            editingService = null
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-
-                    TextButton(
-                        onClick = {
-                            val newServices = settings.searchServices.map {
-                                if (it.id == service.id) currentService else it
-                            }
-                            vm.updateSettings(settings.copy(searchServices = newServices))
-                            editingService = null
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.chat_page_save))
-                    }
-                }
+    SearchServiceEditorSheet(
+        service = editingService,
+        settings = settings,
+        catalogSnapshot = catalogSnapshot,
+        onDismiss = { editingService = null },
+        onSave = { original, updated ->
+            val newServices = settings.searchServices.map {
+                if (it.id == original.id) updated else it
             }
+            vm.updateSettings(settings.copy(searchServices = newServices))
+            editingService = null
         }
-    }
+    )
 }
 
 @Composable
@@ -1015,45 +862,42 @@ private fun SearchServiceEditorSheet(
     onSave: (SearchServiceOptions, SearchServiceOptions) -> Unit
 ) {
     service ?: return
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var currentService by remember(service) { mutableStateOf(service) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val serviceName = SearchServiceOptions.TYPES[currentService::class] ?: context.getString(R.string.setting_search_service_generic)
+    val title = if (currentService is SearchServiceOptions.KeylessOptions) {
+        stringResource(R.string.setting_search_what_is_keyless)
+    } else {
+        stringResource(R.string.setting_search_edit_service, serviceName)
+    }
 
-    me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-    ModalBottomSheet(
+    DomChatInWindowBottomSheet(
         containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-        contentColor = Color(0xFFF2F2F7),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         onDismissRequest = onDismiss,
-        sheetState = bottomSheetState,
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                        bottomSheetState.hide()
-                        onDismiss()
-                    }
-                }
-            )
-        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .fillMaxHeight(0.8f),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .navigationBarsPadding()
+                .imePadding()
         ) {
-            SearchServiceEditHeader(
-                service = currentService,
-                catalogSnapshot = catalogSnapshot,
+            DomChatSheetHeader(
+                title = title,
+                onCloseClick = onDismiss,
             )
 
+            val lazyListState = rememberLazyListState()
+            val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+            val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
+
             LazyColumn(
+                state = lazyListState,
                 modifier = Modifier
                     .weight(1f)
-                    .clipToBounds(),
+                    .fillMaxWidth()
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
@@ -1090,23 +934,35 @@ private fun SearchServiceEditorSheet(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                TextButton(
+                Surface(
                     onClick = onDismiss,
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.cancel))
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.cancel), color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
                 }
 
-                TextButton(
+                Surface(
                     onClick = {
                         onSave(service, currentService)
                     },
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.chat_page_save))
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.chat_page_save), color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -1136,8 +992,9 @@ internal fun AddSearchServiceButton(
         FloatingActionButton(
             onClick = openSearchProviderSheet,
             shape = CircleShape,
-            containerColor = Color(0xFFFFFFFF),
-            contentColor = Color(0xFF000000)
+            containerColor = Color(0xFF000000),
+            contentColor = Color.White,
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
         ) {
             Icon(Icons.Rounded.Add, stringResource(R.string.setting_page_search_add_provider))
         }
@@ -1148,71 +1005,31 @@ internal fun AddSearchServiceButton(
     }
 
     if (showBottomSheet) {
-        val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        val scope = androidx.compose.runtime.rememberCoroutineScope()
-        
-        ModalBottomSheet(
-containerColor = Color(0xFF000000),
-shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-contentColor = Color(0xFFF2F2F7),
+        DomChatInWindowBottomSheet(
+            containerColor = Color(0xFF000000),
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             onDismissRequest = {
                 showBottomSheet = false
             },
-            sheetState = bottomSheetState,
-            dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                            bottomSheetState.hide()
-                            showBottomSheet = false
-                        }
-                }
-            )
-        }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .fillMaxHeight(0.85f)
-                    .clipToBounds()
+                    .navigationBarsPadding()
+                    .imePadding()
             ) {
-                // Title
-                Text(
-                    text = stringResource(R.string.setting_page_search_add_provider),
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                DomChatSheetHeader(
+                    title = stringResource(R.string.setting_page_search_add_provider),
+                    onCloseClick = { showBottomSheet = false },
                 )
-                
-                // Search bar
-                OutlinedTextField(
+
+                DomChatSearchBar(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text(stringResource(R.string.setting_provider_page_search_placeholder)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                        .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
-                    shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
-                    singleLine = true,
-                    colors = appFieldColors(),
-                    leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                    trailingIcon = if (searchQuery.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search))
-                            }
-                        }
-                    } else null
+                    placeholder = stringResource(R.string.setting_provider_page_search_placeholder),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                 )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Filter presets based on search
+
                 val filteredPresets = remember(searchQuery, context) {
                     if (searchQuery.isBlank()) {
                         SEARCH_SERVICE_PRESETS
@@ -1224,95 +1041,68 @@ contentColor = Color(0xFFF2F2F7),
                         }
                     }
                 }
-                
-                CompositionLocalProvider(
-                    LocalOverscrollFactory provides null
+
+                val lazyListState = rememberLazyListState()
+                val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
+
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    val lazyListState = rememberLazyListState()
-                    val nestedScrollConnection = remember {
-                        object : NestedScrollConnection {
-                            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                                if (lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 0) {
-                                    return Offset.Zero
-                                }
-                                return Offset.Zero
-                            }
-                        }
-                    }
-                    LazyColumn(
-                        state = lazyListState,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clipToBounds()
-                            .nestedScroll(nestedScrollConnection),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { index, preset ->
-                            val position = when {
-                                filteredPresets.size == 1 -> ItemPosition.ONLY
-                                index == 0 -> ItemPosition.FIRST
-                                index == filteredPresets.lastIndex -> ItemPosition.LAST
-                                else -> ItemPosition.MIDDLE
-                            }
-                            
-                            val shape = AppShapes.CardMedium
-                            
-                            Surface(
-                                onClick = {
-                                    haptics.perform(HapticPattern.Pop)
-                                    val newService = preset.createOptions()
-                                    onAdd(newService)
-                                    showBottomSheet = false
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = shape,
-                                color = androidx.compose.ui.graphics.Color(0xFF000000),
-                                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
+                    itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { index, preset ->
+                        val shape = RoundedCornerShape(20.dp)
+
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                val newService = preset.createOptions()
+                                onAdd(newService)
+                                showBottomSheet = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = shape,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    SearchProviderIcon(
-                                        name = preset.name,
-                                        catalogSnapshot = catalogSnapshot,
-                                        modifier = Modifier.size(40.dp),
-                                        contentColor = Color.White,
+                                SearchProviderIcon(
+                                    name = preset.name,
+                                    catalogSnapshot = catalogSnapshot,
+                                    modifier = Modifier.size(38.dp),
+                                    contentColor = Color.White,
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = preset.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White,
                                     )
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = preset.name,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = Color.White,
-                                        )
-                                        Text(
-                                            text = context.getString(preset.descriptionRes),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.65f),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                    // Show capability tags
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        if (preset.hasScraping) {
-                                            Tag(type = TagType.INFO) {
-                                                Text(stringResource(R.string.search_ability_scrape))
-                                            }
-                                        }
+                                    Text(
+                                        text = context.getString(preset.descriptionRes),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.65f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                if (preset.hasScraping) {
+                                    Tag(type = TagType.INFO) {
+                                        Text(stringResource(R.string.search_ability_scrape))
                                     }
                                 }
                             }
-                        }
-                        
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }

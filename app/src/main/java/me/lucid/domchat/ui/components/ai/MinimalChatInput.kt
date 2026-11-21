@@ -982,42 +982,45 @@ fun MinimalChatInput(
                                     androidx.compose.animation.expandVertically(spring(dampingRatio = 0.85f, stiffness = 300f)),
                             exit = fadeOut(spring(dampingRatio = 0.85f, stiffness = 300f)) +
                                    androidx.compose.animation.shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 300f)),
-                            modifier = Modifier.padding(start = 12.dp, top = 10.dp, end = 8.dp, bottom = 4.dp),
                         ) {
                             val badgeShape = RoundedCornerShape(14.dp)
                             Box(
-                                modifier = Modifier
-                                    .liquidGlassSurface(
-                                        shape = badgeShape,
-                                        fillColor = Color.White.copy(alpha = 0.08f),
-                                        borderWidth = 0.5.dp,
-                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                    )
-                                    .clip(badgeShape)
+                                modifier = Modifier.padding(start = 12.dp, top = 8.dp, end = 8.dp, bottom = 2.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(start = 10.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.editing),
-                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = Color.White.copy(alpha = 0.90f),
-                                        modifier = Modifier.padding(end = 4.dp)
-                                    )
-                                    IconButton(
-                                        onClick = {
-                                            state.editingMessage = null
-                                            state.clearInput()
-                                        },
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Close,
-                                            contentDescription = stringResource(R.string.cancel),
-                                            tint = Color.White.copy(alpha = 0.70f),
-                                            modifier = Modifier.size(16.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .liquidGlassSurface(
+                                            shape = badgeShape,
+                                            fillColor = Color.Transparent,
+                                            borderWidth = 0.5.dp,
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                                         )
+                                        .clip(badgeShape)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(start = 10.dp, end = 4.dp, top = 3.dp, bottom = 3.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.editing),
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            color = Color.White.copy(alpha = 0.90f),
+                                            modifier = Modifier.padding(end = 4.dp)
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                state.editingMessage = null
+                                                state.clearInput()
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Close,
+                                                contentDescription = stringResource(R.string.cancel),
+                                                tint = Color.White.copy(alpha = 0.70f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -4234,37 +4237,7 @@ private fun MinimalPickerContent(
                         onClick = onOpenSearchPicker
                     )
                     
-                    if (settings.skills.isNotEmpty()) {
-                        val activeSkills = availableSkills.filter { skill ->
-                            effectiveActiveSkillIds.contains(skill.id)
-                        }
-                        val activeSkillsCount = activeSkills.size
-                        val skillsActive = activeSkillsCount > 0
-                        val singleActiveSkillIcon = activeSkills.singleOrNull()?.icon
-                        MinimalPickerItem(
-                            icon = {
-
-                                Icon(
-                                    imageVector = if (singleActiveSkillIcon != null) {
-                                        ModeIcons.getIcon(singleActiveSkillIcon)
-                                    } else {
-                                        Icons.Rounded.Category
-                                    },
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (skillsActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
-                                )
-                            },
-
-                            title = stringResource(R.string.minimal_input_skills),
-                            subtitle = if (activeSkillsCount > 0) {
-                                stringResource(R.string.skills_picker_active_count, activeSkillsCount)
-                            } else {
-                                stringResource(R.string.minimal_input_skills_desc)
-                            },
-                            onClick = onOpenSkillsPicker
-                        )
-                    }
+                    // Skills card hidden from plus icon menu per user request
 
                     if (settings.mcpServers.isNotEmpty()) {
                         val availablePluginIds = settings.mcpServers

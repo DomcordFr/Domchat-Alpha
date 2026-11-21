@@ -1331,7 +1331,7 @@
     <string name="text_selection_try_it">Try It</string>
     <string name="text_selection_setup_instructions">Select text anywhere on your device, look for \"Domchat\" in the toolbar that appears, and tap it to use these features.</string>
     <string name="text_selection_demo_text">This is sample text you can select! Try long-pressing to select these words, then look for \"Domchat\" in the selection toolbar. If you don\'t see it, you may need to tap the overflow menu (⋮) to find it.</string>
-    <string name="text_selection_demo_hint">👆 Long-press the text above to try selecting it</string>
+    <string name="text_selection_demo_hint">Long-press the text above to try selecting it</string>
 
     <!-- Additional Greetings -->
     <string name="greeting_early_morning">Rise and shine!</string>

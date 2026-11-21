@@ -659,7 +659,7 @@ private fun AnimatedSinglePill(
                         settings.displaySetting.bubbleSpecularIntensity > 0f
                     }
                     val bubbleFillColor = if (effectiveAlpha <= 0.02f) {
-                        if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.35f)
+                        Color.Transparent
                     } else {
                         baseTone.copy(alpha = effectiveAlpha)
                     }

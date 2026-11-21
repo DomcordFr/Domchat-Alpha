@@ -52,15 +52,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import me.lucid.domchat.ui.components.chat.DomChatGlassBottomSheet
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.derivedStateOf
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.DomChatSearchBar
+import me.lucid.domchat.ui.components.common.fadeEdges
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -618,22 +625,29 @@ private fun VoiceEditorSheet(
     onSave: (TTSVoice) -> Unit,
 ) {
     voice ?: return
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var current by remember(voice.id) { mutableStateOf(voice) }
-    DomChatGlassBottomSheet(
-        visible = true,
+    DomChatInWindowBottomSheet(
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
         onDismissRequest = onDismiss,
-        sheetState = state,
     ) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxSize(0.8f)
-                .imePadding(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .navigationBarsPadding()
+                .imePadding()
         ) {
-            item { Text("Edit Voice", style = MaterialTheme.typography.headlineSmall) }
+            DomChatSheetHeader(
+                title = "Edit Voice",
+                onCloseClick = onDismiss,
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
             item {
                 OutlinedTextField(
                     value = current.name,
@@ -728,10 +742,34 @@ private fun VoiceEditorSheet(
                     )
                 }
             }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
-                    TextButton(onClick = { onSave(current) }, modifier = Modifier.weight(1f)) { Text("Save") }
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Surface(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text("Cancel", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                Surface(
+                    onClick = { onSave(current) },
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text("Save", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -800,27 +838,37 @@ private fun ProviderVoicesFab(
 
     if (!showSheet) return
 
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    DomChatGlassBottomSheet(
-        visible = true,
+    DomChatInWindowBottomSheet(
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
         onDismissRequest = onDismiss,
-        sheetState = state,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(500.dp)
-                .padding(8.dp)
-                .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .navigationBarsPadding()
+                .imePadding()
         ) {
+            DomChatSheetHeader(
+                title = "Provider Voices",
+                onCloseClick = onDismiss,
+            )
+
+            DomChatSearchBar(
+                value = filterText,
+                onValueChange = { filterText = it },
+                placeholder = "Search voices, id, locale...",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(
+                Surface(
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         if (allFilteredSelected) {
@@ -834,30 +882,62 @@ private fun ProviderVoicesFab(
                             }
                         }
                     },
-                    modifier = Modifier.height(40.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
-                    Text(if (allFilteredSelected) "Deselect all" else "Select all")
+                    Text(
+                        text = if (allFilteredSelected) "Deselect all" else "Select all",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    )
                 }
+
                 if (isFetching) {
                     LinearWavyProgressIndicator(modifier = Modifier.weight(1f))
                 } else {
                     Spacer(modifier = Modifier.weight(1f))
                 }
-                Button(
+
+                Surface(
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         fetchVoices()
                     },
                     enabled = !isFetching,
-                    modifier = Modifier.height(40.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 ) {
-                    Icon(Icons.Rounded.Refresh, contentDescription = null)
-                    Spacer(Modifier.size(4.dp))
-                    Text("Reload")
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(Icons.Rounded.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = "Reload",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color.White,
+                        )
+                    }
                 }
             }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+            val lazyListState = rememberLazyListState()
+            val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+            val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
+
+            LazyColumn(
+                state = lazyListState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            ) {
                 if (filteredVoices.isEmpty()) {
                     item {
                         Column(
@@ -909,16 +989,17 @@ private fun ProviderVoicesFab(
                                     onAddVoice(voice)
                                 }
                             },
-                        shape = AppShapes.CardLarge,
+                        shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (LocalDarkMode.current) Color(0xFF000000) else Color.Transparent
+                            containerColor = Color(0xFF000000)
                         ),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -956,16 +1037,6 @@ private fun ProviderVoicesFab(
                     }
                 }
             }
-            OutlinedTextField(
-                value = filterText,
-                onValueChange = { filterText = it },
-                label = { Text("Search voices") },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Try name, id, locale, or engine") },
-                singleLine = true,
-                shape = AppShapes.SearchField,
-                colors = appFieldColors(),
-            )
         }
     }
 }
@@ -1015,53 +1086,85 @@ private fun ManualVoiceSheet(
     onDismiss: () -> Unit,
     onAddVoice: (TTSVoice) -> Unit,
 ) {
-    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val haptics = rememberPremiumHaptics()
     var voiceName by remember(provider.id) { mutableStateOf("") }
     var voiceId by remember(provider.id) { mutableStateOf("") }
 
-    DomChatGlassBottomSheet(
-        visible = true,
+    DomChatInWindowBottomSheet(
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
         onDismissRequest = onDismiss,
-        sheetState = state,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .imePadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Manual Voice", style = MaterialTheme.typography.headlineSmall)
-            OutlinedTextField(
-                value = voiceName,
-                onValueChange = { voiceName = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = AppShapes.InputField,
-                singleLine = true,
-                colors = appFieldColors(),
+            DomChatSheetHeader(
+                title = "Manual Voice",
+                onCloseClick = onDismiss,
             )
-            OutlinedTextField(
-                value = voiceId,
-                onValueChange = { voiceId = it },
-                label = { Text("Provider voice id") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = AppShapes.InputField,
-                singleLine = true,
-                colors = appFieldColors(),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
-                TextButton(
-                    enabled = voiceId.isNotBlank(),
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        onAddVoice(manualVoiceForProvider(provider, voiceName, voiceId))
-                    },
-                    modifier = Modifier.weight(1f),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedTextField(
+                    value = voiceName,
+                    onValueChange = { voiceName = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = AppShapes.InputField,
+                    singleLine = true,
+                    colors = appFieldColors(),
+                )
+                OutlinedTextField(
+                    value = voiceId,
+                    onValueChange = { voiceId = it },
+                    label = { Text("Provider voice id") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = AppShapes.InputField,
+                    singleLine = true,
+                    colors = appFieldColors(),
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
                 ) {
-                    Text("Add")
+                    Surface(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                            Text("Cancel", color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    Surface(
+                        enabled = voiceId.isNotBlank(),
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            onAddVoice(manualVoiceForProvider(provider, voiceName, voiceId))
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                "Add",
+                                color = if (voiceId.isNotBlank()) Color.White else Color.White.copy(alpha = 0.4f),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
                 }
             }
         }

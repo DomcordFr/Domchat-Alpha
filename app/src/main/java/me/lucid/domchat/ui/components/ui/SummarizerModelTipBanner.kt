@@ -41,7 +41,7 @@ fun SummarizerModelTipBanner(
         onClick = onClick,
         color = Color.Transparent,
         shape = bannerShape,
-        border = BorderStroke(0.5.dp, borderBrush),
+        border = null,
         modifier = modifier.fillMaxWidth()
     ) {
         Row(

@@ -1708,23 +1708,25 @@ private fun JanitorCharacterInspectorSheet(
                     contentScale = ContentScale.Fit,
                 )
                 // Close button top-end
-                IconButton(
+                Surface(
                     onClick = { showFullScreenImage = false },
+                    shape = CircleShape,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .statusBarsPadding()
                         .padding(top = 16.dp, end = 16.dp)
                         .align(Alignment.TopEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.50f))
-                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                        .size(44.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Close",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
 
                 // Download button bottom-end (matching chat)
@@ -1741,19 +1743,20 @@ private fun JanitorCharacterInspectorSheet(
                         }
                     },
                     shape = CircleShape,
-                    color = Color.White,
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier
                         .navigationBarsPadding()
                         .padding(bottom = 24.dp, end = 24.dp)
                         .align(Alignment.BottomEnd)
-                        .size(48.dp)
+                        .size(44.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Download,
                             contentDescription = "Download Image",
-                            tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }

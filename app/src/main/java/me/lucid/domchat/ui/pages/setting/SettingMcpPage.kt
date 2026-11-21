@@ -49,7 +49,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -70,8 +69,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
@@ -144,6 +144,12 @@ import me.lucid.domchat.utils.openUrl
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.BorderStroke
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.modifier.fadeEdges
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 
 @Composable
 fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
@@ -233,8 +239,9 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                             showImportDialog = true
                         },
                         shape = CircleShape,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000),
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.Input, "Import MCP configuration")
                     }
@@ -244,8 +251,9 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                             showConnectionsSheet = true
                         },
                         shape = CircleShape,
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000),
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White,
+                        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                     ) {
                         Icon(Icons.Rounded.Add, "Add connection")
                     }
@@ -519,13 +527,10 @@ private fun McpConnectionsSheet(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val haptics = rememberPremiumHaptics()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
     val isDarkMode = LocalDarkMode.current
-    val titleColor = if (isDarkMode) Color.White else Color.White
-    val iconColor = if (isDarkMode) Color.White else Color.White.copy(alpha = 0.65f)
-    val itemTextColor = if (isDarkMode) Color.White else Color.White
-    val customServerContentColor = if (isDarkMode) Color.White else Color(0xFFFFFFFF)
+    val listState = rememberLazyListState()
+    val canScrollUp by remember { derivedStateOf { listState.canScrollBackward } }
+    val canScrollDown by remember { derivedStateOf { listState.canScrollForward } }
 
     val filtered = remember(searchQuery) {
         if (searchQuery.isBlank()) POPULAR_MCP_CONNECTIONS else POPULAR_MCP_CONNECTIONS.filter {
@@ -535,103 +540,104 @@ private fun McpConnectionsSheet(
         }
     }
 
-    ModalBottomSheet(
+    DomChatInWindowBottomSheet(
+        visible = true,
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
         containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(
-            width = 0.5.dp,
-            brush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-            shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet
-        ),
-        dragHandle = {
-            ApplyDialogWindowBlur()
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        },
+        dragHandle = { DomChatSheetDragHandle() },
     ) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.85f)
-                .padding(horizontal = 16.dp),
+                .padding(bottom = 16.dp)
         ) {
-            Text(
-                "Add a connection",
-                style = MaterialTheme.typography.headlineSmall,
-                color = titleColor,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                textAlign = TextAlign.Center,
+            DomChatSheetHeader(
+                title = "Add a connection",
+                onCloseClick = onDismiss,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
             )
+
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.1f)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                shape = me.lucid.domchat.ui.theme.AppShapes.SettingControl,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                shape = RoundedCornerShape(14.dp),
                 singleLine = true,
-                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = iconColor) },
+                leadingIcon = { Icon(Icons.Rounded.Search, null, tint = Color.White) },
                 trailingIcon = if (searchQuery.isNotEmpty()) {
-                    { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = iconColor) } }
+                    { IconButton(onClick = { searchQuery = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = Color.White) } }
                 } else null,
-                placeholder = { Text("Search connections", color = if (isDarkMode) Color.White.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.65f)) },
+                placeholder = { Text("Search connections", color = Color.White.copy(alpha = 0.65f)) },
                 colors = appFieldColors(),
             )
-            Spacer(Modifier.height(16.dp))
+
+            Spacer(Modifier.height(12.dp))
+
             LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 24f)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 item {
-                    val customBg = Color(0xFF000000)
-                    val customBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                     Surface(
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
                             onAddCustom()
                         },
-                        shape = AppShapes.CardMedium,
-                        color = customBg,
-                        contentColor = customServerContentColor,
-                        modifier = Modifier.border(0.5.dp, customBorder, AppShapes.CardMedium)
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(Icons.Rounded.Add, null, modifier = Modifier.size(40.dp), tint = customServerContentColor)
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(Color(0xFF000000), CircleShape)
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.Add, null, modifier = Modifier.size(24.dp), tint = Color.White)
+                            }
                             Text(
                                 "Custom MCP server",
                                 modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = customServerContentColor,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White,
                             )
                         }
                     }
-                    Spacer(Modifier.height(12.dp))
                 }
 
-                itemsIndexed(filtered, key = { _, preset -> preset.id }) { index, preset ->
+                items(filtered, key = { it.id }) { preset ->
                     val installed = preset.id in installedPresetIds
-                    val shape = when {
-                        filtered.size == 1 -> AppShapes.CardMedium
-                        index == 0 -> AppShapes.ListItemFirst
-                        index == filtered.lastIndex -> AppShapes.ListItemLast
-                        else -> AppShapes.ListItemMiddle
-                    }
-                    val presetBg = Color(0xFF000000)
-                    val presetBorder = if (isDarkMode) Color.White.copy(alpha = 0.08f) else Color.Transparent
                     Surface(
                         onClick = {
                             haptics.perform(HapticPattern.Pop)
                             onSelect(preset)
                         },
-                        modifier = Modifier.fillMaxWidth().border(1.dp, presetBorder, shape),
-                        shape = shape,
-                        color = presetBg,
-                        contentColor = itemTextColor,
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -642,7 +648,7 @@ private fun McpConnectionsSheet(
                                 name = preset.name,
                                 customIconUri = preset.iconUri,
                                 modifier = Modifier.size(40.dp),
-                                contentColor = itemTextColor,
+                                contentColor = Color.White,
                             )
                             Column(
                                 modifier = Modifier.weight(1f),
@@ -650,8 +656,8 @@ private fun McpConnectionsSheet(
                             ) {
                                 Text(
                                     preset.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = itemTextColor,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White,
                                 )
                                 Text(
                                     preset.description,
@@ -672,7 +678,7 @@ private fun McpConnectionsSheet(
                             Icon(
                                 if (installed) Icons.AutoMirrored.Rounded.Login else Icons.Rounded.Add,
                                 contentDescription = null,
-                                tint = iconColor,
+                                tint = Color.White,
                             )
                         }
                     }
@@ -876,28 +882,16 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
     state.EditStateContent { config, updateValue ->
         val pagerState = rememberPagerState { 2 }
         val scope = rememberCoroutineScope()
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
+        DomChatInWindowBottomSheet(
             containerColor = Color(0xFF000000),
+            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
             onDismissRequest = {
                 state.dismiss()
             },
-            sheetState = sheetState,
-            dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    scope.launch {
-                            sheetState.hide()
-                            state.dismiss()
-                        }
-                }
-            )
-        }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.8f)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1403,19 +1397,15 @@ private fun McpImportModal(
     val noValidConfigMessage = stringResource(R.string.setting_mcp_page_import_no_valid_config)
     val parseErrorMessage = stringResource(R.string.setting_mcp_page_import_parse_error)
 
-    ModalBottomSheet(
+    DomChatInWindowBottomSheet(
         containerColor = Color(0xFF000000),
-        dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-        contentColor = Color(0xFFF2F2F7),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.75f).dp,
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.7f)
                 .padding(16.dp)
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp)

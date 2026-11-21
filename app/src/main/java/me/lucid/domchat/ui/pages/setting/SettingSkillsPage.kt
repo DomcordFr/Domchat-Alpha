@@ -1653,7 +1653,7 @@ private fun SkillExportDialog(
                     skillMdLauncher.launch(SkillExportImport.getSuggestedFileName(skill, "skill_md"))
                 },
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(20.dp),
                 border = BorderStroke(0.5.dp, borderBrush)
             ) {
                 ListItem(
@@ -1669,7 +1669,7 @@ private fun SkillExportDialog(
             Card(
                 onClick = { skillPackageLauncher.launch("${skill.name.ifBlank { "skill" }}.zip") },
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(20.dp),
                 border = BorderStroke(0.5.dp, borderBrush)
             ) {
                 ListItem(

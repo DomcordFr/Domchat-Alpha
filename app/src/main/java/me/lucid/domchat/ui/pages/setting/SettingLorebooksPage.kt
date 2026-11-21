@@ -385,8 +385,8 @@ fun LorebooksPageContent(
                             PhysicsSwipeToDelete(
                                 position = ItemPosition.ONLY,
                                 deleteEnabled = canDelete,
-                                groupCornerRadius = 18.dp,
-                                itemCornerRadius = 18.dp,
+                                groupCornerRadius = 20.dp,
+                                itemCornerRadius = 20.dp,
                                 neighborOffset = neighborOffset,
                                 onDragProgress = { offset, unlocked ->
                                     draggingIndex = index
@@ -507,7 +507,7 @@ fun LorebooksPageContent(
 @Composable
 private fun LorebookCard(
     lorebook: Lorebook,
-    shape: Shape = RoundedCornerShape(18.dp),
+    shape: Shape = RoundedCornerShape(20.dp),
     position: ItemPosition,
     onClick: () -> Unit,
     dragHandle: @Composable () -> Unit,

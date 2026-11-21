@@ -183,10 +183,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
 
-    var hasInitializedAdvanced by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        hasInitializedAdvanced = true
-    }
+    var userToggledAdvanced by remember { mutableStateOf(false) }
 
     val permissionState = rememberPermissionState(
         permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) setOf(
@@ -333,6 +330,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             HapticSwitch(
                                 checked = settings.displaySetting.isAdvancedGlassEnabled,
                                 onCheckedChange = {
+                                    userToggledAdvanced = true
                                     updateDisplaySetting(
                                         vm.settings.value.displaySetting.copy(
                                             isAdvancedGlassEnabled = it
@@ -344,8 +342,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         AnimatedVisibility(
                             visible = settings.displaySetting.isAdvancedGlassEnabled,
-                            enter = if (hasInitializedAdvanced) expandVertically() + fadeIn() else androidx.compose.animation.EnterTransition.None,
-                            exit = shrinkVertically() + fadeOut(),
+                            enter = if (userToggledAdvanced) expandVertically() + fadeIn() else androidx.compose.animation.EnterTransition.None,
+                            exit = if (userToggledAdvanced) shrinkVertically() + fadeOut() else androidx.compose.animation.ExitTransition.None,
                         ) {
                             Column(
                                 modifier = Modifier
@@ -659,6 +657,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             HapticSwitch(
                                 checked = settings.displaySetting.isAdvancedGlassEnabled,
                                 onCheckedChange = {
+                                    userToggledAdvanced = true
                                     updateDisplaySetting(
                                         vm.settings.value.displaySetting.copy(
                                             isAdvancedGlassEnabled = it
@@ -670,8 +669,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
 
                         AnimatedVisibility(
                             visible = settings.displaySetting.isAdvancedGlassEnabled,
-                            enter = if (hasInitializedAdvanced) expandVertically() + fadeIn() else androidx.compose.animation.EnterTransition.None,
-                            exit = shrinkVertically() + fadeOut(),
+                            enter = if (userToggledAdvanced) expandVertically() + fadeIn() else androidx.compose.animation.EnterTransition.None,
+                            exit = if (userToggledAdvanced) shrinkVertically() + fadeOut() else androidx.compose.animation.ExitTransition.None,
                         ) {
                             Column(
                                 modifier = Modifier
@@ -1146,6 +1145,19 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 },
                                 optionToString = { it.title },
                                 modifier = Modifier.wrapContentWidth()
+                            )
+                        }
+                    )
+
+                    SettingGroupItem(
+                        title = "Chat Switching Animation",
+                        subtitle = "Cinematic animated transition when switching between conversations",
+                        trailing = {
+                            HapticSwitch(
+                                checked = settings.displaySetting.enableChatSwitchAnimation,
+                                onCheckedChange = {
+                                    updateDisplaySetting(vm.settings.value.displaySetting.copy(enableChatSwitchAnimation = it))
+                                }
                             )
                         }
                     )

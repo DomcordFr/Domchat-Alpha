@@ -848,99 +848,98 @@ internal fun ColumnScope.ModelList(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .height(if (style == ModelPickerStyle.LIQUID_GLASS) 60.dp else 84.dp)
                     .padding(
                         start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
                         end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
-                        top = if (style == ModelPickerStyle.LIQUID_GLASS) 6.dp else 16.dp,
-                        bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 6.dp else 12.dp
+                        top = if (style == ModelPickerStyle.LIQUID_GLASS) 8.dp else 16.dp,
+                        bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 8.dp else 12.dp
                     )
             ) {
-
                 val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
                 val searchBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                OutlinedTextField(
-                    value = searchKeywords,
-                    onValueChange = { searchKeywords = it },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(48.dp)
                         .liquidGlassSurface(
                             shape = searchFieldShape,
-                            fillColor = Color.White.copy(alpha = 0.05f),
+                            fillColor = Color.Transparent,
                             borderWidth = 0.5.dp,
                             specularBrush = searchBorder
-                        ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        disabledBorderColor = Color.Transparent,
-                        errorBorderColor = Color.Transparent,
-                        focusedTextColor = Color(0xFFF2F2F7),
-                        unfocusedTextColor = Color(0xFFF2F2F7),
-                        disabledTextColor = Color(0xFF8A8A96),
-                        cursorColor = Color(0xFFF2F2F7),
-                        errorCursorColor = Color(0xFFEF4444),
-                        focusedLabelColor = Color(0xFFF2F2F7),
-                        unfocusedLabelColor = Color(0xFF8A8A96),
-                        focusedPlaceholderColor = Color(0xFF8A8A96),
-                        unfocusedPlaceholderColor = Color(0xFF8A8A96),
-                        disabledPlaceholderColor = Color(0xFF8A8A96),
-                        focusedLeadingIconColor = Color(0xFF8A8A96),
-                        unfocusedLeadingIconColor = Color(0xFF8A8A96),
-                        focusedTrailingIconColor = Color(0xFF8A8A96),
-                        unfocusedTrailingIconColor = Color(0xFF8A8A96),
-                        focusedSupportingTextColor = Color(0xFF8A8A96),
-                        unfocusedSupportingTextColor = Color(0xFF8A8A96),
-                        errorSupportingTextColor = Color(0xFFEF4444),
-                    ),
-                    leadingIcon = {
-                        Icon(Icons.Rounded.Search, null)
-                    },
-                    trailingIcon = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (searchKeywords.isNotEmpty()) {
-                                IconButton(onClick = { searchKeywords = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Close,
-                                        contentDescription = "Clear",
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                        )
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                            if (searchKeywords.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.model_list_search_placeholder),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.65f),
+                                    maxLines = 1
+                                )
                             }
-                            IconButton(onClick = {
+                            androidx.compose.foundation.text.BasicTextField(
+                                value = searchKeywords,
+                                onValueChange = { searchKeywords = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color.White,
+                                    lineHeight = 20.sp
+                                ),
+                                cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
+                                singleLine = true,
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                                ),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                    onDone = { focusManager.clearFocus() }
+                                )
+                            )
+                        }
+                        if (searchKeywords.isNotEmpty()) {
+                            IconButton(
+                                onClick = { searchKeywords = "" },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Clear",
+                                    modifier = Modifier.size(18.dp),
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = {
                                 sortOrder = when (sortOrder) {
                                     ModelSortOrder.DEFAULT -> ModelSortOrder.NAME
                                     ModelSortOrder.NAME -> ModelSortOrder.CONTEXT
                                     ModelSortOrder.CONTEXT -> ModelSortOrder.DEFAULT
                                 }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.Sort,
-                                    contentDescription = "Sort",
-                                    tint = if (sortOrder != ModelSortOrder.DEFAULT) Color.White else Color.White.copy(alpha = 0.65f),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.Sort,
+                                contentDescription = "Sort",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
-                    },
-                    placeholder = {
-                        Text(stringResource(R.string.model_list_search_placeholder))
-                    },
-                    maxLines = 1,
-                    singleLine = true,
-                    shape = searchFieldShape,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        imeAction = androidx.compose.ui.text.input.ImeAction.Done
-                    ),
-                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                        }
-                    )
-                )
+                    }
+                }
             }
 
             // 3. Strong Bottom Floating Fade (Gradient + Solid background covering provider badges area)
@@ -1193,17 +1192,36 @@ private fun ModelItem(
             if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
         }
 
+        val target = me.lucid.domchat.ui.components.settings.groupedCornerRadii(select, position.toSharedPosition())
+        val topStart by animateDpAsState(target.topStart, spring(dampingRatio = 0.5f, stiffness = 400f))
+        val topEnd by animateDpAsState(target.topEnd, spring(dampingRatio = 0.5f, stiffness = 400f))
+        val bottomStart by animateDpAsState(target.bottomStart, spring(dampingRatio = 0.5f, stiffness = 400f))
+        val bottomEnd by animateDpAsState(target.bottomEnd, spring(dampingRatio = 0.5f, stiffness = 400f))
+        val rowShape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
+        val glassModifier = if (isLiquidGlass) {
+            modifier.liquidGlassSurface(
+                shape = rowShape,
+                fillColor = Color.Transparent,
+                borderWidth = if (select) 1.dp else 0.5.dp,
+                specularBrush = if (select) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+            )
+        } else {
+            modifier
+        }
+
         DomChatGroupedModelRow(
             title = model.displayName,
             selected = select,
             position = position.toSharedPosition(),
             onClick = { onSelect(model) },
             containerColor = rowContainerColor,
+            drawBackground = !isLiquidGlass,
+            drawBorder = !isLiquidGlass,
             onLongClick = {
                 onDismiss()
                 navController.navigate(Screen.SettingProviderDetail(providerSetting.id.toString()))
             },
-            modifier = modifier,
+            modifier = glassModifier,
             icon = {
                 ModelIcon(
                     model = model,

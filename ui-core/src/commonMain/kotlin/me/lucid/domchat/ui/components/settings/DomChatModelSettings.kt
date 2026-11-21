@@ -113,6 +113,8 @@ fun DomChatGroupedModelRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = Color.White.copy(alpha = 0.08f),
+    drawBackground: Boolean = true,
+    drawBorder: Boolean = true,
     onLongClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit,
     metadata: @Composable () -> Unit = {},
@@ -157,8 +159,8 @@ fun DomChatGroupedModelRow(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 0.5.dp, vertical = 0.5.dp)
-            .background(rowBackground, shape = rowShape)
-            .border(BorderStroke(if (selected) 1.dp else 0.5.dp, borderBrush), shape = rowShape)
+            .then(if (drawBackground) Modifier.background(rowBackground, shape = rowShape) else Modifier)
+            .then(if (drawBorder) Modifier.border(BorderStroke(if (selected) 1.dp else 0.5.dp, borderBrush), shape = rowShape) else Modifier)
             .clip(rowShape)
             .padding(vertical = 12.dp, horizontal = 16.dp),
     ) {

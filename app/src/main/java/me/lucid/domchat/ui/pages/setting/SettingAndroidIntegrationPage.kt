@@ -163,7 +163,7 @@ fun SettingAndroidIntegrationPage(
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = innerPadding + PaddingValues(bottom = 80.dp),
+                contentPadding = innerPadding + PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 
@@ -424,8 +424,6 @@ fun SettingAndroidIntegrationPage(
                         }
                     }
                 }
-
-                item { Spacer(Modifier.height(80.dp)) }
             }
         }
     }

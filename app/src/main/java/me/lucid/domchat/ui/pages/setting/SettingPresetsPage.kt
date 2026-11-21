@@ -308,7 +308,7 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = Color(0xFF000000),
                     border = BorderStroke(0.5.dp, if (isDark) LiquidGlassTokens.SpecularBorderSubtle else LiquidGlassTokens.LightSpecularBorder)
                 ) {
@@ -737,17 +737,26 @@ fun SettingPresetsPage(vm: SettingVM = koinViewModel()) {
                 Button(
                     onClick = { saveDraft() },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFFFFF),
-                        contentColor = Color(0xFF000000)
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White
                     ),
-                    shape = AppShapes.CardMedium
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
-                    Text("Save")
+                    Text("Save", color = Color.White)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false }) {
-                    Text("Cancel", color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Unspecified)
+                Button(
+                    onClick = { showEditDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF000000),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                ) {
+                    Text("Cancel", color = Color.White)
                 }
             }
         )

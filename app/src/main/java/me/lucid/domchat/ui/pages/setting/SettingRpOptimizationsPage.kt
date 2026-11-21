@@ -133,11 +133,11 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             item {
                 val isDark = LocalDarkMode.current
                 val cardBg = Color(0xFF000000)
-                val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                val cardShape = RoundedCornerShape(20.dp)
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
-                    shape = AppShapes.CardLarge,
-                    modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
+                    shape = cardShape,
+                    modifier = Modifier.border(0.5.dp, cardBorder, cardShape)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -208,11 +208,11 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
             item {
                 val isDark = LocalDarkMode.current
                 val cardBg = Color(0xFF000000)
-                val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                val cardShape = RoundedCornerShape(20.dp)
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
-                    shape = AppShapes.CardLarge,
-                    modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
+                    shape = cardShape,
+                    modifier = Modifier.border(0.5.dp, cardBorder, cardShape)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -280,11 +280,11 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 item {
                     val isDark = LocalDarkMode.current
                     val cardBg = Color(0xFF000000)
-                    val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                    val cardShape = RoundedCornerShape(20.dp)
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
-                        shape = AppShapes.CardLarge,
-                        modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
+                        shape = cardShape,
+                        modifier = Modifier.border(0.5.dp, cardBorder, cardShape)
                     ) {
                         Box(
                             modifier = Modifier
@@ -336,11 +336,11 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 item {
                     val isDark = LocalDarkMode.current
                     val cardBg = Color(0xFF000000)
-                    val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+                    val cardShape = RoundedCornerShape(20.dp)
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
-                        shape = AppShapes.CardLarge,
-                        modifier = Modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge)
+                        shape = cardShape,
+                        modifier = Modifier.border(0.5.dp, cardBorder, cardShape)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -420,10 +420,11 @@ private fun RpStyleRuleItem(
     val cardBg = Color(0xFF000000)
     val cardBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
 
+    val cardShape = RoundedCornerShape(20.dp)
     Card(
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = AppShapes.CardLarge,
-        modifier = modifier.border(0.5.dp, cardBorder, AppShapes.CardLarge),
+        shape = cardShape,
+        modifier = modifier.border(0.5.dp, cardBorder, cardShape),
         onClick = onEdit
     ) {
         ListItem(

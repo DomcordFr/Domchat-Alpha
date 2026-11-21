@@ -40,9 +40,11 @@ import me.lucid.domchat.R
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.saveToDownloads
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.draw.clip
@@ -104,23 +106,25 @@ fun ImagePreviewDialog(
             }
 
             // Close button top-end
-            IconButton(
+            Surface(
                 onClick = onDismissRequest,
+                shape = CircleShape,
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier
                     .statusBarsPadding()
                     .padding(top = 16.dp, end = 16.dp)
                     .align(Alignment.TopEnd)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.50f))
-                    .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                    .size(44.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = "Close",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp),
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
 
             // Bottom controls: Prompt text and save button
@@ -177,15 +181,16 @@ fun ImagePreviewDialog(
                                 }
                             },
                             shape = CircleShape,
-                            color = Color.White,
-                            modifier = Modifier.size(48.dp)
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            modifier = Modifier.size(44.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     Icons.Rounded.Download,
                                     contentDescription = stringResource(R.string.save),
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(24.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }

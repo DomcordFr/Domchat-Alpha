@@ -320,6 +320,7 @@ data class DisplaySetting(
     // Bubble specular highlight intensity (0.0f..1.0f). Independent of UI glass specular intensity.
     val bubbleSpecularIntensity: Float = 1.0f,
     val animationSpeed: AnimationSpeedLevel = AnimationSpeedLevel.NORMAL,
+    val enableChatSwitchAnimation: Boolean = true,
     val conversationWallpapers: Map<String, ConversationWallpaperConfig> = emptyMap(),
     // Chromatic / rainbow optical dispersion around glass specular edges
     val chromaticDispersionEnabled: Boolean = false,
