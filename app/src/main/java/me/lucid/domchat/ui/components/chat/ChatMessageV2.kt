@@ -1389,10 +1389,11 @@ private fun UserMessageTurn(
             )
             val onUserAvatarClick: () -> Unit = {
                 haptics.perform(HapticPattern.Pop)
-                val avatarUrl = when (personaAvatar) {
-                    is Avatar.Image -> personaAvatar.url
-                    is Avatar.Resource -> "android.resource://${context.packageName}/${safeDrawableResId(context, personaAvatar.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
-                    else -> settings.displaySetting.userAvatarUri.takeIf { it.isNotBlank() }
+                val avatarToUse = personaAvatar.takeIf { it !is Avatar.Dummy } ?: settings.displaySetting.userAvatar
+                val avatarUrl = when (avatarToUse) {
+                    is Avatar.Image -> avatarToUse.url
+                    is Avatar.Resource -> "android.resource://${context.packageName}/${safeDrawableResId(context, avatarToUse.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
+                    else -> null
                 }
                 if (avatarUrl != null) {
                     previewUserAvatarUrl = avatarUrl

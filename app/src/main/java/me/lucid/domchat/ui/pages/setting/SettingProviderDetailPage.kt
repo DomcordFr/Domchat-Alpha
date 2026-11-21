@@ -1891,6 +1891,7 @@ private fun ModelPickerSheet(
         dragHandle = { DomChatSheetDragHandle() },
         onDismissRequest = onDismissRequest
     ) {
+        val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
         val models = modelList.orEmpty()
         var filterText by rememberSaveable { mutableStateOf("") }
         var debouncedQuery by remember { mutableStateOf("") }
