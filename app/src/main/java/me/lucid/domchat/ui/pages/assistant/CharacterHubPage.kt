@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
+import me.lucid.domchat.ui.modifier.fadeEdges
 import androidx.compose.material.icons.rounded.Reorder
 import androidx.compose.material.icons.rounded.Download
 import me.lucid.domchat.ui.theme.liquidGlassSurface

@@ -203,14 +203,14 @@ fun DomChatGroupedModelRow(
     }
 }
 
-private data class ModelCornerRadii(
+data class ModelCornerRadii(
     val topStart: androidx.compose.ui.unit.Dp,
     val topEnd: androidx.compose.ui.unit.Dp,
     val bottomStart: androidx.compose.ui.unit.Dp,
     val bottomEnd: androidx.compose.ui.unit.Dp,
 )
 
-private fun groupedCornerRadii(
+fun groupedCornerRadii(
     selected: Boolean,
     position: DomChatModelGroupPosition,
 ): ModelCornerRadii {

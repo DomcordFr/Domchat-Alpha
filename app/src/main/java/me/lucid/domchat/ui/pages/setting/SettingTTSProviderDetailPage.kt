@@ -60,7 +60,7 @@ import androidx.compose.runtime.derivedStateOf
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.chat.DomChatSearchBar
-import me.lucid.domchat.ui.components.common.fadeEdges
+import me.lucid.domchat.ui.modifier.fadeEdges
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold

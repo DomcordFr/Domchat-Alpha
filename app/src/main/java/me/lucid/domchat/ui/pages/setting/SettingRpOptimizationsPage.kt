@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.pages.setting
 
 import me.lucid.domchat.ui.theme.LocalDarkMode
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.appFilterChipColors
 import me.lucid.domchat.ui.theme.appFilterChipBorder
 
@@ -134,6 +135,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 val isDark = LocalDarkMode.current
                 val cardBg = Color(0xFF000000)
                 val cardShape = RoundedCornerShape(20.dp)
+                val cardBorder = LiquidGlassTokens.SpecularBorderSubtle
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = cardShape,
@@ -209,6 +211,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                 val isDark = LocalDarkMode.current
                 val cardBg = Color(0xFF000000)
                 val cardShape = RoundedCornerShape(20.dp)
+                val cardBorder = LiquidGlassTokens.SpecularBorderSubtle
                 Card(
                     colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = cardShape,
@@ -281,6 +284,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                     val isDark = LocalDarkMode.current
                     val cardBg = Color(0xFF000000)
                     val cardShape = RoundedCornerShape(20.dp)
+                    val cardBorder = LiquidGlassTokens.SpecularBorderSubtle
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = cardShape,
@@ -337,6 +341,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                     val isDark = LocalDarkMode.current
                     val cardBg = Color(0xFF000000)
                     val cardShape = RoundedCornerShape(20.dp)
+                    val cardBorder = LiquidGlassTokens.SpecularBorderSubtle
                     Card(
                         colors = CardDefaults.cardColors(containerColor = cardBg),
                         shape = cardShape,

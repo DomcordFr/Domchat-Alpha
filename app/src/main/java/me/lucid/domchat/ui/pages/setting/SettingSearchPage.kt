@@ -53,7 +53,10 @@ import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.chat.DomChatSearchBar
-import me.lucid.domchat.ui.components.common.fadeEdges
+import me.lucid.domchat.ui.modifier.fadeEdges
+import androidx.compose.foundation.BorderStroke
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.navigationBarsPadding
