@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.material.icons.Icons
@@ -137,6 +138,9 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     val provider = settings.ttsProviders.find { it.id == id } ?: return
     val pager = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
+    var showProviderVoicesSheet by remember(provider.id) { mutableStateOf(false) }
+    var showManualVoiceSheet by remember(provider.id) { mutableStateOf(false) }
+    var editingVoice by remember(provider.id) { mutableStateOf<TTSVoice?>(null) }
 
     fun updateProvider(updated: TTSProviderSetting) {
         vm.updateSettings(
@@ -146,124 +150,188 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                navigationIcon = { BackButton() },
-                title = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        TTSProviderIcon(provider = provider, catalogSnapshot = catalogSnapshot, modifier = Modifier.size(24.dp))
-                        Text(provider.name.ifBlank { "TTS Provider" }, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    navigationIcon = { BackButton() },
+                    title = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            TTSProviderIcon(provider = provider, catalogSnapshot = catalogSnapshot, modifier = Modifier.size(24.dp))
+                            Text(provider.name.ifBlank { "TTS Provider" }, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
                     }
-                }
-            )
-        },
-        bottomBar = {
-            val haptics = rememberPremiumHaptics()
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-            ) {
-                Surface(
-                    modifier = Modifier.align(Alignment.Center),
-                    shape = RoundedCornerShape(28.dp),
-                    color = androidx.compose.ui.graphics.Color(0xFF000000),
-                    tonalElevation = 6.dp,
-                    shadowElevation = 8.dp,
+                )
+            },
+            bottomBar = {
+                val haptics = rememberPremiumHaptics()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Row(
-                        modifier = Modifier.padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    val tabWidth = 64.dp
+                    val tabHeight = 44.dp
+                    val indicatorOffset by animateFloatAsState(
+                        targetValue = pager.currentPage.toFloat(),
+                        animationSpec = spring(
+                            dampingRatio = 0.75f,
+                            stiffness = 380f,
+                        ),
+                        label = "tts_tab_indicator",
+                    )
+
+                    Surface(
+                        shape = CircleShape,
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        tonalElevation = 6.dp,
+                        shadowElevation = 8.dp,
                     ) {
-                        DetailTabButton(
-                            selected = pager.currentPage == 0,
-                            icon = { tint ->
-                                Icon(
-                                    Icons.Rounded.Settings,
-                                    contentDescription = "Configuration",
-                                    tint = tint,
-                                    modifier = Modifier.size(24.dp),
+                        Box(
+                            modifier = Modifier.padding(4.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = tabWidth * indicatorOffset)
+                                    .size(width = tabWidth, height = tabHeight)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                Color.White.copy(alpha = 0.20f),
+                                                Color.White.copy(alpha = 0.08f),
+                                            )
+                                        )
+                                    )
+                                    .border(
+                                        0.5.dp,
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                Color.White.copy(alpha = 0.40f),
+                                                Color.White.copy(alpha = 0.12f),
+                                            )
+                                        ),
+                                        CircleShape,
+                                    )
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                val tabs = listOf(
+                                    Icons.Rounded.Settings to "Configuration",
+                                    Icons.Rounded.ViewModule to "Voices",
                                 )
-                            },
-                            onClick = {
-                                haptics.perform(HapticPattern.Tick)
-                                scope.launch { pager.animateScrollToPage(0) }
-                            },
-                        )
-                        DetailTabButton(
-                            selected = pager.currentPage == 1,
-                            icon = { tint ->
-                                Icon(
-                                    Icons.Rounded.ViewModule,
-                                    contentDescription = "Voices",
-                                    tint = tint,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                            },
-                            onClick = {
-                                haptics.perform(HapticPattern.Tick)
-                                scope.launch { pager.animateScrollToPage(1) }
-                            },
-                        )
+                                tabs.forEachIndexed { index, (icon, label) ->
+                                    val selected = pager.currentPage == index
+                                    val iconTint by animateColorAsState(
+                                        targetValue = if (selected) Color(0xFFFFFFFF) else Color.White.copy(alpha = 0.45f),
+                                        animationSpec = spring(stiffness = 400f),
+                                        label = "tab_icon_tint_$index",
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = tabWidth, height = tabHeight)
+                                            .clip(CircleShape)
+                                            .clickable {
+                                                if (!selected) {
+                                                    haptics.perform(HapticPattern.Tick)
+                                                    scope.launch { pager.animateScrollToPage(index) }
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = label,
+                                            tint = iconTint,
+                                            modifier = Modifier.size(22.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
-    ) { contentPadding ->
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier
-                .fillMaxSize()
-                .consumeWindowInsets(contentPadding),
-        ) { page ->
-            when (page) {
-                0 -> TtsProviderConfigTab(
-                    provider = provider,
-                    onUpdateProvider = ::updateProvider,
-                    contentPadding = contentPadding,
-                )
-                1 -> TtsVoiceTab(
-                    provider = provider,
-                    onUpdateProvider = ::updateProvider,
-                    contentPadding = contentPadding,
-                )
+        ) { contentPadding ->
+            HorizontalPager(
+                state = pager,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .consumeWindowInsets(contentPadding),
+            ) { page ->
+                when (page) {
+                    0 -> TtsProviderConfigTab(
+                        provider = provider,
+                        onUpdateProvider = ::updateProvider,
+                        contentPadding = contentPadding,
+                    )
+                    1 -> TtsVoiceTab(
+                        provider = provider,
+                        onUpdateProvider = ::updateProvider,
+                        contentPadding = contentPadding,
+                        onOpenProviderVoices = { showProviderVoicesSheet = true },
+                        onOpenManualVoice = { showManualVoiceSheet = true },
+                        onEditVoice = { editingVoice = it },
+                    )
+                }
             }
         }
-    }
-}
 
-@Composable
-private fun DetailTabButton(
-    selected: Boolean,
-    icon: @Composable (Color) -> Unit,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .clip(CircleShape)
-            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
-            .then(
-                if (selected) {
-                    Modifier.background(Color(0xFF000000))
-                } else {
-                    Modifier.clickable(onClick = onClick)
+        ProviderVoicesSheet(
+            provider = provider,
+            showSheet = showProviderVoicesSheet,
+            onDismiss = { showProviderVoicesSheet = false },
+            onAddVoice = { voice ->
+                updateProvider(provider.addVoice(voice.copy(id = Uuid.random())))
+            },
+            onAddVoices = { voices ->
+                updateProvider(
+                    voices.fold(provider as TTSProviderSetting) { updated, voice ->
+                        updated.addVoice(voice.copy(id = Uuid.random()))
+                    }
+                )
+            },
+            onRemoveVoice = { voice ->
+                provider.voices.firstOrNull { selected -> voicesReferToSameProviderVoice(selected, voice) }?.let {
+                    updateProvider(provider.delVoice(it))
                 }
-            )
-            .padding(12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        icon(
-            if (selected) {
-                Color(0xFFFFFFFF)
-            } else {
-                Color.White.copy(alpha = 0.65f)
+            },
+            onRemoveVoices = { voices ->
+                val selectedVoices = voices.mapNotNull { voice ->
+                    provider.voices.firstOrNull { selected -> voicesReferToSameProviderVoice(selected, voice) }
+                }
+                updateProvider(selectedVoices.fold(provider as TTSProviderSetting) { updated, voice -> updated.delVoice(voice) })
+            },
+        )
+
+        VoiceEditorSheet(
+            provider = provider,
+            voice = editingVoice,
+            onDismiss = { editingVoice = null },
+            onSave = { updated ->
+                updateProvider(provider.editVoice(updated))
+                editingVoice = null
             }
         )
+
+        if (showManualVoiceSheet) {
+            ManualVoiceSheet(
+                provider = provider,
+                onDismiss = { showManualVoiceSheet = false },
+                onAddVoice = { voice ->
+                    updateProvider(provider.addVoice(voice))
+                    showManualVoiceSheet = false
+                }
+            )
+        }
     }
 }
 
@@ -311,14 +379,14 @@ private fun TtsVoiceTab(
     provider: TTSProviderSetting,
     onUpdateProvider: (TTSProviderSetting) -> Unit,
     contentPadding: PaddingValues,
+    onOpenProviderVoices: () -> Unit,
+    onOpenManualVoice: () -> Unit,
+    onEditVoice: (TTSVoice) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
         onUpdateProvider(provider.moveVoice(from.index, to.index))
     }
-    var editingVoice by remember(provider.id) { mutableStateOf<TTSVoice?>(null) }
-    var showManualVoiceSheet by remember(provider.id) { mutableStateOf(false) }
-    var showProviderVoicesSheet by remember(provider.id) { mutableStateOf(false) }
     val tts = LocalTTSState.current
     val density = LocalDensity.current
     val haptics = rememberPremiumHaptics()
@@ -404,7 +472,7 @@ private fun TtsVoiceTab(
                         provider = provider,
                         voice = voice,
                         position = position,
-                        onEdit = { editingVoice = voice },
+                        onEdit = { onEditVoice(voice) },
                         onDelete = { onUpdateProvider(provider.delVoice(voice)) },
                         neighborOffset = neighborOffset,
                         onDragProgress = { offset, unlocked ->
@@ -477,94 +545,45 @@ private fun TtsVoiceTab(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (provider !is TTSProviderSetting.SystemTTS) {
-                ProviderVoicesFab(
-                    provider = provider,
-                    onAddVoice = { voice ->
-                        onUpdateProvider(provider.addVoice(voice.copy(id = Uuid.random())))
+                FloatingActionButton(
+                    onClick = {
+                        haptics.perform(HapticPattern.Tick)
+                        onOpenProviderVoices()
                     },
-                    onAddVoices = { voices ->
-                        onUpdateProvider(
-                            voices.fold(provider as TTSProviderSetting) { updated, voice ->
-                                updated.addVoice(voice.copy(id = Uuid.random()))
-                            }
-                        )
-                    },
-                    onRemoveVoice = { voice ->
-                        provider.voices.firstOrNull { selected -> voicesReferToSameProviderVoice(selected, voice) }?.let {
-                            onUpdateProvider(provider.delVoice(it))
-                        }
-                    },
-                    onRemoveVoices = { voices ->
-                        val selectedVoices = voices.mapNotNull { voice ->
-                            provider.voices.firstOrNull { selected -> voicesReferToSameProviderVoice(selected, voice) }
-                        }
-                        onUpdateProvider(selectedVoices.fold(provider as TTSProviderSetting) { updated, voice -> updated.delVoice(voice) })
-                    },
-                    onOpen = { showProviderVoicesSheet = true },
-                    showSheet = showProviderVoicesSheet,
-                    onDismiss = { showProviderVoicesSheet = false },
-                )
+                    shape = AppShapes.CardLarge,
+                    containerColor = Color(0xFF000000),
+                    contentColor = Color.White,
+                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge),
+                ) {
+                    Icon(Icons.Rounded.Widgets, contentDescription = "Provider voices")
+                }
                 FloatingActionButton(
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
-                        showManualVoiceSheet = true
+                        onOpenManualVoice()
                     },
                     shape = AppShapes.CardLarge,
+                    containerColor = Color(0xFF000000),
+                    contentColor = Color.White,
+                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge),
                 ) {
-                    Icon(Icons.Rounded.Add, null)
+                    Icon(Icons.Rounded.Add, contentDescription = "Add manual voice")
                 }
             } else {
-                ProviderVoicesFab(
-                    provider = provider,
-                    contentDescription = "Add system voice",
-                    onAddVoice = { voice ->
-                        onUpdateProvider(provider.addVoice(voice.copy(id = Uuid.random())))
+                FloatingActionButton(
+                    onClick = {
+                        haptics.perform(HapticPattern.Tick)
+                        onOpenProviderVoices()
                     },
-                    onAddVoices = { voices ->
-                        onUpdateProvider(
-                            voices.fold(provider as TTSProviderSetting) { updated, voice ->
-                                updated.addVoice(voice.copy(id = Uuid.random()))
-                            }
-                        )
-                    },
-                    onRemoveVoice = { voice ->
-                        provider.voices.firstOrNull { selected -> voicesReferToSameProviderVoice(selected, voice) }?.let {
-                            onUpdateProvider(provider.delVoice(it))
-                        }
-                    },
-                    onRemoveVoices = { voices ->
-                        val selectedVoices = voices.mapNotNull { voice ->
-                            provider.voices.firstOrNull { selected -> voicesReferToSameProviderVoice(selected, voice) }
-                        }
-                        onUpdateProvider(selectedVoices.fold(provider as TTSProviderSetting) { updated, voice -> updated.delVoice(voice) })
-                    },
-                    onOpen = { showProviderVoicesSheet = true },
-                    showSheet = showProviderVoicesSheet,
-                    onDismiss = { showProviderVoicesSheet = false },
-                )
+                    shape = AppShapes.CardLarge,
+                    containerColor = Color(0xFF000000),
+                    contentColor = Color.White,
+                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge),
+                ) {
+                    Icon(Icons.Rounded.PhoneAndroid, contentDescription = "Add system voice")
+                }
             }
         }
-    }
-
-    VoiceEditorSheet(
-        provider = provider,
-        voice = editingVoice,
-        onDismiss = { editingVoice = null },
-        onSave = { updated ->
-            onUpdateProvider(provider.editVoice(updated))
-            editingVoice = null
-        }
-    )
-
-    if (showManualVoiceSheet) {
-        ManualVoiceSheet(
-            provider = provider,
-            onDismiss = { showManualVoiceSheet = false },
-            onAddVoice = { voice ->
-                onUpdateProvider(provider.addVoice(voice))
-                showManualVoiceSheet = false
-            }
-        )
     }
 }
 
@@ -640,6 +659,7 @@ private fun VoiceEditorSheet(
             DomChatSheetHeader(
                 title = "Edit Voice",
                 onCloseClick = onDismiss,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
             )
             LazyColumn(
                 modifier = Modifier
@@ -777,18 +797,17 @@ private fun VoiceEditorSheet(
 }
 
 @Composable
-private fun ProviderVoicesFab(
+private fun ProviderVoicesSheet(
     provider: TTSProviderSetting,
-    icon: ImageVector = Icons.Rounded.Widgets,
-    contentDescription: String = "Provider voices",
+    showSheet: Boolean,
+    onDismiss: () -> Unit,
     onAddVoice: (TTSVoice) -> Unit,
     onAddVoices: (List<TTSVoice>) -> Unit,
     onRemoveVoice: (TTSVoice) -> Unit,
     onRemoveVoices: (List<TTSVoice>) -> Unit,
-    onOpen: () -> Unit,
-    showSheet: Boolean,
-    onDismiss: () -> Unit,
 ) {
+    if (!showSheet) return
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val httpClient = koinInject<PlatformHttpClient>()
@@ -823,20 +842,11 @@ private fun ProviderVoicesFab(
         }
     }
 
-    FloatingActionButton(
-        onClick = {
-            haptics.perform(HapticPattern.Tick)
-            onOpen()
-            if (discovered.isEmpty()) fetchVoices()
-        },
-        shape = AppShapes.CardLarge,
-        containerColor = androidx.compose.ui.graphics.Color(0xFF000000),
-        contentColor = Color.White,
-    ) {
-        Icon(icon, contentDescription = contentDescription)
+    androidx.compose.runtime.LaunchedEffect(provider.id) {
+        if (discovered.isEmpty()) {
+            fetchVoices()
+        }
     }
-
-    if (!showSheet) return
 
     DomChatInWindowBottomSheet(
         containerColor = Color(0xFF000000),
@@ -850,8 +860,9 @@ private fun ProviderVoicesFab(
                 .imePadding()
         ) {
             DomChatSheetHeader(
-                title = "Provider Voices",
+                title = if (provider is TTSProviderSetting.SystemTTS) "System Voices" else "Provider Voices",
                 onCloseClick = onDismiss,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
             )
 
             DomChatSearchBar(
@@ -1104,6 +1115,7 @@ private fun ManualVoiceSheet(
             DomChatSheetHeader(
                 title = "Manual Voice",
                 onCloseClick = onDismiss,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
             )
             Column(
                 modifier = Modifier

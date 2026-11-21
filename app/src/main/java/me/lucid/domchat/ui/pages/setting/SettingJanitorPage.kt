@@ -1718,14 +1718,14 @@ private fun JanitorCharacterInspectorSheet(
                         .statusBarsPadding()
                         .padding(top = 16.dp, end = 16.dp)
                         .align(Alignment.TopEnd)
-                        .size(44.dp)
+                        .size(52.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "Close",
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
@@ -1750,14 +1750,14 @@ private fun JanitorCharacterInspectorSheet(
                         .navigationBarsPadding()
                         .padding(bottom = 24.dp, end = 24.dp)
                         .align(Alignment.BottomEnd)
-                        .size(44.dp)
+                        .size(52.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Download,
                             contentDescription = "Download Image",
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }

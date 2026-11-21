@@ -70,6 +70,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -223,12 +224,21 @@ fun AssistantGreetingsSubPage(
                             role = Role.Tab
                         )
                         .background(
-                            if (isSelected) Color(0xFF000000) else Color.Transparent,
+                            Color(0xFF000000),
                             shape = AppShapes.ButtonPill
                         )
                         .border(
-                            if (isSelected) BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
-                            else BorderStroke(0.5.dp, SolidColor(Color.White.copy(alpha = 0.14f))),
+                            if (isSelected) BorderStroke(
+                                1.dp,
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color.White.copy(alpha = 0.65f),
+                                        Color.White.copy(alpha = 0.25f),
+                                        Color.White.copy(alpha = 0.08f)
+                                    )
+                                )
+                            )
+                            else BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             shape = AppShapes.ButtonPill
                         )
                         .padding(horizontal = 16.dp),
@@ -238,7 +248,7 @@ fun AssistantGreetingsSubPage(
                         text = tabLabel,
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f)
+                            color = if (isSelected) Color(0xFFFFFFFF) else Color.White.copy(alpha = 0.65f)
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -256,7 +266,7 @@ fun AssistantGreetingsSubPage(
                         newGreetingDraftName = "Initial #${intros.size + 1}"
                         showCreateDialog = true
                     }
-                    .background(Color.Transparent, shape = AppShapes.ButtonPill)
+                    .background(Color(0xFF000000), shape = AppShapes.ButtonPill)
                     .border(
                         BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         shape = AppShapes.ButtonPill

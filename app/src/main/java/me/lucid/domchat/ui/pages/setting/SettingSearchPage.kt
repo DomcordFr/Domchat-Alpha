@@ -253,6 +253,7 @@ private fun KeylessOptionsDescription() {
             Surface(
                 shape = AppShapes.ListItem,
                 color = androidx.compose.ui.graphics.Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             ) {
                 Column(
                     modifier = Modifier
@@ -636,7 +637,8 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
 @Composable
 internal fun SearchProvidersContent(
     vm: SettingVM = koinViewModel(),
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    onEditService: ((SearchServiceOptions) -> Unit)? = null
 ) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val catalogSnapshot by vm.modelCatalogSnapshot.collectAsStateWithLifecycle()
@@ -776,7 +778,13 @@ internal fun SearchProvidersContent(
                             catalogSnapshot = catalogSnapshot,
                             itemShape = position.listItemShape(),
                             haptics = haptics,
-                            onClick = { editingService = service },
+                            onClick = {
+                                if (onEditService != null) {
+                                    onEditService(service)
+                                } else {
+                                    editingService = service
+                                }
+                            },
                             dragHandle = {
                                 IconButton(
                                     onClick = {},
@@ -857,7 +865,7 @@ internal fun SearchProvidersContent(
 }
 
 @Composable
-private fun SearchServiceEditorSheet(
+internal fun SearchServiceEditorSheet(
     service: SearchServiceOptions?,
     settings: Settings,
     catalogSnapshot: ModelCatalogSnapshot?,
@@ -868,7 +876,8 @@ private fun SearchServiceEditorSheet(
     var currentService by remember(service) { mutableStateOf(service) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val serviceName = SearchServiceOptions.TYPES[currentService::class] ?: context.getString(R.string.setting_search_service_generic)
-    val title = if (currentService is SearchServiceOptions.KeylessOptions) {
+    val isKeyless = currentService is SearchServiceOptions.KeylessOptions
+    val title = if (isKeyless) {
         stringResource(R.string.setting_search_what_is_keyless)
     } else {
         stringResource(R.string.setting_search_edit_service, serviceName)
@@ -882,12 +891,13 @@ private fun SearchServiceEditorSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
+                .heightIn(min = 280.dp, max = (LocalConfiguration.current.screenHeightDp * 0.85f).dp)
                 .imePadding()
         ) {
             DomChatSheetHeader(
                 title = title,
                 onCloseClick = onDismiss,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
             )
 
             val lazyListState = rememberLazyListState()
@@ -927,7 +937,7 @@ private fun SearchServiceEditorSheet(
                         is SearchServiceOptions.NanoGPTOptions -> NanoGPTOptions(currentService as SearchServiceOptions.NanoGPTOptions) { currentService = it }
                     }
 
-                    if (currentService !is SearchServiceOptions.KeylessOptions) {
+                    if (!isKeyless) {
                         Spacer(modifier = Modifier.height(8.dp))
                         ProvideTextStyle(MaterialTheme.typography.labelMedium) {
                             SearchServiceDescription(currentService)
@@ -942,29 +952,46 @@ private fun SearchServiceEditorSheet(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Surface(
-                    onClick = onDismiss,
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.cancel), color = Color.White, fontWeight = FontWeight.SemiBold)
+                if (isKeyless) {
+                    Surface(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Done", color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
                     }
-                }
+                } else {
+                    Surface(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                            Text(stringResource(R.string.cancel), color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
 
-                Surface(
-                    onClick = {
-                        onSave(service, currentService)
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.chat_page_save), color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Surface(
+                        onClick = {
+                            onSave(service, currentService)
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                            Text(stringResource(R.string.chat_page_save), color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -1382,7 +1409,9 @@ internal fun CommonOptionsDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = Color(0xFF000000),
         shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        modifier = Modifier
+            .padding(horizontal = 24.dp)
+            .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
         titleContentColor = Color(0xFFF2F2F7),
         textContentColor = Color(0xFFF2F2F7),
         onDismissRequest = onDismissRequest,

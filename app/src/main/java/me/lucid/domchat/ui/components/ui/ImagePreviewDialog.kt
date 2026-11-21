@@ -76,11 +76,10 @@ fun ImagePreviewDialog(
                 .fillMaxSize()
                 .background(if (isDarkMode) Color.Black else Color.Black.copy(alpha = 0.95f))
         ) {
-            // Image container - full bleed without rounded corners for proper clipping
+            // Image container - perfectly vertically centered
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = if (prompt != null) 120.dp else 80.dp) // Space for prompt and button
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
                 ImagePager(
                     modifier = Modifier.fillMaxSize(),
@@ -115,14 +114,14 @@ fun ImagePreviewDialog(
                     .statusBarsPadding()
                     .padding(top = 16.dp, end = 16.dp)
                     .align(Alignment.TopEnd)
-                    .size(44.dp)
+                    .size(52.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Rounded.Close,
                         contentDescription = "Close",
                         tint = Color.White,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
@@ -183,14 +182,14 @@ fun ImagePreviewDialog(
                             shape = CircleShape,
                             color = Color(0xFF000000),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                            modifier = Modifier.size(44.dp)
+                            modifier = Modifier.size(52.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     Icons.Rounded.Download,
                                     contentDescription = stringResource(R.string.save),
                                     tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(26.dp)
                                 )
                             }
                         }
