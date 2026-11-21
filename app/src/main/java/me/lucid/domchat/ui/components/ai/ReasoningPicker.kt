@@ -205,7 +205,7 @@ fun ReasoningPicker(
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = onDismissRequest,
-            containerColor = Color.Unspecified,
+            containerColor = Color(0xFF000000),
             dragHandle = { DomChatSheetDragHandle() },
             maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
         ) {
@@ -280,7 +280,6 @@ fun ReasoningPicker(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
 
@@ -409,13 +408,9 @@ private fun ReasoningOptionItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .liquidGlassSurface(
-                shape = itemShape,
-                fillColor = fill,
-                borderWidth = if (selected) 1.dp else 0.5.dp,
-                specularBrush = borderBrush,
-            )
             .clip(itemShape)
+            .background(Color(0xFF000000))
+            .border(if (selected) 1.dp else 0.5.dp, borderBrush, itemShape)
             .clickable {
                 haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
                 onClick()
@@ -508,9 +503,7 @@ private fun ReasoningLevelCard(
     val isAmoled = amoledMode && isDarkMode
     
     val defaultContainerColor = domChatCardContainerColor()
-    val targetContainerColor = if (selected) {
-        Color(0xFF000000)
-    } else (containerColor ?: if (isDarkMode) Color(0xFF000000).copy(alpha = 0.55f) else defaultContainerColor)
+    val targetContainerColor = Color(0xFF000000)
     val animatedContainerColor by animateColorAsState(
         targetValue = targetContainerColor,
         animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),

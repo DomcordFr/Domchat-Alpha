@@ -2408,16 +2408,11 @@ fun CharacterInspectorSheet(
                         Surface(
                             onClick = onEdit,
                             shape = RoundedCornerShape(14.dp),
-                            color = Color.Transparent,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier
                                 .height(48.dp)
                                 .width(48.dp)
-                                .liquidGlassSurface(
-                                    shape = RoundedCornerShape(14.dp),
-                                    borderWidth = 0.5.dp,
-                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                )
                         ) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = Color.White, modifier = Modifier.size(18.dp))
@@ -2435,16 +2430,11 @@ fun CharacterInspectorSheet(
                         Surface(
                             onClick = onExport,
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.Transparent,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
-                                .liquidGlassSurface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    borderWidth = 0.5.dp,
-                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                )
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
@@ -2460,16 +2450,11 @@ fun CharacterInspectorSheet(
                         Surface(
                             onClick = onDuplicate,
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.Transparent,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
-                                .liquidGlassSurface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    borderWidth = 0.5.dp,
-                                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                )
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
@@ -3228,55 +3213,55 @@ fun CharacterInspectorSheet(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                // Controls top-end corner: Download + Close
-                Row(
+                // Close button top-end
+                IconButton(
+                    onClick = { viewerOpen = false },
                     modifier = Modifier
                         .statusBarsPadding()
                         .padding(top = 16.dp, end = 16.dp)
-                        .align(Alignment.TopEnd),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .align(Alignment.TopEnd)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.50f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
                 ) {
-                    IconButton(
-                        onClick = {
-                            val currentUrl = viewerImageUrls.getOrNull(viewerPagerState.currentPage)
-                            if (!currentUrl.isNullOrBlank()) {
-                                scope.launch {
-                                    try {
-                                        val uri = currentUrl.toUri()
-                                        val fileName = "character_${System.currentTimeMillis()}.png"
-                                        context.saveToDownloads(uri, fileName)
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // Download button bottom-end (matching chat)
+                Surface(
+                    onClick = {
+                        val currentUrl = viewerImageUrls.getOrNull(viewerPagerState.currentPage)
+                        if (!currentUrl.isNullOrBlank()) {
+                            scope.launch {
+                                try {
+                                    val uri = currentUrl.toUri()
+                                    val fileName = "character_${System.currentTimeMillis()}.png"
+                                    context.saveToDownloads(uri, fileName)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
                             }
-                        },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                    ) {
+                        }
+                    },
+                    shape = CircleShape,
+                    color = Color.White,
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(bottom = 24.dp, end = 24.dp)
+                        .align(Alignment.BottomEnd)
+                        .size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Download,
                             contentDescription = "Download Image",
                             tint = Color.Black,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { viewerOpen = false },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.50f))
-                            .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
                     }

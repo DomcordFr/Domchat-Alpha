@@ -39,7 +39,7 @@ fun SummarizerModelTipBanner(
 
     Surface(
         onClick = onClick,
-        color = if (isDark) Color(0xFF000000) else Color.White.copy(alpha = 0.60f),
+        color = Color.Transparent,
         shape = bannerShape,
         border = BorderStroke(0.5.dp, borderBrush),
         modifier = modifier.fillMaxWidth()

@@ -1707,51 +1707,52 @@ private fun JanitorCharacterInspectorSheet(
                     alignment = Alignment.Center,
                     contentScale = ContentScale.Fit,
                 )
-                Row(
+                // Close button top-end
+                IconButton(
+                    onClick = { showFullScreenImage = false },
                     modifier = Modifier
                         .statusBarsPadding()
                         .padding(top = 16.dp, end = 16.dp)
-                        .align(Alignment.TopEnd),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .align(Alignment.TopEnd)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.50f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
                 ) {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                try {
-                                    val uri = imageUrl.toUri()
-                                    val fileName = "${character.name.replace(" ", "_")}_${System.currentTimeMillis()}.png"
-                                    context.saveToDownloads(uri, fileName)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // Download button bottom-end (matching chat)
+                Surface(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val uri = imageUrl.toUri()
+                                val fileName = "${character.name.replace(" ", "_")}_${System.currentTimeMillis()}.png"
+                                context.saveToDownloads(uri, fileName)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
                             }
-                        },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                    ) {
+                        }
+                    },
+                    shape = CircleShape,
+                    color = Color.White,
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(bottom = 24.dp, end = 24.dp)
+                        .align(Alignment.BottomEnd)
+                        .size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Download,
                             contentDescription = "Download Image",
                             tint = Color.Black,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { showFullScreenImage = false },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.50f))
-                            .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
                     }
