@@ -147,6 +147,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
     var editingProvider by remember { mutableStateOf<TTSProviderSetting?>(null) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
+    val scope = rememberCoroutineScope()
     
     // Move lazyListState outside for canScroll detection
     val lazyListState = rememberLazyListState()
@@ -803,6 +804,7 @@ private fun TtsProviderEditorSheet(
 ) {
     provider ?: return
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var currentProvider by remember(provider) { mutableStateOf(provider) }
     val tts = LocalTTSState.current
 

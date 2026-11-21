@@ -355,12 +355,12 @@ fun DomChatInWindowBottomSheet(
             launch {
                 scrimAlpha.animateTo(
                     0f,
-                    animationSpec = spring(dampingRatio = 0.88f, stiffness = motionPolicy.pressStiffness(450f))
+                    animationSpec = androidx.compose.animation.core.tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)
                 )
             }
             offsetY.animateTo(
                 targetValue = sheetHeightPx.coerceAtLeast(1200f),
-                animationSpec = spring(dampingRatio = 0.84f, stiffness = motionPolicy.pressStiffness(420f))
+                animationSpec = androidx.compose.animation.core.tween(220, easing = androidx.compose.animation.core.FastOutLinearInEasing)
             )
             onDismissRequest()
         }
@@ -434,6 +434,7 @@ fun DomChatInWindowBottomSheet(
                 }
                 .background(Color.Black.copy(alpha = if (isSolidContainer) 0.55f else 0.20f))
                 .clickable(
+                    enabled = !isDismissing,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = { dismissWithAnimation() }

@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
+import me.lucid.domchat.ui.components.richtext.SimpleHtmlBlock
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
@@ -204,11 +205,24 @@ fun CharacterNotesBottomSheet(
                     .verticalScroll(scrollState)
                     .padding(top = 6.dp, bottom = 32.dp)
             ) {
-                val formattedNotes = formatRoleplayTextWithCdnImages(notes.ifBlank { "No creator notes provided." })
-                MarkdownBlock(
-                    content = formattedNotes,
-                    paragraphSpacing = 12.dp
-                )
+                val hasHtml = remember(notes) {
+                    notes.contains("<p", ignoreCase = true) ||
+                    notes.contains("<div", ignoreCase = true) ||
+                    notes.contains("<img", ignoreCase = true) ||
+                    notes.contains("<a", ignoreCase = true) ||
+                    notes.contains("<span", ignoreCase = true) ||
+                    notes.contains("<center", ignoreCase = true) ||
+                    notes.contains("<br", ignoreCase = true)
+                }
+                if (hasHtml) {
+                    SimpleHtmlBlock(html = notes)
+                } else {
+                    val formattedNotes = formatRoleplayTextWithCdnImages(notes.ifBlank { "No creator notes provided." })
+                    MarkdownBlock(
+                        content = formattedNotes,
+                        paragraphSpacing = 12.dp
+                    )
+                }
             }
         }
     }

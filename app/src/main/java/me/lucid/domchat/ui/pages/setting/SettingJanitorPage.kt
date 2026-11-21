@@ -1606,17 +1606,17 @@ private fun JanitorCharacterInspectorSheet(
                                                             Box(
                                                                 modifier = Modifier
                                                                     .clip(RoundedCornerShape(8.dp))
-                                                                    .background(
-                                                                        if (isGreetingSelected) {
-                                                                            Color.White.copy(alpha = 0.35f)
-                                                                        } else {
-                                                                            Color.White.copy(alpha = 0.05f)
-                                                                        }
-                                                                    )
+                                                                    .background(Color(0xFF000000))
                                                                     .border(
-                                                                        0.5.dp,
+                                                                        if (isGreetingSelected) 1.dp else 0.5.dp,
                                                                         if (isGreetingSelected) {
-                                                                            Brush.verticalGradient(listOf(Color.White, Color.White))
+                                                                            Brush.verticalGradient(
+                                                                                listOf(
+                                                                                    Color.White.copy(alpha = 0.65f),
+                                                                                    Color.White.copy(alpha = 0.25f),
+                                                                                    Color.White.copy(alpha = 0.08f),
+                                                                                )
+                                                                            )
                                                                         } else cardBorderColor,
                                                                         RoundedCornerShape(8.dp)
                                                                     )
@@ -1627,7 +1627,7 @@ private fun JanitorCharacterInspectorSheet(
                                                                     text = if (idx == 0) "Intro #1 (Default)" else "Greeting #${idx + 1}",
                                                                     fontSize = 12.sp,
                                                                     fontWeight = if (isGreetingSelected) FontWeight.Bold else FontWeight.Medium,
-                                                                    color = if (isGreetingSelected) Color.White else contentTextColor.copy(alpha = 0.75f)
+                                                                    color = if (isGreetingSelected) Color(0xFFFFFFFF) else Color.White.copy(alpha = 0.65f)
                                                                 )
                                                             }
                                                         }

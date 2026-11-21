@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.lucid.domchat.ui.core.generated.resources.Res
@@ -122,7 +123,7 @@ fun DomChatAboutContent(
             DomChatAboutItem(
                 icon = Icons.Rounded.Code,
                 title = "Source Code",
-                subtitle = "https://github.com/DomcordFr/Domchat",
+                subtitle = "DomcordFr/Domchat",
                 trailing = Icons.AutoMirrored.Rounded.OpenInNew,
                 darkTheme = darkTheme,
                 onHaptic = onHaptic,
@@ -235,6 +236,8 @@ private fun DomChatAboutItem(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF9A9AA2),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

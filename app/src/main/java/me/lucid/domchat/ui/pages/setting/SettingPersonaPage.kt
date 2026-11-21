@@ -78,6 +78,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import me.lucid.domchat.ui.components.dialog.SettingsDestructiveConfirmDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -165,6 +166,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
     // Editor state
     var showEditor by remember { mutableStateOf(false) }
     var editingTargetId by remember { mutableStateOf<String?>(null) }
+    var personaToDelete by remember { mutableStateOf<UserPersona?>(null) }
     var formName by remember { mutableStateOf("") }
     var formPronouns by remember { mutableStateOf("") }
     var formDescription by remember { mutableStateOf("") }
@@ -348,6 +350,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                         .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                 )
+                Spacer(modifier = Modifier.height(6.dp))
             }
 
             // Personas List
@@ -496,7 +499,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                             if (personas.size > 1) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 IconButton(
-                                    onClick = { deletePersona(persona.id) },
+                                    onClick = { personaToDelete = persona },
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
@@ -835,7 +838,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                     ),
                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                 ) {
-                    Text(if (editorStep == EditorStep.LorebookPicker) "Done" else "Save")
+                    Text("Save")
                 }
             },
             dismissButton = {
@@ -855,6 +858,21 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     Text("Cancel", color = Color.White)
                 }
+            }
+        )
+    }
+
+    // Persona deletion confirmation dialog
+    personaToDelete?.let { persona ->
+        SettingsDestructiveConfirmDialog(
+            visible = true,
+            title = "Delete ${persona.name}?",
+            message = "This will permanently delete this persona.",
+            onDismiss = { personaToDelete = null },
+            onConfirm = {
+                val id = persona.id
+                personaToDelete = null
+                deletePersona(id)
             }
         )
     }

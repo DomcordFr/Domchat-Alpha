@@ -145,8 +145,11 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Info
 import me.lucid.domchat.ui.components.chat.ChatInfoBottomSheet
+import me.lucid.domchat.ui.components.chat.CharacterNotesBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.dialog.CharacterExportDialog
 import me.lucid.domchat.ui.components.dialog.ChatDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.dialog.SettingsDestructiveConfirmDialog
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
@@ -3562,6 +3565,11 @@ private fun ChatToolbar(
     // State for assistant picker - must be at function level for proper recomposition
     var showAssistantPicker by remember { mutableStateOf(false) }
     var showCharacterNotesSheet by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showCreatorNotesSheet by remember { mutableStateOf(false) }
+    val assistantVM = koinViewModel<AssistantVM>()
+    val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val isEmpty = !conversation.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER }
     val rawActionMode = run {
@@ -3757,14 +3765,85 @@ private fun ChatToolbar(
         val navController = LocalNavController.current
         me.lucid.domchat.ui.pages.assistant.CharacterInspectorSheet(
             assistant = currentAssistant,
+            settings = settings,
             isDark = LocalDarkMode.current,
+            ttsProviders = settings.ttsProviders,
             onDismiss = { showCharacterNotesSheet = false },
             onStartChat = { showCharacterNotesSheet = false },
             onEdit = {
                 showCharacterNotesSheet = false
                 navController.navigate(Screen.AssistantDetail(currentAssistant.id.toString()))
             },
-            onViewCreatorNotes = {}
+            onViewCreatorNotes = {
+                showCharacterNotesSheet = false
+                showCreatorNotesSheet = true
+            },
+            onDuplicate = {
+                val cloned = currentAssistant.copy(
+                    id = kotlin.uuid.Uuid.random(),
+                    name = "${currentAssistant.name} (Copy)"
+                )
+                scope.launch { assistantVM.addAssistant(cloned) }
+                showCharacterNotesSheet = false
+                toaster?.show("Cloned ${currentAssistant.name}")
+            },
+            onExport = {
+                showCharacterNotesSheet = false
+                showExportDialog = true
+            },
+            onDelete = {
+                showCharacterNotesSheet = false
+                showDeleteConfirm = true
+            },
+            onUpdateLorebookIds = { newIds ->
+                val updated = currentAssistant.copy(enabledLorebookIds = newIds)
+                assistantVM.updateAssistant(updated)
+            }
+        )
+    }
+
+    if (showCreatorNotesSheet) {
+        CharacterNotesBottomSheet(
+            characterName = currentAssistant.name,
+            creatorName = currentAssistant.creator,
+            characterVersion = currentAssistant.characterVersion,
+            creatorNotes = currentAssistant.creatorNotes,
+            onDismiss = { showCreatorNotesSheet = false }
+        )
+    }
+
+    if (showExportDialog) {
+        CharacterExportDialog(
+            assistant = currentAssistant,
+            onDismissRequest = { showExportDialog = false }
+        )
+    }
+
+    if (showDeleteConfirm) {
+        SettingsDestructiveConfirmDialog(
+            visible = true,
+            title = "Delete ${currentAssistant.name}?",
+            message = "This will permanently remove this character from your library. Associated chat sessions will be preserved.",
+            onConfirm = {
+                val toDelete = currentAssistant
+                showDeleteConfirm = false
+                assistantVM.removeAssistant(toDelete)
+                toaster?.show(
+                    message = "Deleted ${toDelete.name}",
+                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                        label = "Undo",
+                        onClick = { assistantVM.undoRemoveAssistant(toDelete) }
+                    )
+                )
+                val remaining = settings.assistants.filter { it.id != toDelete.id }
+                val fallback = remaining.firstOrNull()
+                if (fallback != null) {
+                    onSwitchAssistant(fallback)
+                } else {
+                    onCloseAction()
+                }
+            },
+            onDismiss = { showDeleteConfirm = false }
         )
     }
 }

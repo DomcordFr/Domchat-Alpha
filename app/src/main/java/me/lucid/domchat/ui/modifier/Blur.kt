@@ -71,22 +71,22 @@ fun ApplyDialogWindowBlur(
     val blurActive = settings.displaySetting.enableBlurEffect || 
                      settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
 
-    LaunchedEffect(view, effectiveRadius, blurActive) {
+    DisposableEffect(view, effectiveRadius, blurActive) {
+        var resolvedWindow: android.view.Window? = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurActive) {
-            var window: android.view.Window? = null
             var current: ViewParent? = view.parent
             while (current != null) {
                 if (current is DialogWindowProvider) {
-                    window = current.window
+                    resolvedWindow = current.window
                     break
                 }
                 current = current.parent
             }
-            if (window == null) {
+            if (resolvedWindow == null) {
                 var ctx = view.context
                 while (ctx is android.content.ContextWrapper) {
                     if (ctx is android.app.Dialog) {
-                        window = ctx.window
+                        resolvedWindow = ctx.window
                         break
                     }
                     if (ctx is android.app.Activity) {
@@ -95,20 +95,20 @@ fun ApplyDialogWindowBlur(
                     ctx = ctx.baseContext
                 }
             }
-            if (window == null) {
+            if (resolvedWindow == null) {
                 try {
                     val root = view.rootView
                     var clazz: Class<*>? = root.javaClass
-                    while (clazz != null && window == null) {
+                    while (clazz != null && resolvedWindow == null) {
                         try {
                             val f = clazz.getDeclaredField("mWindow").apply { isAccessible = true }
-                            window = f.get(root) as? android.view.Window
+                            resolvedWindow = f.get(root) as? android.view.Window
                         } catch (_: Throwable) {}
                         clazz = clazz.superclass
                     }
                 } catch (_: Throwable) {}
             }
-            window?.let { win ->
+            resolvedWindow?.let { win ->
                 win.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
                 val density = view.resources.displayMetrics.density
                 val radiusPx = (effectiveRadius.value * density).toInt().coerceAtLeast(1)
@@ -120,6 +120,19 @@ fun ApplyDialogWindowBlur(
                     lp.blurBehindRadius = radiusPx
                     win.attributes = lp
                 } catch (_: Throwable) {}
+            }
+        }
+        onDispose {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurActive) {
+                resolvedWindow?.let { win ->
+                    try {
+                        win.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+                        win.setBackgroundBlurRadius(0)
+                        val lp = win.attributes
+                        lp.blurBehindRadius = 0
+                        win.attributes = lp
+                    } catch (_: Throwable) {}
+                }
             }
         }
     }

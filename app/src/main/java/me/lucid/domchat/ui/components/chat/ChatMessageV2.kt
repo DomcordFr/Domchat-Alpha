@@ -2472,15 +2472,17 @@ private fun AssistantThinkingDropdown(
         else -> Color(0xFFF2F2F7)
     }
 
+    val reasoningMotionSpec = remember {
+        spring<androidx.compose.ui.unit.IntSize>(
+            dampingRatio = 0.90f,
+            stiffness = 160f
+        )
+    }
+
     Column(
         modifier = modifier
             .widthIn(max = maxWidth)
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = 0.86f,
-                    stiffness = 140f
-                )
-            )
+            .animateContentSize(animationSpec = reasoningMotionSpec)
             .then(
                 if (isTransparentStyle) {
                     Modifier
@@ -2549,8 +2551,14 @@ private fun AssistantThinkingDropdown(
 
         AnimatedVisibility(
             visible = expanded,
-            enter = expandVertically(spring(dampingRatio = 0.88f, stiffness = 200f)) + fadeIn(tween(260)),
-            exit = shrinkVertically(spring(dampingRatio = 0.88f, stiffness = 200f)) + fadeOut(tween(200))
+            enter = expandVertically(
+                animationSpec = spring(dampingRatio = 0.90f, stiffness = 160f),
+                expandFrom = Alignment.Top
+            ) + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing)),
+            exit = shrinkVertically(
+                animationSpec = spring(dampingRatio = 0.90f, stiffness = 160f),
+                shrinkTowards = Alignment.Top
+            ) + fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing))
         ) {
             Column(
                 modifier = Modifier

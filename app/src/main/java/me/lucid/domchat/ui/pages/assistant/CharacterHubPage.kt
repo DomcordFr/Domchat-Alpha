@@ -109,6 +109,8 @@ import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.dialog.SettingsDestructiveConfirmDialog
+import me.lucid.domchat.ui.components.dialog.CharacterExportDialog
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
@@ -1418,210 +1420,36 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     // Delete confirmation dialog
     characterToDelete?.let { char ->
-        CompositionLocalProvider(LocalAppBackdrop provides hubBackdrop) {
-            DomChatDestructiveConfirmDialog(
-                visible = true,
-                title = "Delete ${char.name}?",
-                consequence = "This will permanently remove this character from your library. Associated chat sessions will be preserved.",
-                onConfirm = {
-                    val toDelete = char
-                    characterToDelete = null
-                    charGroupAssignments = charGroupAssignments - toDelete.id.toString()
-                    persistGroups()
-                    if (inspectingAssistant?.id == toDelete.id) {
-                        inspectingAssistant = null
-                    }
-                    vm.removeAssistant(toDelete)
-                    toaster?.show(
-                        message = "Deleted ${toDelete.name}",
-                        action = me.lucid.domchat.ui.components.ui.ToastAction(
-                            label = "Undo",
-                            onClick = { vm.undoRemoveAssistant(toDelete) }
-                        )
+        SettingsDestructiveConfirmDialog(
+            visible = true,
+            title = "Delete ${char.name}?",
+            message = "This will permanently remove this character from your library. Associated chat sessions will be preserved.",
+            onConfirm = {
+                val toDelete = char
+                characterToDelete = null
+                charGroupAssignments = charGroupAssignments - toDelete.id.toString()
+                persistGroups()
+                if (inspectingAssistant?.id == toDelete.id) {
+                    inspectingAssistant = null
+                }
+                vm.removeAssistant(toDelete)
+                toaster?.show(
+                    message = "Deleted ${toDelete.name}",
+                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                        label = "Undo",
+                        onClick = { vm.undoRemoveAssistant(toDelete) }
                     )
-                },
-                onDismiss = { characterToDelete = null }
-            )
-        }
+                )
+            },
+            onDismiss = { characterToDelete = null }
+        )
     }
 
     // Export options dialog
     showExportDialogFor?.let { char ->
-        AlertDialog(
-            onDismissRequest = { showExportDialogFor = null },
-            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
-            containerColor = Color(0xFF000000),
-            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Dialog),
-            title = {
-                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-                Text(
-                    text = "Export ${char.name}",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Choose an export format for this character:",
-                        fontSize = 13.sp,
-                        color = Color(0xFFAAAAAA)
-                    )
-
-                    // Option 1: SillyTavern Character Card PNG
-                    Surface(
-                        onClick = {
-                            val target = char
-                            showExportDialogFor = null
-                            scope.launch {
-                                val bytes = withContext(Dispatchers.IO) {
-                                    AssistantExportImport.exportToCharacterCardPng(target, context)
-                                }
-                                if (bytes != null) {
-                                    pendingExportBytes = bytes
-                                    exportPngLauncher.launch("${target.name.replace(" ", "_")}.png")
-                                } else {
-                                    toaster?.show("Failed to create PNG card with avatar", ToastType.Error)
-                                }
-                            }
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFF000000),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .background(Color(0xFF000000), CircleShape)
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Download,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "Character Card",
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .background(Color(0xFF000000), RoundedCornerShape(6.dp))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "PNG",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Embedded avatar for SillyTavern, Agnai & Chub",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9E9EAA)
-                                )
-                            }
-                        }
-                    }
-
-                    // Option 2: Character Card V2 JSON
-                    Surface(
-                        onClick = {
-                            val target = char
-                            showExportDialogFor = null
-                            scope.launch {
-                                val jsonStr = withContext(Dispatchers.IO) {
-                                    AssistantExportImport.exportToCharacterCardV2(target, context)
-                                }
-                                pendingExportJson = jsonStr
-                                exportJsonLauncher.launch("${target.name.replace(" ", "_")}.json")
-                            }
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFF000000),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .background(Color(0xFF000000), CircleShape)
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Download,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "Character Card V2",
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .background(Color(0xFF000000), RoundedCornerShape(6.dp))
-                                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(6.dp))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "JSON",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Standard V2 JSON spec with all character data",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9E9EAA)
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                DomChatGlassPillButton(
-                    text = "Close",
-                    onClick = { showExportDialogFor = null }
-                )
-            }
+        CharacterExportDialog(
+            assistant = char,
+            onDismissRequest = { showExportDialogFor = null }
         )
     }
 
@@ -2747,17 +2575,17 @@ fun CharacterInspectorSheet(
                                                         Box(
                                                             modifier = Modifier
                                                                 .clip(RoundedCornerShape(8.dp))
-                                                                .background(
-                                                                    if (isGreetingSelected) {
-                                                                        Color.White.copy(alpha = 0.35f)
-                                                                    } else {
-                                                                        Color.White.copy(alpha = 0.05f)
-                                                                    }
-                                                                )
+                                                                .background(Color(0xFF000000))
                                                                 .border(
-                                                                    0.5.dp,
+                                                                    if (isGreetingSelected) 1.dp else 0.5.dp,
                                                                     if (isGreetingSelected) {
-                                                                        Brush.verticalGradient(listOf(Color.White, Color.White))
+                                                                        Brush.verticalGradient(
+                                                                            listOf(
+                                                                                Color.White.copy(alpha = 0.65f),
+                                                                                Color.White.copy(alpha = 0.25f),
+                                                                                Color.White.copy(alpha = 0.08f),
+                                                                            )
+                                                                        )
                                                                     } else cardBorderColor,
                                                                     RoundedCornerShape(8.dp)
                                                                 )
@@ -2768,7 +2596,7 @@ fun CharacterInspectorSheet(
                                                                 text = if (idx == 0) "Intro #1 (Default)" else "Greeting #${idx + 1}",
                                                                 fontSize = 12.sp,
                                                                 fontWeight = if (isGreetingSelected) FontWeight.Bold else FontWeight.Medium,
-                                                                color = if (isGreetingSelected) Color.White else contentTextColor.copy(alpha = 0.75f)
+                                                                color = if (isGreetingSelected) Color(0xFFFFFFFF) else Color.White.copy(alpha = 0.65f)
                                                             )
                                                         }
                                                     }
@@ -3103,7 +2931,7 @@ fun CharacterInspectorSheet(
                             border = BorderStroke(0.5.dp, cardBorderColor)
                         ) {
                             Text(
-                                text = "Done",
+                                text = "Save",
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -3711,11 +3539,6 @@ private fun GroupReorderSheet(
                 subtitle = "Drag handle to rearrange groups, swipe left to delete",
                 onCloseClick = onDismissRequest,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White.copy(alpha = 0.1f)
             )
 
             Spacer(modifier = Modifier.height(10.dp))

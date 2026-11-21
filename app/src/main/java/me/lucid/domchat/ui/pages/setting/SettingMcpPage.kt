@@ -559,11 +559,6 @@ private fun McpConnectionsSheet(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
             )
 
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White.copy(alpha = 0.1f)
-            )
-
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(

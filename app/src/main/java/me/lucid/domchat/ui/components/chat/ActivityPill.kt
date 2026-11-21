@@ -311,8 +311,8 @@ fun buildActivityItemsFromMultiple(state: ActivityState.CompletedMultiple): List
 private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
-private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 0.82f, stiffness = 300f)
-private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 0.82f, stiffness = 300f)
+private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 0.88f, stiffness = 220f)
+private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 0.88f, stiffness = 220f)
 
 /**
  * Position of a pill in a row of pills.
@@ -702,7 +702,7 @@ private fun AnimatedSinglePill(
                 if (wasCompletedInitially && targetState !is SinglePillContentState.ExpandedTimeline && initialState !is SinglePillContentState.ExpandedTimeline) {
                     EnterTransition.None togetherWith ExitTransition.None
                 } else {
-                    (fadeIn(animationSpec = tween(150)) togetherWith fadeOut(animationSpec = tween(90))) using SizeTransform(clip = false) { _, _ ->
+                    (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
                         PILL_MORPH_SPEC
                     }
                 }

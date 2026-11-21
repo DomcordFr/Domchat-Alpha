@@ -33,7 +33,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -235,6 +237,41 @@ private fun RenderNode(
                     ) {
                         node.children.forEach { childNode ->
                             RenderNode(childNode, onLinkClick)
+                        }
+                    }
+                }
+
+                "a" -> {
+                    val href = node.attr("href")
+                    val hasImgChild = node.children.any { child ->
+                        child is SimpleHtmlElement &&
+                            (child.tagName == "img" || child.descendantElementsByTags("img").isNotEmpty())
+                    }
+                    if (hasImgChild) {
+                        Box(
+                            modifier = Modifier
+                                .clickable {
+                                    if (href.isNotEmpty()) onLinkClick(href)
+                                }
+                        ) {
+                            node.children.forEach { childNode ->
+                                RenderNode(childNode, onLinkClick)
+                            }
+                        }
+                    } else {
+                        val annotatedString = buildAnnotatedStringFromElement(node, onLinkClick)
+                        if (annotatedString.text.isNotBlank()) {
+                            val direction = rememberElementDirection(annotatedString.text)
+                            CompositionLocalProvider(LocalLayoutDirection provides direction.toLayoutDirection()) {
+                                Text(
+                                    text = annotatedString,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = LocalContentColor.current,
+                                        textDirection = direction.toComposeTextDirection()
+                                    ),
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -480,14 +517,30 @@ private fun processElementNodes(
                         val start = builder.length
                         processElementNodes(node, builder, onLinkClick)
                         if (href.isNotEmpty()) {
+                            val linkColor = Color(0xFF64B5F6)
                             builder.addStyle(
                                 SpanStyle(
-                                    color = Color.Blue,
+                                    color = linkColor,
                                     textDecoration = TextDecoration.Underline
                                 ),
                                 start,
                                 builder.length
                             )
+                            try {
+                                builder.addLink(
+                                    LinkAnnotation.Url(
+                                        url = href,
+                                        styles = TextLinkStyles(
+                                            style = SpanStyle(
+                                                color = linkColor,
+                                                textDecoration = TextDecoration.Underline
+                                            )
+                                        )
+                                    ),
+                                    start,
+                                    builder.length
+                                )
+                            } catch (_: Throwable) {}
                             builder.addStringAnnotation(
                                 tag = "URL",
                                 annotation = href,
