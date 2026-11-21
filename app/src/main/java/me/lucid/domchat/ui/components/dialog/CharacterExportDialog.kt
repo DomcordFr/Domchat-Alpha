@@ -42,8 +42,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
-import me.lucid.domchat.ui.components.ui.LocalToaster
 import me.lucid.domchat.ui.components.ui.ToastType
+import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.utils.AssistantExportImport

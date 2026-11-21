@@ -3804,11 +3804,8 @@ private fun ChatToolbar(
 
     if (showCreatorNotesSheet) {
         CharacterNotesBottomSheet(
-            characterName = currentAssistant.name,
-            creatorName = currentAssistant.creator,
-            characterVersion = currentAssistant.characterVersion,
-            creatorNotes = currentAssistant.creatorNotes,
-            onDismiss = { showCreatorNotesSheet = false }
+            assistant = currentAssistant,
+            onDismissRequest = { showCreatorNotesSheet = false }
         )
     }
 
