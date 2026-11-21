@@ -279,7 +279,7 @@ fun AssistantDetailPage(
                 AssistantDetailRoutes.UI -> stringResource(R.string.assistant_detail_ui_customization)
                 AssistantDetailRoutes.TOOLS -> "Tools & Workspace"
                 AssistantDetailRoutes.SKILLS -> "Character Skills"
-                AssistantDetailRoutes.ADVANCED -> stringResource(R.string.assistant_page_advanced)
+                AssistantDetailRoutes.ADVANCED -> stringResource(R.string.assistant_detail_advanced)
                 else -> assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
             }
 
@@ -599,7 +599,7 @@ fun AssistantDetailPage(
                     onDeleteMemory = { vm.deleteMemory(it) },
                     onRegenerateEmbeddings = { vm.regenerateEmbeddings() },
                     embeddingProgress = embeddingProgress,
-                    onTestRetrieval = { query -> vm.testMemoryRetrieval(query) },
+                    onTestRetrieval = { query -> vm.testRetrieval(query) },
                     retrievalDebugState = retrievalDebugState,
                     assistantDetailVM = vm,
                     estimatedMemoryCapacity = estimatedMemoryCapacity,
@@ -853,8 +853,8 @@ private fun AssistantDetailHome(
 
             NavigationCard(
                 icon = Icons.Rounded.Settings,
-                title = stringResource(R.string.assistant_page_advanced),
-                description = "TTS autoplay, custom HTTP headers, bodies & regex formatting",
+                title = stringResource(R.string.assistant_detail_advanced),
+                description = stringResource(R.string.assistant_detail_advanced_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.ADVANCED) }
             )
         }
