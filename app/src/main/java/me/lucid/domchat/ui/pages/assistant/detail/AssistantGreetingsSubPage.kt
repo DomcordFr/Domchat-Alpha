@@ -380,19 +380,27 @@ fun AssistantGreetingsSubPage(
             onDismissRequest = { showCreateDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
+            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
+                val dialogShape = RoundedCornerShape(22.dp)
                 Surface(
-                    color = Color(0xFF000000),
-                    shape = RoundedCornerShape(22.dp),
-                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                    color = Color.Transparent,
+                    shape = dialogShape,
+                    tonalElevation = 0.dp,
                     modifier = Modifier
                         .widthIn(min = 280.dp, max = 360.dp)
                         .imePadding()
+                        .liquidGlassSurface(
+                            shape = dialogShape,
+                            fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                        )
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -467,13 +475,20 @@ fun AssistantGreetingsSubPage(
                         .padding(horizontal = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    val dialogShape = RoundedCornerShape(22.dp)
                     Surface(
-                        color = Color(0xFF000000),
-                        shape = RoundedCornerShape(22.dp),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        color = Color.Transparent,
+                        shape = dialogShape,
+                        tonalElevation = 0.dp,
                         modifier = Modifier
                             .widthIn(min = 280.dp, max = 360.dp)
                             .imePadding()
+                            .liquidGlassSurface(
+                                shape = dialogShape,
+                                fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                            )
                     ) {
                         Column(
                             modifier = Modifier.padding(24.dp),

@@ -2511,43 +2511,45 @@ private fun ChatPageContent(
 
             // Custom initial message creator dialog (swipe-reroll on intro message)
             if (showCustomGreetingDialog) {
-                CustomGreetingDialog(
-                    visible = true,
-                    onDismissRequest = { showCustomGreetingDialog = false },
-                    onSave = { newGreeting ->
-                        val trimmed = newGreeting.trim()
-                        if (trimmed.isNotBlank()) {
-                            val updatedAssistant = currentAssistant.copy(
-                                alternateGreetings = currentAssistant.alternateGreetings + trimmed,
-                            )
-                            assistantVM.updateAssistant(updatedAssistant)
-                            val introNode = conversation.messageNodes.firstOrNull { node ->
-                                node.currentMessage.role == MessageRole.ASSISTANT &&
-                                    isCharacterIntroMessage(
-                                        messages = conversation.messageNodes.map { it.currentMessage },
-                                        message = node.currentMessage,
+                CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
+                    CustomGreetingDialog(
+                        visible = true,
+                        onDismissRequest = { showCustomGreetingDialog = false },
+                        onSave = { newGreeting ->
+                            val trimmed = newGreeting.trim()
+                            if (trimmed.isNotBlank()) {
+                                val updatedAssistant = currentAssistant.copy(
+                                    alternateGreetings = currentAssistant.alternateGreetings + trimmed,
+                                )
+                                assistantVM.updateAssistant(updatedAssistant)
+                                val introNode = conversation.messageNodes.firstOrNull { node ->
+                                    node.currentMessage.role == MessageRole.ASSISTANT &&
+                                        isCharacterIntroMessage(
+                                            messages = conversation.messageNodes.map { it.currentMessage },
+                                            message = node.currentMessage,
+                                        )
+                                }
+                                introNode?.let { node ->
+                                    val newMessage = UIMessage(
+                                        role = MessageRole.ASSISTANT,
+                                        parts = listOf(UIMessagePart.Text(text = trimmed)),
                                     )
+                                    val updatedNode = node.copy(
+                                        messages = node.messages + newMessage,
+                                        selectIndex = node.messages.size,
+                                    )
+                                    val updatedConversation = conversation.copy(
+                                        messageNodes = conversation.messageNodes.map { n ->
+                                            if (n.id == updatedNode.id) updatedNode else n
+                                        },
+                                    )
+                                    vm.updateConversation(updatedConversation)
+                                }
                             }
-                            introNode?.let { node ->
-                                val newMessage = UIMessage(
-                                    role = MessageRole.ASSISTANT,
-                                    parts = listOf(UIMessagePart.Text(text = trimmed)),
-                                )
-                                val updatedNode = node.copy(
-                                    messages = node.messages + newMessage,
-                                    selectIndex = node.messages.size,
-                                )
-                                val updatedConversation = conversation.copy(
-                                    messageNodes = conversation.messageNodes.map { n ->
-                                        if (n.id == updatedNode.id) updatedNode else n
-                                    },
-                                )
-                                vm.updateConversation(updatedConversation)
-                            }
-                        }
-                        showCustomGreetingDialog = false
-                    },
-                )
+                            showCustomGreetingDialog = false
+                        },
+                    )
+                }
             }
 
             androidx.compose.animation.AnimatedVisibility(
@@ -2630,6 +2632,7 @@ private fun CustomGreetingDialog(
             decorFitsSystemWindows = false
         )
     ) {
+        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -2647,7 +2650,7 @@ private fun CustomGreetingDialog(
                     .widthIn(max = 420.dp)
                     .liquidGlassSurface(
                         shape = dialogShape,
-                        fillColor = Color(0xFF000000).copy(alpha = 0.70f),
+                        fillColor = Color(0xFF000000).copy(alpha = 0.50f),
                         borderWidth = 0.5.dp,
                         specularBrush = LiquidGlassTokens.SpecularBorderBrush,
                     ),
