@@ -32,10 +32,20 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.sp
+import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
+import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.UIMessagePart
 import me.lucid.domchat.R
 import me.lucid.domchat.utils.copyMessageToClipboard
+import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
+
+
 
 @Composable
 fun ChatMessageCopySheet(
@@ -47,48 +57,31 @@ fun ChatMessageCopySheet(
     DomChatInWindowBottomSheet(
         visible = true,
         onDismissRequest = onDismissRequest,
+        dragHandle = { DomChatSheetDragHandle() },
         maxHeight = screenHeight * 0.85f,
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(
-                    onClick = {
-                        onDismissRequest()
-                    }
-                ) {
-                    Icon(Icons.Rounded.Close, null)
-                }
-
-                Text(
-                    text = stringResource(R.string.select_and_copy),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-
-                TextButton(
-                    onClick = {
-                        context.copyMessageToClipboard(message)
-                        onDismissRequest()
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ContentCopy,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+            DomChatSheetHeader(
+                title = stringResource(R.string.select_and_copy),
+                subtitle = "Select text or copy message content",
+                onCloseClick = onDismissRequest,
+                actions = {
+                    DomChatGlassPillButton(
+                        text = stringResource(R.string.copy_all),
+                        icon = Icons.Rounded.ContentCopy,
+                        onClick = {
+                            context.copyMessageToClipboard(message)
+                            onDismissRequest()
+                        }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.copy_all))
                 }
-            }
+            )
 
             // Content
             val textParts =
@@ -96,33 +89,47 @@ fun ChatMessageCopySheet(
 
             if (textParts.isEmpty()) {
                 // No text content available
-                Column(
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .fillMaxWidth()
+                        .height(140.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = stringResource(R.string.no_text_content_to_copy),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        color = Color.White.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center
                     )
                 }
             } else {
                 SelectionContainer {
-                    Column(
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
                             .fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        textParts.fastForEach { textPart ->
-                            Text(
-                                text = textPart.text,
-                                style = MaterialTheme.typography.bodyMedium,
+                            .liquidGlassSurface(
+                                shape = RoundedCornerShape(16.dp),
+                                fillColor = Color.White.copy(alpha = 0.05f),
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                             )
+                            .padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            textParts.fastForEach { textPart ->
+                                Text(
+                                    text = textPart.text,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = Color.White.copy(alpha = 0.95f),
+                                        lineHeight = 22.sp
+                                    ),
+                                )
+                            }
                         }
                     }
                 }
@@ -130,3 +137,4 @@ fun ChatMessageCopySheet(
         }
     }
 }
+

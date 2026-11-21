@@ -326,8 +326,15 @@ internal fun ColumnScope.ModelList(
     
     // activeProviderId is null initially and is set upon explicit user click
 
-    val favoriteModels = settings.value.favoriteModels.mapNotNull { modelId ->
+    val displayedFavoriteIds = if (style == ModelPickerStyle.LIQUID_GLASS) {
+        remember { settings.value.favoriteModels }
+    } else {
+        settings.value.favoriteModels
+    }
+
+    val favoriteModels = displayedFavoriteIds.mapNotNull { modelId ->
         val model = providers.findModelById(modelId) ?: return@mapNotNull null
+
         val provider = model.findProvider(providers = providers, checkOverwrite = false) ?: return@mapNotNull null
         val isTypeMatch = if (modelType == ModelType.STT) {
             val resolvedModel = modelMetadataResolver.applyToModel(model, provider)
@@ -577,11 +584,12 @@ internal fun ColumnScope.ModelList(
                 state = lazyListState,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 104.dp, // Generous spacing so first item sits below search bar & gradient without being faded out
-                    bottom = 100.dp // Leave space for bottom floating provider options
+                    start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
+                    end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
+                    top = if (style == ModelPickerStyle.LIQUID_GLASS) 68.dp else 104.dp,
+                    bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 24.dp else 100.dp
                 ),
+
                 modifier = Modifier
                     .fillMaxSize()
                     .onGloballyPositioned { coordinates ->
@@ -818,7 +826,7 @@ internal fun ColumnScope.ModelList(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(116.dp)
+                            .height(if (style == ModelPickerStyle.LIQUID_GLASS) 68.dp else 116.dp)
                             .domChatBlurEffect(
                                 containerColor = Color.Transparent,
                                 blurRadius = 12.dp
@@ -840,9 +848,15 @@ internal fun ColumnScope.ModelList(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .height(84.dp)
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
+                    .height(if (style == ModelPickerStyle.LIQUID_GLASS) 60.dp else 84.dp)
+                    .padding(
+                        start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
+                        end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
+                        top = if (style == ModelPickerStyle.LIQUID_GLASS) 6.dp else 16.dp,
+                        bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 6.dp else 12.dp
+                    )
             ) {
+
                 val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
                 val searchBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
                 OutlinedTextField(
@@ -1171,10 +1185,11 @@ private fun ModelItem(
 
     if(inGroup) {
         val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
+            Color.White.copy(alpha = 0.04f)
         } else {
             if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
         }
+
         DomChatGroupedModelRow(
             title = model.displayName,
             selected = select,
@@ -1217,10 +1232,11 @@ private fun ModelItem(
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
         val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            if (select) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
+            Color.White.copy(alpha = 0.04f)
         } else {
             Color(0xFF000000)
         }
+
         Card(
             modifier = modifier.liquidGlassSurface(
                 shape = cardShape,

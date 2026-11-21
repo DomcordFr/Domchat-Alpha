@@ -106,6 +106,10 @@ import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
+import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.runtime.Composable
@@ -307,6 +311,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var inspectingAssistant by remember { mutableStateOf<Assistant?>(null) }
     var showingCreatorNotesFor by remember { mutableStateOf<Assistant?>(null) }
     var characterToDelete by remember { mutableStateOf<Assistant?>(null) }
+    val hubBackdrop = rememberLayerBackdrop()
     var showExportDialogFor by remember { mutableStateOf<Assistant?>(null) }
 
     // Group / folder state
@@ -578,7 +583,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
-            modifier = Modifier.fillMaxSize().padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding).layerBackdrop(hubBackdrop)
         ) { (targetGrid, targetGroup) ->
             if (targetGrid) {
                 LazyVerticalGrid(
@@ -1411,59 +1416,31 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
 
     // Delete confirmation dialog
     characterToDelete?.let { char ->
-        AlertDialog(
-            onDismissRequest = { characterToDelete = null },
-            shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
-            containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-            modifier = Modifier
-                .wrapContentHeight()
-                .padding(horizontal = 28.dp)
-                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.Dialog),
-            title = {
-                me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-                Text(
-                    text = "Delete ${char.name}?",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            },
-            text = {
-                Text(
-                    text = "This will permanently remove this character from your library. Associated chat sessions will be preserved.",
-                    fontSize = 13.5.sp,
-                    color = Color(0xFFAAAAAA)
-                )
-            },
-            confirmButton = {
-                DomChatGlassPillButton(
-                    text = "Delete",
-                    destructive = true,
-                    onClick = {
-                        val toDelete = char
-                        characterToDelete = null
-                        charGroupAssignments = charGroupAssignments - toDelete.id.toString()
-                        persistGroups()
-                        if (inspectingAssistant?.id == toDelete.id) {
-                            inspectingAssistant = null
-                        }
-                        vm.removeAssistant(toDelete)
-                        toaster?.show(
-                            message = "Deleted ${toDelete.name}",
-                            action = me.lucid.domchat.ui.components.ui.ToastAction(
-                                label = "Undo",
-                                onClick = { vm.undoRemoveAssistant(toDelete) }
-                            )
-                        )
+        CompositionLocalProvider(LocalAppBackdrop provides hubBackdrop) {
+            DomChatDestructiveConfirmDialog(
+                visible = true,
+                title = "Delete ${char.name}?",
+                consequence = "This will permanently remove this character from your library. Associated chat sessions will be preserved.",
+                onConfirm = {
+                    val toDelete = char
+                    characterToDelete = null
+                    charGroupAssignments = charGroupAssignments - toDelete.id.toString()
+                    persistGroups()
+                    if (inspectingAssistant?.id == toDelete.id) {
+                        inspectingAssistant = null
                     }
-                )
-            },
-            dismissButton = {
-                DomChatGlassPillButton(
-                    text = "Cancel",
-                    onClick = { characterToDelete = null }
-                )
-            }
-        )
+                    vm.removeAssistant(toDelete)
+                    toaster?.show(
+                        message = "Deleted ${toDelete.name}",
+                        action = me.lucid.domchat.ui.components.ui.ToastAction(
+                            label = "Undo",
+                            onClick = { vm.undoRemoveAssistant(toDelete) }
+                        )
+                    )
+                },
+                onDismiss = { characterToDelete = null }
+            )
+        }
     }
 
     // Export options dialog
@@ -4156,42 +4133,12 @@ private fun DeleteConfirmationDialog(
     onConfirm: () -> Unit
 ) {
     if (!visible) return
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = me.lucid.domchat.ui.theme.AppShapes.Dialog,
-        containerColor = me.lucid.domchat.ui.modifier.domChatDialogContainerColor(),
-        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.Dialog),
-        title = {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-            Text(
-                text = "Delete ${assistant.effectiveDisplayName}?",
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        },
-        text = {
-            Text(
-                text = "This will permanently remove this character from your library. Associated chat sessions will be preserved in your history.",
-                fontSize = 13.5.sp,
-                color = Color(0xFFAAAAAA)
-            )
-        },
-        confirmButton = {
-            DomChatGlassPillButton(
-                text = "Delete",
-                destructive = true,
-                onClick = {
-                    onConfirm()
-                    onDismiss()
-                }
-            )
-        },
-        dismissButton = {
-            DomChatGlassPillButton(
-                text = "Cancel",
-                onClick = onDismiss
-            )
-        }
+    DomChatDestructiveConfirmDialog(
+        visible = visible,
+        title = "Delete ${assistant.effectiveDisplayName}?",
+        consequence = "This will permanently remove this character from your library. Associated chat sessions will be preserved in your history.",
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 

@@ -2070,7 +2070,7 @@ private fun ModelPickerSheet(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
-                        contentPadding = PaddingValues(top = 64.dp, bottom = 28.dp)
+                        contentPadding = PaddingValues(top = 6.dp, bottom = 28.dp)
                     ) {
                         items(filteredModels, key = { it.modelId }) { model ->
                         val isSelected = selectedModelMap.containsKey(model.modelId)
@@ -2135,7 +2135,7 @@ private fun ModelPickerSheet(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
+                            .height(32.dp)
                             .align(Alignment.TopCenter)
                             .domChatBlurEffect(
                                 containerColor = Color.Transparent,

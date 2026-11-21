@@ -213,7 +213,8 @@ internal fun SkillsPickerSheet(
                             .fillMaxWidth()
                             .liquidGlassSurface(
                                 shape = shape,
-                                fillColor = if (isEnabled) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.04f),
+                                fillColor = Color.White.copy(alpha = 0.05f),
+
                                 borderWidth = 0.5.dp,
                                 specularBrush = if (isEnabled) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
                             )

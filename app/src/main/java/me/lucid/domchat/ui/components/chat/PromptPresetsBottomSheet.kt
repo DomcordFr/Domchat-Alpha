@@ -132,7 +132,8 @@ private fun PositionButton(
         shape = btnShape,
         modifier = modifier.liquidGlassSurface(
             shape = btnShape,
-            fillColor = if (selected) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.05f),
+            fillColor = Color.White.copy(alpha = 0.05f),
+
             borderWidth = if (selected) 1.dp else 0.5.dp,
             specularBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
         ),

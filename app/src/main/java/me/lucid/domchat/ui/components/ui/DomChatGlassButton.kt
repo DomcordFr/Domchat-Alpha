@@ -47,7 +47,7 @@ fun DomChatGlassPillButton(
     enabled: Boolean = true,
     destructive: Boolean = false,
     accent: Boolean = false,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 7.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 5.dp),
     containerColor: Color? = null,
     contentColor: Color? = null,
     content: (@Composable RowScope.() -> Unit)? = null,
@@ -99,7 +99,7 @@ private fun DomChatGlassPillButtonContent(
         modifier
     } else {
         val glassFill = containerColor.takeIf { it != null }
-            ?: if (accent) Color.White.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.08f)
+            ?: if (accent) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.08f)
         modifier.liquidGlassSurface(
             shape = shape,
             fillColor = if (enabled) glassFill else glassFill.copy(alpha = 0.4f),
@@ -138,7 +138,7 @@ private fun DomChatGlassPillButtonContent(
                 text = text,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                 ),
                 color = when {
                     !enabled -> resolvedTextColor.copy(alpha = 0.4f)

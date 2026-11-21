@@ -280,8 +280,9 @@ fun ReasoningPicker(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
+
 
                     data class EffortOption(
                         val level: ReasoningLevel,
@@ -391,7 +392,8 @@ private fun ReasoningOptionItem(
     val itemShape = RoundedCornerShape(22.dp)
     
     val isDark = LocalDarkMode.current
-    val fill = if (selected) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.04f)
+    val fill = Color.White.copy(alpha = 0.05f)
+
     val animatedTitleColor by animateColorAsState(
         targetValue = if (selected) Color.White else (if (isDark) Color(0xFFEEEEEE) else MaterialTheme.colorScheme.onSurface),
         animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),

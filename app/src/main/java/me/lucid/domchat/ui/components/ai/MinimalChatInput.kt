@@ -1899,15 +1899,7 @@ fun MinimalChatInput(
                 DomChatSheetHeader(
                     title = "Text Styling",
                     subtitle = "Customize appearance for italics & markdown",
-                    onCloseClick = { showTextStylingDialog = false },
-                    actions = {
-                        DomChatGlassPillButton(
-                            text = "Reset to Global",
-                            icon = Icons.Rounded.Refresh,
-                            onClick = { resetToGlobal() },
-                            modifier = Modifier.height(30.dp),
-                        )
-                    }
+                    onCloseClick = { showTextStylingDialog = false }
                 )
 
                 val styleScrollState = rememberScrollState()
@@ -1922,11 +1914,25 @@ fun MinimalChatInput(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
 
-                Text(
-                    text = "Tap a style to configure its color and settings",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.65f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Tap a style to configure its color and settings",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.65f),
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    DomChatGlassPillButton(
+                        text = "Reset",
+                        icon = Icons.Rounded.Refresh,
+                        onClick = { resetToGlobal() },
+                        modifier = Modifier.height(26.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                    )
+                }
 
                 // Compact accordion cards
                 styleDefs.forEachIndexed { idx, (label, pattern, defaultHex) ->
@@ -2125,7 +2131,7 @@ fun MinimalChatInput(
                         showTextStylingDialog = false
                         haptics.perform(HapticPattern.Pop)
                     },
-                    modifier = Modifier.align(Alignment.End).padding(end = 20.dp).height(36.dp)
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp).height(36.dp)
                 )
             }
         }
@@ -3152,6 +3158,7 @@ fun MinimalChatInput(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
                     .padding(bottom = 16.dp)
             ) {
                 DomChatSheetHeader(
@@ -3165,7 +3172,6 @@ fun MinimalChatInput(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
                         .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 36f)
                         .verticalScroll(searchScrollState)
                         .padding(top = 8.dp, bottom = 36.dp),
@@ -3689,11 +3695,7 @@ private fun MinimalPickerContent(
     var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
     var cameraOutputFile by remember { mutableStateOf<File?>(null) }
     
-    var showContextRefreshDialog by remember { mutableStateOf(false) }
-    var showContextSummaryEditDialog by remember { mutableStateOf(false) }
-    var editableContextSummary by remember(conversation.contextSummary) {
-        mutableStateOf(conversation.contextSummary.orEmpty())
-    }
+
     val modelCatalogService: ModelCatalogService = koinInject()
     val settingsStore: me.lucid.domchat.data.datastore.SettingsStore = koinInject()
     val catalogSnapshot by modelCatalogService.snapshotFlow.collectAsStateWithLifecycle()
@@ -4222,30 +4224,19 @@ private fun MinimalPickerContent(
                         val singleActiveSkillIcon = activeSkills.singleOrNull()?.icon
                         MinimalPickerItem(
                             icon = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF000000))
-                                        .border(
-                                            0.5.dp,
-                                            if (skillsActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-                                            CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (singleActiveSkillIcon != null) {
-                                            ModeIcons.getIcon(singleActiveSkillIcon)
-                                        } else {
-                                            Icons.Rounded.Category
-                                        },
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = if (skillsActive) MaterialTheme.colorScheme.primary else Color.White
-                                    )
-                                }
+
+                                Icon(
+                                    imageVector = if (singleActiveSkillIcon != null) {
+                                        ModeIcons.getIcon(singleActiveSkillIcon)
+                                    } else {
+                                        Icons.Rounded.Category
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (skillsActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
+                                )
                             },
+
                             title = stringResource(R.string.minimal_input_skills),
                             subtitle = if (activeSkillsCount > 0) {
                                 stringResource(R.string.skills_picker_active_count, activeSkillsCount)
@@ -4282,117 +4273,13 @@ private fun MinimalPickerContent(
                         )
                     }
                     
-                    // Summarize button - show whenever there is enough history to summarize
-                    if (assistant.canManuallySummarizeConversation(conversation.currentMessages.size)) {
-                        MinimalPickerItem(
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Summarize,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            title = stringResource(R.string.minimal_input_summarize),
-                            subtitle = stringResource(R.string.minimal_input_summarize_desc),
-                            onClick = {
-                                showContextRefreshDialog = true
-                            }
-                        )
-                    }
                 }
             }
         }
     }
     }
     
-    // Context Refresh dialog (same as floating toolbar)
-    if (showContextRefreshDialog) {
-        ContextRefreshDialog(
-            conversation = conversation,
-            onRefresh = onRefreshContext,
-            onEditSummary = {
-                editableContextSummary = conversation.contextSummary.orEmpty()
-                showContextSummaryEditDialog = true
-            },
-            onRevertSummary = {
-                onUpdateConversation(
-                    conversation.copy(
-                        contextSummary = null,
-                        contextSummaryUpToIndex = -1,
-                        lastRefreshTime = 0L,
-                        updateAt = Instant.now()
-                    )
-                )
-            },
-            onDismiss = { showContextRefreshDialog = false }
-        )
-    }
 
-    if (showContextSummaryEditDialog) {
-        AlertDialog(
-            onDismissRequest = { showContextSummaryEditDialog = false },
-            shape = RoundedCornerShape(28.dp),
-            containerColor = Color(0xFF000000),
-            title = {
-                Text(
-                    text = stringResource(R.string.context_refresh_edit_summary),
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            },
-            text = {
-                TextField(
-                    value = editableContextSummary,
-                    onValueChange = { editableContextSummary = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 180.dp),
-                    placeholder = {
-                        Text(stringResource(R.string.context_refresh_edit_summary_placeholder))
-                    }
-                )
-            },
-            confirmButton = {
-                IconButton(
-                    onClick = {
-                        haptics.perform(HapticPattern.Success)
-                        val trimmedSummary = editableContextSummary.trim()
-                        onUpdateConversation(
-                            conversation.copy(
-                                contextSummary = trimmedSummary.takeIf { it.isNotBlank() },
-                                contextSummaryUpToIndex = if (trimmedSummary.isBlank()) {
-                                    -1
-                                } else {
-                                    conversation.contextSummaryUpToIndex
-                                },
-                                lastRefreshTime = if (trimmedSummary.isBlank()) 0L else System.currentTimeMillis(),
-                                updateAt = Instant.now()
-                            )
-                        )
-                        showContextSummaryEditDialog = false
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Save,
-                        contentDescription = stringResource(R.string.context_refresh_save_summary)
-                    )
-                }
-            },
-            dismissButton = {
-                IconButton(
-                    onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        showContextSummaryEditDialog = false
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(android.R.string.cancel)
-                    )
-                }
-            }
-        )
-    }
 }
 
 @Composable

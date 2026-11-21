@@ -131,6 +131,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.message.ActiveChatMessageAction
 import me.lucid.domchat.ui.components.message.ChatMessageActionsSheet
+import me.lucid.domchat.ui.components.message.ChatMessageCopySheet
 import me.lucid.domchat.ui.components.message.LocalActiveChatMessageAction
 import androidx.navigation.NavHostController
 import androidx.compose.material.icons.Icons
@@ -814,12 +815,6 @@ fun ChatPage(
         }
     }
 
-    // Navigate to Home when backing out of chat with the drawer closed
-    BackHandler(enabled = !drawerState.isOpen) {
-        scope.launch {
-            navController.navigate(Screen.ConversationList)
-        }
-    }
 
     // Hide keyboard when drawer is open
     LaunchedEffect(drawerState.isOpen) {
@@ -916,10 +911,40 @@ fun ChatPage(
     }
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
     var isSwitchingConversations by remember(conversation.id) { mutableStateOf(true) }
-    LaunchedEffect(conversation.id) {
-        delay(900L)
+    LaunchedEffect(target.id, conversation.id) {
+        isSwitchingConversations = true
+        delay(1200L)
         isSwitchingConversations = false
     }
+    val isChatSwitching = isSwitchingConversations || !chatListReady || !conversationInitialized || (target.id != conversation.id.toString())
+
+    // Safely handle back navigation when switching / animating into a chat
+    BackHandler(enabled = isChatSwitching) {
+        if (navController.previousBackStackEntry != null) {
+            navController.popBackStack()
+        } else {
+            runCatching {
+                navController.navigate(Screen.ConversationList) {
+                    popUpTo<Screen.Chat> { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+    // Safely navigate back or to conversation list when backing out of chat with the drawer closed
+    BackHandler(enabled = !drawerState.isOpen && !isChatSwitching) {
+        if (navController.previousBackStackEntry != null) {
+            navController.popBackStack()
+        } else {
+            runCatching {
+                navController.navigate(Screen.ConversationList) {
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
     var chatAnimationsEnabled by remember(conversation.id) { mutableStateOf(false) }
     LaunchedEffect(conversation.id) {
         delay(startupWallpaperPauseMs.toLong())
@@ -1316,8 +1341,19 @@ fun ChatPage(
                     )
                 }
             }
-            BackHandler(drawerState.isOpen) {
-                scope.launch { drawerState.close() }
+
+            AnimatedVisibility(
+                visible = isChatSwitching,
+                enter = fadeIn(animationSpec = tween(600, easing = LinearOutSlowInEasing)),
+                exit = fadeOut(animationSpec = tween(800, easing = FastOutLinearInEasing)),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(9999f)
+            ) {
+                ChatSwitchLoadingIndicator(
+                    assistant = conversationAssistant,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
@@ -1416,6 +1452,7 @@ private fun ChatPageContent(
     var showContextUsagePopup by remember { mutableStateOf(false) }
     var showChatInfoSheet by remember { mutableStateOf(false) }
     var activeChatMessageAction by remember { mutableStateOf<ActiveChatMessageAction?>(null) }
+    var activeCopyMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var isChatShareSelecting by rememberSaveable { mutableStateOf(false) }
     var selectedChatShareItems by remember(conversation.id) { mutableStateOf<Set<Uuid>>(emptySet()) }
     var showExportSheet by remember { mutableStateOf(false) }
@@ -2357,18 +2394,6 @@ private fun ChatPageContent(
                 )
                 }
 
-                // Smooth fullscreen glassy loading animation when switching conversations
-                AnimatedVisibility(
-                    visible = !chatListReady || !conversationInitialized || isSwitchingConversations,
-                    enter = fadeIn(animationSpec = tween(400, easing = LinearOutSlowInEasing)),
-                    exit = fadeOut(animationSpec = tween(600, easing = FastOutLinearInEasing)),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    ChatSwitchLoadingIndicator(
-                        assistant = currentAssistant,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
                 }
             }
             }
@@ -2461,8 +2486,9 @@ private fun ChatPageContent(
                             action.onFork()
                         },
                         onSelectAndCopy = {
+                            val msg = action.message
                             activeChatMessageAction = null
-                            action.onSelectAndCopy()
+                            activeCopyMessage = msg
                         },
                         onWebViewPreview = {
                             activeChatMessageAction = null
@@ -2472,6 +2498,16 @@ private fun ChatPageContent(
                     )
                 }
             }
+
+            activeCopyMessage?.let { copyMsg ->
+                CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
+                    ChatMessageCopySheet(
+                        message = copyMsg,
+                        onDismissRequest = { activeCopyMessage = null }
+                    )
+                }
+            }
+
 
             // Custom initial message creator dialog (swipe-reroll on intro message)
             if (showCustomGreetingDialog) {
@@ -4822,23 +4858,24 @@ private fun ChatSwitchLoadingIndicator(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "chat_loading_pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
+        initialValue = 0.45f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing),
+            animation = tween(2400, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "chat_loading_glow"
     )
     val scalePulse by infiniteTransition.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
+        initialValue = 0.95f,
+        targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2400, easing = LinearOutSlowInEasing),
+            animation = tween(2800, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "chat_avatar_pulse"
     )
+
 
     Box(
         modifier = modifier

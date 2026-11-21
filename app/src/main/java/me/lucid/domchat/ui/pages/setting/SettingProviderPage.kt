@@ -1486,7 +1486,7 @@ private fun ChooseProviderSheet(
                 colors = appFieldColors(),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             val filteredPresets = remember(searchQuery, providerPresets) {
                 if (searchQuery.isBlank()) {
@@ -1509,6 +1509,9 @@ private fun ChooseProviderSheet(
                 LocalOverscrollFactory provides null
             ) {
                 val lazyListState = rememberLazyListState()
+                val canScrollUp by remember {
+                    derivedStateOf { lazyListState.canScrollBackward }
+                }
                 val nestedScrollConnection = remember {
                     object : NestedScrollConnection {
                         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -1519,15 +1522,21 @@ private fun ChooseProviderSheet(
                         }
                     }
                 }
-                LazyColumn(
-                    state = lazyListState,
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clipToBounds()
-                        .nestedScroll(nestedScrollConnection),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                        .fillMaxWidth()
                 ) {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clipToBounds()
+                            .nestedScroll(nestedScrollConnection),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
+                    ) {
+
                     localPreset?.let { preset ->
                         item {
                             Surface(
@@ -1699,8 +1708,28 @@ private fun ChooseProviderSheet(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
+
+                if (canScrollUp) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(28.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFF000000),
+                                        Color(0xFF000000).copy(alpha = 0.75f),
+                                        Color(0xFF000000).copy(alpha = 0.25f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
             }
         }
+    }
     }
 }
 
