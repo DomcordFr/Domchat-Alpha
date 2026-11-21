@@ -464,8 +464,10 @@ fun ConversationList(
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    val dialogShape = RoundedCornerShape(20.dp)
+                    val inputShape = RoundedCornerShape(14.dp)
                     Surface(
-                        shape = RoundedCornerShape(24.dp),
+                        shape = dialogShape,
                         color = Color(0xFF000000),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
@@ -486,13 +488,15 @@ fun ConversationList(
                                 value = editedTitle,
                                 onValueChange = { editedTitle = it },
                                 singleLine = true,
-                                shape = AppShapes.InputField,
-                                modifier = Modifier.fillMaxWidth(),
+                                shape = inputShape,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle), inputShape),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
-                                    focusedBorderColor = Color.White.copy(alpha = 0.35f),
-                                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                                    focusedBorderColor = Color.Transparent,
+                                    unfocusedBorderColor = Color.Transparent,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White,
                                     focusedLabelColor = Color.White.copy(alpha = 0.8f),
@@ -502,25 +506,57 @@ fun ConversationList(
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                DomChatGlassPillButton(
-                                    text = stringResource(R.string.chat_page_cancel),
+                                Surface(
                                     onClick = { editConversation = null },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    containerColor = Color(0xFF000000),
-                                    contentColor = Color.White,
-                                )
-                                DomChatGlassPillButton(
-                                    text = stringResource(R.string.chat_page_save),
+                                    shape = inputShape,
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                    tonalElevation = 0.dp,
+                                    modifier = Modifier.weight(1f).height(44.dp),
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.chat_page_cancel),
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 14.sp,
+                                            ),
+                                            color = Color.White,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                    }
+                                }
+                                Surface(
                                     onClick = {
                                         onEditTitle(conversation, editedTitle)
                                         editConversation = null
                                     },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    containerColor = Color(0xFF000000),
-                                    contentColor = Color.White,
-                                )
+                                    shape = inputShape,
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                                    tonalElevation = 0.dp,
+                                    modifier = Modifier.weight(1f).height(44.dp),
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.chat_page_save),
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 14.sp,
+                                            ),
+                                            color = Color.White,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

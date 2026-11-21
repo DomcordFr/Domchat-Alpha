@@ -149,7 +149,7 @@ fun VoiceSelector(
             DomChatInWindowBottomSheet(
                 visible = true,
                 onDismissRequest = { showSheet = false },
-                containerColor = Color.Unspecified,
+                containerColor = Color(0xFF000000),
                 dragHandle = { DomChatSheetDragHandle() },
                 maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
             ) {
@@ -284,7 +284,7 @@ fun ColumnScope.VoiceList(
                     .liquidGlassSurface(
                         shape = searchFieldShape,
                         borderWidth = 0.5.dp,
-                        fillColor = Color(0xFF000000).copy(alpha = 0.45f)
+                        fillColor = Color(0xFF000000)
                     ),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
@@ -476,7 +476,7 @@ private fun VoiceItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(14.dp)
-    val containerColor = if (selected) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
+    val containerColor = Color(0xFF000000)
     val contentColor = Color(0xFFFFFFFF)
 
     Row(

@@ -1149,21 +1149,24 @@ private fun ModelItem(
 ) {
     val navController = LocalNavController.current
 
+    val isLiquidGlass = style == ModelPickerStyle.LIQUID_GLASS
+    val tagFill = if (isLiquidGlass) Color.Transparent else null
+
     val activeBadge: @Composable RowScope.() -> Unit = {
         if (select) {
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(8.dp),
                 color = Color.Transparent,
                 contentColor = Color.White,
                 modifier = Modifier.liquidGlassSurface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(8.dp),
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                    fillColor = Color(0xFF000000)
+                    fillColor = if (isLiquidGlass) Color.Transparent else Color(0xFF000000)
                 )
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -1171,7 +1174,7 @@ private fun ModelItem(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(11.dp)
                     )
                     Text(
                         text = "ACTIVE",
@@ -1184,8 +1187,8 @@ private fun ModelItem(
     }
 
     if(inGroup) {
-        val rowContainerColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            Color.White.copy(alpha = 0.04f)
+        val rowContainerColor = if (isLiquidGlass) {
+            Color.Transparent
         } else {
             if (select) Color(0xFF000000) else Color(0xFF000000).copy(alpha = 0.55f)
         }
@@ -1216,8 +1219,8 @@ private fun ModelItem(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    ModelModalityTag(model = model)
-                    ModelAbilityTag(model = model)
+                    ModelModalityTag(model = model, fillColor = tagFill)
+                    ModelAbilityTag(model = model, fillColor = tagFill)
                 }
             },
             titleTrailing = {
@@ -1231,8 +1234,8 @@ private fun ModelItem(
     } else {
         val interactionSource = remember { MutableInteractionSource() }
         val cardShape = me.lucid.domchat.ui.theme.AppShapes.CardLarge
-        val resolvedFillColor = if (style == ModelPickerStyle.LIQUID_GLASS) {
-            Color.White.copy(alpha = 0.04f)
+        val resolvedFillColor = if (isLiquidGlass) {
+            Color.Transparent
         } else {
             Color(0xFF000000)
         }
@@ -1308,9 +1311,9 @@ private fun ModelItem(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            ModelModalityTag(model = model)
+                            ModelModalityTag(model = model, fillColor = tagFill)
 
-                            ModelAbilityTag(model = model)
+                            ModelAbilityTag(model = model, fillColor = tagFill)
                         }
                     }
                     tail()
@@ -1349,11 +1352,12 @@ fun ModelTypeTag(model: Model) {
 }
 
 @Composable
-fun ModelModalityTag(model: Model) {
+fun ModelModalityTag(model: Model, fillColor: Color? = null) {
     if (model.type == ModelType.STT) return
     
     Tag(
-        type = TagType.DEFAULT
+        type = TagType.DEFAULT,
+        fillColor = fillColor,
     ) {
         model.inputModalities.fastForEach { modality ->
             if (modality == Modality.AUDIO) return@fastForEach
@@ -1394,12 +1398,13 @@ fun ModelModalityTag(model: Model) {
 }
 
 @Composable
-fun ModelAbilityTag(model: Model) {
+fun ModelAbilityTag(model: Model, fillColor: Color? = null) {
     model.abilities.fastForEach { ability ->
         when (ability) {
             ModelAbility.TOOL -> {
                 Tag(
-                    type = TagType.DEFAULT
+                    type = TagType.DEFAULT,
+                    fillColor = fillColor,
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Build,
@@ -1412,7 +1417,8 @@ fun ModelAbilityTag(model: Model) {
 
             ModelAbility.REASONING -> {
                 Tag(
-                    type = TagType.DEFAULT
+                    type = TagType.DEFAULT,
+                    fillColor = fillColor,
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Lightbulb,

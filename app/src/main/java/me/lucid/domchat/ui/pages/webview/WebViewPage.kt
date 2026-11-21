@@ -16,11 +16,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberModalBottomSheetState
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +68,6 @@ fun WebViewPage(url: String, content: String) {
 
     var showDropdown by remember { mutableStateOf(false) }
     var showConsoleSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
 
     BackHandler(state.canGoBack) {
         state.goBack()
@@ -107,17 +105,16 @@ fun WebViewPage(url: String, content: String) {
                     ) {
                         Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.webview_more_options))
 
-                        val isDark = LocalDarkMode.current
                         DropdownMenu(
                             expanded = showDropdown,
                             onDismissRequest = { showDropdown = false },
                             shape = RoundedCornerShape(18.dp),
-                            containerColor = if (isDark) Color(0xFF141418) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = Color(0xFF000000),
                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.webview_open_in_browser)) },
-                                leadingIcon = { Icon(Icons.Rounded.Public, contentDescription = null) },
+                                text = { Text(stringResource(R.string.webview_open_in_browser), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Rounded.Public, contentDescription = null, tint = Color.White) },
                                 onClick = {
                                     showDropdown = false
                                     state.currentUrl?.let { url ->
@@ -128,8 +125,8 @@ fun WebViewPage(url: String, content: String) {
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.webview_console_logs)) },
-                                leadingIcon = { Icon(Icons.Rounded.BugReport, contentDescription = null) },
+                                text = { Text(stringResource(R.string.webview_console_logs), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Rounded.BugReport, contentDescription = null, tint = Color.White) },
                                 onClick = {
                                     showDropdown = false
                                     showConsoleSheet = true
@@ -150,14 +147,14 @@ fun WebViewPage(url: String, content: String) {
     }
 
     if (showConsoleSheet) {
-        ModalBottomSheet(
-        containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
-        onDismissRequest = { showConsoleSheet = false },
-        sheetState = sheetState,
-        dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
-        }
-    ) {
+        DomChatInWindowBottomSheet(
+            visible = true,
+            containerColor = Color(0xFF000000),
+            onDismissRequest = { showConsoleSheet = false },
+            dragHandle = {
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+            }
+        ) {
             me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             Column(
                 modifier = Modifier

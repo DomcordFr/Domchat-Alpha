@@ -43,6 +43,7 @@ fun Tag(
     modifier: Modifier = Modifier,
     type: TagType = TagType.DEFAULT,
     onClick: (() -> Unit)? = null,
+    fillColor: Color? = null,
     children: @Composable RowScope.() -> Unit
 ) {
     val haptics = rememberPremiumHaptics()
@@ -62,6 +63,7 @@ fun Tag(
     val background = Color(0xFF000000)
     val textColor = if (type == TagType.ERROR) Color(0xFFFF6B6B) else Color.White
     val tagShape = me.lucid.domchat.ui.theme.AppShapes.Tag
+    val resolvedFillColor = fillColor ?: Color(0xFF000000).copy(alpha = 0.50f)
     ProvideTextStyle(MaterialTheme.typography.labelSmall.copy(color = textColor)) {
         Row(
             modifier = modifier
@@ -71,7 +73,7 @@ fun Tag(
                 }
                 .liquidGlassSurface(
                     shape = tagShape,
-                    fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                    fillColor = resolvedFillColor,
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                 )

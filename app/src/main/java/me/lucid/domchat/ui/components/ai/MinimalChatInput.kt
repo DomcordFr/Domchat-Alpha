@@ -2314,15 +2314,32 @@ fun MinimalChatInput(
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.65f)
                     )
+                    val inputShape = RoundedCornerShape(14.dp)
                     OutlinedTextField(
                         value = noteDraft,
                         onValueChange = { noteDraft = it },
-                        label = { Text("Author's Note Directive") },
-                        placeholder = { Text("[Writing style: vivid, slow-burn, emotional]") },
+                        label = { Text("Author's Note Directive", color = Color.White.copy(alpha = 0.7f)) },
+                        placeholder = { Text("[Writing style: vivid, slow-burn, emotional]", color = Color.White.copy(alpha = 0.5f)) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 100.dp, max = 220.dp),
-                        shape = RoundedCornerShape(16.dp)
+                            .heightIn(min = 100.dp, max = 220.dp)
+                            .liquidGlassSurface(
+                                shape = inputShape,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = Color.Transparent,
+                            ),
+                        shape = inputShape,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            cursorColor = Color.White,
+                        )
                     )
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(
@@ -2351,12 +2368,14 @@ fun MinimalChatInput(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TextButton(onClick = { showAuthorsNoteSheet = false }) {
-                            Text("Cancel", color = Color.White.copy(alpha = 0.7f))
-                        }
-                        Spacer(Modifier.width(8.dp))
+                        DomChatGlassPillButton(
+                            text = "Cancel",
+                            onClick = { showAuthorsNoteSheet = false }
+                        )
+                        Spacer(Modifier.width(10.dp))
                         DomChatGlassPillButton(
                             text = "Save",
+                            accent = true,
                             onClick = {
                                 onUpdateAssistant(
                                     assistant.copy(
@@ -2365,8 +2384,7 @@ fun MinimalChatInput(
                                     )
                                 )
                                 showAuthorsNoteSheet = false
-                            },
-                            modifier = Modifier.height(36.dp)
+                            }
                         )
                     }
                 }
@@ -3113,7 +3131,8 @@ fun MinimalChatInput(
             onUpdateReasoningTokens = { tokens ->
                 onUpdateAssistant(assistant.copy(thinkingBudget = tokens))
                 showReasoningPicker = false
-            }
+            },
+            isChatPage = true,
         )
     }
 

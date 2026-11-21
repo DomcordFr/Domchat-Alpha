@@ -387,7 +387,8 @@ fun AssistantGreetingsSubPage(
                     .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val dialogShape = RoundedCornerShape(22.dp)
+                val dialogShape = RoundedCornerShape(20.dp)
+                val inputShape = RoundedCornerShape(14.dp)
                 Surface(
                     color = Color.Transparent,
                     shape = dialogShape,
@@ -397,9 +398,9 @@ fun AssistantGreetingsSubPage(
                         .imePadding()
                         .liquidGlassSurface(
                             shape = dialogShape,
-                            fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                            fillColor = Color.Transparent,
                             borderWidth = 0.5.dp,
-                            specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                         )
                 ) {
                     Column(
@@ -420,11 +421,27 @@ fun AssistantGreetingsSubPage(
                         OutlinedTextField(
                             value = newGreetingDraftName,
                             onValueChange = { newGreetingDraftName = it },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .liquidGlassSurface(
+                                    shape = inputShape,
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    fillColor = Color.Transparent,
+                                ),
                             singleLine = true,
-                            placeholder = { Text("Greeting name") },
-                            shape = AppShapes.InputField,
-                            colors = appFieldColors()
+                            placeholder = { Text("Greeting name", color = Color.White.copy(alpha = 0.5f)) },
+                            shape = inputShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                cursorColor = Color.White,
+                            )
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -475,7 +492,8 @@ fun AssistantGreetingsSubPage(
                         .padding(horizontal = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val dialogShape = RoundedCornerShape(22.dp)
+                    val dialogShape = RoundedCornerShape(20.dp)
+                    val inputShape = RoundedCornerShape(14.dp)
                     Surface(
                         color = Color.Transparent,
                         shape = dialogShape,
@@ -485,9 +503,9 @@ fun AssistantGreetingsSubPage(
                             .imePadding()
                             .liquidGlassSurface(
                                 shape = dialogShape,
-                                fillColor = Color(0xFF000000).copy(alpha = 0.50f),
+                                fillColor = Color.Transparent,
                                 borderWidth = 0.5.dp,
-                                specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                             )
                     ) {
                         Column(
@@ -508,7 +526,12 @@ fun AssistantGreetingsSubPage(
                                         modifier = Modifier
                                             .size(36.dp)
                                             .clip(CircleShape)
-                                            .background(Color.White.copy(alpha = 0.08f)),
+                                            .liquidGlassSurface(
+                                                shape = CircleShape,
+                                                fillColor = Color.Transparent,
+                                                borderWidth = 0.5.dp,
+                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                            ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
@@ -546,11 +569,27 @@ fun AssistantGreetingsSubPage(
                                 OutlinedTextField(
                                     value = renameDraft,
                                     onValueChange = { renameDraft = it },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .liquidGlassSurface(
+                                            shape = inputShape,
+                                            borderWidth = 0.5.dp,
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                            fillColor = Color.Transparent,
+                                        ),
                                     singleLine = true,
-                                    placeholder = { Text("Initial message name") },
-                                    shape = AppShapes.InputField,
-                                    colors = me.lucid.domchat.ui.theme.appFieldColors()
+                                    placeholder = { Text("Initial message name", color = Color.White.copy(alpha = 0.5f)) },
+                                    shape = inputShape,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        disabledContainerColor = Color.Transparent,
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        cursorColor = Color.White,
+                                    )
                                 )
 
                                 AnimatedVisibility(

@@ -302,54 +302,96 @@ fun AssistantProfileSubPage(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            // Status Badges Row
+                            // Status Badges Row (clean mobile 3-column layout)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                val cardShape = RoundedCornerShape(10.dp)
+                                val cardBorder = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+
+                                // Starts
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFF000000), RoundedCornerShape(8.dp))
-                                        .border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle), RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .weight(1f)
+                                        .background(Color(0xFF000000), cardShape)
+                                        .border(cardBorder, cardShape)
+                                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = stringResource(
-                                            R.string.assistant_advanced_schedule_starts,
-                                            formatHourLabel(scheduleSelection.startHour)
-                                        ),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Starts",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White.copy(alpha = 0.55f),
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = formatHourLabel(scheduleSelection.startHour),
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White,
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
 
+                                // Duration
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFF000000), RoundedCornerShape(8.dp))
-                                        .border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle), RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .weight(1f)
+                                        .background(Color(0xFF000000), cardShape)
+                                        .border(cardBorder, cardShape)
+                                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = buildSpontaneousScheduleStatusLabel(context, scheduleSelection),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Duration",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White.copy(alpha = 0.55f),
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = if (scheduleSelection.spanHours >= 24) "All Day" else "${scheduleSelection.spanHours}h",
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White,
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
 
+                                // Ends
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFF000000), RoundedCornerShape(8.dp))
-                                        .border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle), RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .weight(1f)
+                                        .background(Color(0xFF000000), cardShape)
+                                        .border(cardBorder, cardShape)
+                                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = stringResource(
-                                            R.string.assistant_advanced_schedule_ends,
-                                            formatScheduleEndLabel(context, scheduleSelection)
-                                        ),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Ends",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White.copy(alpha = 0.55f),
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = formatScheduleEndLabel(context, scheduleSelection),
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White,
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
                             }
 

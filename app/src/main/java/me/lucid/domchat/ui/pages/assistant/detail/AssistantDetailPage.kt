@@ -806,13 +806,6 @@ private fun AssistantDetailHome(
                 description = "Example conversation turns demonstrating speech style and behavior",
                 onClick = { navController.navigate(AssistantDetailRoutes.EXAMPLE_DIALOGUES) }
             )
-
-            NavigationCard(
-                icon = Icons.Rounded.Psychology,
-                title = "Memories & RAG",
-                description = "Character memories, episodic recall, and embedding search",
-                onClick = { navController.navigate(AssistantDetailRoutes.MEMORY) }
-            )
         }
 
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_advanced)) {
@@ -828,20 +821,6 @@ private fun AssistantDetailHome(
                 title = "Context & Budget",
                 description = stringResource(R.string.assistant_detail_advanced_context_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.CONTEXT_MANAGEMENT) }
-            )
-
-            NavigationCard(
-                icon = Icons.Rounded.Handyman,
-                title = "Tools & Workspace",
-                description = "Search integrations, workspace access, and MCP servers",
-                onClick = { navController.navigate(AssistantDetailRoutes.TOOLS) }
-            )
-
-            NavigationCard(
-                icon = Icons.Rounded.AutoAwesome,
-                title = "Character Skills",
-                description = "Specialized skills and capabilities enabled for this character",
-                onClick = { navController.navigate(AssistantDetailRoutes.SKILLS) }
             )
 
             NavigationCard(

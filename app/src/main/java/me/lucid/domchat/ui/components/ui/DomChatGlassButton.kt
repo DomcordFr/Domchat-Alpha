@@ -1,6 +1,8 @@
 package me.lucid.domchat.ui.components.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,9 +15,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,6 +81,7 @@ fun DomChatGlassPillButton(
  * (no solid white, no solid black). Settings pages can pass `containerColor = Color(0xFF000000)`
  * for a black glass + specular border variant.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun DomChatGlassPillButtonContent(
     onClick: () -> Unit,
@@ -91,15 +96,14 @@ private fun DomChatGlassPillButtonContent(
     text: String,
     content: (@Composable RowScope.() -> Unit)? = null,
 ) {
-    val shape = if (destructive) RoundedCornerShape(16.dp) else AppShapes.ButtonPill
+    val shape = AppShapes.ButtonPill
     val resolvedTextColor = contentColor.takeIf { it != null } ?: Color.White
     val resolvedIconTint = resolvedTextColor
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
+    val glassFill = containerColor.takeIf { it != null } ?: Color.Transparent
     val surfaceModifier = if (destructive) {
-        modifier
+        modifier.border(0.5.dp, borderBrush, shape)
     } else {
-        val glassFill = containerColor.takeIf { it != null }
-            ?: if (accent) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.08f)
         modifier.liquidGlassSurface(
             shape = shape,
             fillColor = if (enabled) glassFill else glassFill.copy(alpha = 0.4f),
@@ -108,46 +112,49 @@ private fun DomChatGlassPillButtonContent(
         )
     }
 
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        shape = shape,
-        color = if (destructive) {
-            val dColor = Color(DOMCHAT_DESTRUCTIVE)
-            if (enabled) dColor else dColor.copy(alpha = 0.5f)
-        } else {
-            Color.Transparent
-        },
-        tonalElevation = 0.dp,
-        modifier = surfaceModifier,
-    ) {
-        Row(
-            modifier = Modifier.padding(contentPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+        Surface(
+            onClick = onClick,
+            enabled = enabled,
+            shape = shape,
+            color = if (destructive) {
+                val dColor = Color(DOMCHAT_DESTRUCTIVE)
+                if (enabled) dColor else dColor.copy(alpha = 0.5f)
+            } else {
+                Color.Transparent
+            },
+            tonalElevation = 0.dp,
+            modifier = surfaceModifier,
         ) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = resolvedIconTint
+            Row(
+                modifier = Modifier.padding(contentPadding),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = resolvedIconTint
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                    ),
+                    color = when {
+                        !enabled -> resolvedTextColor.copy(alpha = 0.4f)
+                        else -> resolvedTextColor
+                    },
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
                 )
+                content?.invoke(this)
             }
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                ),
-                color = when {
-                    !enabled -> resolvedTextColor.copy(alpha = 0.4f)
-                    else -> resolvedTextColor
-                },
-                maxLines = 1,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
-            content?.invoke(this)
         }
     }
 }

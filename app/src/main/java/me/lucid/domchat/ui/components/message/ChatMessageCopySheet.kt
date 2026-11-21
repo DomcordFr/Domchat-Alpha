@@ -23,6 +23,9 @@ import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +49,7 @@ import me.lucid.domchat.utils.copyMessageToClipboard
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.modifier.fadeEdges
 
 
 
@@ -106,12 +110,15 @@ fun ChatMessageCopySheet(
                 }
             } else {
                 SelectionContainer {
+                    val textScrollState = rememberScrollState()
+                    val canScrollUp by remember { derivedStateOf { textScrollState.canScrollBackward } }
+                    val canScrollDown by remember { derivedStateOf { textScrollState.canScrollForward } }
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .liquidGlassSurface(
                                 shape = RoundedCornerShape(16.dp),
-                                fillColor = Color.White.copy(alpha = 0.05f),
+                                fillColor = Color.Transparent,
                                 borderWidth = 0.5.dp,
                                 specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                             )
@@ -120,7 +127,8 @@ fun ChatMessageCopySheet(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScroll(rememberScrollState()),
+                                .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 24f)
+                                .verticalScroll(textScrollState),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             textParts.fastForEach { textPart ->

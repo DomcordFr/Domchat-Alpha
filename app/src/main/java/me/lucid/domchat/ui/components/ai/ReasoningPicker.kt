@@ -188,6 +188,7 @@ fun ReasoningPicker(
     reasoningTokens: Int,
     onDismissRequest: () -> Unit = {},
     onUpdateReasoningTokens: (Int) -> Unit,
+    isChatPage: Boolean = false,
 ) {
     val config = remember(model) { resolveReasoningConfig(model) }
     val currentLevel = ReasoningLevel.fromBudgetTokens(reasoningTokens)
@@ -205,7 +206,7 @@ fun ReasoningPicker(
         DomChatInWindowBottomSheet(
             visible = true,
             onDismissRequest = onDismissRequest,
-            containerColor = Color(0xFF000000),
+            containerColor = if (isChatPage) Color.Transparent else Color(0xFF000000),
             dragHandle = { DomChatSheetDragHandle() },
             maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.88f).dp,
         ) {
@@ -239,7 +240,8 @@ fun ReasoningPicker(
                             title = stringResource(id = R.string.reasoning_off),
                             subtitle = stringResource(id = R.string.reasoning_off_desc),
                             onClick = { onUpdateReasoningTokens(0) },
-                            isAmoled = isAmoled
+                            isAmoled = isAmoled,
+                            isChatPage = isChatPage
                         )
                         ReasoningOptionItem(
                             selected = currentLevel != ReasoningLevel.OFF,
@@ -247,7 +249,8 @@ fun ReasoningPicker(
                             title = stringResource(id = R.string.reasoning_auto),
                             subtitle = stringResource(id = R.string.reasoning_auto_desc),
                             onClick = { onUpdateReasoningTokens(-1) },
-                            isAmoled = isAmoled
+                            isAmoled = isAmoled,
+                            isChatPage = isChatPage
                         )
                     }
                 }
@@ -266,7 +269,8 @@ fun ReasoningPicker(
                                     title = stringResource(id = R.string.reasoning_off),
                                     subtitle = stringResource(id = R.string.reasoning_off_desc),
                                     onClick = { onUpdateReasoningTokens(0) },
-                                    isAmoled = isAmoled
+                                    isAmoled = isAmoled,
+                                    isChatPage = isChatPage
                                 )
                             }
                             if (showAuto) {
@@ -276,7 +280,8 @@ fun ReasoningPicker(
                                     title = stringResource(id = R.string.reasoning_auto),
                                     subtitle = stringResource(id = R.string.reasoning_auto_desc),
                                     onClick = { onUpdateReasoningTokens(-1) },
-                                    isAmoled = isAmoled
+                                    isAmoled = isAmoled,
+                                    isChatPage = isChatPage
                                 )
                             }
                         }
@@ -314,7 +319,8 @@ fun ReasoningPicker(
                                     title = option.title,
                                     subtitle = option.desc,
                                     onClick = { onUpdateReasoningTokens(option.tokens) },
-                                    isAmoled = isAmoled
+                                    isAmoled = isAmoled,
+                                    isChatPage = isChatPage
                                 )
                             }
                         }
@@ -329,7 +335,8 @@ fun ReasoningPicker(
                             title = stringResource(id = R.string.reasoning_off),
                             subtitle = stringResource(id = R.string.reasoning_off_desc),
                             onClick = { onUpdateReasoningTokens(0) },
-                            isAmoled = isAmoled
+                            isAmoled = isAmoled,
+                            isChatPage = isChatPage
                         )
                         if (config.minTokens == 0) {
                             ReasoningOptionItem(
@@ -338,7 +345,8 @@ fun ReasoningPicker(
                                 title = stringResource(id = R.string.reasoning_auto),
                                 subtitle = stringResource(id = R.string.reasoning_auto_desc),
                                 onClick = { onUpdateReasoningTokens(-1) },
-                                isAmoled = isAmoled
+                                isAmoled = isAmoled,
+                                isChatPage = isChatPage
                             )
                         }
                     }
@@ -364,7 +372,8 @@ fun ReasoningPicker(
                                     title = formattedTokens,
                                     subtitle = stringResource(R.string.assistant_page_thinking_budget),
                                     onClick = { onUpdateReasoningTokens(tokens) },
-                                    isAmoled = isAmoled
+                                    isAmoled = isAmoled,
+                                    isChatPage = isChatPage
                                 )
                             }
                         }
@@ -385,13 +394,13 @@ private fun ReasoningOptionItem(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    isAmoled: Boolean  // Only use Color.Black when actually in OLED mode
+    isAmoled: Boolean,  // Only use Color.Black when actually in OLED mode
+    isChatPage: Boolean = false,
 ) {
     val haptics = me.lucid.domchat.ui.hooks.rememberPremiumHaptics()
     val itemShape = RoundedCornerShape(22.dp)
     
     val isDark = LocalDarkMode.current
-    val fill = Color.White.copy(alpha = 0.05f)
 
     val animatedTitleColor by animateColorAsState(
         targetValue = if (selected) Color.White else (if (isDark) Color(0xFFEEEEEE) else MaterialTheme.colorScheme.onSurface),
@@ -405,8 +414,21 @@ private fun ReasoningOptionItem(
     )
     val borderBrush = if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
 
-    Row(
-        modifier = Modifier
+    val itemModifier = if (isChatPage) {
+        Modifier
+            .fillMaxWidth()
+            .liquidGlassSurface(
+                shape = itemShape,
+                fillColor = Color.Transparent,
+                borderWidth = if (selected) 1.dp else 0.5.dp,
+                specularBrush = borderBrush,
+            )
+            .clickable {
+                haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
+                onClick()
+            }
+    } else {
+        Modifier
             .fillMaxWidth()
             .clip(itemShape)
             .background(Color(0xFF000000))
@@ -415,6 +437,10 @@ private fun ReasoningOptionItem(
                 haptics.perform(me.lucid.domchat.ui.hooks.HapticPattern.Pop)
                 onClick()
             }
+    }
+
+    Row(
+        modifier = itemModifier
             .animateContentSize(
                 animationSpec = spring<IntSize>(
                     dampingRatio = 0.85f,
@@ -452,13 +478,23 @@ private fun ReasoningOptionItem(
                     enter = fadeIn(spring(dampingRatio = 0.85f, stiffness = 300f)) + scaleIn(spring(dampingRatio = 0.85f, stiffness = 300f)),
                     exit = fadeOut(spring(dampingRatio = 0.85f, stiffness = 300f)) + scaleOut(spring(dampingRatio = 0.85f, stiffness = 300f))
                 ) {
+                    val badgeModifier = if (isChatPage) {
+                        Modifier.liquidGlassSurface(
+                            shape = RoundedCornerShape(8.dp),
+                            fillColor = Color.Transparent,
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderBrush
+                        )
+                    } else {
+                        Modifier.border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush), RoundedCornerShape(8.dp))
+                    }
                     Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color(0xFF000000),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isChatPage) Color.Transparent else Color(0xFF000000),
+                        modifier = badgeModifier
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
@@ -466,7 +502,7 @@ private fun ReasoningOptionItem(
                                 imageVector = Icons.Rounded.Check,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(12.dp)
+                                modifier = Modifier.size(11.dp)
                             )
                             Text(
                                 text = "ACTIVE",
@@ -496,19 +532,14 @@ private fun ReasoningLevelCard(
     description: @Composable () -> Unit = {},
     onClick: () -> Unit,
     shape: Shape = RoundedCornerShape(22.dp),
-    containerColor: Color? = null
+    containerColor: Color? = null,
+    isChatPage: Boolean = false,
 ) {
     val amoledMode by rememberAmoledDarkMode()
     val isDarkMode = LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
     
-    val defaultContainerColor = domChatCardContainerColor()
-    val targetContainerColor = Color(0xFF000000)
-    val animatedContainerColor by animateColorAsState(
-        targetValue = targetContainerColor,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
-        label = "reasoning_card_bg"
-    )
+    val targetContainerColor = if (isChatPage) Color.Transparent else Color(0xFF000000)
     
     val defaultContentColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
     val resolvedContentColor = if (selected) Color.White else defaultContentColor
@@ -517,7 +548,7 @@ private fun ReasoningLevelCard(
 
     val cardElevation = CardDefaults.cardElevation(defaultElevation = elevation)
     val cardColors = CardDefaults.cardColors(
-        containerColor = animatedContainerColor,
+        containerColor = targetContainerColor,
         contentColor = resolvedContentColor
     )
     val resolvedShape = RoundedCornerShape(22.dp)
@@ -528,9 +559,21 @@ private fun ReasoningLevelCard(
         animationSpec = spring(stiffness = 400f),
         label = "reasoning_card_border_width"
     )
+
+    val cardModifier = if (isChatPage) {
+        modifier.liquidGlassSurface(
+            shape = resolvedShape,
+            fillColor = Color.Transparent,
+            borderWidth = animatedBorderWidth,
+            specularBrush = borderBrush
+        )
+    } else {
+        modifier.border(animatedBorderWidth, borderBrush, resolvedShape)
+    }
+
     Card(
         onClick = onClick,
-        modifier = modifier.border(animatedBorderWidth, borderBrush, resolvedShape),
+        modifier = cardModifier,
         shape = resolvedShape,
         elevation = cardElevation,
         colors = cardColors
@@ -560,13 +603,23 @@ private fun ReasoningLevelCard(
                         enter = fadeIn(spring(stiffness = 400f)) + scaleIn(spring(stiffness = 400f)),
                         exit = fadeOut(spring(stiffness = 400f)) + scaleOut(spring(stiffness = 400f))
                     ) {
+                        val badgeModifier = if (isChatPage) {
+                            Modifier.liquidGlassSurface(
+                                shape = RoundedCornerShape(8.dp),
+                                fillColor = Color.Transparent,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderBrush
+                            )
+                        } else {
+                            Modifier.border(BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush), RoundedCornerShape(8.dp))
+                        }
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF000000),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush)
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isChatPage) Color.Transparent else Color(0xFF000000),
+                            modifier = badgeModifier
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
@@ -574,7 +627,7 @@ private fun ReasoningLevelCard(
                                     imageVector = Icons.Rounded.Check,
                                     contentDescription = null,
                                     tint = Color.White,
-                                    modifier = Modifier.size(12.dp)
+                                    modifier = Modifier.size(11.dp)
                                 )
                                 Text(
                                     text = "ACTIVE",

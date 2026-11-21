@@ -2623,8 +2623,34 @@ private fun CustomGreetingDialog(
     if (!visible) return
     val haptics = rememberPremiumHaptics()
     var greetingText by remember(visible) { mutableStateOf("") }
-    // Vertically centered, wraps its height, with screen margins so it is never
-    // cut off at the top or bottom by the keyboard or screen edges.
+    val outerBackdrop = LocalAppBackdrop.current
+    val settings = LocalSettings.current
+    val isFrosted = settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
+    val useGlass = outerBackdrop != null && me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported()
+
+    val dialogShape = RoundedCornerShape(20.dp)
+    val inputShape = RoundedCornerShape(14.dp)
+    val surfaceModifier: Modifier = if (useGlass) {
+        if (isFrosted) {
+            Modifier.frostedGlassSurface(
+                shape = dialogShape,
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = Color.Transparent,
+            )
+        } else {
+            Modifier.liquidGlassSurface(
+                shape = dialogShape,
+                borderWidth = 0.5.dp,
+                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = Color.Transparent,
+                glassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
+            )
+        }
+    } else {
+        Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, dialogShape)
+    }
+
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = androidx.compose.ui.window.DialogProperties(
@@ -2640,24 +2666,17 @@ private fun CustomGreetingDialog(
                 .imePadding(),
             contentAlignment = Alignment.Center
         ) {
-            val dialogShape = RoundedCornerShape(24.dp)
-            Surface(
-                shape = dialogShape,
-                color = Color.Transparent,
-                tonalElevation = 0.dp,
+            Box(
                 modifier = Modifier
                     .wrapContentHeight()
-                    .widthIn(max = 420.dp)
-                    .liquidGlassSurface(
-                        shape = dialogShape,
-                        fillColor = Color(0xFF000000).copy(alpha = 0.50f),
-                        borderWidth = 0.5.dp,
-                        specularBrush = LiquidGlassTokens.SpecularBorderBrush,
-                    ),
+                    .widthIn(min = 280.dp, max = 400.dp)
+                    .then(surfaceModifier)
+                    .clip(dialogShape)
+                    .background(if (useGlass) Color.Transparent else Color(0xFF000000)),
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(22.dp)
+                        .padding(24.dp)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
@@ -2678,21 +2697,27 @@ private fun CustomGreetingDialog(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 120.dp),
+                            .heightIn(min = 120.dp)
+                            .liquidGlassSurface(
+                                shape = inputShape,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                fillColor = Color.Transparent,
+                            ),
                         maxLines = Int.MAX_VALUE,
                         minLines = 6,
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                            disabledContainerColor = Color.White.copy(alpha = 0.02f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color.White.copy(alpha = 0.35f),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
                             cursorColor = Color.White,
                         ),
-                        shape = AppShapes.CardMedium,
+                        shape = inputShape,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
