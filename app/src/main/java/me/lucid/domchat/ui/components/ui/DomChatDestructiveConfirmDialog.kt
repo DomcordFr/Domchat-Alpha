@@ -49,14 +49,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.draw.clip
 import me.lucid.domchat.R
 import me.lucid.domchat.data.model.LiquidGlassMode
-import me.lucid.domchat.data.model.LocalSettings
+import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported
 import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.frostedGlassSurface
-import me.lucid.domchat.ui.theme.isRuntimeShaderSupported
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 private const val DELETE_RED = 0xFFE53935
