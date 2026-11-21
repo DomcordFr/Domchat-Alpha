@@ -47,6 +47,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Scaffold
 import me.lucid.domchat.ui.components.ui.HapticSwitch
 import androidx.compose.material3.Text
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LargeTopAppBar
@@ -113,6 +114,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateFloatAsState
+import me.lucid.domchat.ui.modifier.fadeEdges
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.listItemShape
 import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
@@ -354,7 +356,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         TTSProviderItemContent(
                             provider = provider,
                             catalogSnapshot = catalogSnapshot,
-                            itemShape = RoundedCornerShape(0.dp),
+                            itemShape = position.listItemShape(),
                             haptics = haptics,
                             onClick = {
                                 navController.navigate(Screen.SettingTTSProviderDetail(provider.id.toString()))
@@ -1345,50 +1347,14 @@ internal fun AddTTSProviderSheet(
                 } else null
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                onClick = {
-                    haptics.perform(HapticPattern.Pop)
-                    onAdd(TTSProviderSetting.OpenAI(name = "Custom TTS"))
-                    onDismissRequest()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF000000),
-                    contentColor = Color(0xFFF2F2F7)
-                ),
-                shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = Color(0xFFFFFFFF)
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Custom OpenAI-compatible TTS",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFFFFFFFF)
-                        )
-                    }
-                }
-            }
             Spacer(modifier = Modifier.height(12.dp))
 
             CompositionLocalProvider(
                 LocalOverscrollFactory provides null
             ) {
                 val lazyListState = rememberLazyListState()
+                val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+                val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
                 val nestedScrollConnection = remember {
                     object : NestedScrollConnection {
                         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -1404,10 +1370,49 @@ internal fun AddTTSProviderSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clipToBounds()
+                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown)
                         .nestedScroll(nestedScrollConnection),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)
                 ) {
+                    item {
+                        Card(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onAdd(TTSProviderSetting.OpenAI(name = "Custom TTS"))
+                                onDismissRequest()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFF000000),
+                                contentColor = Color(0xFFF2F2F7)
+                            ),
+                            shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = Color(0xFFFFFFFF)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Custom OpenAI-compatible TTS",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color(0xFFFFFFFF)
+                                    )
+                                }
+                            }
+                        }
+                    }
                     itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { index, preset ->
                         val shape = AppShapes.CardMedium
 

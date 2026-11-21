@@ -1937,6 +1937,8 @@ fun MinimalChatInput(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Compact accordion cards
                 styleDefs.forEachIndexed { idx, (label, pattern, defaultHex) ->
                     val isExpanded = expandedIndex == idx

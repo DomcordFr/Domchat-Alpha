@@ -726,7 +726,7 @@ private fun AssistantDetailHome(
             Text(
                 text = "Tap to change avatar",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.60f)
             )
 
             val resolvedHeaderName = (assistant.displayName ?: assistant.name).ifBlank { stringResource(R.string.assistant_page_default_assistant) }

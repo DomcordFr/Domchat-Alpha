@@ -350,7 +350,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                         .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
                         .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField)
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // Personas List

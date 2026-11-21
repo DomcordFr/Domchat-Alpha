@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.components.settings
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
@@ -64,7 +65,9 @@ fun DomChatModelFeatureCard(
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .animateContentSize(spring(dampingRatio = 0.8f, stiffness = 400f))
+                .padding(16.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -93,7 +96,9 @@ fun DomChatModelFeatureCard(
                 }
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize(spring(dampingRatio = 0.8f, stiffness = 400f)),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 content = actions,

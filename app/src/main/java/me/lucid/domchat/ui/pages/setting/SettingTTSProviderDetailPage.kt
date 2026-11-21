@@ -161,7 +161,7 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             TTSProviderIcon(provider = provider, catalogSnapshot = catalogSnapshot, modifier = Modifier.size(24.dp))
-                            Text(provider.name.ifBlank { "TTS Provider" }, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(provider.name.ifBlank { if (provider is TTSProviderSetting.SystemTTS || provider.id == DEFAULT_SYSTEM_TTS_ID) "System TTS" else "TTS Provider" }, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 )
@@ -175,85 +175,56 @@ fun SettingTTSProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val tabWidth = 64.dp
-                    val tabHeight = 44.dp
-                    val indicatorOffset by animateFloatAsState(
-                        targetValue = pager.currentPage.toFloat(),
-                        animationSpec = spring(
-                            dampingRatio = 0.75f,
-                            stiffness = 380f,
-                        ),
-                        label = "tts_tab_indicator",
-                    )
-
                     Surface(
-                        shape = CircleShape,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        shape = RoundedCornerShape(28.dp),
                         color = Color(0xFF000000),
-                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
-                        tonalElevation = 6.dp,
+                        border = BorderStroke(
+                            0.5.dp,
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.22f),
+                                    Color.White.copy(alpha = 0.06f),
+                                    Color.Transparent,
+                                )
+                            )
+                        ),
                         shadowElevation = 8.dp,
                     ) {
-                        Box(
+                        Row(
                             modifier = Modifier.padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = tabWidth * indicatorOffset)
-                                    .size(width = tabWidth, height = tabHeight)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.verticalGradient(
-                                            listOf(
-                                                Color.White.copy(alpha = 0.20f),
-                                                Color.White.copy(alpha = 0.08f),
-                                            )
-                                        )
-                                    )
-                                    .border(
-                                        0.5.dp,
-                                        Brush.verticalGradient(
-                                            listOf(
-                                                Color.White.copy(alpha = 0.40f),
-                                                Color.White.copy(alpha = 0.12f),
-                                            )
-                                        ),
-                                        CircleShape,
-                                    )
+                            val tabs = listOf(
+                                Icons.Rounded.Settings to "Configuration",
+                                Icons.Rounded.ViewModule to "Voices",
                             )
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                val tabs = listOf(
-                                    Icons.Rounded.Settings to "Configuration",
-                                    Icons.Rounded.ViewModule to "Voices",
-                                )
-                                tabs.forEachIndexed { index, (icon, label) ->
-                                    val selected = pager.currentPage == index
-                                    val iconTint by animateColorAsState(
-                                        targetValue = if (selected) Color(0xFFFFFFFF) else Color.White.copy(alpha = 0.45f),
-                                        animationSpec = spring(stiffness = 400f),
-                                        label = "tab_icon_tint_$index",
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = tabWidth, height = tabHeight)
-                                            .clip(CircleShape)
-                                            .clickable {
-                                                if (!selected) {
+                            tabs.forEachIndexed { index, (icon, label) ->
+                                val selected = pager.currentPage == index
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .then(
+                                            if (selected) {
+                                                Modifier
+                                                    .background(Color.White.copy(alpha = 0.18f))
+                                                    .border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+                                            } else {
+                                                Modifier.clickable {
                                                     haptics.perform(HapticPattern.Tick)
                                                     scope.launch { pager.animateScrollToPage(index) }
                                                 }
-                                            },
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = label,
-                                            tint = iconTint,
-                                            modifier = Modifier.size(22.dp),
+                                            }
                                         )
-                                    }
+                                        .padding(12.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = label,
+                                        tint = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
+                                        modifier = Modifier.size(24.dp),
+                                    )
                                 }
                             }
                         }

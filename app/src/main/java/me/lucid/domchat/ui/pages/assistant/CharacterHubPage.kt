@@ -106,6 +106,7 @@ import androidx.compose.material.icons.rounded.Folder
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
+import me.lucid.domchat.ui.components.chat.LocalSheetDismiss
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.components.ui.PhysicsSwipeToDelete
 import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
@@ -2790,8 +2791,9 @@ fun CharacterInspectorSheet(
             }
 
             // Close button floating at top-right with safe margin
+            val sheetDismiss = LocalSheetDismiss.current
             IconButton(
-                onClick = onDismiss,
+                onClick = { sheetDismiss?.invoke() ?: onDismiss() },
                 modifier = Modifier
                     .padding(top = 16.dp, end = 16.dp)
                     .align(Alignment.TopEnd)
@@ -3271,7 +3273,7 @@ private fun GroupTabsRow(
     ) {
         // "All" tab
         item(key = "__all_group__") {
-            val allLabel = "All ($allCount)"
+            val allLabel = "All"
             val isAllSelected = selectedGroupId == null
             Surface(
                 onClick = { onGroupSelected(null) },
@@ -4049,7 +4051,7 @@ private fun CharacterActionPopover(
                                         }
                                         Spacer(modifier = Modifier.height(2.dp))
                                         Text(
-                                            text = "Embedded avatar for SillyTavern, Agnai & Chub",
+                                            text = "Embedded avatar for SillyTavern",
                                             fontSize = 12.sp,
                                             color = Color(0xFF9E9EAA)
                                         )

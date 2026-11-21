@@ -152,7 +152,7 @@ fun AssistantProfileSubPage(
             Text(
                 text = stringResource(R.string.assistant_profile_tap_change_avatar),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.60f)
             )
         }
 

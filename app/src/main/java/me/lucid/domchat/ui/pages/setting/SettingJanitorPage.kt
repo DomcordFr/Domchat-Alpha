@@ -46,6 +46,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.LocalSheetDismiss
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import androidx.core.net.toUri
 import me.lucid.domchat.utils.saveToDownloads
@@ -616,6 +617,8 @@ fun SettingJanitorPage() {
                                 ),
                             )
 
+                            Spacer(modifier = Modifier.height(14.dp))
+
                             // Controls row: Feed mode dropdown + Sort & Filter buttons
                             Row(
                                 modifier = Modifier
@@ -1175,8 +1178,9 @@ private fun JanitorCharacterInspectorSheet(
                         }
                     }
                     // Close/cross button top-end corner over hero image
+                    val sheetDismiss = LocalSheetDismiss.current
                     IconButton(
-                        onClick = onDismiss,
+                        onClick = { sheetDismiss?.invoke() ?: onDismiss() },
                         modifier = Modifier
                             .padding(top = 12.dp, end = 12.dp)
                             .align(Alignment.TopEnd)

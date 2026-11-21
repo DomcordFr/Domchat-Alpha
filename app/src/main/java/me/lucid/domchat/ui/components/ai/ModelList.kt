@@ -1,6 +1,10 @@
 package me.lucid.domchat.ui.components.ai
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -174,6 +178,7 @@ fun ModelSelector(
     if (!onlyIcon) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.animateContentSize(spring(dampingRatio = 0.8f, stiffness = 400f)),
         ) {
             TextButton(
                 onClick = {
@@ -181,24 +186,45 @@ fun ModelSelector(
                 },
                 modifier = modifier
             ) {
-                model?.let { m ->
-                    val provider = m.findProvider(providers = providers)
-                    ModelIcon(
-                        model = m,
-                        provider = provider,
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .size(36.dp)
-                    )
+                AnimatedContent(
+                    targetState = model,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)) +
+                            scaleIn(initialScale = 0.92f, animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)))
+                            .togetherWith(
+                                fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f)) +
+                                    scaleOut(targetScale = 0.92f, animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f))
+                            )
+                    },
+                    label = "model_selector_content"
+                ) { currentModelItem ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        currentModelItem?.let { m ->
+                            val provider = m.findProvider(providers = providers)
+                            ModelIcon(
+                                model = m,
+                                provider = provider,
+                                modifier = Modifier
+                                    .padding(end = 4.dp)
+                                    .size(36.dp)
+                            )
+                        }
+                        Text(
+                            text = currentModelItem?.displayName ?: stringResource(R.string.model_list_select_model),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
-                Text(
-                    text = model?.displayName ?: stringResource(R.string.model_list_select_model),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
-            if (allowClear && model != null) {
+            AnimatedVisibility(
+                visible = allowClear && model != null,
+                enter = fadeIn(spring(dampingRatio = 0.8f, stiffness = 400f)) + expandHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f)),
+                exit = fadeOut(spring(dampingRatio = 0.8f, stiffness = 400f)) + shrinkHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f))
+            ) {
                 IconButton(
                     onClick = {
                         onClear?.invoke() ?: onSelect(Model())
@@ -575,6 +601,104 @@ internal fun ColumnScope.ModelList(
     val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
     val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
 
+    // Floating Search field at top
+    val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
+    val searchBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
+                end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
+                top = if (style == ModelPickerStyle.LIQUID_GLASS) 6.dp else 12.dp,
+                bottom = 10.dp
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .liquidGlassSurface(
+                    shape = searchFieldShape,
+                    fillColor = Color(0xFF000000).copy(alpha = 0.60f),
+                    borderWidth = 0.5.dp,
+                    specularBrush = searchBorder
+                )
+                .padding(horizontal = 14.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    if (searchKeywords.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.model_list_search_placeholder),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.65f),
+                            maxLines = 1
+                        )
+                    }
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = searchKeywords,
+                        onValueChange = { searchKeywords = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = Color.White,
+                            lineHeight = 20.sp
+                        ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                        ),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        )
+                    )
+                }
+                if (searchKeywords.isNotEmpty()) {
+                    IconButton(
+                        onClick = { searchKeywords = "" },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Clear",
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.White
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = {
+                        sortOrder = when (sortOrder) {
+                            ModelSortOrder.DEFAULT -> ModelSortOrder.NAME
+                            ModelSortOrder.NAME -> ModelSortOrder.CONTEXT
+                            ModelSortOrder.CONTEXT -> ModelSortOrder.DEFAULT
+                        }
+                    },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.Sort,
+                        contentDescription = "Sort",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .weight(1f)
@@ -587,13 +711,13 @@ internal fun ColumnScope.ModelList(
                 contentPadding = PaddingValues(
                     start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
                     end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
-                    top = if (style == ModelPickerStyle.LIQUID_GLASS) 74.dp else 112.dp,
-                    bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 24.dp else 100.dp
+                    top = 4.dp,
+                    bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 80.dp else 100.dp
                 ),
 
                 modifier = Modifier
                     .fillMaxSize()
-                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 40f)
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = false, fadeHeight = 28f)
                     .onGloballyPositioned { coordinates ->
                         viewportHeight = coordinates.size.height
                     },
@@ -756,7 +880,6 @@ internal fun ColumnScope.ModelList(
                                 tail = {
                                     IconButton(
                                         onClick = {
-                                            val willBeFavorite = !item.isFavorite
                                             coroutineScope.launch {
                                                 settingsStore.update { settings ->
                                                     if (item.isFavorite) {
@@ -769,9 +892,6 @@ internal fun ColumnScope.ModelList(
                                                             favoriteModels = settings.favoriteModels + item.model.id
                                                         )
                                                     }
-                                                }
-                                                if (willBeFavorite) {
-                                                    lazyListState.animateScrollToItem(0)
                                                 }
                                             }
                                         }
@@ -801,105 +921,6 @@ internal fun ColumnScope.ModelList(
                                         }
                                     }
                                 }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Floating Search field
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(
-                        start = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
-                        end = if (style == ModelPickerStyle.LIQUID_GLASS) 0.dp else 16.dp,
-                        top = if (style == ModelPickerStyle.LIQUID_GLASS) 8.dp else 16.dp,
-                        bottom = if (style == ModelPickerStyle.LIQUID_GLASS) 8.dp else 12.dp
-                    )
-            ) {
-                val searchFieldShape = me.lucid.domchat.ui.theme.AppShapes.SearchField
-                val searchBorder = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .liquidGlassSurface(
-                            shape = searchFieldShape,
-                            fillColor = Color.Transparent,
-                            borderWidth = 0.5.dp,
-                            specularBrush = searchBorder
-                        )
-                        .padding(horizontal = 14.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                            if (searchKeywords.isEmpty()) {
-                                Text(
-                                    text = stringResource(R.string.model_list_search_placeholder),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.65f),
-                                    maxLines = 1
-                                )
-                            }
-                            androidx.compose.foundation.text.BasicTextField(
-                                value = searchKeywords,
-                                onValueChange = { searchKeywords = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                    color = Color.White,
-                                    lineHeight = 20.sp
-                                ),
-                                cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
-                                singleLine = true,
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                    imeAction = androidx.compose.ui.text.input.ImeAction.Done
-                                ),
-                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                    onDone = { focusManager.clearFocus() }
-                                )
-                            )
-                        }
-                        if (searchKeywords.isNotEmpty()) {
-                            IconButton(
-                                onClick = { searchKeywords = "" },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Close,
-                                    contentDescription = "Clear",
-                                    modifier = Modifier.size(18.dp),
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                        IconButton(
-                            onClick = {
-                                sortOrder = when (sortOrder) {
-                                    ModelSortOrder.DEFAULT -> ModelSortOrder.NAME
-                                    ModelSortOrder.NAME -> ModelSortOrder.CONTEXT
-                                    ModelSortOrder.CONTEXT -> ModelSortOrder.DEFAULT
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Sort,
-                                contentDescription = "Sort",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }

@@ -292,7 +292,7 @@ private fun TemplateCard(
     val cardShape = AppShapes.CardMedium
     val settings = LocalSettings.current
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
-    val cardFill = if (isDark) Color(0xFF000000).copy(alpha = 0.45f) else Color.White.copy(alpha = 0.35f)
+    val cardFill = Color(0xFF000000)
 
     Card(
         onClick = onClick,
@@ -321,14 +321,14 @@ private fun TemplateCard(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = if (isDark) Color.White else MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -349,7 +349,7 @@ private fun ActionPill(
     val isDark = LocalDarkMode.current
     val settings = LocalSettings.current
     val borderBrush = LiquidGlassTokens.SpecularBorderSubtle
-    val pillFill = if (isDark) Color(0xFF000000).copy(alpha = 0.45f) else Color.White.copy(alpha = 0.35f)
+    val pillFill = Color(0xFF000000)
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(

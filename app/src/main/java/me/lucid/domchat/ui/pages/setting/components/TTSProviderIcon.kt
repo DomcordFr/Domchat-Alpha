@@ -24,7 +24,12 @@ fun TTSProviderIcon(
     modifier: Modifier = Modifier.size(40.dp),
     tint: Color = LocalContentColor.current
 ) {
-    if (provider is TTSProviderSetting.SystemTTS) {
+    val isSystem = provider is TTSProviderSetting.SystemTTS ||
+        provider.id == me.lucid.domchat.data.datastore.DEFAULT_SYSTEM_TTS_ID ||
+        provider.name.contains("system", ignoreCase = true) ||
+        provider.name.isEmpty()
+
+    if (isSystem) {
         Box(
             modifier = modifier,
             contentAlignment = Alignment.Center
@@ -33,7 +38,7 @@ fun TTSProviderIcon(
                 imageVector = Icons.Rounded.PhoneAndroid,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
-                tint = tint
+                tint = if (tint != Color.Unspecified) tint else Color.White
             )
         }
     } else {

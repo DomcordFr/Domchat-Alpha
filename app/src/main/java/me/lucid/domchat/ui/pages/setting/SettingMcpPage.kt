@@ -595,7 +595,7 @@ private fun McpConnectionsSheet(
                             haptics.perform(HapticPattern.Pop)
                             onAddCustom()
                         },
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(22.dp),
                         color = Color(0xFF000000),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth()
@@ -631,7 +631,7 @@ private fun McpConnectionsSheet(
                             haptics.perform(HapticPattern.Pop)
                             onSelect(preset)
                         },
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(22.dp),
                         color = Color(0xFF000000),
                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                         modifier = Modifier.fillMaxWidth()
@@ -852,16 +852,19 @@ private fun McpServerItem(
             }
 
             if (item.commonOptions.authMode == McpAuthMode.OAUTH && !hasOAuthCredentials) {
-                FilledTonalIconButton(
+                IconButton(
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         oauthManager.startAuthorization(item)
-                    }
+                    },
+                    modifier = Modifier
+                        .background(Color(0xFF000000), CircleShape)
+                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                 ) {
                     if (oauthStatus is McpOAuthStatus.Discovering || oauthStatus is McpOAuthStatus.ExchangingCode) {
-                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                     } else {
-                        Icon(Icons.AutoMirrored.Rounded.Login, "Sign in")
+                        Icon(Icons.AutoMirrored.Rounded.Login, "Sign in", tint = Color.White)
                     }
                 }
             } else {
@@ -882,6 +885,7 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
         DomChatInWindowBottomSheet(
             containerColor = Color(0xFF000000),
             maxHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp,
+            dragHandle = { DomChatSheetDragHandle() },
             onDismissRequest = {
                 state.dismiss()
             },
@@ -889,36 +893,50 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .navigationBarsPadding()
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                SecondaryTabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    containerColor = Color.Transparent
+                DomChatSheetHeader(
+                    title = if (config.commonOptions.name.isNotBlank()) config.commonOptions.name else "Custom MCP Server",
+                    subtitle = "Configure Model Context Protocol server connection",
+                    onCloseClick = { state.dismiss() },
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Tab(
-                        selected = pagerState.currentPage == 0,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(0)
-                            }
-                        },
-                        text = {
-                            Text(stringResource(R.string.setting_mcp_page_basic_settings))
-                        }
+                    val tabs = listOf(
+                        stringResource(R.string.setting_mcp_page_basic_settings),
+                        stringResource(R.string.setting_mcp_page_tools)
                     )
-                    Tab(
-                        selected = pagerState.currentPage == 1,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(1)
-                            }
-                        },
-                        text = {
-                            Text(stringResource(R.string.setting_mcp_page_tools))
+                    tabs.forEachIndexed { index, title ->
+                        val selected = pagerState.currentPage == index
+                        Surface(
+                            onClick = {
+                                scope.launch { pagerState.animateScrollToPage(index) }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF000000),
+                            border = BorderStroke(
+                                0.5.dp,
+                                if (selected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium),
+                                color = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 10.dp)
+                            )
                         }
-                    )
+                    }
                 }
+
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
@@ -941,18 +959,50 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
                         }
                     }
                 }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    TextButton(
+                    Surface(
+                        onClick = { state.dismiss() },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+                    }
+
+                    Surface(
                         onClick = {
                             if (config.commonOptions.name.isNotBlank()) {
                                 state.confirm()
                             }
-                        }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFF000000),
+                        border = BorderStroke(
+                            0.5.dp,
+                            if (config.commonOptions.name.isNotBlank()) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
+                        ),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(R.string.setting_mcp_page_save))
+                        Text(
+                            text = stringResource(R.string.setting_mcp_page_save),
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                            color = if (config.commonOptions.name.isNotBlank()) Color.White else Color.White.copy(alpha = 0.45f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
                     }
                 }
             }

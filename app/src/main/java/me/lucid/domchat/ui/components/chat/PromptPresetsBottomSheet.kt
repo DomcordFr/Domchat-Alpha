@@ -66,6 +66,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -74,6 +75,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -502,83 +504,85 @@ fun PromptPresetsBottomSheet(
                     )
 
                     // Row 2: Scope badge + Reset button
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxWidth().height(26.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Scope",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.55f)
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .liquidGlassSurface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        fillColor = if (isChatSpecific) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.06f),
-                                        borderWidth = 0.5.dp,
-                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle
-                                    )
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                AnimatedContent(
-                                    targetState = isChatSpecific,
-                                    transitionSpec = {
-                                        fadeIn(tween(200)) togetherWith fadeOut(tween(150))
-                                    },
-                                    label = "scope_badge_text"
-                                ) { chatSpecific ->
-                                    Text(
-                                        text = if (chatSpecific) "This Chat" else "Global",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = if (chatSpecific) Color.White else Color.White.copy(alpha = 0.85f)
-                                    )
+                                Text(
+                                    text = "Scope",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.55f)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .liquidGlassSurface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            fillColor = if (isChatSpecific) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.06f),
+                                            borderWidth = 0.5.dp,
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                        )
+                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    AnimatedContent(
+                                        targetState = isChatSpecific,
+                                        transitionSpec = {
+                                            fadeIn(tween(200)) togetherWith fadeOut(tween(150))
+                                        },
+                                        label = "scope_badge_text"
+                                    ) { chatSpecific ->
+                                        Text(
+                                            text = if (chatSpecific) "This Chat" else "Global",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (chatSpecific) Color.White else Color.White.copy(alpha = 0.85f)
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        AnimatedVisibility(
-                            visible = isChatSpecific,
-                            enter = fadeIn(tween(200)) + expandHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f)),
-                            exit = fadeOut(tween(150)) + shrinkHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f))
-                        ) {
-                            Surface(
-                                onClick = { resetToGlobal() },
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.Transparent,
-                                modifier = Modifier
-                                    .liquidGlassSurface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        fillColor = Color.White.copy(alpha = 0.10f),
-                                        borderWidth = 0.5.dp,
-                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle
-                                    )
-                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
+                            AnimatedVisibility(
+                                visible = isChatSpecific,
+                                enter = fadeIn(tween(200)) + expandHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f)),
+                                exit = fadeOut(tween(150)) + shrinkHorizontally(spring(dampingRatio = 0.8f, stiffness = 400f))
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                Surface(
+                                    onClick = { resetToGlobal() },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.Transparent,
+                                    modifier = Modifier
+                                        .liquidGlassSurface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            fillColor = Color.White.copy(alpha = 0.10f),
+                                            borderWidth = 0.5.dp,
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                        )
+                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Refresh,
-                                        contentDescription = null,
-                                        tint = Color.White.copy(alpha = 0.85f),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        text = "Reset",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Refresh,
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.85f),
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Text(
+                                            text = "Reset",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White
+                                        )
+                                    }
                                 }
                             }
                         }
