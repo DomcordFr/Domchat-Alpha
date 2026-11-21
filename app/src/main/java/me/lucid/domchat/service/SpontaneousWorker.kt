@@ -7,12 +7,24 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.Person
+import androidx.core.graphics.drawable.IconCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.utils.ImageUtils
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.coroutines.Dispatchers
@@ -215,15 +227,16 @@ class SpontaneousWorker(
 
         val eventId = Uuid.random().toString()
 
-        sendNotification(
-            assistantId = assistant.id,
+        sendSpontaneousNotification(
+            context = applicationContext,
+            assistant = assistant,
             conversationId = if (effectiveRelation == SpontaneousMessageRelation.RECENT_CHAT) {
                 conversation?.id
             } else {
                 null
             },
             eventId = eventId,
-            title = response.title?.takeIf { it.isNotBlank() } ?: assistant.name.ifBlank { applicationContext.getString(R.string.app_name) },
+            title = response.title?.takeIf { it.isNotBlank() } ?: (assistant.displayName ?: assistant.name).ifBlank { applicationContext.getString(R.string.app_name) },
             content = content,
             relation = effectiveRelation,
         )
@@ -434,49 +447,154 @@ class SpontaneousWorker(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun sendNotification(
-        assistantId: Uuid,
-        conversationId: Uuid?,
-        eventId: String,
-        title: String,
-        content: String,
-        relation: SpontaneousMessageRelation,
-    ) {
-        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(
-            NotificationChannel(
-                SPONTANEOUS_NOTIFICATION_CHANNEL_ID,
-                applicationContext.getString(R.string.notification_channel_spontaneous),
-                NotificationManager.IMPORTANCE_DEFAULT,
-            )
-        )
-
-        val intent = Intent(applicationContext, RouteActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra(EXTRA_IS_SPONTANEOUS_NOTIFICATION, true)
-            putExtra("assistantId", assistantId.toString())
-            conversationId?.let { putExtra("conversationId", it.toString()) }
-            putExtra(EXTRA_SPONTANEOUS_EVENT_ID, eventId)
-            putExtra(EXTRA_SPONTANEOUS_MESSAGE, content)
-            putExtra(EXTRA_SPONTANEOUS_RELATION, relation.wireValue)
+    companion object {
+        suspend fun loadAvatarBitmap(context: Context, avatar: Avatar): Bitmap? = withContext(Dispatchers.IO) {
+            when (avatar) {
+                is Avatar.Image -> {
+                    try {
+                        val cleanUrl = avatar.url.trim()
+                        if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+                            java.net.URL(cleanUrl).openStream().use { input ->
+                                BitmapFactory.decodeStream(input)
+                            }
+                        } else {
+                            val uri = if (cleanUrl.startsWith("/")) Uri.fromFile(java.io.File(cleanUrl)) else Uri.parse(cleanUrl)
+                            ImageUtils.loadOptimizedBitmap(context, uri, 256) ?: run {
+                                if (cleanUrl.startsWith("/")) BitmapFactory.decodeFile(cleanUrl) else null
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to load avatar bitmap for notification", e)
+                        null
+                    }
+                }
+                is Avatar.Resource -> {
+                    try {
+                        BitmapFactory.decodeResource(context.resources, avatar.id)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                else -> null
+            }
         }
-        val pendingIntent = PendingIntent.getActivity(
-            applicationContext,
-            eventId.hashCode(),
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
 
-        val notification = NotificationCompat.Builder(applicationContext, SPONTANEOUS_NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .build()
+        fun getCircularBitmap(bitmap: Bitmap): Bitmap {
+            val size = minOf(bitmap.width, bitmap.height)
+            val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(output)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            val rect = Rect(0, 0, size, size)
+            canvas.drawARGB(0, 0, 0, 0)
+            canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+            paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+            val srcRect = Rect(
+                (bitmap.width - size) / 2,
+                (bitmap.height - size) / 2,
+                (bitmap.width + size) / 2,
+                (bitmap.height + size) / 2
+            )
+            canvas.drawBitmap(bitmap, srcRect, rect, paint)
+            return output
+        }
 
-        notificationManager.notify(eventId.hashCode(), notification)
+        suspend fun sendSpontaneousNotification(
+            context: Context,
+            assistant: Assistant,
+            conversationId: Uuid?,
+            eventId: String,
+            title: String,
+            content: String,
+            relation: SpontaneousMessageRelation,
+        ) {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channel = NotificationChannel(
+                SPONTANEOUS_NOTIFICATION_CHANNEL_ID,
+                context.getString(R.string.notification_channel_spontaneous),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "Incoming roleplay messages from your characters"
+                enableLights(true)
+                enableVibration(true)
+            }
+            notificationManager.createNotificationChannel(channel)
+
+            val intent = Intent(context, RouteActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(EXTRA_IS_SPONTANEOUS_NOTIFICATION, true)
+                putExtra("assistantId", assistant.id.toString())
+                conversationId?.let { putExtra("conversationId", it.toString()) }
+                putExtra(EXTRA_SPONTANEOUS_EVENT_ID, eventId)
+                putExtra(EXTRA_SPONTANEOUS_MESSAGE, content)
+                putExtra(EXTRA_SPONTANEOUS_RELATION, relation.wireValue)
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                eventId.hashCode(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+
+            val rawBitmap = loadAvatarBitmap(context, assistant.avatar)
+            val circularBitmap = rawBitmap?.let { getCircularBitmap(it) }
+
+            val botPersonBuilder = Person.Builder()
+                .setName(title)
+                .setKey("bot_${assistant.id}")
+                .setBot(true)
+
+            if (circularBitmap != null) {
+                botPersonBuilder.setIcon(IconCompat.createWithBitmap(circularBitmap))
+            }
+            val botPerson = botPersonBuilder.build()
+
+            val userPerson = Person.Builder()
+                .setName("You")
+                .setKey("user")
+                .build()
+
+            val messagingStyle = NotificationCompat.MessagingStyle(userPerson)
+                .setConversationTitle(title)
+                .addMessage(
+                    NotificationCompat.MessagingStyle.Message(
+                        content,
+                        System.currentTimeMillis(),
+                        botPerson
+                    )
+                )
+
+            val notification = NotificationCompat.Builder(context, SPONTANEOUS_NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setStyle(messagingStyle)
+                .setContentTitle(title)
+                .setContentText(content)
+                .apply {
+                    if (circularBitmap != null) {
+                        setLargeIcon(circularBitmap)
+                    }
+                }
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .build()
+
+            notificationManager.notify(eventId.hashCode(), notification)
+        }
+
+        suspend fun sendTestNotification(context: Context, assistant: Assistant) {
+            val title = (assistant.displayName ?: assistant.name).ifBlank { "Character" }
+            val sampleGreetings = assistant.alternateGreetings.filter { it.isNotBlank() }
+            val content = sampleGreetings.randomOrNull()?.take(180) ?: "Hey! Just thinking about our conversation earlier... are you there?"
+            sendSpontaneousNotification(
+                context = context,
+                assistant = assistant,
+                conversationId = null,
+                eventId = Uuid.random().toString(),
+                title = title,
+                content = content,
+                relation = SpontaneousMessageRelation.UNRELATED
+            )
+        }
     }
 }

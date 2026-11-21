@@ -28,15 +28,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Chat
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.DataObject
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Handyman
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -270,9 +273,13 @@ fun AssistantDetailPage(
                 AssistantDetailRoutes.GREETINGS -> "Initial Messages"
                 AssistantDetailRoutes.LOREBOOKS -> "Lorebooks & World Info"
                 AssistantDetailRoutes.EXAMPLE_DIALOGUES -> "Example Dialogues"
+                AssistantDetailRoutes.MEMORY -> "Memories & RAG"
                 AssistantDetailRoutes.MODEL -> stringResource(R.string.assistant_detail_models)
                 AssistantDetailRoutes.CONTEXT_MANAGEMENT -> "Context & Budget"
                 AssistantDetailRoutes.UI -> stringResource(R.string.assistant_detail_ui_customization)
+                AssistantDetailRoutes.TOOLS -> "Tools & Workspace"
+                AssistantDetailRoutes.SKILLS -> "Character Skills"
+                AssistantDetailRoutes.ADVANCED -> stringResource(R.string.assistant_page_advanced)
                 else -> assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
             }
 
@@ -554,6 +561,55 @@ fun AssistantDetailPage(
                     onUpdate = { onUpdate(it) }
                 )
             }
+
+            // Tools & Workspace
+            composable(AssistantDetailRoutes.TOOLS) {
+                AssistantToolsSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm,
+                    mcpServerConfigs = mcpServerConfigs
+                )
+            }
+
+            // Skills
+            composable(AssistantDetailRoutes.SKILLS) {
+                AssistantSkillsSubPage(
+                    assistant = assistant,
+                    onUpdate = { onUpdate(it) },
+                    vm = vm
+                )
+            }
+
+            // Memories & RAG
+            composable(AssistantDetailRoutes.MEMORY) {
+                val embeddingProgress by vm.embeddingProgress.collectAsStateWithLifecycle()
+                val retrievalDebugState by vm.retrievalDebugState.collectAsStateWithLifecycle()
+                val needsEmbeddingRegeneration by vm.needsEmbeddingRegeneration.collectAsStateWithLifecycle()
+                val embeddingStatus by vm.embeddingStatus.collectAsStateWithLifecycle()
+                val estimatedMemoryCapacity by vm.estimatedMemoryCapacity.collectAsStateWithLifecycle()
+
+                AssistantMemorySettings(
+                    assistant = assistant,
+                    hasSummarizerModelConfigured = settings.summarizerModelId != null,
+                    memories = memories,
+                    onUpdateAssistant = { onUpdate(it) },
+                    onAddMemory = { vm.addMemory(it) },
+                    onUpdateMemory = { vm.updateMemory(it) },
+                    onDeleteMemory = { vm.deleteMemory(it) },
+                    onRegenerateEmbeddings = { vm.regenerateEmbeddings() },
+                    embeddingProgress = embeddingProgress,
+                    onTestRetrieval = { query -> vm.testMemoryRetrieval(query) },
+                    retrievalDebugState = retrievalDebugState,
+                    assistantDetailVM = vm,
+                    estimatedMemoryCapacity = estimatedMemoryCapacity,
+                    needsEmbeddingRegeneration = needsEmbeddingRegeneration,
+                    embeddingStatus = embeddingStatus,
+                    initialMemoryTab = initialMemoryTab,
+                    scrollToMemoryId = scrollToMemoryId,
+                    onNavigateToSummarizerSettings = { rootNavController.navigate(Screen.SettingModels) }
+                )
+            }
         }
     }
 
@@ -750,6 +806,13 @@ private fun AssistantDetailHome(
                 description = "Example conversation turns demonstrating speech style and behavior",
                 onClick = { navController.navigate(AssistantDetailRoutes.EXAMPLE_DIALOGUES) }
             )
+
+            NavigationCard(
+                icon = Icons.Rounded.Psychology,
+                title = "Memories & RAG",
+                description = "Character memories, episodic recall, and embedding search",
+                onClick = { navController.navigate(AssistantDetailRoutes.MEMORY) }
+            )
         }
 
         SettingsGroup(title = stringResource(R.string.assistant_detail_section_advanced)) {
@@ -768,10 +831,31 @@ private fun AssistantDetailHome(
             )
 
             NavigationCard(
+                icon = Icons.Rounded.Handyman,
+                title = "Tools & Workspace",
+                description = "Search integrations, workspace access, and MCP servers",
+                onClick = { navController.navigate(AssistantDetailRoutes.TOOLS) }
+            )
+
+            NavigationCard(
+                icon = Icons.Rounded.AutoAwesome,
+                title = "Character Skills",
+                description = "Specialized skills and capabilities enabled for this character",
+                onClick = { navController.navigate(AssistantDetailRoutes.SKILLS) }
+            )
+
+            NavigationCard(
                 icon = Icons.Rounded.Palette,
                 title = stringResource(R.string.assistant_detail_ui_customization),
                 description = stringResource(R.string.assistant_detail_advanced_ui_desc),
                 onClick = { navController.navigate(AssistantDetailRoutes.UI) }
+            )
+
+            NavigationCard(
+                icon = Icons.Rounded.Settings,
+                title = stringResource(R.string.assistant_page_advanced),
+                description = "TTS autoplay, custom HTTP headers, bodies & regex formatting",
+                onClick = { navController.navigate(AssistantDetailRoutes.ADVANCED) }
             )
         }
 
