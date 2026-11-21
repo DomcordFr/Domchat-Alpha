@@ -1848,11 +1848,11 @@ private fun AssistantMessageTurn(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (chatAnimationsEnabled && (timelineOpen || loadingJustFinished)) {
+                if (chatAnimationsEnabled) {
                     Modifier.animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 220,
-                            easing = LinearOutSlowInEasing
+                        animationSpec = spring(
+                            dampingRatio = 0.88f,
+                            stiffness = 110f
                         )
                     )
                 } else {
@@ -2474,8 +2474,8 @@ private fun AssistantThinkingDropdown(
 
     val reasoningMotionSpec = remember {
         spring<androidx.compose.ui.unit.IntSize>(
-            dampingRatio = 0.90f,
-            stiffness = 160f
+            dampingRatio = 0.88f,
+            stiffness = 110f
         )
     }
 
@@ -2552,13 +2552,13 @@ private fun AssistantThinkingDropdown(
         AnimatedVisibility(
             visible = expanded,
             enter = expandVertically(
-                animationSpec = spring(dampingRatio = 0.90f, stiffness = 160f),
+                animationSpec = spring(dampingRatio = 0.88f, stiffness = 110f),
                 expandFrom = Alignment.Top
-            ) + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing)),
+            ) + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing)),
             exit = shrinkVertically(
-                animationSpec = spring(dampingRatio = 0.90f, stiffness = 160f),
+                animationSpec = spring(dampingRatio = 0.88f, stiffness = 110f),
                 shrinkTowards = Alignment.Top
-            ) + fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing))
+            ) + fadeOut(animationSpec = tween(240, easing = LinearOutSlowInEasing))
         ) {
             Column(
                 modifier = Modifier

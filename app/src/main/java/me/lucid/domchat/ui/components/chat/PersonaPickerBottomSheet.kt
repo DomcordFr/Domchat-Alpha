@@ -120,14 +120,14 @@ fun PersonaPickerBottomSheet(
             shape = shape,
             borderWidth = if (isActive) 1.dp else 0.5.dp,
             specularBrush = if (isActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-            fillColor = if (isActive) Color.White.copy(alpha = 0.10f) else Color.Transparent,
+            fillColor = Color.Transparent,
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = shape,
             borderWidth = if (isActive) 1.dp else 0.5.dp,
             specularBrush = if (isActive) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
-            fillColor = if (isActive) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+            fillColor = Color.Transparent,
             glassMode = LiquidGlassMode.BALANCED_BLEND,
         )
     }

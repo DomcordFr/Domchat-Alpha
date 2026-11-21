@@ -449,65 +449,115 @@ fun PromptPresetsBottomSheet(
             ) {
 
         item {
-            // Action & scope controls: stable 2-row layout with Enable/Disable above scope & reset
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            val allEnabled = presets.isNotEmpty() && presets.all { it.id in effectiveEnabledIds }
+            val cardShape = RoundedCornerShape(18.dp)
+            Surface(
+                color = Color.Transparent,
+                shape = cardShape,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlassSurface(
+                        shape = cardShape,
+                        fillColor = Color.Transparent,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    )
             ) {
-                // Row 1: Enable All & Disable All evenly balanced
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    DomChatGlassPillButton(
-                        text = "Enable All",
-                        onClick = { toggleAll(true) },
-                        modifier = Modifier.weight(1f).height(34.dp),
-                    )
-                    DomChatGlassPillButton(
-                        text = "Disable All",
-                        onClick = { toggleAll(false) },
-                        modifier = Modifier.weight(1f).height(34.dp),
-                    )
-                }
-
-                // Row 2: Scope indicator (left, animated forward/backward switch) + optional Reset to Global (right, animated appearance)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AnimatedContent(
-                        targetState = isChatSpecific,
-                        transitionSpec = {
-                            if (targetState) {
-                                (slideInHorizontally { width -> width / 3 } + fadeIn(tween(200))) togetherWith
-                                    (slideOutHorizontally { width -> -width / 3 } + fadeOut(tween(150)))
-                            } else {
-                                (slideInHorizontally { width -> -width / 3 } + fadeIn(tween(200))) togetherWith
-                                    (slideOutHorizontally { width -> width / 3 } + fadeOut(tween(150)))
-                            }
-                        },
-                        label = "scope_switch_transition"
-                    ) { chatSpecific ->
-                        DomChatGlassChip(
-                            text = if (chatSpecific) "Using Chat" else "Using Global",
-                            accent = chatSpecific,
+                    // Row 1: Enable / Disable All with Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "All Presets",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White
+                            )
+                            Text(
+                                text = "${effectiveEnabledIds.size} of ${presets.size} active",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.65f)
+                            )
+                        }
+                        HapticSwitch(
+                            checked = allEnabled,
+                            onCheckedChange = { toggleAll(it) }
                         )
                     }
 
-                    AnimatedVisibility(
-                        visible = isChatSpecific,
-                        enter = fadeIn(animationSpec = tween(220)) + scaleIn(tween(220)) + expandHorizontally(),
-                        exit = fadeOut(animationSpec = tween(180)) + scaleOut(tween(180)) + shrinkHorizontally(),
+                    HorizontalDivider(
+                        color = Color.White.copy(alpha = 0.08f),
+                        thickness = 0.5.dp
+                    )
+
+                    // Row 2: Scope badge + Reset button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        DomChatGlassPillButton(
-                            text = "Reset",
-                            icon = Icons.Rounded.Refresh,
-                            onClick = { resetToGlobal() },
-                            modifier = Modifier.height(30.dp),
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Scope",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.55f)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        if (isChatSpecific) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.06f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = if (isChatSpecific) "This Chat" else "Global",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isChatSpecific) Color.White else Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
+
+                        if (isChatSpecific) {
+                            Surface(
+                                onClick = { resetToGlobal() },
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.08f),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Refresh,
+                                        contentDescription = null,
+                                        tint = Color.White.copy(alpha = 0.85f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        text = "Reset",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

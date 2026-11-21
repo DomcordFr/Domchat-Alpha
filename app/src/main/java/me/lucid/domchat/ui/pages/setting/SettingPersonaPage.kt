@@ -741,6 +741,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 modifier = Modifier.fillMaxWidth()
                             )
 
+                            Spacer(modifier = Modifier.height(10.dp))
+
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxWidth()

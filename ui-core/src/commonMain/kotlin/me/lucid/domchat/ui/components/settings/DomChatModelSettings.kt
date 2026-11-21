@@ -115,6 +115,7 @@ fun DomChatGroupedModelRow(
     containerColor: Color = Color.White.copy(alpha = 0.08f),
     drawBackground: Boolean = true,
     drawBorder: Boolean = true,
+    uniformCorners: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit,
     metadata: @Composable () -> Unit = {},
@@ -123,7 +124,11 @@ fun DomChatGroupedModelRow(
     dragHandle: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val target = groupedCornerRadii(selected, position)
+    val target = if (uniformCorners) {
+        ModelCornerRadii(18.dp, 18.dp, 18.dp, 18.dp)
+    } else {
+        groupedCornerRadii(selected, position)
+    }
     val topStart by animateDpAsState(
         target.topStart,
         spring(dampingRatio = 0.5f, stiffness = 400f),
@@ -179,7 +184,7 @@ fun DomChatGroupedModelRow(
             icon()
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

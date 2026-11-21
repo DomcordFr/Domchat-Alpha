@@ -327,11 +327,7 @@ internal fun ColumnScope.ModelList(
     
     // activeProviderId is null initially and is set upon explicit user click
 
-    val displayedFavoriteIds = if (style == ModelPickerStyle.LIQUID_GLASS) {
-        remember { settings.value.favoriteModels }
-    } else {
-        settings.value.favoriteModels
-    }
+    val displayedFavoriteIds = settings.value.favoriteModels
 
     val favoriteModels = displayedFavoriteIds.mapNotNull { modelId ->
         val model = providers.findModelById(modelId) ?: return@mapNotNull null
@@ -958,7 +954,8 @@ internal fun ColumnScope.ModelList(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.45f)
+                                    Color.Black.copy(alpha = 0.75f),
+                                    Color.Black
                                 )
                             )
                         )
@@ -967,8 +964,8 @@ internal fun ColumnScope.ModelList(
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(36.dp)
-                        .background(Color.Black.copy(alpha = 0.45f))
+                        .height(48.dp)
+                        .background(Color.Black)
                 )
             }
 
@@ -978,12 +975,12 @@ internal fun ColumnScope.ModelList(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 12.dp)
                 ) {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp),
                         state = providerBadgeListState
                     ) {
                         items(providers) { provider ->
@@ -1162,7 +1159,7 @@ private fun ModelItem(
                     shape = RoundedCornerShape(8.dp),
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                    fillColor = if (isLiquidGlass) Color.Transparent else Color(0xFF000000)
+                    fillColor = if (isLiquidGlass) Color.White.copy(alpha = 0.18f) else Color(0xFF000000)
                 )
             ) {
                 Row(
@@ -1198,7 +1195,7 @@ private fun ModelItem(
         val topEnd by animateDpAsState(target.topEnd, spring(dampingRatio = 0.5f, stiffness = 400f))
         val bottomStart by animateDpAsState(target.bottomStart, spring(dampingRatio = 0.5f, stiffness = 400f))
         val bottomEnd by animateDpAsState(target.bottomEnd, spring(dampingRatio = 0.5f, stiffness = 400f))
-        val rowShape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
+        val rowShape = if (isLiquidGlass) RoundedCornerShape(18.dp) else RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
         val glassModifier = if (isLiquidGlass) {
             modifier.liquidGlassSurface(
                 shape = rowShape,
@@ -1218,6 +1215,7 @@ private fun ModelItem(
             containerColor = rowContainerColor,
             drawBackground = !isLiquidGlass,
             drawBorder = !isLiquidGlass,
+            uniformCorners = isLiquidGlass,
             onLongClick = {
                 onDismiss()
                 navController.navigate(Screen.SettingProviderDetail(providerSetting.id.toString()))
@@ -1308,7 +1306,7 @@ private fun ModelItem(
                     )
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

@@ -229,12 +229,12 @@ fun AssistantGreetingsSubPage(
                         )
                         .border(
                             if (isSelected) BorderStroke(
-                                1.dp,
+                                0.5.dp,
                                 Brush.verticalGradient(
                                     listOf(
-                                        Color.White.copy(alpha = 0.65f),
-                                        Color.White.copy(alpha = 0.25f),
-                                        Color.White.copy(alpha = 0.08f)
+                                        Color.White.copy(alpha = 0.42f),
+                                        Color.White.copy(alpha = 0.18f),
+                                        Color.White.copy(alpha = 0.06f)
                                     )
                                 )
                             )

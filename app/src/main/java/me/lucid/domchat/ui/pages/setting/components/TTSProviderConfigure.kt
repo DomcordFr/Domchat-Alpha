@@ -120,6 +120,18 @@ fun TTSProviderConfigure(
                         TTSProviderIcon(provider = setting, catalogSnapshot = null, modifier = modifier.size(48.dp))
                     }
                 )
+            } else {
+                Box(
+                    modifier = Modifier.size(56.dp),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    TTSProviderIcon(
+                        provider = setting,
+                        catalogSnapshot = null,
+                        modifier = Modifier.size(44.dp),
+                        tint = Color.White
+                    )
+                }
             }
             
             // Name

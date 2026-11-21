@@ -179,8 +179,9 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                         showFilterSettingsDialog = true
                     },
                     shape = AppShapes.CardLarge,
-                    containerColor = Color(0xFFFFFFFF),
-                    contentColor = Color(0xFF000000)
+                    containerColor = Color(0xFF000000),
+                    contentColor = Color.White,
+                    modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.CardLarge)
                 ) {
                     Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.setting_tts_settings_title))
                 }
@@ -982,8 +983,21 @@ internal fun TtsTextFilterSettingsDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
+            Surface(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            ) {
+                Text(
+                    text = stringResource(android.R.string.ok),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    ),
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                )
             }
         }
     )

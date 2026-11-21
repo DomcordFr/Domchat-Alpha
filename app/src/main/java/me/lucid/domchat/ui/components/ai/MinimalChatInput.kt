@@ -2126,16 +2126,6 @@ fun MinimalChatInput(
                     }
                 }
             }
-
-            Spacer(Modifier.height(8.dp))
-                DomChatGlassPillButton(
-                    text = "Done",
-                    onClick = {
-                        showTextStylingDialog = false
-                        haptics.perform(HapticPattern.Pop)
-                    },
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp).height(36.dp)
-                )
             }
         }
     }
@@ -2849,9 +2839,10 @@ fun MinimalChatInput(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f, fill = false)
                         .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown, fadeHeight = 24f)
                         .verticalScroll(wallpaperScrollState)
-                        .padding(top = 12.dp, bottom = 36.dp),
+                        .padding(top = 12.dp, bottom = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Status & Action row
@@ -3070,8 +3061,28 @@ fun MinimalChatInput(
                             valueRange = 0f..0.95f
                         )
                     }
+                }
 
-                    // Save / Apply Button
+                // Sticky Bottom Apply Button with top fade gradient
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(20.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.50f)
+                                    )
+                                )
+                            )
+                    )
                     Surface(
                         onClick = {
                             val updatedConfig = me.lucid.domchat.data.datastore.ConversationWallpaperConfig(

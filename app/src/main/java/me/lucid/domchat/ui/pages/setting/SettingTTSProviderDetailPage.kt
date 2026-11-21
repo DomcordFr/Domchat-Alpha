@@ -850,7 +850,7 @@ private fun ProviderVoicesSheet(
 
     DomChatInWindowBottomSheet(
         containerColor = Color(0xFF000000),
-        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.90f).dp,
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.72f).dp,
         onDismissRequest = onDismiss,
     ) {
         Column(

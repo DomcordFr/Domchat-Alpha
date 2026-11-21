@@ -266,10 +266,22 @@ fun CharacterExportDialog(
         },
         confirmButton = {},
         dismissButton = {
-            DomChatGlassPillButton(
-                text = "Close",
-                onClick = onDismissRequest
-            )
+            Surface(
+                onClick = onDismissRequest,
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+            ) {
+                Text(
+                    text = "Close",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    ),
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                )
+            }
         }
     )
 }

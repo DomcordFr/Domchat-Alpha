@@ -337,6 +337,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
     // State for editing a service
     var editingService by remember { mutableStateOf<SearchServiceOptions?>(null) }
     var showCommonOptions by remember { mutableStateOf(false) }
+    var showAddSearchServiceSheet by remember { mutableStateOf(false) }
     
     // Move lazyListState outside for canScroll detection
     val lazyListState = rememberLazyListState()
@@ -387,14 +388,9 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                 AddSearchServiceButton(
                     enableHaptics = settings.displaySetting.enableUIHaptics,
                     catalogSnapshot = catalogSnapshot,
-                    asFab = true
-                ) { newService ->
-                    vm.updateSettings(
-                        settings.copy(
-                            searchServices = listOf(newService) + settings.searchServices
-                        )
-                    )
-                }
+                    asFab = true,
+                    onClick = { showAddSearchServiceSheet = true }
+                )
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -633,6 +629,18 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
             editingService = null
         }
     )
+
+    AddSearchServiceSheet(
+        visible = showAddSearchServiceSheet,
+        onDismissRequest = { showAddSearchServiceSheet = false },
+        onAdd = { newService ->
+            vm.updateSettings(
+                settings.copy(
+                    searchServices = listOf(newService) + settings.searchServices
+                )
+            )
+        }
+    )
 }
 
 @Composable
@@ -656,6 +664,7 @@ internal fun SearchProvidersContent(
     }
 
     var editingService by remember { mutableStateOf<SearchServiceOptions?>(null) }
+    var showAddSearchServiceSheet by remember { mutableStateOf(false) }
     var draggingIndex by remember { mutableStateOf(-1) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var isUnlocked by remember { mutableStateOf(false) }
@@ -863,6 +872,18 @@ internal fun SearchProvidersContent(
             editingService = null
         }
     )
+
+    AddSearchServiceSheet(
+        visible = showAddSearchServiceSheet,
+        onDismissRequest = { showAddSearchServiceSheet = false },
+        onAdd = { newService ->
+            vm.updateSettings(
+                settings.copy(
+                    searchServices = listOf(newService) + settings.searchServices
+                )
+            )
+        }
+    )
 }
 
 @Composable
@@ -1003,25 +1024,25 @@ internal fun SearchServiceEditorSheet(
 @Composable
 internal fun AddSearchServiceButton(
     enableHaptics: Boolean,
-    catalogSnapshot: ModelCatalogSnapshot?,
+    catalogSnapshot: ModelCatalogSnapshot? = null,
     asFab: Boolean = false,
-    onAdd: (SearchServiceOptions) -> Unit
+    onClick: (() -> Unit)? = null,
+    onAdd: ((SearchServiceOptions) -> Unit)? = null
 ) {
-    val context = LocalContext.current
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-
+    var showInternalSheet by remember { mutableStateOf(false) }
     val haptics = rememberPremiumHaptics(enabled = enableHaptics)
-    val openSearchProviderSheet = {
+    val handleOpen = {
         haptics.perform(HapticPattern.Pop)
-        searchQuery = ""
-        showBottomSheet = true
+        if (onClick != null) {
+            onClick()
+        } else {
+            showInternalSheet = true
+        }
     }
 
-    val isDark = LocalDarkMode.current
     if (asFab) {
         FloatingActionButton(
-            onClick = openSearchProviderSheet,
+            onClick = handleOpen,
             shape = CircleShape,
             containerColor = Color(0xFF000000),
             contentColor = Color.White,
@@ -1030,108 +1051,127 @@ internal fun AddSearchServiceButton(
             Icon(Icons.Rounded.Add, stringResource(R.string.setting_page_search_add_provider))
         }
     } else {
-        IconButton(onClick = openSearchProviderSheet) {
+        IconButton(onClick = handleOpen) {
             Icon(Icons.Rounded.Add, stringResource(R.string.setting_page_search_add_provider))
         }
     }
 
-    if (showBottomSheet) {
-        DomChatInWindowBottomSheet(
-            containerColor = Color(0xFF000000),
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.88f).dp,
-            onDismissRequest = {
-                showBottomSheet = false
-            },
+    if (onClick == null && onAdd != null) {
+        AddSearchServiceSheet(
+            visible = showInternalSheet,
+            catalogSnapshot = catalogSnapshot,
+            onDismissRequest = { showInternalSheet = false },
+            onAdd = onAdd
+        )
+    }
+}
+
+@Composable
+internal fun AddSearchServiceSheet(
+    visible: Boolean,
+    catalogSnapshot: ModelCatalogSnapshot? = null,
+    onDismissRequest: () -> Unit,
+    onAdd: (SearchServiceOptions) -> Unit
+) {
+    if (!visible) return
+    val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    val haptics = rememberPremiumHaptics()
+
+    DomChatInWindowBottomSheet(
+        containerColor = Color(0xFF000000),
+        maxHeight = (LocalConfiguration.current.screenHeightDp * 0.72f).dp,
+        onDismissRequest = onDismissRequest,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .imePadding()
-            ) {
-                DomChatSheetHeader(
-                    title = stringResource(R.string.setting_page_search_add_provider),
-                    onCloseClick = { showBottomSheet = false },
-                )
+            DomChatSheetHeader(
+                title = stringResource(R.string.setting_page_search_add_provider),
+                onCloseClick = onDismissRequest,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+            )
 
-                DomChatSearchBar(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = stringResource(R.string.setting_provider_page_search_placeholder),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
+            DomChatSearchBar(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = stringResource(R.string.setting_provider_page_search_placeholder),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+            )
 
-                val filteredPresets = remember(searchQuery, context) {
-                    if (searchQuery.isBlank()) {
-                        SEARCH_SERVICE_PRESETS
-                    } else {
-                        SEARCH_SERVICE_PRESETS.filter { preset ->
-                            val description = context.getString(preset.descriptionRes)
-                            preset.name.contains(searchQuery, ignoreCase = true) ||
-                            description.contains(searchQuery, ignoreCase = true)
-                        }
+            val filteredPresets = remember(searchQuery, context) {
+                if (searchQuery.isBlank()) {
+                    SEARCH_SERVICE_PRESETS
+                } else {
+                    SEARCH_SERVICE_PRESETS.filter { preset ->
+                        val description = context.getString(preset.descriptionRes)
+                        preset.name.contains(searchQuery, ignoreCase = true) ||
+                        description.contains(searchQuery, ignoreCase = true)
                     }
                 }
+            }
 
-                val lazyListState = rememberLazyListState()
-                val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
-                val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
+            val lazyListState = rememberLazyListState()
+            val canScrollUp by remember { derivedStateOf { lazyListState.canScrollBackward } }
+            val canScrollDown by remember { derivedStateOf { lazyListState.canScrollForward } }
 
-                LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { index, preset ->
-                        val shape = RoundedCornerShape(20.dp)
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = canScrollDown),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                itemsIndexed(filteredPresets, key = { _, preset -> preset.name }) { _, preset ->
+                    val shape = RoundedCornerShape(20.dp)
 
-                        Surface(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                val newService = preset.createOptions()
-                                onAdd(newService)
-                                showBottomSheet = false
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = shape,
-                            color = Color(0xFF000000),
-                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                    Surface(
+                        onClick = {
+                            haptics.perform(HapticPattern.Pop)
+                            val newService = preset.createOptions()
+                            onAdd(newService)
+                            onDismissRequest()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = shape,
+                        color = Color(0xFF000000),
+                        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                SearchProviderIcon(
-                                    name = preset.name,
-                                    catalogSnapshot = catalogSnapshot,
-                                    modifier = Modifier.size(38.dp),
-                                    contentColor = Color.White,
+                            SearchProviderIcon(
+                                name = preset.name,
+                                catalogSnapshot = catalogSnapshot,
+                                modifier = Modifier.size(38.dp),
+                                contentColor = Color.White,
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = preset.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White,
                                 )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = preset.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Color.White,
-                                    )
-                                    Text(
-                                        text = context.getString(preset.descriptionRes),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.65f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                if (preset.hasScraping) {
-                                    Tag(type = TagType.INFO) {
-                                        Text(stringResource(R.string.search_ability_scrape))
-                                    }
+                                Text(
+                                    text = context.getString(preset.descriptionRes),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.65f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            if (preset.hasScraping) {
+                                Tag(type = TagType.INFO) {
+                                    Text(stringResource(R.string.search_ability_scrape))
                                 }
                             }
                         }
@@ -1443,10 +1483,21 @@ internal fun CommonOptionsDialog(
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = onDismissRequest
+            Surface(
+                onClick = onDismissRequest,
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
             ) {
-                Text(stringResource(android.R.string.ok))
+                Text(
+                    text = stringResource(android.R.string.ok),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    ),
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                )
             }
         }
     )

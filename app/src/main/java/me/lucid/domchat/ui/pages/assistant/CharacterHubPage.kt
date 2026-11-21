@@ -2577,13 +2577,13 @@ fun CharacterInspectorSheet(
                                                                 .clip(RoundedCornerShape(8.dp))
                                                                 .background(Color(0xFF000000))
                                                                 .border(
-                                                                    if (isGreetingSelected) 1.dp else 0.5.dp,
+                                                                    0.5.dp,
                                                                     if (isGreetingSelected) {
                                                                         Brush.verticalGradient(
                                                                             listOf(
-                                                                                Color.White.copy(alpha = 0.65f),
-                                                                                Color.White.copy(alpha = 0.25f),
-                                                                                Color.White.copy(alpha = 0.08f),
+                                                                                Color.White.copy(alpha = 0.42f),
+                                                                                Color.White.copy(alpha = 0.18f),
+                                                                                Color.White.copy(alpha = 0.06f),
                                                                             )
                                                                         )
                                                                     } else cardBorderColor,

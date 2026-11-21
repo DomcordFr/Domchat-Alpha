@@ -1902,7 +1902,7 @@ private fun ModelPickerSheet(
             }
         }
         var resolvedModels by remember(models) { mutableStateOf(models) }
-        LaunchedEffect(models, parentProvider) {
+        LaunchedEffect(models, parentProvider.id, parentProvider.type) {
             if (models.isNotEmpty()) {
                 val resolved = withContext(Dispatchers.Default) {
                     resolveProviderModels(modelMetadataResolver, parentProvider, models)
@@ -1924,27 +1924,18 @@ private fun ModelPickerSheet(
                 }
             }
         }
-        val selectedModelIds = remember(parentProvider.models) {
-            parentProvider.models.map { it.modelId.lowercase() }.toSet()
-        }
-        val selectedModelMap = remember(resolvedModels, parentProvider.models, selectedModelIds) {
-            val map = HashMap<String, Model>(resolvedModels.size)
-            val selectedByLowerId = parentProvider.models.associateBy { it.modelId.lowercase() }
-            for (model in resolvedModels) {
-                val direct = selectedByLowerId[model.modelId.lowercase()]
-                if (direct != null) {
-                    map[model.modelId] = direct
-                } else {
-                    val match = parentProvider.models.firstOrNull { modelsReferToSameApiModel(it, model) }
-                    if (match != null) {
-                        map[model.modelId] = match
-                    }
-                }
+        val selectedModelMap = remember(parentProvider.models) {
+            val map = HashMap<String, Model>(parentProvider.models.size * 2)
+            for (m in parentProvider.models) {
+                map[m.modelId] = m
+                map[m.modelId.lowercase()] = m
             }
             map
         }
         val allFilteredSelected = remember(filteredModels, selectedModelMap) {
-            filteredModels.isNotEmpty() && filteredModels.all { selectedModelMap.containsKey(it.modelId) }
+            filteredModels.isNotEmpty() && filteredModels.all { 
+                selectedModelMap.containsKey(it.modelId) || selectedModelMap.containsKey(it.modelId.lowercase())
+            }
         }
 
         Column(
@@ -2073,23 +2064,23 @@ private fun ModelPickerSheet(
                         contentPadding = PaddingValues(top = 6.dp, bottom = 28.dp)
                     ) {
                         items(filteredModels, key = { it.modelId }) { model ->
-                        val isSelected = selectedModelMap.containsKey(model.modelId)
+                        val isSelected = selectedModelMap.containsKey(model.modelId) || selectedModelMap.containsKey(model.modelId.lowercase())
                         Surface(
                             onClick = {
                                 if (isSelected) {
-                                    val current = selectedModelMap[model.modelId] ?: model
+                                    val current = selectedModelMap[model.modelId] ?: selectedModelMap[model.modelId.lowercase()] ?: model
                                     onRemoveModel(current)
                                 } else {
                                     onAddModel(model)
                                 }
                             },
                             shape = me.lucid.domchat.ui.theme.AppShapes.CardMedium,
-                            color = if (isSelected) Color(0xFF1E1E24) else Color(0xFF000000),
+                            color = Color(0xFF000000),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .border(
                                     0.5.dp,
-                                    if (isSelected) SolidColor(Color.White.copy(alpha = 0.35f)) else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                                    if (isSelected) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
                                     me.lucid.domchat.ui.theme.AppShapes.CardMedium
                                 )
                         ) {
@@ -2297,26 +2288,17 @@ private fun AddNewModelSheet(
 
 @Composable
 private fun ModelSelectionCircle(selected: Boolean) {
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.78f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-        label = "model_selection_circle_scale",
-    )
     Box(
         modifier = Modifier
-            .size(28.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .size(22.dp)
             .clip(CircleShape)
             .then(
                 if (selected) {
                     Modifier.background(Color.White)
                 } else {
                     Modifier.border(
-                        width = 2.dp,
-                        color = Color.White.copy(alpha = 0.18f),
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.25f),
                         shape = CircleShape,
                     )
                 }
@@ -2328,7 +2310,7 @@ private fun ModelSelectionCircle(selected: Boolean) {
                 imageVector = Icons.Rounded.Check,
                 contentDescription = null,
                 tint = Color.Black,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(14.dp),
             )
         }
     }

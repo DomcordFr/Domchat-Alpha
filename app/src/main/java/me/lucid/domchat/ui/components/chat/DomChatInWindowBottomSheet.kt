@@ -147,7 +147,13 @@ fun DomChatSheetHeader(
             Spacer(modifier = Modifier.weight(1f))
             actions?.invoke()
             IconButton(
-                onClick = onCloseClick ?: dismiss ?: {},
+                onClick = {
+                    if (dismiss != null) {
+                        dismiss()
+                    } else {
+                        onCloseClick?.invoke()
+                    }
+                },
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,

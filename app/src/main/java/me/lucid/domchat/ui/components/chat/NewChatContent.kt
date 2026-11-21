@@ -54,8 +54,10 @@ import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.modifier.blurredContainerColor
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.liquidGlassSurface
+import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
 import me.lucid.domchat.ui.theme.liquidInteractiveGlass
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
+import me.lucid.domchat.ui.context.LocalSettings
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -288,16 +290,24 @@ private fun TemplateCard(
 ) {
     val isDark = LocalDarkMode.current
     val cardShape = AppShapes.CardMedium
+    val settings = LocalSettings.current
+    val glassAlpha = settings.displaySetting.chatBubbleAlpha.coerceIn(0f, 1f)
+    val bubbleTone = settings.displaySetting.chatBubbleTone.coerceIn(0f, 1f)
+    val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+        settings.displaySetting.bubbleSpecularIntensity > 0f
+    } ?: LiquidGlassTokens.SpecularBorderSubtle
+    val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
 
     Card(
         onClick = onClick,
         modifier = modifier
             .wrapContentHeight()
-            .liquidGlassSurface(
+            .liquidGlassBubbleSurface(
                 shape = cardShape,
-                fillColor = Color.Transparent,
                 borderWidth = 0.5.dp,
-                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                fillColor = bubbleFillColor,
+                specularBrush = specularBorder,
+                glassMode = settings.displaySetting.liquidGlassMode,
             ),
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent, contentColor = Color.White),
@@ -340,16 +350,24 @@ private fun ActionPill(
 ) {
     val pillShape = RoundedCornerShape(24.dp)
     val isDark = LocalDarkMode.current
+    val settings = LocalSettings.current
+    val glassAlpha = settings.displaySetting.chatBubbleAlpha.coerceIn(0f, 1f)
+    val bubbleTone = settings.displaySetting.chatBubbleTone.coerceIn(0f, 1f)
+    val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+        settings.displaySetting.bubbleSpecularIntensity > 0f
+    } ?: LiquidGlassTokens.SpecularBorderSubtle
+    val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
             onClick = onClick,
             modifier = modifier
-                .liquidGlassSurface(
+                .liquidGlassBubbleSurface(
                     shape = pillShape,
-                    fillColor = Color.Transparent,
                     borderWidth = 0.5.dp,
-                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    fillColor = bubbleFillColor,
+                    specularBrush = specularBorder,
+                    glassMode = settings.displaySetting.liquidGlassMode,
                 ),
             shape = pillShape,
             color = Color.Transparent,

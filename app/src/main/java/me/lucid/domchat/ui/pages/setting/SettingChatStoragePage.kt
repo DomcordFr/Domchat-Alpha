@@ -71,14 +71,12 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -440,7 +438,7 @@ fun SettingChatStoragePage(
                             subtitle = stringResource(R.string.setting_chat_storage_maintenance_desc),
                             icon = { Icon(Icons.Rounded.CleaningServices, null) },
                         ) {
-                            Button(
+                            Surface(
                                 onClick = {
                                     haptics.perform(HapticPattern.Thud)
                                     context.workManagerOrNull()?.enqueue(
@@ -451,23 +449,29 @@ fun SettingChatStoragePage(
                                         type = ToastType.Info
                                     )
                                 },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(44.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = Color.White.copy(alpha = 0.12f),
-                                    contentColor = Color.White.copy(alpha = 0.92f)
-                                )
+                                color = Color(0xFF000000),
+                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.CleaningServices,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                                Text(
-                                    text = stringResource(R.string.setting_chat_storage_run_maintenance),
-                                    modifier = Modifier.padding(start = 8.dp),
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.CleaningServices,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Color.White
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.setting_chat_storage_run_maintenance),
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                }
                             }
                         }
                     }
@@ -495,6 +499,7 @@ fun SettingChatStoragePage(
                                 showEmbeddingCacheInspector = true
                             }
                         )
+                        val canClean = unusedCount > 0 && !isCleaningEmbeddingCache
                         SettingGroupInputItem(
                             title = "Unused embeddings",
                             subtitle = if (unusedCount == 0) {
@@ -504,35 +509,43 @@ fun SettingChatStoragePage(
                             },
                             icon = { Icon(Icons.Rounded.Delete, null) },
                         ) {
-                            Button(
+                            Surface(
                                 onClick = {
-                                    haptics.perform(HapticPattern.Thud)
-                                    pendingUnusedEmbeddingsDeletion = true
+                                    if (canClean) {
+                                        haptics.perform(HapticPattern.Thud)
+                                        pendingUnusedEmbeddingsDeletion = true
+                                    }
                                 },
-                                enabled = unusedCount > 0 && !isCleaningEmbeddingCache,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(44.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = Color.White.copy(alpha = 0.12f),
-                                    contentColor = Color.White.copy(alpha = 0.92f),
-                                    disabledContainerColor = Color.White.copy(alpha = 0.06f),
-                                    disabledContentColor = Color.White.copy(alpha = 0.35f)
-                                )
+                                color = Color(0xFF000000),
+                                border = BorderStroke(
+                                    0.5.dp,
+                                    if (canClean) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle.copy(alpha = 0.3f)
+                                ),
                             ) {
-                                if (isCleaningEmbeddingCache) {
-                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Delete,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    if (isCleaningEmbeddingCache) {
+                                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White)
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Delete,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = if (canClean) Color.White else Color.White.copy(alpha = 0.35f)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Delete unused",
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (canClean) Color.White else Color.White.copy(alpha = 0.35f)
                                     )
                                 }
-                                Text(
-                                    text = "Delete unused",
-                                    modifier = Modifier.padding(start = 8.dp),
-                                    fontWeight = FontWeight.SemiBold
-                                )
                             }
                         }
                     }
@@ -652,10 +665,21 @@ fun SettingChatStoragePage(
                 )
             },
             dismissButton = {
-                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
-                    text = stringResource(R.string.cancel),
-                    onClick = { pendingDeletion = null }
-                )
+                Surface(
+                    onClick = { pendingDeletion = null },
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Box(modifier = Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         )
     }
@@ -706,10 +730,21 @@ fun SettingChatStoragePage(
                 )
             },
             dismissButton = {
-                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
-                    text = stringResource(R.string.cancel),
-                    onClick = { pendingOtherUploadDeletion = null }
-                )
+                Surface(
+                    onClick = { pendingOtherUploadDeletion = null },
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Box(modifier = Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         )
     }
@@ -754,26 +789,34 @@ fun SettingChatStoragePage(
                 )
             },
             dismissButton = {
-                me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
-                    text = stringResource(R.string.cancel),
-                    onClick = { pendingDeleteAllOtherUploads = false }
-                )
+                Surface(
+                    onClick = { pendingDeleteAllOtherUploads = false },
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF000000),
+                    border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Box(modifier = Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         )
     }
 
     if (showOtherUploadsInspector) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
+        me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = { showOtherUploadsInspector = false },
             containerColor = Color(0xFF000000),
             dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-            contentColor = Color(0xFFF2F2F7),
-            sheetState = sheetState,
         ) {
-            me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
             OtherUploadsSheet(
                 files = otherUploadFiles,
                 isLoading = isLoadingOtherUploads,
@@ -800,20 +843,15 @@ fun SettingChatStoragePage(
         }
     }
     if (showEmbeddingCacheInspector) {
-        me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur()
-        ModalBottomSheet(
+        me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet(
+            visible = true,
             onDismissRequest = { showEmbeddingCacheInspector = false },
             containerColor = Color(0xFF000000),
             shape = me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet,
             modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush, me.lucid.domchat.ui.theme.AppShapes.SettingBottomSheet),
-            contentColor = Color(0xFFF2F2F7),
             dragHandle = {
-            me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle(
-                modifier = Modifier.clickable {
-                    showEmbeddingCacheInspector = false
-                }
-            )
-        }
+                me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle()
+            }
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp),
@@ -1561,20 +1599,31 @@ private fun OtherUploadsSheet(
                 hasFilters = false,
             )
         } else {
-            FilledTonalButton(
+            Surface(
                 onClick = { onDeleteAll?.invoke() },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(44.dp),
                 shape = AppShapes.ButtonPill,
+                color = Color(0xFF000000),
+                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Text(
-                    text = stringResource(R.string.setting_chat_storage_delete_all_orphaned),
-                    modifier = Modifier.padding(start = 8.dp),
-                )
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        text = stringResource(R.string.setting_chat_storage_delete_all_orphaned),
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
             }
             Text(
                 text = context.resources.getQuantityString(
