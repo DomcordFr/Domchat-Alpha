@@ -80,7 +80,11 @@ class WebServerManager(
                     return@launch
                 }
 
-                server = startWebServer(port = port) {
+                val settings = settingsStore.settingsFlow.value
+                val isAuthSecured = settings.webServerJwtEnabled && settings.webServerAccessPassword.isNotBlank()
+                val host = if (isAuthSecured) "0.0.0.0" else "127.0.0.1"
+
+                server = startWebServer(port = port, host = host) {
                     configureWebApi(
                         context = context,
                         chatService = chatService,
@@ -89,7 +93,7 @@ class WebServerManager(
                     )
                 }.start(wait = false)
 
-                val address = nsdRegistrar.findLanAddress()?.hostAddress
+                val address = if (host == "0.0.0.0") nsdRegistrar.findLanAddress()?.hostAddress else "127.0.0.1"
                 _state.value = WebServerState(
                     phase = WebServerPhase.Running,
                     port = port,
@@ -97,19 +101,21 @@ class WebServerManager(
                     address = address,
                 )
 
-                runCatching {
-                    nsdRegistrar.register(
-                        port = port,
-                        serviceName = serviceName,
-                    ) { info ->
-                        _state.value = _state.value.copy(
-                            serviceName = info.serviceName,
-                            hostname = info.hostname,
-                            address = info.address.hostAddress,
-                        )
+                if (host == "0.0.0.0") {
+                    runCatching {
+                        nsdRegistrar.register(
+                            port = port,
+                            serviceName = serviceName,
+                        ) { info ->
+                            _state.value = _state.value.copy(
+                                serviceName = info.serviceName,
+                                hostname = info.hostname,
+                                address = info.address.hostAddress,
+                            )
+                        }
+                    }.onFailure {
+                        Log.w(TAG, "mDNS registration failed", it)
                     }
-                }.onFailure {
-                    Log.w(TAG, "mDNS registration failed", it)
                 }
 
                 Log.i(TAG, "Web server started on port $port")

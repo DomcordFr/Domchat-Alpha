@@ -49,10 +49,32 @@ class WebApiHelpersTest {
     @Test
     fun publicWebApiPaths_doNotRequireExistingToken() {
         assertTrue(isPublicWebApiPath("/api/auth/token"))
-        assertTrue(isPublicWebApiPath("/api/bootstrap"))
+        assertTrue(isPublicWebApiPath("/api/auth/status"))
         assertTrue(isPublicWebApiPath("/api/ai-icon"))
+        assertTrue(!isPublicWebApiPath("/api/bootstrap"))
         assertTrue(!isPublicWebApiPath("/api/conversations/paged"))
         assertTrue(!isPublicWebApiPath("/api/settings/stream"))
+    }
+
+    @Test
+    fun isAllowedIconHost_validatesTrustedIconHosts() {
+        assertTrue(isAllowedIconHost("raw.githubusercontent.com"))
+        assertTrue(isAllowedIconHost("registry.npmmirror.com"))
+        assertTrue(isAllowedIconHost("cdn.jsdelivr.net"))
+        assertTrue(isAllowedIconHost("api.dicebear.com"))
+        assertTrue(!isAllowedIconHost("evil.com"))
+        assertTrue(!isAllowedIconHost("attacker.site"))
+    }
+
+    @Test
+    fun isDangerousActiveContentType_detectsActiveContent() {
+        assertTrue(isDangerousActiveContentType("text/html"))
+        assertTrue(isDangerousActiveContentType("text/html; charset=utf-8"))
+        assertTrue(isDangerousActiveContentType("image/svg+xml"))
+        assertTrue(isDangerousActiveContentType("application/javascript"))
+        assertTrue(!isDangerousActiveContentType("image/png"))
+        assertTrue(!isDangerousActiveContentType("image/jpeg"))
+        assertTrue(!isDangerousActiveContentType("application/pdf"))
     }
 
     @Test

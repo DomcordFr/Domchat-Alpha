@@ -1333,10 +1333,6 @@ private fun String.toWebAssetUrl(
         return buildString {
             append("/api/files/content?uri=")
             append(this@toWebAssetUrl.urlEncode(spaceAsPlus = true))
-            if (!mimeOverride.isNullOrBlank()) {
-                append("&mime=")
-                append(mimeOverride.urlEncode(spaceAsPlus = true))
-            }
             if (!fileName.isNullOrBlank()) {
                 append("&name=")
                 append(fileName.urlEncode(spaceAsPlus = true))

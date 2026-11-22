@@ -10,7 +10,7 @@ import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 
 fun startWebServer(
     port: Int,
-    host: String = "0.0.0.0",
+    host: String = "127.0.0.1",
     configure: Application.() -> Unit,
 ): EmbeddedServer<*, *> {
     return embeddedServer(

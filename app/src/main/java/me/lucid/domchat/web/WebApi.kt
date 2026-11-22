@@ -55,6 +55,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okio.Buffer
+import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
+import me.lucid.domchat.data.datastore.SecureStore
 import me.lucid.ai.provider.ModelType
 import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.UIMessagePart
@@ -77,6 +80,99 @@ private const val WEB_JWT_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val WEB_ACCESS_TOKEN_QUERY_KEY = "access_token"
 private const val WEB_AUTH_TOKEN_VERSION = "v1"
 private const val WEB_AUTH_HMAC_ALGORITHM = "HmacSHA256"
+private const val WEB_SERVER_HMAC_SECRET_KEY = "web_server_hmac_secret"
+
+private val ALLOWED_ICON_HOSTS = setOf(
+    "raw.githubusercontent.com",
+    "registry.npmmirror.com",
+    "unpkg.com",
+    "cdn.jsdelivr.net",
+    "api.dicebear.com",
+)
+
+internal fun isAllowedIconHost(host: String): Boolean {
+    val cleanHost = host.lowercase(Locale.ROOT)
+    return cleanHost in ALLOWED_ICON_HOSTS || ALLOWED_ICON_HOSTS.any { cleanHost.endsWith(".$it") }
+}
+
+private val ACTIVE_CONTENT_TYPES = setOf(
+    "text/html",
+    "application/xhtml+xml",
+    "image/svg+xml",
+    "application/javascript",
+    "text/javascript",
+    "application/x-javascript",
+    "text/xml",
+    "application/xml",
+)
+
+internal fun isDangerousActiveContentType(contentType: String): Boolean {
+    val clean = contentType.substringBefore(';').trim().lowercase(Locale.ROOT)
+    return clean in ACTIVE_CONTENT_TYPES
+}
+
+private fun ApplicationCall.clientIp(): String {
+    return request.headers["X-Forwarded-For"]?.substringBefore(",")?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?: request.local.remoteAddress.takeIf { it.isNotBlank() }
+        ?: request.local.remoteHost.takeIf { it.isNotBlank() }
+        ?: "unknown"
+}
+
+private object WebAuthRateLimiter {
+    private const val MAX_ATTEMPTS = 5
+    private const val WINDOW_MILLIS = 60_000L
+    private const val BLOCK_DURATION_MILLIS = 5 * 60_000L
+
+    private data class AttemptHistory(
+        val timestamps: MutableList<Long> = mutableListOf(),
+        var blockedUntil: Long = 0L,
+    )
+
+    private val attempts = ConcurrentHashMap<String, AttemptHistory>()
+
+    fun isAllowed(ip: String, now: Long = System.currentTimeMillis()): Boolean {
+        cleanOldEntries(now)
+        val history = attempts.computeIfAbsent(ip) { AttemptHistory() }
+        synchronized(history) {
+            if (history.blockedUntil > now) {
+                return false
+            }
+            history.timestamps.removeAll { it < now - WINDOW_MILLIS }
+            return history.timestamps.size < MAX_ATTEMPTS
+        }
+    }
+
+    fun recordAttempt(ip: String, success: Boolean, now: Long = System.currentTimeMillis()) {
+        val history = attempts.computeIfAbsent(ip) { AttemptHistory() }
+        synchronized(history) {
+            if (success) {
+                history.timestamps.clear()
+                history.blockedUntil = 0L
+            } else {
+                history.timestamps.removeAll { it < now - WINDOW_MILLIS }
+                history.timestamps.add(now)
+                if (history.timestamps.size >= MAX_ATTEMPTS) {
+                    history.blockedUntil = now + BLOCK_DURATION_MILLIS
+                }
+            }
+        }
+    }
+
+    private fun cleanOldEntries(now: Long) {
+        if (attempts.size > 1000) {
+            val iterator = attempts.entries.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                synchronized(entry.value) {
+                    if (entry.value.blockedUntil <= now && entry.value.timestamps.all { it < now - WINDOW_MILLIS }) {
+                        iterator.remove()
+                    }
+                }
+            }
+        }
+    }
+}
 
 fun Application.configureWebApi(
     context: Context,
@@ -84,8 +180,6 @@ fun Application.configureWebApi(
     conversationRepo: ConversationRepository,
     settingsStore: SettingsStore,
 ) {
-    val jwtEnabled = settingsStore.settingsFlow.value.webServerJwtEnabled
-
     install(ContentNegotiation) {
         json(JsonInstant)
     }
@@ -133,10 +227,60 @@ fun Application.configureWebApi(
         }
 
         route("/api") {
+            install(createRouteScopedPlugin("LastChatWebAuth") {
+                onCall { call ->
+                    if (call.isPublicWebApiPath()) {
+                        return@onCall
+                    }
+
+                    val settings = settingsStore.settingsFlow.value
+                    if (!settings.webServerJwtEnabled) {
+                        return@onCall
+                    }
+
+                    val accessToken = extractAccessToken(call)
+                    val status = validateWebAccessToken(
+                        settings = settings,
+                        token = accessToken,
+                        context = context,
+                    )
+                    if (status != null) {
+                        when (status) {
+                            HttpStatusCode.Forbidden -> throw ForbiddenException("Access password is not configured")
+                            else -> throw UnauthorizedException("Unauthorized")
+                        }
+                    }
+                }
+            })
+
+            get("/auth/status") {
+                val settings = settingsStore.settingsFlow.value
+                call.respond(WebClientBootConfig(authRequired = settings.webServerJwtEnabled))
+            }
+
             post("/auth/token") {
+                val ip = call.clientIp()
+                if (!WebAuthRateLimiter.isAllowed(ip)) {
+                    throw ApiException(HttpStatusCode.TooManyRequests, "Too many authentication attempts. Please try again later.")
+                }
                 val settings = settingsStore.settingsFlow.value
                 val request = call.receive<WebAuthTokenRequest>()
-                call.respond(issueWebAuthToken(settings, request))
+                try {
+                    val response = issueWebAuthToken(
+                        settings = settings,
+                        request = request,
+                        context = context,
+                    )
+                    WebAuthRateLimiter.recordAttempt(ip, success = true)
+                    call.response.header(
+                        HttpHeaders.SetCookie,
+                        "access_token=${response.token}; Path=/; Max-Age=${WEB_JWT_TTL_MILLIS / 1000}; HttpOnly; SameSite=Strict"
+                    )
+                    call.respond(response)
+                } catch (e: Exception) {
+                    WebAuthRateLimiter.recordAttempt(ip, success = false)
+                    throw e
+                }
             }
 
             get("/bootstrap") {
@@ -191,12 +335,21 @@ fun Application.configureWebApi(
                     ?.let { getProviderSlugFromName(it) ?: it.lowercase(Locale.ROOT).takeIf { s -> s.isNotBlank() } }
                     ?: getProviderSlugFromName(name)
 
-                val remoteIconUrl = icon
-                    ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
-                    ?: effectiveSlug?.toLobeHubIconUrl(theme)
-                    ?: assetPath?.let {
-                        "https://raw.githubusercontent.com/DomcordFr/Domchat/main/catalog/icons/$it"
+                val remoteIconUrl = if (icon != null && (icon.startsWith("http://") || icon.startsWith("https://"))) {
+                    val uri = runCatching { URI(icon) }.getOrNull()
+                    val host = uri?.host?.lowercase(Locale.ROOT)
+                    if (uri?.scheme == "https" && host != null && isAllowedIconHost(host)) {
+                        icon
+                    } else {
+                        throw BadRequestException("Untrusted or invalid icon URL host")
                     }
+                } else {
+                    effectiveSlug?.toLobeHubIconUrl(theme)
+                        ?: assetPath?.let {
+                            "https://raw.githubusercontent.com/DomcordFr/Domchat/main/catalog/icons/$it"
+                        }
+                }
+
                 if (remoteIconUrl != null) {
                     call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                     call.respondRedirect(remoteIconUrl, permanent = false)
@@ -215,7 +368,6 @@ fun Application.configureWebApi(
                 chatService = chatService,
                 conversationRepo = conversationRepo,
                 settingsStore = settingsStore,
-                requireAuth = jwtEnabled,
             )
         }
 
@@ -239,31 +391,7 @@ private fun Route.webRoutes(
     chatService: ChatService,
     conversationRepo: ConversationRepository,
     settingsStore: SettingsStore,
-    requireAuth: Boolean,
 ) {
-    if (requireAuth) {
-        install(createRouteScopedPlugin("LastChatWebAuth") {
-            onCall { call ->
-                if (call.isPublicWebApiPath()) {
-                    return@onCall
-                }
-
-                val settings = settingsStore.settingsFlow.value
-                val accessToken = extractAccessToken(
-                    authorizationHeader = call.request.headers[HttpHeaders.Authorization],
-                    queryToken = call.request.queryParameters[WEB_ACCESS_TOKEN_QUERY_KEY],
-                )
-                val status = validateWebAccessToken(settings, accessToken)
-                if (status != null) {
-                    when (status) {
-                        HttpStatusCode.Forbidden -> throw ForbiddenException("Access password is not configured")
-                        else -> throw UnauthorizedException("Unauthorized")
-                    }
-                }
-            }
-        })
-    }
-
     route("/conversations") {
         post {
             val settings = settingsStore.settingsFlow.value
@@ -946,8 +1074,7 @@ private fun Route.webRoutes(
             val file = withContext(Dispatchers.IO) {
                 context.filesDir.resolve(relativePath).canonicalFile
             }
-            val filesDir = withContext(Dispatchers.IO) { context.filesDir.canonicalFile }
-            if (!file.path.startsWith(filesDir.path + File.separator) && file.path != filesDir.path) {
+            if (!isAllowedCanonicalFile(context, file)) {
                 throw BadRequestException("Invalid file path")
             }
             if (!file.exists() || !file.isFile) {
@@ -957,6 +1084,14 @@ private fun Route.webRoutes(
             val mime = WebUploadRegistry.getByRelativePath(relativePath)?.mime
                 ?: guessWebMediaMimeTypeFromName(file.name)
                 ?: "application/octet-stream"
+
+            call.response.header("X-Content-Type-Options", "nosniff")
+            val disposition = if (isDangerousActiveContentType(mime)) {
+                ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name).toString()
+            } else {
+                ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, file.name).toString()
+            }
+            call.response.header(HttpHeaders.ContentDisposition, disposition)
             call.response.header(HttpHeaders.ContentType, mime)
             call.respondOutputStream(contentType = ContentType.parse(mime)) {
                 withContext(Dispatchers.IO) {
@@ -972,18 +1107,21 @@ private fun Route.webRoutes(
                 ?: throw BadRequestException("Invalid uri")
             val media = openAllowedWebMedia(context, uri)
                 ?: throw NotFoundException("File not found")
-            val mimeOverride = call.request.queryParameters["mime"]?.trim().orEmpty()
+
             val fileName = call.request.queryParameters["name"]?.trim().takeUnless { it.isNullOrBlank() }
                 ?: media.fileName
-            val contentType = mimeOverride.takeIf { it.isNotBlank() }?.let(ContentType::parse) ?: media.contentType
+                ?: "file"
+            val contentType = media.contentType
+            val mimeStr = contentType.toString()
 
             media.use { content ->
-                fileName?.let { name ->
-                    call.response.header(
-                        HttpHeaders.ContentDisposition,
-                        ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, name).toString()
-                    )
+                call.response.header("X-Content-Type-Options", "nosniff")
+                val disposition = if (isDangerousActiveContentType(mimeStr)) {
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, fileName).toString()
+                } else {
+                    ContentDisposition.Inline.withParameter(ContentDisposition.Parameters.FileName, fileName).toString()
                 }
+                call.response.header(HttpHeaders.ContentDisposition, disposition)
                 call.response.header(HttpHeaders.CacheControl, "public, max-age=86400")
                 call.respondOutputStream(contentType = contentType) {
                     withContext(Dispatchers.IO) {
@@ -1001,7 +1139,7 @@ private fun ApplicationCall.isPublicWebApiPath(): Boolean {
 
 internal fun isPublicWebApiPath(path: String): Boolean {
     return path == "/api/auth/token" ||
-        path == "/api/bootstrap" ||
+        path == "/api/auth/status" ||
         path == "/api/ai-icon"
 }
 
@@ -1250,7 +1388,32 @@ private fun String?.toUuid(name: String): Uuid {
     }
 }
 
-private fun createWebJwt(secret: String): Pair<String, Long> {
+internal fun getOrCreateWebHmacSecret(secureStore: SecureStore): ByteArray {
+    val existing = secureStore.getSecret(WEB_SERVER_HMAC_SECRET_KEY)
+    if (!existing.isNullOrBlank()) {
+        val decoded = runCatching { base64UrlDecode(existing) }.getOrNull()
+        if (decoded != null && decoded.size == 32) {
+            return decoded
+        }
+    }
+    val newSecret = ByteArray(32).apply { java.security.SecureRandom().nextBytes(this) }
+    val encoded = base64UrlEncode(newSecret)
+    secureStore.putSecret(WEB_SERVER_HMAC_SECRET_KEY, encoded)
+    return newSecret
+}
+
+internal fun getWebHmacSecret(context: Context?, settings: Settings): ByteArray {
+    val baseSecret = if (context != null) {
+        runCatching {
+            val secureStore = SecureStore(context)
+            getOrCreateWebHmacSecret(secureStore)
+        }.getOrNull()
+    } else null
+    val salt = baseSecret ?: "domchat-web-hmac-fixed-salt".toByteArray(Charsets.UTF_8)
+    return hmacSha256(salt, settings.webServerAccessPassword)
+}
+
+private fun createWebJwt(secret: ByteArray): Pair<String, Long> {
     val now = System.currentTimeMillis()
     val expiresAt = now + WEB_JWT_TTL_MILLIS
     val payload = listOf(
@@ -1266,7 +1429,12 @@ private fun createWebJwt(secret: String): Pair<String, Long> {
     return token to expiresAt
 }
 
-internal fun validateWebAccessToken(settings: Settings, token: String?): HttpStatusCode? {
+internal fun validateWebAccessToken(
+    settings: Settings,
+    token: String?,
+    context: Context? = null,
+    hmacSecret: ByteArray? = null,
+): HttpStatusCode? {
     if (settings.webServerAccessPassword.isBlank()) {
         return HttpStatusCode.Forbidden
     }
@@ -1304,7 +1472,8 @@ internal fun validateWebAccessToken(settings: Settings, token: String?): HttpSta
         return HttpStatusCode.Unauthorized
     }
 
-    val expectedSignature = hmacSha256(settings.webServerAccessPassword, parts[0])
+    val secret = hmacSecret ?: getWebHmacSecret(context, settings)
+    val expectedSignature = hmacSha256(secret, parts[0])
     val actualSignature = runCatching {
         base64UrlDecode(parts[1])
     }.getOrNull() ?: return HttpStatusCode.Unauthorized
@@ -1316,11 +1485,18 @@ internal fun validateWebAccessToken(settings: Settings, token: String?): HttpSta
     }
 }
 
-private fun hmacSha256(secret: String, value: String): ByteArray {
+private fun hmacSha256(secret: ByteArray, value: String): ByteArray {
     val mac = Mac.getInstance(WEB_AUTH_HMAC_ALGORITHM)
-    val key = SecretKeySpec(secret.toByteArray(Charsets.UTF_8), WEB_AUTH_HMAC_ALGORITHM)
+    val key = SecretKeySpec(secret, WEB_AUTH_HMAC_ALGORITHM)
     mac.init(key)
     return mac.doFinal(value.toByteArray(Charsets.UTF_8))
+}
+
+private fun hmacSha256(secret: ByteArray, value: ByteArray): ByteArray {
+    val mac = Mac.getInstance(WEB_AUTH_HMAC_ALGORITHM)
+    val key = SecretKeySpec(secret, WEB_AUTH_HMAC_ALGORITHM)
+    mac.init(key)
+    return mac.doFinal(value)
 }
 
 @OptIn(ExperimentalEncodingApi::class)
@@ -1340,9 +1516,28 @@ private fun extractBearerToken(authorizationHeader: String?): String? {
     return authorizationHeader.substring(prefix.length).trim().takeIf { it.isNotEmpty() }
 }
 
-private fun extractAccessToken(authorizationHeader: String?, queryToken: String?): String? {
-    return extractBearerToken(authorizationHeader)
-        ?: queryToken?.trim()?.takeIf { it.isNotEmpty() }
+private fun extractCookie(cookieHeader: String?, name: String): String? {
+    if (cookieHeader.isNullOrBlank()) return null
+    return cookieHeader.split(';')
+        .map { it.trim() }
+        .firstOrNull { it.startsWith("$name=") }
+        ?.substringAfter("$name=")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+}
+
+private fun extractAccessToken(call: ApplicationCall): String? {
+    val authHeader = call.request.headers[HttpHeaders.Authorization]
+    extractBearerToken(authHeader)?.let { return it }
+
+    val cookieHeader = call.request.headers[HttpHeaders.Cookie]
+    extractCookie(cookieHeader, "access_token")?.let { return it }
+
+    val path = call.request.path()
+    if (path.startsWith("/api/chat/events") || path.startsWith("/api/files/")) {
+        call.request.queryParameters[WEB_ACCESS_TOKEN_QUERY_KEY]?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
+    }
+    return null
 }
 
 private fun secureEquals(left: String, right: String): Boolean {
@@ -1539,6 +1734,8 @@ internal fun buildWebClientBootConfig(settings: Settings): WebClientBootConfig {
 internal fun issueWebAuthToken(
     settings: Settings,
     request: WebAuthTokenRequest,
+    context: Context? = null,
+    hmacSecret: ByteArray? = null,
 ): WebAuthTokenResponse {
     if (!settings.webServerJwtEnabled) {
         throw BadRequestException("JWT auth is disabled")
@@ -1553,7 +1750,8 @@ internal fun issueWebAuthToken(
         throw UnauthorizedException("Invalid password")
     }
 
-    val (token, expiresAt) = createWebJwt(accessPassword)
+    val secret = hmacSecret ?: getWebHmacSecret(context, settings)
+    val (token, expiresAt) = createWebJwt(secret)
     return WebAuthTokenResponse(token = token, expiresAt = expiresAt)
 }
 

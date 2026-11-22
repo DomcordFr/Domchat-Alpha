@@ -7,9 +7,11 @@ import androidx.core.net.toFile
 import androidx.core.net.toUri
 import io.ktor.http.ContentType
 import me.lucid.common.http.urlEncode
+import me.lucid.domchat.utils.resolveAppOwnedFileProviderFile
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
+import java.util.Locale
 
 data class WebMediaContent(
     val inputStream: InputStream,
@@ -34,18 +36,60 @@ fun String.toWebMediaUrl(context: Context): String? {
     }
 }
 
+internal fun isAllowedCanonicalFile(context: Context, file: File): Boolean {
+    val canonical = file.canonicalFile
+    val allowedRoots = listOf(
+        File(context.filesDir, "upload"),
+        File(context.filesDir, "chat_files"),
+        File(context.filesDir, "avatars"),
+        File(context.filesDir, "wallpapers"),
+        File(context.filesDir, "backgrounds"),
+        File(context.filesDir, "custom_icons"),
+        File(context.filesDir, "custom_fonts"),
+        File(context.cacheDir, "attachments"),
+        File(context.cacheDir, "audio"),
+    )
+
+    val isInAllowedRoot = allowedRoots.any { canonical.isInside(it) }
+    if (!isInAllowedRoot) return false
+
+    val forbiddenRoots = listOf(
+        File(context.filesDir, "datastore"),
+        File(context.filesDir, "workspaces"),
+        File(context.applicationInfo.dataDir, "databases"),
+        File(context.applicationInfo.dataDir, "shared_prefs"),
+        File(context.applicationInfo.dataDir, "keystore"),
+    )
+
+    return forbiddenRoots.none { canonical.isInside(it) }
+}
+
 fun Uri.isAllowedWebMediaUri(context: Context): Boolean {
-    return when (scheme?.lowercase()) {
+    return when (scheme?.lowercase(Locale.ROOT)) {
         "file" -> runCatching {
-            val file = toFile().canonicalFile
-            file.isInside(context.filesDir) || file.isInside(context.cacheDir)
+            val file = toFile()
+            isAllowedCanonicalFile(context, file)
         }.getOrDefault(false)
 
-        "content" -> !authority.isNullOrBlank()
-
         "android.resource" -> {
-            val authorityValue = authority ?: return false
-            authorityValue == context.packageName
+            authority == context.packageName
+        }
+
+        "content" -> {
+            val auth = authority ?: return false
+            if (auth == "${context.packageName}.fileprovider") {
+                val file = resolveAppOwnedFileProviderFile(
+                    authority = auth,
+                    encodedPath = encodedPath,
+                    expectedAuthority = "${context.packageName}.fileprovider",
+                    cacheDir = context.cacheDir,
+                    filesDir = context.filesDir,
+                    externalFilesDir = context.getExternalFilesDir(null),
+                )
+                file != null && isAllowedCanonicalFile(context, file)
+            } else {
+                false
+            }
         }
 
         else -> false
@@ -55,13 +99,13 @@ fun Uri.isAllowedWebMediaUri(context: Context): Boolean {
 fun openAllowedWebMedia(context: Context, uri: Uri): WebMediaContent? {
     if (!uri.isAllowedWebMediaUri(context)) return null
 
-    return when (uri.scheme?.lowercase()) {
+    return when (uri.scheme?.lowercase(Locale.ROOT)) {
         "file" -> {
             val file = runCatching { uri.toFile().canonicalFile }.getOrNull() ?: return null
+            if (!file.exists() || !file.isFile) return null
             val mimeType = guessWebMediaMimeTypeFromName(file.name)
                 ?.let { ContentType.parse(it) }
                 ?: ContentType.Application.OctetStream
-            if (!file.exists()) return null
             WebMediaContent(
                 inputStream = file.inputStream(),
                 contentType = mimeType,
@@ -70,28 +114,28 @@ fun openAllowedWebMedia(context: Context, uri: Uri): WebMediaContent? {
         }
 
         "content" -> {
-            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
-            val mimeType = context.contentResolver.getType(uri)
-                ?.let { ContentType.parse(it) }
-                ?: ContentType.Application.OctetStream
-            val fileName = context.contentResolver.query(
-                uri,
-                arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),
-                null,
-                null,
+            val auth = uri.authority ?: return null
+            if (auth == "${context.packageName}.fileprovider") {
+                val file = resolveAppOwnedFileProviderFile(
+                    authority = auth,
+                    encodedPath = uri.encodedPath,
+                    expectedAuthority = "${context.packageName}.fileprovider",
+                    cacheDir = context.cacheDir,
+                    filesDir = context.filesDir,
+                    externalFilesDir = context.getExternalFilesDir(null),
+                )?.canonicalFile ?: return null
+                if (!file.exists() || !file.isFile) return null
+                val mimeType = guessWebMediaMimeTypeFromName(file.name)
+                    ?.let { ContentType.parse(it) }
+                    ?: ContentType.Application.OctetStream
+                WebMediaContent(
+                    inputStream = file.inputStream(),
+                    contentType = mimeType,
+                    fileName = file.name
+                )
+            } else {
                 null
-            )?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    cursor.getString(0)
-                } else {
-                    null
-                }
             }
-            WebMediaContent(
-                inputStream = inputStream,
-                contentType = mimeType,
-                fileName = fileName
-            )
         }
 
         "android.resource" -> {
