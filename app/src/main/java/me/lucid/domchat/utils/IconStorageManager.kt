@@ -4,10 +4,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import me.lucid.common.platform.PlatformHttpClient
 import me.lucid.common.platform.PlatformHttpRequest
 import okio.buffer
@@ -116,9 +119,11 @@ class IconStorageManager private constructor(
         }
         
         if (!shouldDownload) {
-            // Wait for the other download to complete and return the result
-            while (downloadMutex.withLock { activeDownloads.contains(iconKey) }) {
-                kotlinx.coroutines.delay(50)
+            // Wait for the other download to complete with bounded timeout and return the result
+            withTimeoutOrNull(10_000L) {
+                while (downloadMutex.withLock { activeDownloads.contains(iconKey) }) {
+                    kotlinx.coroutines.delay(50)
+                }
             }
             return getLocalIconUri(iconKey)
         }
@@ -179,12 +184,16 @@ class IconStorageManager private constructor(
                     }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             e.printStackTrace()
             null
         } finally {
-            downloadMutex.withLock {
-                activeDownloads.remove(iconKey)
+            withContext(NonCancellable) {
+                downloadMutex.withLock {
+                    activeDownloads.remove(iconKey)
+                }
             }
         }
     }

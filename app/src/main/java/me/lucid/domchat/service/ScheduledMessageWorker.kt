@@ -137,6 +137,7 @@ class ScheduledMessageWorker(
                         return Result.retry()
                     }
             } catch (e: Exception) {
+                if (e is kotlin.coroutines.cancellation.CancellationException) throw e
                 me.lucid.common.android.Logging.log(TAG, "Retrying scheduled message after generation failure: ${e.message}")
                 return Result.retry()
             }
@@ -157,6 +158,7 @@ class ScheduledMessageWorker(
             }
             Result.success()
         } catch (e: Exception) {
+            if (e is kotlin.coroutines.cancellation.CancellationException) throw e
             e.printStackTrace()
             me.lucid.common.android.Logging.log(TAG, "Retrying scheduled message after unexpected failure: ${e.message}")
             Result.retry()

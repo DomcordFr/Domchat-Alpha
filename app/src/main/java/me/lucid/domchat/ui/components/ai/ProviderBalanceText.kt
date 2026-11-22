@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import me.lucid.ai.provider.ProviderManager
 import me.lucid.ai.provider.ProviderSetting
 import me.lucid.domchat.data.datastore.SecretKeyManager
+import me.lucid.domchat.utils.runCatchingCancellable
 import me.lucid.domchat.utils.toDp
 import org.koin.compose.koinInject
 import java.util.concurrent.ConcurrentHashMap
@@ -94,7 +95,7 @@ fun ProviderBalanceText(
         }
 
         // Fetch fresh balance in background
-        runCatching {
+        runCatchingCancellable {
             val resolvedProvider = secretKeyManager.populateProviderSecrets(providerSetting) as? ProviderSetting.OpenAI ?: providerSetting
             val balance = providerManager.getProviderByType(resolvedProvider).getBalance(resolvedProvider)
             ProviderBalanceCache.put(context, cacheKey, balance)

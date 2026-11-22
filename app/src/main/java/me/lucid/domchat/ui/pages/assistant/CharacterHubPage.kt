@@ -360,6 +360,16 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         }
     }
 
+    fun moveGroup(groupId: String, newIndex: Int) {
+        val ordered = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toMutableList()
+        val currentIdx = ordered.indexOf(groupId)
+        if (currentIdx == -1) return
+        val moved = ordered.removeAt(currentIdx)
+        ordered.add(newIndex.coerceIn(0, ordered.size), moved)
+        groupOrder = ordered
+        persistGroups()
+    }
+
     var pendingExportJson by remember { mutableStateOf("") }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
     var loadError by remember { mutableStateOf<Throwable?>(null) }
@@ -462,9 +472,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             val groups = withContext(Dispatchers.IO) { loadGroupNames(context) }
             val order = withContext(Dispatchers.IO) { loadGroupOrder(context) }
             val assignments = withContext(Dispatchers.IO) { loadCharAssignments(context) }
+            val mergedOrder = (order.filter { it in groups } + groups.keys.filter { it !in order }).distinct()
             withContext(Dispatchers.Main) {
                 groupNames = groups
-                groupOrder = order
+                groupOrder = mergedOrder
                 charGroupAssignments = assignments
             }
         }
@@ -902,13 +913,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 groupNames = groupNames + (groupId to newName)
                                 persistGroups()
                             },
-                            onGroupMoved = { groupId, newIndex ->
-                                val list = groupOrder.toMutableList()
-                                val item = list.removeAt(list.indexOf(groupId))
-                                list.add(newIndex.coerceIn(0, list.lastIndex), item)
-                                groupOrder = list
-                                persistGroups()
-                            },
+                            onGroupMoved = ::moveGroup,
                             onGroupDeleted = { groupId ->
                                 charGroupAssignments = charGroupAssignments.filterValues { it != groupId }
                                 groupNames = groupNames - groupId
@@ -1250,13 +1255,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                 groupNames = groupNames + (groupId to newName)
                                 persistGroups()
                             },
-                            onGroupMoved = { groupId, newIndex ->
-                                val list = groupOrder.toMutableList()
-                                val item = list.removeAt(list.indexOf(groupId))
-                                list.add(newIndex.coerceIn(0, list.lastIndex), item)
-                                groupOrder = list
-                                persistGroups()
-                            },
+                            onGroupMoved = ::moveGroup,
                             onGroupDeleted = { groupId ->
                                 charGroupAssignments = charGroupAssignments.filterValues { it != groupId }
                                 groupNames = groupNames - groupId
@@ -1514,6 +1513,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         onCreate = { groupName ->
             val newGroupId = java.util.UUID.randomUUID().toString()
             groupNames = groupNames + (newGroupId to groupName)
+            groupOrder = (groupOrder + newGroupId).distinct()
+            persistGroups()
             showNewGroupDialog = false
             newGroupName = ""
             toaster?.show("Created group '$groupName'", ToastType.Success)

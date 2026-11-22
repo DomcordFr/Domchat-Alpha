@@ -17,6 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -24,6 +25,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.update
 import me.lucid.ai.context.ContextUsageBreakdown
 import me.lucid.ai.context.ContextTokenEstimator
 import me.lucid.ai.context.smartInputBudget
@@ -70,6 +73,7 @@ import me.lucid.domchat.AppScope
 import me.lucid.domchat.data.ai.TOOL_RESULT_INJECT_USER_IMAGE_PARTS_KEY
 import me.lucid.domchat.data.ai.transformers.OcrTransformer
 import me.lucid.domchat.service.assist.AssistScreenHolder
+import me.lucid.domchat.utils.runCatchingCancellable
 import me.lucid.domchat.CHAT_COMPLETED_NOTIFICATION_CHANNEL_ID
 import me.lucid.domchat.R
 import me.lucid.common.platform.PlatformHttpClient
@@ -855,13 +859,13 @@ class ChatService(
     }
 
     private fun setConversationPersistenceMode(conversationId: Uuid, mode: ChatPersistenceMode) {
-        _conversationPersistenceModes.value = _conversationPersistenceModes.value.toMutableMap().apply {
+        _conversationPersistenceModes.update { current ->
             if (mode == ChatPersistenceMode.NORMAL) {
-                remove(conversationId)
+                current - conversationId
             } else {
-                this[conversationId] = mode
+                current + (conversationId to mode)
             }
-        }.toMap()
+        }
     }
 
     private fun setGenerationJob(conversationId: Uuid, job: Job?) {
@@ -869,9 +873,9 @@ class ChatService(
             removeGenerationJob(conversationId)
             return
         }
-        _generationJobs.value = _generationJobs.value.toMutableMap().apply {
-            this[conversationId] = job
-        }.toMap() // 确保创建新的不可变Map实例
+        _generationJobs.update { current ->
+            current + (conversationId to job)
+        }
     }
 
     private fun getGenerationJob(conversationId: Uuid): Job? {
@@ -879,9 +883,9 @@ class ChatService(
     }
 
     private fun removeGenerationJob(conversationId: Uuid) {
-        _generationJobs.value = _generationJobs.value.toMutableMap().apply {
-            remove(conversationId)
-        }.toMap() // 确保创建新的不可变Map实例
+        _generationJobs.update { current ->
+            current - conversationId
+        }
     }
 
     // 初始化对话
@@ -1255,9 +1259,7 @@ class ChatService(
         reason: String,
         answer: String?,
     ) {
-        getGenerationJob(conversationId)?.cancel()
-
-        val job = appScope.launch {
+        val job = appScope.launch(start = CoroutineStart.LAZY) {
             try {
                 val currentConversation = ensureConversationLoaded(conversationId)
                     ?: error("Conversation not found")
@@ -1321,20 +1323,26 @@ class ChatService(
                 )
 
                 emitGenerationDone(conversationId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 e.printStackTrace()
                 _errorFlow.emit(e)
             }
         }
 
-        setGenerationJob(conversationId, job)
+        val previous = _generationJobs.getAndUpdate { it + (conversationId to job) }[conversationId]
+        previous?.cancel()
         job.invokeOnCompletion {
-            setGenerationJob(conversationId, null)
+            _generationJobs.update { current ->
+                if (current[conversationId] === job) current - conversationId else current
+            }
             appScope.launch {
                 delay(500)
                 checkAllConversationsReferences()
             }
         }
+        job.start()
     }
 
     fun sendMessage(
@@ -1353,10 +1361,7 @@ class ChatService(
         }
         setConversationPersistenceMode(conversationId, effectiveMode)
 
-        // 取消现有的生成任务
-        getGenerationJob(conversationId)?.cancel()
-
-        val job = appScope.launch {
+        val job = appScope.launch(start = CoroutineStart.LAZY) {
             try {
                 var effectiveContent = content
                 val currentConversation = getConversationFlow(conversationId).value
@@ -1434,20 +1439,26 @@ class ChatService(
                 }
 
                 emitGenerationDone(conversationId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 e.printStackTrace()
                 _errorFlow.emit(e)
             }
         }
-        setGenerationJob(conversationId, job)
+        val previous = _generationJobs.getAndUpdate { it + (conversationId to job) }[conversationId]
+        previous?.cancel()
         job.invokeOnCompletion {
-            setGenerationJob(conversationId, null)
+            _generationJobs.update { current ->
+                if (current[conversationId] === job) current - conversationId else current
+            }
             // 取消生成任务后，检查是否有其他任务在进行
             appScope.launch {
                 delay(500)
                 checkAllConversationsReferences()
             }
         }
+        job.start()
     }
 
     // Regenerate message - TURN-BASED for assistant messages
@@ -1460,9 +1471,7 @@ class ChatService(
         regenerateAssistantMsg: Boolean = true,
         suppressCompletionNotification: Boolean = false,
     ) {
-        getGenerationJob(conversationId)?.cancel()
-
-        val job = appScope.launch {
+        val job = appScope.launch(start = CoroutineStart.LAZY) {
             try {
                 val conversation = getConversationFlow(conversationId).value
 
@@ -1531,20 +1540,26 @@ class ChatService(
                 }
 
                 emitGenerationDone(conversationId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _errorFlow.emit(e)
             }
         }
 
-        setGenerationJob(conversationId, job)
+        val previous = _generationJobs.getAndUpdate { it + (conversationId to job) }[conversationId]
+        previous?.cancel()
         job.invokeOnCompletion {
-            setGenerationJob(conversationId, null)
+            _generationJobs.update { current ->
+                if (current[conversationId] === job) current - conversationId else current
+            }
             // 取消生成任务后，检查是否有其他任务在进行
             appScope.launch {
                 delay(500)
                 checkAllConversationsReferences()
             }
         }
+        job.start()
     }
 
     // 处理消息补全
@@ -1684,8 +1699,7 @@ class ChatService(
                     null
                 },
                 onContextUsage = { usage ->
-                    val current = _contextUsage.value
-                    _contextUsage.value = current + (conversationId to usage)
+                    _contextUsage.update { it + (conversationId to usage) }
                 },
             ).onCompletion { cause ->
                 if (conversationDeletionLedger.isTombstoned(conversationId)) {
@@ -2013,7 +2027,7 @@ class ChatService(
         }
 
         val tool = tools.find { it.name == toolCall.toolName }
-        val result = runCatching {
+        val result = runCatchingCancellable {
             checkNotNull(tool) { "Tool ${toolCall.toolName} not found" }
             tool.execute(parsedArguments)
         }.getOrElse { throwable ->
@@ -2339,7 +2353,7 @@ class ChatService(
         }
         LogUtil.d(TAG, "generateTitle: starting for conversation ${conversation.id}, messages=${conversation.messageNodes.size}")
 
-        runCatching {
+        runCatchingCancellable {
             val settings = settingsStore.settingsFlow.first()
             val conversationContext = settings.resolveConversationContext(conversation)
             val model =
@@ -2396,7 +2410,7 @@ class ChatService(
         conversation: Conversation,
         preserveConsolidation: Boolean = false,
     ) {
-        runCatching {
+        runCatchingCancellable {
             val settings = settingsStore.settingsFlow.first()
             val model = settings.findModelById(settings.suggestionModelId) ?: return
             val provider = model.findProvider(settings.providers) ?: return
@@ -2512,11 +2526,11 @@ class ChatService(
             }
 
             // Track for fade-in animation
-            _recentlyRestoredIds.value = _recentlyRestoredIds.value + conversationId
+            _recentlyRestoredIds.update { it + conversationId }
 
             // Remove from tracking after animation completes
             kotlinx.coroutines.delay(1000)
-            _recentlyRestoredIds.value = _recentlyRestoredIds.value - conversationId
+            _recentlyRestoredIds.update { it - conversationId }
         }
         return true
     }
@@ -2770,6 +2784,8 @@ class ChatService(
                     Log.w(TAG, "Auto-summarization failed: ${result.errorResId}, args=${result.errorArgs}")
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "checkAndAutoSummarize failed", e)
         }
@@ -2923,6 +2939,8 @@ class ChatService(
                 messagesSummarized = messagesToSummarize.size,
                 tokensSaved = (originalTokens - summaryTokens).coerceAtLeast(0)
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "summarizeAndRefresh failed", e)
             val errorMessage = e.message?.takeIf { it.isNotBlank() }
@@ -3007,6 +3025,9 @@ class ChatService(
 
                 // Save the conversation after translation is complete
                 saveConversation(conversationId, getConversationFlow(conversationId).value)
+            } catch (e: CancellationException) {
+                clearTranslationField(conversationId, message.id)
+                throw e
             } catch (e: Exception) {
                 // Clear translation field on error
                 clearTranslationField(conversationId, message.id)
@@ -3064,18 +3085,18 @@ class ChatService(
         conversationId: Uuid,
         activity: ContextManagementActivity?,
     ) {
-        val current = _contextManagementActivity.value
-        _contextManagementActivity.value = if (activity == null) {
-            current - conversationId
-        } else {
-            current + (conversationId to activity)
+        _contextManagementActivity.update { current ->
+            if (activity == null) {
+                current - conversationId
+            } else {
+                current + (conversationId to activity)
+            }
         }
     }
 
     private fun removeContextUsage(conversationId: Uuid) {
-        val current = _contextUsage.value
-        if (current.containsKey(conversationId)) {
-            _contextUsage.value = current - conversationId
+        _contextUsage.update { current ->
+            current - conversationId
         }
     }
 

@@ -22,6 +22,8 @@ class ChatStorageMaintenanceWorker(
         try {
             chatAttachmentRepository.runMaintenance()
             Result.success()
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            throw e
         } catch (throwable: Throwable) {
             Log.e(CHAT_STORAGE_MAINTENANCE_WORK_NAME, "Chat storage maintenance failed", throwable)
             Result.retry()

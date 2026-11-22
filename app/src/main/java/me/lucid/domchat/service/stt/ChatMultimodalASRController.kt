@@ -144,6 +144,7 @@ class ChatMultimodalASRController(
                     _state.update { it.copy(status = ASRStatus.Idle) }
                 }
             } catch (e: Exception) {
+                if (e is kotlin.coroutines.cancellation.CancellationException) throw e
                 Log.e(TAG, "Transcription failed", e)
                 setError(e.message ?: "Transcription failed")
             }
@@ -195,6 +196,7 @@ class ChatMultimodalASRController(
                     }
                 }
             } catch (e: Exception) {
+                if (e is kotlin.coroutines.cancellation.CancellationException) throw e
                 Log.e(TAG, "Audio recording error", e)
                 setError("Audio recording error: ${e.message}")
             } finally {

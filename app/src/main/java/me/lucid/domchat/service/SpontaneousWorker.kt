@@ -36,6 +36,7 @@ import me.lucid.ai.ui.UIMessage
 import me.lucid.domchat.R
 import me.lucid.domchat.RouteActivity
 import me.lucid.domchat.security.InternalIntentAuthenticator
+import kotlin.coroutines.cancellation.CancellationException
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.SpontaneousMessagingStateStore
@@ -74,14 +75,17 @@ class SpontaneousWorker(
         val settings = try {
             settingsStore.settingsFlow.first { !it.init }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e(TAG, "Failed to load hydrated settings for spontaneous messaging", e)
             return@withContext Result.retry()
         }
 
-        runCatching {
+        try {
             process(settings)
             Result.success()
-        }.getOrElse { error ->
+        } catch (e: CancellationException) {
+            throw e
+        } catch (error: Throwable) {
             Log.e(TAG, "Spontaneous worker failed", error)
             Result.success()
         }
@@ -191,7 +195,7 @@ class SpontaneousWorker(
             )
         }
 
-        val responseText = runCatching {
+        val responseText = try {
             providerHandler.generateText(
                 providerSetting = provider,
                 messages = listOf(UIMessage.user(prompt)),
@@ -201,7 +205,9 @@ class SpontaneousWorker(
                     thinkingBudget = 0,
                 ),
             ).choices.firstOrNull()?.message?.toContentText()
-        }.getOrElse { error ->
+        } catch (e: CancellationException) {
+            throw e
+        } catch (error: Throwable) {
             Log.w(TAG, "Spontaneous generation failed for ${assistant.id}", error)
             return
         } ?: return

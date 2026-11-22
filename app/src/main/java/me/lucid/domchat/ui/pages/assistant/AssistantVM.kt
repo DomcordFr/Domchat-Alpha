@@ -22,6 +22,7 @@ import me.lucid.domchat.data.repository.MemoryRepository
 import me.lucid.domchat.service.ChatService
 import kotlin.uuid.Uuid
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
 
 data class AssistantDeleteImpact(
     val conversationCount: Int,
@@ -98,6 +99,7 @@ class AssistantVM(
                 )
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             PlatformLog.e("AssistantVM", e.message ?: e.toString())
         }
     }
@@ -112,12 +114,14 @@ class AssistantVM(
         // Room reads must never propagate a corrupt-db/query exception to the caller.
         val conversationCount = try {
             conversationRepo.getConversationCountOfAssistant(assistant.id)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             0
         }
         val memoryCount = try {
             memoryRepository.getMemoryCountOfAssistant(assistant.id.toString())
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             0
         }
         AssistantDeleteImpact(
@@ -139,6 +143,7 @@ class AssistantVM(
                     )
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }
         }
@@ -155,6 +160,7 @@ class AssistantVM(
                 conversationRepo.deleteConversationOfAssistant(assistant.id)
                 appStorageRepository.deleteFilesIfUnreferenced(assistant.collectMediaFileRefs())
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 // Room/query failure during deferred deletion must not crash the host process;
                 // the assistant remains removed from settings (optimistic update above) and can be
                 // retried via undo or a subsequent hub open.

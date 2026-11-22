@@ -18,6 +18,7 @@ import me.lucid.domchat.data.sync.WorkspaceExportMetadata
 import me.lucid.domchat.utils.LogUtil
 import me.lucid.workspace.RootfsInstallProgress
 import me.lucid.workspace.RootfsInstallStage
+import java.util.concurrent.ConcurrentHashMap
 
 sealed interface WorkspaceEnvironmentTask {
     val workspaceId: String
@@ -54,7 +55,7 @@ class WorkspaceEnvironmentManager(
     private val _tasks = MutableStateFlow<Map<String, WorkspaceEnvironmentTask>>(emptyMap())
     val tasks: StateFlow<Map<String, WorkspaceEnvironmentTask>> = _tasks.asStateFlow()
 
-    private val jobs = mutableMapOf<String, Job>()
+    private val jobs = ConcurrentHashMap<String, Job>()
 
     fun isBusy(workspaceId: String): Boolean {
         val task = _tasks.value[workspaceId]
@@ -83,17 +84,16 @@ class WorkspaceEnvironmentManager(
         installPythonAfter: Boolean = false,
     ) {
         if (isBusy(workspaceId)) return
+        _tasks.update {
+            it + (workspaceId to WorkspaceEnvironmentTask.InstallingRootfs(
+                workspaceId = workspaceId,
+                workspaceName = workspaceName,
+                progress = RootfsInstallProgress(stage = RootfsInstallStage.DOWNLOADING),
+            ))
+        }
         startService()
 
         val job = scope.launch {
-            _tasks.update {
-                it + (workspaceId to WorkspaceEnvironmentTask.InstallingRootfs(
-                    workspaceId = workspaceId,
-                    workspaceName = workspaceName,
-                    progress = RootfsInstallProgress(stage = RootfsInstallStage.DOWNLOADING),
-                ))
-            }
-
             try {
                 workspaceRepository.installRootfs(workspaceId, url) { progress ->
                     _tasks.update { current ->
@@ -146,16 +146,15 @@ class WorkspaceEnvironmentManager(
         workspaceName: String,
     ) {
         if (isBusy(workspaceId)) return
+        _tasks.update {
+            it + (workspaceId to WorkspaceEnvironmentTask.InstallingPython(
+                workspaceId = workspaceId,
+                workspaceName = workspaceName,
+            ))
+        }
         startService()
 
         val job = scope.launch {
-            _tasks.update {
-                it + (workspaceId to WorkspaceEnvironmentTask.InstallingPython(
-                    workspaceId = workspaceId,
-                    workspaceName = workspaceName,
-                ))
-            }
-
             try {
                 workspaceRepository.installPython(workspaceId)
                 _tasks.update {
