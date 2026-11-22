@@ -41,6 +41,7 @@ import coil3.compose.AsyncImage
 import me.lucid.domchat.R
 import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.ui.hooks.avatarLoadingSpin
 import me.lucid.domchat.ui.hooks.rememberAvatarShape
 import me.lucid.domchat.utils.createChatFilesByContents
 
@@ -54,6 +55,7 @@ fun TextAvatar(
 ) {
     Box(
         modifier = modifier
+            .avatarLoadingSpin(loading)
             .clip(shape = rememberAvatarShape(loading))
             .background(color)
             .size(32.dp),
@@ -160,7 +162,9 @@ fun UIAvatar(
     if (onClick != null || onUpdate != null) {
         Surface(
             shape = rememberAvatarShape(loading),
-            modifier = modifier.size(32.dp),
+            modifier = modifier
+                .size(32.dp)
+                .avatarLoadingSpin(loading),
             onClick = {
                 onClick?.invoke()
                 if (onUpdate != null) showPickOption = true
@@ -172,7 +176,9 @@ fun UIAvatar(
     } else {
         Surface(
             shape = rememberAvatarShape(loading),
-            modifier = modifier.size(32.dp),
+            modifier = modifier
+                .size(32.dp)
+                .avatarLoadingSpin(loading),
             tonalElevation = 4.dp,
             color = Color(0xFF000000),
             content = avatarContent

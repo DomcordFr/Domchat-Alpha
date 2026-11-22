@@ -35,14 +35,15 @@ private class LayerBackdropElement(
     }
 
     override fun update(node: LayerBackdropNode) {
-        if (node.backdrop != backdrop) {
+        val backdropChanged = node.backdrop !== backdrop
+        if (backdropChanged) {
             node.backdrop.sourceInvalidator = null
             node.backdrop.layerCoordinates = null
             node.backdrop = backdrop
             backdrop.sourceInvalidator = { node.invalidateDraw() }
+            node.invalidateDraw()
         }
         node.frozen = frozen
-        node.invalidateDraw()
     }
 
     override fun InspectorInfo.inspectableProperties() {

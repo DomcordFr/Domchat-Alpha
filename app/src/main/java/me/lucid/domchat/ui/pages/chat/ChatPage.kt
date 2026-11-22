@@ -1627,7 +1627,15 @@ private fun ChatPageContent(
         val wallpaperBackdrop = rememberLayerBackdrop()
         // Records the chat list content. Served ONLY to overlay floaters (top bar,
         // composer, picker, menus, sheets) and only while it is opaque and ready.
-        val contentBackdrop = rememberLayerBackdrop()
+        val contentBackdrop = rememberLayerBackdrop(
+            onDraw = {
+                // Draw the recorded wallpaper backdrop layer behind content so overlay glass
+                // samples both the wallpaper and any messages without running a duplicate
+                // AssistantBackground / AsyncImage / RenderEffect hierarchy!
+                drawLayer(wallpaperBackdrop.graphicsLayer)
+                drawContent()
+            }
+        )
         // Empty chat: bind the wallpaper backdrop immediately so liquid glass
         // paints at launch with 0ms delay instead of waiting for the first frame.
         val emptyChat = conversation.messageNodes.isEmpty()
@@ -1845,23 +1853,6 @@ private fun ChatPageContent(
                                         alpha = contentAlpha
                                     }
                             ) {
-                                if (renderBackground) {
-                                    AssistantBackground(
-                                        assistant = currentAssistant,
-                                        conversationId = conversation.id.toString(),
-                                        modifier = Modifier.fillMaxSize(),
-                                        onWallpaperLoaded = {
-                                            wallpaperBackdrop.geometryChanged()
-                                            contentBackdrop.geometryChanged()
-                                        },
-                                    )
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(MaterialTheme.colorScheme.background)
-                                    )
-                                }
                                 CompositionLocalProvider(
                                     me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes provides preexistingNodeIds
                                 ) {

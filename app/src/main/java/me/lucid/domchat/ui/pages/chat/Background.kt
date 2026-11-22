@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.State
@@ -112,6 +114,25 @@ fun AssistantBackground(
                 }
                 val edgeFadeColor = if (isDark) Color.Black else MaterialTheme.colorScheme.background
 
+                val blurPx = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && resolvedBlur > 0f) {
+                    with(LocalDensity.current) { resolvedBlur.dp.toPx().coerceAtLeast(1f) }
+                } else {
+                    0f
+                }
+                val cachedBlurRenderEffect = if (blurPx > 0f) {
+                    remember(blurPx) {
+                        try {
+                            RenderEffect
+                                .createBlurEffect(blurPx, blurPx, Shader.TileMode.CLAMP)
+                                .asComposeRenderEffect()
+                        } catch (t: Throwable) {
+                            null
+                        }
+                    }
+                } else {
+                    null
+                }
+
                 // Base Wallpaper Image
                 AsyncImage(
                     model = bgUrl,
@@ -129,16 +150,9 @@ fun AssistantBackground(
                     modifier = Modifier
                         .fillMaxSize()
                         .then(
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && resolvedBlur > 0f && blurMode == BackgroundBlurMode.FULL) {
+                            if (cachedBlurRenderEffect != null && blurMode == BackgroundBlurMode.FULL) {
                                 Modifier.graphicsLayer {
-                                    val blurPx = resolvedBlur.dp.toPx().coerceAtLeast(1f)
-                                    renderEffect = try {
-                                        RenderEffect
-                                            .createBlurEffect(blurPx, blurPx, Shader.TileMode.CLAMP)
-                                            .asComposeRenderEffect()
-                                    } catch (t: Throwable) {
-                                        null
-                                    }
+                                    renderEffect = cachedBlurRenderEffect
                                 }
                             } else {
                                 Modifier
@@ -147,7 +161,7 @@ fun AssistantBackground(
                 )
 
                 // Optional Bottom Fade Blur Layer (blurs bottom, fades out near top)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && resolvedBlur > 0f && blurMode == BackgroundBlurMode.BOTTOM_FADE) {
+                if (cachedBlurRenderEffect != null && blurMode == BackgroundBlurMode.BOTTOM_FADE) {
                     val fadeStart = (1f - blurHeightFraction).coerceIn(0.01f, 0.95f)
                     AsyncImage(
                         model = bgUrl,
@@ -157,14 +171,7 @@ fun AssistantBackground(
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
-                                val blurPx = resolvedBlur.dp.toPx().coerceAtLeast(1f)
-                                renderEffect = try {
-                                    RenderEffect
-                                        .createBlurEffect(blurPx, blurPx, Shader.TileMode.CLAMP)
-                                        .asComposeRenderEffect()
-                                } catch (t: Throwable) {
-                                    null
-                                }
+                                renderEffect = cachedBlurRenderEffect
                                 alpha = 0.99f
                             }
                             .drawWithContent {

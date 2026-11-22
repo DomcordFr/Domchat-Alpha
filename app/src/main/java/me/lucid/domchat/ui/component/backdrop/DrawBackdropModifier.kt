@@ -230,8 +230,8 @@ private class DrawBackdropElement(
         if (captureChanged) {
             node.surfaceDirty = true
             node.invalidateDraw()
+            node.invalidateDrawCache()
         }
-        node.invalidateDrawCache()
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -313,7 +313,9 @@ private class DrawBackdropNode(
 
     /** Invalidates this sampler's draw when the backdrop source changes (e.g. wallpaper bitmap finished decoding). */
     private val invalidateSamplerDraw: () -> Unit = {
-        surfaceDirty = true
+        if (!frozen() || recordedBackdropSize == IntSize.Zero) {
+            surfaceDirty = true
+        }
         invalidateDraw()
     }
 
@@ -537,6 +539,8 @@ private class DrawBackdropNode(
         surfaceDirty = false
     }
 
+    private var lastLayoutSize: IntSize = IntSize.Zero
+
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
         if (coordinates.isAttached) {
             if (backdrop.isCoordinatesDependent) {
@@ -547,8 +551,14 @@ private class DrawBackdropNode(
                 }
             }
             exportedBackdrop?.layerCoordinates = coordinates
-            surfaceDirty = true
-            invalidateDrawCache()
+
+            val sizeChanged = coordinates.size != lastLayoutSize
+            lastLayoutSize = coordinates.size
+
+            if (sizeChanged || recordedBackdropSize == IntSize.Zero) {
+                surfaceDirty = true
+                invalidateDrawCache()
+            }
             invalidateDraw()
         }
     }

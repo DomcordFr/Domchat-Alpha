@@ -214,56 +214,74 @@ fun Modifier.liquidGlass(
     val baseTint = Color.Transparent
 
     val highlight: (() -> Highlight?)? = if (useGlass && borderWidth > 0.dp && specular > 0f) {
-        {
-            Highlight(
-                width = borderWidth,
-                alpha = specular,
-                style = HighlightStyle.Default(
-                    color = Color.White.copy(alpha = 0.5f * specular),
-                    angle = 45f,
-                    falloff = 1f
+        remember(borderWidth, specular) {
+            {
+                Highlight(
+                    width = borderWidth,
+                    alpha = specular,
+                    style = HighlightStyle.Default(
+                        color = Color.White.copy(alpha = 0.5f * specular),
+                        angle = 45f,
+                        falloff = 1f
+                    )
                 )
-            )
+            }
         }
     } else {
         null
     }
 
-    val effects: BackdropEffectScope.() -> Unit = {
-        if (blurPx > 0f) {
-            blur(blurPx)
-        }
-        if (useGlass && heightPx > 0f && amountPx > 0f) {
-            lens(
-                refractionHeight = heightPx,
-                refractionAmount = amountPx,
-                depthEffect = depthEffect,
-                chromaticAberration = display.chromaticDispersionEnabled,
-                chromaticAberrationAmount = if (display.chromaticDispersionEnabled) 0.65f else 0f,
-            )
+    val effects: BackdropEffectScope.() -> Unit = remember(
+        blurPx,
+        useGlass,
+        heightPx,
+        amountPx,
+        depthEffect,
+        display.chromaticDispersionEnabled
+    ) {
+        {
+            if (blurPx > 0f) {
+                blur(blurPx)
+            }
+            if (useGlass && heightPx > 0f && amountPx > 0f) {
+                lens(
+                    refractionHeight = heightPx,
+                    refractionAmount = amountPx,
+                    depthEffect = depthEffect,
+                    chromaticAberration = display.chromaticDispersionEnabled,
+                    chromaticAberrationAmount = if (display.chromaticDispersionEnabled) 0.65f else 0f,
+                )
+            }
         }
     }
 
-    val surfaceBlock: DrawScope.() -> Unit = {
-        val base = when {
-            fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
-            baseTint != Color.Transparent && baseTint.alpha > 0f -> baseTint
-            else -> Color.Transparent
+    val surfaceBlock: DrawScope.() -> Unit = remember(fillColor, baseTint, tint) {
+        {
+            val base = when {
+                fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
+                baseTint != Color.Transparent && baseTint.alpha > 0f -> baseTint
+                else -> Color.Transparent
+            }
+            if (base.alpha > 0f) {
+                drawRect(color = base, size = size)
+            }
+            val tintResolved = if (tint != Color.Transparent) tint else Color.Transparent
+            if (tintResolved.alpha > 0f) {
+                drawRect(color = tintResolved, size = size)
+            }
         }
-        if (base.alpha > 0f) {
-            drawRect(color = base, size = size)
-        }
-        val tintResolved = if (tint != Color.Transparent) tint else Color.Transparent
-        if (tintResolved.alpha > 0f) {
-            drawRect(color = tintResolved, size = size)
-        }
+    }
+
+    val shapeProvider = remember(shape) { { shape } }
+    val frozenProvider = remember(isFloatingControl, backdrop?.hasRecording) {
+        { isFloatingControl && (backdrop?.hasRecording == true) }
     }
 
     return if (useGlass) {
         this
             .drawBackdrop(
                 backdrop = backdrop,
-                shape = { shape },
+                shape = shapeProvider,
                 effects = effects,
                 highlight = highlight,
                 shadow = null,
@@ -272,7 +290,7 @@ fun Modifier.liquidGlass(
                 // Floating controls (input row, chips, floaters) freeze the backdrop
                 // capture so streaming content behind them does not keep re-recording;
                 // pure position changes are still tracked via draw-time translation.
-                frozen = { isFloatingControl && (backdrop?.hasRecording == true) }
+                frozen = frozenProvider
             )
             .then(
                 if (shadowElevation > 0.dp) {
@@ -393,59 +411,73 @@ fun Modifier.liquidGlassBubbleSurface(
     val blurContainer = if (tintColor.alpha > 0.02f) tintColor else fillColor
 
     val highlight: (() -> Highlight?)? = if (useGlass && borderWidth > 0.dp && specular > 0f) {
-        {
-            Highlight(
-                width = borderWidth,
-                alpha = specular,
-                style = HighlightStyle.Default(
-                    color = Color.White.copy(alpha = 0.5f * specular),
-                    angle = 45f,
-                    falloff = 1f
+        remember(borderWidth, specular) {
+            {
+                Highlight(
+                    width = borderWidth,
+                    alpha = specular,
+                    style = HighlightStyle.Default(
+                        color = Color.White.copy(alpha = 0.5f * specular),
+                        angle = 45f,
+                        falloff = 1f
+                    )
                 )
-            )
+            }
         }
     } else {
         null
     }
 
-    val effects: BackdropEffectScope.() -> Unit = {
-        if (blurPx > 0f) {
-            blur(blurPx)
-        }
-        if (useGlass && heightPx > 0f && amountPx > 0f) {
-            lens(
-                refractionHeight = heightPx,
-                refractionAmount = amountPx,
-                depthEffect = true,
-                chromaticAberration = display.chromaticDispersionEnabled,
-                chromaticAberrationAmount = if (display.chromaticDispersionEnabled) 0.65f else 0f,
-            )
+    val effects: BackdropEffectScope.() -> Unit = remember(
+        blurPx,
+        useGlass,
+        heightPx,
+        amountPx,
+        display.chromaticDispersionEnabled
+    ) {
+        {
+            if (blurPx > 0f) {
+                blur(blurPx)
+            }
+            if (useGlass && heightPx > 0f && amountPx > 0f) {
+                lens(
+                    refractionHeight = heightPx,
+                    refractionAmount = amountPx,
+                    depthEffect = true,
+                    chromaticAberration = display.chromaticDispersionEnabled,
+                    chromaticAberrationAmount = if (display.chromaticDispersionEnabled) 0.65f else 0f,
+                )
+            }
         }
     }
 
     val neutralTone = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, tone)
     val effectiveContainerColor = if (alpha <= 0.02f) Color.Transparent else neutralTone.copy(alpha = alpha)
 
-    val surfaceBlock: DrawScope.() -> Unit = {
-        val base = when {
-            fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
-            effectiveContainerColor != Color.Transparent -> effectiveContainerColor
-            else -> Color.Transparent
-        }
-        if (base.alpha > 0f) {
-            drawRect(color = base, size = size)
-        }
-        val tintResolved = if (tintColor != Color.Transparent) tintColor else Color.Transparent
-        if (tintResolved.alpha > 0f) {
-            drawRect(color = tintResolved, size = size)
+    val surfaceBlock: DrawScope.() -> Unit = remember(fillColor, effectiveContainerColor, tintColor) {
+        {
+            val base = when {
+                fillColor != Color.Transparent && fillColor != Color.Unspecified -> fillColor
+                effectiveContainerColor != Color.Transparent -> effectiveContainerColor
+                else -> Color.Transparent
+            }
+            if (base.alpha > 0f) {
+                drawRect(color = base, size = size)
+            }
+            val tintResolved = if (tintColor != Color.Transparent) tintColor else Color.Transparent
+            if (tintResolved.alpha > 0f) {
+                drawRect(color = tintResolved, size = size)
+            }
         }
     }
+
+    val shapeProvider = remember(shape) { { shape } }
 
     return if (useGlass) {
         this
             .drawBackdrop(
                 backdrop = backdrop,
-                shape = { shape },
+                shape = shapeProvider,
                 effects = effects,
                 highlight = highlight,
                 shadow = null,

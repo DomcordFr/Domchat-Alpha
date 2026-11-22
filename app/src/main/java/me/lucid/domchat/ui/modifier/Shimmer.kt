@@ -9,20 +9,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.node.DrawModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 
 @Composable
@@ -33,65 +30,168 @@ fun Modifier.shimmer(
     durationMillis: Int = 1200,
     angle: Float = 20f,
     gradientWidthRatio: Float = 0.5f
-): Modifier = composed {
-    if (!isLoading) {
-        this
+): Modifier {
+    if (!isLoading) return this
+
+    val motionPolicy = LocalMotionPolicy.current
+    val progressProvider: () -> Float = if (motionPolicy.reduceMotion) {
+        { 0.35f }
     } else {
-        val motionPolicy = LocalMotionPolicy.current
-        var size by remember { mutableStateOf(IntSize.Zero) }
-        val translateAnimation = if (motionPolicy.reduceMotion) {
-            null
-        } else {
-            val transition = rememberInfiniteTransition(label = "ShimmerTransition")
-            transition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = durationMillis, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                ),
-                label = "ShimmerTranslate"
+        val transition = rememberInfiniteTransition(label = "ShimmerTransition")
+        val progress by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = durationMillis, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "ShimmerProgress"
+        )
+        { progress }
+    }
+
+    return this
+        .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+        .then(
+            ShimmerElement(
+                progressProvider = progressProvider,
+                shimmerColor = shimmerColor,
+                backgroundColor = backgroundColor,
+                angle = angle,
+                gradientWidthRatio = gradientWidthRatio
             )
+        )
+}
+
+private data class ShimmerElement(
+    val progressProvider: () -> Float,
+    val shimmerColor: Color,
+    val backgroundColor: Color,
+    val angle: Float,
+    val gradientWidthRatio: Float
+) : ModifierNodeElement<ShimmerNode>() {
+
+    override fun create(): ShimmerNode {
+        return ShimmerNode(
+            progressProvider = progressProvider,
+            shimmerColor = shimmerColor,
+            backgroundColor = backgroundColor,
+            angle = angle,
+            gradientWidthRatio = gradientWidthRatio
+        )
+    }
+
+    override fun update(node: ShimmerNode) {
+        node.progressProvider = progressProvider
+        node.shimmerColor = shimmerColor
+        node.backgroundColor = backgroundColor
+        node.angle = angle
+        node.gradientWidthRatio = gradientWidthRatio
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "shimmer"
+        properties["shimmerColor"] = shimmerColor
+        properties["backgroundColor"] = backgroundColor
+        properties["angle"] = angle
+        properties["gradientWidthRatio"] = gradientWidthRatio
+    }
+}
+
+private class ShimmerNode(
+    var progressProvider: () -> Float,
+    var shimmerColor: Color,
+    var backgroundColor: Color,
+    var angle: Float,
+    var gradientWidthRatio: Float
+) : Modifier.Node(), DrawModifierNode {
+
+    private var cachedWidth: Float = -1f
+    private var cachedHeight: Float = -1f
+    private var cachedShimmerColor: Color = Color.Unspecified
+    private var cachedBackgroundColor: Color = Color.Unspecified
+    private var cachedAngle: Float = -1f
+    private var cachedGradientWidthRatio: Float = -1f
+
+    private var shader: android.graphics.LinearGradient? = null
+    private var shaderBrush: ShaderBrush? = null
+    private val matrix = android.graphics.Matrix()
+
+    private var angleRad: Float = 0f
+    private var cosAngle: Float = 1f
+    private var sinAngle: Float = 0f
+    private var gradientWidth: Float = 0f
+    private var totalDistance: Float = 0f
+
+    override fun ContentDrawScope.draw() {
+        val width = size.width
+        val height = size.height
+
+        if (width <= 0f || height <= 0f) {
+            drawContent()
+            return
         }
-        val angleRad = Math.toRadians(angle.toDouble()).toFloat()
-        val colors = remember(shimmerColor, backgroundColor) {
-            listOf(backgroundColor, shimmerColor, backgroundColor)
+
+        if (width != cachedWidth ||
+            height != cachedHeight ||
+            shimmerColor != cachedShimmerColor ||
+            backgroundColor != cachedBackgroundColor ||
+            angle != cachedAngle ||
+            gradientWidthRatio != cachedGradientWidthRatio
+        ) {
+            cachedWidth = width
+            cachedHeight = height
+            cachedShimmerColor = shimmerColor
+            cachedBackgroundColor = backgroundColor
+            cachedAngle = angle
+            cachedGradientWidthRatio = gradientWidthRatio
+
+            angleRad = Math.toRadians(angle.toDouble()).toFloat()
+            cosAngle = kotlin.math.cos(angleRad)
+            sinAngle = kotlin.math.sin(angleRad)
+
+            val diagonal = kotlin.math.sqrt(width * width + height * height)
+            gradientWidth = diagonal * gradientWidthRatio
+            totalDistance = diagonal + gradientWidth
+
+            val colors = intArrayOf(
+                backgroundColor.toArgb(),
+                shimmerColor.toArgb(),
+                backgroundColor.toArgb()
+            )
+            val positions = floatArrayOf(0f, 0.5f, 1f)
+
+            val newShader = android.graphics.LinearGradient(
+                0f,
+                0f,
+                gradientWidth * cosAngle,
+                gradientWidth * sinAngle,
+                colors,
+                positions,
+                android.graphics.Shader.TileMode.CLAMP
+            )
+            shader = newShader
+            shaderBrush = ShaderBrush(newShader)
         }
 
-        this
-            .onGloballyPositioned { coordinates ->
-                size = coordinates.size
-            }
-            .graphicsLayer { alpha = 0.99f }
-            .drawWithContent {
-                if (size == IntSize.Zero) {
-                    drawContent()
-                    return@drawWithContent
-                }
+        val brush = shaderBrush
+        val localShader = shader
+        if (brush != null && localShader != null) {
+            val progress = progressProvider()
+            val currentOffset = progress * totalDistance - gradientWidth
+            val dx = currentOffset * cosAngle
+            val dy = currentOffset * sinAngle
 
-                val width = size.width.toFloat()
-                val height = size.height.toFloat()
-                val diagonal = kotlin.math.sqrt(width * width + height * height)
-                val gradientWidth = diagonal * gradientWidthRatio
-                val totalDistance = diagonal + gradientWidth
-                val shimmerProgress = translateAnimation?.value ?: 0.35f
-                val currentOffset = shimmerProgress * totalDistance - gradientWidth
-                val startX = currentOffset * kotlin.math.cos(angleRad)
-                val startY = currentOffset * kotlin.math.sin(angleRad)
-                val endX = (currentOffset + gradientWidth) * kotlin.math.cos(angleRad)
-                val endY = (currentOffset + gradientWidth) * kotlin.math.sin(angleRad)
-                val shimmerBrush = Brush.linearGradient(
-                    colors = colors,
-                    start = Offset(startX, startY),
-                    end = Offset(endX, endY),
-                    tileMode = TileMode.Clamp
-                )
+            matrix.setTranslate(dx, dy)
+            localShader.setLocalMatrix(matrix)
 
-                drawContent()
-                drawRect(
-                    brush = shimmerBrush,
-                    blendMode = BlendMode.DstIn
-                )
-            }
+            drawContent()
+            drawRect(
+                brush = brush,
+                blendMode = BlendMode.DstIn
+            )
+        } else {
+            drawContent()
+        }
     }
 }
