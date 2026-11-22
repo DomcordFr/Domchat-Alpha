@@ -346,7 +346,7 @@ class ChatCompletionsAPI(
                 fallback
             }
         } catch (e: Throwable) {
-            PlatformLog.w(TAG, "onFailure: failed to parse from $bodyRaw")
+            PlatformLog.w(TAG, "onFailure: failed to parse error response")
             fallback
         }
     }
@@ -693,7 +693,7 @@ class ChatCompletionsAPI(
                                                 })
                                             }.onFailure {
                                                 it.printStackTrace()
-                                                println("encode image failed: ${part.url}")
+                                                PlatformLog.w(TAG, "encode image failed: ${it.message}")
 
                                                 put("type", "text")
                                                 put("text", "")
@@ -712,7 +712,7 @@ class ChatCompletionsAPI(
                                                 })
                                             }.onFailure {
                                                 it.printStackTrace()
-                                                println("encode audio failed: ${part.url}")
+                                                PlatformLog.w(TAG, "encode audio failed: ${it.message}")
 
                                                 put("type", "text")
                                                 put("text", "")

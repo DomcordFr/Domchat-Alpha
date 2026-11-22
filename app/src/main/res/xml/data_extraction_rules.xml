@@ -2,15 +2,13 @@
 <data-extraction-rules>
   <cloud-backup>
     <exclude domain="root" />
-    <exclude domain="file" path="datastore" />
-    <exclude domain="file" path="workspaces" />
+    <exclude domain="file" path="." />
     <exclude domain="database" />
     <exclude domain="sharedpref" />
   </cloud-backup>
   <device-transfer>
     <exclude domain="root" />
-    <exclude domain="file" path="datastore" />
-    <exclude domain="file" path="workspaces" />
+    <exclude domain="file" path="." />
     <exclude domain="database" />
     <exclude domain="sharedpref" />
   </device-transfer>

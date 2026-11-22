@@ -34,13 +34,22 @@
 # The embedded web UI is runtime-only: Android starts a foreground service,
 # Ktor serves bundled assets from AssetManager, and the browser talks to
 # kotlinx-serialized DTOs over local HTTP/SSE. Keep this path intact under R8.
--keep class me.lucid.domchat.web.** { *; }
+-keep class me.lucid.domchat.web.**$* { *; }
+-keepclassmembers class me.lucid.domchat.web.** {
+    <init>(...);
+    public <methods>;
+}
 -keep class me.lucid.domchat.service.WebServerService { *; }
 
 # Linux workspace shell uses ProcessBuilder plus Termux terminal JNI. R8 does not
 # rewrite native proot binaries, but keep this boundary intact in release builds.
--keep class me.lucid.workspace.** { *; }
--keep class me.lucid.domchat.ui.pages.extensions.workspace.** { *; }
+-keep class me.lucid.workspace.** {
+    native <methods>;
+    public <methods>;
+}
+-keep class me.lucid.domchat.ui.pages.extensions.workspace.** {
+    public <methods>;
+}
 -keep class com.termux.terminal.** { *; }
 -keep class com.termux.view.** { *; }
 -keepclasseswithmembernames class * {

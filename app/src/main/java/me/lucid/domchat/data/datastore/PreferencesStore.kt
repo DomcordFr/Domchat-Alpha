@@ -433,6 +433,8 @@ class SettingsStore(
             preferences[PROVIDERS] = JsonInstant.encodeToString(settings.providers)
             preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(settings.webDavConfig)
             preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(settings.ttsProviders)
+            preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(settings.searchServices)
+            preferences[MCP_SERVERS] = JsonInstant.encodeToString(settings.mcpServers)
         }
     }
 
@@ -567,7 +569,7 @@ class SettingsStore(
             preferences[PROVIDER_TAGS] = JsonInstant.encodeToString(normalizedSettings.providerTags)
             preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(normalizedSettings.recentlyUsedAssistants)
 
-            preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(normalizedSettings.searchServices)
+            preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(migratedSettings.searchServices)
             preferences[SEARCH_COMMON] = JsonInstant.encodeToString(normalizedSettings.searchCommonOptions)
             preferences[SEARCH_SELECTED] = if (normalizedSettings.searchServices.isEmpty()) {
                 0
@@ -575,7 +577,7 @@ class SettingsStore(
                 normalizedSettings.searchServiceSelected.coerceIn(0, normalizedSettings.searchServices.size - 1)
             }
 
-            preferences[MCP_SERVERS] = JsonInstant.encodeToString(normalizedSettings.mcpServers)
+            preferences[MCP_SERVERS] = JsonInstant.encodeToString(migratedSettings.mcpServers)
             preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(migratedSettings.webDavConfig)
             preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(migratedSettings.ttsProviders)
             normalizedSettings.selectedTTSProviderId?.let {

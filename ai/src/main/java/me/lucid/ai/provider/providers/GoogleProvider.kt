@@ -251,7 +251,8 @@ class GoogleProvider(
                 headers = buildHeaders(
                     providerSetting = providerSetting,
                     customHeaders = params.customHeaders,
-                    includeJsonContentType = true
+                    includeJsonContentType = true,
+                    selectedKey = selectedKey,
                 ),
                 body = encodedRequestBody.encodeToByteArray(),
                 mediaType = "application/json",
@@ -325,13 +326,15 @@ class GoogleProvider(
         val requestBody = buildJsonObject {
             put("generateContentRequest", generationBody)
         }
+        val selectedKey = selectKey(providerSetting)
         val url = buildUrl(
             providerSetting = providerSetting,
             path = if (providerSetting.vertexAI) {
                 "publishers/google/models/${params.model.modelId}:countTokens"
             } else {
                 "models/${params.model.modelId}:countTokens"
-            }
+            },
+            selectedKey = selectedKey,
         )
         val response = platformHttpClient.execute(
             PlatformHttpRequest(
@@ -341,6 +344,7 @@ class GoogleProvider(
                     providerSetting = providerSetting,
                     customHeaders = params.customHeaders,
                     includeJsonContentType = true,
+                    selectedKey = selectedKey,
                 ),
                 body = json.encodeToString(requestBody).encodeToByteArray(),
                 mediaType = "application/json",
@@ -513,7 +517,6 @@ class GoogleProvider(
         return try {
             if (!bodyRaw.isNullOrBlank()) {
                 val bodyElement = json.parseToJsonElement(bodyRaw)
-                println(bodyElement)
                 if (bodyElement is JsonObject) {
                     Exception(
                         bodyElement["error"]?.jsonObjectOrNull?.get("message")?.jsonPrimitive?.contentOrNull
@@ -944,13 +947,15 @@ class GoogleProvider(
             }
         }.mergeCustomBody(params.customBody)
 
+        val selectedKey = selectKey(providerSetting)
         val url = buildUrl(
             providerSetting = providerSetting,
             path = if (providerSetting.vertexAI) {
                 "publishers/google/models/${params.model.modelId}:predict"
             } else {
                 "models/${params.model.modelId}:predict"
-            }
+            },
+            selectedKey = selectedKey,
         )
 
         val encodedRequestBody = json.encodeToString(requestBody)
@@ -961,7 +966,8 @@ class GoogleProvider(
                 headers = buildHeaders(
                     providerSetting = providerSetting,
                     customHeaders = params.customHeaders,
-                    includeJsonContentType = true
+                    includeJsonContentType = true,
+                    selectedKey = selectedKey,
                 ),
                 body = encodedRequestBody.encodeToByteArray(),
                 mediaType = "application/json",

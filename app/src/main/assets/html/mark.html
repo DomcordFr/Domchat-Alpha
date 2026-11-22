@@ -289,7 +289,12 @@
             try {
                 // Process with markdown-it
                 const html = md.render(markdownContent);
-                document.getElementById('content').innerHTML = (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) ? DOMPurify.sanitize(html) : html;
+                if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
+                    document.getElementById('content').innerHTML = DOMPurify.sanitize(html);
+                } else {
+                    console.error('DOMPurify missing, falling back to safe textContent rendering');
+                    document.getElementById('content').textContent = markdownContent;
+                }
 
                 // Render mermaid diagrams
                 const mermaidElements = document.querySelectorAll('.mermaid');

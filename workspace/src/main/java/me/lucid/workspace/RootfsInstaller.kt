@@ -200,7 +200,7 @@ class RootfsInstaller(
 
     private fun assertInsideRootfs(root: File, file: File) {
         val rootCanonicalPath = root.canonicalFile.toPath()
-        var current: File? = file.parentFile
+        var current: File? = file
         while (current != null) {
             if (current.exists()) {
                 val currentCanonical = current.canonicalFile.toPath()
@@ -226,7 +226,13 @@ class RootfsInstaller(
             "Symlink escapes rootfs: ${target.name} -> $linkName"
         }
         val sourceForFallback = targetCanonical
-        val linkTarget = File(linkName)
+        val linkTarget = if (File(linkName).isAbsolute) {
+            val parentFile = (target.parentFile ?: rootFile).apply { mkdirs() }.canonicalFile
+            val relPath = parentFile.toPath().relativize(targetCanonical.toPath())
+            File(relPath.toString())
+        } else {
+            File(linkName)
+        }
         target.delete()
         runCatching {
             Files.createSymbolicLink(target.toPath(), linkTarget.toPath())

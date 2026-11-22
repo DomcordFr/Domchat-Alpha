@@ -184,6 +184,7 @@ fun Mermaid(
         interfaces = mapOf(
             "AndroidInterface" to jsInterface
         ),
+        blockExternalNavigation = true,
         settings = {
             builtInZoomControls = true
             displayZoomControls = false
@@ -376,6 +377,7 @@ fun Mermaid(
                         interfaces = mapOf(
                             "AndroidInterface" to jsInterface
                         ),
+                        blockExternalNavigation = true,
                         settings = {
                             builtInZoomControls = true
                             displayZoomControls = false

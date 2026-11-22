@@ -195,7 +195,8 @@ fun UpdateDialog(
                                 haptics.perform(HapticPattern.Pop)
                                 when {
                                     isDownloaded && progress.localUri != null -> {
-                                        updateChecker.installDownloadedUpdate(context, progress.localUri!!)
+                                        val localUri = progress.localUri ?: return@Button
+                                        updateChecker.installDownloadedUpdate(context, localUri, primaryDownload?.sha256)
                                     }
                                     primaryDownload != null -> {
                                         downloadId = updateChecker.downloadUpdate(context, primaryDownload)

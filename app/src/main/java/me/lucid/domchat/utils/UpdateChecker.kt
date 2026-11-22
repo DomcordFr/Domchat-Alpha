@@ -72,10 +72,16 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                         val downloads = release.assets
                             .filter { it.name.endsWith(".apk") }
                             .map { asset ->
+                                val shaRegex = Regex("""([a-fA-F0-9]{64})\s+[*]?\s*(${Regex.escape(asset.name)})""", RegexOption.IGNORE_CASE)
+                                val shaMatch = shaRegex.find(release.body) ?: Regex("""(${Regex.escape(asset.name)})[:\s]+([a-fA-F0-9]{64})""", RegexOption.IGNORE_CASE).find(release.body)
+                                val sha256 = shaMatch?.let { m ->
+                                    if (m.groupValues[1].length == 64) m.groupValues[1] else m.groupValues[2]
+                                }
                                 UpdateDownload(
                                     name = asset.name,
                                     url = asset.browser_download_url,
-                                    size = formatFileSize(asset.size)
+                                    size = formatFileSize(asset.size),
+                                    sha256 = sha256,
                                 )
                             }
                         
@@ -132,7 +138,14 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                 setDescription("Downloading ${download.name}...")
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, download.name)
+                val destDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                if (destDir != null) {
+                    val destFile = File(destDir, download.name)
+                    if (destFile.exists()) destFile.delete()
+                    setDestinationUri(android.net.Uri.fromFile(destFile))
+                } else {
+                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, download.name)
+                }
                 setMimeType("application/vnd.android.package-archive")
             }
             val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -309,7 +322,8 @@ data class GitHubAsset(
 data class UpdateDownload(
     val name: String,
     val url: String,
-    val size: String
+    val size: String,
+    val sha256: String? = null,
 )
 
 @Serializable

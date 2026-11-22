@@ -6,6 +6,9 @@ import me.lucid.ai.provider.ProviderSetting
 import me.lucid.ai.provider.withApiKeyPool
 import me.lucid.ai.util.PooledKey
 import me.lucid.tts.provider.TTSProviderSetting
+import me.lucid.search.SearchServiceOptions
+import me.lucid.domchat.data.ai.mcp.McpServerConfig
+import me.lucid.domchat.data.ai.mcp.McpCommonOptions
 import kotlin.uuid.Uuid
 
 /**
@@ -31,6 +34,10 @@ class SecretKeyManager(
         private const val WEB_SERVER_ACCESS_PASSWORD_KEY = "web_server_access_password"
         private const val HUGGINGFACE_TOKEN_KEY = "huggingface_token"
         private const val MCP_OAUTH_PREFIX = "mcp_oauth_"
+        private const val SEARCH_SERVICE_KEY_PREFIX = "search_service_apikey_"
+        private const val SEARCH_SERVICE_USER_PREFIX = "search_service_user_"
+        private const val SEARCH_SERVICE_PASS_PREFIX = "search_service_pass_"
+        private const val MCP_SERVER_HEADER_PREFIX = "mcp_header_"
     }
 
     // ========== Provider API Key Management ==========
@@ -280,12 +287,28 @@ class SecretKeyManager(
             }
         }
 
+        // Migrate Search Service secrets
+        val migratedSearchServices = settings.searchServices.map { service ->
+            migrateSearchServiceSecrets(service).also {
+                if (it != service) migrated = true
+            }
+        }
+
+        // Migrate MCP Server secrets
+        val migratedMcpServers = settings.mcpServers.map { server ->
+            migrateMcpServerSecrets(server).also {
+                if (it != server) migrated = true
+            }
+        }
+
         return if (migrated) {
             settings.copy(
                 providers = migratedProviders,
                 webDavConfig = migratedWebDav,
                 ttsProviders = migratedTtsProviders,
                 webServerAccessPassword = migratedWebServerAccessPassword,
+                searchServices = migratedSearchServices,
+                mcpServers = migratedMcpServers,
                 huggingFaceToken = "",
                 mcpOAuthTokens = emptyMap(),
             )
@@ -323,6 +346,22 @@ class SecretKeyManager(
             .map { it.id }
             .filterNot(newTtsProviderIds::contains)
             .forEach(::removeTtsProviderSecrets)
+
+        // Same for Search services
+        val newSearchIds = newSettings.searchServices.asSequence().map { it.id }.toHashSet()
+        oldSettings.searchServices
+            .asSequence()
+            .map { it.id }
+            .filterNot(newSearchIds::contains)
+            .forEach(::removeSearchServiceSecrets)
+
+        // Same for MCP servers
+        val newMcpIds = newSettings.mcpServers.asSequence().map { it.id }.toHashSet()
+        oldSettings.mcpServers
+            .asSequence()
+            .map { it.id }
+            .filterNot(newMcpIds::contains)
+            .forEach(::removeMcpServerSecrets)
 
         // Handle provider secrets (API keys and private keys)
         for (newProvider in newSettings.providers) {
@@ -657,11 +696,25 @@ class SecretKeyManager(
         val hfToken = if (includeApiKeys) getHuggingFaceToken().orEmpty() else ""
         val mcpTokens = if (includeApiKeys) getAllMcpOAuthSecrets() else emptyMap()
 
+        val searchServicesWithSecrets = if (includeApiKeys) {
+            settings.searchServices.map { populateSearchServiceSecrets(it) }
+        } else {
+            settings.searchServices.map { stripSearchServiceSecrets(it) }
+        }
+
+        val mcpServersWithSecrets = if (includeApiKeys) {
+            settings.mcpServers.map { populateMcpServerSecrets(it) }
+        } else {
+            settings.mcpServers.map { stripMcpServerSecrets(it) }
+        }
+
         return settings.copy(
             providers = providersWithSecrets,
             webDavConfig = webDavWithPassword,
             ttsProviders = ttsProvidersWithSecrets,
             webServerAccessPassword = webServerAccessPassword,
+            searchServices = searchServicesWithSecrets,
+            mcpServers = mcpServersWithSecrets,
             huggingFaceToken = hfToken,
             mcpOAuthTokens = mcpTokens,
         )
@@ -843,6 +896,219 @@ class SecretKeyManager(
 
             is TTSProviderSetting.SystemTTS -> provider
         }
+    }
+
+    // ========== Search Service Secrets Management ==========
+
+    fun migrateSearchServiceSecrets(service: SearchServiceOptions): SearchServiceOptions {
+        return when (service) {
+            is SearchServiceOptions.ZhipuOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.TavilyOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.ExaOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.LinkUpOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.BraveOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.MetasoOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.OllamaOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.PerplexityOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.FirecrawlOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.JinaOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.BochaOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.NanoGPTOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.GrokOptions -> {
+                if (service.apiKey.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}", service.apiKey)
+                    service.copy(apiKey = "")
+                } else service
+            }
+            is SearchServiceOptions.SearXNGOptions -> {
+                var s = service
+                if (service.username.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_USER_PREFIX${service.id}", service.username)
+                    s = s.copy(username = "")
+                }
+                if (service.password.isNotBlank()) {
+                    secureStore.putSecret("$SEARCH_SERVICE_PASS_PREFIX${service.id}", service.password)
+                    s = s.copy(password = "")
+                }
+                s
+            }
+            is SearchServiceOptions.KeylessOptions,
+            is SearchServiceOptions.BingLocalOptions -> service
+        }
+    }
+
+    fun populateSearchServiceSecrets(service: SearchServiceOptions): SearchServiceOptions {
+        val apiKey = secureStore.getSecret("$SEARCH_SERVICE_KEY_PREFIX${service.id}")
+        return when (service) {
+            is SearchServiceOptions.ZhipuOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.TavilyOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.ExaOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.LinkUpOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.BraveOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.MetasoOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.OllamaOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.PerplexityOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.FirecrawlOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.JinaOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.BochaOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.NanoGPTOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.GrokOptions -> if (!apiKey.isNullOrBlank()) service.copy(apiKey = apiKey) else service
+            is SearchServiceOptions.SearXNGOptions -> {
+                val user = secureStore.getSecret("$SEARCH_SERVICE_USER_PREFIX${service.id}") ?: service.username
+                val pass = secureStore.getSecret("$SEARCH_SERVICE_PASS_PREFIX${service.id}") ?: service.password
+                service.copy(username = user, password = pass)
+            }
+            is SearchServiceOptions.KeylessOptions,
+            is SearchServiceOptions.BingLocalOptions -> service
+        }
+    }
+
+    fun stripSearchServiceSecrets(service: SearchServiceOptions): SearchServiceOptions {
+        return when (service) {
+            is SearchServiceOptions.ZhipuOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.TavilyOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.ExaOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.LinkUpOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.BraveOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.MetasoOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.OllamaOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.PerplexityOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.FirecrawlOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.JinaOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.BochaOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.NanoGPTOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.GrokOptions -> service.copy(apiKey = "")
+            is SearchServiceOptions.SearXNGOptions -> service.copy(username = "", password = "")
+            is SearchServiceOptions.KeylessOptions,
+            is SearchServiceOptions.BingLocalOptions -> service
+        }
+    }
+
+    private fun removeSearchServiceSecrets(serviceId: Uuid) {
+        secureStore.removeSecret("$SEARCH_SERVICE_KEY_PREFIX$serviceId")
+        secureStore.removeSecret("$SEARCH_SERVICE_USER_PREFIX$serviceId")
+        secureStore.removeSecret("$SEARCH_SERVICE_PASS_PREFIX$serviceId")
+    }
+
+    // ========== MCP Server Secrets Management ==========
+
+    private fun isAuthHeader(key: String): Boolean {
+        val lower = key.trim().lowercase()
+        return lower == "authorization" || lower.contains("auth") || lower.contains("token") || lower.contains("key") || lower.contains("secret")
+    }
+
+    fun migrateMcpServerSecrets(server: McpServerConfig): McpServerConfig {
+        var modified = false
+        val newHeaders = server.commonOptions.headers.map { (k, v) ->
+            if (isAuthHeader(k) && v.isNotBlank()) {
+                secureStore.putSecret("$MCP_SERVER_HEADER_PREFIX${server.id}_$k", v)
+                modified = true
+                k to ""
+            } else {
+                k to v
+            }
+        }
+        return if (modified) {
+            server.clone(commonOptions = server.commonOptions.copy(headers = newHeaders))
+        } else {
+            server
+        }
+    }
+
+    fun populateMcpServerSecrets(server: McpServerConfig): McpServerConfig {
+        var modified = false
+        val newHeaders = server.commonOptions.headers.map { (k, v) ->
+            if (isAuthHeader(k)) {
+                val secret = secureStore.getSecret("$MCP_SERVER_HEADER_PREFIX${server.id}_$k")
+                if (!secret.isNullOrBlank() && secret != v) {
+                    modified = true
+                    k to secret
+                } else {
+                    k to v
+                }
+            } else {
+                k to v
+            }
+        }
+        return if (modified) {
+            server.clone(commonOptions = server.commonOptions.copy(headers = newHeaders))
+        } else {
+            server
+        }
+    }
+
+    fun stripMcpServerSecrets(server: McpServerConfig): McpServerConfig {
+        val stripped = server.commonOptions.headers.map { (k, v) ->
+            if (isAuthHeader(k)) k to "" else k to v
+        }
+        return server.clone(commonOptions = server.commonOptions.copy(headers = stripped))
+    }
+
+    private fun removeMcpServerSecrets(serverId: Uuid) {
+        val prefix = "$MCP_SERVER_HEADER_PREFIX${serverId}_"
+        secureStore.getAllKeys()
+            .filter { it.startsWith(prefix) }
+            .forEach { secureStore.removeSecret(it) }
     }
 
     /**

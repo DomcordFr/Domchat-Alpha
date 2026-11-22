@@ -12,7 +12,12 @@ fun sanitizeImportFileName(raw: String, fallback: String = "attachment"): String
         .substringAfterLast('\\')
         .replace("..", "")
         .replace("\u0000", "")
-        .filter { it.code in 32..126 && it != '/' && it != '\\' && it != ':' && it != '*' && it != '?' && it != '"' && it != '<' && it != '>' && it != '|' }
+        .filter {
+            (it.isLetterOrDigit() || it.code in 32..126) &&
+                it != '/' && it != '\\' && it != ':' && it != '*' &&
+                it != '?' && it != '"' && it != '<' && it != '>' &&
+                it != '|' && !it.isISOControl()
+        }
         .trim()
     return if (clean.isBlank()) fallback else clean
 }

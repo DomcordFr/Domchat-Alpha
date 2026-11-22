@@ -65,6 +65,17 @@ internal class MyWebViewClient(private val state: WebViewState) : WebViewClient(
     }
 
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        if (state.blockExternalNavigation) {
+            val url = request?.url ?: return true
+            val scheme = url.scheme?.lowercase() ?: return true
+            if (scheme == "file" && url.path?.startsWith("/android_asset/") == true) {
+                return false
+            }
+            if (scheme == "about") {
+                return false
+            }
+            return true
+        }
         val scheme = request?.url?.scheme?.lowercase() ?: return true
         if (scheme == "https" || scheme == "http") {
             return false
@@ -205,6 +216,7 @@ sealed class WebContent {
 class WebViewState(
     initialContent: WebContent = WebContent.NavigatorOnly,
     val interfaces: Map<String, Any> = emptyMap(),
+    val blockExternalNavigation: Boolean = false,
     val settings: WebSettings.() -> Unit = {}
 ) {
     // --- Content State ---
@@ -308,11 +320,13 @@ fun rememberWebViewState(
     url: String = "about:blank",
     additionalHttpHeaders: Map<String, String> = emptyMap(),
     interfaces: Map<String, Any> = emptyMap(),
+    blockExternalNavigation: Boolean = false,
     settings: WebSettings.() -> Unit = {},
-) = remember(url, additionalHttpHeaders) { // Use keys for better recomposition control
+) = remember(url, additionalHttpHeaders, blockExternalNavigation) { // Use keys for better recomposition control
     WebViewState(
         initialContent = WebContent.Url(url, additionalHttpHeaders),
         interfaces = interfaces,
+        blockExternalNavigation = blockExternalNavigation,
         settings = settings
     )
 }
@@ -325,11 +339,13 @@ fun rememberWebViewState(
     mimeType: String? = null,
     historyUrl: String? = null,
     interfaces: Map<String, Any> = emptyMap(),
+    blockExternalNavigation: Boolean = false,
     settings: WebSettings.() -> Unit = {},
-) = remember(data, baseUrl, encoding, mimeType, historyUrl) { // Use keys
+) = remember(data, baseUrl, encoding, mimeType, historyUrl, blockExternalNavigation) { // Use keys
     WebViewState(
         initialContent = WebContent.Data(data, baseUrl, encoding, mimeType, historyUrl),
         interfaces = interfaces,
+        blockExternalNavigation = blockExternalNavigation,
         settings = settings
     )
 }

@@ -51,6 +51,8 @@ object InternalIntentAuthenticator {
         if (intent == null) return false
         val token = intent.getStringExtra(EXTRA_INTERNAL_AUTH_TOKEN) ?: return false
         val expected = getOrCreateAuthToken(context)
-        return token.isNotEmpty() && token == expected
+        val tokenBytes = token.toByteArray(Charsets.UTF_8)
+        val expectedBytes = expected.toByteArray(Charsets.UTF_8)
+        return token.isNotEmpty() && java.security.MessageDigest.isEqual(tokenBytes, expectedBytes)
     }
 }

@@ -112,9 +112,7 @@ internal fun isDangerousActiveContentType(contentType: String): Boolean {
 }
 
 private fun ApplicationCall.clientIp(): String {
-    return request.headers["X-Forwarded-For"]?.substringBefore(",")?.trim()
-        ?.takeIf { it.isNotBlank() }
-        ?: request.local.remoteAddress.takeIf { it.isNotBlank() }
+    return request.local.remoteAddress.takeIf { it.isNotBlank() }
         ?: request.local.remoteHost.takeIf { it.isNotBlank() }
         ?: "unknown"
 }
@@ -1388,29 +1386,37 @@ private fun String?.toUuid(name: String): Uuid {
     }
 }
 
+@Volatile
+private var cachedWebHmacSecret: ByteArray? = null
+
 internal fun getOrCreateWebHmacSecret(secureStore: SecureStore): ByteArray {
-    val existing = secureStore.getSecret(WEB_SERVER_HMAC_SECRET_KEY)
-    if (!existing.isNullOrBlank()) {
-        val decoded = runCatching { base64UrlDecode(existing) }.getOrNull()
-        if (decoded != null && decoded.size == 32) {
-            return decoded
+    cachedWebHmacSecret?.let { return it }
+    synchronized(WebAuthRateLimiter) {
+        cachedWebHmacSecret?.let { return it }
+        val existing = secureStore.getSecret(WEB_SERVER_HMAC_SECRET_KEY)
+        if (!existing.isNullOrBlank()) {
+            val decoded = runCatching { base64UrlDecode(existing) }.getOrNull()
+            if (decoded != null && decoded.size == 32) {
+                cachedWebHmacSecret = decoded
+                return decoded
+            }
         }
+        val newSecret = ByteArray(32).apply { java.security.SecureRandom().nextBytes(this) }
+        val encoded = base64UrlEncode(newSecret)
+        secureStore.putSecret(WEB_SERVER_HMAC_SECRET_KEY, encoded)
+        cachedWebHmacSecret = newSecret
+        return newSecret
     }
-    val newSecret = ByteArray(32).apply { java.security.SecureRandom().nextBytes(this) }
-    val encoded = base64UrlEncode(newSecret)
-    secureStore.putSecret(WEB_SERVER_HMAC_SECRET_KEY, encoded)
-    return newSecret
 }
 
 internal fun getWebHmacSecret(context: Context?, settings: Settings): ByteArray {
-    val baseSecret = if (context != null) {
-        runCatching {
-            val secureStore = SecureStore(context)
-            getOrCreateWebHmacSecret(secureStore)
-        }.getOrNull()
-    } else null
-    val salt = baseSecret ?: "domchat-web-hmac-fixed-salt".toByteArray(Charsets.UTF_8)
-    return hmacSha256(salt, settings.webServerAccessPassword)
+    cachedWebHmacSecret?.let { return hmacSha256(it, settings.webServerAccessPassword) }
+    val secureStore = runCatching {
+        org.koin.core.context.GlobalContext.get().get<SecureStore>()
+    }.getOrNull() ?: context?.let { SecureStore(it.applicationContext) }
+        ?: throw IllegalStateException("SecureStore or Context required for Web HMAC authentication")
+    val baseSecret = getOrCreateWebHmacSecret(secureStore)
+    return hmacSha256(baseSecret, settings.webServerAccessPassword)
 }
 
 private fun createWebJwt(secret: ByteArray): Pair<String, Long> {

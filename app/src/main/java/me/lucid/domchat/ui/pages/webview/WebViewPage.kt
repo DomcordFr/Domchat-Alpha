@@ -60,6 +60,7 @@ fun WebViewPage(url: String, content: String) {
         rememberWebViewState(
             data = content.base64Decode(),
             baseUrl = "file:///android_asset/html/",
+            blockExternalNavigation = true,
             settings = {
                 builtInZoomControls = true
                 displayZoomControls = false

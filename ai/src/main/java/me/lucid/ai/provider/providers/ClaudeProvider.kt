@@ -723,13 +723,12 @@ class ClaudeProvider(
         return try {
             if (!bodyRaw.isNullOrBlank()) {
                 val bodyElement = Json.parseToJsonElement(bodyRaw)
-                PlatformLog.i(TAG, "Error response: $bodyElement")
                 bodyElement.parseErrorDetail()
             } else {
                 fallback
             }
         } catch (e: Throwable) {
-            PlatformLog.w(TAG, "onFailure: failed to parse from $bodyRaw")
+            PlatformLog.w(TAG, "onFailure: failed to parse error response")
             e.printStackTrace()
             e
         }
