@@ -238,7 +238,7 @@ fun SettingPage(
                 keywords = listOf("chats", "conversations", "history", "manage", "delete", "search")
             ),
             SettingNavItem(
-                title = "Backup and restore",
+                title = "Backup and Restore",
                 subtitle = "Export and restore chats, characters, and settings",
                 category = "Data & Storage",
                 icon = Icons.Rounded.CloudUpload,

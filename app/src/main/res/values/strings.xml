@@ -204,7 +204,7 @@
     <string name="backup_page_restoring">Restoring...</string>
     <string name="backup_page_size">Size</string>
     <string name="backup_page_test_connection">Test Connection</string>
-    <string name="backup_page_title">Backup and restore</string>
+    <string name="backup_page_title">Backup and Restore</string>
     <string name="backup_page_unknown_error">Unknown Error</string>
     <string name="backup_page_username">Username</string>
     <string name="backup_page_webdav_backup">WebDAV Backup</string>

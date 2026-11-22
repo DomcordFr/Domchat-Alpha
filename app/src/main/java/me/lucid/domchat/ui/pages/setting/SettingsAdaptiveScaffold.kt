@@ -343,7 +343,7 @@ private fun settingsPaneGroups(): List<SettingsPaneGroup> {
         SettingsPaneGroup(
             titleRes = R.string.setting_page_data_settings,
             entries = listOf(
-                SettingsPaneEntry(SettingsDestination.Backup, R.string.setting_page_data_backup, null, Icons.Rounded.Inventory2, Screen.BackupLocal),
+                SettingsPaneEntry(SettingsDestination.Backup, R.string.setting_page_data_backup, null, Icons.Rounded.CloudUpload, Screen.BackupLocal),
                 SettingsPaneEntry(SettingsDestination.ChatStorage, R.string.setting_page_chat_storage, null, Icons.Rounded.Storage, Screen.SettingChatStorage),
             )
         ),

@@ -327,7 +327,7 @@ fun BackupPage(
     Scaffold(
         topBar = {
             OneUITopAppBar(
-                title = "Backup and restore",
+                title = "Backup and Restore",
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     BackButton()
@@ -343,7 +343,7 @@ fun BackupPage(
         ) {
             item {
                 SettingsGroup(
-                    title = "Backup and restore",
+                    title = "Backup and Restore",
                     horizontalPadding = 16.dp,
                     titleStartPadding = 16.dp,
                 ) {
