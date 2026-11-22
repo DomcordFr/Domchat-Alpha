@@ -319,7 +319,6 @@ fun ModelSelector(
                         modelType = type,
                         modelFilter = effectiveModelFilter,
                         onSelect = {
-                            haptics.perform(HapticPattern.Pop)
                             onSelect(it)
                             sheetDismiss?.invoke() ?: run { popup = false }
                         },
@@ -626,7 +625,7 @@ internal fun ColumnScope.ModelList(
                 .height(48.dp)
                 .liquidGlassSurface(
                     shape = searchFieldShape,
-                    fillColor = Color(0xFF000000).copy(alpha = 0.60f),
+                    fillColor = if (style == ModelPickerStyle.LIQUID_GLASS) Color.Transparent else Color(0xFF000000).copy(alpha = 0.60f),
                     borderWidth = 0.5.dp,
                     specularBrush = searchBorder
                 )
@@ -723,7 +722,11 @@ internal fun ColumnScope.ModelList(
 
                 modifier = Modifier
                     .fillMaxSize()
-                    .fadeEdges(fadeTop = canScrollUp, fadeBottom = false, fadeHeight = 28f)
+                    .fadeEdges(
+                        fadeTop = canScrollUp,
+                        fadeBottom = if (style == ModelPickerStyle.LIQUID_GLASS) canScrollDown else false,
+                        fadeHeight = 72f
+                    )
                     .onGloballyPositioned { coordinates ->
                         viewportHeight = coordinates.size.height
                     },
@@ -934,33 +937,35 @@ internal fun ColumnScope.ModelList(
             }
 
             // 3. Strong Bottom Floating Fade (Gradient + Solid background covering provider badges area)
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-            ) {
-                // Gradient part (from transparent to solid surfaceContainerLow)
-                Box(
+            if (style != ModelPickerStyle.LIQUID_GLASS) {
+                Column(
                     modifier = Modifier
+                        .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(64.dp)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.75f),
-                                    Color.Black
+                ) {
+                    // Gradient part (from transparent to solid surfaceContainerLow)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.75f),
+                                        Color.Black
+                                    )
                                 )
                             )
-                        )
-                )
-                // Solid part (completely covering the provider pills area)
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color.Black)
-                )
+                    )
+                    // Solid part (completely covering the provider pills area)
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .background(Color.Black)
+                    )
+                }
             }
 
             // 4. Bottom floating provider options row
@@ -1139,7 +1144,6 @@ private fun ModelItem(
     style: ModelPickerStyle = ModelPickerStyle.SETTINGS
 ) {
     val navController = LocalNavController.current
-    val haptics = rememberPremiumHaptics()
 
     val isLiquidGlass = style == ModelPickerStyle.LIQUID_GLASS
     val tagFill = if (isLiquidGlass) Color.Transparent else null
@@ -1154,7 +1158,7 @@ private fun ModelItem(
                     shape = RoundedCornerShape(8.dp),
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                    fillColor = Color(0xFF000000)
+                    fillColor = if (isLiquidGlass) Color.Transparent else Color(0xFF000000)
                 )
             ) {
                 Row(
@@ -1206,10 +1210,7 @@ private fun ModelItem(
             title = model.displayName,
             selected = select,
             position = position.toSharedPosition(),
-            onClick = {
-                haptics.perform(HapticPattern.Pop)
-                onSelect(model)
-            },
+            onClick = { onSelect(model) },
             containerColor = rowContainerColor,
             drawBackground = !isLiquidGlass,
             drawBorder = !isLiquidGlass,
@@ -1288,10 +1289,7 @@ private fun ModelItem(
                                     )
                                 )
                             },
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                onSelect(model)
-                            },
+                            onClick = { onSelect(model) },
                             interactionSource = interactionSource,
                             indication = LocalIndication.current
                         ),

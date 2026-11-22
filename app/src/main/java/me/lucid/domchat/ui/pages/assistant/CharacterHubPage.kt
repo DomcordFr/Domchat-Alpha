@@ -7,6 +7,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -144,6 +145,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.Screen
 import me.lucid.domchat.data.model.Assistant
@@ -468,16 +470,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         }
     }
 
-    var filteredAssistants by remember { mutableStateOf(settings.assistants) }
+    var baseFilteredAssistants by remember { mutableStateOf(settings.assistants) }
 
     // Fast indexed background search: searches name, creator without scanning multi-KB prompt blobs
     LaunchedEffect(
         settings.assistants,
         debouncedQuery,
         sortOption,
-        selectedTagIds,
-        selectedGroupId,
-        charGroupAssignments
+        selectedTagIds
     ) {
         try {
             withContext(Dispatchers.Default) {
@@ -494,33 +494,35 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 } else {
                     base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId.toString()) } }
                 }
-                // Group filter: 'All' (null) shows every character; a selected group shows only
-                // characters whose persisted assignment points at that group.
-                val groupFiltered = if (selectedGroupId == null) {
-                    tagFiltered
-                } else {
-                    tagFiltered.filter { char ->
-                        charGroupAssignments[char.id.toString()] == selectedGroupId
-                    }
-                }
                 val sorted = when (sortOption) {
-                    CharacterSortOption.NAME -> groupFiltered.sortedBy { it.name.lowercase() }
-                    CharacterSortOption.CREATOR -> groupFiltered.sortedBy { it.creator?.lowercase() ?: "" }
+                    CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
+                    CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
                     CharacterSortOption.RECENT -> {
-                        val activityMap = groupFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
-                        groupFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
+                        val activityMap = tagFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
+                        tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
                     }
                 }
                 val distinctSorted = sorted.distinctBy { it.id }
                 withContext(Dispatchers.Main) {
                     loadError = null
-                    filteredAssistants = distinctSorted
+                    baseFilteredAssistants = distinctSorted
                 }
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
                 loadError = e
-                filteredAssistants = emptyList()
+                baseFilteredAssistants = emptyList()
+            }
+        }
+    }
+
+    // Group filter applied synchronously so cards update on the exact frame the group tab switches
+    val filteredAssistants = remember(baseFilteredAssistants, selectedGroupId, charGroupAssignments) {
+        if (selectedGroupId == null) {
+            baseFilteredAssistants
+        } else {
+            baseFilteredAssistants.filter { char ->
+                charGroupAssignments[char.id.toString()] == selectedGroupId
             }
         }
     }
@@ -564,42 +566,47 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             }
         }
     ) { padding ->
-        AnimatedContent<Pair<Boolean, String?>>(
-            targetState = isGridView to selectedGroupId,
+        var previousGroupId by remember { mutableStateOf<String?>(null) }
+        var hasSeenInitialGroup by remember { mutableStateOf(false) }
+        val groupCardsAlpha = remember { Animatable(1f) }
+        val groupCardsOffsetX = remember { Animatable(0f) }
+
+        LaunchedEffect(selectedGroupId) {
+            if (!hasSeenInitialGroup) {
+                hasSeenInitialGroup = true
+                previousGroupId = selectedGroupId
+                return@LaunchedEffect
+            }
+            val allOrdered = listOf<String?>(null) + (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder })
+            val prevIdx = allOrdered.indexOf(previousGroupId).let { if (it == -1) 0 else it }
+            val nextIdx = allOrdered.indexOf(selectedGroupId).let { if (it == -1) 0 else it }
+            previousGroupId = selectedGroupId
+            val dir = if (nextIdx >= prevIdx) 1f else -1f
+            groupCardsOffsetX.snapTo(dir * 48f)
+            groupCardsAlpha.snapTo(0f)
+            launch {
+                groupCardsOffsetX.animateTo(0f, spring(dampingRatio = 0.86f, stiffness = 420f))
+            }
+            launch {
+                groupCardsAlpha.animateTo(1f, tween(180, easing = LinearOutSlowInEasing))
+            }
+        }
+
+        AnimatedContent(
+            targetState = isGridView,
             transitionSpec = {
-                if (targetState.first != initialState.first) {
-                    if (targetState.first) {
-                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeIn(animationSpec = tween(200)))
-                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 3 } + fadeOut(animationSpec = tween(160)))
-                    } else {
-                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 3 } + fadeIn(animationSpec = tween(200)))
-                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeOut(animationSpec = tween(160)))
-                    }
+                if (targetState) {
+                    (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeIn(animationSpec = tween(200)))
+                        .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 3 } + fadeOut(animationSpec = tween(160)))
                 } else {
-                    if (initialState.second == targetState.second) {
-                        (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
-                            .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
-                    } else {
-                        val allOrdered = listOf<String?>(null) + (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder })
-                        val initialIdx = allOrdered.indexOf(initialState.second).let { if (it == -1) 0 else it }
-                        val targetIdx = allOrdered.indexOf(targetState.second).let { if (it == -1) 0 else it }
-                        if (targetIdx > initialIdx) {
-                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeIn(animationSpec = tween(200)))
-                                .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeOut(animationSpec = tween(160)))
-                        } else if (targetIdx < initialIdx) {
-                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeIn(animationSpec = tween(200)))
-                                .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeOut(animationSpec = tween(160)))
-                        } else {
-                            (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
-                                .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
-                        }
-                    }
+                    (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 3 } + fadeIn(animationSpec = tween(200)))
+                        .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeOut(animationSpec = tween(160)))
                 }
             },
             contentAlignment = Alignment.TopCenter,
             label = "CharacterGallery",
             modifier = Modifier.fillMaxSize().padding(padding).layerBackdrop(hubBackdrop)
-        ) { (targetGrid, targetGroup) ->
+        ) { targetGrid ->
             if (targetGrid) {
                 LazyVerticalGrid(
                     state = gridState,
@@ -930,16 +937,23 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     }
 
                     items(filteredAssistants, key = { it.id.toString() }) { char ->
-                        CharacterPortraitCard(
-                            assistant = char,
-                            settings = settings,
-                            isDark = isDark,
-                            onClick = { inspectingAssistant = char },
-                            onLongClick = {
-                                characterToMove = char
-                                showMoveToGroupDialog = true
+                        Box(
+                            modifier = Modifier.graphicsLayer {
+                                translationX = groupCardsOffsetX.value
+                                alpha = groupCardsAlpha.value
                             }
-                        )
+                        ) {
+                            CharacterPortraitCard(
+                                assistant = char,
+                                settings = settings,
+                                isDark = isDark,
+                                onClick = { inspectingAssistant = char },
+                                onLongClick = {
+                                    characterToMove = char
+                                    showMoveToGroupDialog = true
+                                }
+                            )
+                        }
                     }
 
                 }
@@ -1271,15 +1285,22 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     }
 
                     items(filteredAssistants, key = { it.id.toString() }) { char ->
-                        CharacterListRow(
-                            assistant = char,
-                            isDark = isDark,
-                            onClick = { inspectingAssistant = char },
-                            onLongClick = {
-                                characterToMove = char
-                                showMoveToGroupDialog = true
+                        Box(
+                            modifier = Modifier.graphicsLayer {
+                                translationX = groupCardsOffsetX.value
+                                alpha = groupCardsAlpha.value
                             }
-                        )
+                        ) {
+                            CharacterListRow(
+                                assistant = char,
+                                isDark = isDark,
+                                onClick = { inspectingAssistant = char },
+                                onLongClick = {
+                                    characterToMove = char
+                                    showMoveToGroupDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }

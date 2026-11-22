@@ -1774,7 +1774,6 @@ fun MinimalChatInput(
                     modelType = me.lucid.ai.provider.ModelType.CHAT,
                     style = me.lucid.domchat.ui.components.ai.ModelPickerStyle.LIQUID_GLASS,
                     onSelect = { selectedModel: Model ->
-                        haptics.perform(HapticPattern.Pop)
                         onUpdateChatModel(selectedModel)
                         sheetDismiss?.invoke() ?: run { showModelPickerSheet = false }
                     },

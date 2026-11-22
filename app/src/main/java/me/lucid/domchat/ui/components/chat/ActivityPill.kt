@@ -363,6 +363,13 @@ private sealed interface SinglePillContentState {
     ) : SinglePillContentState
 }
 
+private fun SinglePillContentState.isUnifiedReasoning(): Boolean = when (this) {
+    is SinglePillContentState.ExpandedReasoning -> true
+    is SinglePillContentState.Compact -> state is ActivityState.Reasoning ||
+        (state is ActivityState.CompletedSingle && state.type == ActivityType.REASONING)
+    else -> false
+}
+
 /**
  * A row of activity pills with Apple-like smooth animations.
  * 
@@ -642,7 +649,7 @@ private fun AnimatedSinglePill(
                 } else Modifier
             )
             .then(
-                if (surfaceExpanded) {
+                if (surfaceExpanded || requestedContentState.isUnifiedReasoning()) {
                     Modifier.widthIn(max = maxBubbleWidth)
                 } else {
                     Modifier.height(PILL_HEIGHT)
@@ -694,23 +701,23 @@ private fun AnimatedSinglePill(
         AnimatedContent(
             targetState = requestedContentState,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith
-                    fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = true) { _, _ ->
+                (fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
+                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using SizeTransform(clip = true) { _, _ ->
                     PILL_MORPH_SPEC
                 }
             },
             contentAlignment = Alignment.TopStart,
-            contentKey = { 
-                when (it) {
-                    is SinglePillContentState.ExpandedReasoning -> "reasoning"
-                    is SinglePillContentState.ExpandedTimeline -> "timeline"
-                    is SinglePillContentState.Compact -> "compact"
+            contentKey = {
+                when {
+                    it is SinglePillContentState.ExpandedTimeline -> "timeline"
+                    it.isUnifiedReasoning() -> "reasoning_unified"
+                    else -> "compact"
                 }
             },
             label = "pill_morph_content"
         ) { targetContentState ->
-            when (targetContentState) {
-                is SinglePillContentState.ExpandedTimeline -> {
+            when {
+                targetContentState is SinglePillContentState.ExpandedTimeline -> {
                     ActivityTimelinePanel(
                         entries = targetContentState.entries,
                         initialOpenRequest = targetContentState.initialRequest,
@@ -721,28 +728,22 @@ private fun AnimatedSinglePill(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                is SinglePillContentState.ExpandedReasoning -> {
-                    val activeReasoningState = targetContentState.state.let { targetState ->
-                        val parentState = state as? ActivityState.Reasoning
-                        if (parentState != null &&
-                            parentState.startTimeMs == targetState.startTimeMs &&
-                            parentState.reasoningText.length > targetState.reasoningText.length
-                        ) {
-                            parentState
-                        } else {
-                            targetState
-                        }
+                targetContentState.isUnifiedReasoning() -> {
+                    val liveContentState = if (requestedContentState.isUnifiedReasoning()) {
+                        requestedContentState
+                    } else {
+                        targetContentState
                     }
-                    ReasoningPreviewCard(
-                        state = activeReasoningState,
-                        active = surfaceExpanded,
-                        isLive = targetContentState.isLive,
-                        durationMs = targetContentState.durationMs,
-                        onHeaderClick = if (timelineOpen) onTimelineDismiss else null
+                    UnifiedReasoningPill(
+                        contentState = liveContentState,
+                        parentState = state,
+                        timelineOpen = timelineOpen,
+                        onHeaderDismiss = onTimelineDismiss
                     )
                 }
-                is SinglePillContentState.Compact -> {
-                    val compactState = if (!surfaceExpanded && !isExpandedReasoning) state else targetContentState.state
+                else -> {
+                    val compactTarget = targetContentState as SinglePillContentState.Compact
+                    val compactState = if (!surfaceExpanded && !isExpandedReasoning) state else compactTarget.state
                     
                     AnimatedContent(
                         targetState = compactState,
@@ -909,36 +910,69 @@ private fun AnimatedSinglePill(
 }
 
 @Composable
-private fun ReasoningPreviewCard(
-    state: ActivityState.Reasoning,
-    active: Boolean,
-    isLive: Boolean = true,
-    durationMs: Long? = null,
-    onHeaderClick: (() -> Unit)? = null
+private fun UnifiedReasoningPill(
+    contentState: SinglePillContentState,
+    parentState: ActivityState,
+    timelineOpen: Boolean,
+    onHeaderDismiss: () -> Unit,
 ) {
-    var elapsedMs by remember { mutableLongStateOf(durationMs ?: 0L) }
+    val expandedState = contentState as? SinglePillContentState.ExpandedReasoning
+    val isExpanded = expandedState != null
+    val compactReasoning = (contentState as? SinglePillContentState.Compact)?.state as? ActivityState.Reasoning
+    val compactCompleted = (contentState as? SinglePillContentState.Compact)?.state as? ActivityState.CompletedSingle
+
+    val liveParent = parentState as? ActivityState.Reasoning
+    val resolvedExpandedReasoning = expandedState?.state?.let { targetState ->
+        if (liveParent != null &&
+            liveParent.startTimeMs == targetState.startTimeMs &&
+            liveParent.reasoningText.length > targetState.reasoningText.length
+        ) {
+            liveParent
+        } else {
+            targetState
+        }
+    }
+    val resolvedCompactReasoning = compactReasoning?.let { targetState -> liveParent ?: targetState }
+
+    val isLive = expandedState?.isLive ?: (compactReasoning != null)
+    val startTimeMs = resolvedExpandedReasoning?.startTimeMs ?: resolvedCompactReasoning?.startTimeMs ?: 0L
+    val completedDurationMs = expandedState?.durationMs ?: compactCompleted?.durationMs
+    val defaultReasoningTitle = stringResource(R.string.activity_timeline_reasoning)
+    val headerTitle = when {
+        resolvedExpandedReasoning != null -> resolvedExpandedReasoning.title?.takeIf { it.isNotBlank() } ?: defaultReasoningTitle
+        resolvedCompactReasoning != null -> resolvedCompactReasoning.title?.takeIf { it.isNotBlank() } ?: defaultReasoningTitle
+        else -> "Reasoned"
+    }
+
+    var elapsedMs by remember { mutableLongStateOf(completedDurationMs ?: 0L) }
     val scrollState = rememberScrollState()
-    var previewAutoFollowPaused by remember(state.startTimeMs) { mutableStateOf(false) }
-    var programmaticScrollInProgress by remember { mutableStateOf(false) }
-    var previousScrollValue by remember(state.startTimeMs) { mutableIntStateOf(0) }
+    var previewAutoFollowPaused by remember(startTimeMs) { mutableStateOf(false) }
+    var programmaticScrollInProgress by remember(startTimeMs) { mutableStateOf(false) }
+    var previousScrollValue by remember(startTimeMs) { mutableIntStateOf(0) }
 
     if (isLive) {
-        LaunchedEffect(state.startTimeMs) {
+        LaunchedEffect(startTimeMs) {
             while (isActive) {
-                elapsedMs = System.currentTimeMillis() - state.startTimeMs
+                elapsedMs = System.currentTimeMillis() - startTimeMs
                 delay(50)
             }
         }
     } else {
-        LaunchedEffect(durationMs) {
-            if (durationMs != null) {
-                elapsedMs = durationMs
+        LaunchedEffect(completedDurationMs) {
+            if (completedDurationMs != null) {
+                elapsedMs = completedDurationMs
             }
         }
     }
 
-    LaunchedEffect(scrollState, active && isLive) {
-        if (!active || !isLive) return@LaunchedEffect
+    val durationText = when {
+        isLive -> formatDuration(elapsedMs)
+        isExpanded -> (completedDurationMs ?: elapsedMs.takeIf { it > 0L })?.let { formatDuration(it) }.orEmpty()
+        else -> completedDurationMs?.let { "for ${formatDuration(it)}" }.orEmpty()
+    }
+
+    LaunchedEffect(scrollState, isExpanded && isLive) {
+        if (!isExpanded || !isLive) return@LaunchedEffect
         snapshotFlow {
             Triple(
                 scrollState.value,
@@ -958,8 +992,8 @@ private fun ReasoningPreviewCard(
         }
     }
 
-    LaunchedEffect(scrollState, previewAutoFollowPaused, active && isLive) {
-        if (!active || !isLive) return@LaunchedEffect
+    LaunchedEffect(scrollState, previewAutoFollowPaused, isExpanded && isLive) {
+        if (!isExpanded || !isLive) return@LaunchedEffect
         snapshotFlow { scrollState.maxValue }.collect { maxValue ->
             if (!previewAutoFollowPaused) {
                 programmaticScrollInProgress = true
@@ -974,8 +1008,8 @@ private fun ReasoningPreviewCard(
 
     var streamingLayoutTick by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(streamingLayoutTick, previewAutoFollowPaused, active && isLive) {
-        if (!active || !isLive || previewAutoFollowPaused) return@LaunchedEffect
+    LaunchedEffect(streamingLayoutTick, previewAutoFollowPaused, isExpanded && isLive) {
+        if (!isExpanded || !isLive || previewAutoFollowPaused) return@LaunchedEffect
         delay(16)
         programmaticScrollInProgress = true
         try {
@@ -985,30 +1019,35 @@ private fun ReasoningPreviewCard(
         }
     }
 
-    val displayTitle = state.title?.takeIf { it.isNotBlank() }
-        ?: stringResource(R.string.activity_timeline_reasoning)
-    val previewText = state.reasoningText.takeIf { it.isNotBlank() } ?: displayTitle
+    val lastPreviewText = remember { mutableStateOf("") }
+    val currentPreviewText = resolvedExpandedReasoning?.reasoningText?.takeIf { it.isNotBlank() }
+        ?: resolvedCompactReasoning?.reasoningText?.takeIf { it.isNotBlank() }
+        ?: if (isExpanded) headerTitle else null
+    if (currentPreviewText != null) {
+        lastPreviewText.value = currentPreviewText
+    }
 
-    Column(
-        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    val contentColor = LocalContentColor.current
+
+    Column(modifier = if (isExpanded) Modifier.fillMaxWidth() else Modifier) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
+                .height(PILL_HEIGHT)
                 .then(
-                    if (onHeaderClick != null) {
-                        Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onHeaderClick
-                        )
+                    if (isExpanded && timelineOpen) {
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onHeaderDismiss
+                            )
                     } else Modifier
-                ),
+                )
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val contentColor = LocalContentColor.current
             Icon(
                 imageVector = Icons.Rounded.Lightbulb,
                 contentDescription = null,
@@ -1016,13 +1055,14 @@ private fun ReasoningPreviewCard(
                 tint = contentColor.copy(alpha = 0.85f)
             )
             AnimatedContent(
-                targetState = displayTitle,
+                targetState = headerTitle,
                 transitionSpec = {
-                    fadeIn(tween(200, easing = LinearOutSlowInEasing))
-                        .togetherWith(fadeOut(tween(160, easing = FastOutLinearInEasing)))
+                    (fadeIn(tween(220, easing = LinearOutSlowInEasing)) togetherWith
+                        fadeOut(tween(160, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
+                        PILL_MORPH_SPEC
+                    }
                 },
-                label = "reasoning_preview_title",
-                modifier = Modifier.weight(1f)
+                label = "reasoning_header_title"
             ) { title ->
                 Text(
                     text = title,
@@ -1033,14 +1073,25 @@ private fun ReasoningPreviewCard(
                     modifier = if (isLive) Modifier.shimmer(true) else Modifier
                 )
             }
-            val formattedDuration = formatDuration(if (isLive) elapsedMs else (durationMs ?: elapsedMs))
-            if (formattedDuration.isNotBlank()) {
-                Text(
-                    text = formattedDuration,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor.copy(alpha = 0.8f),
-                    modifier = if (isLive) Modifier.shimmer(true) else Modifier
-                )
+            AnimatedContent(
+                targetState = durationText,
+                contentKey = { if (isLive) "live_timer" else it },
+                transitionSpec = {
+                    (fadeIn(tween(220, easing = LinearOutSlowInEasing)) togetherWith
+                        fadeOut(tween(160, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
+                        PILL_MORPH_SPEC
+                    }
+                },
+                label = "reasoning_header_duration"
+            ) { duration ->
+                if (duration.isNotBlank()) {
+                    Text(
+                        text = duration,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.8f),
+                        modifier = if (isLive) Modifier.shimmer(true) else Modifier
+                    )
+                }
             }
         }
 
@@ -1058,25 +1109,26 @@ private fun ReasoningPreviewCard(
         )
 
         AnimatedVisibility(
-            visible = active && previewText.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(220, delayMillis = 40, easing = LinearOutSlowInEasing)) +
-                    expandVertically(animationSpec = PILL_MORPH_SPEC),
-            exit = fadeOut(animationSpec = tween(160, easing = FastOutLinearInEasing)) +
-                   shrinkVertically(animationSpec = tween(180, easing = FastOutLinearInEasing))
+            visible = isExpanded && lastPreviewText.value.isNotBlank(),
+            enter = fadeIn(animationSpec = tween(240, delayMillis = 40, easing = LinearOutSlowInEasing)) +
+                    expandVertically(animationSpec = PILL_MORPH_SPEC, expandFrom = Alignment.Top),
+            exit = fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing)) +
+                   shrinkVertically(animationSpec = tween(180, easing = FastOutLinearInEasing), shrinkTowards = Alignment.Top)
         ) {
             MarkdownBlock(
-                content = previewText,
+                content = lastPreviewText.value,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp)
                     .fadeEdges(
                         topProgress = topFadeProgress,
                         bottomProgress = bottomFadeProgress,
                         fadeHeight = 64f
                     )
-                    .heightIn(max = if (active && isLive && onHeaderClick == null) 120.dp else 280.dp)
+                    .heightIn(max = if (isExpanded && isLive && !timelineOpen) 120.dp else 280.dp)
                     .verticalScroll(scrollState),
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = LocalContentColor.current
+                    color = contentColor
                 ),
                 paragraphSpacing = 8.dp,
                 streamingTextReveal = isLive,

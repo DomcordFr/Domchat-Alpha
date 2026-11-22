@@ -474,7 +474,8 @@ internal data class ChatInputDraft(
 }
 
 internal object ChatSwitchSession {
-    var isColdStart: Boolean = true
+    var coldStartConsumed: Boolean = false
+    var coldStartTargetId: String? = null
 }
 
 internal object ChatSessionDraftStore {
@@ -916,17 +917,26 @@ fun ChatPage(
             firstVisibleItemScrollOffset = initialChatListScrollPosition?.firstVisibleItemScrollOffset ?: 0,
         )
     }
-    val isColdStart = remember {
-        val cold = ChatSwitchSession.isColdStart
-        ChatSwitchSession.isColdStart = false
-        cold
+    val isColdStart = remember(target.id) {
+        if (!ChatSwitchSession.coldStartConsumed) {
+            ChatSwitchSession.coldStartConsumed = true
+            ChatSwitchSession.coldStartTargetId = target.id
+            true
+        } else if (ChatSwitchSession.coldStartTargetId == target.id) {
+            true
+        } else {
+            ChatSwitchSession.coldStartTargetId = null
+            false
+        }
     }
     var chatListReady by remember(conversation.id) { mutableStateOf(false) }
-    var isSwitchingConversations by remember(conversation.id) { mutableStateOf(!isColdStart) }
-    LaunchedEffect(target.id, conversation.id) {
+    var isSwitchingConversations by remember(target.id) { mutableStateOf(!isColdStart) }
+    LaunchedEffect(target.id) {
         if (!isColdStart) {
             isSwitchingConversations = true
             delay(1200L)
+            isSwitchingConversations = false
+        } else {
             isSwitchingConversations = false
         }
     }
