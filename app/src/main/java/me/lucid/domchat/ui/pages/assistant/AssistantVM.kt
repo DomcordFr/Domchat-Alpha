@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.pages.assistant
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -230,7 +231,60 @@ class AssistantVM(
 
     fun getMemories(assistant: Assistant) =
         memoryRepository.getMemoriesOfAssistantFlow(assistant.id.toString())
+
+    suspend fun loadGroupNames(context: Context): Map<String, String> = withContext(Dispatchers.IO) {
+        try {
+            context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+                .getString(PREFS_KEY_GROUPS, null)?.let {
+                    me.lucid.domchat.utils.JsonInstant.decodeFromString<Map<String, String>>(it)
+                } ?: emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    suspend fun loadGroupOrder(context: Context): List<String> = withContext(Dispatchers.IO) {
+        try {
+            context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+                .getString(PREFS_KEY_ORDER, null)?.let {
+                    me.lucid.domchat.utils.JsonInstant.decodeFromString<List<String>>(it)
+                } ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun loadCharAssignments(context: Context): Map<String, String> = withContext(Dispatchers.IO) {
+        try {
+            context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
+                .getString(PREFS_KEY_ASSIGNMENTS, null)?.let {
+                    me.lucid.domchat.utils.JsonInstant.decodeFromString<Map<String, String>>(it)
+                } ?: emptyMap()
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    suspend fun saveGroups(
+        context: Context,
+        groups: Map<String, String>,
+        order: List<String>,
+        assignments: Map<String, String>,
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val prefs = context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE).edit()
+            prefs.putString(PREFS_KEY_GROUPS, me.lucid.domchat.utils.JsonInstant.encodeToString(groups))
+            prefs.putString(PREFS_KEY_ORDER, me.lucid.domchat.utils.JsonInstant.encodeToString(order))
+            prefs.putString(PREFS_KEY_ASSIGNMENTS, me.lucid.domchat.utils.JsonInstant.encodeToString(assignments))
+            prefs.apply()
+        } catch (_: Exception) { /* best-effort persistence */ }
+    }
 }
+
+const val HUB_GROUP_PREFS = "character_hub_groups"
+const val PREFS_KEY_GROUPS = "group_names"
+const val PREFS_KEY_ASSIGNMENTS = "char_assignments"
+const val PREFS_KEY_ORDER = "group_order"
 
 private fun Assistant.collectMediaFileRefs(): List<String> {
     return buildList {

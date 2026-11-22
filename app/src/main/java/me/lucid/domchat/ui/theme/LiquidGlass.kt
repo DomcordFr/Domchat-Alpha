@@ -46,7 +46,7 @@ import me.lucid.domchat.ui.component.backdrop.highlight.Highlight
 import me.lucid.domchat.ui.component.backdrop.highlight.HighlightStyle
 import me.lucid.domchat.ui.component.backdrop.isRenderEffectSupported
 import me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported
-import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.data.model.LiquidGlassMode
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 
@@ -103,8 +103,7 @@ object LiquidGlassTokens {
  */
 @Composable
 fun liquidGlassSurfaceColor(): Color {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     val alpha = display.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
     var base = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, display.glassBaseLuminance.coerceIn(0f, 1f))
@@ -127,8 +126,7 @@ fun liquidGlassSurfaceColor(): Color {
  */
 @Composable
 fun liquidGlassBorderBrush(): Brush {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     // Specular rim catch and depth scale jointly drive rim brightness.
     val specular = display.glassSpecularIntensity.coerceIn(0f, 1f)
     val depth = display.glassDepthScale.coerceIn(0f, 2.5f)
@@ -149,8 +147,7 @@ fun liquidGlassBorderBrush(): Brush {
  */
 @Composable
 fun liquidBubbleSurfaceColor(): Color {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
     val base = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, display.chatBubbleTone.coerceIn(0f, 1f))
@@ -197,8 +194,7 @@ fun Modifier.liquidGlass(
     shadowElevation: Dp = 0.dp,
     isFloatingControl: Boolean = false,
 ): Modifier {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     val density = LocalDensity.current
     val backdrop = LocalAppBackdrop.current
     val useGlass = backdrop != null && isRuntimeShaderSupported()
@@ -345,8 +341,7 @@ fun Modifier.liquidGlassSurface(
     glassMode: LiquidGlassMode = LiquidGlassMode.BALANCED_BLEND,
     isFloatingControl: Boolean = false
 ): Modifier {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     val activeMode = if (glassMode != LiquidGlassMode.BALANCED_BLEND) glassMode else display.liquidGlassMode
     val isFrostedMode = activeMode == LiquidGlassMode.SOFT_FROSTED
     return this.liquidGlass(
@@ -381,8 +376,7 @@ fun Modifier.liquidGlassBubbleSurface(
     shadowElevation: Dp = 0.dp,
     glassMode: LiquidGlassMode = LiquidGlassMode.BALANCED_BLEND,
 ): Modifier {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     val density = LocalDensity.current
     val backdrop = LocalAppBackdrop.current
     val useGlass = backdrop != null && isRuntimeShaderSupported()
@@ -539,8 +533,7 @@ fun Modifier.frostedGlassSurface(
     fillColor: Color = Color.Transparent,
     shadowElevation: Dp = 0.dp,
 ): Modifier {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
 
     val effectiveAlpha = display.glassAlpha.coerceIn(0f, 1f)
     val effectiveTone = display.glassBaseLuminance.coerceIn(0f, 1f)
@@ -589,8 +582,7 @@ fun Modifier.frostedGlassBubbleSurface(
     fillColor: Color = Color.Transparent,
     shadowElevation: Dp = 0.dp,
 ): Modifier {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
 
     val effectiveAlpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
     val effectiveTone = display.chatBubbleTone.coerceIn(0f, 1f)

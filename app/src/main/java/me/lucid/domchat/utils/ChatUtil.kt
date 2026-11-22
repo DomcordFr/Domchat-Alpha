@@ -248,7 +248,7 @@ fun Context.createChatFilesByContents(uris: List<Uri>): List<Uri> {
             newUris.add(newUri)
         }.onFailure {
             it.printStackTrace()
-            if (file.exists() && file.length() == 0L) {
+            if (file.exists()) {
                 file.delete()
             }
             Log.e(TAG, "createChatFilesByContents: Failed to save image from $uri", it)

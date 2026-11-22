@@ -1086,6 +1086,7 @@ class ChatService(
                 }
                 return true
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 if (attempt == retryDelaysMs.size) {
                     e.printStackTrace()
                     return false
@@ -1412,6 +1413,7 @@ class ChatService(
                                         }
                                     }
                                 } catch (e: Exception) {
+                                    if (e is CancellationException) throw e
                                     e.printStackTrace()
                                 }
                             }
@@ -2140,6 +2142,7 @@ class ChatService(
                                     searchResult = searchResult.copy(images = keylessFallback.images)
                                 }
                             } catch (e: Exception) {
+                                if (e is CancellationException) throw e
                                 Log.w(TAG, "Keyless image search fallback failed", e)
                             }
                         }
@@ -3185,9 +3188,13 @@ internal fun createLookAtScreenTool(model: Model): Tool = Tool(
             }
         } else {
             // Non-vision model: OCR fallback.
-            val ocrText = runCatching {
+            val ocrText = try {
                 OcrTransformer.performOcr(UIMessagePart.Image(url = dataUrl))
-            }.getOrNull()
+            } catch (c: CancellationException) {
+                throw c
+            } catch (e: Exception) {
+                null
+            }
             buildJsonObject {
                 put("type", JsonPrimitive("ocr_text"))
                 if (ocrText.isNullOrBlank()) {

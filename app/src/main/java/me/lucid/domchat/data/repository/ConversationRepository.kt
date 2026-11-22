@@ -107,16 +107,39 @@ class ConversationRepository(
         }
     }
 
-    fun searchAllConversationsPaging(titleKeyword: String): Flow<PagingData<Conversation>> = Pager(
-        config = PagingConfig(
-            pageSize = PAGE_SIZE,
-            initialLoadSize = INITIAL_LOAD_SIZE,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = { conversationDAO.searchConversationsPaging(titleKeyword) }
-    ).flow.map { pagingData ->
-        pagingData.map { entity ->
-            conversationSummaryToConversation(entity)
+    fun searchAllConversationsPaging(titleKeyword: String): Flow<PagingData<Conversation>> {
+        val trimmed = titleKeyword.trim()
+        val isStructural = isJsonStructuralToken(trimmed)
+        return Pager(
+            config = PagingConfig(
+                pageSize = PAGE_SIZE,
+                initialLoadSize = INITIAL_LOAD_SIZE,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { conversationDAO.searchConversationsPaging(titleKeyword) }
+        ).flow.map { pagingData ->
+            val mapped = pagingData.map { entity ->
+                conversationSummaryToConversation(entity)
+            }
+            if (isStructural) {
+                mapped.filter { conversation ->
+                    if (conversation.title.contains(trimmed, ignoreCase = true)) {
+                        true
+                    } else {
+                        val fullEntity = withContext(Dispatchers.IO) {
+                            conversationDAO.getConversationById(conversation.id.toString())
+                        }
+                        val messageNodes = fullEntity?.nodes?.let {
+                            runCatching { JsonInstant.decodeFromString<List<MessageNode>>(it) }.getOrNull()
+                        } ?: emptyList()
+                        messageNodes.any { node ->
+                            node.currentMessage.toText().contains(trimmed, ignoreCase = true)
+                        }
+                    }
+                }
+            } else {
+                mapped
+            }
         }
     }
 
@@ -143,16 +166,39 @@ class ConversationRepository(
         }
     }
 
-    fun searchConversationsOfAssistantPaging(assistantId: Uuid, titleKeyword: String): Flow<PagingData<Conversation>> = Pager(
-        config = PagingConfig(
-            pageSize = PAGE_SIZE,
-            initialLoadSize = INITIAL_LOAD_SIZE,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = { conversationDAO.searchConversationsOfAssistantPaging(assistantId.toString(), titleKeyword) }
-    ).flow.map { pagingData ->
-        pagingData.map { entity ->
-            conversationSummaryToConversation(entity)
+    fun searchConversationsOfAssistantPaging(assistantId: Uuid, titleKeyword: String): Flow<PagingData<Conversation>> {
+        val trimmed = titleKeyword.trim()
+        val isStructural = isJsonStructuralToken(trimmed)
+        return Pager(
+            config = PagingConfig(
+                pageSize = PAGE_SIZE,
+                initialLoadSize = INITIAL_LOAD_SIZE,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { conversationDAO.searchConversationsOfAssistantPaging(assistantId.toString(), titleKeyword) }
+        ).flow.map { pagingData ->
+            val mapped = pagingData.map { entity ->
+                conversationSummaryToConversation(entity)
+            }
+            if (isStructural) {
+                mapped.filter { conversation ->
+                    if (conversation.title.contains(trimmed, ignoreCase = true)) {
+                        true
+                    } else {
+                        val fullEntity = withContext(Dispatchers.IO) {
+                            conversationDAO.getConversationById(conversation.id.toString())
+                        }
+                        val messageNodes = fullEntity?.nodes?.let {
+                            runCatching { JsonInstant.decodeFromString<List<MessageNode>>(it) }.getOrNull()
+                        } ?: emptyList()
+                        messageNodes.any { node ->
+                            node.currentMessage.toText().contains(trimmed, ignoreCase = true)
+                        }
+                    }
+                }
+            } else {
+                mapped
+            }
         }
     }
 
@@ -759,3 +805,14 @@ data class LightConversationEntity(
     val isFork: Boolean,
     val assistantMessageCount: Int = 0,
 )
+
+private val JSON_STRUCTURAL_KEYS = hashSetOf(
+    "text", "role", "type", "user", "assistant", "system",
+    "parts", "messages", "selectindex", "id", "annotations",
+    "modelid", "createdat", "versiontag"
+)
+
+private fun isJsonStructuralToken(query: String): Boolean {
+    val q = query.trim().lowercase()
+    return q in JSON_STRUCTURAL_KEYS
+}

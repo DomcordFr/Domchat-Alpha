@@ -51,6 +51,7 @@ import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.ui.context.LocalAnimatedVisibilityScope
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.ui.context.LocalSharedTransitionScope
 import me.lucid.domchat.ui.context.LocalTTSState
 import me.lucid.domchat.ui.context.LocalSTTState
@@ -423,7 +424,7 @@ class RouteActivity : ComponentActivity() {
             }
 
             // Pre-warm EmojiData off main thread so EmojiPicker opens with zero dropped frames
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                 me.lucid.domchat.utils.EmojiUtils.loadEmoji(applicationContext)
             }
         } catch (e: Exception) {
@@ -432,9 +433,6 @@ class RouteActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        if (!isChangingConfigurations) {
-            ChatSessionDraftStore.clear()
-        }
         super.onDestroy()
     }
 
@@ -718,14 +716,18 @@ class RouteActivity : ComponentActivity() {
     fun AppRoutes(navBackStack: NavHostController, startDestination: Screen.Chat) {
         val toastState = rememberAppToasterState()
         val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
+        val displaySetting by remember(settingsStore) {
+            settingsStore.settingsFlow.map { it.displaySetting }.distinctUntilChanged()
+        }.collectAsStateWithLifecycle(settings.displaySetting)
         val tts = rememberCustomTtsState()
         val stt = rememberCustomSttState()
-        val motionPolicy = rememberSystemMotionPolicy(settings.displaySetting.animationSpeed.scaleFactor)
+        val motionPolicy = rememberSystemMotionPolicy(displaySetting.animationSpeed.scaleFactor)
         SharedTransitionLayout {
             CompositionLocalProvider(
                 LocalNavController provides navBackStack,
                 LocalSharedTransitionScope provides this,
                 LocalSettings provides settings,
+                LocalDisplaySetting provides displaySetting,
                 LocalHighlighter provides highlighter,
                 LocalMotionPolicy provides motionPolicy,
                 LocalToaster provides toastState,

@@ -242,71 +242,6 @@ enum class CharacterSortOption {
     NAME, RECENT, CREATOR
 }
 
-private const val HUB_GROUP_PREFS = "character_hub_groups"
-private const val PREFS_KEY_GROUPS = "group_names"
-private const val PREFS_KEY_ASSIGNMENTS = "char_assignments"
-private const val PREFS_KEY_ORDER = "group_order"
-
-/**
- * Reads the persisted group name map (groupId -> displayName) from SharedPreferences.
- */
-private fun loadGroupNames(context: Context): Map<String, String> =
-    try {
-        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
-            .getString(PREFS_KEY_GROUPS, null)?.let {
-                JsonInstant.decodeFromString<Map<String, String>>(it)
-            } ?: emptyMap()
-    } catch (_: Exception) {
-        emptyMap()
-    }
-
-/**
- * Reads the persisted group order list from SharedPreferences.
- */
-private fun loadGroupOrder(context: Context): List<String> =
-    try {
-        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
-            .getString(PREFS_KEY_ORDER, null)?.let {
-                JsonInstant.decodeFromString<List<String>>(it)
-            } ?: emptyList()
-    } catch (_: Exception) {
-        emptyList()
-    }
-
-/**
- * Reads the persisted character -> group assignment map (characterId string -> groupId).
- */
-private fun loadCharAssignments(context: Context): Map<String, String> =
-    try {
-        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
-            .getString(PREFS_KEY_ASSIGNMENTS, null)?.let {
-                JsonInstant.decodeFromString<Map<String, String>>(it)
-            } ?: emptyMap()
-    } catch (_: Exception) {
-        emptyMap()
-    }
-
-private fun saveGroupNames(context: Context, groups: Map<String, String>) {
-    try {
-        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
-            .edit().putString(PREFS_KEY_GROUPS, JsonInstant.encodeToString(groups)).apply()
-    } catch (_: Exception) { /* best-effort persistence */ }
-}
-
-private fun saveGroupOrder(context: Context, order: List<String>) {
-    try {
-        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
-            .edit().putString(PREFS_KEY_ORDER, JsonInstant.encodeToString(order)).apply()
-    } catch (_: Exception) { /* best-effort persistence */ }
-}
-
-private fun saveCharAssignments(context: Context, assignments: Map<String, String>) {
-    try {
-        context.getSharedPreferences(HUB_GROUP_PREFS, Context.MODE_PRIVATE)
-            .edit().putString(PREFS_KEY_ASSIGNMENTS, JsonInstant.encodeToString(assignments)).apply()
-    } catch (_: Exception) { /* best-effort persistence */ }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
@@ -368,11 +303,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         val orderSnapshot = groupOrder
         val assignmentsSnapshot = charGroupAssignments
         scope.launch {
-            withContext(Dispatchers.IO) {
-                saveGroupNames(context, groupsSnapshot)
-                saveGroupOrder(context, orderSnapshot)
-                saveCharAssignments(context, assignmentsSnapshot)
-            }
+            vm.saveGroups(context, groupsSnapshot, orderSnapshot, assignmentsSnapshot)
         }
     }
 
@@ -404,13 +335,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     val currentSettings = vm.settings.first { !it.init }
                     val target = currentSettings.assistants.find { it.id.toString() == assistantId }
                     if (target != null) {
-                        withContext(Dispatchers.IO) {
-                            val jsonStr = AssistantExportImport.exportToCharacterCardV2(target, context)
-                            context.contentResolver.openOutputStream(uri)?.use { 
-                                it.write(jsonStr.toByteArray())
-                            }
+                        val result = AssistantExportHelper.exportJson(context, target, uri)
+                        if (result.isSuccess) {
+                            toaster?.show("Character Card exported successfully")
+                        } else {
+                            toaster?.show("Export failed: ${result.exceptionOrNull()?.message}", ToastType.Error)
                         }
-                        toaster?.show("Character Card exported successfully")
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
@@ -437,21 +367,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     val currentSettings = vm.settings.first { !it.init }
                     val target = currentSettings.assistants.find { it.id.toString() == assistantId }
                     if (target != null) {
-                        val exported = withContext(Dispatchers.IO) {
-                            val bytes = AssistantExportImport.exportToCharacterCardPng(target, context)
-                            if (bytes != null) {
-                                context.contentResolver.openOutputStream(uri)?.use { 
-                                    it.write(bytes)
-                                }
-                                true
-                            } else {
-                                false
-                            }
-                        }
-                        if (exported) {
+                        val result = AssistantExportHelper.exportPng(context, target, uri)
+                        if (result.isSuccess && result.getOrDefault(false)) {
                             toaster?.show("SillyTavern PNG Card exported successfully")
                         } else {
-                            toaster?.show("Export failed: could not generate PNG card", ToastType.Error)
+                            val msg = result.exceptionOrNull()?.message ?: "could not generate PNG card"
+                            toaster?.show("Export failed: $msg", ToastType.Error)
                         }
                     }
                 } catch (e: Exception) {
@@ -516,9 +437,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     // Restore persisted groups + character-to-group assignments from SharedPreferences
     LaunchedEffect(Unit) {
         scope.launch {
-            val groups = withContext(Dispatchers.IO) { loadGroupNames(context) }
-            val order = withContext(Dispatchers.IO) { loadGroupOrder(context) }
-            val assignments = withContext(Dispatchers.IO) { loadCharAssignments(context) }
+            val groups = vm.loadGroupNames(context)
+            val order = vm.loadGroupOrder(context)
+            val assignments = vm.loadCharAssignments(context)
             val mergedOrder = (order.filter { it in groups } + groups.keys.filter { it !in order }).distinct()
             withContext(Dispatchers.Main) {
                 groupNames = groups

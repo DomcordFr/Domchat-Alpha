@@ -191,6 +191,33 @@ private fun parseMarkdownCached(content: String): Pair<String, ASTNode> {
     return result
 }
 
+private class OffsetASTNode(
+    private val delegate: ASTNode,
+    private val offset: Int,
+    override val parent: ASTNode? = null,
+) : ASTNode {
+    override val type: IElementType get() = delegate.type
+    override val startOffset: Int get() = delegate.startOffset + offset
+    override val endOffset: Int get() = delegate.endOffset + offset
+    override val children: List<ASTNode> by lazy {
+        delegate.children.map { OffsetASTNode(it, offset, this) }
+    }
+}
+
+private class MergedRootASTNode(
+    private val prefixRoot: ASTNode,
+    private val tailRoot: ASTNode,
+    private val offset: Int,
+) : ASTNode {
+    override val type: IElementType get() = prefixRoot.type
+    override val startOffset: Int get() = 0
+    override val endOffset: Int get() = tailRoot.endOffset + offset
+    override val parent: ASTNode? get() = null
+    override val children: List<ASTNode> by lazy {
+        prefixRoot.children + tailRoot.children.map { OffsetASTNode(it, offset, this) }
+    }
+}
+
 @Synchronized
 private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
     val split = splitCompletedBlocksAndTail(content)
@@ -199,8 +226,9 @@ private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
         val prefixParsed = parseMarkdownCached(prefix)
         val tailPreprocessed = preProcess(tail)
         val combinedPreprocessed = prefixParsed.first + tailPreprocessed
-        val tailTree = parser.buildMarkdownTreeFromString(combinedPreprocessed)
-        return combinedPreprocessed to tailTree
+        val tailTree = parser.buildMarkdownTreeFromString(tailPreprocessed)
+        val mergedTree = MergedRootASTNode(prefixParsed.second, tailTree, prefixParsed.first.length)
+        return combinedPreprocessed to mergedTree
     }
     val preprocessed = preProcess(content)
     val astTree = parser.buildMarkdownTreeFromString(preprocessed)

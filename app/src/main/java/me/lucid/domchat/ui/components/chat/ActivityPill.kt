@@ -1,5 +1,8 @@
 package me.lucid.domchat.ui.components.chat
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -920,10 +923,13 @@ private fun LiveElapsedTimerText(
 ) {
     if (isLive) {
         var elapsedMs by remember(startTimeMs) { mutableLongStateOf((System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)) }
-        LaunchedEffect(startTimeMs) {
-            while (isActive) {
-                elapsedMs = (System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)
-                delay(100)
+        val lifecycleOwner = LocalLifecycleOwner.current
+        LaunchedEffect(startTimeMs, lifecycleOwner) {
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    elapsedMs = (System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)
+                    delay(100)
+                }
             }
         }
         Text(

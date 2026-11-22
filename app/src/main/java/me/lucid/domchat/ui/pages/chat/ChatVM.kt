@@ -162,7 +162,9 @@ class ChatVM(
         }
 
         // 记住对话ID, 方便下次启动恢复
-        context.writeStringPreference("lastConversationId", _conversationId.toString())
+        viewModelScope.launch(Dispatchers.IO) {
+            context.writeStringPreference("lastConversationId", _conversationId.toString())
+        }
     }
 
     override fun onCleared() {

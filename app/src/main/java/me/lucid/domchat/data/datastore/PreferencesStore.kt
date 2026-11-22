@@ -618,6 +618,48 @@ class SettingsStore(
         }
     }
 
+    suspend fun updateDisplaySetting(displaySetting: DisplaySetting) = updateMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val current = if (settingsFlow.value.init) {
+                withTimeoutOrNull(5000L) {
+                    settingsFlow.first { !it.init }
+                } ?: settingsFlow.value
+            } else {
+                settingsFlow.value
+            }
+            if (current.displaySetting != displaySetting) {
+                dataStore.edit { preferences ->
+                    preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(displaySetting)
+                }
+                settingsFlow.value = current.copy(displaySetting = displaySetting)
+            }
+        }
+    }
+
+    suspend fun updateRecentlyUsedAssistants(assistants: List<Uuid>) = updateMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val current = if (settingsFlow.value.init) {
+                withTimeoutOrNull(5000L) {
+                    settingsFlow.first { !it.init }
+                } ?: settingsFlow.value
+            } else {
+                settingsFlow.value
+            }
+            if (current.recentlyUsedAssistants != assistants) {
+                dataStore.edit { preferences ->
+                    preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(assistants)
+                }
+                settingsFlow.value = current.copy(recentlyUsedAssistants = assistants)
+            }
+        }
+    }
+
+    suspend fun updateAssistantSelection(assistantId: Uuid) = updateMutex.withLock {
+        withContext(Dispatchers.IO) {
+            updateAssistant(assistantId)
+        }
+    }
+
     suspend fun updateAssistant(assistantId: Uuid) {
         // Update in-memory state immediately to avoid race conditions
         val current = settingsFlow.value

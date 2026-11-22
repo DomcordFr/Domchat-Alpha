@@ -162,6 +162,7 @@ class ChatMultimodalASRController(
     private fun startRecorder() {
         recorderJob?.cancel()
         recorderJob = scope.launch(Dispatchers.IO) {
+            val currentJob = coroutineContext[Job]
             val sampleRate = model.sttOptions?.sampleRate ?: 16000
             val minBufferSize = AudioRecord.getMinBufferSize(
                 sampleRate,
@@ -210,7 +211,7 @@ class ChatMultimodalASRController(
                 Log.e(TAG, "Audio recording error", e)
                 setError("Audio recording error: ${e.message}")
             } finally {
-                releaseRecorder()
+                releaseRecorder(currentJob)
             }
         }
     }
@@ -224,13 +225,15 @@ class ChatMultimodalASRController(
         }
     }
 
-    private fun releaseRecorder() {
-        recorderJob = null
-        synchronized(recorderLock) {
-            val record = audioRecord
-            audioRecord = null
-            runCatching { record?.stop() }
-            runCatching { record?.release() }
+    private fun releaseRecorder(callerJob: Job? = null) {
+        if (callerJob == null || recorderJob === callerJob) {
+            recorderJob = null
+            synchronized(recorderLock) {
+                val record = audioRecord
+                audioRecord = null
+                runCatching { record?.stop() }
+                runCatching { record?.release() }
+            }
         }
     }
 

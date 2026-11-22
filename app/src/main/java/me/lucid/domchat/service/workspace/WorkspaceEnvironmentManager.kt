@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -93,7 +94,7 @@ class WorkspaceEnvironmentManager(
         }
         startService()
 
-        val job = scope.launch {
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 workspaceRepository.installRootfs(workspaceId, url) { progress ->
                     _tasks.update { current ->
@@ -134,11 +135,17 @@ class WorkspaceEnvironmentManager(
                         error = error.message ?: "Installation failed",
                     ))
                 }
-            } finally {
-                jobs.remove(workspaceId)
             }
         }
-        jobs[workspaceId] = job
+        val previous = jobs.putIfAbsent(workspaceId, job)
+        if (previous != null) {
+            job.cancel()
+            return
+        }
+        job.invokeOnCompletion {
+            jobs.remove(workspaceId, job)
+        }
+        job.start()
     }
 
     fun installPython(
@@ -154,7 +161,7 @@ class WorkspaceEnvironmentManager(
         }
         startService()
 
-        val job = scope.launch {
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 workspaceRepository.installPython(workspaceId)
                 _tasks.update {
@@ -175,11 +182,17 @@ class WorkspaceEnvironmentManager(
                         error = error.message ?: "Python installation failed",
                     ))
                 }
-            } finally {
-                jobs.remove(workspaceId)
             }
         }
-        jobs[workspaceId] = job
+        val previous = jobs.putIfAbsent(workspaceId, job)
+        if (previous != null) {
+            job.cancel()
+            return
+        }
+        job.invokeOnCompletion {
+            jobs.remove(workspaceId, job)
+        }
+        job.start()
     }
 
     fun autoRestoreWorkspaces(workspaces: List<WorkspaceExportMetadata>) {

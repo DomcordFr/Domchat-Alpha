@@ -1,5 +1,10 @@
 package me.lucid.domchat.ui.pages.chat
 
+import android.content.Context
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import me.lucid.domchat.DomChatApp
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.theme.LocalDarkMode
@@ -464,6 +469,7 @@ internal fun decodeChatRouteText(text: String?): String {
     }.orEmpty()
 }
 
+@Serializable
 internal data class ChatInputDraft(
     val text: String = "",
     val messageContent: List<UIMessagePart> = emptyList(),
@@ -484,26 +490,45 @@ internal object ChatSwitchSession {
 
 internal object ChatSessionDraftStore {
     private val drafts = mutableMapOf<Uuid, ChatInputDraft>()
+    private val json = Json { ignoreUnknownKeys = true }
+    private val prefs by lazy {
+        runCatching {
+            DomChatApp.instance.getSharedPreferences("chat_session_drafts", Context.MODE_PRIVATE)
+        }.getOrNull()
+    }
 
     fun get(conversationId: Uuid): ChatInputDraft? {
-        return drafts[conversationId]
+        drafts[conversationId]?.let { return it }
+        val raw = prefs?.getString(conversationId.toString(), null) ?: return null
+        return runCatching {
+            json.decodeFromString<ChatInputDraft>(raw)
+        }.getOrNull()?.also { restored ->
+            drafts[conversationId] = restored
+        }
     }
 
     fun put(conversationId: Uuid, draft: ChatInputDraft) {
         if (draft.isEmpty) {
             drafts.remove(conversationId)
+            prefs?.edit()?.remove(conversationId.toString())?.apply()
         } else {
             drafts[conversationId] = draft
+            runCatching {
+                val encoded = json.encodeToString(draft)
+                prefs?.edit()?.putString(conversationId.toString(), encoded)?.apply()
+            }
         }
     }
 
     fun moveDraft(fromConversationId: Uuid, toConversationId: Uuid, draft: ChatInputDraft) {
         drafts.remove(fromConversationId)
+        prefs?.edit()?.remove(fromConversationId.toString())?.apply()
         put(toConversationId, draft.forAssistantSwitch())
     }
 
     fun clear() {
         drafts.clear()
+        prefs?.edit()?.clear()?.apply()
     }
 }
 
@@ -1532,18 +1557,34 @@ private fun ChatPageContent(
                 }
             }
     }
-    val contextMeterUsage = rememberContextMeterUsage(
-        enabled = settings.displaySetting.showContextTokenSummary,
-        model = currentChatModel,
-        conversation = conversation,
-        assistant = currentAssistant,
-        settings = setting,
-        memoryCandidates = assistantMemories,
-        persistenceMode = activePersistenceMode,
-        pendingParts = debouncedPendingParts,
-        requestUsage = requestContextUsage,
-        isGenerating = isGenerating,
-    )
+    val showContextSummary = settings.displaySetting.showContextTokenSummary
+    val contextMeterUsage by produceState<ContextUsageBreakdown?>(
+        initialValue = requestContextUsage,
+        key1 = showContextSummary,
+        key2 = currentChatModel?.id,
+        key3 = conversation.updateAt,
+        key4 = currentAssistant.id,
+        key5 = debouncedPendingParts,
+        key6 = isGenerating,
+    ) {
+        if (!showContextSummary) {
+            value = null
+            return@produceState
+        }
+        withContext(Dispatchers.Default) {
+            value = ContextBudgetCalculator.calculate(
+                model = currentChatModel,
+                conversation = conversation,
+                assistant = currentAssistant,
+                settings = setting,
+                memoryCandidates = assistantMemories,
+                persistenceMode = activePersistenceMode,
+                pendingParts = debouncedPendingParts,
+                requestUsage = requestContextUsage,
+                isGenerating = isGenerating,
+            )
+        }
+    }
 
     LaunchedEffect(contextMeterUsage) {
         if (contextMeterUsage == null) showContextUsagePopup = false
@@ -1812,25 +1853,19 @@ private fun ChatPageContent(
                             modifier = Modifier.fillMaxSize()
                         ) {
                     val recentlyRestoredNodeIds = vm.recentlyRestoredNodeIds.collectAsStateWithLifecycle().value
-                    val conversationSnapshots = remember {
-                        object : java.util.LinkedHashMap<Uuid, Conversation>(4, 0.75f, true) {
-                            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Uuid, Conversation>?): Boolean = size > 3
-                        }
-                    }
-                    val chatListStateSnapshots = remember {
-                        object : java.util.LinkedHashMap<Uuid, LazyListState>(4, 0.75f, true) {
-                            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Uuid, LazyListState>?): Boolean = size > 3
-                        }
-                    }
-                    val searchQuerySnapshots = remember {
-                        object : java.util.LinkedHashMap<Uuid, String?>(4, 0.75f, true) {
-                            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Uuid, String?>?): Boolean = size > 3
-                        }
-                    }
+                    val conversationSnapshots = remember { mutableMapOf<Uuid, Conversation>() }
+                    val chatListStateSnapshots = remember { mutableMapOf<Uuid, LazyListState>() }
+                    val searchQuerySnapshots = remember { mutableMapOf<Uuid, String?>() }
                     SideEffect {
                         conversationSnapshots[conversation.id] = conversation
                         chatListStateSnapshots[conversation.id] = chatListState
                         searchQuerySnapshots[conversation.id] = initialSearchQuery
+                        while (conversationSnapshots.size > 3) {
+                            val oldestKey = conversationSnapshots.keys.firstOrNull { it != conversation.id } ?: break
+                            conversationSnapshots.remove(oldestKey)
+                            chatListStateSnapshots.remove(oldestKey)
+                            searchQuerySnapshots.remove(oldestKey)
+                        }
                     }
                     AnimatedContent(
                         targetState = conversation.id,
@@ -1861,7 +1896,7 @@ private fun ChatPageContent(
                         val frameListState = if (targetConversationId == conversation.id) {
                             chatListState
                         } else {
-                            chatListStateSnapshots.getOrPut(targetConversationId) { LazyListState() }
+                            chatListStateSnapshots[targetConversationId] ?: LazyListState()
                         }
                         val frameInitialSearchQuery = if (targetConversationId == conversation.id) {
                             initialSearchQuery
@@ -3936,420 +3971,29 @@ private fun rememberContextMeterUsage(
     isGenerating: Boolean = false,
 ): ContextUsageBreakdown? {
     if (!enabled) return null
-    val activeModel = model?.takeIf { (it.contextCapacityTokens ?: 0) > 0 } ?: return null
-    var lastStableUsage by remember(conversation.id) { mutableStateOf<ContextUsageBreakdown?>(null) }
-    val hasPendingInput = pendingParts.any { part ->
-        part !is UIMessagePart.Text || part.text.isNotBlank()
-    }
-    // During active generation streaming, avoid recomputing 200k+ token breakdowns on the UI thread 40 times/sec.
-    // requestUsage contains the exact context breakdown computed at request start.
-    if (isGenerating && !hasPendingInput) {
-        if (requestUsage != null) return requestUsage
-        if (lastStableUsage != null) return lastStableUsage
-    }
-    val smartActive = assistant.smartContextManagement && (activeModel.contextCapacityTokens ?: 0) > 0
-    val rawMessages = conversation.currentMessages
-    val messages = effectiveHistoryForContext(
-        messages = rawMessages,
-        smartManagement = smartActive,
-        summaryUpToIndex = conversation.contextSummaryUpToIndex.takeIf {
-            !conversation.contextSummary.isNullOrBlank()
-        } ?: -1,
-        truncateIndex = conversation.truncateIndex,
-        manualHistoryLimit = assistant.maxHistoryMessages,
-    )
-    val memoryContextEnabled = assistant.enableMemory && persistenceMode == ChatPersistenceMode.NORMAL
-    val eligibleMemoryCandidates = remember(memoryCandidates, assistant, memoryContextEnabled) {
-        if (!memoryContextEnabled) {
-            emptyList()
-        } else if (!assistant.useRagMemoryRetrieval) {
-            memoryCandidates.filter { memory -> memory.type == 0 }.take(50)
-        } else {
-            memoryCandidates.filter { memory ->
-                (memory.type == 0 && assistant.ragIncludeCore) ||
-                    (memory.type == 1 && assistant.ragIncludeEpisodes)
-            }.take(1_000)
-        }
-    }
-    val memoryRevision = remember(eligibleMemoryCandidates) {
-        eligibleMemoryCandidates.map { memory ->
-            listOf(memory.id, memory.content, memory.type, memory.timestamp)
-        }.hashCode()
-    }
-    val sourceKey = remember(conversation, assistant, activeModel, settings, memoryRevision) {
-        contextUsageSourceKey(conversation, assistant, activeModel, settings, memoryRevision)
-    }
-    val matchingRequestUsage = requestUsage?.takeIf { usage -> usage.sourceKey == sourceKey }
-    if (!hasPendingInput && matchingRequestUsage != null) return matchingRequestUsage
-
-    val observedMemoryTokenTotals = rawMessages.asReversed().mapNotNull { message ->
-        message.usedMemories.orEmpty()
-            .sumOf { memory ->
-                memory.contextTokenCount
-                    ?: ContextTokenEstimator.textTokens(memory.memoryContent, activeModel)
-            }
-            .takeIf { it > 0 }
-    }.take(6)
-    val availableSkills = settings.skills.filter { skill ->
-        skill.enabled && skill.instructions.isNotBlank()
-    }
-    val allSkillIds = availableSkills.map { skill -> skill.id }.toSet()
-    val assistantAvailableSkillIds = availableSkills
-        .filter { skill -> skill.isAvailableForAssistant(assistant.id) }
-        .map { skill -> skill.id }
-        .toSet()
-    val activeSkillIds = resolveActiveSkillIds(
-        assistantDefaultSkillIds = assistant.enabledSkillIds.intersect(assistantAvailableSkillIds),
-        conversationSkillIds = conversation.enabledModeIds,
-        turnScopedSkillIds = emptySet(),
-        allSkillIds = allSkillIds,
-        alwaysEnabledSkillIds = availableSkills
-            .filter { skill -> skill.alwaysEnabled && skill.id in assistantAvailableSkillIds }
-            .map { skill -> skill.id }
-            .toSet(),
-    )
-    val activeLorebookIds = conversation.enabledLorebookIds ?: assistant.enabledLorebookIds
-    val activeLoreEntries = remember(settings.lorebooks, activeLorebookIds) {
-        settings.lorebooks
-            .filter { lorebook -> lorebook.enabled && lorebook.id in activeLorebookIds }
-            .flatMap { lorebook -> lorebook.entries.filter { it.enabled } }
-    }
-    val deterministicLoreEntries = remember(activeLoreEntries, rawMessages) {
-        val recentText = rawMessages.takeLast(10).joinToString(" ") { message -> message.toText() }
-        activeLoreEntries.filter { entry ->
-            when (entry.activationType) {
-                LorebookActivationType.ALWAYS -> true
-                LorebookActivationType.RAG -> false
-                LorebookActivationType.KEYWORDS -> entry.keywords.any { keyword ->
-                    if (entry.useRegex) {
-                        runCatching {
-                            val options = if (entry.caseSensitive) emptySet() else setOf(RegexOption.IGNORE_CASE)
-                            Regex(keyword, options).containsMatchIn(recentText)
-                        }.getOrDefault(false)
-                    } else if (entry.caseSensitive) {
-                        recentText.contains(keyword)
-                    } else {
-                        recentText.contains(keyword, ignoreCase = true)
-                    }
-                }
-            }
-        }
-    }
-    fun loreEntryTokenCost(entry: me.lucid.domchat.data.model.LorebookEntry): Int =
-        ContextTokenEstimator.textTokens(entry.prompt, activeModel) +
-            entry.attachments.sumOf { attachment ->
-                when (attachment.type) {
-                    ModeAttachmentType.IMAGE -> 1_024
-                    ModeAttachmentType.VIDEO -> 4_096
-                    ModeAttachmentType.AUDIO -> 2_000
-                    ModeAttachmentType.DOCUMENT -> 512
-                }
-            }
-    val loreEntryTokensById = remember(activeLoreEntries, activeModel) {
-        activeLoreEntries.associate { entry ->
-            entry.id.toString() to loreEntryTokenCost(entry)
-        }
-    }
-    val observedConditionalTokenTotals = rawMessages.asReversed().mapNotNull { message ->
-        message.usedLorebookEntries.orEmpty()
-            .filter { it.activationReason?.startsWith("RAG Match") == true }
-            .sumOf { used ->
-                used.contextTokenCount ?: loreEntryTokensById[used.entryId] ?: 0
-            }
-            .takeIf { it > 0 }
-    }.take(6)
-    val conditionalContextCandidateTokens = remember(activeLoreEntries, loreEntryTokensById) {
-        activeLoreEntries
-            .filter { it.activationType == LorebookActivationType.RAG }
-            .sumOf { entry -> loreEntryTokensById[entry.id.toString()] ?: 0 }
-    }
-    val eligibleMemoryCandidateTokens = remember(eligibleMemoryCandidates, activeModel) {
-        eligibleMemoryCandidates.sumOf { memory ->
-            ContextTokenEstimator.textTokens(memory.content, activeModel).toLong()
-        }.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-    }
-    val probableTemporaryTokens = probableTemporaryTokenReserve(
-        model = activeModel,
-        requestedOutputTokens = assistant.maxTokens,
-        memoryEnabled = memoryContextEnabled,
-        memoryRecallIsConditional = assistant.useRagMemoryRetrieval,
-        memoryCandidateLimit = if (assistant.ragLimit > 50) 1_000 else assistant.ragLimit,
-        memoryCandidateTokens = eligibleMemoryCandidateTokens,
-        memoryBudgetFraction = when (assistant.contextPriority) {
-            me.lucid.domchat.data.model.ContextPriority.CHAT_HISTORY -> 0.20
-            me.lucid.domchat.data.model.ContextPriority.BALANCED -> 0.40
-            me.lucid.domchat.data.model.ContextPriority.MEMORIES -> 0.65
-        },
-        observedMemoryTokenTotals = observedMemoryTokenTotals,
-        conditionalContextCandidateTokens = conditionalContextCandidateTokens,
-        observedConditionalTokenTotals = observedConditionalTokenTotals,
-    )
-    val skillText = remember(availableSkills, activeSkillIds) {
-        buildString {
-            availableSkills
-                .filter { skill -> skill.id in activeSkillIds }
-                .forEach { skill ->
-                    appendLine(skill.name)
-                    appendLine(skill.instructions)
-                }
-        }
-    }
-    val lorebookText = remember(deterministicLoreEntries) {
-        deterministicLoreEntries.joinToString("\n") { entry -> entry.prompt }
-    }
-    val skillTokens = remember(skillText, activeModel) {
-        ContextTokenEstimator.textTokens(skillText, activeModel)
-    }
-    val lorebookTokens = remember(lorebookText, activeModel) {
-        ContextTokenEstimator.textTokens(lorebookText, activeModel)
-    }
-    fun me.lucid.domchat.data.model.ModeAttachment.toContextPart(): UIMessagePart = when (type) {
-        ModeAttachmentType.IMAGE -> UIMessagePart.Image(url)
-        ModeAttachmentType.VIDEO -> UIMessagePart.Video(url)
-        ModeAttachmentType.AUDIO -> UIMessagePart.Audio(url)
-        ModeAttachmentType.DOCUMENT -> UIMessagePart.Document(url, fileName, mime)
-    }
-    val knownContextAttachments = remember(availableSkills, activeSkillIds, deterministicLoreEntries) {
-        buildList {
-            availableSkills
-                .filter { skill -> skill.id in activeSkillIds }
-                .flatMapTo(this) { skill -> skill.attachments.map { it.toContextPart() } }
-            deterministicLoreEntries
-                .flatMapTo(this) { entry -> entry.attachments.map { it.toContextPart() } }
-        }
-    }
-    val knownContextMediaTokens = remember(knownContextAttachments, activeModel) {
-        knownContextAttachments.sumOf { part ->
-            ContextTokenEstimator.partTokens(part, activeModel)
-        }
-    }
-    val toolAccounting = remember(
-        activeModel,
-        assistant.localTools,
-        assistant.mcpServers,
-        settings.mcpServers,
+    return produceState<ContextUsageBreakdown?>(
+        initialValue = requestUsage,
+        key1 = enabled,
+        key2 = model?.id,
+        key3 = conversation.updateAt,
+        key4 = assistant.id,
+        key5 = pendingParts,
+        key6 = isGenerating,
     ) {
-        if (ModelAbility.TOOL !in activeModel.abilities) return@remember "" to 0
-        val activeMcpTools = settings.mcpServers
-            .filter { server -> server.commonOptions.enable && server.id in assistant.mcpServers }
-            .flatMap { server -> server.commonOptions.tools.filter { tool -> tool.enable } }
-        val localPreviews = assistant.localTools.flatMap { it.toDefinitionPreviews() }
-        val definitionText = buildString {
-            localPreviews.forEach { tool ->
-                appendLine(
-                    ContextTokenEstimator.toolDefinitionText(
-                        name = tool.name,
-                        description = tool.description,
-                        schema = tool.schema,
-                    )
-                )
-            }
-            activeMcpTools.forEach { tool ->
-                appendLine(
-                    ContextTokenEstimator.toolDefinitionText(
-                        name = tool.name,
-                        description = tool.description.orEmpty(),
-                        schema = tool.inputSchema,
-                    )
-                )
-            }
-        }
-        val localTokens = localPreviews.sumOf { tool ->
-            ContextTokenEstimator.toolDefinitionTokens(
-                name = tool.name,
-                description = tool.description,
-                schema = tool.schema,
-                model = activeModel,
-            ).toLong()
-        }
-        val mcpTokens = activeMcpTools.sumOf { tool ->
-            ContextTokenEstimator.toolDefinitionTokens(
-                name = tool.name,
-                description = tool.description.orEmpty(),
-                schema = tool.inputSchema,
-                model = activeModel,
-            ).toLong()
-        }
-        definitionText to (localTokens + mcpTokens)
-            .coerceAtMost(Int.MAX_VALUE.toLong())
-            .toInt()
-    }
-    val toolDefinitionText = toolAccounting.first
-    // Once a request has resolved runtime/local/MCP/memory tools, retain that exact definition
-    // cost while typing instead of falling back to the necessarily incomplete settings preview.
-    val toolDefinitionTokens = matchingRequestUsage?.toolDefinitionTokens ?: toolAccounting.second
-    val systemPromptText = buildString {
-        append(assistant.systemPrompt)
-        if (assistant.learningMode) {
-            appendLine()
-            append(settings.learningModePrompt.ifEmpty { DEFAULT_LEARNING_MODE_PROMPT })
-        }
-        buildTimeAwarenessBlock(
-            enabled = assistant.enableTimeAwareness,
-            fullMessages = rawMessages,
-            retainedMessages = messages,
-        )?.let { block ->
-            appendLine()
-            append(block)
-        }
-    }
-    val baseSmartInputBudget = if (smartActive) {
-        smartInputBudget(activeModel, assistant.maxTokens)
-    } else {
-        null
-    }
-    val deterministicContextTokens = ContextTokenEstimator.textTokens(systemPromptText, activeModel) +
-        ContextTokenEstimator.textTokens(conversation.contextSummary.orEmpty(), activeModel) +
-        skillTokens + lorebookTokens + toolDefinitionTokens + knownContextMediaTokens
-    val fixedMemorySelection = remember(
-        eligibleMemoryCandidates,
-        activeModel,
-        baseSmartInputBudget,
-        deterministicContextTokens,
-        messages,
-        assistant.contextPriority,
-        assistant.useRagMemoryRetrieval,
-    ) {
-        if (
-            !smartActive || assistant.useRagMemoryRetrieval ||
-            eligibleMemoryCandidates.isEmpty() || baseSmartInputBudget == null
-        ) {
-            null
-        } else {
-            selectSmartMemoryContext(
-                candidates = eligibleMemoryCandidates,
-                model = activeModel,
-                inputBudgetTokens = baseSmartInputBudget,
-                requiredContextTokens = deterministicContextTokens,
-                historyMessages = messages,
-                contextPriority = assistant.contextPriority,
-                episodeGroup = { "Older" },
+        withContext(Dispatchers.Default) {
+            value = ContextBudgetCalculator.calculate(
+                model = model,
+                conversation = conversation,
+                assistant = assistant,
+                settings = settings,
+                memoryCandidates = memoryCandidates,
+                persistenceMode = persistenceMode,
+                pendingParts = pendingParts,
+                requestUsage = requestUsage,
+                isGenerating = isGenerating,
             )
         }
-    }
-    val fixedMemoryText = fixedMemorySelection?.promptText.orEmpty()
-    val fixedMemoryTokens = fixedMemorySelection?.promptTokens ?: 0
-    val effectiveSmartInputBudget = baseSmartInputBudget?.let { budget ->
-        (budget - probableTemporaryTokens).coerceAtLeast(1)
-    }
-
-    val baseBreakdown = remember(
-        messages,
-        activeModel,
-        systemPromptText,
-        conversation.contextSummary,
-        fixedMemoryText,
-        fixedMemoryTokens,
-        skillText,
-        lorebookText,
-        skillTokens,
-        lorebookTokens,
-        toolDefinitionText,
-        toolDefinitionTokens,
-        knownContextAttachments,
-        effectiveSmartInputBudget,
-        sourceKey,
-    ) {
-        val messagesToCount = if (smartActive) {
-            val namedTokens = ContextTokenEstimator.textTokens(systemPromptText, activeModel) +
-                ContextTokenEstimator.textTokens(conversation.contextSummary.orEmpty(), activeModel) +
-                fixedMemoryTokens + skillTokens + lorebookTokens +
-                toolDefinitionTokens +
-                knownContextMediaTokens
-            val messageBudget = ((effectiveSmartInputBudget ?: Int.MAX_VALUE) - namedTokens)
-                .coerceAtLeast(1)
-            smartFitContext(
-                messages = messages,
-                model = activeModel,
-                messageBudgetTokens = messageBudget,
-            )
-        } else {
-            messages
-        }
-        ContextTokenEstimator.breakdown(
-            messages = messagesToCount,
-            model = activeModel,
-            systemPromptText = systemPromptText,
-            summaryText = conversation.contextSummary.orEmpty(),
-            memoryText = fixedMemoryText,
-            memoryTokensOverride = fixedMemoryTokens,
-            skillText = skillText,
-            lorebookText = lorebookText,
-            skillTokensOverride = skillTokens,
-            lorebookTokensOverride = lorebookTokens,
-            toolDefinitionText = toolDefinitionText,
-            toolDefinitionTokensOverride = toolDefinitionTokens,
-            pendingParts = knownContextAttachments,
-            usableInputTokens = effectiveSmartInputBudget,
-            sourceKey = sourceKey,
-        )
-    }
-
-    val computedBreakdown = if (!hasPendingInput) {
-        baseBreakdown
-    } else {
-        var pendingTextTokens = 0
-        var pendingMediaTokens = 0
-        var pendingImages = 0
-        pendingParts.forEach { part ->
-            when (part) {
-                is UIMessagePart.Image -> {
-                    pendingMediaTokens += ContextTokenEstimator.partTokens(part, activeModel)
-                    pendingImages++
-                }
-                is UIMessagePart.Video, is UIMessagePart.Audio, is UIMessagePart.Document -> {
-                    pendingMediaTokens += ContextTokenEstimator.partTokens(part, activeModel)
-                }
-                else -> {
-                    pendingTextTokens += ContextTokenEstimator.partTokens(part, activeModel)
-                }
-            }
-        }
-        val framingDelta = if (messages.isEmpty()) 7 else 4
-        val estimatedTotalTokens = baseBreakdown.usedTokens + pendingTextTokens + pendingMediaTokens + framingDelta
-        val budgetLimit = effectiveSmartInputBudget ?: Int.MAX_VALUE
-
-        if (smartActive && estimatedTotalTokens > budgetLimit) {
-            val pendingMessage = UIMessage(role = MessageRole.USER, parts = pendingParts)
-            val namedTokens = ContextTokenEstimator.textTokens(systemPromptText, activeModel) +
-                ContextTokenEstimator.textTokens(conversation.contextSummary.orEmpty(), activeModel) +
-                fixedMemoryTokens + skillTokens + lorebookTokens +
-                toolDefinitionTokens +
-                knownContextMediaTokens
-            val messageBudget = (budgetLimit - namedTokens).coerceAtLeast(1)
-            val messagesToCount = smartFitContext(
-                messages = messages + listOf(pendingMessage),
-                model = activeModel,
-                messageBudgetTokens = messageBudget,
-            )
-            ContextTokenEstimator.breakdown(
-                messages = messagesToCount,
-                model = activeModel,
-                systemPromptText = systemPromptText,
-                summaryText = conversation.contextSummary.orEmpty(),
-                memoryText = fixedMemoryText,
-                memoryTokensOverride = fixedMemoryTokens,
-                skillText = skillText,
-                lorebookText = lorebookText,
-                skillTokensOverride = skillTokens,
-                lorebookTokensOverride = lorebookTokens,
-                toolDefinitionText = toolDefinitionText,
-                toolDefinitionTokensOverride = toolDefinitionTokens,
-                pendingParts = knownContextAttachments,
-                usableInputTokens = effectiveSmartInputBudget,
-                sourceKey = sourceKey,
-            )
-        } else {
-            baseBreakdown.copy(
-                conversationTokens = baseBreakdown.conversationTokens + pendingTextTokens + framingDelta,
-                mediaTokens = baseBreakdown.mediaTokens + pendingMediaTokens,
-                imageCount = baseBreakdown.imageCount + pendingImages,
-                usedTokens = estimatedTotalTokens,
-            )
-        }
-    }
-    lastStableUsage = computedBreakdown
-    return computedBreakdown
+    }.value
 }
 
 @Composable
