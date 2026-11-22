@@ -616,20 +616,62 @@ private fun TtsVoiceRow(
                 .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, position.listItemShape())
                 .background(Color(0xFF000000))
                 .clickable(onClick = onEdit)
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(voice.name.ifBlank { voice.providerVoiceId.ifBlank { "Voice" } }, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            val isSystem = provider is TTSProviderSetting.SystemTTS || provider.id == DEFAULT_SYSTEM_TTS_ID || voice.enginePackageName != null
+            if (isSystem) {
+                Box(
+                    modifier = Modifier.size(40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PhoneAndroid,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.White
+                    )
+                }
+            } else {
+                TTSProviderIcon(
+                    provider = provider,
+                    catalogSnapshot = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = Color.White
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = voice.name.ifBlank { voice.providerVoiceId.ifBlank { "Voice" } },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (isSystem) {
+                        Tag(type = TagType.SUCCESS) {
+                            Text(stringResource(R.string.local_label))
+                        }
+                    }
                     val locale = voice.locale
                     if (!locale.isNullOrBlank()) Tag(type = TagType.INFO) { Text(locale) }
                     Tag { Text("x${"%.2f".format(voice.speed)}") }
                     Tag { Text("p${"%.2f".format(voice.pitch)}") }
                 }
             }
-            IconButton(onClick = onTest) { Icon(Icons.AutoMirrored.Rounded.VolumeUp, null) }
+            IconButton(onClick = onTest) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.VolumeUp,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
             dragHandle()
         }
     }

@@ -1352,6 +1352,14 @@ fun ChatPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .zIndex(9999f)
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
             ) {
                 ChatSwitchLoadingIndicator(
                     assistant = conversationAssistant,
@@ -4984,7 +4992,15 @@ private fun ChatSwitchLoadingIndicator(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF000000)),
+            .background(Color(0xFF000000))
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        event.changes.forEach { it.consume() }
+                    }
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         Column(

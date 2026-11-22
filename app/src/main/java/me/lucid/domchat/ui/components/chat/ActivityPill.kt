@@ -639,7 +639,7 @@ private fun AnimatedSinglePill(
     Surface(
         modifier = Modifier
             .then(
-                if (chatAnimationsEnabled && !wasCompletedInitially) {
+                if (chatAnimationsEnabled) {
                     Modifier.animateContentSize(
                         animationSpec = PILL_MORPH_SPEC,
                         alignment = Alignment.TopStart
@@ -650,7 +650,7 @@ private fun AnimatedSinglePill(
                 if (surfaceExpanded) {
                     Modifier.widthIn(max = maxBubbleWidth)
                 } else {
-                    Modifier.height(PILL_HEIGHT)
+                    Modifier.heightIn(min = PILL_HEIGHT)
                 }
             )
             .then(
@@ -699,7 +699,7 @@ private fun AnimatedSinglePill(
         AnimatedContent(
             targetState = requestedContentState,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
+                (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = true) { _, _ ->
                     PILL_MORPH_SPEC
                 }
             },
@@ -751,16 +751,12 @@ private fun AnimatedSinglePill(
                     AnimatedContent(
                         targetState = compactState,
                         transitionSpec = {
-                            if (wasCompletedInitially) {
-                                EnterTransition.None togetherWith ExitTransition.None
-                            } else {
-                                (fadeIn(animationSpec = tween(200)) +
-                                    scaleIn(initialScale = 0.92f, animationSpec = tween(200)))
-                                    .togetherWith(
-                                        fadeOut(animationSpec = tween(150)) +
-                                            scaleOut(targetScale = 0.92f, animationSpec = tween(150))
-                                    )
-                            }
+                            (fadeIn(animationSpec = tween(180, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
+                                scaleIn(initialScale = 0.95f, animationSpec = tween(180)))
+                                .togetherWith(
+                                    fadeOut(animationSpec = tween(140, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
+                                        scaleOut(targetScale = 0.95f, animationSpec = tween(140))
+                                )
                         },
                         label = "pill_content",
                         contentKey = { stateToKey(it) }
@@ -841,7 +837,9 @@ private fun AnimatedSinglePill(
                             }
                         } else {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                modifier = Modifier
+                                    .height(PILL_HEIGHT)
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
