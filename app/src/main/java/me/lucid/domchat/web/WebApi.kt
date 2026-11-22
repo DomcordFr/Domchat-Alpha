@@ -261,7 +261,7 @@ fun Application.configureWebApi(
             post("/auth/token") {
                 val ip = call.clientIp()
                 if (!WebAuthRateLimiter.isAllowed(ip)) {
-                    throw ApiException(HttpStatusCode.TooManyRequests, "Too many authentication attempts. Please try again later.")
+                    throw TooManyRequestsException("Too many authentication attempts. Please try again later.")
                 }
                 val settings = settingsStore.settingsFlow.value
                 val request = call.receive<WebAuthTokenRequest>()
