@@ -65,15 +65,28 @@ internal fun restoreManagedFileDirectories(
         replaced.asReversed().forEach { dirName ->
             val liveDir = File(liveFilesDir, dirName)
             val backupDir = File(liveBackupDir, dirName)
-            if (liveDir.exists()) {
-                liveDir.deleteRecursively()
-            }
-            if (backupDir.exists()) {
-                liveDir.parentFile?.mkdirs()
-                if (!backupDir.renameTo(liveDir)) {
-                    liveDir.mkdirs()
-                    mirrorDirectory(backupDir, liveDir)
-                    backupDir.deleteRecursively()
+            if (dirName == BackupArchiveFormat.WORKSPACES_DIR) {
+                // Never delete files/workspaces/ recursively - that would destroy the Linux rootfs!
+                // Roll back only the modified workspace files from backupDir
+                if (backupDir.exists()) {
+                    backupDir.walkTopDown().filter { it.isFile }.forEach { backupFile ->
+                        val relPath = backupFile.relativeTo(backupDir).path
+                        val liveTarget = File(liveDir, relPath)
+                        liveTarget.parentFile?.mkdirs()
+                        backupFile.copyTo(liveTarget, overwrite = true)
+                    }
+                }
+            } else {
+                if (liveDir.exists()) {
+                    liveDir.deleteRecursively()
+                }
+                if (backupDir.exists()) {
+                    liveDir.parentFile?.mkdirs()
+                    if (!backupDir.renameTo(liveDir)) {
+                        liveDir.mkdirs()
+                        mirrorDirectory(backupDir, liveDir)
+                        backupDir.deleteRecursively()
+                    }
                 }
             }
         }

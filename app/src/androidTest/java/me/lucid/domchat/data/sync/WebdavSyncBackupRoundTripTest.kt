@@ -320,7 +320,6 @@ class WebdavSyncBackupRoundTripTest {
             context = isolatedContext,
             secretKeyManager = secretKeyManager,
             appDatabase = appDatabase,
-            webDavClientFactory = unsupportedWebDavClientFactory,
         )
         return TestEnvironment(
             context = isolatedContext,
@@ -670,30 +669,6 @@ class WebdavSyncBackupRoundTripTest {
             runCatching { secureStore.clearAll() }
             appScope.cancel()
             context.cleanup()
-        }
-    }
-
-    private val unsupportedWebDavClientFactory = object : WebDavClientFactory {
-        override fun collection(
-            config: WebDavConfig,
-            path: String?,
-        ): at.bitfire.dav4jvm.okhttp.DavCollection {
-            error("WebDAV network operations are not used by local backup round-trip tests")
-        }
-
-        override fun hrefCollection(
-            config: WebDavConfig,
-            href: String,
-        ): at.bitfire.dav4jvm.okhttp.DavCollection {
-            error("WebDAV network operations are not used by local backup round-trip tests")
-        }
-
-        override fun putFile(
-            collection: at.bitfire.dav4jvm.okhttp.DavCollection,
-            file: File,
-            onResponse: (String) -> Unit,
-        ) {
-            error("WebDAV network operations are not used by local backup round-trip tests")
         }
     }
 

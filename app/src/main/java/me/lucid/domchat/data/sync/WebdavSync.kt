@@ -2,12 +2,6 @@ package me.lucid.domchat.data.sync
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import at.bitfire.dav4jvm.okhttp.DavCollection
-import at.bitfire.dav4jvm.okhttp.Response
-import at.bitfire.dav4jvm.okhttp.exception.NotFoundException
-import at.bitfire.dav4jvm.property.webdav.DisplayName
-import at.bitfire.dav4jvm.property.webdav.GetContentLength
-import at.bitfire.dav4jvm.property.webdav.GetLastModified
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -46,113 +40,8 @@ class WebdavSync(
     private val context: Context,
     private val secretKeyManager: SecretKeyManager,
     private val appDatabase: AppDatabase,
-    private val webDavClientFactory: WebDavClientFactory,
 ) {
-    suspend fun testWebdav(webDavConfig: WebDavConfig) {
-        val davCollection = webDavClientFactory.collection(webDavConfig, path = "")
-
-        withContext(Dispatchers.IO) {
-            davCollection.propfind(depth = 1) { response, relation ->
-                LogUtil.i(TAG, "testWebdav: $response | $relation")
-            }
-        }
-    }
-
-    suspend fun backupToWebDav(webDavConfig: WebDavConfig) = AppMaintenanceLock.withLock {
-        withContext(Dispatchers.IO) {
-            val file = prepareBackupFile(webDavConfig)
-            try {
-                val collection = webDavClientFactory.collection(webDavConfig)
-                collection.ensureCollectionExists()
-                val target = webDavClientFactory.collection(webDavConfig, file.name)
-                webDavClientFactory.putFile(target, file) { response ->
-                    LogUtil.i(TAG, "backupToWebDav: $response")
-                }
-            } finally {
-                if (file.exists()) {
-                    file.delete()
-                }
-            }
-        }
-    }
-
-    suspend fun listBackupFiles(webDavConfig: WebDavConfig): List<WebDavBackupItem> =
-        withContext(Dispatchers.IO) {
-            val collection = webDavClientFactory.collection(webDavConfig)
-            val files = mutableListOf<WebDavBackupItem>()
-            collection.propfind(depth = 1) { response, relation ->
-                LogUtil.i(TAG, "listBackupFiles: ${response.properties} ${response.href}")
-                if (relation == Response.HrefRelation.MEMBER) {
-                    val displayName = response.properties.filterIsInstance<DisplayName>()
-                        .firstOrNull()?.displayName ?: "Unknown"
-                    val size = response.properties.filterIsInstance<GetContentLength>()
-                        .firstOrNull()?.contentLength ?: 0L
-                    val lastModified = response.properties.filterIsInstance<GetLastModified>()
-                        .firstOrNull()?.lastModified ?: Instant.EPOCH
-                    files.add(
-                        WebDavBackupItem(
-                            href = response.href.toString(),
-                            displayName = displayName,
-                            size = size,
-                            lastModified = lastModified,
-                        )
-                    )
-                }
-            }
-            files
-        }
-
-    suspend fun restoreFromWebDav(
-        webDavConfig: WebDavConfig,
-        item: WebDavBackupItem,
-    ): RestoreResult = withContext(Dispatchers.IO) {
-        val collection = webDavClientFactory.hrefCollection(webDavConfig, item.href)
-        val backupFile = File.createTempFile("webdav_restore_", ".zip", context.cacheDir)
-
-        collection.get(
-            accept = "",
-            headers = null,
-        ) { response ->
-            if (response.isSuccessful) {
-                LogUtil.i(
-                    TAG,
-                    "restoreFromWebDav: Downloading ${item.displayName} to ${backupFile.absolutePath}",
-                )
-                response.body?.byteStream()?.use { inputStream ->
-                    backupFile.sink().buffer().outputStream().use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-            } else {
-                LogUtil.e(
-                    TAG,
-                    "restoreFromWebDav: Failed to download ${item.displayName}, response: $response",
-                )
-                throw Exception("Failed to download backup file: ${response.message}")
-            }
-        }
-
-        LogUtil.i(TAG, "restoreFromWebDav: Downloaded ${backupFile.length()} bytes")
-
-        try {
-            restoreFromBackupFile(backupFile)
-        } finally {
-            if (backupFile.exists()) {
-                backupFile.delete()
-                LogUtil.i(TAG, "restoreFromWebDav: Cleaned up temporary backup file")
-            }
-        }
-    }
-
-    suspend fun deleteWebDavBackupFile(webDavConfig: WebDavConfig, item: WebDavBackupItem) =
-        withContext(Dispatchers.IO) {
-            val collection = webDavClientFactory.hrefCollection(webDavConfig, item.href)
-            collection.delete { response ->
-                LogUtil.i(TAG, "deleteWebDavBackupFile: $response")
-            }
-        }
-
-    suspend fun restoreFromLocalFile(file: File, webDavConfig: WebDavConfig): RestoreResult =
+    suspend fun restoreFromLocalFile(file: File): RestoreResult =
         withContext(Dispatchers.IO) {
             LogUtil.i(TAG, "restoreFromLocalFile: Starting restore from ${file.absolutePath}")
 
@@ -173,7 +62,6 @@ class WebdavSync(
         }
 
     suspend fun prepareBackupFile(
-        webDavConfig: WebDavConfig,
         selectedContent: Set<BackupContentOption>? = null,
         selectedKeyIds: Set<kotlin.uuid.Uuid>? = null,
     ): File = AppMaintenanceLock.withLock {
@@ -184,8 +72,8 @@ class WebdavSync(
             backupFile.delete()
         }
 
-        val includesDatabase = webDavConfig.items.contains(WebDavConfig.BackupItem.DATABASE)
-        val includesFiles = webDavConfig.items.contains(WebDavConfig.BackupItem.FILES)
+        val includesDatabase = selectedContent == null || selectedContent.any { it in setOf(BackupContentOption.SETTINGS, BackupContentOption.CHARACTERS, BackupContentOption.CHATS, BackupContentOption.LOREBOOKS, BackupContentOption.SKILLS) }
+        val includesFiles = selectedContent == null || selectedContent.any { it in setOf(BackupContentOption.CHARACTERS, BackupContentOption.CHATS, BackupContentOption.SETTINGS) }
 
         // Determine which managed dirs and DB table sets to include based on selectedContent.
         // When selectedContent is null (e.g., WebDAV full backup), everything is included.
@@ -1139,22 +1027,3 @@ private fun addVirtualFileToZip(zipOut: ZipOutputStream, name: String, content: 
     LogUtil.i(TAG, "addVirtualFileToZip: $name (${content.length} bytes)")
 }
 
-private suspend fun DavCollection.ensureCollectionExists() = withContext(Dispatchers.IO) {
-    try {
-        propfind(depth = 0) { response, relation ->
-            LogUtil.i(TAG, "ensureCollectionExists: $response $relation")
-        }
-    } catch (e: NotFoundException) {
-        LogUtil.i(TAG, "ensureCollectionExists: ${this@ensureCollectionExists.location}")
-        mkCol(null) { response ->
-            LogUtil.i(TAG, "ensureCollectionExists: $response")
-        }
-    }
-}
-
-data class WebDavBackupItem(
-    val href: String,
-    val displayName: String,
-    val size: Long,
-    val lastModified: Instant,
-)

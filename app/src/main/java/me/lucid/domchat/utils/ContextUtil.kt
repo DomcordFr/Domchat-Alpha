@@ -242,8 +242,13 @@ internal fun resolveAppOwnedFileProviderFile(
     val encodedRelativePath = normalizedPath.substring(separatorIndex + 1)
     val rootDir = when (rootName) {
         "cache" -> cacheDir
-        "upload" -> filesDir
         "external_files" -> externalFilesDir ?: return null
+        "upload" -> File(filesDir, "upload")
+        "chat_files" -> File(filesDir, "chat_files")
+        "avatars" -> File(filesDir, "avatars")
+        "assistant_backgrounds" -> File(filesDir, "assistant_backgrounds")
+        "lorebook_covers" -> File(filesDir, "lorebook_covers")
+        "lorebook_attachments" -> File(filesDir, "lorebook_attachments")
         else -> return null
     }
     val relativePath = encodedRelativePath.urlDecode(plusAsSpace = true)

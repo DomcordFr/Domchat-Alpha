@@ -707,13 +707,9 @@ class ChatService(
         when (event) {
             Lifecycle.Event.ON_START -> {
                 _isForeground.value = true
-                GenerationForegroundService.stop(context)
             }
             Lifecycle.Event.ON_STOP -> {
                 _isForeground.value = false
-                if (_generationJobs.value.isNotEmpty()) {
-                    GenerationForegroundService.start(context)
-                }
             }
             else -> {}
         }
@@ -1355,9 +1351,7 @@ class ChatService(
             }
         }
         job.start()
-        if (!_isForeground.value) {
-            GenerationForegroundService.start(context)
-        }
+        GenerationForegroundService.start(context)
     }
 
     fun sendMessage(
@@ -1477,9 +1471,7 @@ class ChatService(
             }
         }
         job.start()
-        if (!_isForeground.value) {
-            GenerationForegroundService.start(context)
-        }
+        GenerationForegroundService.start(context)
     }
 
     // Regenerate message - TURN-BASED for assistant messages
@@ -1584,9 +1576,7 @@ class ChatService(
             }
         }
         job.start()
-        if (!_isForeground.value) {
-            GenerationForegroundService.start(context)
-        }
+        GenerationForegroundService.start(context)
     }
 
     // 处理消息补全

@@ -55,12 +55,6 @@ class WebServerService : Service() {
 
         fun stop(context: android.content.Context) {
             runCatching {
-                val intent = Intent(context, WebServerService::class.java).apply {
-                    action = ACTION_STOP
-                }
-                context.startService(intent)
-            }
-            runCatching {
                 context.stopService(Intent(context, WebServerService::class.java))
             }
         }
@@ -97,9 +91,11 @@ class WebServerService : Service() {
 
             ACTION_STOP -> {
                 webServerManager.stop()
-                serviceScope.launch {
-                    settingsStore.update { settings ->
-                        settings.copy(webServerEnabled = false)
+                org.koin.core.context.GlobalContext.get().get<SettingsStore>().let { store ->
+                    org.koin.core.context.GlobalContext.get().get<CoroutineScope>().launch(Dispatchers.IO) {
+                        store.update { settings ->
+                            settings.copy(webServerEnabled = false)
+                        }
                     }
                 }
                 ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -162,42 +158,63 @@ class WebServerService : Service() {
         if (stateObserverJob != null) return
 
         stateObserverJob = serviceScope.launch {
-            var wasRunning = false
+            var hasSeenActivePhase = false
             webServerManager.state.collect { state ->
                 when (state.phase) {
                     WebServerPhase.Starting -> {
+                        hasSeenActivePhase = true
                         acquireWifiLock()
                         updateNotification(buildStartingNotification())
                     }
 
                     WebServerPhase.Running -> {
-                        wasRunning = true
+                        hasSeenActivePhase = true
                         acquireWifiLock()
                         updateNotification(buildRunningNotification(state.preferredUrl))
                     }
 
                     WebServerPhase.Stopping -> {
+                        hasSeenActivePhase = true
                         updateNotification(buildStoppingNotification())
                     }
 
                     WebServerPhase.Error -> {
+                        hasSeenActivePhase = true
                         releaseWifiLock()
                         updateNotification(buildErrorNotification(state.error ?: getString(R.string.notification_web_server_error)))
-                        settingsStore.update { settings ->
-                            settings.copy(webServerEnabled = false)
+                        org.koin.core.context.GlobalContext.get().get<SettingsStore>().let { store ->
+                            org.koin.core.context.GlobalContext.get().get<CoroutineScope>().launch(Dispatchers.IO) {
+                                store.update { settings -> settings.copy(webServerEnabled = false) }
+                            }
                         }
                         stopForeground(STOP_FOREGROUND_DETACH)
                         stopSelf()
                     }
 
                     WebServerPhase.Idle -> {
-                        releaseWifiLock()
-                        ServiceCompat.stopForeground(this@WebServerService, ServiceCompat.STOP_FOREGROUND_REMOVE)
-                        stopSelf()
+                        if (hasSeenActivePhase) {
+                            releaseWifiLock()
+                            ServiceCompat.stopForeground(this@WebServerService, ServiceCompat.STOP_FOREGROUND_REMOVE)
+                            stopSelf()
+                        }
                     }
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        webServerManager.stop()
+        org.koin.core.context.GlobalContext.get().get<SettingsStore>().let { store ->
+            org.koin.core.context.GlobalContext.get().get<CoroutineScope>().launch(Dispatchers.IO) {
+                store.update { settings -> settings.copy(webServerEnabled = false) }
+            }
+        }
+        stateObserverJob?.cancel()
+        stateObserverJob = null
+        releaseWifiLock()
+        serviceScope.cancel()
+        super.onDestroy()
     }
 
     private fun updateNotification(notification: android.app.Notification) {

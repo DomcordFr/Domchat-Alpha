@@ -3,8 +3,6 @@ package me.lucid.domchat.di
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import at.bitfire.dav4jvm.okhttp.BasicDigestAuthHandler
-import at.bitfire.dav4jvm.okhttp.DavCollection
 import coil3.ImageLoader
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
@@ -53,8 +51,6 @@ import me.lucid.domchat.data.ai.mcp.McpManager
 import me.lucid.domchat.data.ai.mcp.McpOAuthManager
 import me.lucid.domchat.data.ai.mcp.McpServerConfig
 import me.lucid.domchat.data.ai.mcp.McpTransportFactory
-import me.lucid.domchat.data.datastore.WebDavConfig
-import me.lucid.domchat.data.sync.WebDavClientFactory
 import me.lucid.domchat.data.sync.WebdavSync
 import me.lucid.domchat.ui.image.AppImageLoaderFactory
 import me.lucid.domchat.ui.image.HttpUrlImageInterceptor
@@ -65,7 +61,6 @@ import me.lucid.domchat.service.initializeAetherWorkManager
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import okio.Path.Companion.toOkioPath
 import org.koin.core.qualifier.named
@@ -304,60 +299,6 @@ val dataSourceModule = module {
         OkHttpPlatformHttpClient(get<OkHttpClient>(named(MCP_OKHTTP_CLIENT)))
     }
 
-    single<WebDavClientFactory> {
-        object : WebDavClientFactory {
-            override fun collection(config: WebDavConfig, path: String?): DavCollection {
-                val location = buildString {
-                    append(config.url.trimEnd('/'))
-                    append("/")
-                    if (config.path.isNotBlank()) {
-                        append(config.path.trim('/'))
-                        append("/")
-                    }
-                    if (path != null) {
-                        append(path.trim('/'))
-                    }
-                }.toCheckedHttpUrl("WebDAV URL")
-                return DavCollection(
-                    httpClient = config.createWebDavClient(),
-                    location = location,
-                )
-            }
-
-            override fun hrefCollection(config: WebDavConfig, href: String): DavCollection {
-                return DavCollection(
-                    httpClient = config.createWebDavClient(),
-                    location = href.toCheckedHttpUrl("WebDAV href"),
-                )
-            }
-
-            override fun putFile(
-                collection: DavCollection,
-                file: java.io.File,
-                onResponse: (String) -> Unit,
-            ) {
-                collection.put(body = file.asRequestBody()) { response ->
-                    onResponse(response.toString())
-                }
-            }
-
-            private fun WebDavConfig.createWebDavClient(): OkHttpClient {
-                val authHandler = BasicDigestAuthHandler(
-                    domain = null,
-                    username = username,
-                    password = password.toCharArray(),
-                )
-                return OkHttpClient.Builder()
-                    .followRedirects(false)
-                    .authenticator(authHandler)
-                    .addNetworkInterceptor(authHandler)
-                    .fastFallback(true)
-                    .writeTimeout(5.minutes)
-                    .build()
-            }
-        }
-    }
-
     single<PlatformHttpClient> {
         OkHttpPlatformHttpClient(get())
     }
@@ -477,7 +418,6 @@ val dataSourceModule = module {
             context = get(),
             secretKeyManager = get(),
             appDatabase = get(),
-            webDavClientFactory = get(),
         )
     }
 }

@@ -409,11 +409,6 @@ dependencies {
     // Palette (for color extraction from images)
     implementation(libs.androidx.palette.ktx)
 
-    // WebDav
-    implementation(libs.dav4jvm) {
-        exclude(group = "org.ogce", module = "xpp3")
-    }
-
     // Reorderable (https://github.com/Calvin-LL/Reorderable/)
     implementation(libs.reorderable)
 

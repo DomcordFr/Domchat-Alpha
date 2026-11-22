@@ -61,15 +61,15 @@ class WebServerManager(
             return
         }
 
+        _state.value = _state.value.copy(
+            phase = WebServerPhase.Starting,
+            error = null,
+            port = port,
+            serviceName = serviceName,
+        )
+
         appScope.launch(Dispatchers.IO) {
             try {
-                _state.value = _state.value.copy(
-                    phase = WebServerPhase.Starting,
-                    error = null,
-                    port = port,
-                    serviceName = serviceName,
-                )
-
                 if (!isPortAvailable(port)) {
                     _state.value = WebServerState(
                         phase = WebServerPhase.Error,

@@ -273,7 +273,7 @@ class SecretKeyManager(
         // Migrate MCP OAuth tokens
         if (settings.mcpOAuthTokens.isNotEmpty()) {
             settings.mcpOAuthTokens.forEach { (k, v) ->
-                if (v.isNotBlank()) {
+                if (k.startsWith(MCP_OAUTH_PREFIX) && v.isNotBlank()) {
                     secureStore.putSecret(k, v)
                     migrated = true
                 }
@@ -706,18 +706,6 @@ class SecretKeyManager(
         }
     }
 
-    private fun stripSttSecrets(provider: ASRProviderSetting): ASRProviderSetting {
-        return when (provider) {
-            is ASRProviderSetting.OpenAICompatible -> provider.copy(apiKey = "")
-            is ASRProviderSetting.OpenAIRealtime -> provider.copy(apiKey = "")
-            is ASRProviderSetting.DashScope -> provider.copy(apiKey = "")
-            is ASRProviderSetting.Volcengine -> provider.copy(apiKey = "")
-            is ASRProviderSetting.MiMo -> provider.copy(apiKey = "")
-            is ASRProviderSetting.Step -> provider.copy(apiKey = "")
-            is ASRProviderSetting.SystemSTT -> provider
-        }
-    }
-
     /**
      * Populate a single provider with its secrets.
      * When [forExport] is true, only exportable/selected keys are decrypted into entry.key.
@@ -845,18 +833,6 @@ class SecretKeyManager(
             }
 
             is TTSProviderSetting.SystemTTS -> provider
-        }
-    }
-
-    private fun populateSttProviderSecrets(provider: ASRProviderSetting): ASRProviderSetting {
-        return when (provider) {
-            is ASRProviderSetting.OpenAICompatible -> provider.copy(apiKey = getSttApiKey(provider.id, provider.apiKey))
-            is ASRProviderSetting.OpenAIRealtime -> provider.copy(apiKey = getSttApiKey(provider.id, provider.apiKey))
-            is ASRProviderSetting.DashScope -> provider.copy(apiKey = getSttApiKey(provider.id, provider.apiKey))
-            is ASRProviderSetting.Volcengine -> provider.copy(apiKey = getSttApiKey(provider.id, provider.apiKey))
-            is ASRProviderSetting.MiMo -> provider.copy(apiKey = getSttApiKey(provider.id, provider.apiKey))
-            is ASRProviderSetting.Step -> provider.copy(apiKey = getSttApiKey(provider.id, provider.apiKey))
-            is ASRProviderSetting.SystemSTT -> provider
         }
     }
 

@@ -14,11 +14,9 @@ import me.lucid.ai.provider.ProviderSetting
 import me.lucid.domchat.data.ai.models.ModelMetadataResolver
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
-import me.lucid.domchat.data.datastore.WebDavConfig
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.service.workspace.WorkspaceEnvironmentManager
 import me.lucid.domchat.data.sync.BackupContentOption
-import me.lucid.domchat.data.sync.WebDavBackupItem
 import me.lucid.domchat.data.sync.importer.ChatboxImporter
 import me.lucid.domchat.data.sync.importer.CherryStudioProviderImporter
 import me.lucid.domchat.data.sync.WebdavSync
@@ -40,51 +38,10 @@ class BackupVM(
         initialValue = Settings.dummy()
     )
 
-    val webDavBackupItems = MutableStateFlow<UiState<List<WebDavBackupItem>>>(UiState.Idle)
-
-    init {
-        loadBackupFileItems()
-    }
-
     fun updateSettings(settings: Settings) {
         viewModelScope.launch {
             settingsStore.update(settings)
         }
-    }
-
-    fun loadBackupFileItems() {
-        viewModelScope.launch {
-            runCatching {
-                webDavBackupItems.emit(UiState.Loading)
-                webDavBackupItems.emit(
-                    value = UiState.Success(
-                        data = webdavSync.listBackupFiles(
-                            webDavConfig = settings.value.webDavConfig
-                        ).sortedByDescending { it.lastModified }
-                    )
-                )
-            }.onFailure {
-                webDavBackupItems.emit(UiState.Error(it))
-            }
-        }
-    }
-
-    suspend fun testWebDav() {
-        webdavSync.testWebdav(settings.value.webDavConfig)
-    }
-
-    suspend fun backup() {
-        webdavSync.backupToWebDav(settings.value.webDavConfig)
-    }
-
-    suspend fun restore(item: WebDavBackupItem): WebdavSync.RestoreResult {
-        val result = webdavSync.restoreFromWebDav(webDavConfig = settings.value.webDavConfig, item = item)
-        environmentManager.autoRestoreWorkspaces(result.workspacesMetadata)
-        return result
-    }
-
-    suspend fun deleteWebDavBackupFile(item: WebDavBackupItem) {
-        webdavSync.deleteWebDavBackupFile(settings.value.webDavConfig, item)
     }
 
     suspend fun exportToFile(
@@ -92,14 +49,13 @@ class BackupVM(
         selectedKeyIds: Set<kotlin.uuid.Uuid>? = null,
     ): File {
         return webdavSync.prepareBackupFile(
-            settings.value.webDavConfig.copy(items = WebDavConfig.BackupItem.entries),
             selectedContent = selectedContent,
             selectedKeyIds = selectedKeyIds,
         )
     }
 
     suspend fun restoreFromLocalFile(file: File): WebdavSync.RestoreResult {
-        val result = webdavSync.restoreFromLocalFile(file, settings.value.webDavConfig)
+        val result = webdavSync.restoreFromLocalFile(file)
         environmentManager.autoRestoreWorkspaces(result.workspacesMetadata)
         return result
     }

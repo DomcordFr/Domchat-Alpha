@@ -15,4 +15,13 @@
   <files-path
     name="avatars"
     path="avatars/" />
+  <files-path
+    name="assistant_backgrounds"
+    path="assistant_backgrounds/" />
+  <files-path
+    name="lorebook_covers"
+    path="lorebook_covers/" />
+  <files-path
+    name="lorebook_attachments"
+    path="lorebook_attachments/" />
 </paths>

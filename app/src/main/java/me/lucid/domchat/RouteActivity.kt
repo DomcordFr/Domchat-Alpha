@@ -434,7 +434,6 @@ class RouteActivity : ComponentActivity() {
     override fun onDestroy() {
         if (!isChangingConfigurations) {
             ChatSessionDraftStore.clear()
-            runCatching { org.koin.core.context.GlobalContext.get().get<me.lucid.domchat.service.ChatService>().cleanup() }
         }
         super.onDestroy()
     }
