@@ -41,7 +41,9 @@ import coil3.compose.AsyncImage
 import me.lucid.domchat.R
 import me.lucid.domchat.utils.safeDrawableResId
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.ui.hooks.avatarCounterSpin
 import me.lucid.domchat.ui.hooks.avatarLoadingSpin
+import me.lucid.domchat.ui.hooks.rememberAvatarLoadingRotation
 import me.lucid.domchat.ui.hooks.rememberAvatarShape
 import me.lucid.domchat.utils.createChatFilesByContents
 
@@ -53,9 +55,10 @@ fun TextAvatar(
     color: Color = Color(0xFF000000),
     contentColor: Color = MaterialTheme.colorScheme.onSecondary
 ) {
+    val rotation = rememberAvatarLoadingRotation(loading)
     Box(
         modifier = modifier
-            .avatarLoadingSpin(loading)
+            .avatarLoadingSpin(rotation)
             .clip(shape = rememberAvatarShape(loading))
             .background(color)
             .size(32.dp),
@@ -71,7 +74,8 @@ fun TextAvatar(
                 maxFontSize = 32.sp,
                 stepSize = 1.sp
             ),
-            lineHeight = 0.8.em
+            lineHeight = 0.8.em,
+            modifier = Modifier.avatarCounterSpin(rotation)
         )
     }
 }
@@ -105,10 +109,14 @@ fun UIAvatar(
         }
     }
 
+    val rotation = rememberAvatarLoadingRotation(loading)
+
     val avatarContent: @Composable () -> Unit = {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .avatarCounterSpin(rotation)
         ) {
             when (value) {
                 is Avatar.Image -> {
@@ -164,7 +172,7 @@ fun UIAvatar(
             shape = rememberAvatarShape(loading),
             modifier = modifier
                 .size(32.dp)
-                .avatarLoadingSpin(loading),
+                .avatarLoadingSpin(rotation),
             onClick = {
                 onClick?.invoke()
                 if (onUpdate != null) showPickOption = true
@@ -178,7 +186,7 @@ fun UIAvatar(
             shape = rememberAvatarShape(loading),
             modifier = modifier
                 .size(32.dp)
-                .avatarLoadingSpin(loading),
+                .avatarLoadingSpin(rotation),
             tonalElevation = 4.dp,
             color = Color(0xFF000000),
             content = avatarContent

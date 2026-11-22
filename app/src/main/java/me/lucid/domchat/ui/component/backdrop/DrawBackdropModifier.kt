@@ -209,6 +209,12 @@ private class DrawBackdropElement(
                 node.onDrawBackdrop !== onDrawBackdrop ||
                 node.backdropScale != backdropScale
 
+        val drawOnlyChanged =
+            node.onDrawSurface !== onDrawSurface ||
+                node.onDrawFront !== onDrawFront ||
+                node.onDrawBehind !== onDrawBehind ||
+                node.exportedBackdrop !== exportedBackdrop
+
         val oldBackdrop = node.backdrop
         val backdropChanged = oldBackdrop !== backdrop
         node.backdrop = backdrop
@@ -231,6 +237,8 @@ private class DrawBackdropElement(
             node.surfaceDirty = true
             node.invalidateDraw()
             node.invalidateDrawCache()
+        } else if (drawOnlyChanged) {
+            node.invalidateDraw()
         }
     }
 
@@ -313,9 +321,7 @@ private class DrawBackdropNode(
 
     /** Invalidates this sampler's draw when the backdrop source changes (e.g. wallpaper bitmap finished decoding). */
     private val invalidateSamplerDraw: () -> Unit = {
-        if (!frozen() || recordedBackdropSize == IntSize.Zero) {
-            surfaceDirty = true
-        }
+        surfaceDirty = true
         invalidateDraw()
     }
 
@@ -399,7 +405,7 @@ private class DrawBackdropNode(
         // avoid baking transparent pixels into our layer and stay marked dirty.
         val sourceHasRecording = (backdrop as? LayerBackdrop)?.hasRecording ?: true
         if (offset == null || !sourceHasRecording) {
-            if (recordedBackdropSize != IntSize.Zero && offset != null && sourceHasRecording) {
+            if (recordedBackdropSize != IntSize.Zero) {
                 val drawOffset = lastDrawOffset
                 if (scale != 1f) {
                     scale(1f / scale, pivot = Offset.Zero) {
@@ -469,7 +475,7 @@ private class DrawBackdropNode(
         // the baked layer shifted by the offset delta instead of re-recording.
         val drawOffset =
             if (hasRecording && recordedBackdropOffset != null) {
-                recordedBackdropOffset!! - boundedOffset
+                (recordedBackdropOffset ?: Offset.Zero) - boundedOffset
             } else {
                 Offset.Zero
             }
@@ -540,6 +546,7 @@ private class DrawBackdropNode(
     }
 
     private var lastLayoutSize: IntSize = IntSize.Zero
+    private var lastRecordedLayoutOffset: Offset? = null
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
         if (coordinates.isAttached) {
@@ -555,7 +562,19 @@ private class DrawBackdropNode(
             val sizeChanged = coordinates.size != lastLayoutSize
             lastLayoutSize = coordinates.size
 
-            if (sizeChanged || recordedBackdropSize == IntSize.Zero) {
+            val currentOffset = currentBackdropOffset()
+            val padding = padding
+            val maxDrift = if (padding > 4f) padding * 0.75f else 48f
+            val offsetDrifted = if (currentOffset == null || lastRecordedLayoutOffset == null) {
+                false
+            } else {
+                (currentOffset - (lastRecordedLayoutOffset ?: currentOffset)).getDistance() > maxDrift
+            }
+
+            if (sizeChanged || recordedBackdropSize == IntSize.Zero || offsetDrifted) {
+                if (currentOffset != null) {
+                    lastRecordedLayoutOffset = currentOffset
+                }
                 surfaceDirty = true
                 invalidateDrawCache()
             }

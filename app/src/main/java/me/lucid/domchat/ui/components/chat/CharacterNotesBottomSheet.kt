@@ -80,7 +80,7 @@ fun CharacterNotesBottomSheet(
     onDismissRequest: () -> Unit,
 ) {
     CharacterNotesBottomSheet(
-        characterName = assistant.name,
+        characterName = assistant.displayName?.takeIf { it.isNotBlank() } ?: assistant.name.ifBlank { "Assistant" },
         creatorName = assistant.creator,
         characterVersion = assistant.characterVersion,
         notes = assistant.creatorNotes.orEmpty(),
@@ -138,17 +138,14 @@ fun CharacterNotesBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color(0xFFF0F0F0)),
+                    modifier = Modifier.size(36.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Notes,
                         contentDescription = null,
-                        tint = if (isDark) Color.White else Color.Black,
-                        modifier = Modifier.size(20.dp)
+                        tint = me.lucid.domchat.ui.modifier.domChatSheetContentColor(),
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
@@ -159,7 +156,7 @@ fun CharacterNotesBottomSheet(
                         text = characterName,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color.Black
+                        color = me.lucid.domchat.ui.modifier.domChatSheetContentColor()
                     )
 
                     val meta = buildString {

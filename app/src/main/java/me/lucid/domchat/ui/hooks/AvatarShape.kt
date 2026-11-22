@@ -1,6 +1,7 @@
 package me.lucid.domchat.ui.hooks
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.GenericShape
@@ -104,7 +105,7 @@ fun rememberAvatarShape(loading: Boolean): Shape {
  * draw/layer phase to avoid triggering Compose recompositions.
  */
 @Composable
-fun Modifier.avatarLoadingSpin(loading: Boolean): Modifier {
+fun rememberAvatarLoadingRotation(loading: Boolean): Animatable<Float, AnimationVector1D> {
     val rotation = remember { Animatable(0f) }
     LaunchedEffect(loading) {
         if (loading) {
@@ -128,8 +129,23 @@ fun Modifier.avatarLoadingSpin(loading: Boolean): Modifier {
             )
         }
     }
+    return rotation
+}
 
+@Composable
+fun Modifier.avatarLoadingSpin(loading: Boolean): Modifier {
+    val rotation = rememberAvatarLoadingRotation(loading)
+    return this.avatarLoadingSpin(rotation)
+}
+
+fun Modifier.avatarLoadingSpin(rotation: Animatable<Float, AnimationVector1D>): Modifier {
     return this.graphicsLayer {
         rotationZ = rotation.value
+    }
+}
+
+fun Modifier.avatarCounterSpin(rotation: Animatable<Float, AnimationVector1D>): Modifier {
+    return this.graphicsLayer {
+        rotationZ = -rotation.value
     }
 }

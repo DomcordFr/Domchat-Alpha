@@ -265,10 +265,10 @@ fun AssistantDetailPage(
         }
     }
 
-    // Auto-navigate to start route if specified (e.g., for deep linking to memory)
+    // Auto-navigate to start route if specified (e.g., for deep linking to personality/memory)
     LaunchedEffect(startRoute) {
-        if (startRoute == AssistantDetailRoutes.MEMORY) {
-            navController.navigate(AssistantDetailRoutes.MEMORY) {
+        if (!startRoute.isNullOrBlank() && startRoute != AssistantDetailRoutes.HOME) {
+            navController.navigate(startRoute) {
                 popUpTo(AssistantDetailRoutes.HOME) { inclusive = false }
             }
         }

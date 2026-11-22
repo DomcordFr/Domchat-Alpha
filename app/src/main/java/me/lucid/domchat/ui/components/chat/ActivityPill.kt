@@ -531,9 +531,9 @@ private fun AnimatedSinglePill(
     }
     val surfaceExpanded = requestedContentState !is SinglePillContentState.Compact
     val isExpandedTimeline = requestedContentState is SinglePillContentState.ExpandedTimeline
-    // Match the inner ActivityTimelinePanel shape (InputField = 24dp) when the timeline
-    // is expanded, otherwise the outer pill background peeks out around the inner corners.
-    val expandedRadius = if (isExpandedTimeline) 24.dp else 20.dp
+    // Match the inner ActivityTimelinePanel shape (InputField = 24dp) when expanded,
+    // otherwise the outer pill background peeks out around the inner corners.
+    val expandedRadius = 24.dp
 
     // Animate corner radii for smooth transitions (18.dp = PILL_HEIGHT / 2 for perfect compact capsule)
     val topStartRadius by animateDpAsState(
@@ -1052,13 +1052,17 @@ private fun UnifiedReasoningPill(
             modifier = Modifier
                 .height(PILL_HEIGHT)
                 .then(
-                    if (isExpanded && timelineOpen) {
+                    if (isExpanded) {
                         Modifier
                             .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onHeaderDismiss
+                            .then(
+                                if (timelineOpen) {
+                                    Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = onHeaderDismiss
+                                    )
+                                } else Modifier
                             )
                     } else Modifier
                 )
@@ -1090,6 +1094,9 @@ private fun UnifiedReasoningPill(
                     overflow = TextOverflow.Ellipsis,
                     modifier = if (isLive) Modifier.shimmer(true) else Modifier
                 )
+            }
+            if (isExpanded) {
+                Spacer(modifier = Modifier.weight(1f))
             }
             LiveElapsedTimerText(
                 isLive = isLive,

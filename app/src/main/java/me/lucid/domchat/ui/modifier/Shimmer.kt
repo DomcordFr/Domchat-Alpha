@@ -88,6 +88,7 @@ private data class ShimmerElement(
         node.backgroundColor = backgroundColor
         node.angle = angle
         node.gradientWidthRatio = gradientWidthRatio
+        node.invalidateDraw()
     }
 
     override fun InspectorInfo.inspectableProperties() {

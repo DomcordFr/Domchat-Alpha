@@ -1526,7 +1526,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     // Creator Notes Modal
     showingCreatorNotesFor?.let { char ->
         CharacterNotesBottomSheet(
-            characterName = char.name,
+            characterName = char.displayName?.takeIf { it.isNotBlank() } ?: char.name.ifBlank { "Assistant" },
             creatorName = char.creator,
             characterVersion = char.characterVersion,
             notes = char.creatorNotes.orEmpty(),

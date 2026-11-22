@@ -2659,11 +2659,11 @@ private fun ChatPageContent(
                         },
                         onPromptPresetsClick = {
                             showToolbarOverflowMenu = false
-                            navController.navigate(Screen.SettingSkills())
+                            navController.navigate(Screen.SettingPresets)
                         },
                         onAuthorsNotesClick = {
                             showToolbarOverflowMenu = false
-                            navController.navigate(Screen.AssistantDetail(currentAssistant.id.toString(), startRoute = "prompt"))
+                            navController.navigate(Screen.AssistantDetail(currentAssistant.id.toString(), startRoute = "personality"))
                         },
                         onWallpaperClick = {
                             showToolbarOverflowMenu = false

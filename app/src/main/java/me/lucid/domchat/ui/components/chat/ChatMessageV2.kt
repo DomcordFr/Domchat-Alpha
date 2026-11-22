@@ -180,11 +180,15 @@ private fun rememberFormattedMessageText(
         }
     }
 
+    var lastFormatted by remember { mutableStateOf<String?>(null) }
+    val initial = lastFormatted ?: rawText.replacePersonaPlaceholders(assistant, userNickname)
+
     return produceState(
-        initialValue = rawText,
+        initialValue = initial,
         key1 = rawText,
         key2 = assistant,
-        key3 = userNickname
+        key3 = userNickname,
+        key4 = scope
     ) {
         val formatted = withContext(Dispatchers.Default) {
             formatRoleplayTextWithCdnImages(
@@ -202,6 +206,7 @@ private fun rememberFormattedMessageText(
                 )
             )
         }
+        lastFormatted = formatted
         value = formatted
     }.value
 }
@@ -2166,16 +2171,16 @@ private fun AssistantMessageTurn(
                             assistant = assistant,
                             userNickname = userNickname,
                             scope = AssistantAffectScope.ASSISTANT,
-                            isStreaming = loading && index == allTextBubbles.lastIndex
+                            isStreaming = loading && index == activeParts.lastIndex
                         )
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
                             paragraphSpacing = 12.dp,
-                            streamingTextReveal = loading && index == allTextBubbles.lastIndex,
+                            streamingTextReveal = loading && index == activeParts.lastIndex,
                             displaySetting = effectiveDisplay,
                             onRevealComplete = {
-                                if (index == allTextBubbles.lastIndex) {
+                                if (index == activeParts.lastIndex) {
                                     isTextAnimating = false
                                 }
                             },
@@ -2295,16 +2300,16 @@ private fun AssistantMessageTurn(
                             assistant = assistant,
                             userNickname = userNickname,
                             scope = AssistantAffectScope.ASSISTANT,
-                            isStreaming = loading && index == allTextBubbles.lastIndex
+                            isStreaming = loading && index == activeParts.lastIndex
                         )
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
                             paragraphSpacing = 12.dp,
-                            streamingTextReveal = loading && index == allTextBubbles.lastIndex,
+                            streamingTextReveal = loading && index == activeParts.lastIndex,
                             displaySetting = effectiveDisplay,
                             onRevealComplete = {
-                                if (index == allTextBubbles.lastIndex) {
+                                if (index == activeParts.lastIndex) {
                                     isTextAnimating = false
                                 }
                             },

@@ -2449,9 +2449,14 @@ fun MinimalChatInput(
                         ) {
                             Text("Temperature", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = String.format(java.util.Locale.US, "%.2f", tempDraft),
@@ -2498,9 +2503,14 @@ fun MinimalChatInput(
                             Text("Top-K", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             val topKInt = topKDraft.toInt()
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = if (topKInt <= 0) "Off (Default)" else "$topKInt",
@@ -2546,9 +2556,14 @@ fun MinimalChatInput(
                         ) {
                             Text("Min-P Sampling", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = String.format(java.util.Locale.US, "%.2f", minPDraft),
@@ -2594,9 +2609,14 @@ fun MinimalChatInput(
                         ) {
                             Text("Top-P", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = String.format(java.util.Locale.US, "%.2f", topPDraft),
@@ -2642,9 +2662,14 @@ fun MinimalChatInput(
                         ) {
                             Text("Frequency Penalty", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = String.format(java.util.Locale.US, "%.2f", freqDraft),
@@ -2690,9 +2715,14 @@ fun MinimalChatInput(
                         ) {
                             Text("Presence Penalty", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = String.format(java.util.Locale.US, "%.2f", presDraft),
@@ -2738,9 +2768,14 @@ fun MinimalChatInput(
                         ) {
                             Text("Repetition Penalty", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White.copy(alpha = 0.12f),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color.Transparent,
+                                modifier = Modifier.liquidGlassSurface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                )
                             ) {
                                 Text(
                                     text = String.format(java.util.Locale.US, "%.2f", repDraft),
