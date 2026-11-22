@@ -116,7 +116,7 @@ class WorkspaceRepository(
         try {
             // runInterruptible 让协程取消转成线程中断, 打断 install 内阻塞的下载/解压循环
             runInterruptible(Dispatchers.IO) {
-                rootfsInstaller.install(workspace.root, url, onProgress)
+                rootfsInstaller.install(workspace.root, url, onProgress = onProgress)
                 onProgress(RootfsInstallProgress(stage = RootfsInstallStage.CONFIGURING))
                 smokeTestRootfs(workspace.root)
             }

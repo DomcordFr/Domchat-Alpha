@@ -678,7 +678,7 @@ class ChatService(
 
     // 存储每个对话的生成任务状态
     private val _generationJobs = MutableStateFlow<Map<Uuid, Job?>>(emptyMap())
-    private val generationJobs: StateFlow<Map<Uuid, Job?>> = _generationJobs
+    val generationJobs: StateFlow<Map<Uuid, Job?>> = _generationJobs
         .asStateFlow()
 
     private val conversationDeletionLedger = ConversationDeletionLedger()

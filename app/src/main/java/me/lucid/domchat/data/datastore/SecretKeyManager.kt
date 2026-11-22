@@ -639,14 +639,6 @@ class SecretKeyManager(
             settings.ttsProviders.map { stripTtsSecrets(it) }
         }
 
-        val asrProvidersWithSecrets = if (includeApiKeys) {
-            settings.asrProviders.map { provider ->
-                populateSttProviderSecrets(provider)
-            }
-        } else {
-            settings.asrProviders.map { stripSttSecrets(it) }
-        }
-
         val webServerAccessPassword = if (includeSettings && includeApiKeys) {
             getWebServerAccessPassword(settings.webServerAccessPassword)
         } else {
@@ -660,7 +652,6 @@ class SecretKeyManager(
             providers = providersWithSecrets,
             webDavConfig = webDavWithPassword,
             ttsProviders = ttsProvidersWithSecrets,
-            asrProviders = asrProvidersWithSecrets,
             webServerAccessPassword = webServerAccessPassword,
             huggingFaceToken = hfToken,
             mcpOAuthTokens = mcpTokens,

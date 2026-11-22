@@ -192,7 +192,7 @@ class WebServerService : Service() {
 
                     WebServerPhase.Idle -> {
                         releaseWifiLock()
-                        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+                        ServiceCompat.stopForeground(this@WebServerService, ServiceCompat.STOP_FOREGROUND_REMOVE)
                         stopSelf()
                     }
                 }

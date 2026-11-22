@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import me.lucid.ai.provider.ProviderSetting
+import me.lucid.search.SearchServiceOptions
 import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
@@ -382,25 +383,19 @@ class WebdavSync(
         }
         if (BackupContentOption.API_KEYS !in selectedContent) {
             result = result.copy(
-                searchServices = result.searchServices.map { svc ->
-                    svc.copy(
-                        apiKey = "",
-                        searxng = svc.searxng.copy(username = "", password = "")
-                    )
-                },
+                searchServices = result.searchServices.map { svc -> stripSearchServiceSecrets(svc) },
                 mcpServers = result.mcpServers.map { server ->
-                    server.copy(
-                        commonOptions = server.commonOptions.copy(
-                            headers = server.commonOptions.headers.filterKeys { header ->
-                                val lower = header.lowercase()
-                                !lower.contains("auth") &&
-                                !lower.contains("key") &&
-                                !lower.contains("token") &&
-                                !lower.contains("bearer") &&
-                                !lower.contains("secret") &&
-                                !lower.contains("cookie")
-                            }
-                        )
+                    val strippedHeaders = server.commonOptions.headers.filter { (header, _) ->
+                        val lower = header.lowercase()
+                        !lower.contains("auth") &&
+                        !lower.contains("key") &&
+                        !lower.contains("token") &&
+                        !lower.contains("bearer") &&
+                        !lower.contains("secret") &&
+                        !lower.contains("cookie")
+                    }
+                    server.clone(
+                        commonOptions = server.commonOptions.copy(headers = strippedHeaders)
                     )
                 }
             )
@@ -440,6 +435,25 @@ class WebdavSync(
             )
         }
         return result
+    }
+
+    private fun stripSearchServiceSecrets(svc: SearchServiceOptions): SearchServiceOptions = when (svc) {
+        is SearchServiceOptions.KeylessOptions -> svc
+        is SearchServiceOptions.BingLocalOptions -> svc
+        is SearchServiceOptions.ZhipuOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.TavilyOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.ExaOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.SearXNGOptions -> svc.copy(username = "", password = "")
+        is SearchServiceOptions.LinkUpOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.BraveOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.MetasoOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.OllamaOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.PerplexityOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.FirecrawlOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.JinaOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.BochaOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.NanoGPTOptions -> svc.copy(apiKey = "")
+        is SearchServiceOptions.GrokOptions -> svc.copy(apiKey = "")
     }
 
 

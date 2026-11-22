@@ -28,7 +28,7 @@ object InternalIntentAuthenticator {
             val bytes = ByteArray(32)
             SecureRandom().nextBytes(bytes)
             token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
-            secureStore.setSecret(SECURE_STORE_TOKEN_KEY, token)
+            secureStore.putSecret(SECURE_STORE_TOKEN_KEY, token)
         }
         cachedToken = token
         return token
