@@ -17,7 +17,7 @@ plugins {
 }
 
 composeCompiler {
-    stabilityConfigurationFiles.add(file("compose_stability.conf"))
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose_stability.conf"))
 }
 
 val enableReleaseShrinker = providers.gradleProperty("domchat.release.minify")
