@@ -184,11 +184,11 @@ private fun rememberFormattedMessageText(
     val initial = lastFormatted ?: rawText.replacePersonaPlaceholders(assistant, userNickname)
 
     return produceState(
-        initialValue = initial,
-        key1 = rawText,
-        key2 = assistant,
-        key3 = userNickname,
-        key4 = scope
+        initial,
+        rawText,
+        assistant,
+        userNickname,
+        scope,
     ) {
         val formatted = withContext(Dispatchers.Default) {
             formatRoleplayTextWithCdnImages(

@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import me.lucid.domchat.DomChatApp
+import me.lucid.domchat.data.ai.ContextBudgetCalculator
 import me.lucid.domchat.ui.context.LocalChatAnimationsEnabled
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.theme.LocalDarkMode
@@ -1559,13 +1560,13 @@ private fun ChatPageContent(
     }
     val showContextSummary = settings.displaySetting.showContextTokenSummary
     val contextMeterUsage by produceState<ContextUsageBreakdown?>(
-        initialValue = requestContextUsage,
-        key1 = showContextSummary,
-        key2 = currentChatModel?.id,
-        key3 = conversation.updateAt,
-        key4 = currentAssistant.id,
-        key5 = debouncedPendingParts,
-        key6 = isGenerating,
+        requestContextUsage,
+        showContextSummary,
+        currentChatModel?.id,
+        conversation.updateAt,
+        currentAssistant.id,
+        debouncedPendingParts,
+        isGenerating,
     ) {
         if (!showContextSummary) {
             value = null
@@ -3972,13 +3973,13 @@ private fun rememberContextMeterUsage(
 ): ContextUsageBreakdown? {
     if (!enabled) return null
     return produceState<ContextUsageBreakdown?>(
-        initialValue = requestUsage,
-        key1 = enabled,
-        key2 = model?.id,
-        key3 = conversation.updateAt,
-        key4 = assistant.id,
-        key5 = pendingParts,
-        key6 = isGenerating,
+        requestUsage,
+        enabled,
+        model?.id,
+        conversation.updateAt,
+        assistant.id,
+        pendingParts,
+        isGenerating,
     ) {
         withContext(Dispatchers.Default) {
             value = ContextBudgetCalculator.calculate(
