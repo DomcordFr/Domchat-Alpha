@@ -195,68 +195,56 @@ class AssistantDetailVM(
     fun updateTags(tagIds: List<Uuid>, tags: List<Tag>) {
         viewModelScope.launch {
             // First, update the global tags list
-            val currentSettings = settingsStore.settingsFlow.value
-            settingsStore.update(
-                settings = currentSettings.copy(
-                    assistantTags = tags
-                )
-            )
+            val currentTags = settingsStore.settingsFlow.value.assistantTags
+            val newTagIds = tagIds.filter { id -> currentTags.none { it.id == id } }
+            val newTags = newTagIds.map { id ->
+                AssistantTag(id = id, name = id.toString().take(8))
+            }
+            val tags = currentTags + newTags
             
-            // Then, update this assistant's tags
-            val updatedAssistant = assistant.value.copy(tags = tagIds.toList())
-            val latestSettings = settingsStore.settingsFlow.value
-            settingsStore.update(
-                settings = latestSettings.copy(
-                    assistants = latestSettings.assistants.map {
-                        if (it.id == updatedAssistant.id) updatedAssistant else it
-                    }
+            settingsStore.update { current ->
+                val updatedAssistant = assistant.value.copy(tags = tagIds.toList())
+                val updatedAssistants = current.assistants.map {
+                    if (it.id == updatedAssistant.id) updatedAssistant else it
+                }
+                current.copy(
+                    assistantTags = tags,
+                    assistants = updatedAssistants
                 )
-            )
+            }
             
             Log.d(TAG, "updateTags: ${tagIds.joinToString(",")}")
             
-            // Now cleanup unused tags using the fresh state
+            // Now cleanup unused tags using atomic update
             cleanupUnusedTagsInternal()
         }
     }
 
     private suspend fun cleanupUnusedTagsInternal() {
-        // Use fresh settings after all updates
-        val settings = settingsStore.settingsFlow.value
-        val validTagIds = settings.assistantTags.map { it.id }.toSet()
-
-        // 清理 assistant 中的无效 tag id
-        val cleanedAssistants = settings.assistants.map { assistant ->
-            val validTags = assistant.tags.filter { tagId ->
-                validTagIds.contains(tagId)
+        settingsStore.update { settings ->
+            val validTagIds = settings.assistantTags.map { it.id }.toSet()
+            val cleanedAssistants = settings.assistants.map { assistant ->
+                val validTags = assistant.tags.filter { tagId ->
+                    validTagIds.contains(tagId)
+                }
+                if (validTags.size != assistant.tags.size) {
+                    assistant.copy(tags = validTags)
+                } else {
+                    assistant
+                }
             }
-            if (validTags.size != assistant.tags.size) {
-                assistant.copy(tags = validTags)
-            } else {
-                assistant
+            val usedTagIds = cleanedAssistants.flatMap { it.tags }.toSet()
+            val cleanedTags = settings.assistantTags.filter { tag ->
+                usedTagIds.contains(tag.id)
             }
-        }
-
-        // 获取清理后的 assistant 中使用的 tag id
-        val usedTagIds = cleanedAssistants.flatMap { it.tags }.toSet()
-
-        // 清理未使用的 tags
-        val cleanedTags = settings.assistantTags.filter { tag ->
-            usedTagIds.contains(tag.id)
-        }
-
-        // 检查是否需要更新
-        val needUpdateAssistants = cleanedAssistants != settings.assistants
-        val needUpdateTags = cleanedTags.size != settings.assistantTags.size
-
-        if (needUpdateAssistants || needUpdateTags) {
-            settingsStore.update(
-                settings = settings.copy(
+            if (cleanedAssistants != settings.assistants || cleanedTags.size != settings.assistantTags.size) {
+                settings.copy(
                     assistants = cleanedAssistants,
                     assistantTags = cleanedTags
                 )
-            )
-            Log.d(TAG, "cleanupUnusedTags: removed ${settings.assistantTags.size - cleanedTags.size} unused tags")
+            } else {
+                settings
+            }
         }
     }
 
@@ -268,45 +256,48 @@ class AssistantDetailVM(
 
     fun update(assistant: Assistant) {
         viewModelScope.launch {
-            val currentSettings = settingsStore.settingsFlow.value
-            val oldAssistant = currentSettings.assistants.find { it.id == assistant.id }
-            if (oldAssistant != null) {
-                checkAvatarDelete(old = oldAssistant, new = assistant)
-                checkBackgroundDelete(old = oldAssistant, new = assistant)
-            }
-            settingsStore.update(
-                settings = currentSettings.copy(
+            var removedRefs = emptyList<String>()
+            settingsStore.update { currentSettings ->
+                val oldAssistant = currentSettings.assistants.find { it.id == assistant.id }
+                if (oldAssistant != null) {
+                    checkAvatarDelete(old = oldAssistant, new = assistant)
+                    checkBackgroundDelete(old = oldAssistant, new = assistant)
+                    removedRefs = oldAssistant.collectRemovedMediaRefs(new = assistant)
+                }
+                currentSettings.copy(
                     assistants = if (oldAssistant != null) {
                         currentSettings.assistants.map {
                             if (it.id == assistant.id) assistant else it
                         }
                     } else {
                         currentSettings.assistants + assistant
-                    })
-            )
-            appStorageRepository.deleteFilesIfUnreferenced(
-                oldAssistant?.collectRemovedMediaRefs(new = assistant).orEmpty()
-            )
+                    }
+                )
+            }
+            if (removedRefs.isNotEmpty()) {
+                withContext(Dispatchers.IO) {
+                    appStorageRepository.deleteFilesIfUnreferenced(removedRefs)
+                }
+            }
         }
     }
 
     fun addNewAssistant(assistant: Assistant) {
         viewModelScope.launch {
-            val currentSettings = settingsStore.settingsFlow.value
             val seededAssistant = assistant.copy(
                 maxSearchResultsRetained = assistant.maxSearchResultsRetained ?: 10
             )
-            val existingIds = currentSettings.assistants.map { it.id }.toSet()
-            val uniqueAssistant = if (seededAssistant.id in existingIds) {
-                seededAssistant.copy(id = Uuid.random())
-            } else {
-                seededAssistant
-            }
-            settingsStore.update(
-                settings = currentSettings.copy(
+            settingsStore.update { currentSettings ->
+                val existingIds = currentSettings.assistants.map { it.id }.toSet()
+                val uniqueAssistant = if (seededAssistant.id in existingIds) {
+                    seededAssistant.copy(id = Uuid.random())
+                } else {
+                    seededAssistant
+                }
+                currentSettings.copy(
                     assistants = currentSettings.assistants.plus(uniqueAssistant).distinctBy { it.id }
                 )
-            )
+            }
         }
     }
 

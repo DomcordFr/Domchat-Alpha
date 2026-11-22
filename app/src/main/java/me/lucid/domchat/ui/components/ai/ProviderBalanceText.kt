@@ -42,6 +42,8 @@ object ProviderBalanceCache {
         return context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
+    fun getMemoryOnly(key: String): String? = memoryCache[key]
+
     fun get(context: Context, key: String): String? {
         memoryCache[key]?.let { return it }
         val saved = getPrefs(context).getString(key, null)
@@ -75,7 +77,7 @@ fun ProviderBalanceText(
 
     val cacheKey = "balance_${providerSetting.id}_${providerSetting.balanceOption.apiPath}_${providerSetting.balanceOption.resultPath}"
     val cachedInitial = remember(cacheKey) {
-        ProviderBalanceCache.get(context, cacheKey) ?: "~"
+        ProviderBalanceCache.getMemoryOnly(cacheKey) ?: "~"
     }
 
     val poolHash = remember(providerSetting.apiKeyPool, providerSetting.apiKey) {
@@ -88,8 +90,10 @@ fun ProviderBalanceText(
         key2 = providerSetting.balanceOption,
         key3 = poolHash,
     ) {
-        // Show cached balance immediately if available
-        val cached = ProviderBalanceCache.get(context, cacheKey)
+        // Show cached balance immediately if available (read off UI thread)
+        val cached = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            ProviderBalanceCache.get(context, cacheKey)
+        }
         if (cached != null) {
             value = cached
         }

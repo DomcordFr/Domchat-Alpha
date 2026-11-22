@@ -329,17 +329,17 @@ fun MinimalChatInput(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            val localPath = me.lucid.domchat.utils.ImageUtils.copyImageToAppStorage(
-                context = context,
-                sourceUri = uri,
-                subDir = "wallpapers",
-                fileName = "wp_chat_${conversation.id}_${System.currentTimeMillis()}.jpg"
-            )
-            val updatedUri = localPath ?: uri.toString()
-            val convId = conversation.id.toString()
-            val existing = settings.displaySetting.conversationWallpapers[convId] ?: me.lucid.domchat.data.datastore.ConversationWallpaperConfig()
-            val newMap = settings.displaySetting.conversationWallpapers + (convId to existing.copy(backgroundUri = updatedUri))
-            scope.launch {
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val localPath = me.lucid.domchat.utils.ImageUtils.copyImageToAppStorage(
+                    context = context,
+                    sourceUri = uri,
+                    subDir = "wallpapers",
+                    fileName = "wp_chat_${conversation.id}_${System.currentTimeMillis()}.jpg"
+                )
+                val updatedUri = localPath ?: uri.toString()
+                val convId = conversation.id.toString()
+                val existing = settings.displaySetting.conversationWallpapers[convId] ?: me.lucid.domchat.data.datastore.ConversationWallpaperConfig()
+                val newMap = settings.displaySetting.conversationWallpapers + (convId to existing.copy(backgroundUri = updatedUri))
                 settingsStore.update { cur ->
                     cur.copy(displaySetting = cur.displaySetting.copy(conversationWallpapers = newMap))
                 }

@@ -6,46 +6,55 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 object EmojiUtils {
+    @Volatile
+    private var cachedData: EmojiData? = null
+
     fun loadEmoji(context: Context): EmojiData {
-        return context.assets.open("emoji/categories.with.modifiers.min.json")
-            .bufferedReader()
-            .use { inputStream ->
-                val text = inputStream.readText()
-                val json = JsonInstant.parseToJsonElement(text).jsonObject
+        cachedData?.let { return it }
+        return synchronized(this) {
+            cachedData?.let { return it }
+            val loaded = context.assets.open("emoji/categories.with.modifiers.min.json")
+                .bufferedReader()
+                .use { inputStream ->
+                    val text = inputStream.readText()
+                    val json = JsonInstant.parseToJsonElement(text).jsonObject
 
-                val version = json["@version"]?.jsonPrimitive?.content ?: "unknown"
-                val categories = (json["emojis"] as? kotlinx.serialization.json.JsonObject)?.map { (categoryName, categoryObject) ->
-                    val subCategories =
-                        categoryObject.jsonObject.map { (subCategoryName, subCategoryObject) ->
-                            val emojis =
-                                subCategoryObject.jsonArray.map { emojiObject ->
-                                    val name = emojiObject.jsonObject["name"]?.jsonPrimitive?.content ?: "unknown"
-                                    val emoji = emojiObject.jsonObject["emoji"]?.jsonPrimitive?.content ?: "unknown"
-                                    val code =
-                                        emojiObject.jsonObject["code"]?.jsonArray?.map { it.jsonPrimitive.content }
-                                            ?: emptyList()
+                    val version = json["@version"]?.jsonPrimitive?.content ?: "unknown"
+                    val categories = (json["emojis"] as? kotlinx.serialization.json.JsonObject)?.map { (categoryName, categoryObject) ->
+                        val subCategories =
+                            categoryObject.jsonObject.map { (subCategoryName, subCategoryObject) ->
+                                val emojis =
+                                    subCategoryObject.jsonArray.map { emojiObject ->
+                                        val name = emojiObject.jsonObject["name"]?.jsonPrimitive?.content ?: "unknown"
+                                        val emoji = emojiObject.jsonObject["emoji"]?.jsonPrimitive?.content ?: "unknown"
+                                        val code =
+                                            emojiObject.jsonObject["code"]?.jsonArray?.map { it.jsonPrimitive.content }
+                                                ?: emptyList()
 
-                                    Emoji(
-                                        name = name,
-                                        emoji = emoji,
-                                        code = code
-                                    )
-                                }
+                                        Emoji(
+                                            name = name,
+                                            emoji = emoji,
+                                            code = code
+                                        )
+                                    }
 
-                            EmojiSubCategory(
-                                name = subCategoryName,
-                                emojis = emojis
-                            )
-                        }
+                                EmojiSubCategory(
+                                    name = subCategoryName,
+                                    emojis = emojis
+                                )
+                            }
 
-                    EmojiCategory(
-                        name = categoryName,
-                        subCategories = subCategories
-                    )
-                } ?: emptyList()
+                        EmojiCategory(
+                            name = categoryName,
+                            subCategories = subCategories
+                        )
+                    } ?: emptyList()
 
-                EmojiData(version, categories)
-            }
+                    EmojiData(version, categories)
+                }
+            cachedData = loaded
+            loaded
+        }
     }
 
     /**

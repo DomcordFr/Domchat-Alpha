@@ -189,17 +189,17 @@ fun AssistantDetailPage(
         if (uri != null && mode != null) {
             scope.launch {
                 try {
-                    val content = withContext(Dispatchers.IO) {
-                        when (mode) {
+                    withContext(Dispatchers.IO) {
+                        val content = when (mode) {
                             "card_v2" -> AssistantExportImport.exportToCharacterCardV2(assistant, context)
                             "lastchat_memories" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = false)
                             "lastchat_lorebooks" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = false, includeLorebooks = true)
                             "lastchat_both" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = true)
                             else -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = false, includeLorebooks = false)
                         }
-                    }
-                    context.contentResolver.openOutputStream(uri)?.use {
-                        it.write(content.toByteArray())
+                        context.contentResolver.openOutputStream(uri)?.use {
+                            it.write(content.toByteArray())
+                        }
                     }
                     toaster.show(context.getString(R.string.export_success))
                 } catch (e: Exception) {
@@ -224,13 +224,18 @@ fun AssistantDetailPage(
         if (uri != null) {
             scope.launch {
                 try {
-                    val bytes = withContext(Dispatchers.IO) {
-                        AssistantExportImport.exportToCharacterCardPng(assistant, context)
-                    }
-                    if (bytes != null) {
-                        context.contentResolver.openOutputStream(uri)?.use {
-                            it.write(bytes)
+                    val exported = withContext(Dispatchers.IO) {
+                        val bytes = AssistantExportImport.exportToCharacterCardPng(assistant, context)
+                        if (bytes != null) {
+                            context.contentResolver.openOutputStream(uri)?.use {
+                                it.write(bytes)
+                            }
+                            true
+                        } else {
+                            false
                         }
+                    }
+                    if (exported) {
                         toaster.show(context.getString(R.string.export_success))
                     } else {
                         toaster.show(context.getString(R.string.export_failed_create_png))

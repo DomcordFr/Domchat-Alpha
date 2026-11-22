@@ -397,11 +397,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             if (target != null) {
                 scope.launch {
                     try {
-                        val jsonStr = withContext(Dispatchers.IO) {
-                            AssistantExportImport.exportToCharacterCardV2(target, context)
-                        }
-                        context.contentResolver.openOutputStream(uri)?.use { 
-                            it.write(jsonStr.toByteArray())
+                        withContext(Dispatchers.IO) {
+                            val jsonStr = AssistantExportImport.exportToCharacterCardV2(target, context)
+                            context.contentResolver.openOutputStream(uri)?.use { 
+                                it.write(jsonStr.toByteArray())
+                            }
                         }
                         toaster?.show("Character Card exported successfully")
                     } catch (e: Exception) {
@@ -424,13 +424,18 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             if (target != null) {
                 scope.launch {
                     try {
-                        val bytes = withContext(Dispatchers.IO) {
-                            AssistantExportImport.exportToCharacterCardPng(target, context)
-                        }
-                        if (bytes != null) {
-                            context.contentResolver.openOutputStream(uri)?.use { 
-                                it.write(bytes)
+                        val exported = withContext(Dispatchers.IO) {
+                            val bytes = AssistantExportImport.exportToCharacterCardPng(target, context)
+                            if (bytes != null) {
+                                context.contentResolver.openOutputStream(uri)?.use { 
+                                    it.write(bytes)
+                                }
+                                true
+                            } else {
+                                false
                             }
+                        }
+                        if (exported) {
                             toaster?.show("SillyTavern PNG Card exported successfully")
                         } else {
                             toaster?.show("Export failed: could not generate PNG card", ToastType.Error)

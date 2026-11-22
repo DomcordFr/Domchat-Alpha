@@ -1486,13 +1486,13 @@ private fun ChatPageContent(
     var showToolbarOverflowMenu by remember { mutableStateOf(false) }
     var showContextUsagePopup by remember { mutableStateOf(false) }
     var showChatInfoSheet by remember { mutableStateOf(false) }
+    var showCreatorNotesSheet by remember { mutableStateOf(false) }
     var activeChatMessageAction by remember { mutableStateOf<ActiveChatMessageAction?>(null) }
     var activeCopyMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var isChatShareSelecting by rememberSaveable { mutableStateOf(false) }
     var selectedChatShareItems by remember(conversation.id) { mutableStateOf<Set<Uuid>>(emptySet()) }
     var showExportSheet by remember { mutableStateOf(false) }
     var showCustomGreetingDialog by remember { mutableStateOf(false) }
-    val assistantVM = koinViewModel<AssistantVM>()
     var chatSearchQuery by rememberSaveable(conversation.id) { mutableStateOf(initialSearchQuery.orEmpty()) }
     var consumedInitialSearchQuery by remember(conversation.id) { mutableStateOf<String?>(null) }
     val toolbarPlacement = chatTopBarPlacement(setting)
@@ -1810,9 +1810,21 @@ private fun ChatPageContent(
                             modifier = Modifier.fillMaxSize()
                         ) {
                     val recentlyRestoredNodeIds = vm.recentlyRestoredNodeIds.collectAsStateWithLifecycle().value
-                    val conversationSnapshots = remember { mutableMapOf<Uuid, Conversation>() }
-                    val chatListStateSnapshots = remember { mutableMapOf<Uuid, LazyListState>() }
-                    val searchQuerySnapshots = remember { mutableMapOf<Uuid, String?>() }
+                    val conversationSnapshots = remember {
+                        object : java.util.LinkedHashMap<Uuid, Conversation>(4, 0.75f, true) {
+                            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Uuid, Conversation>?): Boolean = size > 3
+                        }
+                    }
+                    val chatListStateSnapshots = remember {
+                        object : java.util.LinkedHashMap<Uuid, LazyListState>(4, 0.75f, true) {
+                            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Uuid, LazyListState>?): Boolean = size > 3
+                        }
+                    }
+                    val searchQuerySnapshots = remember {
+                        object : java.util.LinkedHashMap<Uuid, String?>(4, 0.75f, true) {
+                            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Uuid, String?>?): Boolean = size > 3
+                        }
+                    }
                     SideEffect {
                         conversationSnapshots[conversation.id] = conversation
                         chatListStateSnapshots[conversation.id] = chatListState
@@ -2566,7 +2578,7 @@ private fun ChatPageContent(
                                 val updatedAssistant = currentAssistant.copy(
                                     alternateGreetings = currentAssistant.alternateGreetings + trimmed,
                                 )
-                                assistantVM.updateAssistant(updatedAssistant)
+                                vm.updateConversationAssistant(updatedAssistant)
                                 val introNode = conversation.messageNodes.firstOrNull { node ->
                                     node.currentMessage.role == MessageRole.ASSISTANT &&
                                         isCharacterIntroMessage(
@@ -2639,13 +2651,35 @@ private fun ChatPageContent(
                         hasConversationContent = conversation.messageNodes.isNotEmpty(),
                         chatListState = chatListState,
                         onDismissRequest = { showToolbarOverflowMenu = false },
-                        onCreatorNotesClick = { showToolbarOverflowMenu = false },
-                        onPromptPresetsClick = { showToolbarOverflowMenu = false },
-                        onAuthorsNotesClick = { showToolbarOverflowMenu = false },
-                        onWallpaperClick = { showToolbarOverflowMenu = false },
-                        onTextStylingClick = { showToolbarOverflowMenu = false },
+                        onCreatorNotesClick = {
+                            showToolbarOverflowMenu = false
+                            showCreatorNotesSheet = true
+                        },
+                        onPromptPresetsClick = {
+                            showToolbarOverflowMenu = false
+                            navController.navigate(Screen.SettingSkills())
+                        },
+                        onAuthorsNotesClick = {
+                            showToolbarOverflowMenu = false
+                            navController.navigate(Screen.AssistantDetail(currentAssistant.id.toString(), startRoute = "prompt"))
+                        },
+                        onWallpaperClick = {
+                            showToolbarOverflowMenu = false
+                            navController.navigate(Screen.DisplaySettings)
+                        },
+                        onTextStylingClick = {
+                            showToolbarOverflowMenu = false
+                            navController.navigate(Screen.DisplaySettings)
+                        },
                     )
                 }
+            }
+
+            if (showCreatorNotesSheet) {
+                CharacterNotesBottomSheet(
+                    assistant = currentAssistant,
+                    onDismissRequest = { showCreatorNotesSheet = false }
+                )
             }
 
             CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
@@ -3610,7 +3644,6 @@ private fun ChatToolbar(
     var showExportDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCreatorNotesSheet by remember { mutableStateOf(false) }
-    val assistantVM = koinViewModel<AssistantVM>()
     val toaster = LocalToaster.current
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val isEmpty = !conversation.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER }
@@ -3825,7 +3858,7 @@ private fun ChatToolbar(
                     id = kotlin.uuid.Uuid.random(),
                     name = "${currentAssistant.name} (Copy)"
                 )
-                scope.launch { assistantVM.addAssistant(cloned) }
+                vm.addAssistant(cloned)
                 showCharacterNotesSheet = false
                 toaster?.show("Cloned ${currentAssistant.name}")
             },
@@ -3839,7 +3872,7 @@ private fun ChatToolbar(
             },
             onUpdateLorebookIds = { newIds ->
                 val updated = currentAssistant.copy(enabledLorebookIds = newIds)
-                assistantVM.updateAssistant(updated)
+                vm.updateConversationAssistant(updated)
             }
         )
     }
@@ -3866,12 +3899,12 @@ private fun ChatToolbar(
             onConfirm = {
                 val toDelete = currentAssistant
                 showDeleteConfirm = false
-                assistantVM.removeAssistant(toDelete)
+                vm.removeAssistant(toDelete)
                 toaster?.show(
                     message = "Deleted ${toDelete.name}",
                     action = me.lucid.domchat.ui.components.ui.ToastAction(
                         label = "Undo",
-                        onClick = { assistantVM.undoRemoveAssistant(toDelete) }
+                        onClick = { vm.undoRemoveAssistant(toDelete) }
                     )
                 )
                 val remaining = settings.assistants.filter { it.id != toDelete.id }

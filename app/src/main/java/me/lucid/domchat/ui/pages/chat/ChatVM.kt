@@ -358,6 +358,28 @@ class ChatVM(
         }
     }
 
+    fun addAssistant(assistant: Assistant) {
+        viewModelScope.launch {
+            settingsStore.update { settings ->
+                if (settings.assistants.none { it.id == assistant.id }) {
+                    settings.copy(assistants = settings.assistants.plus(assistant))
+                } else settings
+            }
+        }
+    }
+
+    fun removeAssistant(assistant: Assistant) {
+        viewModelScope.launch {
+            settingsStore.update { settings ->
+                settings.copy(assistants = settings.assistants.filter { it.id != assistant.id })
+            }
+        }
+    }
+
+    fun undoRemoveAssistant(assistant: Assistant) {
+        addAssistant(assistant)
+    }
+
     // 设置聊天模型
     fun setChatModel(model: Model) {
         val assistant = conversationAssistant.value

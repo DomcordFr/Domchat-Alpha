@@ -196,18 +196,17 @@ class AssistantVM(
 
     fun copyAssistant(assistant: Assistant) {
         viewModelScope.launch {
-            val settings = settings.value
             val copiedAssistant = assistant.copy(
                 id = kotlin.uuid.Uuid.random(),
                 name = "${assistant.name} (Clone)",
                 avatar = if(assistant.avatar is Avatar.Image) Avatar.Dummy else assistant.avatar,
             )
             try {
-                settingsStore.update(
-                    settings.copy(
-                        assistants = settings.assistants.plus(copiedAssistant)
+                settingsStore.update { current ->
+                    current.copy(
+                        assistants = current.assistants.plus(copiedAssistant)
                     )
-                )
+                }
             } catch (e: Exception) {
                 PlatformLog.e("AssistantVM", e.message ?: e.toString())
             }

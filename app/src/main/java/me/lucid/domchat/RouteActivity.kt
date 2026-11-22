@@ -421,6 +421,11 @@ class RouteActivity : ComponentActivity() {
             if (intentAssistantId != null && intentConversationId.isNullOrBlank()) {
                 pendingShortcutAssistantId = intentAssistantId
             }
+
+            // Pre-warm EmojiData off main thread so EmojiPicker opens with zero dropped frames
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                me.lucid.domchat.utils.EmojiUtils.loadEmoji(applicationContext)
+            }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Fatal error in RouteActivity.onCreate", e)
         }
@@ -429,6 +434,7 @@ class RouteActivity : ComponentActivity() {
     override fun onDestroy() {
         if (!isChangingConfigurations) {
             ChatSessionDraftStore.clear()
+            runCatching { org.koin.android.ext.android.getKoin().get<me.lucid.domchat.service.ChatService>().cleanup() }
         }
         super.onDestroy()
     }
