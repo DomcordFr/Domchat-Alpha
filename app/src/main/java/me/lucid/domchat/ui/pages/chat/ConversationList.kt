@@ -815,7 +815,11 @@ private fun ConversationItem(
                             .padding(end = if (assistant != null) 48.dp else 0.dp),
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        val rawTitle = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) }
+                        val rawTitle = conversation.title.takeIf { it.isNotBlank() && it != "New message" && it != "Untitled Conversation" }
+                            ?: assistant?.chatName?.takeIf { it.isNotBlank() }
+                            ?: assistant?.displayName?.takeIf { it.isNotBlank() }
+                            ?: assistant?.name?.takeIf { it.isNotBlank() }
+                            ?: stringResource(id = R.string.chat_page_new_message)
                         Text(
                             text = truncateAfterWords(rawTitle, 3),
                             maxLines = 1,

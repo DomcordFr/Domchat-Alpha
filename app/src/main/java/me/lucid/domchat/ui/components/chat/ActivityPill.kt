@@ -525,32 +525,24 @@ private fun AnimatedSinglePill(
     // is expanded, otherwise the outer pill background peeks out around the inner corners.
     val expandedRadius = if (isExpandedTimeline) 24.dp else 20.dp
 
-    // Animate corner radii for smooth transitions
+    // Animate corner radii for smooth transitions (18.dp = PILL_HEIGHT / 2 for perfect compact capsule)
     val topStartRadius by animateDpAsState(
-        targetValue = if (surfaceExpanded) expandedRadius else LARGE_RADIUS,
+        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
         animationSpec = PILL_CORNER_SPEC,
         label = "corner_top_start"
     )
     val topEndRadius by animateDpAsState(
-        targetValue = if (surfaceExpanded) expandedRadius else LARGE_RADIUS,
+        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
         animationSpec = PILL_CORNER_SPEC,
         label = "corner_top_end"
     )
     val bottomStartRadius by animateDpAsState(
-        targetValue = when {
-            surfaceExpanded -> expandedRadius
-            connectsToBubbleBelow -> SMALL_RADIUS
-            else -> LARGE_RADIUS
-        },
+        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
         animationSpec = PILL_CORNER_SPEC,
         label = "corner_bottom_start"
     )
     val bottomEndRadius by animateDpAsState(
-        targetValue = when {
-            surfaceExpanded -> expandedRadius
-            connectsToBubbleBelow -> SMALL_RADIUS
-            else -> LARGE_RADIUS
-        },
+        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
         animationSpec = PILL_CORNER_SPEC,
         label = "corner_bottom_end"
     )
@@ -650,7 +642,7 @@ private fun AnimatedSinglePill(
                 if (surfaceExpanded) {
                     Modifier.widthIn(max = maxBubbleWidth)
                 } else {
-                    Modifier.heightIn(min = PILL_HEIGHT)
+                    Modifier.height(PILL_HEIGHT)
                 }
             )
             .then(
@@ -699,9 +691,19 @@ private fun AnimatedSinglePill(
         AnimatedContent(
             targetState = requestedContentState,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = true) { _, _ ->
-                    PILL_MORPH_SPEC
-                }
+                val expanding = targetState !is SinglePillContentState.Compact
+                val slideDir = if (expanding) 1 else -1
+
+                (fadeIn(animationSpec = tween(240, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
+                    slideInVertically(animationSpec = tween(240, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) { slideDir * it / 4 } +
+                    scaleIn(initialScale = if (expanding) 0.96f else 1.02f, animationSpec = tween(240)))
+                    .togetherWith(
+                        fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
+                            slideOutVertically(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { -slideDir * it / 4 } +
+                            scaleOut(targetScale = if (expanding) 1.02f else 0.96f, animationSpec = tween(180))
+                    ) using SizeTransform(clip = true) { _, _ ->
+                        PILL_MORPH_SPEC
+                    }
             },
             contentAlignment = Alignment.TopStart,
             contentKey = { 
@@ -751,12 +753,19 @@ private fun AnimatedSinglePill(
                     AnimatedContent(
                         targetState = compactState,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(180, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
-                                scaleIn(initialScale = 0.95f, animationSpec = tween(180)))
+                            val forward = targetState is ActivityState.CompletedSingle
+                            val slideDir = if (forward) 1 else -1
+
+                            (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
+                                slideInVertically(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) { slideDir * it / 3 } +
+                                scaleIn(initialScale = 0.96f, animationSpec = tween(220)))
                                 .togetherWith(
-                                    fadeOut(animationSpec = tween(140, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
-                                        scaleOut(targetScale = 0.95f, animationSpec = tween(140))
-                                )
+                                    fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
+                                        slideOutVertically(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { -slideDir * it / 3 } +
+                                        scaleOut(targetScale = 0.96f, animationSpec = tween(180))
+                                ) using SizeTransform(clip = false) { _, _ ->
+                                    PILL_MORPH_SPEC
+                                }
                         },
                         label = "pill_content",
                         contentKey = { stateToKey(it) }

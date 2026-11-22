@@ -738,8 +738,13 @@ fun SettingChatsPage(
                                                     tint = Color(0xFFFFD60A)
                                                 )
                                             }
+                                            val chatTitle = conv.title.takeIf { it.isNotBlank() && it != "Untitled Conversation" && it != "New message" }
+                                                ?: assistant?.chatName?.takeIf { it.isNotBlank() }
+                                                ?: assistant?.displayName?.takeIf { it.isNotBlank() }
+                                                ?: assistant?.name?.takeIf { it.isNotBlank() }
+                                                ?: "Untitled Conversation"
                                             Text(
-                                                text = conv.title.ifBlank { "Untitled Conversation" },
+                                                text = chatTitle,
                                                 style = MaterialTheme.typography.titleMedium.copy(
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 15.sp
@@ -951,8 +956,13 @@ fun SettingChatsPage(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            val sheetChatTitle = conv.title.takeIf { it.isNotBlank() && it != "Untitled Conversation" && it != "New message" }
+                                ?: assistant?.chatName?.takeIf { it.isNotBlank() }
+                                ?: assistant?.displayName?.takeIf { it.isNotBlank() }
+                                ?: assistant?.name?.takeIf { it.isNotBlank() }
+                                ?: "Untitled Conversation"
                             Text(
-                                text = conv.title.ifBlank { "Untitled Conversation" },
+                                text = sheetChatTitle,
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.White,
                                 maxLines = 1,

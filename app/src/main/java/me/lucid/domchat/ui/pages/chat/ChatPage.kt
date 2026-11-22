@@ -1363,6 +1363,7 @@ fun ChatPage(
             ) {
                 ChatSwitchLoadingIndicator(
                     assistant = conversationAssistant,
+                    conversationTitle = conversation.title,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -4966,6 +4967,7 @@ private fun CompactionBadge(
 @Composable
 private fun ChatSwitchLoadingIndicator(
     assistant: Assistant,
+    conversationTitle: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "chat_loading_pulse")
@@ -4988,6 +4990,11 @@ private fun ChatSwitchLoadingIndicator(
         label = "chat_avatar_pulse"
     )
 
+    val resolvedTitle = conversationTitle?.takeIf { it.isNotBlank() && it != "New message" && it != "Untitled Conversation" }
+        ?: assistant.chatName?.takeIf { it.isNotBlank() }
+        ?: assistant.displayName?.takeIf { it.isNotBlank() }
+        ?: assistant.name.takeIf { it.isNotBlank() }
+        ?: "Chat"
 
     Box(
         modifier = modifier
@@ -5025,7 +5032,7 @@ private fun ChatSwitchLoadingIndicator(
                 contentAlignment = Alignment.Center
             ) {
                 me.lucid.domchat.ui.components.ui.UIAvatar(
-                    name = assistant.effectiveChatName,
+                    name = resolvedTitle,
                     value = assistant.avatar,
                     modifier = Modifier.size(64.dp),
                     onClick = null,
@@ -5037,7 +5044,7 @@ private fun ChatSwitchLoadingIndicator(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = assistant.name.ifBlank { "Chat" },
+                    text = resolvedTitle,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White

@@ -152,10 +152,10 @@ data class Assistant(
 
     /**
      * Chat name used in the chat toolbar, character pill, and assistant message bubbles.
-     * Prefers the explicit [chatName], falls back to [name], then [displayName], then "Character".
+     * Prefers the explicit [chatName], falls back to [displayName], then [name], then "Character".
      */
     val effectiveChatName: String
-        get() = chatName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: displayName?.takeIf { it.isNotBlank() } ?: "Character"
+        get() = chatName?.takeIf { it.isNotBlank() } ?: displayName?.takeIf { it.isNotBlank() } ?: name.takeIf { it.isNotBlank() } ?: "Character"
 }
 
 fun Assistant.getInitialMessageNodes(): List<me.lucid.ai.ui.MessageNode> {
