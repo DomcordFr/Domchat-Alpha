@@ -543,6 +543,26 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("DROP INDEX IF EXISTS index_MemoryEntity_assistant_id")
             }
         }
+
+        val ALL_MIGRATIONS: Array<Migration> by lazy {
+            arrayOf(
+                Migration_6_7,
+                MIGRATION_11_12,
+                MIGRATION_12_13,
+                MIGRATION_14_16,
+                MIGRATION_22_23,
+                MIGRATION_23_24,
+                MIGRATION_24_25,
+                MIGRATION_25_26,
+                MIGRATION_26_27,
+                MIGRATION_27_28,
+                MIGRATION_28_29,
+                MIGRATION_29_30,
+                MIGRATION_31_32,
+                MIGRATION_32_33,
+                MIGRATION_40_39,
+            )
+        }
     }
 }
 

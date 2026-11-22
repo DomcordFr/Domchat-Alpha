@@ -4,6 +4,8 @@ import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.utils.PermissionChecker
+import me.lucid.domchat.utils.BoundedStreams
+import me.lucid.domchat.utils.BoundedStreams.copyBounded
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -213,7 +215,7 @@ fun BackupPage(
                                 withContext(Dispatchers.IO) {
                                     context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
                                         tempFile.sink().buffer().outputStream().use { outputStream ->
-                                            inputStream.copyTo(outputStream)
+                                            inputStream.copyBounded(outputStream, BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES)
                                         }
                                     }
                                 }
@@ -232,7 +234,7 @@ fun BackupPage(
                                 withContext(Dispatchers.IO) {
                                     context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
                                         tempFile.sink().buffer().outputStream().use { outputStream ->
-                                            inputStream.copyTo(outputStream)
+                                            inputStream.copyBounded(outputStream, BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES)
                                         }
                                     }
                                 }
@@ -281,7 +283,7 @@ fun BackupPage(
                                     ?: throw java.io.IOException("Unable to open source backup file")
                                 inputStream.use { input ->
                                     tempFile.sink().buffer().outputStream().use { outputStream ->
-                                        input.copyTo(outputStream)
+                                        input.copyBounded(outputStream, BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES)
                                     }
                                 }
                             }

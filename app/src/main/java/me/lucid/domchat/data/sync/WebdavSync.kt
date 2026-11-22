@@ -1,6 +1,7 @@
 package me.lucid.domchat.data.sync
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import at.bitfire.dav4jvm.okhttp.DavCollection
 import at.bitfire.dav4jvm.okhttp.Response
 import at.bitfire.dav4jvm.okhttp.exception.NotFoundException
@@ -18,18 +19,23 @@ import me.lucid.domchat.data.datastore.SecretKeyManager
 import me.lucid.domchat.data.datastore.WebDavConfig
 import me.lucid.domchat.data.datastore.sanitize
 import me.lucid.domchat.data.db.AppDatabase
+import me.lucid.domchat.utils.BoundedStreams
+import me.lucid.domchat.utils.BoundedStreams.copyBounded
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import me.lucid.domchat.utils.LogUtil
 import me.lucid.workspace.hasUsableRootfs
 import okio.buffer
 import okio.sink
 import okio.source
 import java.io.File
+import java.io.IOException
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "DataSync"
 
@@ -51,18 +57,20 @@ class WebdavSync(
         }
     }
 
-    suspend fun backupToWebDav(webDavConfig: WebDavConfig) = withContext(Dispatchers.IO) {
-        val file = prepareBackupFile(webDavConfig)
-        try {
-            val collection = webDavClientFactory.collection(webDavConfig)
-            collection.ensureCollectionExists()
-            val target = webDavClientFactory.collection(webDavConfig, file.name)
-            webDavClientFactory.putFile(target, file) { response ->
-                LogUtil.i(TAG, "backupToWebDav: $response")
-            }
-        } finally {
-            if (file.exists()) {
-                file.delete()
+    suspend fun backupToWebDav(webDavConfig: WebDavConfig) = AppMaintenanceLock.withLock {
+        withContext(Dispatchers.IO) {
+            val file = prepareBackupFile(webDavConfig)
+            try {
+                val collection = webDavClientFactory.collection(webDavConfig)
+                collection.ensureCollectionExists()
+                val target = webDavClientFactory.collection(webDavConfig, file.name)
+                webDavClientFactory.putFile(target, file) { response ->
+                    LogUtil.i(TAG, "backupToWebDav: $response")
+                }
+            } finally {
+                if (file.exists()) {
+                    file.delete()
+                }
             }
         }
     }
@@ -167,7 +175,8 @@ class WebdavSync(
         webDavConfig: WebDavConfig,
         selectedContent: Set<BackupContentOption>? = null,
         selectedKeyIds: Set<kotlin.uuid.Uuid>? = null,
-    ): File = withContext(Dispatchers.IO) {
+    ): File = AppMaintenanceLock.withLock {
+        withContext(Dispatchers.IO) {
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
         val backupFile = File(context.cacheDir, "Domchat_backup_$timestamp.zip")
         if (backupFile.exists()) {
@@ -323,6 +332,7 @@ class WebdavSync(
 
         backupFile
     }
+}
 
     /**
      * Snapshot workspace environment metadata so a restore can reinstall the
@@ -440,318 +450,493 @@ class WebdavSync(
     )
 
     private suspend fun restoreFromBackupFile(backupFile: File): RestoreResult =
-        withContext(Dispatchers.IO) {
-            LogUtil.i(TAG, "restoreFromBackupFile: Starting restore from ${backupFile.absolutePath}")
+        AppMaintenanceLock.withLock {
+            withContext(Dispatchers.IO) {
+                LogUtil.i(TAG, "restoreFromBackupFile: Starting restore from ${backupFile.absolutePath}")
 
-            var unsupportedZipEntriesBytes = 0L
-            var settingsCleanupResult = BackupCleanupResult()
-            var sanitizationResult = DatabaseSanitizer.SanitizationResult()
-            var settingsJson: String? = null
-            var manifest: BackupManifest? = null
-            val stagedPrefs = linkedMapOf<String, SharedPreferencesSnapshot>()
-            val stagedManagedDirs = linkedSetOf<String>()
-            var foundSupportedEntry = false
+                var unsupportedZipEntriesBytes = 0L
+                var settingsCleanupResult = BackupCleanupResult()
+                var sanitizationResult = DatabaseSanitizer.SanitizationResult()
+                var settingsJson: String? = null
+                var manifest: BackupManifest? = null
+                val stagedPrefs = linkedMapOf<String, SharedPreferencesSnapshot>()
+                val stagedManagedDirs = linkedSetOf<String>()
+                var foundSupportedEntry = false
+                var totalDecompressedBytes = 0L
 
-            val restoreTempDir = File(context.cacheDir, "restore_temp_${System.currentTimeMillis()}")
-            val stagedFilesDir = File(restoreTempDir, "files")
-            val stagedDbDir = File(restoreTempDir, "db")
-            restoreTempDir.mkdirs()
-            stagedFilesDir.mkdirs()
-            stagedDbDir.mkdirs()
+                fun recordDecompressed(bytes: Long) {
+                    totalDecompressedBytes += bytes
+                    if (totalDecompressedBytes > BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES) {
+                        throw IOException("Backup archive decompressed size exceeded maximum budget of ${BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES} bytes")
+                    }
+                }
 
-            try {
-                ZipInputStream(backupFile.source().buffer().inputStream()).use { zipIn ->
-                    var entry: ZipEntry?
-                    while (zipIn.nextEntry.also { entry = it } != null) {
-                        val zipEntry = entry ?: continue
-                        val normalizedName = BackupArchiveFormat.normalizeEntryName(zipEntry.name)
-                        LogUtil.i(TAG, "restoreFromBackupFile: Processing entry $normalizedName")
+                val restoreTempDir = File(context.cacheDir, "restore_temp_${System.currentTimeMillis()}")
+                val stagedFilesDir = File(restoreTempDir, "files")
+                val stagedDbDir = File(restoreTempDir, "db")
+                restoreTempDir.mkdirs()
+                stagedFilesDir.mkdirs()
+                stagedDbDir.mkdirs()
 
-                        when {
-                            normalizedName == BackupArchiveFormat.SETTINGS_ENTRY -> {
-                                settingsJson = zipIn.readBytes().toString(Charsets.UTF_8)
-                                foundSupportedEntry = true
-                            }
+                try {
+                    ZipInputStream(backupFile.source().buffer().inputStream()).use { zipIn ->
+                        var entry: ZipEntry?
+                        while (zipIn.nextEntry.also { entry = it } != null) {
+                            val zipEntry = entry ?: continue
+                            val normalizedName = BackupArchiveFormat.normalizeEntryName(zipEntry.name)
+                            LogUtil.i(TAG, "restoreFromBackupFile: Processing entry $normalizedName")
 
-                            normalizedName == BackupArchiveFormat.MANIFEST_ENTRY -> {
-                                val manifestJson = zipIn.readBytes().toString(Charsets.UTF_8)
-                                manifest = json.decodeFromString<BackupManifest>(manifestJson)
-                                foundSupportedEntry = true
-                            }
-
-                            normalizedName == BackupArchiveFormat.LOCAL_LLM_MODELS_ENTRY -> {
-                                val content = zipIn.readBytes().toString(Charsets.UTF_8)
-                                runCatching {
-                                    val models = json.decodeFromString<List<me.lucid.locallm.InstalledLocalModel>>(content)
-                                    val store = me.lucid.locallm.LocalModelStore(context)
-                                    models.forEach { store.upsert(it) }
-                                }
-                                foundSupportedEntry = true
-                            }
-
-                            normalizedName == BackupArchiveFormat.LOCAL_STT_MODELS_ENTRY -> {
-                                val content = zipIn.readBytes().toString(Charsets.UTF_8)
-                                runCatching {
-                                    val models = json.decodeFromString<List<me.lucid.asr.local.InstalledSherpaModel>>(content)
-                                    val store = me.lucid.asr.local.SherpaModelStore(context)
-                                    models.forEach { store.upsert(it) }
-                                }
-                                foundSupportedEntry = true
-                            }
-
-                            BackupArchiveFormat.isDatabaseEntry(normalizedName) -> {
-                                stageDatabaseEntry(zipIn, stagedDbDir, normalizedName)
-                                foundSupportedEntry = true
-                            }
-
-                            normalizedName.startsWith("${BackupArchiveFormat.PREFS_DIR}/") &&
-                                normalizedName.endsWith(".json") -> {
-                                val storeName = normalizedName
-                                    .removePrefix("${BackupArchiveFormat.PREFS_DIR}/")
-                                    .removeSuffix(".json")
-                                if (BackupArchiveFormat.PORTABLE_SHARED_PREF_STORES.contains(storeName)) {
-                                    val snapshotJson = zipIn.readBytes().toString(Charsets.UTF_8)
-                                    val snapshot =
-                                        json.decodeFromString<SharedPreferencesSnapshot>(snapshotJson)
-                                    stagedPrefs[storeName] = snapshot
+                            when {
+                                normalizedName == BackupArchiveFormat.SETTINGS_ENTRY -> {
+                                    val bytes = zipIn.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES)
+                                    recordDecompressed(bytes.size.toLong())
+                                    settingsJson = bytes.toString(Charsets.UTF_8)
                                     foundSupportedEntry = true
-                                } else {
+                                }
+
+                                normalizedName == BackupArchiveFormat.MANIFEST_ENTRY -> {
+                                    val bytes = zipIn.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES)
+                                    recordDecompressed(bytes.size.toLong())
+                                    val manifestJson = bytes.toString(Charsets.UTF_8)
+                                    manifest = json.decodeFromString<BackupManifest>(manifestJson)
+                                    foundSupportedEntry = true
+                                }
+
+                                normalizedName == BackupArchiveFormat.LOCAL_LLM_MODELS_ENTRY -> {
+                                    val bytes = zipIn.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES)
+                                    recordDecompressed(bytes.size.toLong())
+                                    val content = bytes.toString(Charsets.UTF_8)
+                                    runCatching {
+                                        val models = json.decodeFromString<List<me.lucid.locallm.InstalledLocalModel>>(content)
+                                        val store = me.lucid.locallm.LocalModelStore(context)
+                                        models.forEach { store.upsert(it) }
+                                    }
+                                    foundSupportedEntry = true
+                                }
+
+                                normalizedName == BackupArchiveFormat.LOCAL_STT_MODELS_ENTRY -> {
+                                    val bytes = zipIn.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES)
+                                    recordDecompressed(bytes.size.toLong())
+                                    val content = bytes.toString(Charsets.UTF_8)
+                                    runCatching {
+                                        val models = json.decodeFromString<List<me.lucid.asr.local.InstalledSherpaModel>>(content)
+                                        val store = me.lucid.asr.local.SherpaModelStore(context)
+                                        models.forEach { store.upsert(it) }
+                                    }
+                                    foundSupportedEntry = true
+                                }
+
+                                BackupArchiveFormat.isDatabaseEntry(normalizedName) -> {
+                                    val written = stageDatabaseEntry(zipIn, stagedDbDir, normalizedName)
+                                    recordDecompressed(written)
+                                    foundSupportedEntry = true
+                                }
+
+                                normalizedName.startsWith("${BackupArchiveFormat.PREFS_DIR}/") &&
+                                    normalizedName.endsWith(".json") -> {
+                                    val storeName = normalizedName
+                                        .removePrefix("${BackupArchiveFormat.PREFS_DIR}/")
+                                        .removeSuffix(".json")
+                                    if (BackupArchiveFormat.PORTABLE_SHARED_PREF_STORES.contains(storeName)) {
+                                        val bytes = zipIn.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES)
+                                        recordDecompressed(bytes.size.toLong())
+                                        val snapshotJson = bytes.toString(Charsets.UTF_8)
+                                        val snapshot =
+                                            json.decodeFromString<SharedPreferencesSnapshot>(snapshotJson)
+                                        stagedPrefs[storeName] = snapshot
+                                        foundSupportedEntry = true
+                                    } else {
+                                        unsupportedZipEntriesBytes += zipEntry.size.coerceAtLeast(0L)
+                                    }
+                                }
+
+                                BackupArchiveFormat.managedDirForEntry(normalizedName) != null -> {
+                                    val managedDir = BackupArchiveFormat.managedDirForEntry(normalizedName)
+                                        ?: error("Managed directory was null for $normalizedName")
+                                    val written = stageManagedFileEntry(zipIn, stagedFilesDir, normalizedName, zipEntry.isDirectory)
+                                    recordDecompressed(written)
+                                    stagedManagedDirs.add(managedDir)
+                                    foundSupportedEntry = true
+                                }
+
+                                else -> {
+                                    LogUtil.i(
+                                        TAG,
+                                        "restoreFromBackupFile: Skipping unsupported entry $normalizedName (${zipEntry.size} bytes)",
+                                    )
                                     unsupportedZipEntriesBytes += zipEntry.size.coerceAtLeast(0L)
                                 }
                             }
 
-                            BackupArchiveFormat.managedDirForEntry(normalizedName) != null -> {
-                                val managedDir = BackupArchiveFormat.managedDirForEntry(normalizedName)
-                                    ?: error("Managed directory was null for $normalizedName")
-                                stageManagedFileEntry(zipIn, stagedFilesDir, normalizedName, zipEntry.isDirectory)
-                                stagedManagedDirs.add(managedDir)
-                                foundSupportedEntry = true
-                            }
-
-                            else -> {
-                                LogUtil.i(
-                                    TAG,
-                                    "restoreFromBackupFile: Skipping unsupported entry $normalizedName (${zipEntry.size} bytes)",
-                                )
-                                unsupportedZipEntriesBytes += zipEntry.size.coerceAtLeast(0L)
-                            }
+                            zipIn.closeEntry()
                         }
-
-                        zipIn.closeEntry()
                     }
-                }
 
-                if (!foundSupportedEntry) {
-                    throw Exception("Backup file did not contain any supported entries")
-                }
+                    if (!foundSupportedEntry) {
+                        throw Exception("Backup file did not contain any supported entries")
+                    }
 
-                val sanitizedSettings = settingsJson?.let { rawSettingsJson ->
-                    try {
-                        val parsedSettings = json.decodeFromString<Settings>(rawSettingsJson)
-                        parsedSettings.sanitize().also { (_, cleanup) ->
-                            settingsCleanupResult = cleanup
+                    val sanitizedSettings = settingsJson?.let { rawSettingsJson ->
+                        try {
+                            val parsedSettings = json.decodeFromString<Settings>(rawSettingsJson)
+                            parsedSettings.sanitize().also { (_, cleanup) ->
+                                settingsCleanupResult = cleanup
+                            }
+                        } catch (e: Exception) {
+                            LogUtil.e(TAG, "restoreFromBackupFile: Failed to parse settings", e)
+                            throw Exception("Failed to restore settings: ${e.message}")
                         }
-                    } catch (e: Exception) {
-                        LogUtil.e(TAG, "restoreFromBackupFile: Failed to parse settings", e)
-                        throw Exception("Failed to restore settings: ${e.message}")
                     }
-                }
 
-                restorePortableSharedPreferences(
-                    stagedSnapshots = stagedPrefs,
-                    manifest = manifest,
-                )
+                    var stagedCleanDb: File? = null
+                    val stagedDatabase = File(stagedDbDir, BackupArchiveFormat.DB_ENTRY)
+                    if (stagedDatabase.exists()) {
+                        LogUtil.i(TAG, "restoreFromBackupFile: Starting database sanitization")
+                        try {
+                            val (cleanDb, result) = DatabaseSanitizer.sanitize(context, stagedDatabase)
+                            sanitizationResult = result
+                            stagedCleanDb = cleanDb
 
-                val stagedDatabase = File(stagedDbDir, BackupArchiveFormat.DB_ENTRY)
-                if (stagedDatabase.exists()) {
-                    LogUtil.i(TAG, "restoreFromBackupFile: Starting database sanitization")
-                    try {
-                        sanitizationResult = restoreDatabase(stagedDatabase, manifest)
-                        LogUtil.i(TAG, "restoreFromBackupFile: Database restored and sanitized")
-                        resetWorkspaceShellStatesForMissingRootfs()
-                    } catch (e: Exception) {
-                        LogUtil.e(TAG, "restoreFromBackupFile: Failed to restore database", e)
-                        throw Exception("Database sanitization failed: ${e.message}")
-                    }
-                }
-
-                sanitizedSettings?.let { (cleanedSettings, _) ->
-                    val finalSettings = if (manifest != null && manifest.selectedContent.isNotEmpty()) {
-                        val live = settingsStore.settingsFlow.value
-                        val selected = manifest.selectedContent.toSet()
-
-                        val resolvedProviders = if (BackupContentOption.PROVIDERS.name in selected) {
-                            if (BackupContentOption.API_KEYS.name in selected) {
-                                cleanedSettings.providers
-                            } else {
-                                val liveMap = live.providers.associateBy { it.id }
-                                cleanedSettings.providers.map { restored ->
-                                    val liveProv = liveMap[restored.id]
-                                    if (liveProv != null) {
-                                        when (restored) {
-                                            is ProviderSetting.OpenAI -> (liveProv as? ProviderSetting.OpenAI)?.let {
-                                                restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
-                                            } ?: restored
-                                            is ProviderSetting.Google -> (liveProv as? ProviderSetting.Google)?.let {
-                                                restored.copy(apiKey = it.apiKey, privateKey = it.privateKey, apiKeyPool = it.apiKeyPool)
-                                            } ?: restored
-                                            is ProviderSetting.Claude -> (liveProv as? ProviderSetting.Claude)?.let {
-                                                restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
-                                            } ?: restored
-                                            else -> restored
-                                        }
-                                    } else restored
+                            // If restoring a selective backup (where only a subset of tables were exported),
+                            // copy any unselected live tables into cleanDb so the user's unselected live data
+                            // (e.g. workspaces or chats) is NOT wiped when cleanDb replaces the live DB.
+                            if (manifest != null && manifest.selectedContent.isNotEmpty()) {
+                                val tablesInBackup = buildSet {
+                                    if (BackupContentOption.CHATS.name in manifest.selectedContent) addAll(DatabaseSanitizer.CHAT_TABLES)
+                                    if (BackupContentOption.WORKSPACES.name in manifest.selectedContent) addAll(DatabaseSanitizer.WORKSPACE_TABLES)
+                                }
+                                val liveDbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
+                                if (liveDbFile.exists()) {
+                                    val tablesToPreserve = DatabaseSanitizer.PORTABLE_TABLES.filter { it !in tablesInBackup }
+                                    if (tablesToPreserve.isNotEmpty()) {
+                                        checkpointDatabase()
+                                        DatabaseSanitizer.copyTablesBetweenDatabases(
+                                            sourceDbFile = liveDbFile,
+                                            targetDbFile = cleanDb,
+                                            tables = tablesToPreserve,
+                                        )
+                                    }
                                 }
                             }
-                        } else {
-                            live.providers
-                        }
 
-                        val resolvedTtsProviders = if (BackupContentOption.PROVIDERS.name in selected) {
-                            if (BackupContentOption.API_KEYS.name in selected) {
-                                cleanedSettings.ttsProviders
-                            } else {
-                                val liveTtsMap = live.ttsProviders.associateBy { it.id }
-                                cleanedSettings.ttsProviders.map { restored ->
-                                    val liveTts = liveTtsMap[restored.id]
-                                    if (liveTts != null) {
-                                        when (restored) {
-                                            is TTSProviderSetting.OpenAI -> (liveTts as? TTSProviderSetting.OpenAI)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.Gemini -> (liveTts as? TTSProviderSetting.Gemini)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.MiniMax -> (liveTts as? TTSProviderSetting.MiniMax)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.ElevenLabs -> (liveTts as? TTSProviderSetting.ElevenLabs)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.Qwen -> (liveTts as? TTSProviderSetting.Qwen)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.Cartesia -> (liveTts as? TTSProviderSetting.Cartesia)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.FishAudio -> (liveTts as? TTSProviderSetting.FishAudio)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.PlayHT -> (liveTts as? TTSProviderSetting.PlayHT)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
-                                            is TTSProviderSetting.SystemTTS -> restored
-                                        }
-                                    } else restored
-                                }
-                            }
-                        } else {
-                            live.ttsProviders
+                            resetWorkspaceShellStatesInStagedDb(cleanDb)
+                            LogUtil.i(TAG, "restoreFromBackupFile: Staged database sanitized and shell states adjusted")
+                        } catch (e: Exception) {
+                            LogUtil.e(TAG, "restoreFromBackupFile: Failed to stage database", e)
+                            throw Exception("Database sanitization failed: ${e.message}")
                         }
-
-                        live.copy(
-                            setupCompleted = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.setupCompleted else live.setupCompleted,
-                            assistantId = if (BackupContentOption.CHARACTERS.name in selected || BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantId else live.assistantId,
-                            assistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistants else live.assistants,
-                            assistantTags = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistantTags else live.assistantTags,
-                            recentlyUsedAssistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.recentlyUsedAssistants else live.recentlyUsedAssistants,
-                            providers = resolvedProviders,
-                            ttsProviders = resolvedTtsProviders,
-                            providerTags = if (BackupContentOption.PROVIDERS.name in selected) cleanedSettings.providerTags else live.providerTags,
-                            lorebooks = if (BackupContentOption.LOREBOOKS.name in selected) cleanedSettings.lorebooks else live.lorebooks,
-                            skills = if (BackupContentOption.SKILLS.name in selected) cleanedSettings.skills else live.skills,
-                            mcpServers = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.mcpServers else live.mcpServers,
-                            searchServices = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchServices else live.searchServices,
-                            searchCommonOptions = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchCommonOptions else live.searchCommonOptions,
-                            searchServiceSelected = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchServiceSelected else live.searchServiceSelected,
-                            modes = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.modes else live.modes,
-                            dynamicColor = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.dynamicColor else live.dynamicColor,
-                            themeId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.themeId else live.themeId,
-                            developerMode = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.developerMode else live.developerMode,
-                            enableRagLogging = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.enableRagLogging else live.enableRagLogging,
-                            displaySetting = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.displaySetting else live.displaySetting,
-                            enableWebSearch = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.enableWebSearch else live.enableWebSearch,
-                            favoriteModels = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.favoriteModels else live.favoriteModels,
-                            recentModelIds = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.recentModelIds else live.recentModelIds,
-                            chatModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatModelId else live.chatModelId,
-                            titleModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titleModelId else live.titleModelId,
-                            titleThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titleThinkingBudget else live.titleThinkingBudget,
-                            summarizerModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.summarizerModelId else live.summarizerModelId,
-                            summarizerThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.summarizerThinkingBudget else live.summarizerThinkingBudget,
-                            subagentModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.subagentModelId else live.subagentModelId,
-                            subagentThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.subagentThinkingBudget else live.subagentThinkingBudget,
-                            imageGenerationModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.imageGenerationModelId else live.imageGenerationModelId,
-                            titlePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titlePrompt else live.titlePrompt,
-                            translateModeId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.translateModeId else live.translateModeId,
-                            translatePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.translatePrompt else live.translatePrompt,
-                            suggestionModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionModelId else live.suggestionModelId,
-                            suggestionThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionThinkingBudget else live.suggestionThinkingBudget,
-                            suggestionPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionPrompt else live.suggestionPrompt,
-                            learningModePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.learningModePrompt else live.learningModePrompt,
-                            ocrModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrModelId else live.ocrModelId,
-                            ocrThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrThinkingBudget else live.ocrThinkingBudget,
-                            ocrPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrPrompt else live.ocrPrompt,
-                            embeddingModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.embeddingModelId else live.embeddingModelId,
-                            selectedTTSProviderId = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.selectedTTSProviderId else live.selectedTTSProviderId,
-                            selectedTTSVoiceId = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.selectedTTSVoiceId else live.selectedTTSVoiceId,
-                            ttsAutoplayMode = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ttsAutoplayMode else live.ttsAutoplayMode,
-                            sttModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttModelId else live.sttModelId,
-                            sttThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttThinkingBudget else live.sttThinkingBudget,
-                            sttPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttPrompt else live.sttPrompt,
-                            webServerEnabled = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerEnabled else live.webServerEnabled,
-                            webServerPort = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerPort else live.webServerPort,
-                            webServerJwtEnabled = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerJwtEnabled else live.webServerJwtEnabled,
-                            webServerAccessPassword = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerAccessPassword else live.webServerAccessPassword,
-                            webServerBackgroundSetupShown = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerBackgroundSetupShown else live.webServerBackgroundSetupShown,
-                            chatStorage = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatStorage else live.chatStorage,
-                            textSelectionConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.textSelectionConfig else live.textSelectionConfig,
-                            assistantOverlayConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantOverlayConfig else live.assistantOverlayConfig,
-                        )
-                    } else {
-                        cleanedSettings
                     }
-                    settingsStore.update(finalSettings)
-                    LogUtil.i(
-                        TAG,
-                        "restoreFromBackupFile: Settings restored before file commit",
+
+                    val finalSettings = sanitizedSettings?.let { (cleanedSettings, _) ->
+                        if (manifest != null && manifest.selectedContent.isNotEmpty()) {
+                            val live = settingsStore.settingsFlow.value
+                            val selected = manifest.selectedContent.toSet()
+
+                            val resolvedProviders = if (BackupContentOption.PROVIDERS.name in selected) {
+                                if (BackupContentOption.API_KEYS.name in selected) {
+                                    cleanedSettings.providers
+                                } else {
+                                    val liveMap = live.providers.associateBy { it.id }
+                                    cleanedSettings.providers.map { restored ->
+                                        val liveProv = liveMap[restored.id]
+                                        if (liveProv != null) {
+                                            when (restored) {
+                                                is ProviderSetting.OpenAI -> (liveProv as? ProviderSetting.OpenAI)?.let {
+                                                    restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
+                                                } ?: restored
+                                                is ProviderSetting.Google -> (liveProv as? ProviderSetting.Google)?.let {
+                                                    restored.copy(apiKey = it.apiKey, privateKey = it.privateKey, apiKeyPool = it.apiKeyPool)
+                                                } ?: restored
+                                                is ProviderSetting.Claude -> (liveProv as? ProviderSetting.Claude)?.let {
+                                                    restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
+                                                } ?: restored
+                                                else -> restored
+                                            }
+                                        } else restored
+                                    }
+                                }
+                            } else {
+                                live.providers
+                            }
+
+                            val resolvedTtsProviders = if (BackupContentOption.PROVIDERS.name in selected) {
+                                if (BackupContentOption.API_KEYS.name in selected) {
+                                    cleanedSettings.ttsProviders
+                                } else {
+                                    val liveTtsMap = live.ttsProviders.associateBy { it.id }
+                                    cleanedSettings.ttsProviders.map { restored ->
+                                        val liveTts = liveTtsMap[restored.id]
+                                        if (liveTts != null) {
+                                            when (restored) {
+                                                is TTSProviderSetting.OpenAI -> (liveTts as? TTSProviderSetting.OpenAI)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.Gemini -> (liveTts as? TTSProviderSetting.Gemini)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.MiniMax -> (liveTts as? TTSProviderSetting.MiniMax)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.ElevenLabs -> (liveTts as? TTSProviderSetting.ElevenLabs)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.Qwen -> (liveTts as? TTSProviderSetting.Qwen)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.Cartesia -> (liveTts as? TTSProviderSetting.Cartesia)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.FishAudio -> (liveTts as? TTSProviderSetting.FishAudio)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.PlayHT -> (liveTts as? TTSProviderSetting.PlayHT)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                                is TTSProviderSetting.SystemTTS -> restored
+                                            }
+                                        } else restored
+                                    }
+                                }
+                            } else {
+                                live.ttsProviders
+                            }
+
+                            live.copy(
+                                setupCompleted = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.setupCompleted else live.setupCompleted,
+                                assistantId = if (BackupContentOption.CHARACTERS.name in selected || BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantId else live.assistantId,
+                                assistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistants else live.assistants,
+                                assistantTags = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistantTags else live.assistantTags,
+                                recentlyUsedAssistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.recentlyUsedAssistants else live.recentlyUsedAssistants,
+                                providers = resolvedProviders,
+                                ttsProviders = resolvedTtsProviders,
+                                providerTags = if (BackupContentOption.PROVIDERS.name in selected) cleanedSettings.providerTags else live.providerTags,
+                                lorebooks = if (BackupContentOption.LOREBOOKS.name in selected) cleanedSettings.lorebooks else live.lorebooks,
+                                skills = if (BackupContentOption.SKILLS.name in selected) cleanedSettings.skills else live.skills,
+                                mcpServers = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.mcpServers else live.mcpServers,
+                                searchServices = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchServices else live.searchServices,
+                                searchCommonOptions = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchCommonOptions else live.searchCommonOptions,
+                                searchServiceSelected = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchServiceSelected else live.searchServiceSelected,
+                                modes = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.modes else live.modes,
+                                dynamicColor = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.dynamicColor else live.dynamicColor,
+                                themeId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.themeId else live.themeId,
+                                developerMode = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.developerMode else live.developerMode,
+                                enableRagLogging = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.enableRagLogging else live.enableRagLogging,
+                                displaySetting = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.displaySetting else live.displaySetting,
+                                enableWebSearch = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.enableWebSearch else live.enableWebSearch,
+                                favoriteModels = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.favoriteModels else live.favoriteModels,
+                                recentModelIds = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.recentModelIds else live.recentModelIds,
+                                chatModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatModelId else live.chatModelId,
+                                titleModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titleModelId else live.titleModelId,
+                                titleThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titleThinkingBudget else live.titleThinkingBudget,
+                                summarizerModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.summarizerModelId else live.summarizerModelId,
+                                summarizerThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.summarizerThinkingBudget else live.summarizerThinkingBudget,
+                                subagentModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.subagentModelId else live.subagentModelId,
+                                subagentThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.subagentThinkingBudget else live.subagentThinkingBudget,
+                                imageGenerationModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.imageGenerationModelId else live.imageGenerationModelId,
+                                titlePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titlePrompt else live.titlePrompt,
+                                translateModeId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.translateModeId else live.translateModeId,
+                                translatePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.translatePrompt else live.translatePrompt,
+                                suggestionModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionModelId else live.suggestionModelId,
+                                suggestionThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionThinkingBudget else live.suggestionThinkingBudget,
+                                suggestionPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionPrompt else live.suggestionPrompt,
+                                learningModePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.learningModePrompt else live.learningModePrompt,
+                                ocrModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrModelId else live.ocrModelId,
+                                ocrThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrThinkingBudget else live.ocrThinkingBudget,
+                                ocrPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrPrompt else live.ocrPrompt,
+                                embeddingModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.embeddingModelId else live.embeddingModelId,
+                                selectedTTSProviderId = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.selectedTTSProviderId else live.selectedTTSProviderId,
+                                selectedTTSVoiceId = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.selectedTTSVoiceId else live.selectedTTSVoiceId,
+                                ttsAutoplayMode = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ttsAutoplayMode else live.ttsAutoplayMode,
+                                sttModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttModelId else live.sttModelId,
+                                sttThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttThinkingBudget else live.sttThinkingBudget,
+                                sttPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttPrompt else live.sttPrompt,
+                                webServerEnabled = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerEnabled else live.webServerEnabled,
+                                webServerPort = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerPort else live.webServerPort,
+                                webServerJwtEnabled = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerJwtEnabled else live.webServerJwtEnabled,
+                                webServerAccessPassword = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerAccessPassword else live.webServerAccessPassword,
+                                webServerBackgroundSetupShown = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerBackgroundSetupShown else live.webServerBackgroundSetupShown,
+                                chatStorage = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatStorage else live.chatStorage,
+                                textSelectionConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.textSelectionConfig else live.textSelectionConfig,
+                                assistantOverlayConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantOverlayConfig else live.assistantOverlayConfig,
+                            )
+                        } else {
+                            cleanedSettings
+                        }
+                    }
+
+                    // Files last: never wipe live dirs until DB/settings have committed, and
+                    // skip dirs that were listed in the manifest but missing from the zip.
+                    val directoriesToRestore = resolveManagedDirsToRestore(
+                        manifest = manifest,
+                        stagedManagedDirs = stagedManagedDirs,
+                        stagedFilesDir = stagedFilesDir,
                     )
+
+                    // Live rollback snapshots
+                    val liveSettings = settingsStore.settingsFlow.value
+                    val livePrefsSnapshots = BackupArchiveFormat.PORTABLE_SHARED_PREF_STORES.associateWith {
+                        exportSharedPreferencesSnapshot(context, it)
+                    }
+                    val liveDbBackupDir = File(restoreTempDir, "live_db_backup")
+                    val liveFilesBackupDir = File(restoreTempDir, "live_files_bak")
+                    val finalDbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
+
+                    var dbCommitted = false
+                    var settingsCommitted = false
+                    var prefsCommitted = false
+                    var filesCommitted = false
+
+                    try {
+                        // Step 1: Atomic Database Swap
+                        if (stagedCleanDb != null && stagedCleanDb.exists()) {
+                            checkpointDatabase()
+                            appDatabase.close()
+                            liveDbBackupDir.mkdirs()
+                            if (finalDbFile.exists()) {
+                                finalDbFile.copyTo(File(liveDbBackupDir, BackupArchiveFormat.DB_ENTRY), overwrite = true)
+                            }
+                            val liveWal = File(finalDbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
+                            if (liveWal.exists()) {
+                                liveWal.copyTo(File(liveDbBackupDir, BackupArchiveFormat.WAL_ENTRY), overwrite = true)
+                            }
+                            val liveShm = File(finalDbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
+                            if (liveShm.exists()) {
+                                liveShm.copyTo(File(liveDbBackupDir, BackupArchiveFormat.SHM_ENTRY), overwrite = true)
+                            }
+
+                            context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
+                            finalDbFile.parentFile?.mkdirs()
+                            if (!stagedCleanDb.renameTo(finalDbFile)) {
+                                finalDbFile.delete()
+                                stagedCleanDb.copyTo(finalDbFile, overwrite = true)
+                            }
+                            File(finalDbFile.path + "-wal").delete()
+                            File(finalDbFile.path + "-shm").delete()
+                            context.deleteDatabase("rikka_hub_sanitized")
+                            dbCommitted = true
+                        }
+
+                        // Step 2: Settings Commit
+                        if (finalSettings != null) {
+                            settingsStore.update(finalSettings)
+                            settingsCommitted = true
+                            LogUtil.i(TAG, "restoreFromBackupFile: Settings restored before file commit")
+                        }
+
+                        // Step 3: SharedPreferences Commit
+                        if (stagedPrefs.isNotEmpty()) {
+                            restorePortableSharedPreferences(
+                                stagedSnapshots = stagedPrefs,
+                                manifest = manifest,
+                            )
+                            prefsCommitted = true
+                        }
+
+                        // Step 4: Managed Files Commit
+                        if (directoriesToRestore.isNotEmpty()) {
+                            restoreManagedFileDirectories(
+                                liveFilesDir = context.filesDir,
+                                stagedFilesDir = stagedFilesDir,
+                                directoriesToRestore = directoriesToRestore,
+                                liveBackupDir = liveFilesBackupDir,
+                            )
+                            filesCommitted = true
+                        }
+
+                        LogUtil.i(TAG, "restoreFromBackupFile: Restore completed successfully")
+                    } catch (error: Exception) {
+                        if (error is CancellationException) throw error
+                        LogUtil.e(TAG, "restoreFromBackupFile: Commit failed, rolling back changes", error)
+                        if (prefsCommitted) {
+                            runCatching {
+                                livePrefsSnapshots.forEach { (storeName, snapshot) ->
+                                    val prefs = context.applicationContext.getSharedPreferences(storeName, Context.MODE_PRIVATE)
+                                    restoreSharedPreferencesSnapshot(prefs, snapshot)
+                                }
+                            }
+                        }
+                        if (settingsCommitted) {
+                            runCatching { settingsStore.update(liveSettings) }
+                        }
+                        if (dbCommitted) {
+                            runCatching {
+                                context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
+                                val backupDb = File(liveDbBackupDir, BackupArchiveFormat.DB_ENTRY)
+                                if (backupDb.exists()) {
+                                    finalDbFile.parentFile?.mkdirs()
+                                    if (!backupDb.renameTo(finalDbFile)) {
+                                        backupDb.copyTo(finalDbFile, overwrite = true)
+                                    }
+                                }
+                                val backupWal = File(liveDbBackupDir, BackupArchiveFormat.WAL_ENTRY)
+                                if (backupWal.exists()) {
+                                    val finalWal = File(finalDbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
+                                    backupWal.copyTo(finalWal, overwrite = true)
+                                }
+                                val backupShm = File(liveDbBackupDir, BackupArchiveFormat.SHM_ENTRY)
+                                if (backupShm.exists()) {
+                                    val finalShm = File(finalDbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
+                                    backupShm.copyTo(finalShm, overwrite = true)
+                                }
+                            }
+                        }
+                        throw error
+                    }
+
+                    val totalCleanupResult = settingsCleanupResult.copy(
+                        unsupportedZipEntriesBytes = unsupportedZipEntriesBytes,
+                    )
+                    RestoreResult(
+                        sanitization = sanitizationResult,
+                        settingsCleanup = totalCleanupResult,
+                        workspacesMetadata = manifest?.workspacesMetadata ?: emptyList(),
+                    )
+                } finally {
+                    restoreTempDir.deleteRecursively()
                 }
-
-                // Files last: never wipe live dirs until DB/settings have committed, and
-                // skip dirs that were listed in the manifest but missing from the zip.
-                val directoriesToRestore = resolveManagedDirsToRestore(
-                    manifest = manifest,
-                    stagedManagedDirs = stagedManagedDirs,
-                    stagedFilesDir = stagedFilesDir,
-                )
-                restoreManagedFileDirectories(
-                    liveFilesDir = context.filesDir,
-                    stagedFilesDir = stagedFilesDir,
-                    directoriesToRestore = directoriesToRestore,
-                    liveBackupDir = File(restoreTempDir, "live_files_bak"),
-                )
-
-                LogUtil.i(TAG, "restoreFromBackupFile: Restore completed successfully")
-
-                val totalCleanupResult = settingsCleanupResult.copy(
-                    unsupportedZipEntriesBytes = unsupportedZipEntriesBytes,
-                )
-                RestoreResult(
-                    sanitization = sanitizationResult,
-                    settingsCleanup = totalCleanupResult,
-                    workspacesMetadata = manifest?.workspacesMetadata ?: emptyList(),
-                )
-            } finally {
-                restoreTempDir.deleteRecursively()
             }
         }
 
     private fun checkpointDatabase() {
         runCatching {
-            appDatabase.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").close()
+            appDatabase.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val busy = cursor.getInt(0)
+                    val log = cursor.getInt(1)
+                    val checkpointed = cursor.getInt(2)
+                    LogUtil.i(TAG, "checkpointDatabase: busy=$busy, log=$log, checkpointed=$checkpointed")
+                }
+            }
         }.onFailure { error ->
             LogUtil.w(TAG, "prepareBackupFile: WAL checkpoint failed", error)
         }
     }
 
+    private fun snapshotDatabaseToFile(context: Context, targetFile: File): Boolean {
+        checkpointDatabase()
+        targetFile.parentFile?.mkdirs()
+        return try {
+            val db = appDatabase.openHelper.writableDatabase
+            val escapedPath = targetFile.absolutePath.replace("'", "''")
+            db.execSQL("VACUUM INTO '$escapedPath'")
+            targetFile.exists() && targetFile.length() > 0
+        } catch (e: Exception) {
+            LogUtil.w(TAG, "VACUUM INTO failed or unsupported: ${e.message}")
+            targetFile.delete()
+            false
+        }
+    }
+
     private fun addDatabaseEntries(zipOut: ZipOutputStream) {
-        val dbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
-        if (dbFile.exists()) {
-            addFileToZip(zipOut, dbFile, BackupArchiveFormat.LEGACY_DB_ENTRY)
-        }
+        val tempSnapshot = File(context.cacheDir, "db_snapshot_${System.currentTimeMillis()}.db")
+        try {
+            val success = snapshotDatabaseToFile(context, tempSnapshot)
+            if (success && tempSnapshot.exists()) {
+                addFileToZip(zipOut, tempSnapshot, BackupArchiveFormat.LEGACY_DB_ENTRY)
+            } else {
+                val dbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
+                if (dbFile.exists()) {
+                    addFileToZip(zipOut, dbFile, BackupArchiveFormat.LEGACY_DB_ENTRY)
+                }
 
-        val walFile = File(dbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
-        if (walFile.exists()) {
-            addFileToZip(zipOut, walFile, BackupArchiveFormat.WAL_ENTRY)
-        }
+                val walFile = File(dbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
+                if (walFile.exists()) {
+                    addFileToZip(zipOut, walFile, BackupArchiveFormat.WAL_ENTRY)
+                }
 
-        val shmFile = File(dbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
-        if (shmFile.exists()) {
-            addFileToZip(zipOut, shmFile, BackupArchiveFormat.SHM_ENTRY)
+                val shmFile = File(dbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
+                if (shmFile.exists()) {
+                    addFileToZip(zipOut, shmFile, BackupArchiveFormat.SHM_ENTRY)
+                }
+            }
+        } finally {
+            if (tempSnapshot.exists()) {
+                tempSnapshot.delete()
+            }
         }
     }
 
@@ -797,7 +982,7 @@ class WebdavSync(
         zipIn: ZipInputStream,
         stagedDbDir: File,
         entryName: String,
-    ) {
+    ): Long {
         val targetName = when (entryName) {
             BackupArchiveFormat.LEGACY_DB_ENTRY, BackupArchiveFormat.DB_ENTRY -> BackupArchiveFormat.DB_ENTRY
             BackupArchiveFormat.WAL_ENTRY -> BackupArchiveFormat.WAL_ENTRY
@@ -806,8 +991,8 @@ class WebdavSync(
         }
         val targetFile = File(stagedDbDir, targetName)
         targetFile.parentFile?.mkdirs()
-        targetFile.sink().buffer().outputStream().use { outputStream ->
-            zipIn.copyTo(outputStream)
+        return targetFile.sink().buffer().outputStream().use { outputStream ->
+            zipIn.copyBounded(outputStream, BoundedStreams.MAX_FILE_ENTRY_BYTES)
         }
     }
 
@@ -816,16 +1001,16 @@ class WebdavSync(
         stagedFilesDir: File,
         entryName: String,
         isDirectory: Boolean,
-    ) {
+    ): Long {
         val targetFile = safeZipDestination(stagedFilesDir, entryName)
         if (isDirectory || entryName.endsWith('/')) {
             targetFile.mkdirs()
-            return
+            return 0L
         }
 
         targetFile.parentFile?.mkdirs()
-        targetFile.sink().buffer().outputStream().use { outputStream ->
-            zipIn.copyTo(outputStream)
+        return targetFile.sink().buffer().outputStream().use { outputStream ->
+            zipIn.copyBounded(outputStream, BoundedStreams.MAX_FILE_ENTRY_BYTES)
         }
     }
 
@@ -856,97 +1041,61 @@ class WebdavSync(
         }
     }
 
-    private fun restoreLiveDatabase(stagedDbFile: File, manifest: BackupManifest? = null): DatabaseSanitizer.SanitizationResult {
-        val (cleanDb, result) = DatabaseSanitizer.sanitize(context, stagedDbFile)
-
-        // If restoring a selective backup (where only a subset of tables were exported),
-        // copy any unselected live tables into cleanDb so the user's unselected live data
-        // (e.g. workspaces or chats) is NOT wiped when cleanDb replaces the live DB.
-        if (manifest != null && manifest.selectedContent.isNotEmpty()) {
-            val tablesInBackup = buildSet {
-                if (BackupContentOption.CHATS.name in manifest.selectedContent) addAll(DatabaseSanitizer.CHAT_TABLES)
-                if (BackupContentOption.WORKSPACES.name in manifest.selectedContent) addAll(DatabaseSanitizer.WORKSPACE_TABLES)
-            }
-            val liveDbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
-            if (liveDbFile.exists()) {
-                val tablesToPreserve = DatabaseSanitizer.PORTABLE_TABLES.filter { it !in tablesInBackup }
-                if (tablesToPreserve.isNotEmpty()) {
-                    runCatching {
-                        DatabaseSanitizer.copyTablesBetweenDatabases(
-                            sourceDbFile = liveDbFile,
-                            targetDbFile = cleanDb,
-                            tables = tablesToPreserve,
-                        )
-                    }.onFailure { e ->
-                        LogUtil.w(TAG, "Failed to preserve unselected tables during partial restore", e)
-                    }
-                }
-            }
-        }
-
-        appDatabase.close()
-        context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
-
-        val finalDbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
-        finalDbFile.parentFile?.mkdirs()
-        cleanDb.copyTo(finalDbFile, overwrite = true)
-
-        val cleanWal = File(cleanDb.path + "-wal")
-        val cleanShm = File(cleanDb.path + "-shm")
-        val finalWal = File(finalDbFile.path + "-wal")
-        val finalShm = File(finalDbFile.path + "-shm")
-
-        if (cleanWal.exists()) {
-            cleanWal.copyTo(finalWal, overwrite = true)
-        } else {
-            finalWal.delete()
-        }
-
-        if (cleanShm.exists()) {
-            cleanShm.copyTo(finalShm, overwrite = true)
-        } else {
-            finalShm.delete()
-        }
-
-        context.deleteDatabase("rikka_hub_sanitized")
-        return result
-    }
-
-    private fun restoreDatabase(stagedDbFile: File, manifest: BackupManifest? = null): DatabaseSanitizer.SanitizationResult {
-        return restoreLiveDatabase(stagedDbFile, manifest)
-    }
-
     /**
      * The backup zip excludes each workspace's Linux rootfs, so after a restore
      * any workspace row still marked READY/INSTALLING would be a lie. Reset those
-     * to DISABLED when the rootfs is absent so the UI offers a fresh install.
+     * to DISABLED directly inside the staged SQLite database when the rootfs is
+     * absent so Room is never queried mid-restore while closed.
      */
-    private suspend fun resetWorkspaceShellStatesForMissingRootfs() {
-        val workspaces = runCatching { appDatabase.workspaceDao().getAll() }
-            .getOrDefault(emptyList())
-        if (workspaces.isEmpty()) return
+    private fun resetWorkspaceShellStatesInStagedDb(stagedDbFile: File) {
+        if (!stagedDbFile.exists()) return
         val workspacesRoot = File(context.filesDir, BackupArchiveFormat.WORKSPACES_DIR)
         val now = System.currentTimeMillis()
-        for (ws in workspaces) {
-            val status = ws.shellStatus
-            if (status != me.lucid.workspace.WorkspaceShellStatus.READY.name &&
-                status != me.lucid.workspace.WorkspaceShellStatus.INSTALLING.name
-            ) {
-                continue
-            }
-            val linuxDir = File(File(workspacesRoot, ws.root), "linux")
-            val present = runCatching { linuxDir.hasUsableRootfs() }.getOrDefault(false)
-            if (!present) {
-                runCatching {
-                    appDatabase.workspaceDao().updateShellStatus(
-                        ws.id,
-                        me.lucid.workspace.WorkspaceShellStatus.DISABLED.name,
-                        now,
-                    )
-                }.onFailure { error ->
-                    LogUtil.w(TAG, "resetWorkspaceShellStates: failed for ${ws.id}: ${error.message}")
+        var db: SQLiteDatabase? = null
+        try {
+            db = SQLiteDatabase.openDatabase(stagedDbFile.path, null, SQLiteDatabase.OPEN_READWRITE)
+            val cursor = db.rawQuery("SELECT id, root, shell_status FROM workspaces", null)
+            val updates = mutableListOf<String>()
+            cursor.use { c ->
+                val idIdx = c.getColumnIndex("id")
+                val rootIdx = c.getColumnIndex("root")
+                val statusIdx = c.getColumnIndex("shell_status")
+                if (idIdx >= 0 && rootIdx >= 0 && statusIdx >= 0) {
+                    while (c.moveToNext()) {
+                        val id = c.getString(idIdx)
+                        val root = c.getString(rootIdx)
+                        val status = c.getString(statusIdx)
+                        if (status == me.lucid.workspace.WorkspaceShellStatus.READY.name ||
+                            status == me.lucid.workspace.WorkspaceShellStatus.INSTALLING.name
+                        ) {
+                            val linuxDir = File(File(workspacesRoot, root), "linux")
+                            val present = runCatching { linuxDir.hasUsableRootfs() }.getOrDefault(false)
+                            if (!present) {
+                                updates.add(id)
+                            }
+                        }
+                    }
                 }
             }
+            if (updates.isNotEmpty()) {
+                db.beginTransaction()
+                try {
+                    val stmt = db.compileStatement("UPDATE workspaces SET shell_status = ?, updated_at = ? WHERE id = ?")
+                    for (id in updates) {
+                        stmt.bindString(1, me.lucid.workspace.WorkspaceShellStatus.DISABLED.name)
+                        stmt.bindLong(2, now)
+                        stmt.bindString(3, id)
+                        stmt.executeUpdateDelete()
+                    }
+                    db.setTransactionSuccessful()
+                } finally {
+                    db.endTransaction()
+                }
+            }
+        } catch (e: Exception) {
+            LogUtil.w(TAG, "resetWorkspaceShellStatesInStagedDb failed", e)
+        } finally {
+            db?.close()
         }
     }
 }

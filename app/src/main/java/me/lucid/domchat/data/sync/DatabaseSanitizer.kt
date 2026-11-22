@@ -64,6 +64,12 @@ object DatabaseSanitizer {
         "workspaces",
     )
 
+    val FTS_TABLES = setOf(
+        "memory_claim_fts",
+        "memory_episode_v3_fts",
+        "memory_source_v3_fts",
+    )
+
     data class SanitizationResult(
         val totalRows: Int = 0,
         val skippedRows: Int = 0,
@@ -97,6 +103,42 @@ object DatabaseSanitizer {
             context.deleteDatabase(targetDbName)
         }
 
+        // Migrate older backup database to current schema version before copying
+        val migrationDbName = "backup_migration_${System.currentTimeMillis()}"
+        val migrationDbFile = context.getDatabasePath(migrationDbName)
+        if (migrationDbFile.exists()) {
+            context.deleteDatabase(migrationDbName)
+        }
+        migrationDbFile.parentFile?.mkdirs()
+        sourceDbFile.copyTo(migrationDbFile, overwrite = true)
+        val sourceWal = File(sourceDbFile.parentFile, sourceDbFile.name + "-wal")
+        if (sourceWal.exists()) {
+            sourceWal.copyTo(File(migrationDbFile.parentFile, "$migrationDbName-wal"), overwrite = true)
+        }
+        val sourceShm = File(sourceDbFile.parentFile, sourceDbFile.name + "-shm")
+        if (sourceShm.exists()) {
+            sourceShm.copyTo(File(migrationDbFile.parentFile, "$migrationDbName-shm"), overwrite = true)
+        }
+
+        try {
+            val migrationRoomDb = Room.databaseBuilder(
+                context,
+                AppDatabase::class.java,
+                migrationDbName,
+            )
+                .addMigrations(*AppDatabase.ALL_MIGRATIONS)
+                .allowMainThreadQueries()
+                .build()
+            try {
+                val writable = migrationRoomDb.openHelper.writableDatabase
+                writable.query("PRAGMA wal_checkpoint(TRUNCATE)").close()
+            } finally {
+                migrationRoomDb.close()
+            }
+        } catch (e: Exception) {
+            LogUtil.w(TAG, "Room migration on backup db failed or skipped: ${e.message}")
+        }
+
         // Initialize Target DB using Room to ensure schema creation
         val targetRoomDb = Room.databaseBuilder(
             context,
@@ -113,8 +155,9 @@ object DatabaseSanitizer {
         var sourceDb: SQLiteDatabase? = null
 
         try {
+            val sourceFileToRead = if (migrationDbFile.exists()) migrationDbFile else sourceDbFile
             val db = SQLiteDatabase.openDatabase(
-                sourceDbFile.path,
+                sourceFileToRead.path,
                 null,
                 SQLiteDatabase.OPEN_READONLY
             )
@@ -126,23 +169,31 @@ object DatabaseSanitizer {
                 PORTABLE_TABLES
             }
 
-            for (table in tablesToCopy) {
-                // Check if table exists in source
-                try {
-                    val cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
-                    val exists = cursor.count > 0
-                    cursor.close()
-                    
-                    if (exists) {
-                        val result = copyTable(db, targetDbInfo, table)
-                        totalResult += result
-                        LogUtil.i(TAG, "Sanitized table $table: $result")
-                    } else {
-                        LogUtil.w(TAG, "Table $table not found in source database, skipping")
+            targetDbInfo.beginTransaction()
+            try {
+                for (table in tablesToCopy) {
+                    if (table in FTS_TABLES) continue
+                    // Check if table exists in source
+                    try {
+                        val cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
+                        val exists = cursor.count > 0
+                        cursor.close()
+                        
+                        if (exists) {
+                            val result = copyTable(db, targetDbInfo, table)
+                            totalResult += result
+                            LogUtil.i(TAG, "Sanitized table $table: $result")
+                        } else {
+                            LogUtil.w(TAG, "Table $table not found in source database, skipping")
+                        }
+                    } catch (e: Exception) {
+                        LogUtil.e(TAG, "Failed to check/process table $table", e)
                     }
-                } catch (e: Exception) {
-                    LogUtil.e(TAG, "Failed to check/process table $table", e)
                 }
+                rebuildFtsTables(targetDbInfo)
+                targetDbInfo.setTransactionSuccessful()
+            } finally {
+                targetDbInfo.endTransaction()
             }
 
         } catch (e: Exception) {
@@ -151,9 +202,36 @@ object DatabaseSanitizer {
         } finally {
             sourceDb?.close()
             targetRoomDb.close()
+            context.deleteDatabase(migrationDbName)
         }
 
         return targetDbFile to totalResult
+    }
+
+    fun rebuildFtsTables(target: androidx.sqlite.db.SupportSQLiteDatabase) {
+        runCatching {
+            target.execSQL("DELETE FROM memory_claim_fts")
+            target.execSQL(
+                "INSERT INTO memory_claim_fts(rowid, statement, subject, predicate, objectValue) " +
+                "SELECT id, statement, subject, predicate, coalesce(object_value, '') FROM memory_claim"
+            )
+        }.onFailure { LogUtil.w(TAG, "Failed to rebuild memory_claim_fts", it) }
+
+        runCatching {
+            target.execSQL("DELETE FROM memory_episode_v3_fts")
+            target.execSQL(
+                "INSERT INTO memory_episode_v3_fts(rowid, title, summary) " +
+                "SELECT id, title, summary FROM memory_episode_v3"
+            )
+        }.onFailure { LogUtil.w(TAG, "Failed to rebuild memory_episode_v3_fts", it) }
+
+        runCatching {
+            target.execSQL("DELETE FROM memory_source_v3_fts")
+            target.execSQL(
+                "INSERT INTO memory_source_v3_fts(rowid, excerpt) " +
+                "SELECT id, excerpt FROM memory_source_v3"
+            )
+        }.onFailure { LogUtil.w(TAG, "Failed to rebuild memory_source_v3_fts", it) }
     }
 
     private fun copyTable(
@@ -256,22 +334,57 @@ object DatabaseSanitizer {
         try {
             sourceDb = SQLiteDatabase.openDatabase(sourceDbFile.path, null, SQLiteDatabase.OPEN_READONLY)
             targetDb = SQLiteDatabase.openDatabase(targetDbFile.path, null, SQLiteDatabase.OPEN_READWRITE)
-            for (table in tables) {
-                try {
-                    val cursor = sourceDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
-                    val exists = cursor.count > 0
-                    cursor.close()
-                    if (exists) {
-                        copyTableSqlite(sourceDb, targetDb, table)
+            targetDb.beginTransaction()
+            try {
+                for (table in tables) {
+                    if (table in FTS_TABLES) continue
+                    try {
+                        val cursor = sourceDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
+                        val exists = cursor.count > 0
+                        cursor.close()
+                        if (exists) {
+                            copyTableSqlite(sourceDb, targetDb, table)
+                        }
+                    } catch (e: Exception) {
+                        LogUtil.e(TAG, "copyTablesBetweenDatabases: Failed for table $table", e)
+                        throw e
                     }
-                } catch (e: Exception) {
-                    LogUtil.w(TAG, "copyTablesBetweenDatabases: Failed for table $table", e)
                 }
+                rebuildFtsTablesSqlite(targetDb)
+                targetDb.setTransactionSuccessful()
+            } finally {
+                targetDb.endTransaction()
             }
         } finally {
             sourceDb?.close()
             targetDb?.close()
         }
+    }
+
+    private fun rebuildFtsTablesSqlite(target: SQLiteDatabase) {
+        runCatching {
+            target.execSQL("DELETE FROM memory_claim_fts")
+            target.execSQL(
+                "INSERT INTO memory_claim_fts(rowid, statement, subject, predicate, objectValue) " +
+                "SELECT id, statement, subject, predicate, coalesce(object_value, '') FROM memory_claim"
+            )
+        }.onFailure { LogUtil.w(TAG, "Failed to rebuild memory_claim_fts (sqlite)", it) }
+
+        runCatching {
+            target.execSQL("DELETE FROM memory_episode_v3_fts")
+            target.execSQL(
+                "INSERT INTO memory_episode_v3_fts(rowid, title, summary) " +
+                "SELECT id, title, summary FROM memory_episode_v3"
+            )
+        }.onFailure { LogUtil.w(TAG, "Failed to rebuild memory_episode_v3_fts (sqlite)", it) }
+
+        runCatching {
+            target.execSQL("DELETE FROM memory_source_v3_fts")
+            target.execSQL(
+                "INSERT INTO memory_source_v3_fts(rowid, excerpt) " +
+                "SELECT id, excerpt FROM memory_source_v3"
+            )
+        }.onFailure { LogUtil.w(TAG, "Failed to rebuild memory_source_v3_fts (sqlite)", it) }
     }
 
     private fun copyTableSqlite(

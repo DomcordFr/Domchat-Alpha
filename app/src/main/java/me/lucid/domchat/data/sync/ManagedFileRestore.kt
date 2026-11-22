@@ -48,7 +48,8 @@ internal fun restoreManagedFileDirectories(
                 return@forEach
             }
             if (dirName == BackupArchiveFormat.WORKSPACES_DIR) {
-                restoreWorkspacesDir(stagedDir, liveDir)
+                restoreWorkspacesDir(stagedDir, liveDir, File(liveBackupDir, dirName))
+                replaced += dirName
                 return@forEach
             }
             backupLiveDirectory(liveDir, File(liveBackupDir, dirName))
@@ -88,37 +89,79 @@ internal fun restoreManagedFileDirectories(
  * force a lengthy reinstall on every restore. Instead we replace only the backed-up
  * subtrees (e.g. `files/`) per workspace and leave the excluded subdirs untouched.
  */
-internal fun restoreWorkspacesDir(stagedDir: File, liveDir: File) {
+internal fun restoreWorkspacesDir(
+    stagedDir: File,
+    liveDir: File,
+    workspacesBackupDir: File? = null,
+) {
     liveDir.mkdirs()
     if (!stagedDir.exists()) return
 
-    stagedDir.listFiles()?.forEach { stagedChild ->
-        val liveChild = File(liveDir, stagedChild.name)
-        if (stagedChild.isDirectory) {
-            liveChild.mkdirs()
-            stagedChild.listFiles()?.forEach { stagedSub ->
-                if (stagedSub.name in BackupArchiveFormat.WORKSPACE_EXCLUDED_SUBDIRS) {
-                    return@forEach
+    val backedUpEntries = mutableListOf<Pair<File, File>>() // (liveFile, backupFile)
+    try {
+        stagedDir.listFiles()?.forEach { stagedChild ->
+            val liveChild = File(liveDir, stagedChild.name)
+            if (stagedChild.isDirectory) {
+                liveChild.mkdirs()
+                stagedChild.listFiles()?.forEach { stagedSub ->
+                    if (stagedSub.name in BackupArchiveFormat.WORKSPACE_EXCLUDED_SUBDIRS) {
+                        return@forEach
+                    }
+                    val liveSub = File(liveChild, stagedSub.name)
+                    if (liveSub.exists() && workspacesBackupDir != null) {
+                        val relPath = liveSub.relativeTo(liveDir).path
+                        val backupFile = File(workspacesBackupDir, relPath)
+                        backupFile.parentFile?.mkdirs()
+                        if (liveSub.isDirectory) {
+                            backupFile.mkdirs()
+                            mirrorDirectory(liveSub, backupFile)
+                        } else {
+                            liveSub.copyTo(backupFile, overwrite = true)
+                        }
+                        backedUpEntries.add(liveSub to backupFile)
+                    }
+                    if (liveSub.exists()) {
+                        liveSub.deleteRecursively()
+                    }
+                    if (stagedSub.isDirectory) {
+                        liveSub.mkdirs()
+                        mirrorDirectory(stagedSub, liveSub)
+                    } else {
+                        liveSub.parentFile?.mkdirs()
+                        stagedSub.copyTo(liveSub, overwrite = true)
+                    }
                 }
-                val liveSub = File(liveChild, stagedSub.name)
-                if (liveSub.exists()) {
-                    liveSub.deleteRecursively()
+            } else {
+                if (liveChild.exists() && workspacesBackupDir != null) {
+                    val relPath = liveChild.relativeTo(liveDir).path
+                    val backupFile = File(workspacesBackupDir, relPath)
+                    backupFile.parentFile?.mkdirs()
+                    liveChild.copyTo(backupFile, overwrite = true)
+                    backedUpEntries.add(liveChild to backupFile)
                 }
-                if (stagedSub.isDirectory) {
-                    liveSub.mkdirs()
-                    mirrorDirectory(stagedSub, liveSub)
-                } else {
-                    liveSub.parentFile?.mkdirs()
-                    stagedSub.copyTo(liveSub, overwrite = true)
+                if (liveChild.exists()) {
+                    liveChild.deleteRecursively()
                 }
+                liveChild.parentFile?.mkdirs()
+                stagedChild.copyTo(liveChild, overwrite = true)
             }
-        } else {
-            if (liveChild.exists()) {
-                liveChild.deleteRecursively()
-            }
-            liveChild.parentFile?.mkdirs()
-            stagedChild.copyTo(liveChild, overwrite = true)
         }
+    } catch (error: Exception) {
+        backedUpEntries.asReversed().forEach { (liveTarget, backupSource) ->
+            if (liveTarget.exists()) {
+                liveTarget.deleteRecursively()
+            }
+            if (backupSource.exists()) {
+                liveTarget.parentFile?.mkdirs()
+                if (backupSource.isDirectory) {
+                    liveTarget.mkdirs()
+                    mirrorDirectory(backupSource, liveTarget)
+                } else {
+                    backupSource.copyTo(liveTarget, overwrite = true)
+                }
+            }
+        }
+        throw error
     }
 }
 

@@ -35,6 +35,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.first
 import me.lucid.domchat.data.model.AssistantMemory
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 
 @Serializable
 data class AssistantExportV1(
@@ -688,8 +689,9 @@ object AssistantExportImport : KoinComponent {
      */
     suspend fun parseImport(uri: Uri, context: Context): ImportResult {
         return try {
-            val contentBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: return ImportResult.Error("Failed to read file")
+            val contentBytes = context.contentResolver.openInputStream(uri)?.use { 
+                it.readBoundedBytes(BoundedStreams.MAX_FILE_ENTRY_BYTES) 
+            } ?: return ImportResult.Error("Failed to read file")
             
             var jsonContent: String? = null
             var avatarBytes: ByteArray? = null
@@ -867,13 +869,13 @@ object AssistantExportImport : KoinComponent {
                 if (!entry.isDirectory) {
                     val name = entry.name.lowercase()
                     if (name.endsWith(".json")) {
-                        val content = zis.readBytes().toString(Charsets.UTF_8)
+                        val content = zis.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).toString(Charsets.UTF_8)
                         if (jsonStr == null || name.endsWith("card.json") || name.endsWith("character.json") || name.endsWith("data.json")) {
                             jsonStr = content
                         }
                     } else if (name.endsWith(".png") || name.endsWith(".webp") || name.endsWith(".jpg") || name.endsWith(".jpeg")) {
                         if (imageBytes == null || name.contains("card") || name.contains("avatar") || name.contains("chara")) {
-                            imageBytes = zis.readBytes()
+                            imageBytes = zis.readBoundedBytes(BoundedStreams.MAX_FILE_ENTRY_BYTES)
                         }
                     }
                 }

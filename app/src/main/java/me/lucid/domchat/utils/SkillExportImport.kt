@@ -5,6 +5,7 @@ import android.net.Uri
 import kotlinx.serialization.json.Json
 import me.lucid.domchat.data.model.Skill
 import me.lucid.domchat.data.model.SkillExport
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import okio.buffer
 import okio.source
 import java.io.ByteArrayOutputStream
@@ -123,9 +124,7 @@ object SkillExportImport {
                 ?: return ImportResult.Error("Could not open file")
 
             val bytes = inputStream.use { input ->
-                input.source().buffer().use { source ->
-                    source.readByteArray()
-                }
+                input.readBoundedBytes(MAX_PACKAGE_BYTES.toLong())
             }
             importFromBytes(bytes)
         } catch (e: Exception) {
@@ -426,7 +425,8 @@ object SkillExportImport {
             value.contains('"') || value.contains('\'') || value.startsWith(' ') ||
             value.endsWith(' ')
         ) {
-            "\"${value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")}\""
+            val escaped = value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+            "\"$escaped\""
         } else {
             value
         }

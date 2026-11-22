@@ -17,6 +17,8 @@ import me.lucid.common.http.jsonObjectOrNull
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.sanitizeDisplayText
 import me.lucid.domchat.data.model.Conversation
+import me.lucid.domchat.utils.BoundedStreams
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import me.lucid.domchat.utils.JsonInstant
 import me.lucid.domchat.utils.jsonPrimitiveOrNull
 import java.io.File
@@ -45,7 +47,7 @@ object SillyTavernImporter {
 
     fun import(stream: InputStream, assistants: List<Assistant>): Result {
         return stream.use { input ->
-            val json = input.readBytes().decodeToString()
+            val json = input.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).decodeToString()
             import(json, assistants)
         }
     }

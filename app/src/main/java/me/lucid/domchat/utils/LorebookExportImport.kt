@@ -15,6 +15,7 @@ import me.lucid.domchat.data.model.TavernCharacterBook
 import me.lucid.domchat.data.model.toLorebook
 import me.lucid.domchat.data.model.toSillyTavernWorldInfo
 import me.lucid.domchat.data.model.toTavernCharacterBook
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import okio.buffer
 import okio.sink
 import okio.source
@@ -119,9 +120,7 @@ object LorebookExportImport {
                 }
                 attachment.url.startsWith("content://") -> {
                     context.contentResolver.openInputStream(uri)?.use { input ->
-                        input.source().buffer().use { source ->
-                            source.readByteArray()
-                        }
+                        input.readBoundedBytes(BoundedStreams.MAX_FILE_ENTRY_BYTES)
                     } ?: return null
                 }
                 else -> return null
@@ -293,9 +292,7 @@ object LorebookExportImport {
                 ?: return ImportResult.Error("Could not open file")
 
             val content = inputStream.use { input ->
-                input.source().buffer().use { source ->
-                    source.readUtf8()
-                }
+                input.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).toString(Charsets.UTF_8)
             }
             
             importFromJson(content, context)
