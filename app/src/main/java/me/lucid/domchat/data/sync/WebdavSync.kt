@@ -10,6 +10,8 @@ import at.bitfire.dav4jvm.property.webdav.GetLastModified
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import me.lucid.ai.provider.ProviderSetting
+import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.SecretKeyManager
@@ -181,6 +183,8 @@ class WebdavSync(
                 if (BackupContentOption.CHARACTERS in selectedContent) {
                     add("avatars")
                     add("assistant_backgrounds")
+                    add("wallpapers")
+                    add("backgrounds")
                     add("custom_icons")
                     add("custom_fonts")
                 }
@@ -189,6 +193,18 @@ class WebdavSync(
                     add("chat_files")
                     add("tool_outputs")
                     add("images")
+                    add("wallpapers")
+                }
+                if (BackupContentOption.PROVIDERS in selectedContent) {
+                    add("auto_icons")
+                    add("custom_icons")
+                }
+                if (BackupContentOption.SETTINGS in selectedContent) {
+                    add("wallpapers")
+                    add("backgrounds")
+                    add("custom_fonts")
+                    add("custom_icons")
+                    add("auto_icons")
                 }
                 if (BackupContentOption.WORKSPACES in selectedContent) {
                     add(BackupArchiveFormat.WORKSPACES_DIR)
@@ -486,7 +502,7 @@ class WebdavSync(
                 if (stagedDatabase.exists()) {
                     LogUtil.i(TAG, "restoreFromBackupFile: Starting database sanitization")
                     try {
-                        sanitizationResult = restoreDatabase(stagedDatabase)
+                        sanitizationResult = restoreDatabase(stagedDatabase, manifest)
                         LogUtil.i(TAG, "restoreFromBackupFile: Database restored and sanitized")
                         resetWorkspaceShellStatesForMissingRootfs()
                     } catch (e: Exception) {
@@ -496,7 +512,123 @@ class WebdavSync(
                 }
 
                 sanitizedSettings?.let { (cleanedSettings, _) ->
-                    settingsStore.update(cleanedSettings)
+                    val finalSettings = if (manifest != null && manifest.selectedContent.isNotEmpty()) {
+                        val live = settingsStore.settingsFlow.value
+                        val selected = manifest.selectedContent.toSet()
+
+                        val resolvedProviders = if (BackupContentOption.PROVIDERS.name in selected) {
+                            if (BackupContentOption.API_KEYS.name in selected) {
+                                cleanedSettings.providers
+                            } else {
+                                val liveMap = live.providers.associateBy { it.id }
+                                cleanedSettings.providers.map { restored ->
+                                    val liveProv = liveMap[restored.id]
+                                    if (liveProv != null) {
+                                        when (restored) {
+                                            is ProviderSetting.OpenAI -> (liveProv as? ProviderSetting.OpenAI)?.let {
+                                                restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
+                                            } ?: restored
+                                            is ProviderSetting.Google -> (liveProv as? ProviderSetting.Google)?.let {
+                                                restored.copy(apiKey = it.apiKey, privateKey = it.privateKey, apiKeyPool = it.apiKeyPool)
+                                            } ?: restored
+                                            is ProviderSetting.Claude -> (liveProv as? ProviderSetting.Claude)?.let {
+                                                restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
+                                            } ?: restored
+                                            else -> restored
+                                        }
+                                    } else restored
+                                }
+                            }
+                        } else {
+                            live.providers
+                        }
+
+                        val resolvedTtsProviders = if (BackupContentOption.PROVIDERS.name in selected) {
+                            if (BackupContentOption.API_KEYS.name in selected) {
+                                cleanedSettings.ttsProviders
+                            } else {
+                                val liveTtsMap = live.ttsProviders.associateBy { it.id }
+                                cleanedSettings.ttsProviders.map { restored ->
+                                    val liveTts = liveTtsMap[restored.id]
+                                    if (liveTts != null) {
+                                        when (restored) {
+                                            is TTSProviderSetting.OpenAI -> (liveTts as? TTSProviderSetting.OpenAI)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.Gemini -> (liveTts as? TTSProviderSetting.Gemini)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.MiniMax -> (liveTts as? TTSProviderSetting.MiniMax)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.ElevenLabs -> (liveTts as? TTSProviderSetting.ElevenLabs)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.Qwen -> (liveTts as? TTSProviderSetting.Qwen)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.Cartesia -> (liveTts as? TTSProviderSetting.Cartesia)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.FishAudio -> (liveTts as? TTSProviderSetting.FishAudio)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.PlayHT -> (liveTts as? TTSProviderSetting.PlayHT)?.let { restored.copy(apiKey = it.apiKey) } ?: restored
+                                            is TTSProviderSetting.SystemTTS -> restored
+                                        }
+                                    } else restored
+                                }
+                            }
+                        } else {
+                            live.ttsProviders
+                        }
+
+                        live.copy(
+                            assistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistants else live.assistants,
+                            assistantTags = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistantTags else live.assistantTags,
+                            recentlyUsedAssistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.recentlyUsedAssistants else live.recentlyUsedAssistants,
+                            providers = resolvedProviders,
+                            ttsProviders = resolvedTtsProviders,
+                            providerTags = if (BackupContentOption.PROVIDERS.name in selected) cleanedSettings.providerTags else live.providerTags,
+                            lorebooks = if (BackupContentOption.LOREBOOKS.name in selected) cleanedSettings.lorebooks else live.lorebooks,
+                            skills = if (BackupContentOption.SKILLS.name in selected) cleanedSettings.skills else live.skills,
+                            mcpServers = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.mcpServers else live.mcpServers,
+                            searchServices = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchServices else live.searchServices,
+                            searchCommonOptions = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchCommonOptions else live.searchCommonOptions,
+                            searchServiceSelected = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.searchServiceSelected else live.searchServiceSelected,
+                            modes = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.modes else live.modes,
+                            dynamicColor = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.dynamicColor else live.dynamicColor,
+                            themeId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.themeId else live.themeId,
+                            developerMode = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.developerMode else live.developerMode,
+                            enableRagLogging = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.enableRagLogging else live.enableRagLogging,
+                            displaySetting = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.displaySetting else live.displaySetting,
+                            enableWebSearch = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.enableWebSearch else live.enableWebSearch,
+                            favoriteModels = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.favoriteModels else live.favoriteModels,
+                            recentModelIds = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.recentModelIds else live.recentModelIds,
+                            chatModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatModelId else live.chatModelId,
+                            titleModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titleModelId else live.titleModelId,
+                            titleThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titleThinkingBudget else live.titleThinkingBudget,
+                            summarizerModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.summarizerModelId else live.summarizerModelId,
+                            summarizerThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.summarizerThinkingBudget else live.summarizerThinkingBudget,
+                            subagentModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.subagentModelId else live.subagentModelId,
+                            subagentThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.subagentThinkingBudget else live.subagentThinkingBudget,
+                            imageGenerationModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.imageGenerationModelId else live.imageGenerationModelId,
+                            titlePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.titlePrompt else live.titlePrompt,
+                            translateModeId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.translateModeId else live.translateModeId,
+                            translatePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.translatePrompt else live.translatePrompt,
+                            suggestionModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionModelId else live.suggestionModelId,
+                            suggestionThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionThinkingBudget else live.suggestionThinkingBudget,
+                            suggestionPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.suggestionPrompt else live.suggestionPrompt,
+                            learningModePrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.learningModePrompt else live.learningModePrompt,
+                            ocrModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrModelId else live.ocrModelId,
+                            ocrThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrThinkingBudget else live.ocrThinkingBudget,
+                            ocrPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ocrPrompt else live.ocrPrompt,
+                            embeddingModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.embeddingModelId else live.embeddingModelId,
+                            selectedTTSProviderId = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.selectedTTSProviderId else live.selectedTTSProviderId,
+                            selectedTTSVoiceId = if (BackupContentOption.SETTINGS.name in selected || BackupContentOption.PROVIDERS.name in selected) cleanedSettings.selectedTTSVoiceId else live.selectedTTSVoiceId,
+                            ttsAutoplayMode = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.ttsAutoplayMode else live.ttsAutoplayMode,
+                            sttModelId = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttModelId else live.sttModelId,
+                            sttThinkingBudget = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttThinkingBudget else live.sttThinkingBudget,
+                            sttPrompt = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.sttPrompt else live.sttPrompt,
+                            webServerEnabled = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerEnabled else live.webServerEnabled,
+                            webServerPort = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerPort else live.webServerPort,
+                            webServerJwtEnabled = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerJwtEnabled else live.webServerJwtEnabled,
+                            webServerAccessPassword = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerAccessPassword else live.webServerAccessPassword,
+                            webServerBackgroundSetupShown = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.webServerBackgroundSetupShown else live.webServerBackgroundSetupShown,
+                            chatStorage = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatStorage else live.chatStorage,
+                            textSelectionConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.textSelectionConfig else live.textSelectionConfig,
+                            assistantOverlayConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantOverlayConfig else live.assistantOverlayConfig,
+                        )
+                    } else {
+                        cleanedSettings
+                    }
+                    settingsStore.update(finalSettings)
                     LogUtil.i(
                         TAG,
                         "restoreFromBackupFile: Settings restored before file commit",
@@ -650,14 +782,38 @@ class WebdavSync(
             val snapshot = stagedSnapshots[storeName]
             if (snapshot != null) {
                 restoreSharedPreferencesSnapshot(prefs, snapshot)
-            } else {
-                prefs.edit().clear().commit()
             }
         }
     }
 
-    private fun restoreLiveDatabase(stagedDbFile: File): DatabaseSanitizer.SanitizationResult {
+    private fun restoreLiveDatabase(stagedDbFile: File, manifest: BackupManifest? = null): DatabaseSanitizer.SanitizationResult {
         val (cleanDb, result) = DatabaseSanitizer.sanitize(context, stagedDbFile)
+
+        // If restoring a selective backup (where only a subset of tables were exported),
+        // copy any unselected live tables into cleanDb so the user's unselected live data
+        // (e.g. workspaces or chats) is NOT wiped when cleanDb replaces the live DB.
+        if (manifest != null && manifest.selectedContent.isNotEmpty()) {
+            val tablesInBackup = buildSet {
+                if (BackupContentOption.CHATS.name in manifest.selectedContent) addAll(DatabaseSanitizer.CHAT_TABLES)
+                if (BackupContentOption.WORKSPACES.name in manifest.selectedContent) addAll(DatabaseSanitizer.WORKSPACE_TABLES)
+            }
+            val liveDbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
+            if (liveDbFile.exists()) {
+                val tablesToPreserve = DatabaseSanitizer.PORTABLE_TABLES.filter { it !in tablesInBackup }
+                if (tablesToPreserve.isNotEmpty()) {
+                    runCatching {
+                        DatabaseSanitizer.copyTablesBetweenDatabases(
+                            sourceDbFile = liveDbFile,
+                            targetDbFile = cleanDb,
+                            tables = tablesToPreserve,
+                        )
+                    }.onFailure { e ->
+                        LogUtil.w(TAG, "Failed to preserve unselected tables during partial restore", e)
+                    }
+                }
+            }
+        }
+
         appDatabase.close()
         context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
 
@@ -686,8 +842,8 @@ class WebdavSync(
         return result
     }
 
-    private fun restoreDatabase(stagedDbFile: File): DatabaseSanitizer.SanitizationResult {
-        return restoreLiveDatabase(stagedDbFile)
+    private fun restoreDatabase(stagedDbFile: File, manifest: BackupManifest? = null): DatabaseSanitizer.SanitizationResult {
+        return restoreLiveDatabase(stagedDbFile, manifest)
     }
 
     /**

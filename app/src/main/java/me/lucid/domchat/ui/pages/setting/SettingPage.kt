@@ -238,12 +238,12 @@ fun SettingPage(
                 keywords = listOf("chats", "conversations", "history", "manage", "delete", "search")
             ),
             SettingNavItem(
-                title = "Backup & Restore",
-                subtitle = "Export chats, characters, and WebDAV cloud sync",
+                title = "Backup and restore",
+                subtitle = "Export and restore chats, characters, and settings",
                 category = "Data & Storage",
                 icon = Icons.Rounded.CloudUpload,
                 target = Screen.Backup(),
-                keywords = listOf("backup", "sync", "webdav", "restore", "export", "import")
+                keywords = listOf("backup", "sync", "restore", "export", "import")
             ),
             SettingNavItem(
                 title = "Storage & Cache",

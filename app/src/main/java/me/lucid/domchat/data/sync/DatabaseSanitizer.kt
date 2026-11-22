@@ -240,4 +240,65 @@ object DatabaseSanitizer {
         )
         return file
     }
+
+    /**
+     * Copies specific tables from one SQLite database file into another.
+     * Used during partial restore to preserve non-restored live tables from being wiped.
+     */
+    fun copyTablesBetweenDatabases(
+        sourceDbFile: File,
+        targetDbFile: File,
+        tables: List<String>,
+    ) {
+        if (!sourceDbFile.exists() || !targetDbFile.exists()) return
+        var sourceDb: SQLiteDatabase? = null
+        var targetDb: SQLiteDatabase? = null
+        try {
+            sourceDb = SQLiteDatabase.openDatabase(sourceDbFile.path, null, SQLiteDatabase.OPEN_READONLY)
+            targetDb = SQLiteDatabase.openDatabase(targetDbFile.path, null, SQLiteDatabase.OPEN_READWRITE)
+            for (table in tables) {
+                try {
+                    val cursor = sourceDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
+                    val exists = cursor.count > 0
+                    cursor.close()
+                    if (exists) {
+                        copyTableSqlite(sourceDb, targetDb, table)
+                    }
+                } catch (e: Exception) {
+                    LogUtil.w(TAG, "copyTablesBetweenDatabases: Failed for table $table", e)
+                }
+            }
+        } finally {
+            sourceDb?.close()
+            targetDb?.close()
+        }
+    }
+
+    private fun copyTableSqlite(
+        source: SQLiteDatabase,
+        target: SQLiteDatabase,
+        tableName: String,
+    ) {
+        var cursor: Cursor? = null
+        try {
+            cursor = source.query(tableName, null, null, null, null, null, null)
+            val columnNames = cursor.columnNames
+            while (cursor.moveToNext()) {
+                val values = ContentValues()
+                for (colName in columnNames) {
+                    val index = cursor.getColumnIndex(colName)
+                    when (cursor.getType(index)) {
+                        Cursor.FIELD_TYPE_NULL -> values.putNull(colName)
+                        Cursor.FIELD_TYPE_INTEGER -> values.put(colName, cursor.getLong(index))
+                        Cursor.FIELD_TYPE_FLOAT -> values.put(colName, cursor.getDouble(index))
+                        Cursor.FIELD_TYPE_STRING -> values.put(colName, cursor.getString(index))
+                        Cursor.FIELD_TYPE_BLOB -> values.put(colName, cursor.getBlob(index))
+                    }
+                }
+                target.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            }
+        } finally {
+            cursor?.close()
+        }
+    }
 }

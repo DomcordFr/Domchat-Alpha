@@ -546,7 +546,7 @@ private fun LorebookCard(
             Surface(
                 shape = bookShape,
                 color = Color(0xFF000000),
-                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f)),
+                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                 modifier = Modifier.size(width = 50.dp, height = 70.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -671,7 +671,7 @@ internal fun LorebookCreatorSheet(
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = Color(0xFF000000),
-                    border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f)),
+                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                     modifier = Modifier.size(width = 56.dp, height = 78.dp),
                     onClick = { imagePickerLauncher.launch("image/*") }
                 ) {

@@ -5,21 +5,18 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.components.ui.DomChatGlassPillButton
 import me.lucid.domchat.utils.PermissionChecker
 
-import androidx.annotation.StringRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,36 +24,21 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
-import androidx.compose.material3.MultiChoiceSegmentedButtonRow
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,14 +46,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.Icons
@@ -79,37 +58,21 @@ import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Inventory2
-import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
-import androidx.compose.material.icons.rounded.Visibility
-import androidx.compose.material.icons.rounded.VisibilityOff
 import me.lucid.domchat.ui.components.ui.ToastType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.R
-import me.lucid.domchat.data.datastore.WebDavConfig
 import me.lucid.domchat.data.sync.BackupContentOption
-import me.lucid.domchat.data.sync.WebDavBackupItem
 import me.lucid.domchat.ui.components.nav.BackButton
-import me.lucid.domchat.ui.components.ui.FormItem
+import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.DomChatDestructiveConfirmDialog
 import me.lucid.domchat.ui.context.LocalToaster
-import me.lucid.domchat.ui.hooks.HapticPattern
-import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
-import me.lucid.domchat.ui.modifier.ApplyDialogWindowBlur
-import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
-import me.lucid.domchat.ui.pages.setting.LocalSettingsWideLayout
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.theme.AppShapes
-import me.lucid.domchat.ui.theme.AppSurface
 import me.lucid.domchat.utils.fileSizeToString
-import me.lucid.domchat.utils.onError
-import me.lucid.domchat.utils.onLoading
-import me.lucid.domchat.utils.onSuccess
-import me.lucid.domchat.utils.toLocalDateTime
 import okio.buffer
 import okio.sink
 import okio.source
@@ -117,789 +80,33 @@ import org.koin.androidx.compose.koinViewModel
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.system.exitProcess
 
 enum class BackupTab(
     val routeValue: String,
     val icon: ImageVector,
     val titleRes: Int,
 ) {
-    WebDav("webdav", Icons.Rounded.CloudSync, R.string.backup_page_webdav_backup),
-    Local("local", Icons.Rounded.Folder, R.string.backup_page_import_export);
+    WebDav("webdav", Icons.Rounded.CloudSync, R.string.backup_page_title),
+    Local("local", Icons.Rounded.Folder, R.string.backup_page_title);
 
     companion object {
         fun fromRoute(route: String): BackupTab {
-            return entries.firstOrNull { it.routeValue == route } ?: WebDav
+            return entries.firstOrNull { it.routeValue == route } ?: Local
         }
     }
 }
 
 @Composable
 fun BackupPage(
-    initialTab: BackupTab = BackupTab.WebDav,
+    initialTab: BackupTab = BackupTab.Local,
     vm: BackupVM = koinViewModel(),
 ) {
-    val settings by vm.settings.collectAsStateWithLifecycle()
-    val pagerState = rememberPagerState(initialPage = initialTab.ordinal) { BackupTab.entries.size }
-    val scope = rememberCoroutineScope()
-    val useWideLayout = LocalSettingsWideLayout.current
-    val currentTab = BackupTab.entries[pagerState.currentPage]
-
-    LaunchedEffect(initialTab) {
-        if (pagerState.currentPage != initialTab.ordinal) {
-            pagerState.scrollToPage(initialTab.ordinal)
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(currentTab.titleRes))
-                },
-                navigationIcon = {
-                    BackButton()
-                }
-            )
-        },
-        bottomBar = {
-            if (!useWideLayout) {
-                BackupTabPillBar(
-                    selectedTab = currentTab,
-                    enableHaptics = settings.displaySetting.enableUIHaptics,
-                    onTabSelected = { tab ->
-                        scope.launch { pagerState.animateScrollToPage(tab.ordinal) }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
-        if (useWideLayout) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF000000))
-                    .padding(top = innerPadding.calculateTopPadding())
-            ) {
-                when (currentTab) {
-                    BackupTab.WebDav -> WebDavPage(vm)
-                    BackupTab.Local -> ImportExportPage(vm)
-                }
-            }
-        } else {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = innerPadding.calculateTopPadding())
-                    .background(Color(0xFF000000)),
-                userScrollEnabled = true,
-            ) { page ->
-                when (BackupTab.entries[page]) {
-                    BackupTab.WebDav -> WebDavPage(vm)
-                    BackupTab.Local -> ImportExportPage(vm)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BackupTabPillBar(
-    selectedTab: BackupTab,
-    enableHaptics: Boolean,
-    onTabSelected: (BackupTab) -> Unit,
-) {
-    val haptics = rememberPremiumHaptics(enabled = enableHaptics)
-    val isDark = LocalDarkMode.current
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = Color(0xFF000000),
-            border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-            shadowElevation = 0.dp,
-            modifier = Modifier.domChatBlurEffect(Color(0xFF000000), RoundedCornerShape(28.dp))
-        ) {
-            Row(
-                modifier = Modifier.padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                BackupTab.entries.forEach { tab ->
-                    val selected = tab == selectedTab
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .then(
-                                if (selected) {
-                                    Modifier
-                                        .background(Color.White.copy(alpha = 0.18f))
-                                        .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
-                                } else {
-                                    Modifier.clickable {
-                                        haptics.perform(HapticPattern.Tick)
-                                        onTabSelected(tab)
-                                    }
-                                }
-                            )
-                            .padding(12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = tab.icon,
-                            contentDescription = stringResource(tab.titleRes),
-                            tint = if (selected) {
-                                Color.White
-                            } else {
-                                Color.White.copy(alpha = 0.5f)
-                            },
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BackupCardLabel(@StringRes titleRes: Int) {
-    Text(
-        text = stringResource(titleRes),
-        color = Color(0xFFA6A6A6),
-    )
-}
-
-@Composable
-private fun WebDavPage(
-    vm: BackupVM
-) {
-    val settings by vm.settings.collectAsStateWithLifecycle()
-    val webDavConfig = settings.webDavConfig.sanitize()
-    val toaster = LocalToaster.current
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var showBackupFiles by remember { mutableStateOf(false) }
-    var showRestartDialog by remember { mutableStateOf(false) }
-    var restoreResult by remember { mutableStateOf<me.lucid.domchat.data.sync.WebdavSync.RestoreResult?>(null) }
-    var restoringItemId by remember { mutableStateOf<String?>(null) }
-    var isBackingUp by remember { mutableStateOf(false) }
-    var pendingDeleteItem by remember { mutableStateOf<WebDavBackupItem?>(null) }
-    var pendingRestoreItem by remember { mutableStateOf<WebDavBackupItem?>(null) }
-    
-    // Permission handling after restore
-    var pendingFeatureAccess by remember {
-        mutableStateOf(PermissionChecker.MissingFeatureAccess())
-    }
-    var showPermissionDialog by remember { mutableStateOf(false) }
-    
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        scope.launch {
-            val missing = PermissionChecker.getMissingFeatureAccess(context, vm.getAssistantsSnapshot())
-            if (missing.specialAccesses.isNotEmpty()) {
-                pendingFeatureAccess = PermissionChecker.MissingFeatureAccess(
-                    specialAccesses = missing.specialAccesses
-                )
-                showPermissionDialog = true
-            } else {
-                showRestartDialog = true
-            }
-        }
-    }
-
-    val specialAccessLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        showRestartDialog = true
-    }
-
-    fun updateWebDavConfig(newConfig: WebDavConfig) {
-        vm.updateSettings(settings.copy(webDavConfig = newConfig))
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp)
-                .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Surface(
-                color = Color(0xFF000000),
-                shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FormItem(
-                        label = { BackupCardLabel(R.string.backup_page_webdav_server_address) }
-                    ) {
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = webDavConfig.url,
-                            onValueChange = { updateWebDavConfig(webDavConfig.copy(url = it.trim())) },
-singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF000000),
-                                unfocusedContainerColor = Color(0xFF000000),
-                                focusedTextColor = Color(0xFFF2F2F7),
-                                unfocusedTextColor = Color(0xFFF2F2F7),
-                                cursorColor = Color.White,
-                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
-                            )
-                        )
-                    }
-                    FormItem(
-                        label = { BackupCardLabel(R.string.backup_page_username) }
-                    ) {
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = webDavConfig.username,
-                            onValueChange = {
-                                updateWebDavConfig(
-                                    webDavConfig.copy(
-                                        username = it.trim()
-                                    )
-                                )
-                            },
-singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF000000),
-                                unfocusedContainerColor = Color(0xFF000000),
-                                focusedTextColor = Color(0xFFF2F2F7),
-                                unfocusedTextColor = Color(0xFFF2F2F7),
-                                cursorColor = Color.White,
-                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
-                            )
-                        )
-                    }
-                    FormItem(
-                        label = { BackupCardLabel(R.string.backup_page_password) }
-                    ) {
-                        var passwordVisible by remember { mutableStateOf(false) }
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = webDavConfig.password,
-                            onValueChange = { updateWebDavConfig(webDavConfig.copy(password = it)) },
-                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            trailingIcon = {
-                                val image = if (passwordVisible)
-                                    Icons.Rounded.VisibilityOff
-                                else
-                                    Icons.Rounded.Visibility
-                                IconButton(
-        onClick = { passwordVisible = !passwordVisible }) {
-                                    Icon(imageVector = image, null)
-                                }
-                            },
-singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF000000),
-                                unfocusedContainerColor = Color(0xFF000000),
-                                focusedTextColor = Color(0xFFF2F2F7),
-                                unfocusedTextColor = Color(0xFFF2F2F7),
-                                cursorColor = Color.White,
-                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
-                            )
-                        )
-                    }
-                    FormItem(
-                        label = { BackupCardLabel(R.string.backup_page_path) }
-                    ) {
-                        OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = webDavConfig.path,
-                            onValueChange = { updateWebDavConfig(webDavConfig.copy(path = it.trim())) },
-singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF000000),
-                                unfocusedContainerColor = Color(0xFF000000),
-                                focusedTextColor = Color(0xFFF2F2F7),
-                                unfocusedTextColor = Color(0xFFF2F2F7),
-                                cursorColor = Color.White,
-                                focusedBorderColor = Color.White.copy(alpha = 0.38f),
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.12f)
-                            )
-                        )
-                    }
-                    FormItem(
-                        modifier = Modifier.padding(top = 4.dp),
-                        label = { BackupCardLabel(R.string.backup_page_backup_items) }
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            MultiChoiceSegmentedButtonRow(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
-                            ) {
-                                WebDavConfig.BackupItem.entries.forEachIndexed { index, item ->
-                                    val isChecked = item in webDavConfig.items
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(
-                                            index = index,
-                                            count = WebDavConfig.BackupItem.entries.size
-                                        ),
-                                        onCheckedChange = {
-                                            val newItems = if (it) {
-                                                webDavConfig.items + item
-                                            } else {
-                                                webDavConfig.items - item
-                                            }
-                                            updateWebDavConfig(webDavConfig.copy(items = newItems))
-                                        },
-                                        checked = isChecked,
-                                        colors = me.lucid.domchat.ui.theme.appSegmentedButtonColors(),
-                                    ) {
-                                        Text(
-                                            when (item) {
-                                                WebDavConfig.BackupItem.DATABASE -> stringResource(R.string.backup_page_chat_records)
-                                                WebDavConfig.BackupItem.FILES -> stringResource(R.string.backup_page_files)
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                            Surface(
-                                onClick = {
-                                    scope.launch {
-                                        try {
-                                            vm.testWebDav()
-                                            toaster.show(
-                                                context.getString(R.string.backup_page_connection_success),
-                                                type = ToastType.Success
-                                            )
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                            toaster.show(
-                                                context.getString(
-                                                    R.string.backup_page_connection_failed,
-                                                    e.message ?: ""
-                                                ), type = ToastType.Error
-                                            )
-                                        }
-                                    }
-                                },
-                                shape = CircleShape,
-                                color = Color(0xFF000000),
-                                contentColor = Color.White,
-                                border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle),
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Rounded.CloudSync,
-                                        contentDescription = stringResource(R.string.backup_page_test_connection),
-                                        modifier = Modifier.size(20.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(120.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color(0xFF000000)
-                        )
-                    )
-                )
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .navigationBarsPadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.End,
-        ) {
-            FloatingActionButton(
-                onClick = {
-                    showBackupFiles = true
-                },
-                shape = CircleShape,
-                containerColor = Color(0xFF000000),
-                contentColor = Color.White,
-                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
-            ) {
-                Icon(
-                    Icons.Rounded.SystemUpdateAlt,
-                    contentDescription = stringResource(R.string.backup_page_restore),
-                )
-            }
-            FloatingActionButton(
-                onClick = {
-                    if (!isBackingUp) {
-                        scope.launch {
-                            isBackingUp = true
-                            runCatching {
-                                vm.backup()
-                                vm.loadBackupFileItems()
-                                toaster.show(
-                                    context.getString(R.string.backup_page_backup_success),
-                                    type = ToastType.Success
-                                )
-                            }.onFailure {
-                                it.printStackTrace()
-                                toaster.show(
-                                    it.message ?: context.getString(R.string.backup_page_unknown_error),
-                                    type = ToastType.Error
-                                )
-                            }
-                            isBackingUp = false
-                        }
-                    }
-                },
-                shape = CircleShape,
-                containerColor = Color(0xFF000000),
-                contentColor = Color.White,
-                modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
-            ) {
-                if (isBackingUp) {
-                    CircularWavyProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                    )
-                } else {
-                    Icon(
-                        Icons.Rounded.CloudUpload,
-                        contentDescription = stringResource(R.string.backup_page_backup_now),
-                    )
-                }
-            }
-        }
-    }
-
-    if (showBackupFiles) {
-        DomChatInWindowBottomSheet(
-            containerColor = Color(0xFF000000),
-            maxHeight = (LocalConfiguration.current.screenHeightDp * 0.82f).dp,
-            onDismissRequest = {
-                showBackupFiles = false
-            },
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.8f)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    stringResource(R.string.backup_page_webdav_backup_files),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                val backupItems by vm.webDavBackupItems.collectAsStateWithLifecycle()
-                backupItems.onSuccess {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(it) { item ->
-                            BackupItemCard(
-                                item = item,
-                                isRestoring = restoringItemId == item.displayName,
-                                onDelete = { pendingDeleteItem = item },
-                                onRestore = { pendingRestoreItem = item },
-                            )
-                        }
-                    }
-                }.onError {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.backup_page_loading_failed, it.message ?: ""),
-                            color = Color.Red
-                        )
-                    }
-                }.onLoading {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularWavyProgressIndicator()
-                    }
-                }
-            }
-        }
-    }
-
-    DomChatDestructiveConfirmDialog(
-        visible = pendingDeleteItem != null,
-        title = stringResource(R.string.backup_page_delete_title),
-        consequence = stringResource(R.string.backup_page_delete_consequence),
-        onDismiss = { pendingDeleteItem = null },
-        onConfirm = {
-            pendingDeleteItem?.let { item ->
-                pendingDeleteItem = null
-                scope.launch {
-                    runCatching {
-                        vm.deleteWebDavBackupFile(item)
-                    toaster.show(
-                        context.getString(R.string.backup_page_delete_success),
-                        type = ToastType.Success
-                    )
-                    vm.loadBackupFileItems()
-                }.onFailure { err ->
-                    err.printStackTrace()
-                    toaster.show(
-                        context.getString(
-                            R.string.backup_page_delete_failed,
-                            err.message ?: ""
-                        ),
-                        type = ToastType.Error
-                    )
-                }
-            }
-            }
-        },
-    )
-
-    DomChatDestructiveConfirmDialog(
-        visible = pendingRestoreItem != null,
-        title = stringResource(R.string.backup_page_restore_overwrite_title),
-        consequence = stringResource(R.string.backup_page_restore_overwrite_consequence),
-        confirmLabel = stringResource(R.string.backup_page_restore_now),
-        onDismiss = { pendingRestoreItem = null },
-        onConfirm = {
-            pendingRestoreItem?.let { item ->
-                pendingRestoreItem = null
-                scope.launch {
-                    restoringItemId = item.displayName
-                    runCatching {
-                        val result = vm.restore(item = item)
-                        restoreResult = result
-                        toaster.show(
-                            context.getString(R.string.backup_page_restore_success),
-                            type = ToastType.Success
-                        )
-                        showBackupFiles = false
-
-                        val missing = PermissionChecker.getMissingFeatureAccess(
-                            context,
-                            vm.getAssistantsSnapshot()
-                        )
-                        if (!missing.isEmpty) {
-                            pendingFeatureAccess = missing
-                            showPermissionDialog = true
-                        } else {
-                            showRestartDialog = true
-                        }
-                    }.onFailure { err ->
-                        err.printStackTrace()
-                        toaster.show(
-                            context.getString(
-                                R.string.backup_page_restore_failed,
-                                err.message ?: ""
-                            ),
-                            type = ToastType.Error
-                        )
-                    }
-                    restoringItemId = null
-                }
-            }
-        },
-        )
-
-    // Permission explanation dialog
-    if (showPermissionDialog) {
-        AlertDialog(
-        containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        titleContentColor = Color(0xFFF2F2F7),
-        textContentColor = Color(0xFFF2F2F7),
-        onDismissRequest = {
-                // User dismissed - proceed without permissions
-                showPermissionDialog = false
-                showRestartDialog = true
-            },
-            title = { Text(stringResource(R.string.backup_restore_permissions_required)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.backup_restore_permissions_message))
-                    PermissionChecker.getFeatureAccessDescriptions(pendingFeatureAccess).forEach { description ->
-                        val desc = description
-                        Text("- $desc", style = MaterialTheme.typography.bodySmall)
-                    }
-                    Text(
-                        stringResource(R.string.backup_restore_permissions_follow_up),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            },
-            confirmButton = {
-                Button(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
-                    contentColor = Color(0xFF000000)
-                    ),
-
-                    onClick = {
-                        showPermissionDialog = false
-                        when {
-                            pendingFeatureAccess.runtimePermissions.isNotEmpty() -> {
-                                permissionLauncher.launch(pendingFeatureAccess.runtimePermissions.toTypedArray())
-                            }
-                            pendingFeatureAccess.specialAccesses.isNotEmpty() -> {
-                                val nextAccess = pendingFeatureAccess.specialAccesses.firstOrNull()
-                                    ?: return@Button
-                                specialAccessLauncher.launch(
-                                    PermissionChecker.createSpecialAccessIntent(nextAccess)
-                                )
-                            }
-                            else -> {
-                                showRestartDialog = true
-                            }
-                        }
-                    }
-                ) {
-                    Text(
-                        if (pendingFeatureAccess.runtimePermissions.isNotEmpty()) {
-                            stringResource(R.string.backup_restore_grant_permissions)
-                        } else {
-                            stringResource(R.string.open_settings)
-                        }
-                    )
-                }
-            },
-            dismissButton = {
-                DomChatGlassPillButton(
-                    text = stringResource(R.string.backup_restore_skip),
-                    containerColor = Color(0xFF000000),
-                    onClick = {
-                        showPermissionDialog = false
-                        showRestartDialog = true
-                    }
-                )
-            }
-        )
-    }
-    
-    if (showRestartDialog) {
-        val result = restoreResult // Capture immutable for checking
-        BackupDialog(
-             result = result,
-             onConfirm = {
-                 vm.restartApp(context)
-             }
-        )
-    }
-}
-
-@Composable
-private fun BackupItemCard(
-    item: WebDavBackupItem,
-    isRestoring: Boolean = false,
-    onDelete: (WebDavBackupItem) -> Unit = {},
-    onRestore: (WebDavBackupItem) -> Unit = {},
-) {
-    val isDark = LocalDarkMode.current
-    Card(
-        shape = me.lucid.domchat.ui.theme.AppShapes.CardLarge,
-        colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = Color(0xFF000000)
-        ),
-        border = BorderStroke(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = item.displayName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = item.lastModified.toLocalDateTime(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFA6A6A6)
-                )
-                Text(
-                    text = item.size.fileSizeToString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFA6A6A6)
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DomChatGlassPillButton(
-                text = stringResource(R.string.backup_page_delete),
-                destructive = true,
-                enabled = !isRestoring,
-                onClick = { onDelete(item) }
-            )
-            DomChatGlassPillButton(
-                text = if (isRestoring) stringResource(R.string.backup_page_restoring) else stringResource(R.string.backup_page_restore_now),
-                enabled = !isRestoring,
-                containerColor = Color(0xFF000000),
-                onClick = { onRestore(item) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ImportExportPage(
-    vm: BackupVM
-) {
     val toaster = LocalToaster.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     var isExporting by remember { mutableStateOf(false) }
     var isRestoring by remember { mutableStateOf(false) }
     var showRestartDialog by remember { mutableStateOf(false) }
@@ -908,13 +115,13 @@ private fun ImportExportPage(
     var selectedExportKeyIds by remember { mutableStateOf<Set<kotlin.uuid.Uuid>?>(null) }
 
     var restoreResult by remember { mutableStateOf<me.lucid.domchat.data.sync.WebdavSync.RestoreResult?>(null) }
-    
+
     // Permission handling after restore
     var pendingFeatureAccess by remember {
         mutableStateOf(PermissionChecker.MissingFeatureAccess())
     }
     var showPermissionDialog by remember { mutableStateOf(false) }
-    
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
@@ -937,11 +144,9 @@ private fun ImportExportPage(
         showRestartDialog = true
     }
 
-    // 导入类型：local 为本地备份，chatbox 为 Chatbox 导入
     var importType by remember { mutableStateOf("local") }
     var pendingLocalRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
-    // 创建文件保存的launcher
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
@@ -949,13 +154,11 @@ private fun ImportExportPage(
             scope.launch {
                 isExporting = true
                 runCatching {
-                    // 导出文件
                     val exportFile = vm.exportToFile(
                         selectedContent = selectedExportContent,
                         selectedKeyIds = selectedExportKeyIds,
                     )
 
-                    // 复制到用户选择的位置
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openOutputStream(targetUri)?.use { outputStream ->
                             exportFile.source().buffer().inputStream().use { inputStream ->
@@ -964,7 +167,6 @@ private fun ImportExportPage(
                         }
                     }
 
-                    // 清理临时文件
                     withContext(Dispatchers.IO) {
                         exportFile.delete()
                     }
@@ -985,7 +187,6 @@ private fun ImportExportPage(
         }
     }
 
-    // 创建文件选择的launcher
     val openDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -1105,7 +306,7 @@ private fun ImportExportPage(
                 }
             }
         },
-        )
+    )
 
     if (showExportContentDialog) {
         ExportContentSelectionDialog(
@@ -1123,129 +324,142 @@ private fun ImportExportPage(
         )
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 112.dp)
-    ) {
-        item {
-            SettingsGroup(
-                title = stringResource(R.string.backup_page_local_backup_export),
-                horizontalPadding = 0.dp,
-                titleStartPadding = 4.dp,
-            ) {
-                SettingGroupItem(
-                    title = stringResource(R.string.backup_page_all_in_one_export),
-                    subtitle = if (isExporting && selectedExportContent == null) {
-                        stringResource(R.string.backup_page_exporting)
-                    } else {
-                        stringResource(R.string.backup_page_all_in_one_export_desc)
-                    },
-                    icon = {
-                        if (isExporting && selectedExportContent == null) {
-                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+    Scaffold(
+        topBar = {
+            OneUITopAppBar(
+                title = "Backup and restore",
+                scrollBehavior = scrollBehavior,
+                navigationIcon = {
+                    BackButton()
+                }
+            )
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { contentPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            item {
+                SettingsGroup(
+                    title = "Backup and restore",
+                    horizontalPadding = 16.dp,
+                    titleStartPadding = 16.dp,
+                ) {
+                    SettingGroupItem(
+                        title = stringResource(R.string.backup_page_all_in_one_export),
+                        subtitle = if (isExporting && selectedExportContent == null) {
+                            stringResource(R.string.backup_page_exporting)
                         } else {
-                            Icon(Icons.Rounded.Inventory2, null)
+                            stringResource(R.string.backup_page_all_in_one_export_desc)
+                        },
+                        icon = {
+                            if (isExporting && selectedExportContent == null) {
+                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                Icon(Icons.Rounded.Inventory2, null)
+                            }
+                        },
+                        onClick = {
+                            if (!isExporting) {
+                                selectedExportContent = null
+                                selectedExportKeyIds = null
+                                val timestamp = LocalDateTime.now()
+                                    .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                                createDocumentLauncher.launch("Domchat_all_in_one_$timestamp.zip")
+                            }
                         }
-                    },
-                    onClick = {
-                        if (!isExporting) {
-                            selectedExportContent = null
-                            selectedExportKeyIds = null
-                            val timestamp = LocalDateTime.now()
-                                .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-                            createDocumentLauncher.launch("Domchat_all_in_one_$timestamp.zip")
-                        }
-                    }
-                )
-                SettingGroupItem(
-                    title = stringResource(R.string.backup_page_custom_backup_export),
-                    subtitle = if (isExporting && selectedExportContent != null) {
-                        stringResource(R.string.backup_page_exporting)
-                    } else {
-                        stringResource(R.string.backup_page_custom_backup_export_desc)
-                    },
-                    icon = {
-                        if (isExporting && selectedExportContent != null) {
-                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                    )
+                    SettingGroupItem(
+                        title = stringResource(R.string.backup_page_custom_backup_export),
+                        subtitle = if (isExporting && selectedExportContent != null) {
+                            stringResource(R.string.backup_page_exporting)
                         } else {
-                            Icon(Icons.Rounded.FileUpload, null)
+                            stringResource(R.string.backup_page_custom_backup_export_desc)
+                        },
+                        icon = {
+                            if (isExporting && selectedExportContent != null) {
+                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                Icon(Icons.Rounded.FileUpload, null)
+                            }
+                        },
+                        onClick = {
+                            if (!isExporting) {
+                                showExportContentDialog = true
+                            }
                         }
-                    },
-                    onClick = {
-                        if (!isExporting) {
-                            showExportContentDialog = true
-                        }
-                    }
-                )
-                SettingGroupItem(
-                    title = stringResource(R.string.backup_page_local_backup_import),
-                    subtitle = if (isRestoring && importType == "local") {
-                        stringResource(R.string.backup_page_importing)
-                    } else {
-                        stringResource(R.string.backup_page_import_desc)
-                    },
-                    icon = {
-                        if (isRestoring && importType == "local") {
-                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                    )
+                    SettingGroupItem(
+                        title = stringResource(R.string.backup_page_local_backup_import),
+                        subtitle = if (isRestoring && importType == "local") {
+                            stringResource(R.string.backup_page_importing)
                         } else {
-                            Icon(Icons.Rounded.SystemUpdateAlt, null)
+                            stringResource(R.string.backup_page_import_desc)
+                        },
+                        icon = {
+                            if (isRestoring && importType == "local") {
+                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                Icon(Icons.Rounded.SystemUpdateAlt, null)
+                            }
+                        },
+                        onClick = {
+                            if (!isRestoring) {
+                                importType = "local"
+                                openDocumentLauncher.launch(
+                                    arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*")
+                                )
+                            }
                         }
-                    },
-                    onClick = {
-                        if (!isRestoring) {
-                            importType = "local"
-                            openDocumentLauncher.launch(
-                                arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "*/*")
-                            )
-                        }
-                    }
-                )
+                    )
+                }
             }
-        }
 
-        item {
-            SettingsGroup(
-                title = stringResource(R.string.backup_page_import_from_other_app),
-                horizontalPadding = 0.dp,
-                titleStartPadding = 4.dp,
-            ) {
-                SettingGroupItem(
-                    title = stringResource(R.string.backup_page_import_from_chatbox),
-                    subtitle = stringResource(R.string.backup_page_import_chatbox_desc),
-                    icon = {
-                        if (isRestoring && importType == "chatbox") {
-                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
-                        } else {
-                            Icon(Icons.Rounded.SystemUpdateAlt, null)
+            item {
+                SettingsGroup(
+                    title = stringResource(R.string.backup_page_import_from_other_app),
+                    horizontalPadding = 16.dp,
+                    titleStartPadding = 16.dp,
+                ) {
+                    SettingGroupItem(
+                        title = stringResource(R.string.backup_page_import_from_chatbox),
+                        subtitle = stringResource(R.string.backup_page_import_chatbox_desc),
+                        icon = {
+                            if (isRestoring && importType == "chatbox") {
+                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                Icon(Icons.Rounded.SystemUpdateAlt, null)
+                            }
+                        },
+                        onClick = {
+                            if (!isRestoring) {
+                                importType = "chatbox"
+                                openDocumentLauncher.launch(arrayOf("application/json", "text/plain"))
+                            }
                         }
-                    },
-                    onClick = {
-                        if (!isRestoring) {
-                            importType = "chatbox"
-                            openDocumentLauncher.launch(arrayOf("application/json", "text/plain"))
+                    )
+                    SettingGroupItem(
+                        title = stringResource(R.string.backup_page_import_from_cherry_studio),
+                        subtitle = stringResource(R.string.backup_page_import_cherry_studio_desc),
+                        icon = {
+                            if (isRestoring && importType == "cherry") {
+                                CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                Icon(Icons.Rounded.Folder, null)
+                            }
+                        },
+                        onClick = {
+                            if (!isRestoring) {
+                                importType = "cherry"
+                                openDocumentLauncher.launch(
+                                    arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")
+                                )
+                            }
                         }
-                    }
-                )
-                SettingGroupItem(
-                    title = stringResource(R.string.backup_page_import_from_cherry_studio),
-                    subtitle = stringResource(R.string.backup_page_import_cherry_studio_desc),
-                    icon = {
-                        if (isRestoring && importType == "cherry") {
-                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
-                        } else {
-                            Icon(Icons.Rounded.Folder, null)
-                        }
-                    },
-                    onClick = {
-                        if (!isRestoring) {
-                            importType = "cherry"
-                            openDocumentLauncher.launch(
-                                arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")
-                            )
-                        }
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -1253,13 +467,12 @@ private fun ImportExportPage(
     // Permission explanation dialog
     if (showPermissionDialog) {
         AlertDialog(
-        containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
-        titleContentColor = Color(0xFFF2F2F7),
-        textContentColor = Color(0xFFF2F2F7),
-        onDismissRequest = {
-                // User dismissed - proceed without permissions
+            containerColor = Color(0xFF000000),
+            shape = AppShapes.SettingDialog,
+            modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.SettingDialog),
+            titleContentColor = Color(0xFFF2F2F7),
+            textContentColor = Color(0xFFF2F2F7),
+            onDismissRequest = {
                 showPermissionDialog = false
                 showRestartDialog = true
             },
@@ -1268,8 +481,7 @@ private fun ImportExportPage(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.backup_restore_permissions_message))
                     PermissionChecker.getFeatureAccessDescriptions(pendingFeatureAccess).forEach { description ->
-                        val desc = description
-                        Text("- $desc", style = MaterialTheme.typography.bodySmall)
+                        Text("- $description", style = MaterialTheme.typography.bodySmall)
                     }
                     Text(
                         stringResource(R.string.backup_restore_permissions_follow_up),
@@ -1278,11 +490,11 @@ private fun ImportExportPage(
                 }
             },
             confirmButton = {
-                Button(                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
-                    contentColor = Color(0xFF000000)
+                Button(
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFFFFF),
+                        contentColor = Color(0xFF000000)
                     ),
-
                     onClick = {
                         showPermissionDialog = false
                         when {
@@ -1323,15 +535,15 @@ private fun ImportExportPage(
             }
         )
     }
-    
-    // 重启对话框
+
+    // Restart dialog
     if (showRestartDialog) {
-        val result = restoreResult // Capture immutable for checking
+        val result = restoreResult
         BackupDialog(
-             result = result,
-             onConfirm = {
-                 vm.restartApp(context)
-             }
+            result = result,
+            onConfirm = {
+                vm.restartApp(context)
+            }
         )
     }
 }
@@ -1342,18 +554,19 @@ private fun BackupDialog(
     onConfirm: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = {}, // Disallow dismissing by clicking outside
+        onDismissRequest = {},
         containerColor = Color(0xFF000000),
-        shape = me.lucid.domchat.ui.theme.AppShapes.SettingDialog,
-        modifier = Modifier.border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SettingDialog),
+        shape = AppShapes.SettingDialog,
+        modifier = Modifier.border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, AppShapes.SettingDialog),
         title = { Text(stringResource(R.string.backup_page_restart_app)) },
-        text = { 
+        text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.backup_page_restart_desc))
-                
+
                 result?.let {
-                    if (it.sanitization.skippedRows > 0 || it.settingsCleanup.totalIssuesFixed > 0 || it.settingsCleanup.unsupportedZipEntriesBytes > 0) {                        Card(
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                    if (it.sanitization.skippedRows > 0 || it.settingsCleanup.totalIssuesFixed > 0 || it.settingsCleanup.unsupportedZipEntriesBytes > 0) {
+                        Card(
+                            colors = CardDefaults.cardColors(
                                 containerColor = Color(0xFF000000).copy(alpha = 0.55f),
                                 contentColor = Color(0xFFFF6B6B)
                             )
@@ -1393,7 +606,7 @@ private fun BackupDialog(
                     val envTargets = it.workspacesMetadata.filter { meta -> meta.hasRootfs }
                     if (envTargets.isNotEmpty()) {
                         Card(
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                            colors = CardDefaults.cardColors(
                                 containerColor = Color(0xFF000000).copy(alpha = 0.55f),
                                 contentColor = Color(0xFFF2F2F7)
                             )
@@ -1420,7 +633,7 @@ private fun BackupDialog(
             }
         },
         confirmButton = {
-            me.lucid.domchat.ui.components.ui.DomChatGlassPillButton(
+            DomChatGlassPillButton(
                 text = stringResource(R.string.backup_page_restart_app),
                 onClick = onConfirm
             )

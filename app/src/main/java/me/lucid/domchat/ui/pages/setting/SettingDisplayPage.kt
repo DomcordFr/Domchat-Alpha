@@ -210,6 +210,9 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             // =====================================================================
             // Section 1: Glass & Interface Appearance
             // =====================================================================

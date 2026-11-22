@@ -52,6 +52,7 @@ internal object BackupArchiveFormat {
         "wallpapers",
         "backgrounds",
         "custom_icons",
+        "auto_icons",
         "custom_fonts",
         "images",
         "chat_files",
@@ -66,6 +67,9 @@ internal object BackupArchiveFormat {
         "domchat.preferences",
         "rikkahub.preferences",
         "spontaneous_messaging_state",
+        "character_hub_groups",
+        "janitor_hub_prefs",
+        "assistant_widget_prefs",
     )
 
     fun normalizeEntryName(entryName: String): String {

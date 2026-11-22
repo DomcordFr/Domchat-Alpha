@@ -626,7 +626,7 @@ private fun SkillCard(
         onClick = onEdit,
         colors = CardDefaults.cardColors(containerColor = Color(0xFF000000)),
         shape = shape,
-        border = BorderStroke(0.5.dp, borderBrush)
+        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
     ) {
         Row(
             modifier = Modifier
@@ -660,8 +660,7 @@ private fun SkillCard(
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = if (skill.name.isNotEmpty()) FontFamily.Monospace else FontFamily.Default
+                    fontWeight = FontWeight.SemiBold,
                 )
                 if (skill.description.isNotBlank()) {
                     Text(
@@ -870,7 +869,7 @@ fun SkillEditorSheet(
                             placeholder = stringResource(R.string.skills_page_name_placeholder),
                             singleLine = true,
                             onPendingChange = { namePending = it },
-                            textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace)
+                            textStyle = MaterialTheme.typography.bodyLarge
                         )
                     }
                 }
