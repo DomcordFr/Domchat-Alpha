@@ -212,6 +212,7 @@ import me.lucid.domchat.data.datastore.resolveConversationContext
 import me.lucid.domchat.ui.components.chat.PersonaPickerBottomSheet
 import me.lucid.domchat.ui.components.chat.PromptPresetsBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.LocalSheetDismiss
 import me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.data.model.Assistant
@@ -1753,6 +1754,7 @@ fun MinimalChatInput(
             visible = true,
             onDismissRequest = { showModelPickerSheet = false },
         ) {
+            val sheetDismiss = LocalSheetDismiss.current
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1764,7 +1766,7 @@ fun MinimalChatInput(
                 DomChatSheetHeader(
                     title = "Select Model",
                     subtitle = "Choose AI model for current conversation",
-                    onCloseClick = { showModelPickerSheet = false }
+                    onCloseClick = { sheetDismiss?.invoke() ?: run { showModelPickerSheet = false } }
                 )
                 ModelList(
                     currentModel = assistant.chatModelId ?: settings.chatModelId,
@@ -1772,11 +1774,12 @@ fun MinimalChatInput(
                     modelType = me.lucid.ai.provider.ModelType.CHAT,
                     style = me.lucid.domchat.ui.components.ai.ModelPickerStyle.LIQUID_GLASS,
                     onSelect = { selectedModel: Model ->
+                        haptics.perform(HapticPattern.Pop)
                         onUpdateChatModel(selectedModel)
-                        showModelPickerSheet = false
+                        sheetDismiss?.invoke() ?: run { showModelPickerSheet = false }
                     },
                     onDismiss = {
-                        showModelPickerSheet = false
+                        sheetDismiss?.invoke() ?: run { showModelPickerSheet = false }
                     }
                 )
             }

@@ -399,6 +399,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                 modifier = Modifier
                                     .size(52.dp)
                                     .clip(CircleShape)
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                             )
 
                             Spacer(modifier = Modifier.width(14.dp))
@@ -640,7 +641,8 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     value = formAvatar,
                                     modifier = Modifier
                                         .size(56.dp)
-                                        .clip(CircleShape),
+                                        .clip(CircleShape)
+                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                                     onUpdate = { formAvatar = it }
                                 )
 
@@ -648,7 +650,7 @@ fun SettingPersonaPage(vm: SettingVM = koinViewModel()) {
                                     onClick = { imagePickerLauncher.launch("image/*") },
                                     shape = RoundedCornerShape(12.dp),
                                     color = Color(0xFF000000),
-                                    border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.18f))
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),

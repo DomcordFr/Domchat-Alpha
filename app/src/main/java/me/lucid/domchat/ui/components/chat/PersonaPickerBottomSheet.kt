@@ -304,6 +304,7 @@ fun PersonaPickerBottomSheet(
                                 modifier = Modifier
                                     .size(42.dp)
                                     .clip(CircleShape)
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
                             )
 
                             Spacer(modifier = Modifier.width(14.dp))

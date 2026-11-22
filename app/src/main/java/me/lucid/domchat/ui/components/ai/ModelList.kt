@@ -63,6 +63,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
+import me.lucid.domchat.ui.components.chat.LocalSheetDismiss
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -287,6 +288,7 @@ fun ModelSelector(
                 dragHandle = { me.lucid.domchat.ui.components.chat.DomChatSheetDragHandle() },
                 maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.94f).dp,
             ) {
+                val sheetDismiss = LocalSheetDismiss.current
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -296,7 +298,7 @@ fun ModelSelector(
                 ) {
                     DomChatSheetHeader(
                         title = sheetTitle,
-                        onCloseClick = { popup = false },
+                        onCloseClick = { sheetDismiss?.invoke() ?: run { popup = false } },
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
                     val modelMetadataResolver = org.koin.compose.koinInject<me.lucid.domchat.data.ai.models.ModelMetadataResolver>()
@@ -317,11 +319,12 @@ fun ModelSelector(
                         modelType = type,
                         modelFilter = effectiveModelFilter,
                         onSelect = {
+                            haptics.perform(HapticPattern.Pop)
                             onSelect(it)
-                            popup = false
+                            sheetDismiss?.invoke() ?: run { popup = false }
                         },
                         onDismiss = {
-                            popup = false
+                            sheetDismiss?.invoke() ?: run { popup = false }
                         }
                     )
                 }
@@ -350,6 +353,7 @@ internal fun ColumnScope.ModelList(
     val settingsStore = koinInject<SettingsStore>()
     val settings = settingsStore.settingsFlow
         .collectAsStateWithLifecycle()
+    val haptics = rememberPremiumHaptics(enabled = settings.value.displaySetting.enableUIHaptics)
     val modelMetadataResolver = org.koin.compose.koinInject<me.lucid.domchat.data.ai.models.ModelMetadataResolver>()
     
     var activeProviderId by remember { mutableStateOf<Uuid?>(null) }
@@ -409,6 +413,7 @@ internal fun ColumnScope.ModelList(
     }
 
     val handleSelect: (Model) -> Unit = { model ->
+        haptics.perform(HapticPattern.Pop)
         val currentRecents = settings.value.recentModelIds
         val updatedRecents = (listOf(model.id) + currentRecents.filter { it != model.id }).take(12)
         coroutineScope.launch {
@@ -544,7 +549,6 @@ internal fun ColumnScope.ModelList(
             }
         }
     }
-    val haptics = rememberPremiumHaptics(enabled = settings.value.displaySetting.enableUIHaptics)
 
     // Calculate the LazyColumn item index for each provider header
     val providerPositions = remember(providers, favoriteModels, providerListItems, searchKeywords, recentModels) {
@@ -1135,6 +1139,7 @@ private fun ModelItem(
     style: ModelPickerStyle = ModelPickerStyle.SETTINGS
 ) {
     val navController = LocalNavController.current
+    val haptics = rememberPremiumHaptics()
 
     val isLiquidGlass = style == ModelPickerStyle.LIQUID_GLASS
     val tagFill = if (isLiquidGlass) Color.Transparent else null
@@ -1149,7 +1154,7 @@ private fun ModelItem(
                     shape = RoundedCornerShape(8.dp),
                     borderWidth = 0.5.dp,
                     specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                    fillColor = if (isLiquidGlass) Color.White.copy(alpha = 0.18f) else Color(0xFF000000)
+                    fillColor = Color(0xFF000000)
                 )
             ) {
                 Row(
@@ -1201,7 +1206,10 @@ private fun ModelItem(
             title = model.displayName,
             selected = select,
             position = position.toSharedPosition(),
-            onClick = { onSelect(model) },
+            onClick = {
+                haptics.perform(HapticPattern.Pop)
+                onSelect(model)
+            },
             containerColor = rowContainerColor,
             drawBackground = !isLiquidGlass,
             drawBorder = !isLiquidGlass,
@@ -1280,7 +1288,10 @@ private fun ModelItem(
                                     )
                                 )
                             },
-                            onClick = { onSelect(model) },
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                onSelect(model)
+                            },
                             interactionSource = interactionSource,
                             indication = LocalIndication.current
                         ),
