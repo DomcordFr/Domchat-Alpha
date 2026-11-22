@@ -265,8 +265,9 @@ object LorebookExportImport {
     private fun restoreEmbeddedAttachment(context: Context, embedded: EmbeddedAttachment): ModeAttachment? {
         return try {
             val bytes = base64Decode(embedded.content)
-            val extension = embedded.fileName.substringAfterLast('.', "bin")
-            val file = File(context.filesDir, "chat_files/${System.currentTimeMillis()}_${embedded.fileName}")
+            val safeName = sanitizeImportFileName(embedded.fileName)
+            val baseDir = File(context.filesDir, "chat_files")
+            val file = File(baseDir, "${System.currentTimeMillis()}_$safeName").assertInsideDirectory(baseDir)
             file.parentFile?.mkdirs()
             file.sink().buffer().use { output ->
                 output.write(bytes)
@@ -275,7 +276,7 @@ object LorebookExportImport {
             ModeAttachment(
                 url = "file://${file.absolutePath}",
                 type = embedded.type,
-                fileName = embedded.fileName,
+                fileName = safeName,
                 mime = embedded.mime
             )
         } catch (e: Exception) {

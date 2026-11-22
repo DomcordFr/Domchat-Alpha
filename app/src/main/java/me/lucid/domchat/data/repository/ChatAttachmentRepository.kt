@@ -896,7 +896,18 @@ class ChatAttachmentRepository(
     private fun openInputStream(uri: Uri): InputStream? {
         return when (uri.scheme) {
             "content" -> context.contentResolver.openInputStream(uri)
-            "file" -> runCatching { uri.toFile().inputStream() }.getOrNull()
+            "file" -> runCatching {
+                val file = uri.toFile()
+                val canonical = file.canonicalFile
+                val dataDir = context.applicationInfo.dataDir?.let { File(it).canonicalFile }
+                if (dataDir != null && canonical.toPath().startsWith(dataDir.toPath())) {
+                    if (!isInsideChatUploadDirectory(canonical)) {
+                        android.util.Log.w("ChatAttachmentRepository", "Blocked private file access attempt: $canonical")
+                        return null
+                    }
+                }
+                canonical.inputStream()
+            }.getOrNull()
             else -> null
         }
     }

@@ -12,6 +12,7 @@ import me.lucid.highlight.Highlighter
 import me.lucid.highlight.LocalHighlighter
 import me.lucid.domchat.RouteActivity
 import me.lucid.domchat.data.datastore.SettingsStore
+import me.lucid.domchat.security.InternalIntentAuthenticator
 import me.lucid.domchat.ui.components.textselection.TextSelectionSheet
 import me.lucid.domchat.ui.components.ui.AppToasterHost
 import me.lucid.domchat.ui.components.ui.rememberAppToasterState
@@ -60,6 +61,7 @@ class TextSelectionActivity : ComponentActivity() {
                             val routeIntent = Intent(this@TextSelectionActivity, RouteActivity::class.java).apply {
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                                 putQuickAskContinuationData(continuationData)
+                                InternalIntentAuthenticator.signInternalIntent(this@TextSelectionActivity, this)
                             }
                             startActivity(routeIntent)
                             finish()

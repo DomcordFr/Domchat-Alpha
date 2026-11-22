@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.ViewGroup.LayoutParams
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -62,6 +63,14 @@ internal class MyWebViewClient(private val state: WebViewState) : WebViewClient(
         state.canGoBack = view?.canGoBack() == true
         state.canGoForward = view?.canGoForward() == true
     }
+
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        val scheme = request?.url?.scheme?.lowercase() ?: return true
+        if (scheme == "https" || scheme == "http") {
+            return false
+        }
+        return true
+    }
 }
 
 @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
@@ -93,7 +102,10 @@ fun WebView(
 
                     settings.javaScriptEnabled = true // Enable JavaScript
                     settings.domStorageEnabled = true
-                    settings.allowContentAccess = true
+                    settings.allowContentAccess = false
+                    settings.allowFileAccess = false
+                    settings.allowFileAccessFromFileURLs = false
+                    settings.allowUniversalAccessFromFileURLs = false
                     settings.apply(state.settings)
 
                     // Use the created clients

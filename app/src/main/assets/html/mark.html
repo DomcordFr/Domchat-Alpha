@@ -202,6 +202,7 @@
 <body>
     <div id="content"></div>
 
+    <script src="purify.min.js"></script>
     <script type="module">
         // Import markdown-it and plugins using esm.sh
         import MarkdownIt from 'https://esm.sh/markdown-it@14.0.0';
@@ -264,7 +265,7 @@
         mermaid.initialize({
             startOnLoad: false,
             theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
-            securityLevel: 'loose',
+            securityLevel: 'strict',
             fontFamily: 'inherit'
         });
 
@@ -288,7 +289,7 @@
             try {
                 // Process with markdown-it
                 const html = md.render(markdownContent);
-                document.getElementById('content').innerHTML = html;
+                document.getElementById('content').innerHTML = (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) ? DOMPurify.sanitize(html) : html;
 
                 // Render mermaid diagrams
                 const mermaidElements = document.querySelectorAll('.mermaid');

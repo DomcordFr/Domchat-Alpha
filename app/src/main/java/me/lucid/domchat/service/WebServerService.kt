@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import me.lucid.domchat.R
 import me.lucid.domchat.RouteActivity
+import me.lucid.domchat.security.InternalIntentAuthenticator
 import me.lucid.domchat.WEB_SERVER_NOTIFICATION_CHANNEL_ID
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.web.WebServerPhase
@@ -230,6 +231,7 @@ class WebServerService : Service() {
         val openIntent = Intent(this, RouteActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("webServerSettings", true)
+            InternalIntentAuthenticator.signInternalIntent(this@WebServerService, this)
         }
         val openPendingIntent = PendingIntent.getActivity(
             this,

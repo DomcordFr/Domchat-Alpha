@@ -8,6 +8,7 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Files
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.zip.GZIPInputStream
 import org.tukaani.xz.XZInputStream
@@ -19,9 +20,13 @@ class RootfsInstaller(
     fun install(
         root: String,
         url: String,
+        expectedSha256: String? = null,
         onProgress: (RootfsInstallProgress) -> Unit = {},
     ) {
         require(url.isNotBlank()) { "Rootfs download url is required" }
+        require(url.startsWith("https://", ignoreCase = true)) {
+            "Rootfs download URL must use HTTPS: $url"
+        }
         manager.ensureWorkspace(root)
         val format = ArchiveFormat.fromUrl(url)
         val tempDir = manager.tempDir(root)
@@ -32,7 +37,7 @@ class RootfsInstaller(
         try {
             stagingDir.deleteRecursively()
             stagingDir.mkdirs()
-            download(url, archive, onProgress)
+            download(url, archive, expectedSha256, onProgress)
             extractTar(archive, stagingDir, format, onProgress)
             linuxDir.deleteRecursively()
             require(stagingDir.renameTo(linuxDir)) {
@@ -52,8 +57,12 @@ class RootfsInstaller(
     private fun download(
         url: String,
         target: File,
+        expectedSha256: String?,
         onProgress: (RootfsInstallProgress) -> Unit,
     ) {
+        require(url.startsWith("https://", ignoreCase = true)) {
+            "Rootfs download URL must use HTTPS: $url"
+        }
         val connection = URL(url).openConnection() as HttpURLConnection
         connection.connectTimeout = CONNECT_TIMEOUT_MS
         connection.readTimeout = READ_TIMEOUT_MS
@@ -62,6 +71,7 @@ class RootfsInstaller(
             val code = connection.responseCode
             require(code in 200..299) { "Rootfs download failed: HTTP $code" }
             val totalBytes = connection.contentLengthLong.takeIf { it > 0 }
+            val digest = MessageDigest.getInstance("SHA-256")
             target.parentFile?.mkdirs()
             connection.inputStream.use { input ->
                 target.outputStream().use { output ->
@@ -73,6 +83,7 @@ class RootfsInstaller(
                         val read = input.read(buffer)
                         if (read < 0) break
                         output.write(buffer, 0, read)
+                        digest.update(buffer, 0, read)
                         bytesRead += read
                         if (bytesRead - lastReportBytes >= PROGRESS_STEP_BYTES || bytesRead == totalBytes) {
                             lastReportBytes = bytesRead
@@ -94,6 +105,12 @@ class RootfsInstaller(
                             )
                         )
                     }
+                }
+            }
+            if (!expectedSha256.isNullOrBlank()) {
+                val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
+                require(actualSha256.equals(expectedSha256.trim(), ignoreCase = true)) {
+                    "Rootfs checksum mismatch. Expected $expectedSha256, got $actualSha256"
                 }
             }
         } finally {
@@ -142,6 +159,7 @@ class RootfsInstaller(
                     continue
                 }
                 val target = targetDir.safeResolve(header.name)
+                assertInsideRootfs(targetDir, target)
                 target.parentFile?.mkdirs()
                 when (header.type) {
                     TarEntryType.DIRECTORY -> target.mkdirs()
@@ -180,21 +198,35 @@ class RootfsInstaller(
         }
     }
 
+    private fun assertInsideRootfs(root: File, file: File) {
+        val rootCanonicalPath = root.canonicalFile.toPath()
+        var current: File? = file.parentFile
+        while (current != null) {
+            if (current.exists()) {
+                val currentCanonical = current.canonicalFile.toPath()
+                require(currentCanonical == rootCanonicalPath || currentCanonical.startsWith(rootCanonicalPath)) {
+                    "Rootfs entry escapes target directory via symlink: ${file.path}"
+                }
+            }
+            if (current == root || current.path == root.path) break
+            current = current.parentFile
+        }
+    }
+
     private fun createSymlink(root: File, target: File, linkName: String) {
         if (linkName.isBlank()) return
         val rootFile = root.canonicalFile
-        val sourceForFallback: File?
-        val linkTarget = if (File(linkName).isAbsolute) {
-            sourceForFallback = root.safeResolve(linkName.trimStart('/'))
-            File(linkName)
+        val rootPath = rootFile.toPath()
+        val targetCanonical = if (File(linkName).isAbsolute) {
+            File(rootFile, linkName.trimStart('/')).canonicalFile
         } else {
-            val resolved = File(target.parentFile ?: root, linkName).canonicalFile
-            require(resolved.path == rootFile.path || resolved.path.startsWith(rootFile.path + File.separator)) {
-                "Symlink escapes rootfs: ${target.name}"
-            }
-            sourceForFallback = resolved
-            File(linkName)
+            File(target.parentFile ?: rootFile, linkName).canonicalFile
         }
+        require(targetCanonical.toPath().startsWith(rootPath)) {
+            "Symlink escapes rootfs: ${target.name} -> $linkName"
+        }
+        val sourceForFallback = targetCanonical
+        val linkTarget = File(linkName)
         target.delete()
         runCatching {
             Files.createSymbolicLink(target.toPath(), linkTarget.toPath())
@@ -205,7 +237,7 @@ class RootfsInstaller(
             ) {
                 throw error
             }
-            require(sourceForFallback != null && sourceForFallback.exists()) {
+            require(sourceForFallback.exists()) {
                 "Symlink target is unavailable: $linkName"
             }
             if (sourceForFallback.isDirectory) {

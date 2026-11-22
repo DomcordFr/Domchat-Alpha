@@ -35,6 +35,7 @@ import me.lucid.ai.provider.TextGenerationParams
 import me.lucid.ai.ui.UIMessage
 import me.lucid.domchat.R
 import me.lucid.domchat.RouteActivity
+import me.lucid.domchat.security.InternalIntentAuthenticator
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.SpontaneousMessagingStateStore
@@ -527,6 +528,7 @@ class SpontaneousWorker(
                 putExtra(EXTRA_SPONTANEOUS_EVENT_ID, eventId)
                 putExtra(EXTRA_SPONTANEOUS_MESSAGE, content)
                 putExtra(EXTRA_SPONTANEOUS_RELATION, relation.wireValue)
+                InternalIntentAuthenticator.signInternalIntent(context, this)
             }
             val pendingIntent = PendingIntent.getActivity(
                 context,

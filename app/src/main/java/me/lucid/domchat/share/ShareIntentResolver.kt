@@ -3,6 +3,7 @@ package me.lucid.domchat.share
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -213,11 +214,42 @@ internal fun Intent.copyShareGrantFlagsFrom(source: Intent) {
     clipData = source.clipData
 }
 
+internal fun isAllowedShareStreamUri(context: android.content.Context, uri: Uri): Boolean {
+    val scheme = uri.scheme?.lowercase() ?: return false
+    if (scheme == "content") {
+        val appFileProviderAuthority = "${context.packageName}.fileprovider"
+        if (uri.authority.equals(appFileProviderAuthority, ignoreCase = true)) {
+            android.util.Log.w(TAG, "Blocked self-referencing fileprovider URI from external share: $uri")
+            return false
+        }
+        return true
+    }
+    if (scheme == "file") {
+        val path = uri.path ?: return false
+        val file = runCatching { File(path).canonicalFile }.getOrNull() ?: return false
+        val appDataDir = context.applicationInfo.dataDir?.let { File(it).canonicalFile }
+        if (appDataDir != null && file.toPath().startsWith(appDataDir.toPath())) {
+            android.util.Log.w(TAG, "Blocked private app data directory file from external share: $file")
+            return false
+        }
+        val filesDir = context.filesDir?.canonicalFile
+        if (filesDir != null && file.toPath().startsWith(filesDir.toPath())) {
+            android.util.Log.w(TAG, "Blocked private files directory file from external share: $file")
+            return false
+        }
+        return true
+    }
+    return false
+}
+
 private suspend fun android.content.Context.copyShareAttachment(
     rawUri: String,
     fallbackMimeType: String?,
 ): ShareAttachment? {
     val sourceUri = rawUri.toUri()
+    if (!isAllowedShareStreamUri(this, sourceUri)) {
+        return null
+    }
     val copiedUri = ChatAttachmentManager.importChatFile(
         uri = sourceUri,
         fileNameHint = getFileNameFromUri(sourceUri),

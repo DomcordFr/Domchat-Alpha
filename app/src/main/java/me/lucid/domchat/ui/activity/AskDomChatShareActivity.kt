@@ -15,6 +15,7 @@ import me.lucid.highlight.LocalHighlighter
 import me.lucid.common.platform.PlatformHttpClient
 import me.lucid.domchat.RouteActivity
 import me.lucid.domchat.data.datastore.SettingsStore
+import me.lucid.domchat.security.InternalIntentAuthenticator
 import me.lucid.domchat.share.resolveSharePayload
 import me.lucid.domchat.share.toRawSharePayload
 import me.lucid.domchat.ui.components.textselection.TextSelectionSheet
@@ -83,6 +84,7 @@ class AskDomChatShareActivity : ComponentActivity() {
                                         flags =
                                             Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                                         putQuickAskContinuationData(continuationData)
+                                        InternalIntentAuthenticator.signInternalIntent(this@AskDomChatShareActivity, this)
                                     }
                                 startActivity(routeIntent)
                                 finish()

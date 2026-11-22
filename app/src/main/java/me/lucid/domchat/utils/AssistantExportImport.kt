@@ -242,14 +242,16 @@ object AssistantExportImport : KoinComponent {
                     val attachments = entryAttachments[entry.id.toString()] ?: emptyList()
                     val restoredAttachments = attachments.map { att ->
                         try {
-                            val fileName = "lb_${lorebook.id}_${System.currentTimeMillis()}_${att.fileName}"
-                            val file = File(context.filesDir, "lorebook_attachments/$fileName")
+                            val safeName = sanitizeImportFileName(att.fileName)
+                            val fileName = "lb_${lorebook.id}_${System.currentTimeMillis()}_$safeName"
+                            val baseDir = File(context.filesDir, "lorebook_attachments")
+                            val file = File(baseDir, fileName).assertInsideDirectory(baseDir)
                             file.parentFile?.mkdirs()
                             file.writeBytes(base64Decode(att.content))
                             ModeAttachment(
                                 url = Uri.fromFile(file).toString(),
                                 type = att.type,
-                                fileName = att.fileName,
+                                fileName = safeName,
                                 mime = att.mime
                             )
                         } catch (e: Exception) {

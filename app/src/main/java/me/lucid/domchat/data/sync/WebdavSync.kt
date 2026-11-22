@@ -92,10 +92,7 @@ class WebdavSync(
         item: WebDavBackupItem,
     ): RestoreResult = withContext(Dispatchers.IO) {
         val collection = webDavClientFactory.hrefCollection(webDavConfig, item.href)
-        val backupFile = File(context.cacheDir, item.displayName)
-        if (backupFile.exists()) {
-            backupFile.delete()
-        }
+        val backupFile = File.createTempFile("webdav_restore_", ".zip", context.cacheDir)
 
         collection.get(
             accept = "",

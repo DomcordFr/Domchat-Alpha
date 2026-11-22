@@ -59,6 +59,7 @@ fun WebViewPage(url: String, content: String) {
     } else {
         rememberWebViewState(
             data = content.base64Decode(),
+            baseUrl = "file:///android_asset/html/",
             settings = {
                 builtInZoomControls = true
                 displayZoomControls = false
@@ -118,7 +119,7 @@ fun WebViewPage(url: String, content: String) {
                                 onClick = {
                                     showDropdown = false
                                     state.currentUrl?.let { url ->
-                                        if (url.isNotBlank()) {
+                                        if (url.startsWith("https://", ignoreCase = true) || url.startsWith("http://", ignoreCase = true)) {
                                             urlHandler.openUri(url)
                                         }
                                     }

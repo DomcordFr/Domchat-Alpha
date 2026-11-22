@@ -7,7 +7,10 @@ import android.os.Build
 import android.os.Environment
 import android.provider.Settings
 import android.widget.Toast
+import androidx.core.net.toFile
 import androidx.core.net.toUri
+import java.io.File
+import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -197,7 +200,7 @@ class UpdateChecker(private val client: PlatformHttpClient) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || context.packageManager.canRequestPackageInstalls()
     }
 
-    fun installDownloadedUpdate(context: Context, uriString: String): Boolean {
+    fun installDownloadedUpdate(context: Context, uriString: String, expectedSha256: String? = null): Boolean {
         if (!canInstallDownloadedUpdate(context)) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
@@ -207,12 +210,57 @@ class UpdateChecker(private val client: PlatformHttpClient) {
             return false
         }
 
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uriString.toUri(), "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
-        context.startActivity(intent)
-        return true
+        return runCatching {
+            val sourceUri = uriString.toUri()
+            val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
+            val localApk = File(updatesDir, "update.apk")
+            if (localApk.exists()) {
+                localApk.delete()
+            }
+            val digest = MessageDigest.getInstance("SHA-256")
+            val inputStream = when (sourceUri.scheme) {
+                "content" -> context.contentResolver.openInputStream(sourceUri)
+                "file" -> sourceUri.toFile().inputStream()
+                else -> null
+            } ?: error("Failed to open downloaded APK stream")
+
+            inputStream.use { input ->
+                localApk.outputStream().use { output ->
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read <= 0) break
+                        digest.update(buffer, 0, read)
+                        output.write(buffer, 0, read)
+                    }
+                }
+            }
+
+            if (!expectedSha256.isNullOrBlank()) {
+                val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
+                if (!actualSha256.equals(expectedSha256.trim(), ignoreCase = true)) {
+                    localApk.delete()
+                    Toast.makeText(context, "Update verification failed: SHA-256 mismatch", Toast.LENGTH_LONG).show()
+                    return false
+                }
+            }
+
+            val contentUri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                localApk
+            )
+
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(contentUri, "application/vnd.android.package-archive")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            }
+            context.startActivity(intent)
+            true
+        }.onFailure {
+            android.util.Log.e("UpdateChecker", "Failed to stage update APK", it)
+            Toast.makeText(context, "Failed to launch package installer", Toast.LENGTH_SHORT).show()
+        }.getOrDefault(false)
     }
     
     fun isUpdateIgnored(context: Context, version: String, forceCheck: Boolean): Boolean {

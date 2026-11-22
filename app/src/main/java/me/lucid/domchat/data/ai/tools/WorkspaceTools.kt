@@ -23,8 +23,8 @@ private const val MAX_IMAGE_FILE_BYTES = 15L * 1024 * 1024
 
 val WorkspaceToolDefaultApprovals: Map<String, Boolean> = mapOf(
     "workspace_read_file" to false,
-    "workspace_write_file" to false,
-    "workspace_edit_file" to false,
+    "workspace_write_file" to true,
+    "workspace_edit_file" to true,
     "workspace_shell" to true,
 )
 

@@ -405,7 +405,9 @@ private fun ToolCallPreviewSheet(
                                     val text = itemObj["text"]?.jsonPrimitive?.content ?: return@items
                                     Card(
                                         onClick = {
-                                            navController.navigate(Screen.WebView(url = url))
+                                            if (url.startsWith("https://", ignoreCase = true) || url.startsWith("http://", ignoreCase = true)) {
+                                                navController.navigate(Screen.WebView(url = url))
+                                            }
                                         },
                                         colors = CardDefaults.cardColors(
                                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,

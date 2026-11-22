@@ -187,6 +187,10 @@ fun Mermaid(
         settings = {
             builtInZoomControls = true
             displayZoomControls = false
+            allowFileAccess = false
+            allowFileAccessFromFileURLs = false
+            allowUniversalAccessFromFileURLs = false
+            allowContentAccess = false
         }
     )
 
@@ -459,6 +463,7 @@ private fun buildMermaidHtml(
             <script>
               mermaid.initialize({
                     startOnLoad: false,
+                    securityLevel: 'strict',
                     theme: '${theme.value}',
                     themeVariables: {
                         primaryColor: '${primaryColor}',

@@ -112,6 +112,7 @@ import me.lucid.domchat.ui.pages.setting.SettingUICustomizationPage
 import me.lucid.domchat.ui.pages.setting.SettingFontsPage
 import me.lucid.domchat.ui.pages.setting.AdaptiveSettingsScaffold
 import me.lucid.domchat.ui.pages.setting.SettingsDestination
+import me.lucid.domchat.security.InternalIntentAuthenticator
 import me.lucid.domchat.share.ResolvedSharePayload
 import me.lucid.domchat.share.readResolvedSharePayload
 import me.lucid.domchat.ui.theme.LocalDarkMode
@@ -344,7 +345,8 @@ class RouteActivity : ComponentActivity() {
                     .onFailure { android.util.Log.e(TAG, "increment app launches failed", it) }
             }
             
-            val spontaneousNotification = intent.toSpontaneousNotificationData()
+            val isInternal = InternalIntentAuthenticator.isInternalIntent(this, intent)
+            val spontaneousNotification = if (isInternal) intent.toSpontaneousNotificationData() else null
             val intentAssistantId = if (spontaneousNotification == null) {
                 intent?.getStringExtra(EXTRA_ASSISTANT_ID)
             } else {
@@ -355,9 +357,9 @@ class RouteActivity : ComponentActivity() {
             } else {
                 null
             }
-            val intentWebServerSettings = intent?.getBooleanExtra("webServerSettings", false) == true
-            pendingTextSelection = intent?.readQuickAskContinuationData()
-            pendingShareIntent = intent?.readResolvedSharePayload()
+            val intentWebServerSettings = isInternal && (intent?.getBooleanExtra("webServerSettings", false) == true)
+            pendingTextSelection = if (isInternal) intent?.readQuickAskContinuationData() else null
+            pendingShareIntent = if (isInternal) intent?.readResolvedSharePayload() else null
 
             // Pre-seed initialChatScreen immediately so frame 1 renders without blank box delay
             initialChatScreen = determineInitialChatScreen(
@@ -647,14 +649,16 @@ class RouteActivity : ComponentActivity() {
         val conversationIdText = intent.getStringExtra(EXTRA_CONVERSATION_ID)
         val assistantIdText = intent.getStringExtra(EXTRA_ASSISTANT_ID)
         android.util.Log.d(TAG, "Intent extras: conversationId=$conversationIdText, assistantId=$assistantIdText")
-        pendingShareIntent = intent.readResolvedSharePayload()
-        pendingTextSelection = intent.readQuickAskContinuationData() ?: pendingTextSelection
+        val isInternal = InternalIntentAuthenticator.isInternalIntent(this, intent)
+        pendingShareIntent = if (isInternal) intent.readResolvedSharePayload() else null
+        pendingTextSelection = if (isInternal) (intent.readQuickAskContinuationData() ?: pendingTextSelection) else pendingTextSelection
 
-        if (intent.getBooleanExtra("webServerSettings", false)) {
+        if (isInternal && intent.getBooleanExtra("webServerSettings", false)) {
             navStack?.navigate(Screen.SettingWeb)
             return
         }
-        intent.toSpontaneousNotificationData()?.let { notification ->
+        val spontaneousNotification = if (isInternal) intent.toSpontaneousNotificationData() else null
+        spontaneousNotification?.let { notification ->
             lifecycleScope.launch {
                 resolveSpontaneousChatTarget(notification)?.let { target ->
                     if (navStack == null) {

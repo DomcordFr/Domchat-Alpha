@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import me.lucid.common.platform.PlatformHttpClient
 import me.lucid.domchat.RouteActivity
 import me.lucid.domchat.data.datastore.SettingsStore
+import me.lucid.domchat.security.InternalIntentAuthenticator
 import me.lucid.domchat.share.copyShareGrantFlagsFrom
 import me.lucid.domchat.share.putResolvedSharePayload
 import me.lucid.domchat.share.resolveSharePayload
@@ -38,6 +39,7 @@ class ShareWithCharacterActivity : ComponentActivity() {
                 type = payload.mimeType
                 putResolvedSharePayload(payload)
                 copyShareGrantFlagsFrom(intent)
+                InternalIntentAuthenticator.signInternalIntent(this@ShareWithCharacterActivity, this)
             }
             startActivity(routeIntent)
             finish()
