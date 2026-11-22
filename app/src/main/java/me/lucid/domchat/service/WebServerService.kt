@@ -123,13 +123,6 @@ class WebServerService : Service() {
         return START_STICKY
     }
 
-    override fun onDestroy() {
-        stateObserverJob?.cancel()
-        releaseWifiLock()
-        serviceScope.cancel()
-        super.onDestroy()
-    }
-
     private fun startForegroundCompat(notification: android.app.Notification): Boolean {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
