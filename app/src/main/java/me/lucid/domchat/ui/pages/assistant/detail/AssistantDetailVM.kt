@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import me.lucid.domchat.data.ai.rag.EmbeddingAvailability
 import me.lucid.domchat.data.ai.rag.EmbeddingService
 import me.lucid.domchat.data.datastore.Settings
@@ -194,14 +196,6 @@ class AssistantDetailVM(
 
     fun updateTags(tagIds: List<Uuid>, tags: List<Tag>) {
         viewModelScope.launch {
-            // First, update the global tags list
-            val currentTags = settingsStore.settingsFlow.value.assistantTags
-            val newTagIds = tagIds.filter { id -> currentTags.none { it.id == id } }
-            val newTags = newTagIds.map { id ->
-                AssistantTag(id = id, name = id.toString().take(8))
-            }
-            val tags = currentTags + newTags
-            
             settingsStore.update { current ->
                 val updatedAssistant = assistant.value.copy(tags = tagIds.toList())
                 val updatedAssistants = current.assistants.map {
@@ -256,16 +250,19 @@ class AssistantDetailVM(
 
     fun update(assistant: Assistant) {
         viewModelScope.launch {
+            val oldAssistant = settingsStore.settingsFlow.value.assistants.find { it.id == assistant.id }
+            if (oldAssistant != null) {
+                checkAvatarDelete(old = oldAssistant, new = assistant)
+                checkBackgroundDelete(old = oldAssistant, new = assistant)
+            }
             var removedRefs = emptyList<String>()
             settingsStore.update { currentSettings ->
-                val oldAssistant = currentSettings.assistants.find { it.id == assistant.id }
-                if (oldAssistant != null) {
-                    checkAvatarDelete(old = oldAssistant, new = assistant)
-                    checkBackgroundDelete(old = oldAssistant, new = assistant)
-                    removedRefs = oldAssistant.collectRemovedMediaRefs(new = assistant)
+                val old = currentSettings.assistants.find { it.id == assistant.id }
+                if (old != null) {
+                    removedRefs = old.collectRemovedMediaRefs(new = assistant)
                 }
                 currentSettings.copy(
-                    assistants = if (oldAssistant != null) {
+                    assistants = if (old != null) {
                         currentSettings.assistants.map {
                             if (it.id == assistant.id) assistant else it
                         }

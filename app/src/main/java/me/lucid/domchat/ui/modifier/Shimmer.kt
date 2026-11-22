@@ -38,7 +38,7 @@ fun Modifier.shimmer(
         { 0.35f }
     } else {
         val transition = rememberInfiniteTransition(label = "ShimmerTransition")
-        val progress by transition.animateFloat(
+        val progress = transition.animateFloat(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
@@ -47,7 +47,8 @@ fun Modifier.shimmer(
             ),
             label = "ShimmerProgress"
         )
-        { progress }
+        val provider: () -> Float = { progress.value }
+        provider
     }
 
     return this

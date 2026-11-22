@@ -1780,7 +1780,7 @@ private fun MarkdownNode(
                                 widthPx = resolved.width.toInt(),
                                 heightPx = resolved.height.toInt(),
                             )
-                            imageDisplayInfoCache[imageModel] = newInfo
+                            imageDisplayInfoCache.put(imageModel, newInfo)
                             reservedInfo = newInfo
                         }
                     },

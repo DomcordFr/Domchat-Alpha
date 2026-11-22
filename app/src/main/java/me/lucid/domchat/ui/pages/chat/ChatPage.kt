@@ -101,6 +101,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -2665,11 +2667,11 @@ private fun ChatPageContent(
                         },
                         onWallpaperClick = {
                             showToolbarOverflowMenu = false
-                            navController.navigate(Screen.DisplaySettings)
+                            navController.navigate(Screen.SettingDisplay)
                         },
                         onTextStylingClick = {
                             showToolbarOverflowMenu = false
-                            navController.navigate(Screen.DisplaySettings)
+                            navController.navigate(Screen.SettingDisplay)
                         },
                     )
                 }
