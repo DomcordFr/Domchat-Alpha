@@ -734,7 +734,7 @@ class ConversationRepository(
     suspend fun getAllAssistantsLastUpdateAt(): Map<Uuid, java.time.Instant> = withContext(Dispatchers.IO) {
         conversationDAO.getAllAssistantsLastUpdateAt().mapNotNull { row ->
             val id = runCatching { Uuid.parse(row.assistantId) }.getOrNull()
-            val update = row.lastUpdateAt
+            val update = row.lastUpdateAt?.let { java.time.Instant.ofEpochMilli(it) }
             if (id != null && update != null) id to update else null
         }.toMap()
     }

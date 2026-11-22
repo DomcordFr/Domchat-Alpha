@@ -116,5 +116,5 @@ interface ConversationDAO {
 
 data class AssistantLastUpdate(
     val assistantId: String,
-    val lastUpdateAt: java.time.Instant?,
+    val lastUpdateAt: Long?,
 )
