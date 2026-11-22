@@ -111,8 +111,8 @@ object LorebookExportImport {
                 attachment.url.startsWith("file://") -> {
                     val file = File(uri.path ?: return null)
                     if (file.exists()) {
-                        file.source().buffer().use { source ->
-                            source.readByteArray()
+                        file.inputStream().use { input ->
+                            input.readBoundedBytes(BoundedStreams.MAX_FILE_ENTRY_BYTES)
                         }
                     } else {
                         return null

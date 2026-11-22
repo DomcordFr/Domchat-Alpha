@@ -1,5 +1,7 @@
 package me.lucid.domchat.data.sync.importer
 
+import me.lucid.domchat.utils.BoundedStreams
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.JsonArray
@@ -42,7 +44,8 @@ object ChatboxImporter {
     )
 
     fun import(file: File): Result {
-        return import(file.readText())
+        val json = file.inputStream().use { it.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).decodeToString() }
+        return import(json)
     }
 
     fun import(json: String): Result {

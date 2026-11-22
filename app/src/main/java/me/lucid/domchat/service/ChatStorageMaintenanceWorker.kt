@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.data.repository.ChatAttachmentRepository
+import me.lucid.domchat.data.sync.AppMaintenanceLock
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -19,14 +20,16 @@ class ChatStorageMaintenanceWorker(
     private val chatAttachmentRepository: ChatAttachmentRepository by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        try {
-            chatAttachmentRepository.runMaintenance()
-            Result.success()
-        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
-            throw e
-        } catch (throwable: Throwable) {
-            Log.e(CHAT_STORAGE_MAINTENANCE_WORK_NAME, "Chat storage maintenance failed", throwable)
-            Result.retry()
+        AppMaintenanceLock.withLock {
+            try {
+                chatAttachmentRepository.runMaintenance()
+                Result.success()
+            } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+                throw e
+            } catch (throwable: Throwable) {
+                Log.e(CHAT_STORAGE_MAINTENANCE_WORK_NAME, "Chat storage maintenance failed", throwable)
+                Result.retry()
+            }
         }
     }
 }

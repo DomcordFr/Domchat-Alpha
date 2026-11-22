@@ -367,19 +367,19 @@ object AssistantExportImport : KoinComponent {
         return when {
             url.startsWith("file://") -> {
                 val file = File(uri.path ?: return null)
-                if (file.exists()) file.readBytes() else null
+                if (file.exists()) file.inputStream().use { it.readBoundedBytes(me.lucid.domchat.utils.BoundedStreams.MAX_FILE_ENTRY_BYTES) } else null
             }
             url.startsWith("content://") -> {
-                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                context.contentResolver.openInputStream(uri)?.use { it.readBoundedBytes(me.lucid.domchat.utils.BoundedStreams.MAX_FILE_ENTRY_BYTES) }
             }
             url.startsWith("/") -> {
                 // Plain file path without scheme
                 val file = File(url)
-                if (file.exists()) file.readBytes() else null
+                if (file.exists()) file.inputStream().use { it.readBoundedBytes(me.lucid.domchat.utils.BoundedStreams.MAX_FILE_ENTRY_BYTES) } else null
             }
             url.startsWith("http://") || url.startsWith("https://") -> {
                 try {
-                    java.net.URL(url).openStream().use { it.readBytes() }
+                    java.net.URL(url).openStream().use { it.readBoundedBytes(me.lucid.domchat.utils.BoundedStreams.MAX_FILE_ENTRY_BYTES) }
                 } catch (e: Exception) {
                     null
                 }

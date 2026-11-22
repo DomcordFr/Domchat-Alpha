@@ -107,6 +107,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlin.coroutines.cancellation.CancellationException
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import me.lucid.domchat.data.model.Tag as DataTag
@@ -189,16 +191,22 @@ fun AssistantDetailPage(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         val mode = pendingExportMode
-        if (uri != null && mode != null) {
+        if (uri == null) {
+            pendingExportMode = null
+            return@rememberLauncherForActivityResult
+        }
+        if (mode != null) {
             scope.launch {
                 try {
+                    val currentSettings = vm.settings.first { !it.init }
+                    val currentAssistant = currentSettings.assistants.find { it.id == assistant.id } ?: assistant
                     withContext(Dispatchers.IO) {
                         val content = when (mode) {
-                            "card_v2" -> AssistantExportImport.exportToCharacterCardV2(assistant, context)
-                            "lastchat_memories" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = false)
-                            "lastchat_lorebooks" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = false, includeLorebooks = true)
-                            "lastchat_both" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = true)
-                            else -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = false, includeLorebooks = false)
+                            "card_v2" -> AssistantExportImport.exportToCharacterCardV2(currentAssistant, context)
+                            "lastchat_memories" -> AssistantExportImport.exportToLastChatBundle(currentAssistant, context, includeMemories = true, includeLorebooks = false)
+                            "lastchat_lorebooks" -> AssistantExportImport.exportToLastChatBundle(currentAssistant, context, includeMemories = false, includeLorebooks = true)
+                            "lastchat_both" -> AssistantExportImport.exportToLastChatBundle(currentAssistant, context, includeMemories = true, includeLorebooks = true)
+                            else -> AssistantExportImport.exportToLastChatBundle(currentAssistant, context, includeMemories = false, includeLorebooks = false)
                         }
                         context.contentResolver.openOutputStream(uri)?.use {
                             it.write(content.toByteArray())
@@ -206,6 +214,7 @@ fun AssistantDetailPage(
                     }
                     toaster.show(context.getString(R.string.export_success))
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     e.printStackTrace()
                     toaster.show(
                         context.getString(
@@ -224,34 +233,38 @@ fun AssistantDetailPage(
     val pngExportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("image/png")
     ) { uri ->
-        if (uri != null) {
-            scope.launch {
-                try {
-                    val exported = withContext(Dispatchers.IO) {
-                        val bytes = AssistantExportImport.exportToCharacterCardPng(assistant, context)
-                        if (bytes != null) {
-                            context.contentResolver.openOutputStream(uri)?.use {
-                                it.write(bytes)
-                            }
-                            true
-                        } else {
-                            false
+        if (uri == null) {
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            try {
+                val currentSettings = vm.settings.first { !it.init }
+                val currentAssistant = currentSettings.assistants.find { it.id == assistant.id } ?: assistant
+                val exported = withContext(Dispatchers.IO) {
+                    val bytes = AssistantExportImport.exportToCharacterCardPng(currentAssistant, context)
+                    if (bytes != null) {
+                        context.contentResolver.openOutputStream(uri)?.use {
+                            it.write(bytes)
                         }
-                    }
-                    if (exported) {
-                        toaster.show(context.getString(R.string.export_success))
+                        true
                     } else {
-                        toaster.show(context.getString(R.string.export_failed_create_png))
+                        false
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    toaster.show(
-                        context.getString(
-                            R.string.export_failed_message,
-                            e.message ?: context.getString(R.string.backup_page_unknown_error)
-                        )
-                    )
                 }
+                if (exported) {
+                    toaster.show(context.getString(R.string.export_success))
+                } else {
+                    toaster.show(context.getString(R.string.export_failed_create_png))
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                e.printStackTrace()
+                toaster.show(
+                    context.getString(
+                        R.string.export_failed_message,
+                        e.message ?: context.getString(R.string.backup_page_unknown_error)
+                    )
+                )
             }
         }
     }

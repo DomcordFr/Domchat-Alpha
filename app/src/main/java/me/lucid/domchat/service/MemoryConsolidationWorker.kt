@@ -33,6 +33,7 @@ import me.lucid.domchat.data.db.entity.MemoryType
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.data.repository.ConversationRepository
 import me.lucid.domchat.data.repository.MemoryRepository
+import me.lucid.domchat.data.sync.AppMaintenanceLock
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
@@ -59,9 +60,15 @@ class MemoryConsolidationWorker(
     private val database: AppDatabase by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        AppMaintenanceLock.withLock {
+            doWorkInternal()
+        }
+    }
+
+    private suspend fun doWorkInternal(): Result {
         val conversationId = inputData.getString(KEY_CONVERSATION_ID)
         if (conversationId == null) {
-            return@withContext runCatching {
+            return runCatching {
                 enqueuePendingConversations()
                 Result.success()
             }.getOrElse { throwable ->
@@ -72,8 +79,8 @@ class MemoryConsolidationWorker(
         }
 
         val parsedId = runCatching { Uuid.parse(conversationId) }.getOrNull()
-            ?: return@withContext Result.failure()
-        runCatching { consolidateConversation(parsedId) }
+            ?: return Result.failure()
+        return runCatching { consolidateConversation(parsedId) }
             .fold(
                 onSuccess = { outcome ->
                     when (outcome) {

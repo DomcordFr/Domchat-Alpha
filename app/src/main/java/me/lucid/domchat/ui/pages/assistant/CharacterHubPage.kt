@@ -146,6 +146,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.Screen
@@ -392,11 +394,16 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         val assistantId = pendingExportAssistantId
-        if (uri != null && assistantId != null) {
-            val target = settings.assistants.find { it.id.toString() == assistantId }
-            if (target != null) {
-                scope.launch {
-                    try {
+        if (uri == null) {
+            pendingExportAssistantId = null
+            return@rememberLauncherForActivityResult
+        }
+        if (assistantId != null) {
+            scope.launch {
+                try {
+                    val currentSettings = vm.settings.first { !it.init }
+                    val target = currentSettings.assistants.find { it.id.toString() == assistantId }
+                    if (target != null) {
                         withContext(Dispatchers.IO) {
                             val jsonStr = AssistantExportImport.exportToCharacterCardV2(target, context)
                             context.contentResolver.openOutputStream(uri)?.use { 
@@ -404,11 +411,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             }
                         }
                         toaster?.show("Character Card exported successfully")
-                    } catch (e: Exception) {
-                        toaster?.show("Export failed: ${e.message}", ToastType.Error)
-                    } finally {
-                        pendingExportAssistantId = null
                     }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    toaster?.show("Export failed: ${e.message}", ToastType.Error)
+                } finally {
+                    pendingExportAssistantId = null
                 }
             }
         }
@@ -419,11 +427,16 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         contract = ActivityResultContracts.CreateDocument("image/png")
     ) { uri ->
         val assistantId = pendingExportAssistantId
-        if (uri != null && assistantId != null) {
-            val target = settings.assistants.find { it.id.toString() == assistantId }
-            if (target != null) {
-                scope.launch {
-                    try {
+        if (uri == null) {
+            pendingExportAssistantId = null
+            return@rememberLauncherForActivityResult
+        }
+        if (assistantId != null) {
+            scope.launch {
+                try {
+                    val currentSettings = vm.settings.first { !it.init }
+                    val target = currentSettings.assistants.find { it.id.toString() == assistantId }
+                    if (target != null) {
                         val exported = withContext(Dispatchers.IO) {
                             val bytes = AssistantExportImport.exportToCharacterCardPng(target, context)
                             if (bytes != null) {
@@ -440,11 +453,12 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                         } else {
                             toaster?.show("Export failed: could not generate PNG card", ToastType.Error)
                         }
-                    } catch (e: Exception) {
-                        toaster?.show("Export failed: ${e.message}", ToastType.Error)
-                    } finally {
-                        pendingExportAssistantId = null
                     }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    toaster?.show("Export failed: ${e.message}", ToastType.Error)
+                } finally {
+                    pendingExportAssistantId = null
                 }
             }
         }

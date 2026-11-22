@@ -38,7 +38,7 @@ object SillyTavernImporter {
     )
 
     fun import(file: File): Result {
-        return import(file.readText())
+        return file.inputStream().use { import(it, emptyList()) }
     }
 
     fun import(json: String): Result {

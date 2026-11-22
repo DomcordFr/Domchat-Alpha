@@ -13,6 +13,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -161,6 +164,7 @@ class SettingsStore(
     }
 
     private val dataStore = context.settingsStore
+    private val updateMutex = Mutex()
 
     // One-time migration flags
     private var hasPersistedLegacyModeMigration = false
@@ -456,9 +460,17 @@ class SettingsStore(
     }
 
 
-    suspend fun update(settings: Settings) = withContext(Dispatchers.IO) {
+    suspend fun update(settings: Settings) = updateMutex.withLock {
+        withContext(Dispatchers.IO) {
+            updateInternal(settings)
+        }
+    }
+
+    private suspend fun updateInternal(settings: Settings) {
         val current = if (settingsFlow.value.init) {
-            settingsFlow.first { !it.init }
+            withTimeoutOrNull(5000L) {
+                settingsFlow.first { !it.init }
+            } ?: settingsFlow.value
         } else {
             settingsFlow.value
         }
@@ -591,13 +603,17 @@ class SettingsStore(
         }
     }
 
-    suspend fun update(fn: (Settings) -> Settings) = withContext(Dispatchers.IO) {
-        val current = if (settingsFlow.value.init) {
-            settingsFlow.first { !it.init }
-        } else {
-            settingsFlow.value
+    suspend fun update(fn: (Settings) -> Settings) = updateMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val current = if (settingsFlow.value.init) {
+                withTimeoutOrNull(5000L) {
+                    settingsFlow.first { !it.init }
+                } ?: settingsFlow.value
+            } else {
+                settingsFlow.value
+            }
+            updateInternal(fn(current))
         }
-        update(fn(current))
     }
 
     suspend fun updateAssistant(assistantId: Uuid) {

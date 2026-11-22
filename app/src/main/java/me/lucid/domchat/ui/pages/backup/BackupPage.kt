@@ -213,7 +213,9 @@ fun BackupPage(
 
                             try {
                                 withContext(Dispatchers.IO) {
-                                    context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                                    val input = context.contentResolver.openInputStream(sourceUri)
+                                        ?: throw java.io.IOException("Unable to open source chatbox file")
+                                    input.use { inputStream ->
                                         tempFile.sink().buffer().outputStream().use { outputStream ->
                                             inputStream.copyBounded(outputStream, BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES)
                                         }
@@ -232,7 +234,9 @@ fun BackupPage(
 
                             try {
                                 withContext(Dispatchers.IO) {
-                                    context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                                    val input = context.contentResolver.openInputStream(sourceUri)
+                                        ?: throw java.io.IOException("Unable to open source cherry studio file")
+                                    input.use { inputStream ->
                                         tempFile.sink().buffer().outputStream().use { outputStream ->
                                             inputStream.copyBounded(outputStream, BoundedStreams.MAX_ARCHIVE_TOTAL_BYTES)
                                         }

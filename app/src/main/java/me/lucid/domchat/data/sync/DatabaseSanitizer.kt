@@ -137,6 +137,7 @@ object DatabaseSanitizer {
             }
         } catch (e: Exception) {
             LogUtil.w(TAG, "Room migration on backup db failed or skipped: ${e.message}")
+            context.deleteDatabase(migrationDbName)
         }
 
         // Initialize Target DB using Room to ensure schema creation

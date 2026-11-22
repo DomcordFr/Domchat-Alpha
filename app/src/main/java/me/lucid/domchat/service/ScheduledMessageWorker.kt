@@ -17,6 +17,7 @@ import me.lucid.domchat.data.datastore.findProvider
 import me.lucid.domchat.data.datastore.getAssistantById
 import me.lucid.domchat.data.repository.ConversationRepository
 import me.lucid.domchat.data.repository.MemoryRepository
+import me.lucid.domchat.data.sync.AppMaintenanceLock
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.uuid.Uuid
@@ -34,7 +35,11 @@ class ScheduledMessageWorker(
     private val memoryRepository: MemoryRepository by inject()
     private val providerManager: me.lucid.ai.provider.ProviderManager by inject()
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = AppMaintenanceLock.withLock {
+        doWorkInternal()
+    }
+
+    private suspend fun doWorkInternal(): Result {
         return try {
             val assistantIdStr = inputData.getString(ScheduledMessageWorkSpec.KEY_ASSISTANT_ID)
                 ?: return Result.failure()

@@ -10,6 +10,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import me.lucid.ai.provider.Model
 import me.lucid.ai.provider.ProviderSetting
 import me.lucid.common.http.jsonObjectOrNull
+import me.lucid.domchat.utils.BoundedStreams
+import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import me.lucid.domchat.utils.JsonInstant
 import java.io.File
 import java.util.zip.ZipFile
@@ -19,7 +21,7 @@ object CherryStudioProviderImporter {
         val dataJson = ZipFile(file).use { zip ->
             val entry = zip.getEntry("data.json")
                 ?: throw IllegalArgumentException("Invalid Cherry Studio backup: data.json not found")
-            zip.getInputStream(entry).bufferedReader().use { it.readText() }
+            zip.getInputStream(entry).use { it.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).decodeToString() }
         }
 
         val root = JsonInstant.parseToJsonElement(dataJson).jsonObject

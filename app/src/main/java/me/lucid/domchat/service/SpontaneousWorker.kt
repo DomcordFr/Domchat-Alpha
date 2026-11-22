@@ -48,6 +48,7 @@ import me.lucid.domchat.data.model.SpontaneousMessageMode
 import me.lucid.domchat.data.model.Conversation
 import me.lucid.domchat.data.repository.ConversationRepository
 import me.lucid.domchat.data.repository.MemoryRepository
+import me.lucid.domchat.data.sync.AppMaintenanceLock
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.LocalTime
@@ -72,15 +73,21 @@ class SpontaneousWorker(
     private val spontaneousStateStore: SpontaneousMessagingStateStore by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        AppMaintenanceLock.withLock {
+            doWorkInternal()
+        }
+    }
+
+    private suspend fun doWorkInternal(): Result {
         val settings = try {
             settingsStore.settingsFlow.first { !it.init }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Log.e(TAG, "Failed to load hydrated settings for spontaneous messaging", e)
-            return@withContext Result.retry()
+            return Result.retry()
         }
 
-        try {
+        return try {
             process(settings)
             Result.success()
         } catch (e: CancellationException) {

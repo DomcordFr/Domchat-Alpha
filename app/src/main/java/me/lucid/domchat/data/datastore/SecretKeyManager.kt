@@ -422,6 +422,15 @@ class SecretKeyManager(
             }
         }
 
+        val migratedModels = updated.models.map { model ->
+            val overwrite = model.providerOverwrite
+            if (overwrite != null) {
+                model.copy(providerOverwrite = migrateProviderSecrets(overwrite))
+            } else {
+                model
+            }
+        }
+
         return when (updated) {
             is ProviderSetting.OpenAI -> {
                 val legacyKey = getApiKey(updated.id, updated.apiKey)
@@ -433,11 +442,11 @@ class SecretKeyManager(
                     )
                     setPoolApiKey(updated.id, entry.id, legacyKey)
                     setApiKey(updated.id, "")
-                    updated.copy(apiKey = "", apiKeyPool = listOf(entry))
+                    updated.copy(apiKey = "", apiKeyPool = listOf(entry), models = migratedModels)
                 } else if (updated.apiKey.isNotBlank()) {
                     setApiKey(updated.id, updated.apiKey)
-                    updated.copy(apiKey = "")
-                } else updated
+                    updated.copy(apiKey = "", models = migratedModels)
+                } else updated.copy(models = migratedModels)
             }
 
             is ProviderSetting.Google -> {
@@ -460,7 +469,7 @@ class SecretKeyManager(
                     setPrivateKey(g.id, g.privateKey)
                     g = g.copy(privateKey = "")
                 }
-                g
+                g.copy(models = migratedModels)
             }
 
             is ProviderSetting.Claude -> {
@@ -473,15 +482,15 @@ class SecretKeyManager(
                     )
                     setPoolApiKey(updated.id, entry.id, legacyKey)
                     setApiKey(updated.id, "")
-                    updated.copy(apiKey = "", apiKeyPool = listOf(entry))
+                    updated.copy(apiKey = "", apiKeyPool = listOf(entry), models = migratedModels)
                 } else if (updated.apiKey.isNotBlank()) {
                     setApiKey(updated.id, updated.apiKey)
-                    updated.copy(apiKey = "")
-                } else updated
+                    updated.copy(apiKey = "", models = migratedModels)
+                } else updated.copy(models = migratedModels)
             }
 
-            is ProviderSetting.ComfyUI -> updated
-            is ProviderSetting.LiteRtLocal -> updated // on-device, no secrets
+            is ProviderSetting.ComfyUI -> updated.copy(models = migratedModels)
+            is ProviderSetting.LiteRtLocal -> updated.copy(models = migratedModels) // on-device, no secrets
         }
     }
 

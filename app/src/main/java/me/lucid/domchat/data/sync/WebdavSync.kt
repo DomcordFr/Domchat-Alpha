@@ -363,6 +363,8 @@ class WebdavSync(
                 var manifest: BackupManifest? = null
                 val stagedPrefs = linkedMapOf<String, SharedPreferencesSnapshot>()
                 val stagedManagedDirs = linkedSetOf<String>()
+                var stagedLlmModels: List<me.lucid.locallm.InstalledLocalModel>? = null
+                var stagedSttModels: List<me.lucid.asr.local.InstalledSherpaModel>? = null
                 var foundSupportedEntry = false
                 var totalDecompressedBytes = 0L
 
@@ -409,9 +411,7 @@ class WebdavSync(
                                     recordDecompressed(bytes.size.toLong())
                                     val content = bytes.toString(Charsets.UTF_8)
                                     runCatching {
-                                        val models = json.decodeFromString<List<me.lucid.locallm.InstalledLocalModel>>(content)
-                                        val store = me.lucid.locallm.LocalModelStore(context)
-                                        models.forEach { store.upsert(it) }
+                                        stagedLlmModels = json.decodeFromString<List<me.lucid.locallm.InstalledLocalModel>>(content)
                                     }
                                     foundSupportedEntry = true
                                 }
@@ -421,9 +421,7 @@ class WebdavSync(
                                     recordDecompressed(bytes.size.toLong())
                                     val content = bytes.toString(Charsets.UTF_8)
                                     runCatching {
-                                        val models = json.decodeFromString<List<me.lucid.asr.local.InstalledSherpaModel>>(content)
-                                        val store = me.lucid.asr.local.SherpaModelStore(context)
-                                        models.forEach { store.upsert(it) }
+                                        stagedSttModels = json.decodeFromString<List<me.lucid.asr.local.InstalledSherpaModel>>(content)
                                     }
                                     foundSupportedEntry = true
                                 }
@@ -522,6 +520,15 @@ class WebdavSync(
                             }
 
                             resetWorkspaceShellStatesInStagedDb(cleanDb)
+                            runCatching {
+                                android.database.sqlite.SQLiteDatabase.openDatabase(
+                                    cleanDb.path,
+                                    null,
+                                    android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
+                                ).use { db ->
+                                    db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null)?.close()
+                                }
+                            }
                             LogUtil.i(TAG, "restoreFromBackupFile: Staged database sanitized and shell states adjusted")
                         } catch (e: Exception) {
                             LogUtil.e(TAG, "restoreFromBackupFile: Failed to stage database", e)
@@ -542,17 +549,27 @@ class WebdavSync(
                                     cleanedSettings.providers.map { restored ->
                                         val liveProv = liveMap[restored.id]
                                         if (liveProv != null) {
+                                            val liveModelMap = liveProv.models.associateBy { it.id }
+                                            val modelsWithPreservedOverwrites = restored.models.map { restoredModel ->
+                                                val liveModel = liveModelMap[restoredModel.id]
+                                                if (liveModel?.providerOverwrite != null) {
+                                                    restoredModel.copy(providerOverwrite = liveModel.providerOverwrite)
+                                                } else {
+                                                    restoredModel
+                                                }
+                                            }
                                             when (restored) {
                                                 is ProviderSetting.OpenAI -> (liveProv as? ProviderSetting.OpenAI)?.let {
-                                                    restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
-                                                } ?: restored
+                                                    restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool, models = modelsWithPreservedOverwrites)
+                                                } ?: restored.copy(models = modelsWithPreservedOverwrites)
                                                 is ProviderSetting.Google -> (liveProv as? ProviderSetting.Google)?.let {
-                                                    restored.copy(apiKey = it.apiKey, privateKey = it.privateKey, apiKeyPool = it.apiKeyPool)
-                                                } ?: restored
+                                                    restored.copy(apiKey = it.apiKey, privateKey = it.privateKey, apiKeyPool = it.apiKeyPool, models = modelsWithPreservedOverwrites)
+                                                } ?: restored.copy(models = modelsWithPreservedOverwrites)
                                                 is ProviderSetting.Claude -> (liveProv as? ProviderSetting.Claude)?.let {
-                                                    restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
-                                                } ?: restored
-                                                else -> restored
+                                                    restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool, models = modelsWithPreservedOverwrites)
+                                                } ?: restored.copy(models = modelsWithPreservedOverwrites)
+                                                is ProviderSetting.ComfyUI -> restored.copy(models = modelsWithPreservedOverwrites)
+                                                is ProviderSetting.LiteRtLocal -> restored.copy(models = modelsWithPreservedOverwrites)
                                             }
                                         } else restored
                                     }
@@ -644,6 +661,8 @@ class WebdavSync(
                                 chatStorage = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.chatStorage else live.chatStorage,
                                 textSelectionConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.textSelectionConfig else live.textSelectionConfig,
                                 assistantOverlayConfig = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantOverlayConfig else live.assistantOverlayConfig,
+                                huggingFaceToken = if (BackupContentOption.API_KEYS.name in selected) cleanedSettings.huggingFaceToken else live.huggingFaceToken,
+                                mcpOAuthTokens = if (BackupContentOption.API_KEYS.name in selected) cleanedSettings.mcpOAuthTokens else live.mcpOAuthTokens,
                             )
                         } else {
                             cleanedSettings
@@ -667,10 +686,11 @@ class WebdavSync(
                     val liveFilesBackupDir = File(restoreTempDir, "live_files_bak")
                     val finalDbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
 
-                    var dbCommitted = false
+                    var dbTouched = false
                     var settingsCommitted = false
                     var prefsCommitted = false
-                    var filesCommitted = false
+                    var liveLlmModelsSnapshot: List<me.lucid.locallm.InstalledLocalModel>? = null
+                    var liveSttModelsSnapshot: List<me.lucid.asr.local.InstalledSherpaModel>? = null
 
                     try {
                         // Step 1: Atomic Database Swap
@@ -690,6 +710,7 @@ class WebdavSync(
                                 liveShm.copyTo(File(liveDbBackupDir, BackupArchiveFormat.SHM_ENTRY), overwrite = true)
                             }
 
+                            dbTouched = true
                             context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
                             finalDbFile.parentFile?.mkdirs()
                             if (!stagedCleanDb.renameTo(finalDbFile)) {
@@ -699,7 +720,6 @@ class WebdavSync(
                             File(finalDbFile.path + "-wal").delete()
                             File(finalDbFile.path + "-shm").delete()
                             context.deleteDatabase("rikka_hub_sanitized")
-                            dbCommitted = true
                         }
 
                         // Step 2: Settings Commit
@@ -726,13 +746,36 @@ class WebdavSync(
                                 directoriesToRestore = directoriesToRestore,
                                 liveBackupDir = liveFilesBackupDir,
                             )
-                            filesCommitted = true
+                        }
+
+                        // Step 5: Local Models Commit (staged in memory, committed after DB/settings swap)
+                        if (stagedLlmModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent)) {
+                            val store = me.lucid.locallm.LocalModelStore(context)
+                            liveLlmModelsSnapshot = store.getAll()
+                            stagedLlmModels?.forEach { store.upsert(it) }
+                        }
+                        if (stagedSttModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent)) {
+                            val store = me.lucid.asr.local.SherpaModelStore(context)
+                            liveSttModelsSnapshot = store.getAll()
+                            stagedSttModels?.forEach { store.upsert(it) }
                         }
 
                         LogUtil.i(TAG, "restoreFromBackupFile: Restore completed successfully")
                     } catch (error: Exception) {
                         if (error is CancellationException) throw error
                         LogUtil.e(TAG, "restoreFromBackupFile: Commit failed, rolling back changes", error)
+                        if (liveLlmModelsSnapshot != null) {
+                            runCatching {
+                                val store = me.lucid.locallm.LocalModelStore(context)
+                                liveLlmModelsSnapshot.forEach { store.upsert(it) }
+                            }
+                        }
+                        if (liveSttModelsSnapshot != null) {
+                            runCatching {
+                                val store = me.lucid.asr.local.SherpaModelStore(context)
+                                liveSttModelsSnapshot.forEach { store.upsert(it) }
+                            }
+                        }
                         if (prefsCommitted) {
                             runCatching {
                                 livePrefsSnapshots.forEach { (storeName, snapshot) ->
@@ -744,7 +787,7 @@ class WebdavSync(
                         if (settingsCommitted) {
                             runCatching { settingsStore.update(liveSettings) }
                         }
-                        if (dbCommitted) {
+                        if (dbTouched) {
                             runCatching {
                                 context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
                                 val backupDb = File(liveDbBackupDir, BackupArchiveFormat.DB_ENTRY)
@@ -783,23 +826,35 @@ class WebdavSync(
             }
         }
 
-    private fun checkpointDatabase() {
-        runCatching {
-            appDatabase.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val busy = cursor.getInt(0)
-                    val log = cursor.getInt(1)
-                    val checkpointed = cursor.getInt(2)
-                    LogUtil.i(TAG, "checkpointDatabase: busy=$busy, log=$log, checkpointed=$checkpointed")
+    private fun checkpointDatabase(): Boolean {
+        for (attempt in 1..3) {
+            val success = runCatching {
+                appDatabase.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val busy = cursor.getInt(0)
+                        val log = cursor.getInt(1)
+                        val checkpointed = cursor.getInt(2)
+                        LogUtil.i(TAG, "checkpointDatabase attempt $attempt: busy=$busy, log=$log, checkpointed=$checkpointed")
+                        busy == 0
+                    } else {
+                        false
+                    }
                 }
+            }.getOrElse { error ->
+                LogUtil.w(TAG, "prepareBackupFile: WAL checkpoint attempt $attempt failed", error)
+                false
             }
-        }.onFailure { error ->
-            LogUtil.w(TAG, "prepareBackupFile: WAL checkpoint failed", error)
+            if (success) return true
+            if (attempt < 3) Thread.sleep(50)
         }
+        return false
     }
 
     private fun snapshotDatabaseToFile(context: Context, targetFile: File): Boolean {
-        checkpointDatabase()
+        if (!checkpointDatabase()) {
+            LogUtil.w(TAG, "snapshotDatabaseToFile: Checkpoint returned busy/failed")
+            return false
+        }
         targetFile.parentFile?.mkdirs()
         return try {
             val db = appDatabase.openHelper.writableDatabase

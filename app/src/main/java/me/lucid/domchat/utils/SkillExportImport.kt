@@ -5,6 +5,7 @@ import android.net.Uri
 import kotlinx.serialization.json.Json
 import me.lucid.domchat.data.model.Skill
 import me.lucid.domchat.data.model.SkillExport
+import me.lucid.domchat.utils.BoundedStreams.copyBounded
 import me.lucid.domchat.utils.BoundedStreams.readBoundedBytes
 import okio.buffer
 import okio.source
@@ -119,16 +120,22 @@ object SkillExportImport {
      * Import a skill from a URI.
      */
     fun importFromUri(context: Context, uri: Uri): ImportResult {
+        val tempFile = File(context.cacheDir, "temp_skill_${System.currentTimeMillis()}.zip")
         return try {
             val inputStream = context.contentResolver.openInputStream(uri)
                 ?: return ImportResult.Error("Could not open file")
 
-            val bytes = inputStream.use { input ->
-                input.readBoundedBytes(MAX_PACKAGE_BYTES.toLong())
+            inputStream.use { input ->
+                tempFile.outputStream().use { out ->
+                    input.copyBounded(out, MAX_PACKAGE_BYTES.toLong())
+                }
             }
+            val bytes = tempFile.inputStream().use { it.readBoundedBytes(MAX_PACKAGE_BYTES.toLong()) }
             importFromBytes(bytes)
         } catch (e: Exception) {
             ImportResult.Error("Failed to read file: ${e.message}")
+        } finally {
+            tempFile.delete()
         }
     }
 
@@ -301,7 +308,7 @@ object SkillExportImport {
             ?: error("Invalid skill file path")
         require(target.isFile) { "Skill file does not exist" }
         require(target.length() <= MAX_EDITABLE_FILE_BYTES) { "File is too large to edit" }
-        val bytes = target.readBytes()
+        val bytes = target.inputStream().use { it.readBoundedBytes(MAX_EDITABLE_FILE_BYTES.toLong()) }
         require(bytes.none { it == 0.toByte() }) { "Binary files cannot be edited as text" }
         return bytes.toString(Charsets.UTF_8)
     }
@@ -330,7 +337,7 @@ object SkillExportImport {
         val root = skill.packageRoot?.let { File(context.filesDir, "skills/$it") }
         val files = if (root?.isDirectory == true) {
             root.walkTopDown().filter { it.isFile }.associate { file ->
-                file.relativeTo(root).invariantSeparatorsPath to file.readBytes()
+                file.relativeTo(root).invariantSeparatorsPath to file.inputStream().use { it.readBoundedBytes(MAX_PACKAGE_BYTES.toLong()) }
             }
         } else emptyMap()
         val normalizedFiles = if (files.containsKey("SKILL.md")) {
