@@ -751,12 +751,12 @@ class WebdavSync(
                         // Step 5: Local Models Commit (staged in memory, committed after DB/settings swap)
                         if (stagedLlmModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent)) {
                             val store = me.lucid.locallm.LocalModelStore(context)
-                            liveLlmModelsSnapshot = store.getAll()
+                            liveLlmModelsSnapshot = store.current()
                             stagedLlmModels?.forEach { store.upsert(it) }
                         }
                         if (stagedSttModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent)) {
                             val store = me.lucid.asr.local.SherpaModelStore(context)
-                            liveSttModelsSnapshot = store.getAll()
+                            liveSttModelsSnapshot = store.current()
                             stagedSttModels?.forEach { store.upsert(it) }
                         }
 

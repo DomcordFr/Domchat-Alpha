@@ -2171,16 +2171,16 @@ private fun AssistantMessageTurn(
                             assistant = assistant,
                             userNickname = userNickname,
                             scope = AssistantAffectScope.ASSISTANT,
-                            isStreaming = loading && index == activeParts.lastIndex
+                            isStreaming = loading && index == allTextBubbles.lastIndex
                         )
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
                             paragraphSpacing = 12.dp,
-                            streamingTextReveal = loading && index == activeParts.lastIndex,
+                            streamingTextReveal = loading && index == allTextBubbles.lastIndex,
                             displaySetting = effectiveDisplay,
                             onRevealComplete = {
-                                if (index == activeParts.lastIndex) {
+                                if (index == allTextBubbles.lastIndex) {
                                     isTextAnimating = false
                                 }
                             },
