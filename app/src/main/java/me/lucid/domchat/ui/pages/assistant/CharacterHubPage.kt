@@ -330,6 +330,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     var showMoveToGroupDialog by remember { mutableStateOf(false) }
     var showReorderSheet by remember { mutableStateOf(false) }
     var groupSearchQuery by remember { mutableStateOf("") }
+    var isGroupTabsInitialized by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(120)
+        isGroupTabsInitialized = true
+    }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -571,18 +576,23 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 3 } + fadeOut(animationSpec = tween(160)))
                     }
                 } else {
-                    val allOrdered = listOf<String?>(null) + (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder })
-                    val initialIdx = allOrdered.indexOf(initialState.second).let { if (it == -1) 0 else it }
-                    val targetIdx = allOrdered.indexOf(targetState.second).let { if (it == -1) 0 else it }
-                    if (targetIdx > initialIdx) {
-                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeIn(animationSpec = tween(200)))
-                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeOut(animationSpec = tween(160)))
-                    } else if (targetIdx < initialIdx) {
-                        (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeIn(animationSpec = tween(200)))
-                            .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeOut(animationSpec = tween(160)))
-                    } else {
+                    if (initialState.second == targetState.second) {
                         (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
                             .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
+                    } else {
+                        val allOrdered = listOf<String?>(null) + (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder })
+                        val initialIdx = allOrdered.indexOf(initialState.second).let { if (it == -1) 0 else it }
+                        val targetIdx = allOrdered.indexOf(targetState.second).let { if (it == -1) 0 else it }
+                        if (targetIdx > initialIdx) {
+                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeIn(animationSpec = tween(200)))
+                                .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeOut(animationSpec = tween(160)))
+                        } else if (targetIdx < initialIdx) {
+                            (slideInHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { -it / 2 } + fadeIn(animationSpec = tween(200)))
+                                .togetherWith(slideOutHorizontally(animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) { it / 2 } + fadeOut(animationSpec = tween(160)))
+                        } else {
+                            (fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)))
+                                .togetherWith(fadeOut(animationSpec = tween(150)) + scaleOut(targetScale = 0.96f, animationSpec = tween(150)))
+                        }
                     }
                 }
             },
@@ -871,8 +881,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             groupNames = groupNames,
                             groupOrder = groupOrder,
                             allCount = settings.assistants.size,
+                            isInitialized = isGroupTabsInitialized,
                             onGroupSelected = { groupId ->
-                                selectedGroupId = groupId
+                                if (selectedGroupId != groupId) {
+                                    selectedGroupId = groupId
+                                }
                             },
                             onNewGroup = {
                                 showNewGroupDialog = true
@@ -1209,8 +1222,11 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             groupNames = groupNames,
                             groupOrder = groupOrder,
                             allCount = settings.assistants.size,
+                            isInitialized = isGroupTabsInitialized,
                             onGroupSelected = { groupId ->
-                                selectedGroupId = groupId
+                                if (selectedGroupId != groupId) {
+                                    selectedGroupId = groupId
+                                }
                             },
                             onNewGroup = {
                                 showNewGroupDialog = true
@@ -3253,6 +3269,7 @@ private fun GroupTabsRow(
     groupNames: Map<String, String>,
     groupOrder: List<String>,
     allCount: Int,
+    isInitialized: Boolean = true,
     onGroupSelected: (String?) -> Unit,
     onNewGroup: () -> Unit,
     onGroupRenamed: (String, String) -> Unit = { _, _ -> },
@@ -3265,22 +3282,11 @@ private fun GroupTabsRow(
     val orderedGroups = (groupOrder.filter { it in groupNames } + groupNames.keys.filter { it !in groupOrder }).toList()
     var longPressedGroupId by remember { mutableStateOf<String?>(null) }
     var renameDraft by remember { mutableStateOf("") }
-    var isInitialized by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(120)
-        isInitialized = true
-    }
 
     val activeGroupBorder = remember {
         BorderStroke(
-            1.dp,
-            Brush.verticalGradient(
-                listOf(
-                    Color.White.copy(alpha = 0.65f),
-                    Color.White.copy(alpha = 0.28f),
-                    Color.White.copy(alpha = 0.12f)
-                )
-            )
+            0.5.dp,
+            LiquidGlassTokens.SpecularBorderBrush
         )
     }
     val inactiveGroupBorder = remember {
@@ -3310,7 +3316,7 @@ private fun GroupTabsRow(
                     Text(
                         text = allLabel,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
                 }
@@ -3341,7 +3347,7 @@ private fun GroupTabsRow(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
                 }
@@ -4163,14 +4169,8 @@ private fun GroupActionChip(
 ) {
     val activeBorder = remember {
         BorderStroke(
-            1.dp,
-            Brush.verticalGradient(
-                listOf(
-                    Color.White.copy(alpha = 0.65f),
-                    Color.White.copy(alpha = 0.28f),
-                    Color.White.copy(alpha = 0.12f)
-                )
-            )
+            0.5.dp,
+            LiquidGlassTokens.SpecularBorderBrush
         )
     }
     val inactiveBorder = remember {

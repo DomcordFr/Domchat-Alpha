@@ -473,6 +473,10 @@ internal data class ChatInputDraft(
     }
 }
 
+internal object ChatSwitchSession {
+    var isColdStart: Boolean = true
+}
+
 internal object ChatSessionDraftStore {
     private val drafts = mutableMapOf<Uuid, ChatInputDraft>()
 
@@ -912,14 +916,21 @@ fun ChatPage(
             firstVisibleItemScrollOffset = initialChatListScrollPosition?.firstVisibleItemScrollOffset ?: 0,
         )
     }
-    var chatListReady by remember(conversation.id) { mutableStateOf(false) }
-    var isSwitchingConversations by remember(conversation.id) { mutableStateOf(true) }
-    LaunchedEffect(target.id, conversation.id) {
-        isSwitchingConversations = true
-        delay(1200L)
-        isSwitchingConversations = false
+    val isColdStart = remember {
+        val cold = ChatSwitchSession.isColdStart
+        ChatSwitchSession.isColdStart = false
+        cold
     }
-    val isChatSwitching = settings.displaySetting.enableChatSwitchAnimation && (isSwitchingConversations || !chatListReady || !conversationInitialized || (target.id != conversation.id.toString()))
+    var chatListReady by remember(conversation.id) { mutableStateOf(false) }
+    var isSwitchingConversations by remember(conversation.id) { mutableStateOf(!isColdStart) }
+    LaunchedEffect(target.id, conversation.id) {
+        if (!isColdStart) {
+            isSwitchingConversations = true
+            delay(1200L)
+            isSwitchingConversations = false
+        }
+    }
+    val isChatSwitching = !isColdStart && settings.displaySetting.enableChatSwitchAnimation && (isSwitchingConversations || !chatListReady || !conversationInitialized || (target.id != conversation.id.toString()))
 
     // Safely handle back navigation when switching / animating into a chat
     BackHandler(enabled = isChatSwitching) {

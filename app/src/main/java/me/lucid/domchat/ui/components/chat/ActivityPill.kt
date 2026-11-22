@@ -5,6 +5,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -1015,15 +1017,8 @@ private fun ReasoningPreviewCard(
             AnimatedContent(
                 targetState = displayTitle,
                 transitionSpec = {
-                    (fadeIn(tween(220)) + slideInVertically(
-                        animationSpec = tween(220),
-                        initialOffsetY = { it / 2 }
-                    )).togetherWith(
-                        fadeOut(tween(150)) + slideOutVertically(
-                            animationSpec = tween(150),
-                            targetOffsetY = { -it / 2 }
-                        )
-                    )
+                    fadeIn(tween(200, easing = LinearOutSlowInEasing))
+                        .togetherWith(fadeOut(tween(160, easing = FastOutLinearInEasing)))
                 },
                 label = "reasoning_preview_title",
                 modifier = Modifier.weight(1f)
@@ -1061,26 +1056,34 @@ private fun ReasoningPreviewCard(
             label = "reasoning_bottom_fade"
         )
 
-        MarkdownBlock(
-            content = previewText,
-            modifier = Modifier
-                .fillMaxWidth()
-                .fadeEdges(
-                    topProgress = topFadeProgress,
-                    bottomProgress = bottomFadeProgress,
-                    fadeHeight = 64f
-                )
-                .heightIn(max = if (active && isLive && onHeaderClick == null) 120.dp else 280.dp)
-                .verticalScroll(scrollState),
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = LocalContentColor.current
-            ),
-            paragraphSpacing = 8.dp,
-            streamingTextReveal = isLive,
-            onExpandedStreamingCodeBlockChanged = {
-                if (isLive) streamingLayoutTick++
-            }
-        )
+        AnimatedVisibility(
+            visible = active && previewText.isNotBlank(),
+            enter = fadeIn(animationSpec = tween(220, delayMillis = 40, easing = LinearOutSlowInEasing)) +
+                    expandVertically(animationSpec = PILL_MORPH_SPEC),
+            exit = fadeOut(animationSpec = tween(160, easing = FastOutLinearInEasing)) +
+                   shrinkVertically(animationSpec = tween(180, easing = FastOutLinearInEasing))
+        ) {
+            MarkdownBlock(
+                content = previewText,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fadeEdges(
+                        topProgress = topFadeProgress,
+                        bottomProgress = bottomFadeProgress,
+                        fadeHeight = 64f
+                    )
+                    .heightIn(max = if (active && isLive && onHeaderClick == null) 120.dp else 280.dp)
+                    .verticalScroll(scrollState),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = LocalContentColor.current
+                ),
+                paragraphSpacing = 8.dp,
+                streamingTextReveal = isLive,
+                onExpandedStreamingCodeBlockChanged = {
+                    if (isLive) streamingLayoutTick++
+                }
+            )
+        }
     }
 }
 
@@ -1108,14 +1111,23 @@ private fun ReasoningContent(startTimeMs: Long, title: String? = null, isLive: B
         tint = contentColor.copy(alpha = 0.85f)
     )
     val displayTitle = title?.takeIf { it.isNotBlank() } ?: stringResource(R.string.activity_timeline_reasoning)
-    Text(
-        text = displayTitle,
-        style = MaterialTheme.typography.labelMedium,
-        color = contentColor,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = if (isLive) Modifier.shimmer(true) else Modifier
-    )
+    AnimatedContent(
+        targetState = displayTitle,
+        transitionSpec = {
+            fadeIn(tween(200, easing = LinearOutSlowInEasing))
+                .togetherWith(fadeOut(tween(160, easing = FastOutLinearInEasing)))
+        },
+        label = "reasoning_title"
+    ) { text ->
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = contentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = if (isLive) Modifier.shimmer(true) else Modifier
+        )
+    }
     Text(
         text = formatDuration(elapsedMs),
         style = MaterialTheme.typography.labelSmall,
