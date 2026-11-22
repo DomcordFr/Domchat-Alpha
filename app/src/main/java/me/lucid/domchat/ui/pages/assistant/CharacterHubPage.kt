@@ -3271,6 +3271,22 @@ private fun GroupTabsRow(
         isInitialized = true
     }
 
+    val activeGroupBorder = remember {
+        BorderStroke(
+            1.dp,
+            Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.65f),
+                    Color.White.copy(alpha = 0.28f),
+                    Color.White.copy(alpha = 0.12f)
+                )
+            )
+        )
+    }
+    val inactiveGroupBorder = remember {
+        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+    }
+
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -3283,8 +3299,8 @@ private fun GroupTabsRow(
             Surface(
                 onClick = { onGroupSelected(null) },
                 shape = RoundedCornerShape(20.dp),
-                color = if (isAllSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                color = Color.Transparent,
+                border = if (isAllSelected) activeGroupBorder else inactiveGroupBorder,
                 modifier = if (isInitialized) Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null) else Modifier
             ) {
                 Row(
@@ -3307,8 +3323,8 @@ private fun GroupTabsRow(
             val isSelected = selectedGroupId == groupId
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = if (isSelected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                color = Color.Transparent,
+                border = if (isSelected) activeGroupBorder else inactiveGroupBorder,
                 modifier = (if (isInitialized) Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null) else Modifier)
                     .combinedClickable(
                         onClick = { onGroupSelected(groupId) },
@@ -4145,11 +4161,26 @@ private fun GroupActionChip(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val activeBorder = remember {
+        BorderStroke(
+            1.dp,
+            Brush.verticalGradient(
+                listOf(
+                    Color.White.copy(alpha = 0.65f),
+                    Color.White.copy(alpha = 0.28f),
+                    Color.White.copy(alpha = 0.12f)
+                )
+            )
+        )
+    }
+    val inactiveBorder = remember {
+        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+    }
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
-        color = if (selected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-        border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+        color = Color.Transparent,
+        border = if (selected) activeBorder else inactiveBorder,
         modifier = Modifier.wrapContentWidth()
     ) {
         Row(

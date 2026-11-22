@@ -591,7 +591,7 @@ fun SettingChatsPage(
                     ) {
                     items(filteredConversations, key = { it.id }) { conv ->
                         val isSelected = conv.id in selectedChatIds
-                        val assistant = assistantMap[conv.assistantId]
+                        val assistant = assistantMap[conv.assistantId] ?: allAssistants.firstOrNull { it.id.toString().equals(conv.assistantId, ignoreCase = true) }
                         val cardShape = RoundedCornerShape(18.dp)
 
                         Surface(
@@ -780,14 +780,19 @@ fun SettingChatsPage(
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             modifier = Modifier.weight(1f, fill = false)
                                         ) {
-                                            if (assistant != null) {
+                                            val characterBadgeText = assistant?.name?.trim()?.takeIf { it.isNotBlank() }
+                                                ?: assistant?.displayName?.trim()?.takeIf { it.isNotBlank() }
+                                                ?: assistant?.chatName?.trim()?.takeIf { it.isNotBlank() }
+                                                ?: if (assistant != null) "Character" else null
+
+                                            if (characterBadgeText != null) {
                                                 Surface(
                                                     color = Color(0xFF000000),
                                                     shape = RoundedCornerShape(8.dp),
                                                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                                 ) {
                                                     Text(
-                                                        text = assistant.name.trim(),
+                                                        text = characterBadgeText,
                                                         style = MaterialTheme.typography.labelSmall.copy(
                                                             fontSize = 10.5.sp,
                                                             fontWeight = FontWeight.SemiBold
@@ -895,7 +900,7 @@ fun SettingChatsPage(
 
     // Chat Long-Click Management Card
     managingConversation?.let { conv ->
-        val assistant = assistantMap[conv.assistantId]
+        val assistant = assistantMap[conv.assistantId] ?: allAssistants.firstOrNull { it.id.toString().equals(conv.assistantId, ignoreCase = true) }
         val assistantChatCount = rawConversations.count { it.assistantId == conv.assistantId }
 
         DomChatInWindowBottomSheet(

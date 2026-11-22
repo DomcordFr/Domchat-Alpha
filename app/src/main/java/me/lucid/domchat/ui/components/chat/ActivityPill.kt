@@ -691,19 +691,10 @@ private fun AnimatedSinglePill(
         AnimatedContent(
             targetState = requestedContentState,
             transitionSpec = {
-                val expanding = targetState !is SinglePillContentState.Compact
-                val slideDir = if (expanding) 1 else -1
-
-                (fadeIn(animationSpec = tween(240, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
-                    slideInVertically(animationSpec = tween(240, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) { slideDir * it / 4 } +
-                    scaleIn(initialScale = if (expanding) 0.96f else 1.02f, animationSpec = tween(240)))
-                    .togetherWith(
-                        fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
-                            slideOutVertically(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { -slideDir * it / 4 } +
-                            scaleOut(targetScale = if (expanding) 1.02f else 0.96f, animationSpec = tween(180))
-                    ) using SizeTransform(clip = true) { _, _ ->
-                        PILL_MORPH_SPEC
-                    }
+                (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) togetherWith
+                    fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing))) using SizeTransform(clip = true) { _, _ ->
+                    PILL_MORPH_SPEC
+                }
             },
             contentAlignment = Alignment.TopStart,
             contentKey = { 
@@ -753,16 +744,11 @@ private fun AnimatedSinglePill(
                     AnimatedContent(
                         targetState = compactState,
                         transitionSpec = {
-                            val forward = targetState is ActivityState.CompletedSingle
-                            val slideDir = if (forward) 1 else -1
-
-                            (fadeIn(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
-                                slideInVertically(animationSpec = tween(220, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) { slideDir * it / 3 } +
-                                scaleIn(initialScale = 0.96f, animationSpec = tween(220)))
+                            (fadeIn(animationSpec = tween(200, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) +
+                                scaleIn(initialScale = 0.98f, animationSpec = tween(200)))
                                 .togetherWith(
-                                    fadeOut(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
-                                        slideOutVertically(animationSpec = tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)) { -slideDir * it / 3 } +
-                                        scaleOut(targetScale = 0.96f, animationSpec = tween(180))
+                                    fadeOut(animationSpec = tween(150, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
+                                        scaleOut(targetScale = 0.98f, animationSpec = tween(150))
                                 ) using SizeTransform(clip = false) { _, _ ->
                                     PILL_MORPH_SPEC
                                 }
@@ -1121,32 +1107,15 @@ private fun ReasoningContent(startTimeMs: Long, title: String? = null, isLive: B
         modifier = Modifier.size(18.dp),
         tint = contentColor.copy(alpha = 0.85f)
     )
-    // Crossfade + slide up when the title changes between reasoning sections
     val displayTitle = title?.takeIf { it.isNotBlank() } ?: stringResource(R.string.activity_timeline_reasoning)
-    AnimatedContent(
-        targetState = displayTitle,
-        transitionSpec = {
-            (fadeIn(tween(220)) + slideInVertically(
-                animationSpec = tween(220),
-                initialOffsetY = { it / 2 }
-            )).togetherWith(
-                fadeOut(tween(150)) + slideOutVertically(
-                    animationSpec = tween(150),
-                    targetOffsetY = { -it / 2 }
-                )
-            )
-        },
-        label = "reasoning_title"
-    ) { text ->
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = contentColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = if (isLive) Modifier.shimmer(true) else Modifier
-        )
-    }
+    Text(
+        text = displayTitle,
+        style = MaterialTheme.typography.labelMedium,
+        color = contentColor,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = if (isLive) Modifier.shimmer(true) else Modifier
+    )
     Text(
         text = formatDuration(elapsedMs),
         style = MaterialTheme.typography.labelSmall,
@@ -1207,36 +1176,45 @@ private fun ExpandedActivityContent(item: ActivityItem) {
         tint = contentColor.copy(alpha = 0.85f)
     )
 
-    val text = when (item.type) {
-        ActivityType.REASONING -> {
-            if (item.durationMs != null) {
-                "Reasoned for ${formatDuration(item.durationMs)}"
-            } else {
-                "Reasoned"
-            }
+    if (item.type == ActivityType.REASONING) {
+        Text(
+            text = "Reasoned",
+            style = MaterialTheme.typography.labelMedium,
+            color = contentColor
+        )
+        if (item.durationMs != null) {
+            Text(
+                text = "for ${formatDuration(item.durationMs)}",
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor.copy(alpha = 0.8f)
+            )
         }
-        ActivityType.OCR -> {
-            if (item.count > 1) {
-                stringResource(R.string.activity_pill_ocr_done_count, item.count)
-            } else {
-                stringResource(R.string.activity_pill_ocr_done)
+    } else {
+        val text = when (item.type) {
+            ActivityType.REASONING -> "Reasoned"
+            ActivityType.OCR -> {
+                if (item.count > 1) {
+                    stringResource(R.string.activity_pill_ocr_done_count, item.count)
+                } else {
+                    stringResource(R.string.activity_pill_ocr_done)
+                }
             }
+            ActivityType.SEARCH -> "Searched the Web"
+            ActivityType.MEMORY_RECALL -> stringResource(R.string.activity_pill_memory_recalled)
+            ActivityType.PYTHON -> "Ran Python"
+            ActivityType.WORKSPACE -> "Used workspace"
+            ActivityType.SKILL -> "Managed skills"
+            ActivityType.MCP -> "MCP"
+            ActivityType.TOOL_OTHER -> "Used tool"
+            ActivityType.LOADING_MODEL -> "Loading model"
         }
-        ActivityType.SEARCH -> "Searched the Web"
-        ActivityType.MEMORY_RECALL -> stringResource(R.string.activity_pill_memory_recalled)
-        ActivityType.PYTHON -> "Ran Python"
-        ActivityType.WORKSPACE -> "Used workspace"
-        ActivityType.SKILL -> "Managed skills"
-        ActivityType.MCP -> "MCP"
-        ActivityType.TOOL_OTHER -> "Used tool"
-        ActivityType.LOADING_MODEL -> "Loading model"
-    }
 
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = contentColor
-    )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = contentColor
+        )
+    }
 }
 
 /**
