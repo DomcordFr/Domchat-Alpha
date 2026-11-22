@@ -55,6 +55,7 @@ class ChatMultimodalASRController(
     private var onTranscriptChange: ((String) -> Unit)? = null
 
     private val bufferLock = Any()
+    private val recorderLock = Any()
     private var sessionBuffer = ByteArrayOutputStream()
     private val completedTranscripts = Collections.synchronizedList(mutableListOf<String>())
 
@@ -92,7 +93,7 @@ class ChatMultimodalASRController(
 
         scope.launch(Dispatchers.IO) {
             try {
-                val pcmBytes = sessionBuffer.toByteArray()
+                val pcmBytes = synchronized(bufferLock) { sessionBuffer.toByteArray() }
                 if (pcmBytes.isNotEmpty()) {
                     val sampleRate = model.sttOptions?.sampleRate ?: 16000
                     val wavBytes = pcm16ToWav(
@@ -178,12 +179,21 @@ class ChatMultimodalASRController(
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufferSize * 2,
             )
-            audioRecord = recorder
+            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+                recorder.release()
+                setError("AudioRecord failed to initialize")
+                return@launch
+            }
+            synchronized(recorderLock) {
+                audioRecord = recorder
+            }
 
             try {
                 recorder.startRecording()
                 val buffer = ByteArray(bufferSize)
-                sessionBuffer.reset()
+                synchronized(bufferLock) {
+                    sessionBuffer.reset()
+                }
                 while (isActive) {
                     val read = recorder.read(buffer, 0, buffer.size)
                     if (read > 0) {
@@ -216,9 +226,12 @@ class ChatMultimodalASRController(
 
     private fun releaseRecorder() {
         recorderJob = null
-        runCatching { audioRecord?.stop() }
-        runCatching { audioRecord?.release() }
-        audioRecord = null
+        synchronized(recorderLock) {
+            val record = audioRecord
+            audioRecord = null
+            runCatching { record?.stop() }
+            runCatching { record?.release() }
+        }
     }
 
     private fun pcm16ToWav(

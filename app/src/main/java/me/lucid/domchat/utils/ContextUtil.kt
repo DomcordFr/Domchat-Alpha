@@ -138,7 +138,6 @@ fun Context.exportImage(
     }
 
     // 保存到相册
-    var outputStream: OutputStream? = null
     try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10及以上使用MediaStore API
@@ -149,17 +148,17 @@ fun Context.exportImage(
             }
             val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
             uri?.let {
-                outputStream = contentResolver.openOutputStream(it)
-                val stream = outputStream
-                    ?: throw IllegalStateException("Failed to open MediaStore output stream")
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                contentResolver.openOutputStream(it)?.use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                } ?: throw IllegalStateException("Failed to open MediaStore output stream")
             }
         } else {
             // Android 9及以下直接写入文件
             val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val image = File(imagesDir, fileName)
-            outputStream = image.sink().buffer().outputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            image.sink().buffer().outputStream().use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            }
 
             // 通知图库更新
             @Suppress("DEPRECATION")
@@ -170,8 +169,6 @@ fun Context.exportImage(
         Log.i(TAG, "Image saved successfully: $fileName")
     } catch (e: Exception) {
         Log.e(TAG, "Failed to save image", e)
-    } finally {
-        outputStream?.close()
     }
 }
 
@@ -195,7 +192,6 @@ fun Context.exportImageFile(
     }
 
     // 保存到相册
-    var outputStream: OutputStream? = null
     try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10及以上使用MediaStore API
@@ -206,10 +202,9 @@ fun Context.exportImageFile(
             }
             val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
             uri?.let {
-                outputStream = contentResolver.openOutputStream(it)
-                val stream = outputStream
-                    ?: throw IllegalStateException("Failed to open MediaStore output stream")
-                file.inputStream().use { input -> input.copyTo(stream) }
+                contentResolver.openOutputStream(it)?.use { stream ->
+                    file.inputStream().use { input -> input.copyTo(stream) }
+                } ?: throw IllegalStateException("Failed to open MediaStore output stream")
             }
         } else {
             // Android 9及以下直接写入文件
@@ -226,8 +221,6 @@ fun Context.exportImageFile(
         Log.i(TAG, "Image file saved successfully: $fileName")
     } catch (e: Exception) {
         Log.e(TAG, "Failed to save image file", e)
-    } finally {
-        outputStream?.close()
     }
 }
 

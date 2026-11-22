@@ -29,7 +29,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -38,7 +37,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -83,6 +81,7 @@ import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.AssistantMemory
 import me.lucid.domchat.ui.components.nav.BackButton
+import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.nav.OneUITopAppBar
 import me.lucid.domchat.ui.components.ui.FormItem
 import me.lucid.domchat.ui.components.ui.Tag
@@ -248,9 +247,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                 placeholder = { Text(stringResource(R.string.assistant_page_search_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .clip(me.lucid.domchat.ui.theme.AppShapes.SearchField)
-                    .border(0.5.dp, me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle, me.lucid.domchat.ui.theme.AppShapes.SearchField),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 shape = me.lucid.domchat.ui.theme.AppShapes.SearchField,
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -520,8 +517,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
         )
     }
 
-    if (pendingImportResult != null) {
-        val res = pendingImportResult!!
+    pendingImportResult?.let { res ->
         ImportConfigDialog(
             onDismissRequest = { pendingImportResult = null },
             hasMemories = res.hasMemories,
@@ -560,14 +556,11 @@ fun AssistantCreationSheet(
     onImportClick: () -> Unit,
 ) {
     state.EditStateContent { assistant, update ->
-        ModalBottomSheet(
-            containerColor = me.lucid.domchat.ui.modifier.domChatSheetContainerColor(),
+        DomChatInWindowBottomSheet(
             onDismissRequest = {
                 state.dismiss()
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = {},
-            sheetGesturesEnabled = false
+            dragHandle = null,
         ) {
             Column(
                 modifier = Modifier

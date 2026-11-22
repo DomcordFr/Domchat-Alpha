@@ -248,6 +248,9 @@ fun Context.createChatFilesByContents(uris: List<Uri>): List<Uri> {
             newUris.add(newUri)
         }.onFailure {
             it.printStackTrace()
+            if (file.exists() && file.length() == 0L) {
+                file.delete()
+            }
             Log.e(TAG, "createChatFilesByContents: Failed to save image from $uri", it)
         }
     }
@@ -303,19 +306,21 @@ fun Context.getFileNameFromUri(uri: Uri): String? {
         OpenableColumns.DISPLAY_NAME,
         DocumentsContract.Document.COLUMN_DISPLAY_NAME // 优先尝试 DocumentProvider 标准列
     )
-    contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-        // 移动到第一行结果
-        if (cursor.moveToFirst()) {
-            // 尝试获取 DocumentsContract.Document.COLUMN_DISPLAY_NAME 的索引
-            val documentDisplayNameIndex =
-                cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
-            if (documentDisplayNameIndex != -1) {
-                fileName = cursor.getString(documentDisplayNameIndex)
-            } else {
-                // 如果 DocumentProvider 标准列不存在，尝试 OpenableColumns.DISPLAY_NAME
-                val openableDisplayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (openableDisplayNameIndex != -1) {
-                    fileName = cursor.getString(openableDisplayNameIndex)
+    runCatching {
+        contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+            // 移动到第一行结果
+            if (cursor.moveToFirst()) {
+                // 尝试获取 DocumentsContract.Document.COLUMN_DISPLAY_NAME 的索引
+                val documentDisplayNameIndex =
+                    cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+                if (documentDisplayNameIndex != -1) {
+                    fileName = cursor.getString(documentDisplayNameIndex)
+                } else {
+                    // 如果 DocumentProvider 标准列不存在，尝试 OpenableColumns.DISPLAY_NAME
+                    val openableDisplayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (openableDisplayNameIndex != -1) {
+                        fileName = cursor.getString(openableDisplayNameIndex)
+                    }
                 }
             }
         }
@@ -326,7 +331,7 @@ fun Context.getFileNameFromUri(uri: Uri): String? {
 
 fun Context.getFileMimeType(uri: Uri): String? {
     val contentType = when (uri.scheme) {
-        "content" -> contentResolver.getType(uri)
+        "content" -> runCatching { contentResolver.getType(uri) }.getOrNull()
         "file" -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(
             uri.toFile().extension.lowercase().takeIf { it.isNotBlank() }
         )

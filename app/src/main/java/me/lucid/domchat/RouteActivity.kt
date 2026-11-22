@@ -316,16 +316,17 @@ class RouteActivity : ComponentActivity() {
     private var pendingTextSelection by mutableStateOf<QuickAskContinuationData?>(null)
     private var pendingConversationId by mutableStateOf<String?>(null)
     private var pendingResolvedSpontaneousTarget by mutableStateOf<ResolvedSpontaneousChatTarget?>(null)
+    private var pendingShortcutAssistantId by mutableStateOf<String?>(null)
     private var pendingShareIntent by mutableStateOf<ResolvedSharePayload?>(null)
     private var initialChatScreen by mutableStateOf<Screen.Chat?>(null)
     private var hasSuccessfulReplyBeforeSetup by mutableStateOf<Boolean?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         try {
             enableEdgeToEdge()
             androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
             disableNavigationBarContrast()
-            super.onCreate(savedInstanceState)
             lifecycleScope.launch {
                 hasSuccessfulReplyBeforeSetup = withContext(Dispatchers.IO) {
                     conversationRepo.hasSuccessfulAssistantReply()
@@ -384,7 +385,7 @@ class RouteActivity : ComponentActivity() {
                 if (spontaneousNotification != null) {
                     val spontaneousTarget = resolveSpontaneousChatTarget(spontaneousNotification)
                     if (spontaneousTarget != null) {
-                        initialChatScreen = spontaneousTarget.toScreen()
+                        pendingResolvedSpontaneousTarget = spontaneousTarget
                     }
                 }
             }
@@ -416,25 +417,9 @@ class RouteActivity : ComponentActivity() {
                 }
             }
             
-            // Handle assistant shortcut - navigate directly by waiting for navStack to be ready
+            // Handle assistant shortcut - queued and drained by NotificationHandler once navStack is composed
             if (intentAssistantId != null && intentConversationId.isNullOrBlank()) {
-                lifecycleScope.launch {
-                    // Wait for navStack to be ready (set in composition)
-                    while (navStack == null) {
-                        kotlinx.coroutines.delay(50)
-                    }
-                    try {
-                        val assistantId = Uuid.parse(intentAssistantId)
-                        // Update the selected assistant
-                        settingsStore.updateAssistant(assistantId)
-                        // Mark as recently used
-                        settingsStore.markAssistantUsed(assistantId)
-                        // Navigate to a new chat
-                        navStack?.let { navigateToChatPage(it, chatId = Uuid.random()) }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+                pendingShortcutAssistantId = intentAssistantId
             }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Fatal error in RouteActivity.onCreate", e)
@@ -519,12 +504,6 @@ class RouteActivity : ComponentActivity() {
                 )
             }.onFailure { throwable ->
                 android.util.Log.e(TAG, "Share navigation failed", throwable)
-                navBackStack.navigate(
-                    Screen.ShareHandler(
-                        text = currentShareData.text,
-                        files = currentShareData.attachmentUris()
-                    )
-                )
             }
         }
     }
@@ -533,7 +512,8 @@ class RouteActivity : ComponentActivity() {
     private fun NotificationHandler(navBackStack: NavHostController) {
         val spontaneousTarget = pendingResolvedSpontaneousTarget
         val conversationIdStr = pendingConversationId
-        LaunchedEffect(spontaneousTarget, conversationIdStr) {
+        val shortcutAssistantId = pendingShortcutAssistantId
+        LaunchedEffect(spontaneousTarget, conversationIdStr, shortcutAssistantId) {
             if (spontaneousTarget != null) {
                 pendingResolvedSpontaneousTarget = null
                 navigateToChatPage(
@@ -550,6 +530,16 @@ class RouteActivity : ComponentActivity() {
                     ?.let { conversationId ->
                         navigateToChatPage(navBackStack, chatId = conversationId)
                     }
+            } else if (shortcutAssistantId != null) {
+                pendingShortcutAssistantId = null
+                runCatching {
+                    val assistantId = Uuid.parse(shortcutAssistantId)
+                    settingsStore.updateAssistant(assistantId)
+                    settingsStore.markAssistantUsed(assistantId)
+                    navigateToChatPage(navBackStack, chatId = Uuid.random())
+                }.onFailure {
+                    android.util.Log.e(TAG, "Failed to navigate to shortcut assistant", it)
+                }
             }
         }
     }
@@ -690,26 +680,26 @@ class RouteActivity : ComponentActivity() {
             navigateToIncomingConversation(text)
         }
         
-        // Handle assistant shortcut - navigate directly instead of using state
+        // Handle assistant shortcut
         assistantIdText?.let { assistantIdStr ->
-            android.util.Log.d(TAG, "Handling assistant shortcut directly: $assistantIdStr")
-            lifecycleScope.launch {
-                try {
-                    val assistantId = Uuid.parse(assistantIdStr)
-                    android.util.Log.d(TAG, "Updating to assistant: $assistantId")
-                    // Update the selected assistant
-                    settingsStore.updateAssistant(assistantId)
-                    // Mark as recently used
-                    settingsStore.markAssistantUsed(assistantId)
-                    // Navigate to a new chat
-                    val newChatId = Uuid.random()
-                    android.util.Log.d(TAG, "Navigating to new chat: $newChatId")
-                    navStack?.let { navigateToChatPage(it, chatId = newChatId) }
-                    android.util.Log.d(TAG, "Navigation complete")
-                } catch (e: Exception) {
-                    android.util.Log.e(TAG, "Error handling assistant shortcut", e)
-                    e.printStackTrace()
+            android.util.Log.d(TAG, "Handling assistant shortcut: $assistantIdStr")
+            val controller = navStack
+            if (controller != null) {
+                lifecycleScope.launch {
+                    try {
+                        val assistantId = Uuid.parse(assistantIdStr)
+                        android.util.Log.d(TAG, "Updating to assistant: $assistantId")
+                        settingsStore.updateAssistant(assistantId)
+                        settingsStore.markAssistantUsed(assistantId)
+                        val newChatId = Uuid.random()
+                        android.util.Log.d(TAG, "Navigating to new chat: $newChatId")
+                        navigateToChatPage(controller, chatId = newChatId)
+                    } catch (e: Exception) {
+                        android.util.Log.e(TAG, "Error handling assistant shortcut", e)
+                    }
                 }
+            } else {
+                pendingShortcutAssistantId = assistantIdStr
             }
         }
     }

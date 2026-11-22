@@ -54,10 +54,15 @@ class WebServerService : Service() {
         }
 
         fun stop(context: android.content.Context) {
-            val intent = Intent(context, WebServerService::class.java).apply {
-                action = ACTION_STOP
+            runCatching {
+                val intent = Intent(context, WebServerService::class.java).apply {
+                    action = ACTION_STOP
+                }
+                context.startService(intent)
             }
-            context.startService(intent)
+            runCatching {
+                context.stopService(Intent(context, WebServerService::class.java))
+            }
         }
 
         internal fun isForegroundStartNotAllowed(error: Throwable): Boolean {
@@ -97,6 +102,8 @@ class WebServerService : Service() {
                         settings.copy(webServerEnabled = false)
                     }
                 }
+                ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+                stopSelf()
             }
 
             null -> {
@@ -129,12 +136,16 @@ class WebServerService : Service() {
 
     private fun startForegroundCompat(notification: android.app.Notification): Boolean {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,
                     notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                    } else {
+                        0
+                    }
                 )
             } else {
                 startForeground(NOTIFICATION_ID, notification)
@@ -181,10 +192,7 @@ class WebServerService : Service() {
 
                     WebServerPhase.Idle -> {
                         releaseWifiLock()
-                        if (!wasRunning) {
-                            return@collect
-                        }
-                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
                         stopSelf()
                     }
                 }

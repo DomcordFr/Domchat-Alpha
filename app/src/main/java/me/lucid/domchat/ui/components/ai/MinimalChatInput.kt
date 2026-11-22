@@ -3728,9 +3728,11 @@ private fun MinimalPickerContent(
     val isDarkMode = me.lucid.domchat.ui.theme.LocalDarkMode.current
     val isAmoled = amoledMode && isDarkMode
     
-    // Camera state
-    var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
-    var cameraOutputFile by remember { mutableStateOf<File?>(null) }
+    // Camera state persisted across process death
+    var cameraOutputUriString by rememberSaveable { mutableStateOf<String?>(null) }
+    var cameraOutputFilePath by rememberSaveable { mutableStateOf<String?>(null) }
+    val cameraOutputUri = cameraOutputUriString?.let { Uri.parse(it) }
+    val cameraOutputFile = cameraOutputFilePath?.let { File(it) }
     
 
     val modelCatalogService: ModelCatalogService = koinInject()
@@ -3813,14 +3815,14 @@ private fun MinimalPickerContent(
                 uris = listOf(capturedUri),
                 onFinally = {
                     capturedFile?.delete()
-                    cameraOutputFile = null
-                    cameraOutputUri = null
+                    cameraOutputFilePath = null
+                    cameraOutputUriString = null
                 }
             )
         } else {
-            cameraOutputFile?.delete()
-            cameraOutputFile = null
-            cameraOutputUri = null
+            capturedFile?.delete()
+            cameraOutputFilePath = null
+            cameraOutputUriString = null
         }
     }
     
@@ -3975,11 +3977,16 @@ private fun MinimalPickerContent(
                             title = stringResource(R.string.minimal_input_photos),
                             subtitle = "Import images into the chat",
                             onClick = {
-                                imagePickerLauncher.launch(
-                                    PickVisualMediaRequest(
-                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                runCatching {
+                                    imagePickerLauncher.launch(
+                                        PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                                        )
                                     )
-                                )
+                                }.onFailure { e ->
+                                    Log.e("MinimalChatInput", "Failed to launch image picker", e)
+                                    toaster.show("Unable to open photo picker", type = ToastType.Error)
+                                }
                             }
                         )
 
@@ -3995,7 +4002,12 @@ private fun MinimalPickerContent(
                             title = stringResource(R.string.minimal_input_files),
                             subtitle = "Attach documents and files",
                             onClick = {
-                                filePickerLauncher.launch("*/*")
+                                runCatching {
+                                    filePickerLauncher.launch("*/*")
+                                }.onFailure { e ->
+                                    Log.e("MinimalChatInput", "Failed to launch file picker", e)
+                                    toaster.show("Unable to open file picker", type = ToastType.Error)
+                                }
                             }
                         )
 
@@ -4014,13 +4026,29 @@ private fun MinimalPickerContent(
                                     subtitle = "Capture a photo for the chat",
                                     onClick = {
                                         if (cameraPermission.allRequiredPermissionsGranted) {
-                                            cameraOutputFile = context.cacheDir.resolve("camera_${Uuid.random()}.jpg")
-                                            cameraOutputUri = FileProvider.getUriForFile(
-                                                context,
-                                                "${context.packageName}.fileprovider",
-                                                cameraOutputFile!!
-                                            )
-                                            cameraLauncher.launch(cameraOutputUri!!)
+                                            val file = context.cacheDir.resolve("camera_${Uuid.random()}.jpg")
+                                            val uri = runCatching {
+                                                FileProvider.getUriForFile(
+                                                    context,
+                                                    "${context.packageName}.fileprovider",
+                                                    file
+                                                )
+                                            }.getOrNull()
+                                            if (uri != null) {
+                                                cameraOutputFilePath = file.absolutePath
+                                                cameraOutputUriString = uri.toString()
+                                                runCatching {
+                                                    cameraLauncher.launch(uri)
+                                                }.onFailure { e ->
+                                                    Log.e("MinimalChatInput", "Failed to launch camera", e)
+                                                    file.delete()
+                                                    cameraOutputFilePath = null
+                                                    cameraOutputUriString = null
+                                                    toaster.show("Unable to open camera app", type = ToastType.Error)
+                                                }
+                                            } else {
+                                                toaster.show("Failed to create temporary camera file", type = ToastType.Error)
+                                            }
                                         } else {
                                             cameraPermission.requestPermissions()
                                         }

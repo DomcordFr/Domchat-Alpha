@@ -861,28 +861,28 @@ object AssistantExportImport : KoinComponent {
 
     private fun extractZipData(bytes: ByteArray): Pair<String?, ByteArray?> {
         try {
-            val zis = java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(bytes))
-            var entry = zis.nextEntry
-            var jsonStr: String? = null
-            var imageBytes: ByteArray? = null
-            while (entry != null) {
-                if (!entry.isDirectory) {
-                    val name = entry.name.lowercase()
-                    if (name.endsWith(".json")) {
-                        val content = zis.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).toString(Charsets.UTF_8)
-                        if (jsonStr == null || name.endsWith("card.json") || name.endsWith("character.json") || name.endsWith("data.json")) {
-                            jsonStr = content
-                        }
-                    } else if (name.endsWith(".png") || name.endsWith(".webp") || name.endsWith(".jpg") || name.endsWith(".jpeg")) {
-                        if (imageBytes == null || name.contains("card") || name.contains("avatar") || name.contains("chara")) {
-                            imageBytes = zis.readBoundedBytes(BoundedStreams.MAX_FILE_ENTRY_BYTES)
+            java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(bytes)).use { zis ->
+                var entry = zis.nextEntry
+                var jsonStr: String? = null
+                var imageBytes: ByteArray? = null
+                while (entry != null) {
+                    if (!entry.isDirectory) {
+                        val name = entry.name.lowercase()
+                        if (name.endsWith(".json")) {
+                            val content = zis.readBoundedBytes(BoundedStreams.MAX_JSON_ENTRY_BYTES).toString(Charsets.UTF_8)
+                            if (jsonStr == null || name.endsWith("card.json") || name.endsWith("character.json") || name.endsWith("data.json")) {
+                                jsonStr = content
+                            }
+                        } else if (name.endsWith(".png") || name.endsWith(".webp") || name.endsWith(".jpg") || name.endsWith(".jpeg")) {
+                            if (imageBytes == null || name.contains("card") || name.contains("avatar") || name.contains("chara")) {
+                                imageBytes = zis.readBoundedBytes(BoundedStreams.MAX_FILE_ENTRY_BYTES)
+                            }
                         }
                     }
+                    entry = zis.nextEntry
                 }
-                entry = zis.nextEntry
+                return Pair(jsonStr, imageBytes)
             }
-            zis.close()
-            return Pair(jsonStr, imageBytes)
         } catch (e: Exception) {
             return Pair(null, null)
         }

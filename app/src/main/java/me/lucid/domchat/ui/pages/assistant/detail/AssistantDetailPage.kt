@@ -60,6 +60,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -178,18 +179,27 @@ fun AssistantDetailPage(
     // Export state
     var showExportMenu by remember { androidx.compose.runtime.mutableStateOf(false) }
     var showExportOptionsDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
-    var pendingExportContent by remember { androidx.compose.runtime.mutableStateOf("") }
-    var pendingExportBytes by remember { androidx.compose.runtime.mutableStateOf<ByteArray?>(null) }
+    var pendingExportMode by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
 
     // Export file launcher (JSON)
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
-        if (uri != null && pendingExportContent.isNotEmpty()) {
+        val mode = pendingExportMode
+        if (uri != null && mode != null) {
             scope.launch {
                 try {
+                    val content = withContext(Dispatchers.IO) {
+                        when (mode) {
+                            "card_v2" -> AssistantExportImport.exportToCharacterCardV2(assistant, context)
+                            "lastchat_memories" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = false)
+                            "lastchat_lorebooks" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = false, includeLorebooks = true)
+                            "lastchat_both" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = true)
+                            else -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = false, includeLorebooks = false)
+                        }
+                    }
                     context.contentResolver.openOutputStream(uri)?.use {
-                        it.write(pendingExportContent.toByteArray())
+                        it.write(content.toByteArray())
                     }
                     toaster.show(context.getString(R.string.export_success))
                 } catch (e: Exception) {
@@ -200,8 +210,9 @@ fun AssistantDetailPage(
                             e.message ?: context.getString(R.string.backup_page_unknown_error)
                         )
                     )
+                } finally {
+                    pendingExportMode = null
                 }
-                pendingExportContent = ""
             }
         }
     }
@@ -210,13 +221,20 @@ fun AssistantDetailPage(
     val pngExportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("image/png")
     ) { uri ->
-        if (uri != null && pendingExportBytes != null) {
+        if (uri != null) {
             scope.launch {
                 try {
-                    context.contentResolver.openOutputStream(uri)?.use {
-                        it.write(pendingExportBytes ?: ByteArray(0))
+                    val bytes = withContext(Dispatchers.IO) {
+                        AssistantExportImport.exportToCharacterCardPng(assistant, context)
                     }
-                    toaster.show(context.getString(R.string.export_success))
+                    if (bytes != null) {
+                        context.contentResolver.openOutputStream(uri)?.use {
+                            it.write(bytes)
+                        }
+                        toaster.show(context.getString(R.string.export_success))
+                    } else {
+                        toaster.show(context.getString(R.string.export_failed_create_png))
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     toaster.show(
@@ -226,7 +244,6 @@ fun AssistantDetailPage(
                         )
                     )
                 }
-                pendingExportBytes = null
             }
         }
     }
@@ -331,26 +348,12 @@ fun AssistantDetailPage(
                                             if (hasMemories || hasLorebooks) {
                                                 showExportOptionsDialog = true
                                             } else {
-                                                scope.launch {
-                                                    try {
-                                                        val content = AssistantExportImport.exportToLastChatBundle(
-                                                            assistant = assistant,
-                                                            context = context,
-                                                            includeMemories = false,
-                                                            includeLorebooks = false
-                                                        )
-                                                        pendingExportContent = content
-                                                        val fileName = AssistantExportImport.getSuggestedFileName(assistant, "lastchat")
-                                                        exportLauncher.launch(fileName)
-                                                    } catch (e: Exception) {
-                                                        e.printStackTrace()
-                                                        toaster.show(
-                                                            context.getString(
-                                                                R.string.export_failed_message,
-                                                                e.message ?: context.getString(R.string.backup_page_unknown_error)
-                                                            )
-                                                        )
-                                                    }
+                                                pendingExportMode = "lastchat_minimal"
+                                                val fileName = AssistantExportImport.getSuggestedFileName(assistant, "lastchat")
+                                                runCatching {
+                                                    exportLauncher.launch(fileName)
+                                                }.onFailure {
+                                                    toaster.show("Failed to launch document picker", ToastType.Error)
                                                 }
                                             }
                                         }
@@ -359,21 +362,12 @@ fun AssistantDetailPage(
                                         text = { Text(stringResource(R.string.assistant_detail_export_card_json)) },
                                         onClick = {
                                             showExportMenu = false
-                                            scope.launch {
-                                                try {
-                                                    val content = AssistantExportImport.exportToCharacterCardV2(assistant, context)
-                                                    pendingExportContent = content
-                                                    val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2")
-                                                    exportLauncher.launch(fileName)
-                                                } catch (e: Exception) {
-                                                    e.printStackTrace()
-                                                    toaster.show(
-                                                        context.getString(
-                                                            R.string.export_failed_message,
-                                                            e.message ?: context.getString(R.string.backup_page_unknown_error)
-                                                        )
-                                                    )
-                                                }
+                                            pendingExportMode = "card_v2"
+                                            val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2")
+                                            runCatching {
+                                                exportLauncher.launch(fileName)
+                                            }.onFailure {
+                                                toaster.show("Failed to launch document picker", ToastType.Error)
                                             }
                                         }
                                     )
@@ -381,25 +375,11 @@ fun AssistantDetailPage(
                                         text = { Text(stringResource(R.string.assistant_detail_export_card_png)) },
                                         onClick = {
                                             showExportMenu = false
-                                            scope.launch {
-                                                try {
-                                                    val bytes = AssistantExportImport.exportToCharacterCardPng(assistant, context)
-                                                    if (bytes != null) {
-                                                        pendingExportBytes = bytes
-                                                        val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2_png")
-                                                        pngExportLauncher.launch(fileName)
-                                                    } else {
-                                                        toaster.show(context.getString(R.string.export_failed_create_png))
-                                                    }
-                                                } catch (e: Exception) {
-                                                    e.printStackTrace()
-                                                    toaster.show(
-                                                        context.getString(
-                                                            R.string.export_failed_message,
-                                                            e.message ?: context.getString(R.string.backup_page_unknown_error)
-                                                        )
-                                                    )
-                                                }
+                                            val fileName = AssistantExportImport.getSuggestedFileName(assistant, "card_v2_png")
+                                            runCatching {
+                                                pngExportLauncher.launch(fileName)
+                                            }.onFailure {
+                                                toaster.show("Failed to launch document picker", ToastType.Error)
                                             }
                                         }
                                     )
@@ -621,26 +601,17 @@ fun AssistantDetailPage(
             showLorebooksOption = hasLorebooks,
             onConfirm = { includeMemories, includeLorebooks ->
                 showExportOptionsDialog = false
-                scope.launch {
-                    try {
-                        val content = AssistantExportImport.exportToLastChatBundle(
-                            assistant = assistant,
-                            context = context,
-                            includeMemories = includeMemories,
-                            includeLorebooks = includeLorebooks
-                        )
-                        pendingExportContent = content
-                        val fileName = AssistantExportImport.getSuggestedFileName(assistant, "lastchat")
-                        exportLauncher.launch(fileName)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        toaster.show(
-                            message = context.getString(
-                                R.string.export_failed_message,
-                                e.message ?: context.getString(R.string.backup_page_unknown_error)
-                            )
-                        )
-                    }
+                pendingExportMode = when {
+                    includeMemories && includeLorebooks -> "lastchat_both"
+                    includeMemories -> "lastchat_memories"
+                    includeLorebooks -> "lastchat_lorebooks"
+                    else -> "lastchat_minimal"
+                }
+                val fileName = AssistantExportImport.getSuggestedFileName(assistant, "lastchat")
+                runCatching {
+                    exportLauncher.launch(fileName)
+                }.onFailure {
+                    toaster.show("Failed to launch document picker", ToastType.Error)
                 }
             }
         )

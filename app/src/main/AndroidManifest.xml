@@ -225,6 +225,11 @@
         android:exported="false"
         android:foregroundServiceType="dataSync" />
 
+    <service
+        android:name=".service.GenerationForegroundService"
+        android:exported="false"
+        android:foregroundServiceType="dataSync" />
+
     <!-- Floating assistant overlay launched by the assist gesture -->
     <activity
         android:name=".ui.activity.AssistantOverlayActivity"

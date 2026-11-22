@@ -112,9 +112,9 @@ object ImageUtils {
      */
     fun correctImageOrientation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
         return runCatching {
-            val inputStream = context.contentResolver.openInputStream(uri)
-            val exif = inputStream?.let { ExifInterface(it) }
-            inputStream?.close()
+            val exif = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                ExifInterface(inputStream)
+            }
 
             val orientation = exif?.getAttributeInt(
                 ExifInterface.TAG_ORIENTATION,

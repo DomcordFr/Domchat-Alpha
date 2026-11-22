@@ -74,6 +74,7 @@ const val CHAT_COMPLETED_NOTIFICATION_CHANNEL_ID = "chat_completed"
 const val WEB_SERVER_NOTIFICATION_CHANNEL_ID = "web_server"
 const val LOCAL_MODEL_DOWNLOAD_NOTIFICATION_CHANNEL_ID = "local_model_download"
 const val WORKSPACE_ENVIRONMENT_NOTIFICATION_CHANNEL_ID = "workspace_environment"
+const val GENERATION_SERVICE_NOTIFICATION_CHANNEL_ID = "generation_service"
 
 typealias AetherChatApp = DomChatApp
 
@@ -308,11 +309,20 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
             .setName(getString(R.string.notification_channel_workspace_environment))
             .setVibrationEnabled(false)
             .build()
+        val generationChannel = NotificationChannelCompat
+            .Builder(
+                GENERATION_SERVICE_NOTIFICATION_CHANNEL_ID,
+                NotificationManagerCompat.IMPORTANCE_LOW
+            )
+            .setName(getString(R.string.notification_channel_generation))
+            .setVibrationEnabled(false)
+            .build()
         notificationManager.createNotificationChannel(chatCompletedChannel)
         notificationManager.createNotificationChannel(webServerChannel)
         notificationManager.createNotificationChannel(spontaneousChannel)
         notificationManager.createNotificationChannel(localModelDownloadChannel)
         notificationManager.createNotificationChannel(workspaceEnvironmentChannel)
+        notificationManager.createNotificationChannel(generationChannel)
     }
 
     override fun onTerminate() {

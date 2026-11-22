@@ -1344,12 +1344,17 @@ private fun shareFile(context: Context, uri: Uri, mimeType: String) {
         putExtra(android.content.Intent.EXTRA_STREAM, uri)
         addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(
-        android.content.Intent.createChooser(
-            intent,
-            context.getString(R.string.chat_page_export_share_via)
+    runCatching {
+        context.startActivity(
+            android.content.Intent.createChooser(
+                intent,
+                context.getString(R.string.chat_page_export_share_via)
+            )
         )
-    )
+    }.onFailure {
+        android.util.Log.e("Export", "Failed to share file", it)
+        android.widget.Toast.makeText(context, "No app available to share file", android.widget.Toast.LENGTH_SHORT).show()
+    }
 }
 
 private val troubleshootingKeys = setOf(

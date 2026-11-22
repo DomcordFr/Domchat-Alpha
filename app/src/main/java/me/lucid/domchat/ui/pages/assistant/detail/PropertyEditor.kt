@@ -241,9 +241,7 @@ fun CustomBodies(customBodies: List<CustomBody>, onUpdate: (List<CustomBody>) ->
                             modifier = Modifier.fillMaxWidth(),
                             isError = jsonParseError != null,
                             supportingText = {
-                                if (jsonParseError != null) {
-                                    Text(jsonParseError!!)
-                                }
+                                jsonParseError?.let { Text(it) }
                             },
                             minLines = 3,
                             maxLines = 5,

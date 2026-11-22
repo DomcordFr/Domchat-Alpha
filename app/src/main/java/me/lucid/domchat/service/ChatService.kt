@@ -705,8 +705,16 @@ class ChatService(
 
     private val lifecycleObserver = LifecycleEventObserver { _, event ->
         when (event) {
-            Lifecycle.Event.ON_START -> _isForeground.value = true
-            Lifecycle.Event.ON_STOP -> _isForeground.value = false
+            Lifecycle.Event.ON_START -> {
+                _isForeground.value = true
+                GenerationForegroundService.stop(context)
+            }
+            Lifecycle.Event.ON_STOP -> {
+                _isForeground.value = false
+                if (_generationJobs.value.isNotEmpty()) {
+                    GenerationForegroundService.start(context)
+                }
+            }
             else -> {}
         }
     }
@@ -718,6 +726,7 @@ class ChatService(
 
     fun cleanup() = runCatching {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
+        GenerationForegroundService.stop(context)
         _generationJobs.value.values.forEach { it?.cancel() }
     }
 
@@ -1337,12 +1346,18 @@ class ChatService(
             _generationJobs.update { current ->
                 if (current[conversationId] === job) current - conversationId else current
             }
+            if (_generationJobs.value.isEmpty()) {
+                GenerationForegroundService.stop(context)
+            }
             appScope.launch {
                 delay(500)
                 checkAllConversationsReferences()
             }
         }
         job.start()
+        if (!_isForeground.value) {
+            GenerationForegroundService.start(context)
+        }
     }
 
     fun sendMessage(
@@ -1452,6 +1467,9 @@ class ChatService(
             _generationJobs.update { current ->
                 if (current[conversationId] === job) current - conversationId else current
             }
+            if (_generationJobs.value.isEmpty()) {
+                GenerationForegroundService.stop(context)
+            }
             // 取消生成任务后，检查是否有其他任务在进行
             appScope.launch {
                 delay(500)
@@ -1459,6 +1477,9 @@ class ChatService(
             }
         }
         job.start()
+        if (!_isForeground.value) {
+            GenerationForegroundService.start(context)
+        }
     }
 
     // Regenerate message - TURN-BASED for assistant messages
@@ -1553,6 +1574,9 @@ class ChatService(
             _generationJobs.update { current ->
                 if (current[conversationId] === job) current - conversationId else current
             }
+            if (_generationJobs.value.isEmpty()) {
+                GenerationForegroundService.stop(context)
+            }
             // 取消生成任务后，检查是否有其他任务在进行
             appScope.launch {
                 delay(500)
@@ -1560,6 +1584,9 @@ class ChatService(
             }
         }
         job.start()
+        if (!_isForeground.value) {
+            GenerationForegroundService.start(context)
+        }
     }
 
     // 处理消息补全
@@ -2551,14 +2578,19 @@ class ChatService(
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setContentIntent(getPendingIntent(context, conversationId))
 
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+        }
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
             return
         }
-        NotificationManagerCompat.from(context).notify(1, notification.build())
+        NotificationManagerCompat.from(context).notify(conversationId.hashCode(), notification.build())
     }
 
     private fun getPendingIntent(context: Context, conversationId: Uuid): PendingIntent {

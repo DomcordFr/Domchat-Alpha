@@ -124,6 +124,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -370,25 +371,32 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         persistGroups()
     }
 
-    var pendingExportJson by remember { mutableStateOf("") }
-    var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var pendingExportAssistantId by rememberSaveable { mutableStateOf<String?>(null) }
     var loadError by remember { mutableStateOf<Throwable?>(null) }
 
     // Export file launcher (JSON)
     val exportJsonLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
-        if (uri != null && pendingExportJson.isNotEmpty()) {
-            scope.launch {
-                try {
-                    context.contentResolver.openOutputStream(uri)?.use { 
-                        it.write(pendingExportJson.toByteArray())
+        val assistantId = pendingExportAssistantId
+        if (uri != null && assistantId != null) {
+            val target = settings.assistants.find { it.id.toString() == assistantId }
+            if (target != null) {
+                scope.launch {
+                    try {
+                        val jsonStr = withContext(Dispatchers.IO) {
+                            AssistantExportImport.exportToCharacterCardV2(target, context)
+                        }
+                        context.contentResolver.openOutputStream(uri)?.use { 
+                            it.write(jsonStr.toByteArray())
+                        }
+                        toaster?.show("Character Card exported successfully")
+                    } catch (e: Exception) {
+                        toaster?.show("Export failed: ${e.message}", ToastType.Error)
+                    } finally {
+                        pendingExportAssistantId = null
                     }
-                    toaster?.show("Character Card exported successfully")
-                } catch (e: Exception) {
-                    toaster?.show("Export failed: ${e.message}", ToastType.Error)
                 }
-                pendingExportJson = ""
             }
         }
     }
@@ -397,21 +405,28 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
     val exportPngLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("image/png")
     ) { uri ->
-        if (uri != null) {
-            val bytes = pendingExportBytes
-            if (bytes == null) {
-                toaster?.show("Export failed: no image data", ToastType.Error)
-            } else {
+        val assistantId = pendingExportAssistantId
+        if (uri != null && assistantId != null) {
+            val target = settings.assistants.find { it.id.toString() == assistantId }
+            if (target != null) {
                 scope.launch {
                     try {
-                        context.contentResolver.openOutputStream(uri)?.use { 
-                            it.write(bytes)
+                        val bytes = withContext(Dispatchers.IO) {
+                            AssistantExportImport.exportToCharacterCardPng(target, context)
                         }
-                        toaster?.show("SillyTavern PNG Card exported successfully")
+                        if (bytes != null) {
+                            context.contentResolver.openOutputStream(uri)?.use { 
+                                it.write(bytes)
+                            }
+                            toaster?.show("SillyTavern PNG Card exported successfully")
+                        } else {
+                            toaster?.show("Export failed: could not generate PNG card", ToastType.Error)
+                        }
                     } catch (e: Exception) {
                         toaster?.show("Export failed: ${e.message}", ToastType.Error)
+                    } finally {
+                        pendingExportAssistantId = null
                     }
-                    pendingExportBytes = null
                 }
             }
         }
@@ -1540,26 +1555,20 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
             },
             onExportPng = {
                 val target = char
-                scope.launch {
-                    val bytes = withContext(Dispatchers.IO) {
-                        AssistantExportImport.exportToCharacterCardPng(target, context)
-                    }
-                    if (bytes != null) {
-                        pendingExportBytes = bytes
-                        exportPngLauncher.launch("${target.name.replace(" ", "_")}.png")
-                    } else {
-                        toaster?.show("Failed to create PNG card with avatar", ToastType.Error)
-                    }
+                pendingExportAssistantId = target.id.toString()
+                runCatching {
+                    exportPngLauncher.launch("${target.name.replace(" ", "_")}.png")
+                }.onFailure {
+                    toaster?.show("Failed to launch document picker", ToastType.Error)
                 }
             },
             onExportJson = {
                 val target = char
-                scope.launch {
-                    val jsonStr = withContext(Dispatchers.IO) {
-                        AssistantExportImport.exportToCharacterCardV2(target, context)
-                    }
-                    pendingExportJson = jsonStr
+                pendingExportAssistantId = target.id.toString()
+                runCatching {
                     exportJsonLauncher.launch("${target.name.replace(" ", "_")}.json")
+                }.onFailure {
+                    toaster?.show("Failed to launch document picker", ToastType.Error)
                 }
             },
             onMoveToGroup = { groupId ->

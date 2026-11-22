@@ -196,15 +196,20 @@ class ScheduledMessageWorker(
             .setAutoCancel(true)
             .build()
 
-        if (androidx.core.app.ActivityCompat.checkSelfPermission(
-                applicationContext,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-            return true
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                me.lucid.common.android.Logging.log(TAG, "POST_NOTIFICATIONS permission missing when posting scheduled message")
+                return false
+            }
         }
-        me.lucid.common.android.Logging.log(TAG, "POST_NOTIFICATIONS permission missing when posting scheduled message")
-        return false
+        if (!androidx.core.app.NotificationManagerCompat.from(applicationContext).areNotificationsEnabled()) {
+            return false
+        }
+        notificationManager.notify(conversationId.hashCode(), notification)
+        return true
     }
 }

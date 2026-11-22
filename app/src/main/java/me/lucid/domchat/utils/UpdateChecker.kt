@@ -206,7 +206,11 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                 "package:${context.packageName}".toUri()
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+            runCatching {
+                context.startActivity(intent)
+            }.onFailure {
+                Log.e("UpdateChecker", "Failed to launch unknown sources settings", it)
+            }
             return false
         }
 

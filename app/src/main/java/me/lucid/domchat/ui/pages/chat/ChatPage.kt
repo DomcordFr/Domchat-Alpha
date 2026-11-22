@@ -1471,7 +1471,7 @@ private fun ChatPageContent(
 
     // State for user message regeneration confirmation dialog
     var showUserRegenerateConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var pendingUserRegenerateMessage by rememberSaveable { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
+    var pendingUserRegenerateMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     var pendingDeleteMessage by remember { mutableStateOf<me.lucid.ai.ui.UIMessage?>(null) }
     val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
     val onNewChat = {
@@ -2350,10 +2350,11 @@ private fun ChatPageContent(
                         }
                     },
                     onSendClick = {
-                        if (inputState.isEditing()) {
+                        val editingId = inputState.editingMessage
+                        if (inputState.isEditing() && editingId != null) {
                             vm.handleMessageEdit(
                                 parts = inputState.getContents(),
-                                messageId = inputState.editingMessage!!,
+                                messageId = editingId,
                             )
                         } else {
                             if (currentChatModel == null) {
@@ -2368,10 +2369,11 @@ private fun ChatPageContent(
                         inputState.clearInput()
                     },
                     onLongSendClick = {
-                        if (inputState.isEditing()) {
+                        val editingId = inputState.editingMessage
+                        if (inputState.isEditing() && editingId != null) {
                             vm.handleMessageEdit(
                                 parts = inputState.getContents(),
-                                messageId = inputState.editingMessage!!,
+                                messageId = editingId,
                             )
                         } else {
                             if (currentChatModel == null) {
