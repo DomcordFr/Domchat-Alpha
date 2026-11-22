@@ -23,6 +23,8 @@ internal object BackupArchiveFormat {
     const val CURRENT_FORMAT_VERSION = 2
     const val SETTINGS_ENTRY = "settings.json"
     const val MANIFEST_ENTRY = "backup_manifest.json"
+    const val LOCAL_LLM_MODELS_ENTRY = "local_llm_models.json"
+    const val LOCAL_STT_MODELS_ENTRY = "local_stt_models.json"
     const val PREFS_DIR = "prefs"
 
     const val LEGACY_DB_ENTRY = "rikka_hub.db"

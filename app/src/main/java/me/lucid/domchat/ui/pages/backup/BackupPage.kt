@@ -159,22 +159,28 @@ fun BackupPage(
                         selectedKeyIds = selectedExportKeyIds,
                     )
 
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(targetUri)?.use { outputStream ->
-                            exportFile.source().buffer().inputStream().use { inputStream ->
-                                inputStream.copyTo(outputStream)
+                    try {
+                        withContext(Dispatchers.IO) {
+                            val outputStream = context.contentResolver.openOutputStream(targetUri)
+                                ?: throw java.io.IOException("Unable to open destination")
+                            outputStream.use { out ->
+                                exportFile.source().buffer().inputStream().use { inputStream ->
+                                    inputStream.copyTo(out)
+                                }
+                            }
+                        }
+
+                        toaster.show(
+                            context.getString(R.string.backup_page_backup_success),
+                            type = ToastType.Success
+                        )
+                    } finally {
+                        withContext(Dispatchers.IO) {
+                            if (exportFile.exists()) {
+                                exportFile.delete()
                             }
                         }
                     }
-
-                    withContext(Dispatchers.IO) {
-                        exportFile.delete()
-                    }
-
-                    toaster.show(
-                        context.getString(R.string.backup_page_backup_success),
-                        type = ToastType.Success
-                    )
                 }.onFailure { e ->
                     e.printStackTrace()
                     toaster.show(
@@ -269,22 +275,27 @@ fun BackupPage(
                     runCatching {
                         val tempFile =
                             File(context.cacheDir, "temp_restore_${System.currentTimeMillis()}.zip")
-                        withContext(Dispatchers.IO) {
-                            context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                                tempFile.sink().buffer().outputStream().use { outputStream ->
-                                    inputStream.copyTo(outputStream)
+                        try {
+                            withContext(Dispatchers.IO) {
+                                val inputStream = context.contentResolver.openInputStream(sourceUri)
+                                    ?: throw java.io.IOException("Unable to open source backup file")
+                                inputStream.use { input ->
+                                    tempFile.sink().buffer().outputStream().use { outputStream ->
+                                        input.copyTo(outputStream)
+                                    }
                                 }
                             }
+                            val result = vm.restoreFromLocalFile(tempFile)
+                            restoreResult = result
+                            toaster.show(
+                                context.getString(R.string.backup_page_restore_success),
+                                type = ToastType.Success
+                            )
+                        } finally {
+                            withContext(Dispatchers.IO) {
+                                if (tempFile.exists()) tempFile.delete()
+                            }
                         }
-                        val result = vm.restoreFromLocalFile(tempFile)
-                        restoreResult = result
-                        withContext(Dispatchers.IO) {
-                            tempFile.delete()
-                        }
-                        toaster.show(
-                            context.getString(R.string.backup_page_restore_success),
-                            type = ToastType.Success
-                        )
                         val missing = PermissionChecker.getMissingFeatureAccess(
                             context,
                             vm.getAssistantsSnapshot()

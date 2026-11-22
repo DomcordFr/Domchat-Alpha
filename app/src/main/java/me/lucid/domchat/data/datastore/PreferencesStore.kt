@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -84,6 +85,7 @@ class SettingsStore(
         // 模型选择
         val ENABLE_WEB_SEARCH = booleanPreferencesKey("enable_web_search")
         val FAVORITE_MODELS = stringPreferencesKey("favorite_models")
+        val RECENT_MODEL_IDS = stringPreferencesKey("recent_model_ids")
         val SELECT_MODEL = stringPreferencesKey("chat_model")
         val TITLE_MODEL = stringPreferencesKey("title_model")
         val TITLE_THINKING_BUDGET = intPreferencesKey("title_thinking_budget")
@@ -176,6 +178,7 @@ class SettingsStore(
                     setupCompleted = preferences[SETUP_COMPLETED] == true,
                     enableWebSearch = preferences[ENABLE_WEB_SEARCH] == true,
                     favoriteModels = decodePreferenceList(preferences[FAVORITE_MODELS]) ?: emptyList(),
+                    recentModelIds = decodePreferenceList(preferences[RECENT_MODEL_IDS]) ?: emptyList(),
                     chatModelId = decodeUuid(preferences[SELECT_MODEL], GEMINI_2_5_FLASH_ID),
                     titleModelId = decodeUuid(preferences[TITLE_MODEL], GEMINI_2_5_FLASH_ID),
                     titleThinkingBudget = preferences[TITLE_THINKING_BUDGET] ?: 0,
@@ -453,19 +456,19 @@ class SettingsStore(
 
 
     suspend fun update(settings: Settings) {
-        val current = settingsFlow.value
+        val current = if (settingsFlow.value.init) {
+            settingsFlow.first { !it.init }
+        } else {
+            settingsFlow.value
+        }
         val effectiveSettings = if (settings.init) {
-            if (!current.init) {
-                current.copy(
-                    displaySetting = settings.displaySetting,
-                    assistantId = if (settings.assistantId != DEFAULT_ASSISTANT_ID) settings.assistantId else current.assistantId,
-                    providers = if (settings.providers.isNotEmpty()) settings.providers else current.providers,
-                    assistants = if (settings.assistants.isNotEmpty()) settings.assistants else current.assistants,
-                    init = false
-                )
-            } else {
-                settings.copy(init = false)
-            }
+            current.copy(
+                displaySetting = settings.displaySetting,
+                assistantId = if (settings.assistantId != DEFAULT_ASSISTANT_ID) settings.assistantId else current.assistantId,
+                providers = if (settings.providers.isNotEmpty()) settings.providers else current.providers,
+                assistants = if (settings.assistants.isNotEmpty()) settings.assistants else current.assistants,
+                init = false
+            )
         } else {
             settings
         }
@@ -518,6 +521,7 @@ class SettingsStore(
 
             preferences[ENABLE_WEB_SEARCH] = normalizedSettings.enableWebSearch
             preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(normalizedSettings.favoriteModels)
+            preferences[RECENT_MODEL_IDS] = JsonInstant.encodeToString(normalizedSettings.recentModelIds)
             preferences[SELECT_MODEL] = normalizedSettings.chatModelId.toString()
             preferences[TITLE_MODEL] = normalizedSettings.titleModelId.toString()
             preferences[TITLE_THINKING_BUDGET] = normalizedSettings.titleThinkingBudget
@@ -587,7 +591,12 @@ class SettingsStore(
     }
 
     suspend fun update(fn: (Settings) -> Settings) {
-        update(fn(settingsFlow.value))
+        val current = if (settingsFlow.value.init) {
+            settingsFlow.first { !it.init }
+        } else {
+            settingsFlow.value
+        }
+        update(fn(current))
     }
 
     suspend fun updateAssistant(assistantId: Uuid) {

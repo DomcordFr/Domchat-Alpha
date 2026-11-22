@@ -104,6 +104,8 @@ data class Settings(
     val chatStorage: ChatStorageSettings = ChatStorageSettings(),
     val textSelectionConfig: TextSelectionConfig = TextSelectionConfig(),
     val assistantOverlayConfig: AssistantOverlayConfig = AssistantOverlayConfig(),
+    val huggingFaceToken: String = "",
+    val mcpOAuthTokens: Map<String, String> = emptyMap(),
 ) {
     companion object {
         fun dummy() = Settings(init = true)

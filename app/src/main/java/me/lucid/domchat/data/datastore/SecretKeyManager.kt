@@ -264,12 +264,30 @@ class SecretKeyManager(
             }
         }
 
+        // Migrate HuggingFace token
+        if (settings.huggingFaceToken.isNotBlank()) {
+            setHuggingFaceToken(settings.huggingFaceToken)
+            migrated = true
+        }
+
+        // Migrate MCP OAuth tokens
+        if (settings.mcpOAuthTokens.isNotEmpty()) {
+            settings.mcpOAuthTokens.forEach { (k, v) ->
+                if (v.isNotBlank()) {
+                    secureStore.putSecret(k, v)
+                    migrated = true
+                }
+            }
+        }
+
         return if (migrated) {
             settings.copy(
                 providers = migratedProviders,
                 webDavConfig = migratedWebDav,
                 ttsProviders = migratedTtsProviders,
                 webServerAccessPassword = migratedWebServerAccessPassword,
+                huggingFaceToken = "",
+                mcpOAuthTokens = emptyMap(),
             )
         } else {
             settings
@@ -579,6 +597,12 @@ class SecretKeyManager(
 
     // ========== Backup/Export Support ==========
 
+    fun getAllMcpOAuthSecrets(): Map<String, String> {
+        return secureStore.getAllKeys()
+            .filter { it.startsWith(MCP_OAUTH_PREFIX) }
+            .associateWith { secureStore.getSecret(it).orEmpty() }
+    }
+
     /**
      * Populate settings with decrypted secrets for export.
      * This creates a copy with all secrets in plaintext for backup portability.
@@ -586,27 +610,121 @@ class SecretKeyManager(
     fun populateSecretsForExport(
         settings: Settings,
         selectedKeyIds: Set<Uuid>? = null,
+        includeApiKeys: Boolean = true,
+        includeSettings: Boolean = true,
     ): Settings {
-        val providersWithSecrets = settings.providers.map { provider ->
-            populateProviderSecrets(provider, selectedKeyIds, forExport = (selectedKeyIds != null))
+        val providersWithSecrets = if (includeApiKeys) {
+            settings.providers.map { provider ->
+                populateProviderSecrets(provider, selectedKeyIds, forExport = (selectedKeyIds != null))
+            }
+        } else {
+            settings.providers.map { provider ->
+                stripProviderSecrets(provider)
+            }
         }
 
-        val webDavWithPassword = settings.webDavConfig.copy(
-            password = getWebDavPassword(settings.webDavConfig.password)
-        )
-
-        val ttsProvidersWithSecrets = settings.ttsProviders.map { provider ->
-            populateTtsProviderSecrets(provider)
+        val webDavWithPassword = if (includeSettings && includeApiKeys) {
+            settings.webDavConfig.copy(
+                password = getWebDavPassword(settings.webDavConfig.password)
+            )
+        } else {
+            settings.webDavConfig.copy(password = "")
         }
 
-        val webServerAccessPassword = getWebServerAccessPassword(settings.webServerAccessPassword)
+        val ttsProvidersWithSecrets = if (includeApiKeys) {
+            settings.ttsProviders.map { provider ->
+                populateTtsProviderSecrets(provider)
+            }
+        } else {
+            settings.ttsProviders.map { stripTtsSecrets(it) }
+        }
+
+        val asrProvidersWithSecrets = if (includeApiKeys) {
+            settings.asrProviders.map { provider ->
+                populateSttProviderSecrets(provider)
+            }
+        } else {
+            settings.asrProviders.map { stripSttSecrets(it) }
+        }
+
+        val webServerAccessPassword = if (includeSettings && includeApiKeys) {
+            getWebServerAccessPassword(settings.webServerAccessPassword)
+        } else {
+            ""
+        }
+
+        val hfToken = if (includeApiKeys) getHuggingFaceToken().orEmpty() else ""
+        val mcpTokens = if (includeApiKeys) getAllMcpOAuthSecrets() else emptyMap()
 
         return settings.copy(
             providers = providersWithSecrets,
             webDavConfig = webDavWithPassword,
             ttsProviders = ttsProvidersWithSecrets,
+            asrProviders = asrProvidersWithSecrets,
             webServerAccessPassword = webServerAccessPassword,
+            huggingFaceToken = hfToken,
+            mcpOAuthTokens = mcpTokens,
         )
+    }
+
+    private fun stripProviderSecrets(provider: ProviderSetting): ProviderSetting {
+        val strippedPool = provider.apiKeyPool.map { it.copy(key = "") }
+        val strippedModels = provider.models.map { model ->
+            val overwrite = model.providerOverwrite
+            if (overwrite != null) {
+                model.copy(providerOverwrite = stripProviderSecrets(overwrite))
+            } else {
+                model
+            }
+        }
+        val stripped = when (provider) {
+            is ProviderSetting.OpenAI -> provider.copy(
+                apiKey = "",
+                apiKeyPool = strippedPool,
+                models = strippedModels
+            )
+            is ProviderSetting.Google -> provider.copy(
+                apiKey = "",
+                privateKey = "",
+                apiKeyPool = strippedPool,
+                models = strippedModels
+            )
+            is ProviderSetting.Claude -> provider.copy(
+                apiKey = "",
+                apiKeyPool = strippedPool,
+                models = strippedModels
+            )
+            is ProviderSetting.ComfyUI -> provider.copy(models = strippedModels)
+            is ProviderSetting.LiteRtLocal -> provider.copy(models = strippedModels)
+        }
+        stripped.resolvedApiKeyPool = emptyList()
+        return stripped
+    }
+
+    private fun stripTtsSecrets(provider: TTSProviderSetting): TTSProviderSetting {
+        return when (provider) {
+            is TTSProviderSetting.OpenAI -> provider.copy(apiKey = "")
+            is TTSProviderSetting.Gemini -> provider.copy(apiKey = "")
+            is TTSProviderSetting.MiniMax -> provider.copy(apiKey = "")
+            is TTSProviderSetting.ElevenLabs -> provider.copy(apiKey = "")
+            is TTSProviderSetting.Qwen -> provider.copy(apiKey = "")
+            is TTSProviderSetting.Cartesia -> provider.copy(apiKey = "")
+            is TTSProviderSetting.FishAudio -> provider.copy(apiKey = "")
+            is TTSProviderSetting.PlayHT -> provider.copy(apiKey = "")
+            is TTSProviderSetting.SystemTTS -> provider
+        }
+    }
+
+    private fun stripSttSecrets(provider: ASRProviderSetting): ASRProviderSetting {
+        return when (provider) {
+            is ASRProviderSetting.OpenAICompatible -> provider.copy(apiKey = "")
+            is ASRProviderSetting.OpenAIRealtime -> provider.copy(apiKey = "")
+            is ASRProviderSetting.DashScope -> provider.copy(apiKey = "")
+            is ASRProviderSetting.Volcengine -> provider.copy(apiKey = "")
+            is ASRProviderSetting.MiMo -> provider.copy(apiKey = "")
+            is ASRProviderSetting.Step -> provider.copy(apiKey = "")
+            is ASRProviderSetting.SystemSTT -> provider
+        }
     }
 
     /**
@@ -648,37 +766,38 @@ class SecretKeyManager(
             entry.copy(key = if (shouldExport) secret else "")
         }
 
+        val shouldExportPrimary = !forExport || selectedKeyIds == null || provider.id in selectedKeyIds
         val updated = when (provider) {
             is ProviderSetting.OpenAI -> {
                 provider.copy(
-                    apiKey = getApiKey(provider.id, provider.apiKey),
+                    apiKey = if (shouldExportPrimary) getApiKey(provider.id, provider.apiKey) else "",
                     apiKeyPool = poolWithSecrets,
-                    models = provider.models.map { hydrateModelProviderOverwrite(it) },
+                    models = provider.models.map { hydrateModelProviderOverwrite(it, selectedKeyIds, forExport) },
                 )
             }
 
             is ProviderSetting.Google -> {
                 provider.copy(
-                    apiKey = getApiKey(provider.id, provider.apiKey),
-                    privateKey = getPrivateKey(provider.id, provider.privateKey),
+                    apiKey = if (shouldExportPrimary) getApiKey(provider.id, provider.apiKey) else "",
+                    privateKey = if (shouldExportPrimary) getPrivateKey(provider.id, provider.privateKey) else "",
                     apiKeyPool = poolWithSecrets,
-                    models = provider.models.map { hydrateModelProviderOverwrite(it) },
+                    models = provider.models.map { hydrateModelProviderOverwrite(it, selectedKeyIds, forExport) },
                 )
             }
 
             is ProviderSetting.Claude -> {
                 provider.copy(
-                    apiKey = getApiKey(provider.id, provider.apiKey),
+                    apiKey = if (shouldExportPrimary) getApiKey(provider.id, provider.apiKey) else "",
                     apiKeyPool = poolWithSecrets,
-                    models = provider.models.map { hydrateModelProviderOverwrite(it) },
+                    models = provider.models.map { hydrateModelProviderOverwrite(it, selectedKeyIds, forExport) },
                 )
             }
 
             is ProviderSetting.ComfyUI -> provider.copy(
-                models = provider.models.map { hydrateModelProviderOverwrite(it) },
+                models = provider.models.map { hydrateModelProviderOverwrite(it, selectedKeyIds, forExport) },
             )
             is ProviderSetting.LiteRtLocal -> provider.copy(
-                models = provider.models.map { hydrateModelProviderOverwrite(it) },
+                models = provider.models.map { hydrateModelProviderOverwrite(it, selectedKeyIds, forExport) },
             )
         }
 
@@ -691,9 +810,13 @@ class SecretKeyManager(
      * Overwrites are stored on models and were previously skipped by populate,
      * so chat with an overwrite sent empty credentials after key-pool migration.
      */
-    private fun hydrateModelProviderOverwrite(model: me.lucid.ai.provider.Model): me.lucid.ai.provider.Model {
+    private fun hydrateModelProviderOverwrite(
+        model: me.lucid.ai.provider.Model,
+        selectedKeyIds: Set<Uuid>? = null,
+        forExport: Boolean = false,
+    ): me.lucid.ai.provider.Model {
         val overwrite = model.providerOverwrite ?: return model
-        return model.copy(providerOverwrite = populateProviderSecrets(overwrite))
+        return model.copy(providerOverwrite = populateProviderSecrets(overwrite, selectedKeyIds, forExport))
     }
 
     private fun populateTtsProviderSecrets(provider: TTSProviderSetting): TTSProviderSetting {

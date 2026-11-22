@@ -53,11 +53,17 @@ class WebdavSync(
 
     suspend fun backupToWebDav(webDavConfig: WebDavConfig) = withContext(Dispatchers.IO) {
         val file = prepareBackupFile(webDavConfig)
-        val collection = webDavClientFactory.collection(webDavConfig)
-        collection.ensureCollectionExists()
-        val target = webDavClientFactory.collection(webDavConfig, file.name)
-        webDavClientFactory.putFile(target, file) { response ->
-            LogUtil.i(TAG, "backupToWebDav: $response")
+        try {
+            val collection = webDavClientFactory.collection(webDavConfig)
+            collection.ensureCollectionExists()
+            val target = webDavClientFactory.collection(webDavConfig, file.name)
+            webDavClientFactory.putFile(target, file) { response ->
+                LogUtil.i(TAG, "backupToWebDav: $response")
+            }
+        } finally {
+            if (file.exists()) {
+                file.delete()
+            }
         }
     }
 
@@ -180,21 +186,15 @@ class WebdavSync(
                 if (BackupContentOption.CHARACTERS in selectedContent) {
                     add("avatars")
                     add("assistant_backgrounds")
-                    add("wallpapers")
-                    add("backgrounds")
-                    add("custom_icons")
-                    add("custom_fonts")
                 }
                 if (BackupContentOption.CHATS in selectedContent) {
                     add("upload")
                     add("chat_files")
                     add("tool_outputs")
                     add("images")
-                    add("wallpapers")
                 }
                 if (BackupContentOption.PROVIDERS in selectedContent) {
                     add("auto_icons")
-                    add("custom_icons")
                 }
                 if (BackupContentOption.SETTINGS in selectedContent) {
                     add("wallpapers")
@@ -213,7 +213,7 @@ class WebdavSync(
                     add("lorebook_covers")
                     add("lorebook_attachments")
                 }
-            }.filter { BackupArchiveFormat.MANAGED_FILE_DIRS.contains(it) }
+            }.distinct().filter { BackupArchiveFormat.MANAGED_FILE_DIRS.contains(it) }
         }
 
         val allowedDbTables: Set<String>? = if (selectedContent == null) {
@@ -237,14 +237,14 @@ class WebdavSync(
         )
 
         ZipOutputStream(backupFile.sink().buffer().outputStream()).use { zipOut ->
+            val includeApiKeys = selectedContent == null || BackupContentOption.API_KEYS in selectedContent
+            val includeSettings = selectedContent == null || BackupContentOption.SETTINGS in selectedContent
             val rawSettings = settingsStore.settingsFlow.value
             val settingsForExport = secretKeyManager.populateSecretsForExport(
                 settings = rawSettings,
-                selectedKeyIds = if (selectedContent != null && BackupContentOption.API_KEYS !in selectedContent) {
-                    emptySet() // export no keys
-                } else {
-                    selectedKeyIds
-                },
+                selectedKeyIds = if (!includeApiKeys) emptySet() else selectedKeyIds,
+                includeApiKeys = includeApiKeys,
+                includeSettings = includeSettings,
             )
 
             // Apply content filtering to the Settings object
@@ -264,6 +264,29 @@ class WebdavSync(
                 name = BackupArchiveFormat.MANIFEST_ENTRY,
                 content = json.encodeToString(manifest),
             )
+
+            if (selectedContent == null || BackupContentOption.PROVIDERS in selectedContent || BackupContentOption.SETTINGS in selectedContent) {
+                runCatching {
+                    val installedLlm = me.lucid.locallm.LocalModelStore(context).current()
+                    if (installedLlm.isNotEmpty()) {
+                        addVirtualFileToZip(
+                            zipOut = zipOut,
+                            name = BackupArchiveFormat.LOCAL_LLM_MODELS_ENTRY,
+                            content = json.encodeToString(installedLlm),
+                        )
+                    }
+                }
+                runCatching {
+                    val installedStt = me.lucid.asr.local.SherpaModelStore(context).current()
+                    if (installedStt.isNotEmpty()) {
+                        addVirtualFileToZip(
+                            zipOut = zipOut,
+                            name = BackupArchiveFormat.LOCAL_STT_MODELS_ENTRY,
+                            content = json.encodeToString(installedStt),
+                        )
+                    }
+                }
+            }
 
             BackupArchiveFormat.PORTABLE_SHARED_PREF_STORES.forEach { storeName ->
                 val snapshot = exportSharedPreferencesSnapshot(context, storeName)
@@ -346,8 +369,31 @@ class WebdavSync(
         }
         if (BackupContentOption.PROVIDERS !in selectedContent) {
             result = result.copy(providers = emptyList(), ttsProviders = emptyList())
-        } else if (BackupContentOption.API_KEYS !in selectedContent) {
-            // Keep providers structure, but keys are already blanked out by populateSecretsForExport
+        }
+        if (BackupContentOption.API_KEYS !in selectedContent) {
+            result = result.copy(
+                searchServices = result.searchServices.map { svc ->
+                    svc.copy(
+                        apiKey = "",
+                        searxng = svc.searxng.copy(username = "", password = "")
+                    )
+                },
+                mcpServers = result.mcpServers.map { server ->
+                    server.copy(
+                        commonOptions = server.commonOptions.copy(
+                            headers = server.commonOptions.headers.filterKeys { header ->
+                                val lower = header.lowercase()
+                                !lower.contains("auth") &&
+                                !lower.contains("key") &&
+                                !lower.contains("token") &&
+                                !lower.contains("bearer") &&
+                                !lower.contains("secret") &&
+                                !lower.contains("cookie")
+                            }
+                        )
+                    )
+                }
+            )
         }
         if (BackupContentOption.LOREBOOKS !in selectedContent) {
             result = result.copy(lorebooks = emptyList())
@@ -380,6 +426,7 @@ class WebdavSync(
                 webServerPort = defaults.webServerPort,
                 webServerJwtEnabled = defaults.webServerJwtEnabled,
                 webServerAccessPassword = defaults.webServerAccessPassword,
+                webDavConfig = WebDavConfig(),
             )
         }
         return result
@@ -429,6 +476,26 @@ class WebdavSync(
                             normalizedName == BackupArchiveFormat.MANIFEST_ENTRY -> {
                                 val manifestJson = zipIn.readBytes().toString(Charsets.UTF_8)
                                 manifest = json.decodeFromString<BackupManifest>(manifestJson)
+                                foundSupportedEntry = true
+                            }
+
+                            normalizedName == BackupArchiveFormat.LOCAL_LLM_MODELS_ENTRY -> {
+                                val content = zipIn.readBytes().toString(Charsets.UTF_8)
+                                runCatching {
+                                    val models = json.decodeFromString<List<me.lucid.locallm.InstalledLocalModel>>(content)
+                                    val store = me.lucid.locallm.LocalModelStore(context)
+                                    models.forEach { store.upsert(it) }
+                                }
+                                foundSupportedEntry = true
+                            }
+
+                            normalizedName == BackupArchiveFormat.LOCAL_STT_MODELS_ENTRY -> {
+                                val content = zipIn.readBytes().toString(Charsets.UTF_8)
+                                runCatching {
+                                    val models = json.decodeFromString<List<me.lucid.asr.local.InstalledSherpaModel>>(content)
+                                    val store = me.lucid.asr.local.SherpaModelStore(context)
+                                    models.forEach { store.upsert(it) }
+                                }
                                 foundSupportedEntry = true
                             }
 
@@ -567,6 +634,8 @@ class WebdavSync(
                         }
 
                         live.copy(
+                            setupCompleted = if (BackupContentOption.SETTINGS.name in selected) cleanedSettings.setupCompleted else live.setupCompleted,
+                            assistantId = if (BackupContentOption.CHARACTERS.name in selected || BackupContentOption.SETTINGS.name in selected) cleanedSettings.assistantId else live.assistantId,
                             assistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistants else live.assistants,
                             assistantTags = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.assistantTags else live.assistantTags,
                             recentlyUsedAssistants = if (BackupContentOption.CHARACTERS.name in selected) cleanedSettings.recentlyUsedAssistants else live.recentlyUsedAssistants,
@@ -764,6 +833,10 @@ class WebdavSync(
         stagedSnapshots: Map<String, SharedPreferencesSnapshot>,
         manifest: BackupManifest?,
     ) {
+        if (manifest != null && manifest.selectedContent.isNotEmpty() && BackupContentOption.SETTINGS.name !in manifest.selectedContent) {
+            LogUtil.i(TAG, "restorePortableSharedPreferences: Skipping shared preferences restore because SETTINGS was not selected")
+            return
+        }
         val prefStoresToRestore = if (manifest?.formatVersion == BackupArchiveFormat.CURRENT_FORMAT_VERSION) {
             manifest.sharedPrefsStores
                 .filter { BackupArchiveFormat.PORTABLE_SHARED_PREF_STORES.contains(it) }
