@@ -274,9 +274,18 @@ val dataSourceModule = module {
                 chain.proceed(request)
             }
             .addInterceptor(AIRequestInterceptor(remoteConfig = get()))
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.HEADERS
-            })
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.HEADERS
+                        redactHeader("Authorization")
+                        redactHeader("x-api-key")
+                        redactHeader("x-goog-api-key")
+                        redactHeader("Cookie")
+                        redactHeader("Set-Cookie")
+                    })
+                }
+            }
             .build()
     }
 

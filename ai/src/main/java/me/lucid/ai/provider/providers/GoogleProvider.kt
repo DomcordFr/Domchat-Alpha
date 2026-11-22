@@ -140,8 +140,7 @@ class GoogleProvider(
 
     private fun buildUrl(providerSetting: ProviderSetting.Google, path: String, selectedKey: PooledKey? = null): String {
         return if (!providerSetting.vertexAI) {
-            val key = selectedKey?.value ?: selectKey(providerSetting).value
-            "${providerSetting.baseUrl}/$path".appendQueryParameter("key", key)
+            "${providerSetting.baseUrl}/$path"
         } else {
             "https://aiplatform.googleapis.com/v1/projects/${providerSetting.projectId}/locations/${providerSetting.location}/$path"
         }
@@ -150,7 +149,8 @@ class GoogleProvider(
     private suspend fun buildHeaders(
         providerSetting: ProviderSetting.Google,
         customHeaders: List<CustomHeader> = emptyList(),
-        includeJsonContentType: Boolean = false
+        includeJsonContentType: Boolean = false,
+        selectedKey: PooledKey? = null,
     ): Map<String, String> {
         var headers = customHeaders.toHeaderMap().withReferHeaders(providerSetting.baseUrl)
         if (includeJsonContentType) {
@@ -158,6 +158,11 @@ class GoogleProvider(
         }
         if (providerSetting.vertexAI) {
             headers = headers + ("Authorization" to "Bearer ${fetchVertexAccessToken(providerSetting)}")
+        } else {
+            val key = selectedKey?.value ?: selectKey(providerSetting).value
+            if (key.isNotBlank()) {
+                headers = headers + ("x-goog-api-key" to key)
+            }
         }
         return headers
     }
@@ -383,7 +388,8 @@ class GoogleProvider(
             headers = buildHeaders(
                 providerSetting = providerSetting,
                 customHeaders = params.customHeaders,
-                includeJsonContentType = true
+                includeJsonContentType = true,
+                selectedKey = selectedKey,
             ),
             body = encodedRequestBody.encodeToByteArray(),
             mediaType = "application/json",

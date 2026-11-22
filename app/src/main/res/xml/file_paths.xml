@@ -8,5 +8,11 @@
     path="." />
   <files-path
     name="upload"
-    path="." />
+    path="upload/" />
+  <files-path
+    name="chat_files"
+    path="chat_files/" />
+  <files-path
+    name="avatars"
+    path="avatars/" />
 </paths>

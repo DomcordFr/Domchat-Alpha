@@ -28,6 +28,7 @@ class SecretKeyManager(
         private const val TTS_PROVIDER_APIKEY_PREFIX = "tts_provider_apikey_"
         private const val STT_PROVIDER_APIKEY_PREFIX = "stt_provider_apikey_"
         private const val WEBDAV_PASSWORD_KEY = "webdav_password"
+        private const val WEB_SERVER_ACCESS_PASSWORD_KEY = "web_server_access_password"
         private const val HUGGINGFACE_TOKEN_KEY = "huggingface_token"
         private const val MCP_OAUTH_PREFIX = "mcp_oauth_"
     }
@@ -171,6 +172,20 @@ class SecretKeyManager(
         }
     }
 
+    // ========== Web Server Access Password Management ==========
+
+    fun getWebServerAccessPassword(plaintextFallback: String): String {
+        return secureStore.getSecret(WEB_SERVER_ACCESS_PASSWORD_KEY) ?: plaintextFallback
+    }
+
+    fun setWebServerAccessPassword(password: String) {
+        if (password.isNotBlank()) {
+            secureStore.putSecret(WEB_SERVER_ACCESS_PASSWORD_KEY, password)
+        } else {
+            secureStore.removeSecret(WEB_SERVER_ACCESS_PASSWORD_KEY)
+        }
+    }
+
     // ========== HuggingFace Token Management ==========
 
     fun getHuggingFaceToken(): String? {
@@ -233,6 +248,15 @@ class SecretKeyManager(
             settings.webDavConfig
         }
 
+        // Migrate Web Server Access Password
+        val migratedWebServerAccessPassword = if (settings.webServerAccessPassword.isNotBlank()) {
+            setWebServerAccessPassword(settings.webServerAccessPassword)
+            migrated = true
+            "" // Clear plaintext
+        } else {
+            ""
+        }
+
         // Migrate TTS provider API keys
         val migratedTtsProviders = settings.ttsProviders.map { provider ->
             migrateTtsProviderSecrets(provider).also {
@@ -245,6 +269,7 @@ class SecretKeyManager(
                 providers = migratedProviders,
                 webDavConfig = migratedWebDav,
                 ttsProviders = migratedTtsProviders,
+                webServerAccessPassword = migratedWebServerAccessPassword,
             )
         } else {
             settings
@@ -259,6 +284,9 @@ class SecretKeyManager(
      * This should be called BEFORE migrateSecretsFromSettings() in the update flow.
      */
     fun handleExplicitSecretDeletions(oldSettings: Settings, newSettings: Settings) {
+        if (oldSettings.webServerAccessPassword.isNotBlank() && newSettings.webServerAccessPassword.isBlank()) {
+            setWebServerAccessPassword("")
+        }
         // Provider presets have stable IDs. If a deleted provider's secrets remain in
         // SecureStore, adding the same preset again silently restores those credentials.
         // Treat removal from Settings as deletion of every secret owned by that provider.
@@ -571,10 +599,13 @@ class SecretKeyManager(
             populateTtsProviderSecrets(provider)
         }
 
+        val webServerAccessPassword = getWebServerAccessPassword(settings.webServerAccessPassword)
+
         return settings.copy(
             providers = providersWithSecrets,
             webDavConfig = webDavWithPassword,
             ttsProviders = ttsProvidersWithSecrets,
+            webServerAccessPassword = webServerAccessPassword,
         )
     }
 

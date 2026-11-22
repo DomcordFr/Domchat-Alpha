@@ -475,13 +475,28 @@ class McpOAuthManager(
         }.distinct()
         val json = candidates.firstNotNullOfOrNull { candidate -> getJsonOrNull(candidate) }
             ?: error("The OAuth authorization server did not publish discovery metadata")
+        val authEndpoint = json.string("authorization_endpoint")
+            ?: error("OAuth metadata is missing the authorization endpoint")
+        val tokenEndpoint = json.string("token_endpoint")
+            ?: error("OAuth metadata is missing the token endpoint")
+        val regEndpoint = json.string("registration_endpoint")
+
+        fun validateHttpsEndpoint(endpoint: String, name: String) {
+            val endpointUri = Uri.parse(endpoint)
+            require(endpointUri.scheme == "https" && !endpointUri.host.isNullOrBlank()) {
+                "$name must use HTTPS with a valid host: $endpoint"
+            }
+        }
+
+        validateHttpsEndpoint(authEndpoint, "authorization_endpoint")
+        validateHttpsEndpoint(tokenEndpoint, "token_endpoint")
+        regEndpoint?.let { validateHttpsEndpoint(it, "registration_endpoint") }
+
         return AuthorizationServerMetadata(
             issuer = json.string("issuer") ?: issuerUrl,
-            authorizationEndpoint = json.string("authorization_endpoint")
-                ?: error("OAuth metadata is missing the authorization endpoint"),
-            tokenEndpoint = json.string("token_endpoint")
-                ?: error("OAuth metadata is missing the token endpoint"),
-            registrationEndpoint = json.string("registration_endpoint"),
+            authorizationEndpoint = authEndpoint,
+            tokenEndpoint = tokenEndpoint,
+            registrationEndpoint = regEndpoint,
             scopes = json.arrayStrings("scopes_supported"),
             tokenEndpointAuthMethods = json.arrayStrings("token_endpoint_auth_methods_supported")
                 .ifEmpty { listOf("none") },

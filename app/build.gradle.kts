@@ -129,24 +129,40 @@ android {
 
     signingConfigs {
         create("release") {
-            val localProperties = Properties()
-            val localPropertiesFile = rootProject.file("local.properties")
+            val envKeystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+            val envStorePassword = System.getenv("RELEASE_STORE_PASSWORD")
+            val envKeyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            val envKeyPassword = System.getenv("RELEASE_KEY_PASSWORD")
 
-            if (localPropertiesFile.exists()) {
-                localProperties.load(FileInputStream(localPropertiesFile))
+            if (!envKeystorePath.isNullOrBlank() && !envStorePassword.isNullOrBlank() &&
+                !envKeyAlias.isNullOrBlank() && !envKeyPassword.isNullOrBlank()
+            ) {
+                storeFile = file(envKeystorePath)
+                storePassword = envStorePassword
+                keyAlias = envKeyAlias
+                keyPassword = envKeyPassword
+            } else {
+                val localProperties = Properties()
+                val localPropertiesFile = rootProject.file("local.properties")
+                val keystorePropertiesFile = rootProject.file("keystore.properties")
+                val propsFile = if (keystorePropertiesFile.exists()) keystorePropertiesFile else localPropertiesFile
 
-                val storeFilePath = localProperties.getProperty("storeFile")
-                val storePasswordValue = localProperties.getProperty("storePassword")
-                val keyAliasValue = localProperties.getProperty("keyAlias")
-                val keyPasswordValue = localProperties.getProperty("keyPassword")
+                if (propsFile.exists()) {
+                    localProperties.load(FileInputStream(propsFile))
 
-                if (storeFilePath != null && storePasswordValue != null &&
-                    keyAliasValue != null && keyPasswordValue != null
-                ) {
-                    storeFile = file(storeFilePath)
-                    storePassword = storePasswordValue
-                    keyAlias = keyAliasValue
-                    keyPassword = keyPasswordValue
+                    val storeFilePath = localProperties.getProperty("storeFile")
+                    val storePasswordValue = localProperties.getProperty("storePassword")
+                    val keyAliasValue = localProperties.getProperty("keyAlias")
+                    val keyPasswordValue = localProperties.getProperty("keyPassword")
+
+                    if (storeFilePath != null && storePasswordValue != null &&
+                        keyAliasValue != null && keyPasswordValue != null
+                    ) {
+                        storeFile = file(storeFilePath)
+                        storePassword = storePasswordValue
+                        keyAlias = keyAliasValue
+                        keyPassword = keyPasswordValue
+                    }
                 }
             }
 
@@ -228,7 +244,7 @@ android {
     }
     lint {
         abortOnError = false
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
     }
     applicationVariants.all {
         outputs.all {

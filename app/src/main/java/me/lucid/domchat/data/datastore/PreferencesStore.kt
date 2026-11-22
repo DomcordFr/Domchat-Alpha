@@ -574,7 +574,7 @@ class SettingsStore(
             preferences[WEB_SERVER_ENABLED] = normalizedSettings.webServerEnabled
             preferences[WEB_SERVER_PORT] = normalizedSettings.webServerPort
             preferences[WEB_SERVER_JWT_ENABLED] = normalizedSettings.webServerJwtEnabled
-            preferences[WEB_SERVER_ACCESS_PASSWORD] = normalizedSettings.webServerAccessPassword
+            preferences[WEB_SERVER_ACCESS_PASSWORD] = migratedSettings.webServerAccessPassword
             preferences[WEB_SERVER_BACKGROUND_SETUP_SHOWN] = normalizedSettings.webServerBackgroundSetupShown
 
             preferences[MODES] = JsonInstant.encodeToString(normalizedSettings.modes)

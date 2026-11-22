@@ -36,10 +36,15 @@ class AIRequestInterceptor(private val remoteConfig: FirebaseRemoteConfig) : Int
         )
 
         if (shouldUseFreeApiKey) {
-            val apiKey = String(Base64.decode(remoteConfig.getString("silicon_cloud_api_key")))
-            return request.newBuilder()
-                .header("Authorization", "Bearer $apiKey")
-                .build()
+            val rawConfigKey = remoteConfig.getString("silicon_cloud_api_key")
+            val apiKey = if (rawConfigKey.isNotBlank()) {
+                runCatching { String(Base64.decode(rawConfigKey)) }.getOrDefault("")
+            } else ""
+            if (apiKey.isNotBlank()) {
+                return request.newBuilder()
+                    .header("Authorization", "Bearer $apiKey")
+                    .build()
+            }
         }
 
         return request

@@ -15,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.lucid.common.platform.PlatformLog
 import me.lucid.common.android.appTempFolder
 import me.lucid.domchat.di.appModule
 import me.lucid.domchat.di.dataSourceModule
@@ -94,6 +95,7 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
     override fun onCreate() {
         super.onCreate()
         instance = this
+        PlatformLog.isDebug = BuildConfig.DEBUG
         startKoin {
             androidLogger()
             androidContext(this@DomChatApp)

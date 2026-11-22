@@ -1,9 +1,15 @@
 package me.lucid.common.platform
 
 object PlatformLog {
-    fun d(tag: String, message: String) = log("D", tag, message)
+    var isDebug: Boolean = false
 
-    fun i(tag: String, message: String) = log("I", tag, message)
+    fun d(tag: String, message: String) {
+        if (isDebug) log("D", tag, message)
+    }
+
+    fun i(tag: String, message: String) {
+        if (isDebug) log("I", tag, message)
+    }
 
     fun w(tag: String, message: String) = log("W", tag, message)
 

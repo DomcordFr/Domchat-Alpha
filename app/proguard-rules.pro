@@ -18,7 +18,7 @@
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-renamesourcefileattribute SourceFile
 
 # keep kotlinx serializable classes
 -keep @kotlinx.serialization.Serializable class * {*;}
@@ -58,7 +58,7 @@
 -dontwarn com.google.ai.edge.localagents.**
 -dontwarn com.google.mediapipe.**
 
--dontobfuscate
+# -dontobfuscate removed to enable release R8 obfuscation
 
 # Tasks GenAI (AutoValue/JavaPoet) references javax.lang.model which is not on Android
 -dontwarn javax.lang.model.**
