@@ -109,4 +109,12 @@ interface ConversationDAO {
     // Batch query for backfill tasks to prevent OOM
     @Query("SELECT * FROM conversationentity ORDER BY update_at DESC LIMIT :limit OFFSET :offset")
     suspend fun getBackfillDataBatch(limit: Int, offset: Int): List<ConversationEntity>
+
+    @Query("SELECT assistant_id as assistantId, MAX(update_at) as lastUpdateAt FROM conversationentity GROUP BY assistant_id")
+    suspend fun getAllAssistantsLastUpdateAt(): List<AssistantLastUpdate>
 }
+
+data class AssistantLastUpdate(
+    val assistantId: String,
+    val lastUpdateAt: java.time.Instant?,
+)

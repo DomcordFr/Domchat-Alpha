@@ -173,7 +173,9 @@ import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import me.lucid.ai.core.MessageRole
 import me.lucid.ai.context.ContextCountConfidence
@@ -1511,6 +1513,23 @@ private fun ChatPageContent(
     val requestContextUsage by vm.contextUsage.collectAsStateWithLifecycle()
     val contextManagementActivity by vm.contextManagementActivity.collectAsStateWithLifecycle()
     val assistantMemories by vm.assistantMemories.collectAsStateWithLifecycle()
+    val debouncedPendingParts by produceState<List<UIMessagePart>>(
+        initialValue = emptyList(),
+        key1 = inputState
+    ) {
+        snapshotFlow {
+            inputState.textContent.text.toString() to inputState.pendingAttachments
+        }
+            .debounce(120)
+            .flowOn(Dispatchers.Default)
+            .collect { (text, attachments) ->
+                value = if (text.isBlank() && attachments.isEmpty()) {
+                    emptyList()
+                } else {
+                    listOf(UIMessagePart.Text(text)) + attachments.map { it.part }
+                }
+            }
+    }
     val contextMeterUsage = rememberContextMeterUsage(
         enabled = settings.displaySetting.showContextTokenSummary,
         model = currentChatModel,
@@ -1519,7 +1538,7 @@ private fun ChatPageContent(
         settings = setting,
         memoryCandidates = assistantMemories,
         persistenceMode = activePersistenceMode,
-        pendingParts = inputState.getContents(),
+        pendingParts = debouncedPendingParts,
         requestUsage = requestContextUsage,
         isGenerating = isGenerating,
     )

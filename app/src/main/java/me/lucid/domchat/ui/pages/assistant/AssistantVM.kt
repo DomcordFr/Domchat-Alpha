@@ -226,6 +226,9 @@ class AssistantVM(
         }
     }
 
+    suspend fun getAllAssistantsLastUpdateAt(): Map<Uuid, Instant> =
+        conversationRepo.getAllAssistantsLastUpdateAt()
+
     fun getMemories(assistant: Assistant) =
         memoryRepository.getMemoriesOfAssistantFlow(assistant.id.toString())
 }

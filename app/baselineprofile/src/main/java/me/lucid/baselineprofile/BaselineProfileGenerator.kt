@@ -4,6 +4,8 @@ import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Direction
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,21 +50,29 @@ class BaselineProfileGenerator {
             // See: https://d.android.com/topic/performance/baselineprofiles/dex-layout-optimizations
             includeInStartupProfile = true
         ) {
-            // This block defines the app's critical user journey. Here we are interested in
-            // optimizing for app startup. But you can also navigate and scroll through your most important UI.
-
-            // Start default activity for your app
+            // App startup journey
             pressHome()
             startActivityAndWait()
 
-            // TODO Write more interactions to optimize advanced journeys of your app.
-            // For example:
-            // 1. Wait until the content is asynchronously loaded
-            // 2. Scroll the feed content
-            // 3. Navigate to detail screen
+            // 1. Critical User Journey: Opening and scrolling chat / message history
+            device.waitForIdle()
+            val scrollable = device.findObject(By.scrollable(true))
+            if (scrollable != null) {
+                scrollable.setGestureMargin(device.displayWidth / 5)
+                scrollable.fling(Direction.DOWN)
+                device.waitForIdle()
+                scrollable.fling(Direction.UP)
+                device.waitForIdle()
+            }
 
-            // Check UiAutomator documentation for more information how to interact with the app.
-            // https://d.android.com/training/testing/other-components/ui-automator
+            // 2. Journey: Navigating drawer & sheet menus
+            val menuButton = device.findObject(By.descContains("Menu"))
+            if (menuButton != null) {
+                menuButton.click()
+                device.waitForIdle()
+                device.pressBack()
+                device.waitForIdle()
+            }
         }
     }
 }

@@ -223,6 +223,19 @@ import kotlin.uuid.Uuid
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.hooks.HapticPattern
 
+private val HTML_TAG_REGEX = Regex("<[^>]*>")
+private val WHITESPACE_REGEX = Regex("\\s+")
+private val IMG_TAG_REGEX = Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)
+private val DECIMAL_ENTITY_REGEX = Regex("&#(\\d+);")
+private val HEX_ENTITY_REGEX = Regex("&#x([0-9a-fA-F]+);")
+private val RAW_IMAGE_URL_REGEX = Regex("""https?://[^\s<>"]+\.(?:png|jpg|jpeg|webp|gif)""", RegexOption.IGNORE_CASE)
+private val HORIZONTAL_WHITESPACE_REGEX = Regex("[ \\t]+")
+private val MARKDOWN_IMAGE_REGEX = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
+private val HTML_IMG_SRC_REGEX = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+private val BR_TAG_REGEX = Regex("(?i)<br\\s*/?>")
+private val BLOCK_TAG_REGEX = Regex("(?i)</?(p|div|h[1-6]|blockquote|li)[^>]*>")
+private val MULTI_NEWLINE_REGEX = Regex("\n{3,}")
+
 enum class CharacterSortOption {
     NAME, RECENT, CREATOR
 }
@@ -524,7 +537,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                     CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
                     CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
                     CharacterSortOption.RECENT -> {
-                        val activityMap = tagFiltered.associate { assistant -> assistant.id to runCatching { vm.getAssistantLastUpdateAt(assistant.id) }.getOrNull() }
+                        val activityMap = runCatching { vm.getAllAssistantsLastUpdateAt() }.getOrDefault(emptyMap())
                         tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
                     }
                 }
@@ -1717,11 +1730,13 @@ fun CharacterPortraitCard(
     val tagListState = rememberLazyListState()
 
     // Resolve tag UUIDs to display names via settings.assistantTags; filter out raw UUIDs and missing names
-    val resolvedTagNames = tagList.mapNotNull { tagId ->
-        settings?.assistantTags?.find { it.id == tagId }?.name?.takeIf { name ->
-            name.isNotBlank() && name.length <= 20 && !name.contains("-")
-        }
-    }.distinct()
+    val resolvedTagNames = remember(tagList, settings?.assistantTags) {
+        tagList.mapNotNull { tagId ->
+            settings?.assistantTags?.find { it.id == tagId }?.name?.takeIf { name ->
+                name.isNotBlank() && name.length <= 20 && !name.contains("-")
+            }
+        }.distinct()
+    }
 
     Box(
         modifier = Modifier
@@ -1821,7 +1836,7 @@ fun CharacterPortraitCard(
  */
 private fun cleanHtmlText(raw: String): String {
     return raw
-        .replace(Regex("<[^>]*>"), " ")
+        .replace(HTML_TAG_REGEX, " ")
         .replace("&nbsp;", " ")
         .replace("&quot;", "\"")
         .replace("&apos;", "'")
@@ -1829,7 +1844,7 @@ private fun cleanHtmlText(raw: String): String {
         .replace("&amp;", "&")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
-        .replace(Regex("\\s+"), " ")
+        .replace(WHITESPACE_REGEX, " ")
         .trim()
 }
 
@@ -3186,7 +3201,7 @@ fun CharacterInspectorSheet(
 private fun sanitizeHtml(html: String?): String {
     val text = html ?: return ""
     var result = text
-        .replace(Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)) { match ->
+        .replace(IMG_TAG_REGEX) { match ->
             "![Image](${match.groupValues[1]})"
         }
         .replace("&nbsp;", " ")
@@ -3197,16 +3212,16 @@ private fun sanitizeHtml(html: String?): String {
         .replace("&apos;", "'")
         .replace("&#39;", "'")
         .replace("&#x27;", "'")
-        .replace(Regex("&#(\\d+);")) { match ->
+        .replace(DECIMAL_ENTITY_REGEX) { match ->
             match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
         }
-        .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+        .replace(HEX_ENTITY_REGEX) { match ->
             match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
         }
-        .replace(Regex("""https?://[^\s<>"]+\.(?:png|jpg|jpeg|webp|gif)""", RegexOption.IGNORE_CASE)) { match ->
+        .replace(RAW_IMAGE_URL_REGEX) { match ->
             "![Image](${match.value})"
         }
-        .replace(Regex("[ \\t]+"), " ")
+        .replace(HORIZONTAL_WHITESPACE_REGEX, " ")
         .trim()
     return result
 }
@@ -3224,9 +3239,9 @@ private sealed interface ContentSegment {
 private fun parseContentWithImages(text: String): List<ContentSegment> {
     val segments = mutableListOf<ContentSegment>()
 
-    val markdownRegex = Regex("!\\[([^\\]]*)\\]\\(([^)]+)\\)")
-    val htmlImgRegex = Regex("<img[^>]+src=['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
-    val rawUrlRegex = Regex("https?://[^\\s<>\"]+\\.(?:png|jpg|jpeg|webp|gif)", RegexOption.IGNORE_CASE)
+    val markdownRegex = MARKDOWN_IMAGE_REGEX
+    val htmlImgRegex = HTML_IMG_SRC_REGEX
+    val rawUrlRegex = RAW_IMAGE_URL_REGEX
 
     val allMatches = mutableListOf<Triple<Int, Int, String>>()
 
@@ -4254,9 +4269,9 @@ private fun DeleteConfirmationDialog(
  */
 private fun stripHtmlTags(html: String): String {
     return html
-        .replace(Regex("(?i)<br\\s*/?>"), "\n")
-        .replace(Regex("(?i)</?(p|div|h[1-6]|blockquote|li)[^>]*>"), "\n")
-        .replace(Regex("<[^>]*>"), "")
+        .replace(BR_TAG_REGEX, "\n")
+        .replace(BLOCK_TAG_REGEX, "\n")
+        .replace(HTML_TAG_REGEX, "")
         .replace("&nbsp;", " ")
         .replace("&amp;", "&")
         .replace("&lt;", "<")
@@ -4265,13 +4280,13 @@ private fun stripHtmlTags(html: String): String {
         .replace("&apos;", "'")
         .replace("&#39;", "'")
         .replace("&#x27;", "'")
-        .replace(Regex("&#(\\d+);")) { match ->
+        .replace(DECIMAL_ENTITY_REGEX) { match ->
             match.groupValues[1].toIntOrNull()?.let { it.toChar() }?.toString() ?: match.value
         }
-        .replace(Regex("&#x([0-9a-fA-F]+);")) { match ->
+        .replace(HEX_ENTITY_REGEX) { match ->
             match.groupValues[1].toIntOrNull(16)?.let { it.toChar() }?.toString() ?: match.value
         }
-        .replace(Regex("\n{3,}"), "\n\n")
+        .replace(MULTI_NEWLINE_REGEX, "\n\n")
         .trim()
 }
 

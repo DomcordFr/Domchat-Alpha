@@ -68,10 +68,7 @@ class SecureStore(context: Context) {
     fun putSecret(key: String, value: String) {
         val prefs = encryptedPrefs
         if (prefs != null) {
-            val success = prefs.edit().putString(key, value).commit()
-            if (!success) {
-                Log.e(TAG, "Failed to store secret for key: $key")
-            }
+            prefs.edit().putString(key, value).apply()
         } else {
             fallbackMap?.put(key, value)
         }
@@ -96,10 +93,7 @@ class SecureStore(context: Context) {
     fun removeSecret(key: String) {
         val prefs = encryptedPrefs
         if (prefs != null) {
-            val success = prefs.edit().remove(key).commit()
-            if (!success) {
-                Log.e(TAG, "Failed to remove secret for key: $key")
-            }
+            prefs.edit().remove(key).apply()
         } else {
             fallbackMap?.remove(key)
         }
@@ -148,10 +142,7 @@ class SecureStore(context: Context) {
     fun clearAll() {
         val prefs = encryptedPrefs
         if (prefs != null) {
-            val success = prefs.edit().clear().commit()
-            if (!success) {
-                Log.e(TAG, "Failed to clear encrypted secrets")
-            }
+            prefs.edit().clear().apply()
         } else {
             fallbackMap?.clear()
         }

@@ -1884,7 +1884,7 @@ private fun MarkdownNode(
             val text = node.getTextInNode(content)
             val direction = rememberContentDirection(text)
             val streamingReveal = LocalStreamingTextReveal.current
-            val rpStyleRules = LocalSettings.current.displaySetting.rpStyleRules
+            val rpStyleRules = LocalRpStyleRules.current
             val baseAnnotatedText = remember(text, rpStyleRules) {
                 buildAnnotatedString {
                     appendTextWithCustomPatterns(text, rpStyleRules)
@@ -2171,7 +2171,7 @@ private fun Paragraph(
 
     val textStyle = LocalTextStyle.current
     val density = LocalDensity.current
-    val rpStyleRules = LocalSettings.current.displaySetting.rpStyleRules
+    val rpStyleRules = LocalRpStyleRules.current
     val streamingReveal = LocalStreamingTextReveal.current
     val baseAnnotatedString = remember(content, rpStyleRules) {
         buildAnnotatedString {

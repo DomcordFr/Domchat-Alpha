@@ -117,25 +117,6 @@ class ConversationRepository(
     ).flow.map { pagingData ->
         pagingData.map { entity ->
             conversationSummaryToConversation(entity)
-        }.filter { conversation ->
-            if (conversation.title.contains(titleKeyword, ignoreCase = true)) {
-                true
-            } else {
-                val fullEntity = withContext(Dispatchers.IO) {
-                    conversationDAO.getConversationById(conversation.id.toString())
-                }
-                if (fullEntity != null) {
-                    val messageNodes = runCatching {
-                        JsonInstant.decodeFromString<List<MessageNode>>(fullEntity.nodes)
-                    }.getOrNull() ?: emptyList()
-                    
-                    messageNodes.any { node ->
-                        node.currentMessage.toText().contains(titleKeyword, ignoreCase = true)
-                    }
-                } else {
-                    false
-                }
-            }
         }
     }
 
@@ -172,25 +153,6 @@ class ConversationRepository(
     ).flow.map { pagingData ->
         pagingData.map { entity ->
             conversationSummaryToConversation(entity)
-        }.filter { conversation ->
-            if (conversation.title.contains(titleKeyword, ignoreCase = true)) {
-                true
-            } else {
-                val fullEntity = withContext(Dispatchers.IO) {
-                    conversationDAO.getConversationById(conversation.id.toString())
-                }
-                if (fullEntity != null) {
-                    val messageNodes = runCatching {
-                        JsonInstant.decodeFromString<List<MessageNode>>(fullEntity.nodes)
-                    }.getOrNull() ?: emptyList()
-                    
-                    messageNodes.any { node ->
-                        node.currentMessage.toText().contains(titleKeyword, ignoreCase = true)
-                    }
-                } else {
-                    false
-                }
-            }
         }
     }
 
@@ -767,6 +729,14 @@ class ConversationRepository(
             "eagain" in text ||
             "try again" in text ||
             "os error - 11" in text
+    }
+
+    suspend fun getAllAssistantsLastUpdateAt(): Map<Uuid, java.time.Instant> = withContext(Dispatchers.IO) {
+        conversationDAO.getAllAssistantsLastUpdateAt().mapNotNull { row ->
+            val id = runCatching { Uuid.parse(row.assistantId) }.getOrNull()
+            val update = row.lastUpdateAt
+            if (id != null && update != null) id to update else null
+        }.toMap()
     }
 }
 

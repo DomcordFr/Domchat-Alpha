@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PushPin
@@ -329,22 +330,16 @@ fun ConversationList(
                         is ConversationListItem.PinnedHeader -> "pinned_header"
                         is ConversationListItem.Item -> item.conversation.id.toString()
                     }
+                },
+                contentType = conversations.itemContentType { item ->
+                    when (item) {
+                        is ConversationListItem.DateHeader -> "date_header"
+                        is ConversationListItem.PinnedHeader -> "pinned_header"
+                        is ConversationListItem.Item -> "conversation_item"
+                    }
                 }
             ) { index ->
-                AnimatedContent<Uuid>(
-                    targetState = current.id,
-                    transitionSpec = {
-                        (fadeIn(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideInHorizontally(
-                            animationSpec = tween(220, easing = FastOutSlowInEasing)
-                        ) { width -> width / 4 })
-                            .togetherWith(
-                                fadeOut(animationSpec = tween(220, easing = FastOutSlowInEasing)) + slideOutHorizontally(
-                                    animationSpec = tween(220, easing = FastOutSlowInEasing)
-                                ) { width -> -width / 4 }
-                            )
-                    }
-                ) {
-                    when (val item = conversations[index]) {
+                when (val item = conversations[index]) {
                     is ConversationListItem.DateHeader -> {
                         DateHeaderItem(
                             label = item.label,
@@ -400,7 +395,6 @@ fun ConversationList(
                     }
                 }
             }
-                }
         }
         }
 

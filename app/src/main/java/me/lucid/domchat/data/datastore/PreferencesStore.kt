@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -455,7 +456,7 @@ class SettingsStore(
     }
 
 
-    suspend fun update(settings: Settings) {
+    suspend fun update(settings: Settings) = withContext(Dispatchers.IO) {
         val current = if (settingsFlow.value.init) {
             settingsFlow.first { !it.init }
         } else {
@@ -590,7 +591,7 @@ class SettingsStore(
         }
     }
 
-    suspend fun update(fn: (Settings) -> Settings) {
+    suspend fun update(fn: (Settings) -> Settings) = withContext(Dispatchers.IO) {
         val current = if (settingsFlow.value.init) {
             settingsFlow.first { !it.init }
         } else {

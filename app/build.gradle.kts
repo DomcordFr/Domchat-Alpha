@@ -13,6 +13,11 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.baselineprofile)
+}
+
+composeCompiler {
+    stabilityConfigurationFiles.add(file("compose_stability.conf"))
 }
 
 val enableReleaseShrinker = providers.gradleProperty("domchat.release.minify")
@@ -446,6 +451,9 @@ dependencies {
     // Glance (Widgets)
     implementation(libs.androidx.glance)
     implementation(libs.androidx.glance.material3)
+
+    // Baseline Profile
+    baselineProfile(project(":app:baselineprofile"))
 
     // tests
     testImplementation(libs.junit)

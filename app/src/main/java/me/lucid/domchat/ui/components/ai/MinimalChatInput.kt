@@ -1110,8 +1110,10 @@ fun MinimalChatInput(
                                 else -> state.textContent
                             }
                             var visualLineCount by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(1) }
-                            val lineCount = androidx.compose.runtime.derivedStateOf {
-                                maxOf(activeTextState.text.toString().lines().size, visualLineCount)
+                            val lineCount = androidx.compose.runtime.remember(activeTextState) {
+                                androidx.compose.runtime.derivedStateOf {
+                                    maxOf(activeTextState.text.count { it == '\n' } + 1, visualLineCount)
+                                }
                             }
                             TextField(
                                 state = activeTextState,
@@ -1156,11 +1158,7 @@ fun MinimalChatInput(
                                 contentPadding = PaddingValues(
                                     start = 16.dp,
                                     top = 12.dp,
-                                    end = androidx.compose.animation.core.animateDpAsState(
-                                        targetValue = if ((sttRecording || sttFinalizing) && hasSelectedSttProvider) 150.dp else 96.dp,
-                                        animationSpec = tween(220),
-                                        label = "input_padding"
-                                    ).value,
+                                    end = if ((sttRecording || sttFinalizing) && hasSelectedSttProvider) 150.dp else 96.dp,
                                     bottom = 12.dp,
                                 ),
                                 colors = TextFieldDefaults.colors().copy(

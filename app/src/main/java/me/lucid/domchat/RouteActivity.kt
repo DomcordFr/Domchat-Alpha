@@ -750,14 +750,18 @@ class RouteActivity : ComponentActivity() {
 
                 // Check for backup cleanup results and show toast
                 LaunchedEffect(Unit) {
-                    val prefs = this@RouteActivity.getSharedPreferences("backup_cleanup", MODE_PRIVATE)
-                    val unsupportedBytes = prefs.getLong("unsupported_bytes", 0)
-                    val issuesFixed = prefs.getInt("issues_fixed", 0)
-                    val skippedRows = prefs.getInt("db_skipped_rows", 0)
+                    val (unsupportedBytes, issuesFixed, skippedRows) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        val prefs = this@RouteActivity.getSharedPreferences("backup_cleanup", MODE_PRIVATE)
+                        val bytes = prefs.getLong("unsupported_bytes", 0)
+                        val fixed = prefs.getInt("issues_fixed", 0)
+                        val skipped = prefs.getInt("db_skipped_rows", 0)
+                        if (bytes > 0 || fixed > 0 || skipped > 0) {
+                            prefs.edit().clear().apply()
+                        }
+                        Triple(bytes, fixed, skipped)
+                    }
                     
                     if (unsupportedBytes > 0 || issuesFixed > 0 || skippedRows > 0) {
-                        // Clear the stored values
-                        prefs.edit().clear().apply()
                         
                         // Build cleanup message
                         val parts = mutableListOf<String>()

@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -197,14 +198,14 @@ internal fun chatListTurnKey(
 
     return when {
         isPendingAssistantTurn && previousUserId != null -> "$AssistantResponseTurnKey:$previousUserId"
-        isPendingAssistantTurn -> "$AssistantInitialTurnKey:$index"
+        isPendingAssistantTurn -> "$AssistantInitialTurnKey:pending"
         group.role == me.lucid.ai.core.MessageRole.ASSISTANT && previousUserId != null -> {
             "$AssistantResponseTurnKey:$previousUserId"
         }
         group.role == me.lucid.ai.core.MessageRole.ASSISTANT && previousGroup == null -> {
-            "$AssistantInitialTurnKey:$index"
+            "$AssistantInitialTurnKey:${group.firstNode.id}"
         }
-        else -> "turn:${group.firstNode.id}:$index"
+        else -> "turn:${group.firstNode.id}"
     }
 }
 
@@ -641,13 +642,19 @@ private fun SharedTransitionScope.ChatListNormal(
             conversation.messageNodes.getOrNull(conversation.truncateIndex - 1)?.id
         }
 
+        val selectedItemsState = rememberUpdatedState(selectedItems)
+        val firstUserTurnIndex = remember(displayGroups) {
+            displayGroups.indexOfFirst { it.role == me.lucid.ai.core.MessageRole.USER }
+        }
+
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             LazyColumn(
                 state = state,
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp) + PaddingValues(bottom = 32.dp) + innerPadding + androidx.compose.foundation.layout.WindowInsets.ime.asPaddingValues(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp) + PaddingValues(bottom = 32.dp) + innerPadding,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
+                modifier = Modifier
+                    .imePadding()
                     .domChatBlurSource()
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "conversation_list"),
@@ -699,16 +706,17 @@ private fun SharedTransitionScope.ChatListNormal(
                             )
                     ) {
                         // Check if any node in group is selected
-                        val isSelected = remember(group, selectedItems, selecting) {
-                            selecting && group.nodes.any { selectedItems.contains(it.id) }
+                        val isSelected by remember(group.firstNode.id, selecting) {
+                            derivedStateOf { selecting && group.nodes.any { selectedItemsState.value.contains(it.id) } }
                         }
-                        val onSelectChange = remember(group, selectedItems, onSelectedItemsChange) {
+                        val onSelectChange = remember(group, onSelectedItemsChange) {
                             { checked: Boolean ->
+                                val current = selectedItemsState.value
                                 val groupIds = group.nodes.map { it.id }.toSet()
                                 if (checked) {
-                                    onSelectedItemsChange(selectedItems + groupIds)
+                                    onSelectedItemsChange(current + groupIds)
                                 } else {
-                                    onSelectedItemsChange(selectedItems - groupIds)
+                                    onSelectedItemsChange(current - groupIds)
                                 }
                             }
                         }
@@ -743,11 +751,9 @@ private fun SharedTransitionScope.ChatListNormal(
                                 onMemoryClick = onMemoryClick,
                                 showRegenerate = showRegenerate,
                                 onExpandedStreamingCodeBlockChanged = if (loading && isLastTurn) onStreamingCodeBlockExpanded else null,
-                                isIntroMessage = remember(conversation, group) {
-                                    isCharacterIntroMessage(
-                                        messages = conversation.messageNodes.map { it.currentMessage },
-                                        message = group.lastNode.currentMessage,
-                                    )
+                                isIntroMessage = remember(group.role, index, firstUserTurnIndex) {
+                                    group.role == me.lucid.ai.core.MessageRole.ASSISTANT &&
+                                        (firstUserTurnIndex < 0 || index < firstUserTurnIndex)
                                 },
                                 onAddCustomGreeting = onAddCustomGreeting,
                                 modifier = if (loading && isLastTurn) {
