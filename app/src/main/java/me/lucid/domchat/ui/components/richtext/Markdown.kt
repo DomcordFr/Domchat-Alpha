@@ -38,7 +38,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.draw.alpha
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -92,6 +94,7 @@ import androidx.core.net.toUri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -156,6 +159,28 @@ private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNo
     }
 }
 
+private fun splitCompletedBlocksAndTail(content: String): Pair<String, String>? {
+    var inCodeFence = false
+    var lastSafeSplitIndex = -1
+    var i = 0
+    val len = content.length
+    while (i < len - 2) {
+        if (content.startsWith("```", i)) {
+            inCodeFence = !inCodeFence
+            i += 3
+            continue
+        }
+        if (!inCodeFence && content[i] == '\n' && content[i + 1] == '\n') {
+            lastSafeSplitIndex = i + 2
+            i += 2
+            continue
+        }
+        i++
+    }
+    if (inCodeFence || lastSafeSplitIndex <= 0 || lastSafeSplitIndex >= len) return null
+    return content.substring(0, lastSafeSplitIndex) to content.substring(lastSafeSplitIndex)
+}
+
 @Synchronized
 private fun parseMarkdownCached(content: String): Pair<String, ASTNode> {
     markdownAstCache[content]?.let { return it }
@@ -166,16 +191,38 @@ private fun parseMarkdownCached(content: String): Pair<String, ASTNode> {
     return result
 }
 
+@Synchronized
+private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
+    val split = splitCompletedBlocksAndTail(content)
+    if (split != null) {
+        val (prefix, tail) = split
+        val prefixParsed = parseMarkdownCached(prefix)
+        val tailPreprocessed = preProcess(tail)
+        val combinedPreprocessed = prefixParsed.first + tailPreprocessed
+        val tailTree = parser.buildMarkdownTreeFromString(combinedPreprocessed)
+        return combinedPreprocessed to tailTree
+    }
+    val preprocessed = preProcess(content)
+    val astTree = parser.buildMarkdownTreeFromString(preprocessed)
+    return preprocessed to astTree
+}
+
 /** Intrinsic pixel dimensions of an image, used to reserve its layout box before it decodes. */
 private data class ImageDisplayInfo(val widthPx: Int, val heightPx: Int) {
     val aspectRatio: Float get() = widthPx.toFloat() / heightPx.toFloat()
 }
 
 /**
- * Cache of known image dimensions, keyed by model string. Populated either synchronously (local
- * files, via a header-only decode) or lazily when a remote image finishes loading.
+ * Bounded LRU cache of known image dimensions, keyed by model string.
  */
-private val imageDisplayInfoCache = java.util.concurrent.ConcurrentHashMap<String, ImageDisplayInfo>()
+private val imageDisplayInfoCache = android.util.LruCache<String, ImageDisplayInfo>(256)
+
+private fun getCachedImageDisplayInfo(model: String?): ImageDisplayInfo? {
+    if (model.isNullOrBlank()) return null
+    return synchronized(imageDisplayInfoCache) {
+        imageDisplayInfoCache.get(model)
+    }
+}
 
 /**
  * Best-effort intrinsic dimensions for [model], used to reserve the correct box for an image
@@ -189,7 +236,7 @@ private val imageDisplayInfoCache = java.util.concurrent.ConcurrentHashMap<Strin
  */
 private fun resolveImageDisplayInfo(context: Context, model: String?): ImageDisplayInfo? {
     if (model.isNullOrBlank()) return null
-    imageDisplayInfoCache[model]?.let { return it }
+    getCachedImageDisplayInfo(model)?.let { return it }
     val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
     try {
         when {
@@ -211,7 +258,9 @@ private fun resolveImageDisplayInfo(context: Context, model: String?): ImageDisp
     }
     if (options.outWidth <= 0 || options.outHeight <= 0) return null
     val info = ImageDisplayInfo(options.outWidth, options.outHeight)
-    imageDisplayInfoCache[model] = info
+    synchronized(imageDisplayInfoCache) {
+        imageDisplayInfoCache.put(model, info)
+    }
     return info
 }
 
@@ -460,14 +509,16 @@ val LocalRpStyleRules = compositionLocalOf<List<RpStyleRule>> { emptyList() }
 
 private data class StreamingTextReveal(
     val ranges: List<StreamingSettleRange>,
-    val nowMillis: Long,
+    val nowMillisState: State<Long>,
     val color: Color,
     val smoothedCharsPerSecond: Float,
     val blurEnabled: Boolean,
     val fadeInEnabled: Boolean = true,
     val fadeDurationMs: Int = 450,
     val startAlpha: Float = 0.0f,
-)
+) {
+    val nowMillis: Long get() = nowMillisState.value
+}
 
 internal data class StreamingRevealVisuals(
     val alpha: Float,
@@ -806,7 +857,7 @@ fun MarkdownBlock(
     streamingPresentation.speedScale = speedScale
     var displayContent by remember { mutableStateOf(content) }
     var settleRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
-    var streamingFrameMillis by remember { mutableStateOf(0L) }
+    val streamingFrameMillis = remember { mutableLongStateOf(0L) }
     var isDrainingFinish by remember { mutableStateOf(false) }
     var wasStreaming by remember { mutableStateOf(false) }
     streamingPresentation.isDrainingFinish = isDrainingFinish
@@ -834,7 +885,11 @@ fun MarkdownBlock(
     LaunchedEffect(Unit) {
         var lastPreprocessed = data.first
         snapshotFlow { updatedDisplayContent }.distinctUntilChanged().conflate().map {
-            parseMarkdownCached(it)
+            if (streamingTextReveal) {
+                parseMarkdownStreaming(it)
+            } else {
+                parseMarkdownCached(it)
+            }
         }.catch { exception -> exception.printStackTrace() }.flowOn(Dispatchers.Default)
             .collect { parsed ->
                 if (parsed.first != lastPreprocessed) {
@@ -878,13 +933,13 @@ fun MarkdownBlock(
         }
         displayContent = streamingPresentation.displayContent
         settleRanges = streamingPresentation.settleRanges
-        streamingFrameMillis = now
+        streamingFrameMillis.longValue = now
         onExpandedStreamingCodeBlockChanged?.invoke()
     }
 
     val isActivelyRevealing = streamingTextReveal || isDrainingFinish
     var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
-    var finishNowMillis by remember { mutableStateOf(0L) }
+    val finishNowMillis = remember { mutableLongStateOf(0L) }
     var finishActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(isActivelyRevealing) {
@@ -898,7 +953,7 @@ fun MarkdownBlock(
                 elapsedMillis = (now - previousFrameMillis).coerceAtLeast(0L)
             )
             previousFrameMillis = now
-            streamingFrameMillis = now
+            streamingFrameMillis.longValue = now
             if (changed) {
                 displayContent = streamingPresentation.displayContent
                 onExpandedStreamingCodeBlockChanged?.invoke()
@@ -916,7 +971,7 @@ fun MarkdownBlock(
                 streamingPresentation.isDrainingFinish = false
                 wasStreaming = false
                 finishRanges = settleRanges
-                finishNowMillis = now
+                finishNowMillis.longValue = now
                 finishActive = settleRanges.isNotEmpty()
                 onRevealComplete?.invoke()
                 break
@@ -934,7 +989,7 @@ fun MarkdownBlock(
         LaunchedEffect(finishActive) {
             while (finishActive && !isActivelyRevealing) {
                 val now = withFrameMillis { it }
-                finishNowMillis = now
+                finishNowMillis.longValue = now
                 if (finishRanges.none { now - it.revealedAtMillis < maxSettleDurationMillis }) {
                     finishActive = false
                     finishRanges = emptyList()
@@ -945,12 +1000,12 @@ fun MarkdownBlock(
     }
 
     val revealRanges = if (isActivelyRevealing) settleRanges else finishRanges
-    val revealNowMillis = if (isActivelyRevealing) streamingFrameMillis else finishNowMillis
+    val revealNowMillisState: State<Long> = if (isActivelyRevealing) streamingFrameMillis else finishNowMillis
 
     val streamingReveal: StreamingTextReveal? = if (revealRanges.isNotEmpty()) {
         StreamingTextReveal(
             ranges = revealRanges,
-            nowMillis = revealNowMillis,
+            nowMillisState = revealNowMillisState,
             color = style.color.takeOrElse { Color.White },
             smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond,
             blurEnabled = effectiveDisplay.enableBlurEffect,
@@ -1673,7 +1728,18 @@ private fun MarkdownNode(
             // to the image's intrinsic width so the displayed size matches the previous behaviour
             // (Coil's ContentScale.Fit never upscales past the natural size).
             var reservedInfo by remember(imageModel) {
-                mutableStateOf(resolveImageDisplayInfo(imageContext, imageModel))
+                mutableStateOf(getCachedImageDisplayInfo(imageModel))
+            }
+
+            LaunchedEffect(imageModel) {
+                if (reservedInfo == null && !imageModel.isNullOrBlank()) {
+                    val info = withContext(Dispatchers.IO) {
+                        resolveImageDisplayInfo(imageContext, imageModel)
+                    }
+                    if (info != null) {
+                        reservedInfo = info
+                    }
+                }
             }
 
             val paragraphSpacing = LocalMarkdownParagraphSpacing.current
@@ -1824,10 +1890,15 @@ private fun MarkdownNode(
                     appendTextWithCustomPatterns(text, rpStyleRules)
                 }
             }
-            val revealText = if (streamingReveal != null && streamingReveal.ranges.isNotEmpty()) {
+            val hasActiveReveal = streamingReveal != null && streamingReveal.ranges.any { range ->
+                range.endOffset > node.startOffset && range.startOffset < node.endOffset
+            }
+            val revealText = if (hasActiveReveal && streamingReveal != null) {
+                val now = streamingReveal.nowMillisState.value
                 AnnotatedString.Builder(baseAnnotatedText).apply {
                     applyStreamingRevealStyle(
                         reveal = streamingReveal,
+                        nowMillis = now,
                         sourceStart = node.startOffset,
                         sourceEnd = node.endOffset,
                         outputStart = 0,
@@ -2125,10 +2196,15 @@ private fun Paragraph(
             }
         }
     }
-    val annotatedString = if (streamingReveal != null && streamingReveal.ranges.isNotEmpty()) {
+    val hasActiveReveal = streamingReveal != null && streamingReveal.ranges.any { range ->
+        range.endOffset > node.startOffset && range.startOffset < node.endOffset
+    }
+    val annotatedString = if (hasActiveReveal && streamingReveal != null) {
+        val now = streamingReveal.nowMillisState.value
         AnnotatedString.Builder(baseAnnotatedString).apply {
             applyStreamingRevealStyle(
                 reveal = streamingReveal,
+                nowMillis = now,
                 sourceStart = node.startOffset,
                 sourceEnd = node.endOffset,
                 outputStart = 0,
@@ -2546,6 +2622,7 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
     }
     applyStreamingRevealStyle(
         reveal = streamingReveal,
+        nowMillis = streamingReveal?.nowMillis ?: 0L,
         sourceStart = node.startOffset,
         sourceEnd = node.endOffset,
         outputStart = outputStart,
@@ -2555,6 +2632,7 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
 
 private fun AnnotatedString.Builder.applyStreamingRevealStyle(
     reveal: StreamingTextReveal?,
+    nowMillis: Long = reveal?.nowMillis ?: 0L,
     sourceStart: Int,
     sourceEnd: Int,
     outputStart: Int,
@@ -2585,7 +2663,7 @@ private fun AnnotatedString.Builder.applyStreamingRevealStyle(
     }
 
     reveal.ranges.fastForEach { settleRange ->
-        val ageMillis = reveal.nowMillis - settleRange.revealedAtMillis
+        val ageMillis = nowMillis - settleRange.revealedAtMillis
         if (ageMillis < 0) return@fastForEach
 
         val overlapStart = maxOf(sourceStart, settleRange.startOffset)

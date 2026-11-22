@@ -38,6 +38,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.input.pointer.pointerInput
@@ -149,6 +152,59 @@ import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
 import me.lucid.domchat.data.datastore.getEffectiveTTSProvider
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.ai.core.MessageRole as AIMessageRole
+
+@Composable
+private fun rememberFormattedMessageText(
+    rawText: String,
+    assistant: me.lucid.domchat.data.model.Assistant?,
+    userNickname: String,
+    scope: me.lucid.domchat.data.model.AssistantAffectScope,
+    isStreaming: Boolean
+): String {
+    if (!isStreaming) {
+        return remember(rawText, assistant, userNickname, scope) {
+            formatRoleplayTextWithCdnImages(
+                cleanHtmlImgToMarkdown(
+                    rawText.trimStart()
+                        .replacePersonaPlaceholders(
+                            assistant = assistant,
+                            userNickname = userNickname,
+                        )
+                        .replaceRegexes(
+                            assistant = assistant,
+                            scope = scope,
+                            visual = true,
+                        )
+                )
+            )
+        }
+    }
+
+    return produceState(
+        initialValue = rawText,
+        key1 = rawText,
+        key2 = assistant,
+        key3 = userNickname
+    ) {
+        val formatted = withContext(Dispatchers.Default) {
+            formatRoleplayTextWithCdnImages(
+                cleanHtmlImgToMarkdown(
+                    rawText.trimStart()
+                        .replacePersonaPlaceholders(
+                            assistant = assistant,
+                            userNickname = userNickname,
+                        )
+                        .replaceRegexes(
+                            assistant = assistant,
+                            scope = scope,
+                            visual = true,
+                        )
+                )
+            )
+        }
+        value = formatted
+    }.value
+}
 
 /**
  * Represents a group of consecutive messages from the same role.
@@ -1549,22 +1605,13 @@ private fun UserMessageTurn(
                     ) { targetIdx ->
                         val targetMsg = node.messages.getOrNull(targetIdx) ?: bubbleNode.currentMessage
                         val targetText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(partIndex)?.text ?: part.text
-                        val displayContent = remember(targetText, assistant, userNickname) {
-                            formatRoleplayTextWithCdnImages(
-                                cleanHtmlImgToMarkdown(
-                                    targetText
-                                        .replacePersonaPlaceholders(
-                                            assistant = assistant,
-                                            userNickname = userNickname,
-                                        )
-                                        .replaceRegexes(
-                                            assistant = assistant,
-                                            scope = AssistantAffectScope.USER,
-                                            visual = true,
-                                        )
-                                 )
-                             )
-                         }
+                        val displayContent = rememberFormattedMessageText(
+                            rawText = targetText,
+                            assistant = assistant,
+                            userNickname = userNickname,
+                            scope = AssistantAffectScope.USER,
+                            isStreaming = isRevealing
+                        )
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
@@ -1792,13 +1839,16 @@ private fun AssistantMessageTurn(
     val hasInterestingActivity = activityState !is ActivityState.Hidden
     
     // Collect all text parts from filtered nodes (only nodes matching active versionTag)
-    val allTextBubbles = mutableListOf<Pair<MessageNode, UIMessagePart.Text>>()
-    group.filteredNodes.forEach { node ->
-        node.currentMessage.parts.filterIsInstance<UIMessagePart.Text>().forEach { part ->
-            if (part.text.isNotBlank()) {
-                allTextBubbles.add(node to part)
+    val allTextBubbles = remember(group.filteredNodes) {
+        val list = mutableListOf<Pair<MessageNode, UIMessagePart.Text>>()
+        group.filteredNodes.forEach { node ->
+            node.currentMessage.parts.filterIsInstance<UIMessagePart.Text>().forEach { part ->
+                if (part.text.isNotBlank()) {
+                    list.add(node to part)
+                }
             }
         }
+        list
     }
     
     // Consistent spacing between all elements
@@ -2111,22 +2161,13 @@ private fun AssistantMessageTurn(
                         val targetMsg = assistantNode.messages.getOrNull(targetIdx) ?: assistantNode.currentMessage
                         val currentText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(index)?.text ?: part.text
                         val userNickname = settings.displaySetting.getActivePersona().name
-                        val displayContent = remember(currentText, assistant, userNickname) {
-                            formatRoleplayTextWithCdnImages(
-                                cleanHtmlImgToMarkdown(
-                                    currentText.trimStart()
-                                        .replacePersonaPlaceholders(
-                                            assistant = assistant,
-                                            userNickname = userNickname,
-                                        )
-                                        .replaceRegexes(
-                                            assistant = assistant,
-                                            scope = AssistantAffectScope.ASSISTANT,
-                                            visual = true,
-                                        )
-                                )
-                            )
-                        }
+                        val displayContent = rememberFormattedMessageText(
+                            rawText = currentText,
+                            assistant = assistant,
+                            userNickname = userNickname,
+                            scope = AssistantAffectScope.ASSISTANT,
+                            isStreaming = loading && index == allTextBubbles.lastIndex
+                        )
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
@@ -2249,22 +2290,13 @@ private fun AssistantMessageTurn(
                     val activeParts = if (currentTextParts.isNotEmpty()) currentTextParts else allTextBubbles.map { it.second }
                     activeParts.forEachIndexed { index, part ->
                         val userNickname = settings.displaySetting.getActivePersona().name
-                        val displayContent = remember(part.text, assistant, userNickname) {
-                            formatRoleplayTextWithCdnImages(
-                                cleanHtmlImgToMarkdown(
-                                    part.text.trimStart()
-                                        .replacePersonaPlaceholders(
-                                            assistant = assistant,
-                                            userNickname = userNickname,
-                                        )
-                                        .replaceRegexes(
-                                            assistant = assistant,
-                                            scope = AssistantAffectScope.ASSISTANT,
-                                            visual = true,
-                                        )
-                                )
-                            )
-                        }
+                        val displayContent = rememberFormattedMessageText(
+                            rawText = part.text,
+                            assistant = assistant,
+                            userNickname = userNickname,
+                            scope = AssistantAffectScope.ASSISTANT,
+                            isStreaming = loading && index == allTextBubbles.lastIndex
+                        )
                         MarkdownBlock(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,

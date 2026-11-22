@@ -910,6 +910,46 @@ private fun AnimatedSinglePill(
 }
 
 @Composable
+private fun LiveElapsedTimerText(
+    isLive: Boolean,
+    startTimeMs: Long,
+    completedDurationMs: Long?,
+    isExpanded: Boolean,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    if (isLive) {
+        var elapsedMs by remember(startTimeMs) { mutableLongStateOf((System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)) }
+        LaunchedEffect(startTimeMs) {
+            while (isActive) {
+                elapsedMs = (System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)
+                delay(100)
+            }
+        }
+        Text(
+            text = formatDuration(elapsedMs),
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor.copy(alpha = 0.8f),
+            modifier = modifier.shimmer(true)
+        )
+    } else {
+        val staticText = if (isExpanded) {
+            completedDurationMs?.let { formatDuration(it) }.orEmpty()
+        } else {
+            completedDurationMs?.let { "for ${formatDuration(it)}" }.orEmpty()
+        }
+        if (staticText.isNotBlank()) {
+            Text(
+                text = staticText,
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor.copy(alpha = 0.8f),
+                modifier = modifier
+            )
+        }
+    }
+}
+
+@Composable
 private fun UnifiedReasoningPill(
     contentState: SinglePillContentState,
     parentState: ActivityState,
@@ -944,32 +984,10 @@ private fun UnifiedReasoningPill(
         else -> "Reasoned"
     }
 
-    var elapsedMs by remember { mutableLongStateOf(completedDurationMs ?: 0L) }
     val scrollState = rememberScrollState()
     var previewAutoFollowPaused by remember(startTimeMs) { mutableStateOf(false) }
     var programmaticScrollInProgress by remember(startTimeMs) { mutableStateOf(false) }
     var previousScrollValue by remember(startTimeMs) { mutableIntStateOf(0) }
-
-    if (isLive) {
-        LaunchedEffect(startTimeMs) {
-            while (isActive) {
-                elapsedMs = System.currentTimeMillis() - startTimeMs
-                delay(50)
-            }
-        }
-    } else {
-        LaunchedEffect(completedDurationMs) {
-            if (completedDurationMs != null) {
-                elapsedMs = completedDurationMs
-            }
-        }
-    }
-
-    val durationText = when {
-        isLive -> formatDuration(elapsedMs)
-        isExpanded -> (completedDurationMs ?: elapsedMs.takeIf { it > 0L })?.let { formatDuration(it) }.orEmpty()
-        else -> completedDurationMs?.let { "for ${formatDuration(it)}" }.orEmpty()
-    }
 
     LaunchedEffect(scrollState, isExpanded && isLive) {
         if (!isExpanded || !isLive) return@LaunchedEffect
@@ -1073,26 +1091,13 @@ private fun UnifiedReasoningPill(
                     modifier = if (isLive) Modifier.shimmer(true) else Modifier
                 )
             }
-            AnimatedContent(
-                targetState = durationText,
-                contentKey = { if (isLive) "live_timer" else it },
-                transitionSpec = {
-                    (fadeIn(tween(220, easing = LinearOutSlowInEasing)) togetherWith
-                        fadeOut(tween(160, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
-                        PILL_MORPH_SPEC
-                    }
-                },
-                label = "reasoning_header_duration"
-            ) { duration ->
-                if (duration.isNotBlank()) {
-                    Text(
-                        text = duration,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = contentColor.copy(alpha = 0.8f),
-                        modifier = if (isLive) Modifier.shimmer(true) else Modifier
-                    )
-                }
-            }
+            LiveElapsedTimerText(
+                isLive = isLive,
+                startTimeMs = startTimeMs,
+                completedDurationMs = completedDurationMs,
+                isExpanded = isExpanded,
+                contentColor = contentColor
+            )
         }
 
         val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
@@ -1145,17 +1150,6 @@ private fun UnifiedReasoningPill(
  */
 @Composable
 private fun ReasoningContent(startTimeMs: Long, title: String? = null, isLive: Boolean) {
-    var elapsedMs by remember { mutableLongStateOf(0L) }
-
-    if (isLive) {
-        LaunchedEffect(startTimeMs) {
-            while (isActive) {
-                elapsedMs = System.currentTimeMillis() - startTimeMs
-                delay(50)
-            }
-        }
-    }
-
     val contentColor = LocalContentColor.current
     Icon(
         imageVector = Icons.Rounded.Lightbulb,
@@ -1181,11 +1175,12 @@ private fun ReasoningContent(startTimeMs: Long, title: String? = null, isLive: B
             modifier = if (isLive) Modifier.shimmer(true) else Modifier
         )
     }
-    Text(
-        text = formatDuration(elapsedMs),
-        style = MaterialTheme.typography.labelSmall,
-        color = contentColor.copy(alpha = 0.8f),
-        modifier = if (isLive) Modifier.shimmer(true) else Modifier
+    LiveElapsedTimerText(
+        isLive = isLive,
+        startTimeMs = startTimeMs,
+        completedDurationMs = null,
+        isExpanded = true,
+        contentColor = contentColor
     )
 }
 
@@ -1432,17 +1427,6 @@ private fun ReasoningPill(
     connectsToBubbleBelow: Boolean,
     isLive: Boolean = false
 ) {
-    var elapsedMs by remember { mutableLongStateOf(0L) }
-    
-    if (isLive) {
-        LaunchedEffect(startTimeMs) {
-            while (isActive) {
-                elapsedMs = System.currentTimeMillis() - startTimeMs
-                delay(50)
-            }
-        }
-    }
-    
     SinglePill(
         onClick = onClick,
         position = position,
@@ -1463,11 +1447,12 @@ private fun ReasoningPill(
             color = contentColor,
             modifier = if (isLive) Modifier.shimmer(true) else Modifier
         )
-        Text(
-            text = formatDuration(elapsedMs),
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor.copy(alpha = 0.8f),
-            modifier = if (isLive) Modifier.shimmer(true) else Modifier
+        LiveElapsedTimerText(
+            isLive = isLive,
+            startTimeMs = startTimeMs,
+            completedDurationMs = null,
+            isExpanded = true,
+            contentColor = contentColor
         )
     }
 }
