@@ -2040,7 +2040,7 @@ private fun AssistantMessageTurn(
             val tintHue = effectiveDisplay.chatBubbleTintHue
             val tintAmount = effectiveDisplay.chatBubbleTintAmount
 
-            val bubbleModifierLambda: (Modifier, Shape, Color) -> Modifier = { m: Modifier, shape: Shape, color: Color ->
+            val bubbleModifierLambda: @Composable (Modifier, Shape, Color) -> Modifier = { m: Modifier, shape: Shape, color: Color ->
                 if (isTransparentStyle) {
                     m
                 } else if (!isGlassy) {
