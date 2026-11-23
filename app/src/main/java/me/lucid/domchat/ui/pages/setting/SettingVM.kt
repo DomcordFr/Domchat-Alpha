@@ -71,6 +71,12 @@ class SettingVM(
         }
     }
 
+    fun updateDisplaySetting(displaySetting: me.lucid.domchat.data.datastore.DisplaySetting) {
+        viewModelScope.launch {
+            settingsStore.updateDisplaySetting(displaySetting)
+        }
+    }
+
     fun updateSettings(
         newSettings: Settings,
         afterPersist: (() -> Unit)? = null,

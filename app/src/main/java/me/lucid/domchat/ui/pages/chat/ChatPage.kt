@@ -1729,6 +1729,13 @@ private fun ChatPageContent(
         // composer, picker, menus, sheets) and only while it is opaque and ready.
         val contentBackdrop = rememberLayerBackdrop(
             onDraw = {
+                // Synchronously subscribe to scroll changes during the draw pass.
+                // In Compose, snapshot reads inside DrawModifierNode.draw() automatically
+                // register snapshot observation on this node. Whenever LazyColumn scrolls on ANY frame,
+                // this source layer is immediately marked dirty before the draw traversal begins,
+                // re-recording synchronously on the very same frame tick at 120Hz!
+                chatListState.firstVisibleItemScrollOffset
+                chatListState.firstVisibleItemIndex
                 // Draw the recorded wallpaper backdrop layer behind content so overlay glass
                 // samples both the wallpaper and any messages without running a duplicate
                 // AssistantBackground / AsyncImage / RenderEffect hierarchy!

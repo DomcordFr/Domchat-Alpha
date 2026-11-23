@@ -140,11 +140,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     var displaySetting by remember(settings) { mutableStateOf(settings.displaySetting) }
 
     fun updateDisplaySetting(setting: DisplaySetting) {
-        vm.updateSettings(
-            vm.settings.value.copy(
-                displaySetting = setting
-            )
-        )
+        vm.updateDisplaySetting(setting)
     }
     var uiIsGlass by remember(settings.displaySetting) {
         mutableStateOf(
