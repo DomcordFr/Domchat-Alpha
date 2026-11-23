@@ -2,6 +2,7 @@ package me.lucid.domchat.service
 
 import android.Manifest
 import android.app.Application
+import android.database.sqlite.SQLiteConstraintException
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -187,6 +188,7 @@ internal fun shouldPreserveInMemoryConversation(
     return conversation != null &&
         (
             conversation.messageNodes.isNotEmpty() ||
+                conversation.title.isNotBlank() ||
                 persistenceMode != ChatPersistenceMode.NORMAL
             )
 }
@@ -944,7 +946,7 @@ class ChatService(
                 messages = initialNodes
             )
             setConversationPersistenceMode(conversationId, ChatPersistenceMode.NORMAL)
-            saveConversation(conversationId, newConversation)
+            updateConversation(conversationId, newConversation)
         }
     }
 
@@ -974,7 +976,7 @@ class ChatService(
             messages = initialNodes,
         ).copy(title = assistant.effectiveChatName)
         setConversationPersistenceMode(conversation.id, ChatPersistenceMode.NORMAL)
-        saveConversation(conversation.id, conversation)
+        updateConversation(conversation.id, conversation)
         return conversation
     }
 
@@ -1067,7 +1069,15 @@ class ChatService(
                         if (conversationDeletionLedger.isTombstoned(normalizedConversation.id)) {
                             return@withContext
                         }
-                        conversationRepo.insertConversation(normalizedConversation)
+                        try {
+                            conversationRepo.insertConversation(normalizedConversation)
+                        } catch (e: SQLiteConstraintException) {
+                            conversationRepo.updateConversation(
+                                conversation = normalizedConversation,
+                                preserveConsolidation = preserveConsolidation,
+                                syncAttachments = syncAttachments,
+                            )
+                        }
                     } else {
                         conversationRepo.updateConversation(
                             conversation = normalizedConversation,

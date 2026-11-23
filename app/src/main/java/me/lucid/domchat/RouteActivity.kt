@@ -72,6 +72,7 @@ import me.lucid.domchat.ui.motion.rootPopExitTransition
 import me.lucid.domchat.ui.motion.lateralEnterTransition
 import me.lucid.domchat.ui.motion.lateralExitTransition
 import me.lucid.domchat.navigation.CHAT_ROUTE_TARGET_KEY
+import me.lucid.domchat.navigation.ChatRouteTarget
 import me.lucid.domchat.navigation.toChatRouteTarget
 import me.lucid.domchat.ui.pages.assistant.AssistantPage
 import me.lucid.domchat.ui.pages.assistant.detail.AssistantDetailPage
@@ -323,6 +324,7 @@ class RouteActivity : ComponentActivity() {
     private var pendingShareIntent by mutableStateOf<ResolvedSharePayload?>(null)
     private var initialChatScreen by mutableStateOf<Screen.Chat?>(null)
     private var hasSuccessfulReplyBeforeSetup by mutableStateOf<Boolean?>(null)
+    private var lastNavigatedChatId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -365,12 +367,20 @@ class RouteActivity : ComponentActivity() {
             pendingTextSelection = if (isInternal) intent?.readQuickAskContinuationData() else null
             pendingShareIntent = if (isInternal) intent?.readResolvedSharePayload() else null
 
+            val restoredChatId = savedInstanceState?.getString("active_chat_id")
+            val defaultScreen = if (!restoredChatId.isNullOrBlank()) {
+                Screen.Chat(id = restoredChatId)
+            } else {
+                defaultStartScreen()
+            }
+
             // Pre-seed initialChatScreen immediately so frame 1 renders without blank box delay
             initialChatScreen = determineInitialChatScreen(
-                defaultScreen = defaultStartScreen(),
+                defaultScreen = defaultScreen,
                 deepLinkedConversationId = intentConversationId,
                 spontaneousTarget = null,
             )
+            lastNavigatedChatId = (initialChatScreen as? Screen.Chat)?.id
 
             lifecycleScope.launch {
                 // A conversation hand-off from the assistant overlay must select its
@@ -381,7 +391,7 @@ class RouteActivity : ComponentActivity() {
                         settingsStore.updateAssistant(assistantId)
                         settingsStore.markAssistantUsed(assistantId)
                     }
-                } else if (spontaneousNotification == null && readBooleanPreference("create_new_conversation_on_start", true)) {
+                } else if (restoredChatId == null && spontaneousNotification == null && readBooleanPreference("create_new_conversation_on_start", true)) {
                     // Reset to default blank assistant when starting a new conversation on app restart
                     settingsStore.updateAssistant(me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID)
                 }
@@ -436,6 +446,17 @@ class RouteActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val activeChatId = navStack?.currentBackStackEntry?.let { entry ->
+            entry.savedStateHandle.get<ChatRouteTarget>(CHAT_ROUTE_TARGET_KEY)?.id
+                ?: runCatching { entry.toRoute<Screen.Chat>().id }.getOrNull()
+        } ?: lastNavigatedChatId
+        if (!activeChatId.isNullOrBlank()) {
+            outState.putString("active_chat_id", activeChatId)
+        }
     }
 
     private fun disableNavigationBarContrast() {
@@ -881,6 +902,9 @@ class RouteActivity : ComponentActivity() {
                         val activeChatTarget by backStackEntry.savedStateHandle
                             .getStateFlow(CHAT_ROUTE_TARGET_KEY, initialChatTarget)
                             .collectAsStateWithLifecycle()
+                        LaunchedEffect(activeChatTarget.id) {
+                            lastNavigatedChatId = activeChatTarget.id
+                        }
                         ChatPage(
                             target = activeChatTarget,
                         )

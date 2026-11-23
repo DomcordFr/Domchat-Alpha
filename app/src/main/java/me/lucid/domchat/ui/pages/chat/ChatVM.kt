@@ -161,9 +161,16 @@ class ChatVM(
             }
         }
 
-        // 记住对话ID, 方便下次启动恢复
+        // 记住已保存的非临时对话ID, 方便下次启动恢复
         viewModelScope.launch(Dispatchers.IO) {
-            context.writeStringPreference("lastConversationId", _conversationId.toString())
+            conversation.collect { conv ->
+                if (
+                    conversationPersistenceMode.value == ChatPersistenceMode.NORMAL &&
+                    (conv.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER } || conv.title.isNotBlank())
+                ) {
+                    context.writeStringPreference("lastConversationId", conv.id.toString())
+                }
+            }
         }
     }
 
