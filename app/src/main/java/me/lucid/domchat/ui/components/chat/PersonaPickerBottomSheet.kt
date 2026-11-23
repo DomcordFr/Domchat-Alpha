@@ -343,7 +343,7 @@ fun PersonaPickerBottomSheet(
                                                 shape = RoundedCornerShape(6.dp),
                                                 borderWidth = 0.5.dp,
                                                 specularBrush = LiquidGlassTokens.SpecularBorderBrush,
-                                                fillColor = Color(0xFF000000)
+                                                fillColor = Color.Transparent
                                             )
                                         ) {
                                             Text(

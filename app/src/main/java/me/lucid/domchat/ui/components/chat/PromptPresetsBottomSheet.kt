@@ -49,6 +49,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -63,7 +65,6 @@ import kotlin.math.roundToInt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -398,11 +399,21 @@ fun PromptPresetsBottomSheet(
                 },
                 actions = {
                     if (!isEditingOrCreating) {
-                        IconButton(
-                            onClick = {
-                                haptics.perform(HapticPattern.Pop)
-                                openCreate()
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .liquidGlassSurface(
+                                    shape = CircleShape,
+                                    borderWidth = 0.5.dp,
+                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    isFloatingControl = true,
+                                )
+                                .clip(CircleShape)
+                                .clickable {
+                                    haptics.perform(HapticPattern.Pop)
+                                    openCreate()
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Add,
