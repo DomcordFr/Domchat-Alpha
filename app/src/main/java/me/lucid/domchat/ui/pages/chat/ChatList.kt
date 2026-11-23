@@ -62,6 +62,7 @@ import me.lucid.domchat.ui.component.backdrop.backdrops.LayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -422,32 +423,15 @@ private fun SharedTransitionScope.ChatListNormal(
     val generationHaptics = rememberPremiumHaptics(
         enabled = settings.displaySetting.enableMessageGenerationHapticEffect
     )
-
-    LaunchedEffect(conversation.id, settings.displaySetting.enableMessageGenerationHapticEffect) {
-        var previousLength = 0
-        snapshotFlow {
-            if (!loadingState) {
-                0
-            } else {
-                conversationUpdated.messageNodes
-                    .asReversed()
-                    .asSequence()
-                    .map { it.currentMessage }
-                    .firstOrNull { it.role == me.lucid.ai.core.MessageRole.ASSISTANT }
-                    ?.parts
-                    ?.filterIsInstance<UIMessagePart.Text>()
-                    ?.sumOf { it.text.length }
-                    ?: 0
-            }
-        }.collect { length ->
-            if (length == 0) {
-                previousLength = 0
-            } else if (length > previousLength + 24) {
-                generationHaptics.perform(HapticPattern.ScrollEdge)
-                previousLength = length
-                delay(120)
-            } else if (length < previousLength) {
-                previousLength = length
+    var lastHapticTimeMs by remember(conversation.id) { mutableLongStateOf(0L) }
+    val onStreamingTextRevealTick = remember(conversation.id, settings.displaySetting.enableMessageGenerationHapticEffect) {
+        {
+            if (settings.displaySetting.enableMessageGenerationHapticEffect) {
+                val now = System.currentTimeMillis()
+                if (now - lastHapticTimeMs >= 120L) {
+                    lastHapticTimeMs = now
+                    generationHaptics.perform(HapticPattern.ScrollEdge)
+                }
             }
         }
     }
@@ -751,6 +735,7 @@ private fun SharedTransitionScope.ChatListNormal(
                                 onMemoryClick = onMemoryClick,
                                 showRegenerate = showRegenerate,
                                 onExpandedStreamingCodeBlockChanged = if (loading && isLastTurn) onStreamingCodeBlockExpanded else null,
+                                onStreamingRevealTick = if (isLastTurn) onStreamingTextRevealTick else null,
                                 isIntroMessage = remember(group.role, index, firstUserTurnIndex) {
                                     group.role == me.lucid.ai.core.MessageRole.ASSISTANT &&
                                         (firstUserTurnIndex < 0 || index < firstUserTurnIndex)

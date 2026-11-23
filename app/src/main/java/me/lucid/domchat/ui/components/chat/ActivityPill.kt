@@ -703,7 +703,7 @@ private fun AnimatedSinglePill(
             targetState = requestedContentState,
             transitionSpec = {
                 (fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
-                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using SizeTransform(clip = true) { _, _ ->
+                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
                     PILL_MORPH_SPEC
                 }
             },

@@ -1175,6 +1175,7 @@ fun ChatMessageTurn(
     onModeClick: ((me.lucid.ai.ui.UsedMode) -> Unit)? = null,
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)? = null,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)? = null,
+    onStreamingRevealTick: (() -> Unit)? = null,
     isIntroMessage: Boolean = false,
     onAddCustomGreeting: () -> Unit = {},
 ) {
@@ -1324,6 +1325,7 @@ fun ChatMessageTurn(
                     onModeClick = onModeClick,
                     onMemoryClick = onMemoryClick,
                     onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
+                    onStreamingRevealTick = onStreamingRevealTick,
                     ttsProviderOverride = ttsProviderOverride,
                     isIntroMessage = isIntroMessage,
                     onAddCustomGreeting = onAddCustomGreeting,
@@ -1838,6 +1840,7 @@ private fun AssistantMessageTurn(
     onModeClick: ((me.lucid.ai.ui.UsedMode) -> Unit)?,
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)?,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)?,
+    onStreamingRevealTick: (() -> Unit)? = null,
     ttsProviderOverride: me.lucid.tts.provider.TTSProviderSetting?,
     isIntroMessage: Boolean = false,
     onAddCustomGreeting: () -> Unit = {},
@@ -2048,7 +2051,21 @@ private fun AssistantMessageTurn(
                         bubbleAlpha = glassAlpha,
                         largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
                         smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
-                        modifier = Modifier.widthIn(max = maxWidth),
+                        modifier = Modifier
+                            .widthIn(max = maxWidth)
+                            .then(
+                                if (chatAnimationsEnabled) {
+                                    Modifier.animateContentSize(
+                                        animationSpec = spring(
+                                            dampingRatio = 0.92f,
+                                            stiffness = 135f
+                                        ),
+                                        alignment = Alignment.TopStart
+                                    )
+                                } else {
+                                    Modifier
+                                }
+                            ),
                         onClick = handleBubbleClick,
                         bubbleModifier = bubbleModifierLambda,
                     ) {
@@ -2072,7 +2089,10 @@ private fun AssistantMessageTurn(
                                     isTextAnimating = false
                                 }
                             },
-                            onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
+                            onExpandedStreamingCodeBlockChanged = {
+                                onExpandedStreamingCodeBlockChanged?.invoke()
+                                onStreamingRevealTick?.invoke()
+                            },
                             onClickCitation = { id -> onCitationClick(id) }
                         )
                     }
@@ -2132,7 +2152,10 @@ private fun AssistantMessageTurn(
                                     isTextAnimating = false
                                 }
                             },
-                            onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
+                            onExpandedStreamingCodeBlockChanged = {
+                                onExpandedStreamingCodeBlockChanged?.invoke()
+                                onStreamingRevealTick?.invoke()
+                            },
                             onClickCitation = { id -> onCitationClick(id) },
                             modifier = Modifier.clickable { handleBubbleClick() }
                         )
@@ -2147,7 +2170,7 @@ private fun AssistantMessageTurn(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (chatAnimationsEnabled) {
+                if (chatAnimationsEnabled && !isTurnActive) {
                     Modifier.animateContentSize(
                         animationSpec = spring(
                             dampingRatio = 0.88f,
