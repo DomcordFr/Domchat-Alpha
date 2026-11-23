@@ -179,6 +179,7 @@ private data class AssistantRegenerationContext(
     val inputMessages: List<UIMessage>,
     val turnStartNodeIndex: Int,
     val versionTag: String,
+    val previousSelectIndex: Int,
 )
 
 internal fun shouldPreserveInMemoryConversation(
@@ -1547,6 +1548,7 @@ class ChatService(
                                 inputMessages = inputMessages,
                                 turnStartNodeIndex = firstAssistantIndex,
                                 versionTag = versionTag,
+                                previousSelectIndex = oldFirstAssistant.selectIndex,
                             ),
                         )
                     } else {
@@ -1598,6 +1600,68 @@ class ChatService(
         if (_isForeground.value && wasEmpty) {
             GenerationForegroundService.start(context)
         }
+    }
+
+    private suspend fun revertCancelledEmptyRegeneration(
+        conversationId: Uuid,
+        regeneration: AssistantRegenerationContext,
+    ): Boolean {
+        val current = latestStreamingConversation ?: getConversationFlow(conversationId).value
+        val turnStart = regeneration.turnStartNodeIndex
+        if (turnStart !in current.messageNodes.indices) return false
+
+        val turnEndIndex = current.messageNodes
+            .subList(turnStart, current.messageNodes.size)
+            .indexOfFirst { it.role == MessageRole.USER }
+            .let { offset ->
+                if (offset == -1) current.messageNodes.size
+                else turnStart + offset
+            }
+
+        // Check if ANY message in this regeneration turn has durable assistant progress
+        val hasDurableProgress = (turnStart until turnEndIndex).any { nodeIdx ->
+            current.messageNodes[nodeIdx].messages.any { msg ->
+                msg.versionTag == regeneration.versionTag && msg.hasDurableAssistantProgress()
+            }
+        }
+        if (hasDurableProgress) return false
+
+        // No durable progress: revert the empty regeneration branch!
+        val updatedNodes = current.messageNodes.mapIndexedNotNull { index, node ->
+            if (index in turnStart until turnEndIndex) {
+                val filteredMessages = node.messages.filter { it.versionTag != regeneration.versionTag }
+                if (filteredMessages.isEmpty()) {
+                    null
+                } else {
+                    val targetSelectIndex = if (index == turnStart) {
+                        regeneration.previousSelectIndex.coerceIn(0, filteredMessages.lastIndex)
+                    } else {
+                        node.selectIndex.coerceIn(0, filteredMessages.lastIndex)
+                    }
+                    node.copy(
+                        messages = filteredMessages,
+                        selectIndex = targetSelectIndex,
+                    )
+                }
+            } else {
+                node
+            }
+        }
+
+        val reverted = normalizeConversation(
+            current.copy(
+                messageNodes = updatedNodes,
+                updateAt = Instant.now(),
+            )
+        )
+        updateConversation(conversationId, reverted)
+        if (getConversationPersistenceMode(conversationId) == ChatPersistenceMode.NORMAL) {
+            persistConversationToRepository(
+                conversation = reverted,
+                preserveConsolidation = true,
+            )
+        }
+        return true
     }
 
     // 处理消息补全
@@ -1744,6 +1808,11 @@ class ChatService(
                     LogUtil.i(TAG, "generation onCompletion: skipping persist for tombstoned $conversationId")
                     return@onCompletion
                 }
+                if (cause != null && assistantRegeneration != null) {
+                    if (revertCancelledEmptyRegeneration(conversationId, assistantRegeneration)) {
+                        return@onCompletion
+                    }
+                }
                 // Calculate generation duration from first token (excludes TTFT)
                 val generationDurationMs = firstTokenTime?.let { System.currentTimeMillis() - it }
 
@@ -1887,7 +1956,12 @@ class ChatService(
                 break
             }
         }.onFailure {
-            if (it is CancellationException) return@onFailure
+            if (it is CancellationException) {
+                if (assistantRegeneration != null) {
+                    revertCancelledEmptyRegeneration(conversationId, assistantRegeneration)
+                }
+                return@onFailure
+            }
             it.printStackTrace()
             _errorFlow.emit(it)
             Logging.log(TAG, "handleMessageComplete: $it")

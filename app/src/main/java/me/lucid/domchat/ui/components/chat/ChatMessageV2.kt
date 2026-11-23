@@ -47,6 +47,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
@@ -91,6 +99,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -740,10 +749,16 @@ private fun AttachmentRow(
         alignEnd = alignEnd,
         modifier = modifier,
     ) {
-        items(
+        itemsIndexed(
             items = attachments,
-            key = { attachment -> attachment.hashCode() }
-        ) { attachment ->
+            key = { index, attachment ->
+                when (attachment) {
+                    is RenderableAttachment.Image -> "${index}_${attachment.url}"
+                    is RenderableAttachment.File -> "${index}_${attachment.fileName}_${attachment.url}"
+                    is RenderableAttachment.Placeholder -> "${index}_${attachment.fileName}"
+                }
+            }
+        ) { _, attachment ->
             when (attachment) {
                 is RenderableAttachment.Image -> {
                     val archivedModifier = if (attachment.archived) {
@@ -1868,8 +1883,70 @@ private fun AssistantMessageTurn(
     val assistantNode = group.nodeWithMostVersions
     val versionIndices = remember(assistantNode.messages) { assistantNode.versionSelectionIndices() }
     val currentVersionPos = remember(assistantNode.messages, assistantNode.selectIndex) { assistantNode.versionSelectionPosition() }
-    val assistantSwipeModifier = if (!loading) {
-        Modifier.pointerInput(assistantNode.id, currentVersionPos) {
+    val density = LocalDensity.current
+    val swipeThresholdPx = remember(density) { with(density) { 48.dp.toPx() } }
+
+    val pagerState = if (versionIndices.size > 1) {
+        rememberPagerState(
+            initialPage = currentVersionPos.coerceIn(0, versionIndices.lastIndex),
+            pageCount = { versionIndices.size }
+        )
+    } else null
+
+    if (pagerState != null) {
+        LaunchedEffect(currentVersionPos) {
+            if (pagerState.currentPage != currentVersionPos && currentVersionPos in 0 until versionIndices.size) {
+                pagerState.animateScrollToPage(currentVersionPos)
+            }
+        }
+
+        LaunchedEffect(pagerState) {
+            snapshotFlow { pagerState.settledPage }
+                .collect { page ->
+                    val targetIndex = versionIndices.getOrNull(page)
+                    if (targetIndex != null && targetIndex != assistantNode.selectIndex) {
+                        haptics.perform(HapticPattern.Pop)
+                        onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                    }
+                }
+        }
+    }
+
+    val pagerNestedScrollConnection = remember(pagerState, versionIndices.size, loading, isIntroMessage, swipeThresholdPx) {
+        object : NestedScrollConnection {
+            var accumulatedOverscroll = 0f
+
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.x > 0f && accumulatedOverscroll < 0f) {
+                    accumulatedOverscroll = 0f
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (!loading && pagerState != null && pagerState.currentPage == versionIndices.lastIndex && available.x < 0f) {
+                    accumulatedOverscroll += available.x
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (!loading && pagerState != null && pagerState.currentPage == versionIndices.lastIndex && accumulatedOverscroll < -swipeThresholdPx) {
+                    haptics.perform(HapticPattern.Pop)
+                    if (isIntroMessage) {
+                        onAddCustomGreeting()
+                    } else {
+                        onRegenerate()
+                    }
+                }
+                accumulatedOverscroll = 0f
+                return Velocity.Zero
+            }
+        }
+    }
+
+    val assistantSingleSwipeModifier = if (!loading && versionIndices.size <= 1) {
+        Modifier.pointerInput(assistantNode.id) {
             var totalDrag = 0f
             detectHorizontalDragGestures(
                 onHorizontalDrag = { change, dragAmount ->
@@ -1877,19 +1954,7 @@ private fun AssistantMessageTurn(
                     totalDrag += dragAmount
                 },
                 onDragEnd = {
-                    if (totalDrag > 50f && currentVersionPos > 0) {
-                        val targetIndex = versionIndices.getOrNull(currentVersionPos - 1)
-                        if (targetIndex != null) {
-                            haptics.perform(HapticPattern.Pop)
-                            onUpdate(assistantNode.copy(selectIndex = targetIndex))
-                        }
-                    } else if (totalDrag < -50f && currentVersionPos < versionIndices.lastIndex) {
-                        val targetIndex = versionIndices.getOrNull(currentVersionPos + 1)
-                        if (targetIndex != null) {
-                            haptics.perform(HapticPattern.Pop)
-                            onUpdate(assistantNode.copy(selectIndex = targetIndex))
-                        }
-                    } else if (totalDrag < -50f && currentVersionPos >= versionIndices.lastIndex) {
+                    if (totalDrag < -swipeThresholdPx) {
                         haptics.perform(HapticPattern.Pop)
                         if (isIntroMessage) {
                             onAddCustomGreeting()
@@ -1905,21 +1970,214 @@ private fun AssistantMessageTurn(
     } else {
         Modifier
     }
-    
+
     val assistantTimestamp = remember(assistantNode.currentMessage.createdAt) {
         formatMessageTimestamp(assistantNode.currentMessage.createdAt)
     }
 
+    @Composable
+    fun AssistantTurnVersionContent(
+        targetIdx: Int,
+        targetMsg: UIMessage,
+        versionSwipeModifier: Modifier,
+    ) {
+        val pageAttachments = remember(targetMsg, defaultVideoLabel, defaultAudioLabel, context) {
+            collectRenderableAttachments(
+                context = context,
+                parts = targetMsg.parts,
+                fallbackVideoLabel = defaultVideoLabel,
+                fallbackAudioLabel = defaultAudioLabel,
+            )
+        }
+
+        if (showAssistantBubbles) {
+            val isTransparentStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+            val isMessengerStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
+            val isGlassy = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+            val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
+            val glassAlpha = effectiveDisplay.chatBubbleAlpha
+            val bubbleBlur = effectiveDisplay.chatBubbleBlur
+            val bubbleTone = effectiveDisplay.chatBubbleTone
+            val baseLuminance = effectiveDisplay.glassBaseLuminance
+            val tintHue = effectiveDisplay.chatBubbleTintHue
+            val tintAmount = effectiveDisplay.chatBubbleTintAmount
+
+            val bubbleModifierLambda: (Modifier, Shape, Color) -> Modifier = { m: Modifier, shape: Shape, color: Color ->
+                if (isTransparentStyle) {
+                    m
+                } else if (!isGlassy) {
+                    if (bubbleBlur > 0f) {
+                        m.domChatBlurEffect(
+                            containerColor = color,
+                            shape = shape,
+                            blurRadius = bubbleBlur.dp
+                        )
+                    } else {
+                        m
+                    }
+                } else when (bubbleInterfaceStyle) {
+                    InterfaceStyle.FROSTED -> m.frostedGlassBubbleSurface(
+                        shape = shape,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    )
+                    InterfaceStyle.GLASS -> {
+                        val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                            effectiveDisplay.bubbleSpecularIntensity > 0f
+                        }
+                        val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
+                        m.liquidGlassBubbleSurface(
+                            shape = shape,
+                            borderWidth = 0.5.dp,
+                            fillColor = bubbleFillColor,
+                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                            glassMode = effectiveDisplay.liquidGlassMode,
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(versionSwipeModifier),
+                verticalArrangement = Arrangement.spacedBy(elementSpacing)
+            ) {
+                if (pageAttachments.isNotEmpty()) {
+                    AttachmentRow(
+                        attachments = pageAttachments,
+                        alignEnd = false,
+                    )
+                }
+
+                val textParts = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
+                val activeTextParts = if (textParts.isNotEmpty()) textParts else targetMsg.parts.filterIsInstance<UIMessagePart.Text>()
+                activeTextParts.forEachIndexed { index, part ->
+                    val position = when {
+                        activeTextParts.size == 1 -> BubblePosition.SINGLE
+                        index == 0 -> BubblePosition.FIRST
+                        index == activeTextParts.lastIndex -> BubblePosition.LAST
+                        else -> BubblePosition.MIDDLE
+                    }
+
+                    GroupedMessageBubble(
+                        position = position,
+                        role = BubbleRole.ASSISTANT,
+                        isTransparent = isTransparentStyle,
+                        isGlassy = isGlassy,
+                        glassAlpha = glassAlpha,
+                        baseLuminance = baseLuminance,
+                        tintHue = tintHue,
+                        tintAmount = tintAmount,
+                        bubbleTone = bubbleTone,
+                        bubbleAlpha = glassAlpha,
+                        largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
+                        smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
+                        modifier = Modifier.widthIn(max = maxWidth),
+                        onClick = handleBubbleClick,
+                        bubbleModifier = bubbleModifierLambda,
+                    ) {
+                        val userNickname = effectiveDisplay.getActivePersona().name
+                        val isStreaming = loading && targetIdx == assistantNode.selectIndex && index == activeTextParts.lastIndex
+                        val displayContent = rememberFormattedMessageText(
+                            rawText = part.text,
+                            assistant = assistant,
+                            userNickname = userNickname,
+                            scope = AssistantAffectScope.ASSISTANT,
+                            isStreaming = isStreaming,
+                        )
+                        MarkdownBlock(
+                            workspaceId = assistant?.workspaceId?.toString(),
+                            content = displayContent,
+                            paragraphSpacing = 12.dp,
+                            streamingTextReveal = isStreaming,
+                            displaySetting = effectiveDisplay,
+                            onRevealComplete = {
+                                if (index == activeTextParts.lastIndex) {
+                                    isTextAnimating = false
+                                }
+                            },
+                            onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
+                            onClickCitation = { id -> onCitationClick(id) }
+                        )
+                    }
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(versionSwipeModifier),
+                verticalArrangement = Arrangement.spacedBy(elementSpacing)
+            ) {
+                if (pageAttachments.isNotEmpty()) {
+                    AttachmentRow(
+                        attachments = pageAttachments,
+                        alignEnd = false,
+                    )
+                }
+
+                val reasoningParts = targetMsg.parts
+                    .filterIsInstance<UIMessagePart.Reasoning>()
+                    .filter { it.reasoning.isNotBlank() }
+
+                if (reasoningParts.isNotEmpty()) {
+                    val isReasoningActive = (targetIdx == assistantNode.selectIndex) &&
+                        (reasoningParts.any { it.finishedAt == null } || (isTurnActive && loading))
+                    AssistantThinkingDropdown(
+                        reasoningParts = reasoningParts,
+                        maxWidth = maxWidth,
+                        isStreaming = isReasoningActive,
+                    )
+                }
+
+                val activeTextParts = targetMsg.parts.filterIsInstance<UIMessagePart.Text>()
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(elementSpacing)
+                ) {
+                    activeTextParts.forEachIndexed { index, part ->
+                        val userNickname = effectiveDisplay.getActivePersona().name
+                        val isStreaming = loading && targetIdx == assistantNode.selectIndex && index == activeTextParts.lastIndex
+                        val displayContent = rememberFormattedMessageText(
+                            rawText = part.text,
+                            assistant = assistant,
+                            userNickname = userNickname,
+                            scope = AssistantAffectScope.ASSISTANT,
+                            isStreaming = isStreaming,
+                        )
+                        MarkdownBlock(
+                            workspaceId = assistant?.workspaceId?.toString(),
+                            content = displayContent,
+                            paragraphSpacing = 12.dp,
+                            streamingTextReveal = isStreaming,
+                            displaySetting = effectiveDisplay,
+                            onRevealComplete = {
+                                if (index == activeTextParts.lastIndex) {
+                                    isTextAnimating = false
+                                }
+                            },
+                            onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
+                            onClickCitation = { id -> onCitationClick(id) },
+                            modifier = Modifier.clickable { handleBubbleClick() }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
+    val isPagerScrolling = pagerState?.isScrollInProgress == true
     Column(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (chatAnimationsEnabled) {
+                if (chatAnimationsEnabled && !isPagerScrolling) {
                     Modifier.animateContentSize(
                         animationSpec = spring(
                             dampingRatio = 0.88f,
-                            stiffness = 220f
+                            stiffness = 260f
                         )
                     )
                 } else {
@@ -2072,130 +2330,6 @@ private fun AssistantMessageTurn(
                     }
                 }
             }
-
-            AttachmentRow(
-                attachments = attachments,
-                alignEnd = false,
-            )
-            
-            // Message bubbles - full width, standard bubble positions (no connection to pills)
-            allTextBubbles.forEachIndexed { index, (node, part) ->
-                val position = when {
-                    allTextBubbles.size == 1 -> BubblePosition.SINGLE
-                    index == 0 -> BubblePosition.FIRST
-                    index == allTextBubbles.lastIndex -> BubblePosition.LAST
-                    else -> BubblePosition.MIDDLE
-                }
-                
-                val isTransparentStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-                val isMessengerStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
-                val isGlassy = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
-                val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
-                val glassAlpha = effectiveDisplay.chatBubbleAlpha
-                val bubbleBlur = effectiveDisplay.chatBubbleBlur
-                val bubbleTone = effectiveDisplay.chatBubbleTone
-                val baseLuminance = effectiveDisplay.glassBaseLuminance
-                val tintHue = effectiveDisplay.chatBubbleTintHue
-                val tintAmount = effectiveDisplay.chatBubbleTintAmount
-
-                GroupedMessageBubble(
-                    position = position,
-                    role = BubbleRole.ASSISTANT,
-                    isTransparent = isTransparentStyle,
-                    isGlassy = isGlassy,
-                    glassAlpha = glassAlpha,
-                    baseLuminance = baseLuminance,
-                    tintHue = tintHue,
-                    tintAmount = tintAmount,
-                    bubbleTone = bubbleTone,
-                    bubbleAlpha = glassAlpha,
-                    largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
-                    smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
-                    modifier = Modifier
-                        .widthIn(max = maxWidth)
-                        .then(assistantSwipeModifier)
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = 0.86f,
-                                stiffness = 140f
-                            )
-                        ),
-                    onClick = handleBubbleClick,
-                    bubbleModifier = { m: Modifier, shape: Shape, color: Color ->
-                        if (isTransparentStyle) {
-                            m
-                        } else if (!isGlassy) {
-                            if (bubbleBlur > 0f) {
-                                m.domChatBlurEffect(
-                                    containerColor = color,
-                                    shape = shape,
-                                    blurRadius = bubbleBlur.dp
-                                )
-                            } else {
-                                m
-                            }
-                        } else when (bubbleInterfaceStyle) {
-                            InterfaceStyle.FROSTED -> m.frostedGlassBubbleSurface(
-                                shape = shape,
-                                borderWidth = 0.5.dp,
-                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                            )
-                            InterfaceStyle.GLASS -> {
-                                val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
-                                    effectiveDisplay.bubbleSpecularIntensity > 0f
-                                }
-                                val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
-                                m.liquidGlassBubbleSurface(
-                                    shape = shape,
-                                    borderWidth = 0.5.dp,
-                                    fillColor = bubbleFillColor,
-                                    specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                                    glassMode = effectiveDisplay.liquidGlassMode,
-                                )
-                            }
-                        }
-                    }
-                ) {
-                    AnimatedContent(
-                        targetState = assistantNode.selectIndex,
-                        transitionSpec = {
-                            val forward = targetState >= initialState
-                            (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
-                                if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
-                            } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
-                                if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
-                            } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
-                        },
-                        label = "ChatMessageVersionAnimatedContent"
-                    ) { targetIdx ->
-                        val targetMsg = assistantNode.messages.getOrNull(targetIdx) ?: assistantNode.currentMessage
-                        val currentText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(index)?.text ?: part.text
-                        val userNickname = effectiveDisplay.getActivePersona().name
-                        val displayContent = rememberFormattedMessageText(
-                            rawText = currentText,
-                            assistant = assistant,
-                            userNickname = userNickname,
-                            scope = AssistantAffectScope.ASSISTANT,
-                            isStreaming = loading && index == allTextBubbles.lastIndex
-                        )
-                        MarkdownBlock(
-                            workspaceId = assistant?.workspaceId?.toString(),
-                            content = displayContent,
-                            paragraphSpacing = 12.dp,
-                            streamingTextReveal = loading && index == allTextBubbles.lastIndex,
-                            displaySetting = effectiveDisplay,
-                            onRevealComplete = {
-                                if (index == allTextBubbles.lastIndex) {
-                                    isTextAnimating = false
-                                }
-                            },
-                            onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
-                            onClickCitation = { id -> onCitationClick(id) }
-                        )
-                    }
-                }
-            }
         } else {
             // No bubbles for characters:
             // [Avatar] [Name] (side by side)
@@ -2235,8 +2369,7 @@ private fun AssistantMessageTurn(
                         onActivityPillClick(type)
                     },
                     connectsToBubbleBelow = false,
-                    modifier = Modifier
-                        .widthIn(max = maxWidth),
+                    modifier = Modifier.widthIn(max = maxWidth),
                     reasoningPreviewEnabled = effectiveDisplay.reasoningPreviewEnabled,
                     maxBubbleWidth = maxWidth,
                     timelineOpen = timelineOpen,
@@ -2251,81 +2384,32 @@ private fun AssistantMessageTurn(
                     key = group.firstNode.id
                 )
             }
+        }
 
-            AttachmentRow(
-                attachments = attachments,
-                alignEnd = false,
-            )
-
-            val reasoningParts = group.filteredNodes
-                .flatMap { it.currentMessage.parts }
-                .filterIsInstance<UIMessagePart.Reasoning>()
-                .filter { it.reasoning.isNotBlank() }
-
-            if (reasoningParts.isNotEmpty()) {
-                val isReasoningActive = reasoningParts.any { it.finishedAt == null } || (isTurnActive && loading)
-                AssistantThinkingDropdown(
-                    reasoningParts = reasoningParts,
-                    maxWidth = maxWidth,
-                    isStreaming = isReasoningActive,
+        if (versionIndices.size > 1 && pagerState != null) {
+            HorizontalPager(
+                state = pagerState,
+                beyondViewportPageCount = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .nestedScroll(pagerNestedScrollConnection),
+            ) { page ->
+                val targetIdx = versionIndices.getOrNull(page) ?: assistantNode.selectIndex
+                val targetMsg = assistantNode.messages.getOrNull(targetIdx) ?: assistantNode.currentMessage
+                AssistantTurnVersionContent(
+                    targetIdx = targetIdx,
+                    targetMsg = targetMsg,
+                    versionSwipeModifier = Modifier,
                 )
             }
-
-            AnimatedContent(
-                targetState = assistantNode.selectIndex,
-                transitionSpec = {
-                    val isForward = targetState > initialState
-                    (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
-                        if (isForward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
-                    } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
-                    (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
-                        if (isForward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
-                    } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
-                },
-                label = "assistant_message_content_switch"
-            ) { targetIdx ->
-                val targetMsg = assistantNode.messages.getOrNull(targetIdx) ?: assistantNode.currentMessage
-                val currentTextParts = targetMsg.parts.filterIsInstance<UIMessagePart.Text>()
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(assistantSwipeModifier)
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = 0.86f,
-                                stiffness = 140f
-                            )
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(elementSpacing)
-                ) {
-                    val activeParts = if (currentTextParts.isNotEmpty()) currentTextParts else allTextBubbles.map { it.second }
-                    activeParts.forEachIndexed { index, part ->
-                        val userNickname = effectiveDisplay.getActivePersona().name
-                        val displayContent = rememberFormattedMessageText(
-                            rawText = part.text,
-                            assistant = assistant,
-                            userNickname = userNickname,
-                            scope = AssistantAffectScope.ASSISTANT,
-                            isStreaming = loading && index == activeParts.lastIndex
-                        )
-                        MarkdownBlock(
-                            workspaceId = assistant?.workspaceId?.toString(),
-                            content = displayContent,
-                            paragraphSpacing = 12.dp,
-                            streamingTextReveal = loading && index == activeParts.lastIndex,
-                            displaySetting = effectiveDisplay,
-                            onRevealComplete = {
-                                if (index == activeParts.lastIndex) {
-                                    isTextAnimating = false
-                                }
-                            },
-                            onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
-                            onClickCitation = { id -> onCitationClick(id) },
-                            modifier = Modifier.clickable { handleBubbleClick() }
-                        )
-                    }
-                }
-            }
+        } else {
+            val targetIdx = assistantNode.selectIndex
+            val targetMsg = assistantNode.currentMessage
+            AssistantTurnVersionContent(
+                targetIdx = targetIdx,
+                targetMsg = targetMsg,
+                versionSwipeModifier = assistantSingleSwipeModifier,
+            )
         }
         
         // Token statistics - combined for all messages in group
