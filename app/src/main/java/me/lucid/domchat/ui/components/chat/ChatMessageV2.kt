@@ -1498,7 +1498,7 @@ private fun UserMessageTurn(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 4.dp, end = 2.dp)
+            modifier = Modifier.padding(bottom = 10.dp, end = 2.dp)
         ) {
             Text(
                 text = messageTimestamp,
