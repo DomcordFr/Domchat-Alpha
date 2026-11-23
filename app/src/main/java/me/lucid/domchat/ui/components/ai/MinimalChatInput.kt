@@ -1999,8 +1999,12 @@ fun MinimalChatInput(
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Color.White.copy(alpha = 0.08f))
+                                        .liquidGlassSurface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            fillColor = Color.Transparent,
+                                            borderWidth = 0.5.dp,
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                        )
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
                                     Text(

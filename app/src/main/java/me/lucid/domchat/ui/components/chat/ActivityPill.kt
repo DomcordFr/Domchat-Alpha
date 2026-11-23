@@ -8,9 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -656,13 +654,7 @@ private fun AnimatedSinglePill(
                         )
                     } else Modifier
                 )
-                .then(
-                    if (surfaceExpanded) {
-                        Modifier.widthIn(max = maxBubbleWidth)
-                    } else {
-                        Modifier.height(PILL_HEIGHT).widthIn(max = maxBubbleWidth)
-                    }
-                )
+                .widthIn(max = maxBubbleWidth)
                 .then(
                     if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
                         val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
@@ -917,11 +909,7 @@ private fun AnimatedSinglePill(
     }
     }
 
-    if (!surfaceExpanded) {
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
-            pillSurface()
-        }
-    } else {
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         pillSurface()
     }
 }
@@ -1091,6 +1079,7 @@ private fun UnifiedReasoningPill(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = if (isExpanded) Modifier.weight(1f, fill = false) else Modifier,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1128,8 +1117,8 @@ private fun UnifiedReasoningPill(
                     }
                     AnimatedVisibility(
                         visible = !isExpanded && !isLive && completedDurationMs != null,
-                        enter = fadeIn(tween(180)),
-                        exit = fadeOut(tween(120))
+                        enter = fadeIn(tween(140, delayMillis = 110)),
+                        exit = fadeOut(tween(90))
                     ) {
                         if (completedDurationMs != null) {
                             Text(
@@ -1139,7 +1128,11 @@ private fun UnifiedReasoningPill(
                             )
                         }
                     }
-                    if (isLive && !isExpanded) {
+                    AnimatedVisibility(
+                        visible = isLive && !isExpanded,
+                        enter = fadeIn(tween(140, delayMillis = 110)),
+                        exit = fadeOut(tween(90))
+                    ) {
                         LiveElapsedTimerText(
                             isLive = true,
                             startTimeMs = startTimeMs,
@@ -1154,7 +1147,7 @@ private fun UnifiedReasoningPill(
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = slideInHorizontally(tween(220)) { it / 2 } + fadeIn(tween(200)),
-                exit = slideOutHorizontally(tween(160)) { it / 2 } + fadeOut(tween(140))
+                exit = slideOutHorizontally(tween(110)) { it / 2 } + fadeOut(tween(110))
             ) {
                 LiveElapsedTimerText(
                     isLive = isLive,

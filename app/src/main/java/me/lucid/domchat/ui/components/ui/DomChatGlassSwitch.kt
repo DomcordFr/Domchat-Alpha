@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -23,24 +22,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
+import me.lucid.domchat.ui.component.backdrop.Backdrop
+import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.drawBackdrop
@@ -52,18 +59,18 @@ import me.lucid.domchat.ui.component.backdrop.shadow.InnerShadow
 import me.lucid.domchat.ui.component.backdrop.shadow.Shadow
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.ui.theme.LocalDarkMode
 import kotlin.math.abs
 
 /**
  * Liquid Glass Style Switch (`DomChatGlassSwitch`).
  *
- * Adapted from Convx's CupertinoSwitch + DampedDragAnimation:
- * - Capsule track wrapped in `.layerBackdrop(trackBackdrop)`.
- * - Resting thumb is a crisp white pill with subtle shadow.
- * - While pressed/dragged on API 33+, expands smoothly and transitions into live
- *   refractive liquid glass with AGSL lens refraction, ambient highlight, and inner shadow.
- * - On API < 33, falls back smoothly to translucent specular pill.
- * - Supports crisp tap toggling, interactive thumb dragging with spring settle, and premium haptics.
+ * Adapted from Convx's CupertinoSwitch:
+ * - 60dp x 28dp pill track with specular border and dynamic accent/OLED contrast.
+ * - 36dp x 24dp crisp solid white handle at rest with shadow.
+ * - Interactive damped finger drag with touch-slop protection (never toggles on parent vertical scroll).
+ * - On press/drag (API 33+), transitions smoothly into live refractive liquid glass
+ *   refracting both the live sheet backdrop and track edges via combined backdrop.
  */
 @Composable
 fun DomChatGlassSwitch(
@@ -77,7 +84,7 @@ fun DomChatGlassSwitch(
     val currentOnCheckedChange by rememberUpdatedState(onCheckedChange)
     val density = LocalDensity.current
     val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalDarkMode.current
     val haptics = rememberPremiumHaptics()
     val scope = rememberCoroutineScope()
 
@@ -100,7 +107,31 @@ fun DomChatGlassSwitch(
     }
 
     val trackBackdrop = rememberLayerBackdrop()
-    val uncheckedTrackColor = Color.White.copy(alpha = if (isDark) 0.16f else 0.12f)
+    val appBackdrop = LocalAppBackdrop.current
+    val combinedBackdrop = remember(appBackdrop, trackBackdrop) {
+        object : Backdrop {
+            override val isCoordinatesDependent: Boolean
+                get() = appBackdrop?.isCoordinatesDependent == true || trackBackdrop.isCoordinatesDependent
+
+            override val hasRecording: Boolean
+                get() = appBackdrop?.hasRecording == true || trackBackdrop.hasRecording
+
+            override fun DrawScope.drawBackdrop(
+                density: Density,
+                coordinates: LayoutCoordinates?,
+                layerBlock: (GraphicsLayerScope.() -> Unit)?
+            ) {
+                appBackdrop?.run {
+                    drawBackdrop(density, coordinates, layerBlock)
+                }
+                trackBackdrop.run {
+                    drawBackdrop(density, coordinates, layerBlock)
+                }
+            }
+        }
+    }
+
+    val uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.14f)
     val themePrimary = MaterialTheme.colorScheme.primary
     val checkedTrackColor = if (themePrimary.luminance() > 0.82f) {
         Color(0xFF34C759)
@@ -114,6 +145,13 @@ fun DomChatGlassSwitch(
             .semantics {
                 role = Role.Switch
                 toggleableState = ToggleableState(checked)
+                if (!enabled) disabled()
+                onClick {
+                    if (enabled && onCheckedChange != null) {
+                        onCheckedChange(!checked)
+                        true
+                    } else false
+                }
             }
             .then(
                 if (enabled && onCheckedChange != null) {
@@ -123,6 +161,8 @@ fun DomChatGlassSwitch(
                             val downId = down.id
                             var isDrag = false
                             var totalDragX = 0f
+                            var completedNormally = false
+                            var wasCancelled = false
 
                             scope.launch {
                                 pressProgressAnim.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 600f))
@@ -131,9 +171,14 @@ fun DomChatGlassSwitch(
                             try {
                                 while (true) {
                                     val event = awaitPointerEvent()
-                                    val change = event.changes.find { it.id == downId } ?: break
+                                    val change = event.changes.find { it.id == downId }
+                                    if (change == null || change.isConsumed) {
+                                        wasCancelled = true
+                                        break
+                                    }
                                     if (change.changedToUp()) {
                                         change.consume()
+                                        completedNormally = true
                                         break
                                     }
                                     val dragDelta = change.positionChange()
@@ -158,22 +203,28 @@ fun DomChatGlassSwitch(
                                 }
                             }
 
-                            if (isDrag) {
-                                val newChecked = fractionAnim.value >= 0.5f
-                                val target = if (newChecked) 1f else 0f
-                                if (newChecked != currentChecked) {
+                            if (completedNormally && !wasCancelled) {
+                                if (isDrag) {
+                                    val newChecked = fractionAnim.value >= 0.5f
+                                    if (newChecked != currentChecked) {
+                                        haptics.perform(HapticPattern.Pop)
+                                        currentOnCheckedChange?.invoke(newChecked)
+                                    }
+                                    scope.launch {
+                                        val target = if (newChecked) 1f else 0f
+                                        fractionAnim.animateTo(target, spring(dampingRatio = 0.85f, stiffness = 400f))
+                                    }
+                                } else {
+                                    val newChecked = !currentChecked
                                     haptics.perform(HapticPattern.Pop)
                                     currentOnCheckedChange?.invoke(newChecked)
-                                }
-                                scope.launch {
-                                    fractionAnim.animateTo(target, spring(dampingRatio = 0.85f, stiffness = 400f))
+                                    scope.launch {
+                                        fractionAnim.animateTo(if (newChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
+                                    }
                                 }
                             } else {
-                                val newChecked = !currentChecked
-                                haptics.perform(HapticPattern.Pop)
-                                currentOnCheckedChange?.invoke(newChecked)
                                 scope.launch {
-                                    fractionAnim.animateTo(if (newChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
+                                    fractionAnim.animateTo(if (currentChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
                                 }
                             }
                         }
@@ -199,74 +250,93 @@ fun DomChatGlassSwitch(
                 }
                 .border(
                     width = 0.5.dp,
-                    color = Color.White.copy(alpha = if (isDark) 0.12f else 0.08f),
+                    color = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f),
                     shape = CircleShape
                 )
                 .size(trackWidthDp, trackHeightDp)
         )
 
-        // Refractive Liquid Glass Thumb
-        val pressProgress = pressProgressAnim.value
+        // Refractive Liquid Glass Thumb (crisp white at rest, live refractive glass when pressed)
         val thumbModifier = if (useRuntimeGlass) {
             Modifier.drawBackdrop(
-                backdrop = trackBackdrop,
+                backdrop = combinedBackdrop,
                 shape = { CircleShape },
                 effects = {
-                    blur(2.dp.toPx() + 1.dp.toPx() * pressProgress)
-                    lens(
-                        refractionHeight = (3.5.dp + 1.5.dp * pressProgress).toPx(),
-                        refractionAmount = (8.dp + 4.dp * pressProgress).toPx(),
-                        chromaticAberration = true
-                    )
+                    val progress = pressProgressAnim.value
+                    if (progress > 0f) {
+                        blur(4.dp.toPx() * (1f - progress))
+                        lens(
+                            refractionHeight = 5.dp.toPx() * progress,
+                            refractionAmount = 10.dp.toPx() * progress,
+                            chromaticAberration = true
+                        )
+                    }
                 },
                 onDrawBackdrop = { drawBackdrop ->
-                    drawBackdrop()
+                    if (pressProgressAnim.value > 0f) {
+                        drawBackdrop()
+                    }
                 },
                 highlight = {
-                    Highlight.Ambient.copy(
-                        width = 0.5.dp,
-                        blurRadius = 0.3.dp,
-                        alpha = 0.70f + 0.30f * pressProgress
-                    )
+                    val progress = pressProgressAnim.value
+                    if (progress > 0f) {
+                        Highlight.Ambient.copy(
+                            width = 0.5.dp,
+                            blurRadius = 0.3.dp,
+                            alpha = progress * 0.85f
+                        )
+                    } else null
                 },
                 shadow = {
                     Shadow(
-                        radius = 4.dp + 2.dp * pressProgress,
-                        offset = DpOffset(0.dp, 1.5.dp + 0.5.dp * pressProgress),
-                        color = Color.Black.copy(alpha = 0.35f + 0.10f * pressProgress)
+                        radius = 4.dp,
+                        offset = DpOffset(0.dp, 1.5.dp),
+                        color = Color.Black.copy(alpha = 0.28f)
                     )
                 },
                 innerShadow = {
-                    InnerShadow(
-                        radius = 2.dp + 2.dp * pressProgress,
-                        offset = DpOffset(0.dp, 1.dp + 0.5.dp * pressProgress),
-                        alpha = 0.35f + 0.35f * pressProgress
-                    )
+                    val progress = pressProgressAnim.value
+                    if (progress > 0f) {
+                        InnerShadow(
+                            radius = 4.dp * progress,
+                            offset = DpOffset(0.dp, 1.dp * progress),
+                            alpha = progress
+                        )
+                    } else null
                 },
                 layerBlock = {
-                    val scale = 1f + 0.15f * pressProgress
+                    val progress = pressProgressAnim.value
+                    val scale = 1f + 0.15f * progress
                     scaleX = scale
                     scaleY = scale
+                    if (!enabled) {
+                        alpha = 0.38f
+                    }
                 },
                 onDrawSurface = {
-                    drawRect(Color.White.copy(alpha = 0.22f + 0.10f * (1f - pressProgress)))
+                    val progress = pressProgressAnim.value
+                    drawRect(Color.White.copy(alpha = (1f - progress).coerceIn(0.08f, 1f)))
                 }
             )
         } else {
             Modifier
                 .graphicsLayer {
-                    val scale = 1f + 0.15f * pressProgress
+                    val progress = pressProgressAnim.value
+                    val scale = 1f + 0.15f * progress
                     scaleX = scale
                     scaleY = scale
+                    if (!enabled) {
+                        alpha = 0.38f
+                    }
                 }
                 .shadow(elevation = 3.dp, shape = CircleShape)
                 .background(
-                    Color.White.copy(alpha = (0.90f - pressProgress * 0.20f).coerceIn(0.70f, 0.90f)),
+                    Color.White,
                     CircleShape
                 )
                 .border(
                     width = 0.5.dp,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = Color.White.copy(alpha = 0.6f),
                     shape = CircleShape
                 )
         }
@@ -283,13 +353,8 @@ fun DomChatGlassSwitch(
                         lerp(-paddingPx, -(paddingPx + dragWidthPx), fraction)
                     }
                 }
-                .then(thumbModifier)
-                .border(
-                    width = 0.5.dp,
-                    color = Color.White.copy(alpha = 0.35f),
-                    shape = CircleShape
-                )
                 .size(thumbWidthDp, thumbHeightDp)
+                .then(thumbModifier)
         ) {
             thumbContent?.invoke()
         }

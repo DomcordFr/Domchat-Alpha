@@ -1,19 +1,14 @@
 package me.lucid.domchat.ui.components.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +31,6 @@ import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 
 private const val DOMCHAT_DESTRUCTIVE = 0xFFE53935.toInt()
-private val DomChatAccent = Color.White
 
 /**
  * Dark glassy pill button (enable/disable actions, saves, resets).
@@ -106,7 +100,7 @@ private fun DomChatGlassPillButtonContent(
     } else {
         modifier.liquidGlassSurface(
             shape = shape,
-            fillColor = if (enabled) glassFill else glassFill.copy(alpha = 0.4f),
+            fillColor = if (enabled) glassFill else glassFill.copy(alpha = glassFill.alpha * 0.4f),
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
         )
