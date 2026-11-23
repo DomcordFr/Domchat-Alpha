@@ -654,8 +654,8 @@ class SettingsStore(
             val exists = current.assistants.any { it.id == assistantId }
             if (!exists && assistantId != DEFAULT_ASSISTANT_ID) return@withContext
 
-            val updatedRecentlyUsed = if (exists) {
-                buildList {
+            val updatedRecentlyUsed: List<Uuid>? = if (exists) {
+                buildList<Uuid> {
                     add(assistantId)
                     current.recentlyUsedAssistants
                         .filter { it != assistantId }
@@ -672,13 +672,11 @@ class SettingsStore(
                 }
             }
 
-            // Update in-memory state after successful persistence
-            if (exists) {
-                settingsFlow.value = current.copy(
-                    assistantId = assistantId,
-                    recentlyUsedAssistants = updatedRecentlyUsed ?: current.recentlyUsedAssistants
-                )
-            }
+            // Always update in-memory state after successful persistence (including DEFAULT_ASSISTANT_ID)
+            settingsFlow.value = current.copy(
+                assistantId = assistantId,
+                recentlyUsedAssistants = updatedRecentlyUsed ?: current.recentlyUsedAssistants
+            )
         }
     }
 

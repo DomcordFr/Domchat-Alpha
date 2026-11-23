@@ -37,6 +37,7 @@ class WebServerService : Service() {
         private const val NOTIFICATION_ID = 2001
         private const val TAG = "WebServerService"
         private const val WIFI_LOCK_TAG = "domchat:web_server"
+        private var stopPersistJob: Job? = null
 
         fun start(context: android.content.Context, port: Int) {
             val intent = Intent(context, WebServerService::class.java).apply {
@@ -74,7 +75,6 @@ class WebServerService : Service() {
     private val appScope: AppScope by inject()
 
     private var nullIntentStartupJob: Job? = null
-    private var stopPersistJob: Job? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var stateObserverJob: Job? = null
     private var wifiLock: WifiManager.WifiLock? = null

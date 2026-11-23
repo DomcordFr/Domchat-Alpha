@@ -156,11 +156,13 @@ class UpdateChecker(private val client: PlatformHttpClient) {
     }
 
     private fun sanitizeApkFilename(name: String): String {
-        val base = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-            .trimStart('.')
-            .removeSuffix(".apk")
-            .trim('.')
-        val safeBase = if (base.isBlank()) "update" else base
+        val cleaned = name.replace(Regex("[^a-zA-Z0-9._-]"), "_").trimStart('.')
+        val withoutExt = if (cleaned.endsWith(".apk", ignoreCase = true)) {
+            cleaned.dropLast(4)
+        } else {
+            cleaned
+        }
+        val safeBase = withoutExt.trim('.').ifBlank { "update" }
         return "$safeBase.apk"
     }
 
@@ -231,6 +233,7 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                     }
                 }
 
+                coroutineContext.ensureActive()
                 if (partFile.renameTo(finalFile)) {
                     flow.value = DownloadProgress(
                         bytesDownloaded = finalFile.length(),

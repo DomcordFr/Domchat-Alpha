@@ -87,7 +87,6 @@ class ChatMultimodalASRController(
 
     override fun stop() {
         if (!state.value.isRecording) return
-        recorderJob?.cancel()
         releaseRecorder()
         _state.update { it.copy(status = ASRStatus.Stopping) }
 
@@ -153,7 +152,6 @@ class ChatMultimodalASRController(
     }
 
     override fun dispose() {
-        recorderJob?.cancel()
         releaseRecorder()
         scope.cancel()
     }
@@ -225,9 +223,9 @@ class ChatMultimodalASRController(
                         if (recorderJob === currentJob) {
                             recorderJob = null
                         }
-                        runCatching { ownedRecorder?.stop() }
-                        runCatching { ownedRecorder?.release() }
                     }
+                    runCatching { ownedRecorder?.stop() }
+                    runCatching { ownedRecorder?.release() }
                 }
             }
             recorderJob = newJob
@@ -244,18 +242,22 @@ class ChatMultimodalASRController(
     }
 
     private fun releaseRecorder() {
+        var recordToReleaseDirectly: AudioRecord? = null
         synchronized(recorderLock) {
             val job = recorderJob
             recorderJob = null
             val record = audioRecord
+            audioRecord = null
             if (job != null) {
                 job.cancel()
                 runCatching { record?.stop() }
             } else {
-                audioRecord = null
-                runCatching { record?.stop() }
-                runCatching { record?.release() }
+                recordToReleaseDirectly = record
             }
+        }
+        if (recordToReleaseDirectly != null) {
+            runCatching { recordToReleaseDirectly?.stop() }
+            runCatching { recordToReleaseDirectly?.release() }
         }
     }
 

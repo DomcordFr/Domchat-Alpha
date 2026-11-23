@@ -521,7 +521,7 @@ internal object ChatSessionDraftStore {
         }
     }
 
-    fun persistDraft(conversationId: Uuid, draft: ChatInputDraft) {
+    private fun persistDraftSync(conversationId: Uuid, draft: ChatInputDraft) {
         val p = prefs ?: return
         if (draft.isEmpty) {
             p.edit()
@@ -553,11 +553,17 @@ internal object ChatSessionDraftStore {
         }
     }
 
+    suspend fun persistDraft(conversationId: Uuid, draft: ChatInputDraft) {
+        kotlinx.coroutines.withContext(ioDispatcher) {
+            persistDraftSync(conversationId, draft)
+        }
+    }
+
     fun put(conversationId: Uuid, draft: ChatInputDraft, isTemporary: Boolean = false) {
         putInMemory(conversationId, draft)
         if (!isTemporary) {
             ioScope.launch {
-                persistDraft(conversationId, draft)
+                persistDraftSync(conversationId, draft)
             }
         }
     }
@@ -572,7 +578,7 @@ internal object ChatSessionDraftStore {
                     ?.remove(fromConversationId.toString())
                     ?.remove("ts_$fromConversationId")
                     ?.apply()
-                persistDraft(toConversationId, switchedDraft)
+                persistDraftSync(toConversationId, switchedDraft)
             }
         }
     }
@@ -994,9 +1000,7 @@ fun ChatPage(
             .debounce(300)
             .collect { draft ->
                 if (draft != null && !isTemporaryChat) {
-                    withContext(Dispatchers.IO) {
-                        ChatSessionDraftStore.persistDraft(id, draft)
-                    }
+                    ChatSessionDraftStore.persistDraft(id, draft)
                 }
             }
     }
