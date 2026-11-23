@@ -1167,7 +1167,7 @@ private fun ModelItem(
                         borderWidth = 0.5.dp,
                         specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
                         fillColor = Color.Transparent,
-                        glassMode = me.lucid.domchat.data.datastore.LiquidGlassMode.SOFT_FROSTED
+                        glassMode = me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
                     )
                 } else {
                     Modifier.liquidGlassSurface(
