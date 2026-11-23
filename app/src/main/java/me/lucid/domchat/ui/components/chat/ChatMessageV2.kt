@@ -24,6 +24,7 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -2080,8 +2081,8 @@ private fun AssistantMessageTurn(
                                 if (chatAnimationsEnabled) {
                                     Modifier.animateContentSize(
                                         animationSpec = spring(
-                                            dampingRatio = 0.92f,
-                                            stiffness = 135f
+                                            dampingRatio = 1.0f,
+                                            stiffness = 200f
                                         ),
                                         alignment = Alignment.TopStart
                                     )
@@ -2406,17 +2407,178 @@ private fun AssistantMessageTurn(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        if (versionIndices.size > 1) {
+        val currentVersionAllParts = remember(group.filteredNodes) {
+            group.filteredNodes.flatMap { it.currentMessage.parts }
+        }
+        val currentVersionTextParts = remember(currentVersionAllParts) {
+            currentVersionAllParts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
+        }
+
+        if (versionIndices.size > 1 && showAssistantBubbles && currentVersionTextParts.size == 1 && chatAnimationsEnabled) {
+            val isTransparentStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+            val isMessengerStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
+            val isGlassy = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+            val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
+            val glassAlpha = effectiveDisplay.chatBubbleAlpha
+            val bubbleBlur = effectiveDisplay.chatBubbleBlur
+            val bubbleTone = effectiveDisplay.chatBubbleTone
+            val baseLuminance = effectiveDisplay.glassBaseLuminance
+            val tintHue = effectiveDisplay.chatBubbleTintHue
+            val tintAmount = effectiveDisplay.chatBubbleTintAmount
+            val currentPageAttachments = remember(currentVersionAllParts, defaultVideoLabel, defaultAudioLabel, context) {
+                collectRenderableAttachments(
+                    context = context,
+                    parts = currentVersionAllParts,
+                    fallbackVideoLabel = defaultVideoLabel,
+                    fallbackAudioLabel = defaultAudioLabel,
+                )
+            }
+            val morphBubbleModifierLambda: @Composable (Modifier, Shape, Color) -> Modifier = { m: Modifier, shape: Shape, color: Color ->
+                if (isTransparentStyle) {
+                    m
+                } else if (!isGlassy) {
+                    if (bubbleBlur > 0f) {
+                        m.domChatBlurEffect(
+                            containerColor = color,
+                            shape = shape,
+                            blurRadius = bubbleBlur.dp
+                        )
+                    } else {
+                        m
+                    }
+                } else when (bubbleInterfaceStyle) {
+                    InterfaceStyle.FROSTED -> m.frostedGlassBubbleSurface(
+                        shape = shape,
+                        borderWidth = 0.5.dp,
+                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                    )
+                    InterfaceStyle.GLASS -> {
+                        val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                            effectiveDisplay.bubbleSpecularIntensity > 0f
+                        }
+                        val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
+                        m.liquidGlassBubbleSurface(
+                            shape = shape,
+                            borderWidth = 0.5.dp,
+                            fillColor = bubbleFillColor,
+                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                            glassMode = effectiveDisplay.liquidGlassMode,
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(assistantSwipeModifier),
+                verticalArrangement = Arrangement.spacedBy(elementSpacing)
+            ) {
+                if (currentPageAttachments.isNotEmpty()) {
+                    AttachmentRow(
+                        attachments = currentPageAttachments,
+                        alignEnd = false,
+                    )
+                }
+
+                GroupedMessageBubble(
+                    position = BubblePosition.SINGLE,
+                    role = BubbleRole.ASSISTANT,
+                    isTransparent = isTransparentStyle,
+                    isGlassy = isGlassy,
+                    glassAlpha = glassAlpha,
+                    baseLuminance = baseLuminance,
+                    tintHue = tintHue,
+                    tintAmount = tintAmount,
+                    bubbleTone = bubbleTone,
+                    bubbleAlpha = glassAlpha,
+                    largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
+                    smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
+                    modifier = Modifier
+                        .widthIn(max = maxWidth)
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = 1.0f,
+                                stiffness = 200f
+                            ),
+                            alignment = Alignment.TopStart
+                        ),
+                    onClick = handleBubbleClick,
+                    bubbleModifier = morphBubbleModifierLambda,
+                ) {
+                    AnimatedContent(
+                        targetState = assistantNode.selectIndex,
+                        transitionSpec = {
+                            val forward = targetState >= initialState
+                            (fadeIn(animationSpec = tween(240, delayMillis = 50, easing = LinearOutSlowInEasing)) +
+                                slideInHorizontally(animationSpec = tween(260, easing = LinearOutSlowInEasing)) { width ->
+                                    if (forward) (width * 0.14f).toInt() else (-width * 0.14f).toInt()
+                                }) togetherWith
+                            (fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing)) +
+                                slideOutHorizontally(animationSpec = tween(180, easing = FastOutLinearInEasing)) { width ->
+                                    if (forward) (-width * 0.14f).toInt() else (width * 0.14f).toInt()
+                                }) using
+                            SizeTransform(clip = false) { _, _ -> snap() }
+                        },
+                        contentAlignment = Alignment.TopStart,
+                        label = "assistant_bubble_inner_version_switch"
+                    ) { targetIdx ->
+                        val versionNodes = remember(group, targetIdx) {
+                            group.filteredNodesForVersion(targetIdx)
+                        }
+                        val versionTextParts = remember(versionNodes) {
+                            versionNodes
+                                .flatMap { it.currentMessage.parts }
+                                .filterIsInstance<UIMessagePart.Text>()
+                                .filter { it.text.isNotBlank() }
+                        }
+                        val userNickname = effectiveDisplay.getActivePersona().name
+                        val isStreaming = loading && targetIdx == assistantNode.selectIndex
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            versionTextParts.forEachIndexed { index, part ->
+                                val isPartStreaming = isStreaming && index == versionTextParts.lastIndex
+                                val displayContent = rememberFormattedMessageText(
+                                    rawText = part.text,
+                                    assistant = assistant,
+                                    userNickname = userNickname,
+                                    scope = AssistantAffectScope.ASSISTANT,
+                                    isStreaming = isPartStreaming,
+                                )
+                                MarkdownBlock(
+                                    workspaceId = assistant?.workspaceId?.toString(),
+                                    content = displayContent,
+                                    paragraphSpacing = 12.dp,
+                                    streamingTextReveal = isPartStreaming,
+                                    displaySetting = effectiveDisplay,
+                                    onRevealComplete = {
+                                        if (index == versionTextParts.lastIndex) {
+                                            isTextAnimating = false
+                                        }
+                                    },
+                                    onExpandedStreamingCodeBlockChanged = {
+                                        onExpandedStreamingCodeBlockChanged?.invoke()
+                                        onStreamingRevealTick?.invoke()
+                                    },
+                                    onClickCitation = { id -> onCitationClick(id) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (versionIndices.size > 1 && chatAnimationsEnabled) {
             AnimatedContent(
                 targetState = assistantNode.selectIndex,
                 transitionSpec = {
                     val forward = targetState >= initialState
-                    (slideInHorizontally(animationSpec = tween(260, easing = LinearOutSlowInEasing)) { width ->
-                        if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
-                    } + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
-                    (slideOutHorizontally(animationSpec = tween(200, easing = FastOutLinearInEasing)) { width ->
-                        if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
-                    } + fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using
+                    (fadeIn(animationSpec = tween(240, delayMillis = 50, easing = LinearOutSlowInEasing)) +
+                        slideInHorizontally(animationSpec = tween(260, easing = LinearOutSlowInEasing)) { width ->
+                            if (forward) (width * 0.14f).toInt() else (-width * 0.14f).toInt()
+                        }) togetherWith
+                    (fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing)) +
+                        slideOutHorizontally(animationSpec = tween(180, easing = FastOutLinearInEasing)) { width ->
+                            if (forward) (-width * 0.14f).toInt() else (width * 0.14f).toInt()
+                        }) using
                     SizeTransform(clip = false)
                 },
                 contentAlignment = Alignment.TopStart,
