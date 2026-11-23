@@ -648,19 +648,6 @@ private fun AnimatedSinglePill(
     val pillSurface = @Composable {
         Surface(
             modifier = Modifier
-                .then(
-                    if (chatAnimationsEnabled) {
-                        val sizeSpec = if (isExpandedReasoning && state is ActivityState.Reasoning) {
-                            PILL_LIVE_GROWTH_SPEC
-                        } else {
-                            PILL_MORPH_SPEC
-                        }
-                        Modifier.animateContentSize(
-                            animationSpec = sizeSpec,
-                            alignment = Alignment.TopStart
-                        )
-                    } else Modifier
-                )
                 .widthIn(max = maxBubbleWidth)
                 .then(
                     if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
@@ -707,6 +694,17 @@ private fun AnimatedSinglePill(
         ) {
         AnimatedContent(
             targetState = requestedContentState,
+            modifier = if (chatAnimationsEnabled) {
+                val sizeSpec = if (isExpandedReasoning && state is ActivityState.Reasoning) {
+                    PILL_LIVE_GROWTH_SPEC
+                } else {
+                    PILL_MORPH_SPEC
+                }
+                Modifier.animateContentSize(
+                    animationSpec = sizeSpec,
+                    alignment = Alignment.TopStart
+                )
+            } else Modifier,
             transitionSpec = {
                 (fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
                     fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->

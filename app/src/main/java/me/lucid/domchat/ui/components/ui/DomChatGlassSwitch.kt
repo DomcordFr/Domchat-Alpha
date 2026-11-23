@@ -36,23 +36,10 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
-import me.lucid.domchat.ui.component.backdrop.Backdrop
-import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
-import me.lucid.domchat.ui.component.backdrop.backdrops.CombinedBackdrop
-import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
-import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
-import me.lucid.domchat.ui.component.backdrop.drawBackdrop
-import me.lucid.domchat.ui.component.backdrop.effects.blur
-import me.lucid.domchat.ui.component.backdrop.effects.lens
-import me.lucid.domchat.ui.component.backdrop.highlight.Highlight
-import me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported
-import me.lucid.domchat.ui.component.backdrop.shadow.InnerShadow
-import me.lucid.domchat.ui.component.backdrop.shadow.Shadow
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.LocalDarkMode
@@ -101,16 +88,6 @@ fun DomChatGlassSwitch(
         }
     }
 
-    val trackBackdrop = rememberLayerBackdrop()
-    val appBackdrop = LocalAppBackdrop.current
-    val combinedBackdrop: Backdrop = remember(appBackdrop, trackBackdrop) {
-        if (appBackdrop != null) {
-            CombinedBackdrop(listOf(appBackdrop, trackBackdrop))
-        } else {
-            trackBackdrop
-        }
-    }
-
     val uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.14f)
     val themePrimary = MaterialTheme.colorScheme.primary
     val checkedTrackColor = if (themePrimary.luminance() > 0.82f) {
@@ -118,7 +95,6 @@ fun DomChatGlassSwitch(
     } else {
         themePrimary
     }
-    val useRuntimeGlass = isRuntimeShaderSupported()
 
     Box(
         modifier = modifier
@@ -159,10 +135,9 @@ fun DomChatGlassSwitch(
             ),
         contentAlignment = Alignment.CenterStart
     ) {
-        // Track with backdrop recording
+        // Track
         Box(
             modifier = Modifier
-                .layerBackdrop(trackBackdrop)
                 .clip(CircleShape)
                 .drawBehind {
                     val currentFraction = fractionAnim.value
@@ -182,90 +157,26 @@ fun DomChatGlassSwitch(
                 .size(trackWidthDp, trackHeightDp)
         )
 
-        // Refractive Liquid Glass Thumb (crisp white at rest, live refractive glass when pressed)
-        val thumbModifier = if (useRuntimeGlass) {
-            Modifier.drawBackdrop(
-                backdrop = combinedBackdrop,
-                shape = { CircleShape },
-                effects = {
-                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
-                    if (progress > 0f) {
-                        blur(4.dp.toPx() * (1f - progress))
-                        lens(
-                            refractionHeight = 5.dp.toPx() * progress,
-                            refractionAmount = 10.dp.toPx() * progress,
-                            chromaticAberration = true
-                        )
-                    }
-                },
-                onDrawBackdrop = { drawBackdrop ->
-                    if (pressProgressAnim.value.coerceIn(0f, 1f) > 0f) {
-                        drawBackdrop()
-                    }
-                },
-                highlight = {
-                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
-                    if (progress > 0f) {
-                        Highlight.Ambient.copy(
-                            width = 0.5.dp,
-                            blurRadius = 0.3.dp,
-                            alpha = progress * 0.85f
-                        )
-                    } else null
-                },
-                shadow = {
-                    Shadow(
-                        radius = 4.dp,
-                        offset = DpOffset(0.dp, 1.5.dp),
-                        color = Color.Black.copy(alpha = 0.28f)
-                    )
-                },
-                innerShadow = {
-                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
-                    if (progress > 0f) {
-                        InnerShadow(
-                            radius = 4.dp * progress,
-                            offset = DpOffset(0.dp, 1.dp * progress),
-                            alpha = progress
-                        )
-                    } else null
-                },
-                layerBlock = {
-                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
-                    val scale = 1f + 0.25f * progress
-                    scaleX = scale
-                    scaleY = scale
-                    if (!enabled) {
-                        alpha = 0.38f
-                    }
-                },
-                onDrawSurface = {
-                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
-                    drawRect(Color.White.copy(alpha = (1f - progress).coerceIn(0.08f, 1f)))
+        // Crisp Cupertino White Thumb with subtle pill stretch on press
+        val thumbModifier = Modifier
+            .graphicsLayer {
+                val progress = pressProgressAnim.value.coerceIn(0f, 1f)
+                scaleX = 1f + 0.14f * progress
+                scaleY = 1f + 0.04f * progress
+                if (!enabled) {
+                    alpha = 0.38f
                 }
+            }
+            .shadow(elevation = 3.dp, shape = CircleShape)
+            .background(
+                Color.White,
+                CircleShape
             )
-        } else {
-            Modifier
-                .graphicsLayer {
-                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
-                    val scale = 1f + 0.25f * progress
-                    scaleX = scale
-                    scaleY = scale
-                    if (!enabled) {
-                        alpha = 0.38f
-                    }
-                }
-                .shadow(elevation = 3.dp, shape = CircleShape)
-                .background(
-                    Color.White,
-                    CircleShape
-                )
-                .border(
-                    width = 0.5.dp,
-                    color = Color.White.copy(alpha = 0.6f),
-                    shape = CircleShape
-                )
-        }
+            .border(
+                width = 0.5.dp,
+                color = Color.White.copy(alpha = 0.6f),
+                shape = CircleShape
+            )
 
         Box(
             contentAlignment = Alignment.Center,
