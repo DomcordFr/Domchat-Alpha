@@ -411,7 +411,7 @@ fun PromptPresetsBottomSheet(
                                 .size(36.dp)
                                 .liquidGlassSurface(
                                     shape = CircleShape,
-                                    fillColor = Color.White.copy(alpha = 0.08f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
                                 ),
@@ -526,11 +526,10 @@ fun PromptPresetsBottomSheet(
                                         .height(24.dp)
                                         .liquidGlassSurface(
                                             shape = RoundedCornerShape(8.dp),
-                                            fillColor = if (isChatSpecific) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.06f),
+                                            fillColor = Color.Transparent,
                                             borderWidth = 0.5.dp,
                                             specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                         )
-                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
                                         .padding(horizontal = 8.dp)
                                 ) {
                                     AnimatedContent(
@@ -566,11 +565,10 @@ fun PromptPresetsBottomSheet(
                                         .height(24.dp)
                                         .liquidGlassSurface(
                                             shape = RoundedCornerShape(8.dp),
-                                            fillColor = Color.White.copy(alpha = 0.10f),
+                                            fillColor = Color.Transparent,
                                             borderWidth = 0.5.dp,
                                             specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                         )
-                                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(8.dp))
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 8.dp),

@@ -1087,74 +1087,82 @@ private fun UnifiedReasoningPill(
                     } else Modifier
                 )
                 .padding(horizontal = 14.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Lightbulb,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = contentColor.copy(alpha = 0.85f)
-            )
-            AnimatedContent(
-                targetState = headerTitle,
-                transitionSpec = {
-                    if (targetState == defaultReasoningTitle || targetState != "Reasoned") {
-                        (slideInVertically(animationSpec = tween(220)) { it / 2 } + fadeIn(animationSpec = tween(200))) togetherWith
-                            (slideOutVertically(animationSpec = tween(180)) { -it / 2 } + fadeOut(animationSpec = tween(150)))
-                    } else {
-                        (slideInVertically(animationSpec = tween(220)) { -it / 2 } + fadeIn(animationSpec = tween(200))) togetherWith
-                            (slideOutVertically(animationSpec = tween(180)) { it / 2 } + fadeOut(animationSpec = tween(150)))
-                    }
-                },
-                label = "reasoning_header_title"
-            ) { title ->
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = contentColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = if (isLive) Modifier.shimmer(true) else Modifier
-                )
-            }
-            AnimatedVisibility(
-                visible = !isExpanded && !isLive && completedDurationMs != null,
-                enter = fadeIn(tween(180)) + expandHorizontally(),
-                exit = fadeOut(tween(140)) + shrinkHorizontally()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (completedDurationMs != null) {
-                    Text(
-                        text = "for ${formatDuration(completedDurationMs)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = contentColor
-                    )
+                Icon(
+                    imageVector = Icons.Rounded.Lightbulb,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = contentColor.copy(alpha = 0.85f)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(3.5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AnimatedContent(
+                        targetState = headerTitle,
+                        transitionSpec = {
+                            if (targetState == defaultReasoningTitle || targetState != "Reasoned") {
+                                (slideInVertically(animationSpec = tween(220)) { it / 2 } + fadeIn(animationSpec = tween(200))) togetherWith
+                                    (slideOutVertically(animationSpec = tween(180)) { -it / 2 } + fadeOut(animationSpec = tween(150)))
+                            } else {
+                                (slideInVertically(animationSpec = tween(220)) { -it / 2 } + fadeIn(animationSpec = tween(200))) togetherWith
+                                    (slideOutVertically(animationSpec = tween(180)) { it / 2 } + fadeOut(animationSpec = tween(150)))
+                            }
+                        },
+                        label = "reasoning_header_title"
+                    ) { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = contentColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = if (isLive) Modifier.shimmer(true) else Modifier
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = !isExpanded && !isLive && completedDurationMs != null,
+                        enter = fadeIn(tween(180)),
+                        exit = fadeOut(tween(120))
+                    ) {
+                        if (completedDurationMs != null) {
+                            Text(
+                                text = "for ${formatDuration(completedDurationMs)}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = contentColor
+                            )
+                        }
+                    }
+                    if (isLive && !isExpanded) {
+                        LiveElapsedTimerText(
+                            isLive = true,
+                            startTimeMs = startTimeMs,
+                            completedDurationMs = null,
+                            isExpanded = false,
+                            contentColor = contentColor
+                        )
+                    }
                 }
             }
-            if (isLive && !isExpanded) {
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = slideInHorizontally(tween(220)) { it / 2 } + fadeIn(tween(200)),
+                exit = slideOutHorizontally(tween(160)) { it / 2 } + fadeOut(tween(140))
+            ) {
                 LiveElapsedTimerText(
-                    isLive = true,
+                    isLive = isLive,
                     startTimeMs = startTimeMs,
-                    completedDurationMs = null,
-                    isExpanded = false,
+                    completedDurationMs = completedDurationMs,
+                    isExpanded = true,
                     contentColor = contentColor
                 )
-            }
-            if (isExpanded) {
-                Spacer(modifier = Modifier.weight(1f))
-                AnimatedVisibility(
-                    visible = isExpanded,
-                    enter = slideInHorizontally(tween(220)) { it / 2 } + fadeIn(tween(200)),
-                    exit = slideOutHorizontally(tween(160)) { it / 2 } + fadeOut(tween(140))
-                ) {
-                    LiveElapsedTimerText(
-                        isLive = isLive,
-                        startTimeMs = startTimeMs,
-                        completedDurationMs = completedDurationMs,
-                        isExpanded = true,
-                        contentColor = contentColor
-                    )
-                }
             }
         }
 
@@ -1173,10 +1181,10 @@ private fun UnifiedReasoningPill(
 
         AnimatedVisibility(
             visible = isExpanded && lastPreviewText.value.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(240, delayMillis = 40, easing = LinearOutSlowInEasing)) +
-                    expandVertically(animationSpec = PILL_MORPH_SPEC, expandFrom = Alignment.Top),
+            enter = fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) +
+                    expandVertically(animationSpec = tween(220, easing = LinearOutSlowInEasing), expandFrom = Alignment.Top),
             exit = fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing)) +
-                   shrinkVertically(animationSpec = tween(180, easing = FastOutLinearInEasing), shrinkTowards = Alignment.Top)
+                   shrinkVertically(animationSpec = tween(160, easing = FastOutLinearInEasing), shrinkTowards = Alignment.Top)
         ) {
             MarkdownBlock(
                 content = lastPreviewText.value,

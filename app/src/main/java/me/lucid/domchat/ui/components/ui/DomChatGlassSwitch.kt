@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -100,7 +101,12 @@ fun DomChatGlassSwitch(
 
     val trackBackdrop = rememberLayerBackdrop()
     val uncheckedTrackColor = Color.White.copy(alpha = if (isDark) 0.16f else 0.12f)
-    val checkedTrackColor = MaterialTheme.colorScheme.primary
+    val themePrimary = MaterialTheme.colorScheme.primary
+    val checkedTrackColor = if (themePrimary.luminance() > 0.82f) {
+        Color(0xFF34C759)
+    } else {
+        themePrimary
+    }
     val useRuntimeGlass = isRuntimeShaderSupported()
 
     Box(
@@ -206,44 +212,36 @@ fun DomChatGlassSwitch(
                 backdrop = trackBackdrop,
                 shape = { CircleShape },
                 effects = {
-                    if (pressProgress > 0f) {
-                        blur(2.dp.toPx())
-                        lens(
-                            refractionHeight = 4.dp.toPx(),
-                            refractionAmount = 10.dp.toPx(),
-                            chromaticAberration = true
-                        )
-                    }
+                    blur(2.dp.toPx() + 1.dp.toPx() * pressProgress)
+                    lens(
+                        refractionHeight = (3.5.dp + 1.5.dp * pressProgress).toPx(),
+                        refractionAmount = (8.dp + 4.dp * pressProgress).toPx(),
+                        chromaticAberration = true
+                    )
                 },
                 onDrawBackdrop = { drawBackdrop ->
-                    if (pressProgress > 0f) {
-                        drawBackdrop()
-                    }
+                    drawBackdrop()
                 },
                 highlight = {
-                    if (pressProgress > 0f) {
-                        Highlight.Ambient.copy(
-                            width = 0.5.dp,
-                            blurRadius = 0.25.dp,
-                            alpha = pressProgress
-                        )
-                    } else null
+                    Highlight.Ambient.copy(
+                        width = 0.5.dp,
+                        blurRadius = 0.3.dp,
+                        alpha = 0.70f + 0.30f * pressProgress
+                    )
                 },
                 shadow = {
                     Shadow(
-                        radius = 4.dp,
-                        offset = DpOffset(0.dp, 1.5.dp),
-                        color = Color.Black.copy(alpha = 0.12f)
+                        radius = 4.dp + 2.dp * pressProgress,
+                        offset = DpOffset(0.dp, 1.5.dp + 0.5.dp * pressProgress),
+                        color = Color.Black.copy(alpha = 0.35f + 0.10f * pressProgress)
                     )
                 },
                 innerShadow = {
-                    if (pressProgress > 0f) {
-                        InnerShadow(
-                            radius = 4.dp * pressProgress,
-                            offset = DpOffset(0.dp, 1.dp * pressProgress),
-                            alpha = pressProgress
-                        )
-                    } else null
+                    InnerShadow(
+                        radius = 2.dp + 2.dp * pressProgress,
+                        offset = DpOffset(0.dp, 1.dp + 0.5.dp * pressProgress),
+                        alpha = 0.35f + 0.35f * pressProgress
+                    )
                 },
                 layerBlock = {
                     val scale = 1f + 0.15f * pressProgress
@@ -251,7 +249,7 @@ fun DomChatGlassSwitch(
                     scaleY = scale
                 },
                 onDrawSurface = {
-                    drawRect(Color.White.copy(alpha = (1f - pressProgress).coerceIn(0.15f, 1f)))
+                    drawRect(Color.White.copy(alpha = 0.22f + 0.10f * (1f - pressProgress)))
                 }
             )
         } else {
@@ -263,12 +261,12 @@ fun DomChatGlassSwitch(
                 }
                 .shadow(elevation = 3.dp, shape = CircleShape)
                 .background(
-                    Color.White.copy(alpha = (1f - pressProgress * 0.35f).coerceIn(0.65f, 1f)),
+                    Color.White.copy(alpha = (0.90f - pressProgress * 0.20f).coerceIn(0.70f, 0.90f)),
                     CircleShape
                 )
                 .border(
                     width = 0.5.dp,
-                    color = Color.White.copy(alpha = 0.4f),
+                    color = Color.White.copy(alpha = 0.5f),
                     shape = CircleShape
                 )
         }
@@ -286,6 +284,11 @@ fun DomChatGlassSwitch(
                     }
                 }
                 .then(thumbModifier)
+                .border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = 0.35f),
+                    shape = CircleShape
+                )
                 .size(thumbWidthDp, thumbHeightDp)
         ) {
             thumbContent?.invoke()
