@@ -24,7 +24,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
-import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.DomChatGlassSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -418,7 +418,7 @@ private fun SearchToggleItem(
         ) {
             Icon(Icons.Rounded.Settings, null, tint = contentColor)
         }
-        HapticSwitch(
+        DomChatGlassSwitch(
             checked = enableSearch,
             onCheckedChange = onToggleSearch
         )
@@ -570,7 +570,7 @@ private fun BuiltInSearchSetting(
                     )
                 }
 
-                HapticSwitch(
+                DomChatGlassSwitch(
                     checked = preferBuiltInSearch,
                     onCheckedChange = { checked ->
                         onTogglePreferBuiltInSearch(checked)

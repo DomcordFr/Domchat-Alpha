@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.Velocity
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.modifier.fadeEdges
 import java.util.Locale
-import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.DomChatGlassSwitch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -493,7 +493,7 @@ fun PromptPresetsBottomSheet(
                                 color = Color.White.copy(alpha = 0.65f)
                             )
                         }
-                        HapticSwitch(
+                        DomChatGlassSwitch(
                             checked = allEnabled,
                             onCheckedChange = { toggleAll(it) }
                         )
@@ -921,10 +921,9 @@ fun PromptPresetsBottomSheet(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                HapticSwitch(
+                DomChatGlassSwitch(
                     checked = isEnabled,
                     onCheckedChange = { enabled ->
-                        haptics.perform(HapticPattern.Tick)
                         togglePreset(preset.id, enabled)
                         toaster.show(
                             message = if (enabled) "Enabled: ${preset.name}" else "Disabled: ${preset.name}",

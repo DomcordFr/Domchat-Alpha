@@ -105,7 +105,7 @@ import me.lucid.domchat.ui.components.chat.getTimelineIcon
 import me.lucid.domchat.ui.components.chat.getTimelineLabel
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.components.ui.BitmapComposer
-import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.DomChatGlassSwitch
 import me.lucid.domchat.ui.components.ui.ModelIcon
 import me.lucid.domchat.ui.components.ui.TextAvatar
 import me.lucid.domchat.ui.components.ui.ToastType
@@ -448,7 +448,7 @@ private fun ExportToggleRow(
             headlineContent = { Text(title) },
             supportingContent = { Text(description) },
             trailingContent = {
-                HapticSwitch(
+                DomChatGlassSwitch(
                     checked = checked,
                     onCheckedChange = onCheckedChange
                 )

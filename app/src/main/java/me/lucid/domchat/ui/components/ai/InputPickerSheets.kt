@@ -70,7 +70,7 @@ import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
 import me.lucid.domchat.ui.components.chat.DomChatSearchBar
 import me.lucid.domchat.ui.components.chat.DomChatSheetHeader
 import me.lucid.domchat.ui.components.ui.icons.ModeIcons
-import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.DomChatGlassSwitch
 import me.lucid.domchat.ui.components.ui.ItemPosition
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
@@ -265,7 +265,7 @@ internal fun SkillsPickerSheet(
                                 )
                             }
 
-                            HapticSwitch(
+                            DomChatGlassSwitch(
                                 checked = isEnabled,
                                 onCheckedChange = { newEnabled ->
                                     val newEnabledIds = if (newEnabled) {
@@ -423,7 +423,7 @@ internal fun LorebooksPickerSheet(
                                         )
                                     }
 
-                                    HapticSwitch(
+                                    DomChatGlassSwitch(
                                         checked = isEnabled,
                                         onCheckedChange = { newEnabled ->
                                             val newIds = if (newEnabled) {

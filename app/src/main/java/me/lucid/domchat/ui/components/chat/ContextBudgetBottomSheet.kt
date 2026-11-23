@@ -36,8 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
+import me.lucid.domchat.ui.components.ui.DomChatGlassSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -194,13 +193,9 @@ fun ContextBudgetBottomSheet(
                                     color = Color(0xFF888888)
                                 )
                             }
-                            Switch(
+                            DomChatGlassSwitch(
                                 checked = inheritGlobal,
-                                onCheckedChange = { inheritGlobal = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = Color(0xFF3B82F6)
-                                )
+                                onCheckedChange = { inheritGlobal = it }
                             )
                         }
                     }
@@ -540,13 +535,9 @@ fun ContextBudgetBottomSheet(
                                         color = Color(0xFF888888)
                                     )
                                 }
-                                Switch(
+                                DomChatGlassSwitch(
                                     checked = autoPrune,
-                                    onCheckedChange = { autoPrune = it },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = Color(0xFF10B981)
-                                    )
+                                    onCheckedChange = { autoPrune = it }
                                 )
                             }
                         }

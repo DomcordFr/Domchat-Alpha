@@ -25,7 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import me.lucid.domchat.ui.components.chat.DomChatInWindowBottomSheet
-import me.lucid.domchat.ui.components.ui.HapticSwitch
+import me.lucid.domchat.ui.components.ui.DomChatGlassSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -287,7 +287,7 @@ fun McpPicker(
                                 )
                             }
                         }
-                        HapticSwitch(
+                        DomChatGlassSwitch(
                             checked = server.id in assistant.mcpServers,
                             onCheckedChange = { enabled ->
                                 val validServerIds = servers.map { it.id }.toSet()

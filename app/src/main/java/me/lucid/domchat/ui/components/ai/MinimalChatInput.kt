@@ -2191,7 +2191,7 @@ fun MinimalChatInput(
                         Text("Smooth Fade-in Animation", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
                         Text("Fade text smoothly from transparency", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
                     }
-                    me.lucid.domchat.ui.components.ui.HapticSwitch(
+                    me.lucid.domchat.ui.components.ui.DomChatGlassSwitch(
                         checked = fadeInDraft,
                         onCheckedChange = { fadeInDraft = it }
                     )
@@ -2207,7 +2207,7 @@ fun MinimalChatInput(
                             Text("Continuous Fluid Stream", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
                             Text("Flow text continuously rather than waiting for word chunks", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.65f))
                         }
-                        me.lucid.domchat.ui.components.ui.HapticSwitch(
+                        me.lucid.domchat.ui.components.ui.DomChatGlassSwitch(
                             checked = continuousDraft,
                             onCheckedChange = { continuousDraft = it }
                         )
