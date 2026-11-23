@@ -72,6 +72,7 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
             try {
                 updateChecker.checkUpdate().collect { state ->
                     when (state) {
+                        is UiState.Idle -> Unit
                         is UiState.Loading -> {
                             isCheckingForUpdate = true
                         }
@@ -93,7 +94,7 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                         is UiState.Error -> {
                             isCheckingForUpdate = false
                             toaster.show(
-                                message = state.throwable.message?.takeIf { it.isNotBlank() } ?: "Failed to check for updates",
+                                message = state.error.message?.takeIf { it.isNotBlank() } ?: "Failed to check for updates",
                                 type = ToastType.Error
                             )
                         }
