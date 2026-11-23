@@ -6,7 +6,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -1150,18 +1149,26 @@ private fun UnifiedReasoningPill(
                 }
             }
 
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = fadeIn(tween(240, delayMillis = 140, easing = LinearOutSlowInEasing)),
-                exit = ExitTransition.None
-            ) {
-                LiveElapsedTimerText(
-                    isLive = isLive,
-                    startTimeMs = startTimeMs,
-                    completedDurationMs = completedDurationMs,
-                    isExpanded = true,
-                    contentColor = contentColor
+            if (isExpanded) {
+                var expandedTimerVisible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    delay(140)
+                    expandedTimerVisible = true
+                }
+                val expandedTimerAlpha by animateFloatAsState(
+                    targetValue = if (expandedTimerVisible) 1f else 0f,
+                    animationSpec = tween(220, easing = LinearOutSlowInEasing),
+                    label = "expanded_timer_alpha"
                 )
+                Box(modifier = Modifier.graphicsLayer { alpha = expandedTimerAlpha }) {
+                    LiveElapsedTimerText(
+                        isLive = isLive,
+                        startTimeMs = startTimeMs,
+                        completedDurationMs = completedDurationMs,
+                        isExpanded = true,
+                        contentColor = contentColor
+                    )
+                }
             }
         }
 

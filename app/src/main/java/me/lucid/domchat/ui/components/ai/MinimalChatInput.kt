@@ -1148,7 +1148,7 @@ fun MinimalChatInput(
                                             } else if (isToolApprovalActive) {
                                                 stringResource(R.string.tool_approval_input_placeholder)
                                             } else {
-                                                val charName = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+                                                val charName = assistant.effectiveChatName.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
                                                 stringResource(R.string.minimal_chat_input_placeholder, charName)
                                             },
                                             maxLines = 1,
@@ -1483,7 +1483,7 @@ fun MinimalChatInput(
                                         } else if (isToolApprovalActive) {
                                             stringResource(R.string.tool_approval_input_placeholder)
                                         } else {
-                                            val charName = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+                                            val charName = assistant.effectiveChatName.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
                                             stringResource(R.string.minimal_chat_input_placeholder, charName)
                                         }
                                     )
