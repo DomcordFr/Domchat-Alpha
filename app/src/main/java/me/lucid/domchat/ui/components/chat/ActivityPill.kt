@@ -651,13 +651,9 @@ private fun AnimatedSinglePill(
         Surface(
             modifier = Modifier
                 .then(
-                    if (chatAnimationsEnabled) {
+                    if (chatAnimationsEnabled && !isExpandedReasoning && requestedContentState !is SinglePillContentState.ExpandedReasoning) {
                         Modifier.animateContentSize(
-                            animationSpec = if (isExpandedReasoning) {
-                                spring(dampingRatio = 0.94f, stiffness = 420f)
-                            } else {
-                                PILL_MORPH_SPEC
-                            },
+                            animationSpec = PILL_MORPH_SPEC,
                             alignment = Alignment.TopStart
                         )
                     } else Modifier

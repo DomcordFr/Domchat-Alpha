@@ -2189,18 +2189,6 @@ private fun AssistantMessageTurn(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (chatAnimationsEnabled && !isTurnActive) {
-                    Modifier.animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = 0.88f,
-                            stiffness = 260f
-                        )
-                    )
-                } else {
-                    Modifier
-                }
-            )
-            .then(
                 if (timelineOpen) {
                     Modifier.combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
