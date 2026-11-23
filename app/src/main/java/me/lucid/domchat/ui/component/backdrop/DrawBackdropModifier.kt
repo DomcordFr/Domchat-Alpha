@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
+import me.lucid.domchat.ui.component.backdrop.backdrops.CombinedBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.LayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.highlight.Highlight
 import me.lucid.domchat.ui.component.backdrop.highlight.HighlightElement
@@ -332,24 +333,49 @@ private class DrawBackdropNode(
     }
 
     fun registerSampler(backdrop: Backdrop) {
-        (backdrop as? LayerBackdrop)?.registerSamplerInvalidator(invalidateSamplerDraw)
+        when (backdrop) {
+            is LayerBackdrop -> backdrop.registerSamplerInvalidator(invalidateSamplerDraw)
+            is CombinedBackdrop -> backdrop.layerBackdrops.forEach { it.registerSamplerInvalidator(invalidateSamplerDraw) }
+        }
     }
 
     fun unregisterSampler(backdrop: Backdrop) {
-        (backdrop as? LayerBackdrop)?.unregisterSamplerInvalidator(invalidateSamplerDraw)
+        when (backdrop) {
+            is LayerBackdrop -> backdrop.unregisterSamplerInvalidator(invalidateSamplerDraw)
+            is CombinedBackdrop -> backdrop.layerBackdrops.forEach { it.unregisterSamplerInvalidator(invalidateSamplerDraw) }
+        }
     }
 
-    private fun currentBackdropVersion(): Int? = (backdrop as? LayerBackdrop)?.geometryVersion
+    private fun currentBackdropVersion(): Int? = when (val b = backdrop) {
+        is LayerBackdrop -> b.geometryVersion
+        is CombinedBackdrop -> b.layerBackdrops.fold(0) { acc, item -> acc * 31 + item.geometryVersion }
+        else -> null
+    }
 
-    private fun currentBackdropContentVersion(): Int = (backdrop as? LayerBackdrop)?.contentVersion ?: -1
+    private fun currentBackdropContentVersion(): Int = when (val b = backdrop) {
+        is LayerBackdrop -> b.contentVersion
+        is CombinedBackdrop -> b.layerBackdrops.fold(0) { acc, item -> acc * 31 + item.contentVersion }
+        else -> -1
+    }
 
     private fun currentBackdropOffset(): Offset? {
         return try {
-            val source = backdrop as? LayerBackdrop ?: return null
-            val sourceCoordinates = source.layerCoordinates ?: return null
             val selfCoordinates = layoutCoordinates ?: return null
-            if (!sourceCoordinates.isAttached || !selfCoordinates.isAttached) return null
-            selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
+            if (!selfCoordinates.isAttached) return null
+            when (val b = backdrop) {
+                is LayerBackdrop -> {
+                    val sourceCoordinates = b.layerCoordinates ?: return null
+                    if (!sourceCoordinates.isAttached) return null
+                    selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
+                }
+                is CombinedBackdrop -> {
+                    val primary = b.layerBackdrops.lastOrNull { it.layerCoordinates?.isAttached == true }
+                        ?: return null
+                    val sourceCoordinates = primary.layerCoordinates ?: return null
+                    selfCoordinates.positionInWindow() - sourceCoordinates.positionInWindow()
+                }
+                else -> null
+            }
         } catch (_: Exception) {
             null
         }
@@ -401,7 +427,7 @@ private class DrawBackdropNode(
         // Coordinates detached mid-scroll / during item recycling: offset is null.
         // Also if the backdrop source has not recorded its first frame yet (!sourceHasRecording),
         // avoid baking transparent pixels into our layer and stay marked dirty.
-        val sourceHasRecording = (backdrop as? LayerBackdrop)?.hasRecording ?: true
+        val sourceHasRecording = backdrop.hasRecording
         if (offset == null || !sourceHasRecording) {
             if (recordedBackdropSize != IntSize.Zero) {
                 if (scale != 1f) {
@@ -468,7 +494,6 @@ private class DrawBackdropNode(
         clip = true
         shape = shapeProvider.shape
         compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Auto
-        layerBlock?.invoke(this)
     }
 
     override fun ContentDrawScope.draw() {

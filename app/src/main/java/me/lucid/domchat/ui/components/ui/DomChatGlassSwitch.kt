@@ -22,15 +22,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.GraphicsLayerScope
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -40,7 +37,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -48,6 +44,7 @@ import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.component.backdrop.Backdrop
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.backdrops.CombinedBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.drawBackdrop
@@ -108,26 +105,11 @@ fun DomChatGlassSwitch(
 
     val trackBackdrop = rememberLayerBackdrop()
     val appBackdrop = LocalAppBackdrop.current
-    val combinedBackdrop = remember(appBackdrop, trackBackdrop) {
-        object : Backdrop {
-            override val isCoordinatesDependent: Boolean
-                get() = appBackdrop?.isCoordinatesDependent == true || trackBackdrop.isCoordinatesDependent
-
-            override val hasRecording: Boolean
-                get() = appBackdrop?.hasRecording == true || trackBackdrop.hasRecording
-
-            override fun DrawScope.drawBackdrop(
-                density: Density,
-                coordinates: LayoutCoordinates?,
-                layerBlock: (GraphicsLayerScope.() -> Unit)?
-            ) {
-                appBackdrop?.run {
-                    drawBackdrop(density, coordinates, layerBlock)
-                }
-                trackBackdrop.run {
-                    drawBackdrop(density, coordinates, layerBlock)
-                }
-            }
+    val combinedBackdrop: Backdrop = remember(appBackdrop, trackBackdrop) {
+        if (appBackdrop != null) {
+            CombinedBackdrop(listOf(appBackdrop, trackBackdrop))
+        } else {
+            trackBackdrop
         }
     }
 
@@ -210,17 +192,14 @@ fun DomChatGlassSwitch(
                                         haptics.perform(HapticPattern.Pop)
                                         currentOnCheckedChange?.invoke(newChecked)
                                     }
+                                    // Snap back to currentChecked; if parent accepts and updates `checked`,
+                                    // LaunchedEffect(checked) immediately overrides and springs to the new state.
                                     scope.launch {
-                                        val target = if (newChecked) 1f else 0f
-                                        fractionAnim.animateTo(target, spring(dampingRatio = 0.85f, stiffness = 400f))
+                                        fractionAnim.animateTo(if (currentChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
                                     }
                                 } else {
-                                    val newChecked = !currentChecked
                                     haptics.perform(HapticPattern.Pop)
-                                    currentOnCheckedChange?.invoke(newChecked)
-                                    scope.launch {
-                                        fractionAnim.animateTo(if (newChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
-                                    }
+                                    currentOnCheckedChange?.invoke(!currentChecked)
                                 }
                             } else {
                                 scope.launch {
@@ -262,7 +241,7 @@ fun DomChatGlassSwitch(
                 backdrop = combinedBackdrop,
                 shape = { CircleShape },
                 effects = {
-                    val progress = pressProgressAnim.value
+                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
                     if (progress > 0f) {
                         blur(4.dp.toPx() * (1f - progress))
                         lens(
@@ -273,12 +252,12 @@ fun DomChatGlassSwitch(
                     }
                 },
                 onDrawBackdrop = { drawBackdrop ->
-                    if (pressProgressAnim.value > 0f) {
+                    if (pressProgressAnim.value.coerceIn(0f, 1f) > 0f) {
                         drawBackdrop()
                     }
                 },
                 highlight = {
-                    val progress = pressProgressAnim.value
+                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
                     if (progress > 0f) {
                         Highlight.Ambient.copy(
                             width = 0.5.dp,
@@ -295,7 +274,7 @@ fun DomChatGlassSwitch(
                     )
                 },
                 innerShadow = {
-                    val progress = pressProgressAnim.value
+                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
                     if (progress > 0f) {
                         InnerShadow(
                             radius = 4.dp * progress,
@@ -305,8 +284,8 @@ fun DomChatGlassSwitch(
                     } else null
                 },
                 layerBlock = {
-                    val progress = pressProgressAnim.value
-                    val scale = 1f + 0.15f * progress
+                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
+                    val scale = 1f + 0.25f * progress
                     scaleX = scale
                     scaleY = scale
                     if (!enabled) {
@@ -314,15 +293,15 @@ fun DomChatGlassSwitch(
                     }
                 },
                 onDrawSurface = {
-                    val progress = pressProgressAnim.value
+                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
                     drawRect(Color.White.copy(alpha = (1f - progress).coerceIn(0.08f, 1f)))
                 }
             )
         } else {
             Modifier
                 .graphicsLayer {
-                    val progress = pressProgressAnim.value
-                    val scale = 1f + 0.15f * progress
+                    val progress = pressProgressAnim.value.coerceIn(0f, 1f)
+                    val scale = 1f + 0.25f * progress
                     scaleX = scale
                     scaleY = scale
                     if (!enabled) {

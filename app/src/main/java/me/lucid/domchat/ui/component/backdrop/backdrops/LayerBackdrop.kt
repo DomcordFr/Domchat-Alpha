@@ -138,3 +138,25 @@ class LayerBackdrop internal constructor(
         }
     }
 }
+
+class CombinedBackdrop(val backdrops: List<Backdrop>) : Backdrop {
+    val layerBackdrops: List<LayerBackdrop> = backdrops.filterIsInstance<LayerBackdrop>()
+
+    override val isCoordinatesDependent: Boolean
+        get() = backdrops.any { it.isCoordinatesDependent }
+
+    override val hasRecording: Boolean
+        get() = backdrops.any { it.hasRecording }
+
+    override fun DrawScope.drawBackdrop(
+        density: Density,
+        coordinates: LayoutCoordinates?,
+        layerBlock: (GraphicsLayerScope.() -> Unit)?
+    ) {
+        for (i in backdrops.indices) {
+            with(backdrops[i]) {
+                drawBackdrop(density, coordinates, layerBlock)
+            }
+        }
+    }
+}

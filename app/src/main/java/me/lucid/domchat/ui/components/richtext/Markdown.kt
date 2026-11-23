@@ -165,7 +165,7 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
     var fenceLength = 0
     var inThinkBlock = false
     var mathDelimiter: String? = null
-    var inInlineCode = false
+    var inlineCodeTickCount = 0
     val blocks = mutableListOf<String>()
     var blockStart = 0
     var i = 0
@@ -182,9 +182,8 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
     }
 
     while (i < len) {
-        // Reset inline code on newline (inline code spans cannot cross empty lines or paragraphs)
-        if (content[i] == '\n') {
-            inInlineCode = false
+        if (inlineCodeTickCount > 0 && (content.startsWith("\r\n\r\n", i) || content.startsWith("\n\n", i))) {
+            inlineCodeTickCount = 0
         }
 
         // Code fences at line start (``` or ~~~)
@@ -198,7 +197,7 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
                         inCodeFence = true
                         codeFenceChar = c
                         fenceLength = count
-                        inInlineCode = false
+                        inlineCodeTickCount = 0
                         i += count
                         continue
                     }
@@ -225,15 +224,21 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
             }
         }
 
-        // Inline code spans (` outside code fence)
-        if (!inCodeFence && content[i] == '`') {
-            inInlineCode = !inInlineCode
-            i++
+        // Inline code spans (`...`, ``...``, etc.) outside code fence & display math
+        if (!inCodeFence && mathDelimiter == null && content[i] == '`') {
+            var count = 0
+            while (i + count < len && content[i + count] == '`') count++
+            if (inlineCodeTickCount == 0) {
+                inlineCodeTickCount = count
+            } else if (count == inlineCodeTickCount) {
+                inlineCodeTickCount = 0
+            }
+            i += count
             continue
         }
 
         // Think blocks (<think>...</think>) outside code fence & inline code
-        if (!inCodeFence && !inInlineCode) {
+        if (!inCodeFence && inlineCodeTickCount == 0 && mathDelimiter == null) {
             if (!inThinkBlock && content.startsWith("<think>", i)) {
                 inThinkBlock = true
                 i += 7
@@ -246,7 +251,7 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
         }
 
         // Display math blocks ($$...$$ or \[...\]) outside code fence, inline code & think blocks
-        if (!inCodeFence && !inInlineCode && !inThinkBlock) {
+        if (!inCodeFence && inlineCodeTickCount == 0 && !inThinkBlock) {
             if (mathDelimiter == null) {
                 if (content.startsWith("$$", i)) {
                     mathDelimiter = "$$"
@@ -271,7 +276,7 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
         }
 
         // Paragraph breaks (\n\n or \r\n\r\n) outside fences, inline code, and special blocks
-        if (!inCodeFence && !inInlineCode && !inThinkBlock && mathDelimiter == null) {
+        if (!inCodeFence && inlineCodeTickCount == 0 && !inThinkBlock && mathDelimiter == null) {
             if (content.startsWith("\r\n\r\n", i)) {
                 val blockEnd = i + 4
                 blocks.add(content.substring(blockStart, blockEnd))
