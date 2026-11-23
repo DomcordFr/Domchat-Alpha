@@ -367,7 +367,7 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                                     }
                                 },
                                 shape = RoundedCornerShape(12.dp),
-                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF000000),
                                     contentColor = Color.White
@@ -403,11 +403,9 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                                     Spacer(Modifier.width(8.dp))
                                     val btnText = when {
                                         info != null && Version(info.version) > Version(currentVersionName) ->
-                                            "Install Update (v${info.version})"
-                                        info != null ->
-                                            "Install Latest (v${info.version})"
+                                            "Install Update"
                                         else ->
-                                            "Install Latest (v$currentVersionName)"
+                                            "Install Latest"
                                     }
                                     Text(
                                         text = btnText,

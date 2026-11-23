@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
@@ -177,10 +178,10 @@ fun UpdateDialog(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Header Row with animated status icon and texts
+                    // Header Row with animated status icon, texts, and cross button
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Box(
@@ -262,6 +263,42 @@ fun UpdateDialog(
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White.copy(alpha = 0.65f)
+                                )
+                            }
+                        }
+
+                        // Close / Cross Button
+                        val closeInteraction = remember { MutableInteractionSource() }
+                        val isClosePressed by closeInteraction.collectIsPressedAsState()
+                        val closeScale by animateFloatAsState(
+                            targetValue = if (isClosePressed) 0.90f else 1f,
+                            animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+                            label = "close_button_press"
+                        )
+
+                        Surface(
+                            onClick = {
+                                haptics.perform(HapticPattern.Pop)
+                                animateAndClose(onDismiss)
+                            },
+                            enabled = !isDownloading,
+                            shape = CircleShape,
+                            color = Color(0xFF000000),
+                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
+                            interactionSource = closeInteraction,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .graphicsLayer {
+                                    scaleX = closeScale
+                                    scaleY = closeScale
+                                }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White.copy(alpha = 0.70f),
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
