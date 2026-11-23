@@ -2404,6 +2404,8 @@ private fun AssistantMessageTurn(
             }
         }
 
+        Spacer(modifier = Modifier.height(4.dp))
+
         if (versionIndices.size > 1) {
             AnimatedContent(
                 targetState = assistantNode.selectIndex,

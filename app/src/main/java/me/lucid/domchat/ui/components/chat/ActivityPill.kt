@@ -7,8 +7,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -318,8 +316,8 @@ fun buildActivityItemsFromMultiple(state: ActivityState.CompletedMultiple): List
 private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
-private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 0.90f, stiffness = 135f)
-private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 0.90f, stiffness = 135f)
+private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 1.0f, stiffness = 200f)
+private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 1.0f, stiffness = 200f)
 
 /**
  * Position of a pill in a row of pills.
@@ -650,7 +648,7 @@ private fun AnimatedSinglePill(
         Surface(
             modifier = Modifier
                 .then(
-                    if (chatAnimationsEnabled && !isExpandedReasoning && requestedContentState !is SinglePillContentState.ExpandedReasoning) {
+                    if (chatAnimationsEnabled) {
                         Modifier.animateContentSize(
                             animationSpec = PILL_MORPH_SPEC,
                             alignment = Alignment.TopStart
@@ -1187,10 +1185,8 @@ private fun UnifiedReasoningPill(
 
         AnimatedVisibility(
             visible = isExpanded && lastPreviewText.value.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(320, easing = LinearOutSlowInEasing)) +
-                    expandVertically(animationSpec = tween(360, easing = LinearOutSlowInEasing), expandFrom = Alignment.Top),
-            exit = fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing)) +
-                   shrinkVertically(animationSpec = tween(280, easing = FastOutLinearInEasing), shrinkTowards = Alignment.Top)
+            enter = fadeIn(animationSpec = tween(240, delayMillis = 60, easing = LinearOutSlowInEasing)),
+            exit = fadeOut(animationSpec = tween(120, easing = FastOutLinearInEasing))
         ) {
             MarkdownBlock(
                 content = lastPreviewText.value,
@@ -1198,7 +1194,7 @@ private fun UnifiedReasoningPill(
                     .fillMaxWidth()
                     .fadeEdges(
                         topProgress = topFadeProgress,
-                        bottomProgress = if (isLive) bottomFadeProgress * 0.45f else bottomFadeProgress,
+                        bottomProgress = if (isLive) maxOf(bottomFadeProgress, 0.35f) else bottomFadeProgress,
                         fadeHeight = if (isLive) 36f else 64f
                     )
                     .heightIn(max = if (isExpanded && isLive && !timelineOpen) 120.dp else 280.dp)
