@@ -441,7 +441,8 @@ internal fun ActivityPillRow(
                     timelineLive = timelineLive,
                     onTimelineDismiss = onTimelineDismiss,
                     wasCompletedInitially = wasCompletedInitially,
-                    key = key
+                    key = key,
+                    displaySetting = displaySetting,
                 )
             }
         }
@@ -474,7 +475,8 @@ internal fun ActivityPillRow(
                     timelineLive = timelineLive,
                     onTimelineDismiss = onTimelineDismiss,
                     wasCompletedInitially = wasCompletedInitially,
-                    key = key
+                    key = key,
+                    displaySetting = displaySetting,
                 )
             }
         }
@@ -500,7 +502,8 @@ private fun AnimatedSinglePill(
     timelineLive: Boolean,
     onTimelineDismiss: () -> Unit,
     wasCompletedInitially: Boolean,
-    key: Any? = null
+    key: Any? = null,
+    displaySetting: me.lucid.domchat.data.datastore.DisplaySetting? = null,
 ) {
     val isExpandedReasoning = reasoningPreviewEnabled && state is ActivityState.Reasoning && !timelineOpen
     val requestedContentState = if (timelineOpen && timelineEntries.isNotEmpty()) {

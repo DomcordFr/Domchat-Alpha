@@ -1952,6 +1952,8 @@ private fun AssistantMessageTurn(
         formatMessageTimestamp(assistantNode.currentMessage.createdAt)
     }
 
+    val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
+
     val renderVersionContent: @Composable (
         targetIdx: Int,
         versionNodes: List<MessageNode>,
@@ -2165,7 +2167,6 @@ private fun AssistantMessageTurn(
         }
     }
 
-    val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
     Column(
         modifier = modifier
             .fillMaxWidth()
