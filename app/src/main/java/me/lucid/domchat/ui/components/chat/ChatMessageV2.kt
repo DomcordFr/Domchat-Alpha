@@ -1531,7 +1531,10 @@ private fun UserMessageTurn(
 
             UIAvatar(
                 name = personaName,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                 value = personaAvatar,
                 onClick = onUserAvatarClick,
             )
@@ -2254,7 +2257,10 @@ private fun AssistantMessageTurn(
                     if (showIcon) {
                         UIAvatar(
                             name = avatarName,
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                             value = avatarValue,
                             loading = loading,
                             onClick = onBotAvatarClick,
@@ -2298,7 +2304,10 @@ private fun AssistantMessageTurn(
                         if (showIcon) {
                             UIAvatar(
                                 name = avatarName,
-                                modifier = Modifier.size(36.dp),
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                                 value = avatarValue,
                                 loading = loading,
                                 onClick = onBotAvatarClick,
@@ -2349,7 +2358,10 @@ private fun AssistantMessageTurn(
                     if (showIcon) {
                         UIAvatar(
                             name = avatarName,
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
                             value = avatarValue,
                             loading = loading,
                             onClick = onBotAvatarClick,
