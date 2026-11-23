@@ -58,9 +58,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -2192,6 +2190,7 @@ private fun AssistantMessageTurn(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .then(assistantSwipeModifier)
             .then(
                 if (timelineOpen) {
                     Modifier.combinedClickable(
@@ -2253,7 +2252,8 @@ private fun AssistantMessageTurn(
                 // Avatar + Pills row
                 Row(
                     verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(elementSpacing)
+                    horizontalArrangement = Arrangement.spacedBy(elementSpacing),
+                    modifier = Modifier.padding(bottom = 2.dp)
                 ) {
                     if (showIcon) {
                         UIAvatar(
@@ -2300,7 +2300,8 @@ private fun AssistantMessageTurn(
                 if (showIcon || showModelName) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 2.dp)
                     ) {
                         if (showIcon) {
                             UIAvatar(
@@ -2405,8 +2406,6 @@ private fun AssistantMessageTurn(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
-
         val currentVersionAllParts = remember(group.filteredNodes) {
             group.filteredNodes.flatMap { it.currentMessage.parts }
         }
@@ -2469,9 +2468,7 @@ private fun AssistantMessageTurn(
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(assistantSwipeModifier),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(elementSpacing)
             ) {
                 if (currentPageAttachments.isNotEmpty()) {
@@ -2587,13 +2584,13 @@ private fun AssistantMessageTurn(
                 val versionNodes = remember(group, targetIdx) {
                     group.filteredNodesForVersion(targetIdx)
                 }
-                renderVersionContent(targetIdx, versionNodes, assistantSwipeModifier)
+                renderVersionContent(targetIdx, versionNodes, Modifier)
             }
         } else {
             renderVersionContent(
                 assistantNode.selectIndex,
                 group.filteredNodes,
-                assistantSwipeModifier,
+                Modifier,
             )
         }
         
@@ -2608,7 +2605,11 @@ private fun AssistantMessageTurn(
         }
         
         // Action buttons
-        val showActions = !isTurnActive && (actionsExpanded || (isIntroMessage && !isIntroLocked))
+        val showActions = !isTurnActive && (
+            actionsExpanded ||
+            (isIntroMessage && !isIntroLocked) ||
+            currentVersionTextParts.isEmpty()
+        )
         
         AnimatedVisibility(
             visible = showActions,

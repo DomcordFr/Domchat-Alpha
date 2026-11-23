@@ -317,6 +317,7 @@ private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
 private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 1.0f, stiffness = 200f)
+private val PILL_LIVE_GROWTH_SPEC = spring<IntSize>(dampingRatio = 1.0f, stiffness = 600f)
 private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 1.0f, stiffness = 200f)
 
 /**
@@ -649,8 +650,13 @@ private fun AnimatedSinglePill(
             modifier = Modifier
                 .then(
                     if (chatAnimationsEnabled) {
+                        val sizeSpec = if (isExpandedReasoning && state is ActivityState.Reasoning) {
+                            PILL_LIVE_GROWTH_SPEC
+                        } else {
+                            PILL_MORPH_SPEC
+                        }
                         Modifier.animateContentSize(
-                            animationSpec = PILL_MORPH_SPEC,
+                            animationSpec = sizeSpec,
                             alignment = Alignment.TopStart
                         )
                     } else Modifier
@@ -873,8 +879,12 @@ private fun AnimatedSinglePill(
                                         Text(
                                             text = stringResource(R.string.activity_pill_replying),
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.shimmer(isLoading = true)
+                                            color = Color.White,
+                                            modifier = Modifier.shimmer(
+                                                isLoading = true,
+                                                shimmerColor = Color.White.copy(alpha = 0.35f),
+                                                backgroundColor = Color.White
+                                            )
                                         )
                                     }
                                     is ActivityState.LoadingModel -> {
@@ -882,12 +892,12 @@ private fun AnimatedSinglePill(
                                             imageVector = Icons.Rounded.Memory,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            tint = resolvedContentColor.copy(alpha = 0.85f)
                                         )
                                         Text(
                                             text = targetState.modelName?.let { "Loading $it..." } ?: "Loading model...",
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = resolvedContentColor,
                                             modifier = Modifier.shimmer(isLoading = true)
                                         )
                                     }
@@ -1194,12 +1204,12 @@ private fun UnifiedReasoningPill(
                     .fillMaxWidth()
                     .fadeEdges(
                         topProgress = topFadeProgress,
-                        bottomProgress = if (isLive) maxOf(bottomFadeProgress, 0.35f) else bottomFadeProgress,
+                        bottomProgress = bottomFadeProgress,
                         fadeHeight = if (isLive) 36f else 64f
                     )
                     .heightIn(max = if (isExpanded && isLive && !timelineOpen) 120.dp else 280.dp)
                     .verticalScroll(scrollState)
-                    .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
+                    .padding(start = 14.dp, end = 14.dp, bottom = if (isLive) 18.dp else 14.dp),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = contentColor
                 ),

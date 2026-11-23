@@ -991,6 +991,7 @@ internal fun ColumnScope.ModelList(
                                 label = "provider_badge_scale"
                             )
                             val isActive = activeProviderId == provider.id
+                            val isLiquidGlassMode = style == ModelPickerStyle.LIQUID_GLASS
                             Box(
                                 modifier = Modifier
                                     .graphicsLayer {
@@ -999,9 +1000,14 @@ internal fun ColumnScope.ModelList(
                                     }
                                     .liquidGlassSurface(
                                         shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
-                                        fillColor = if (isActive) Color.White.copy(alpha = 0.22f) else Color(0xFF000000).copy(alpha = 0.35f),
-                                        borderWidth = 0.5.dp,
+                                        fillColor = if (isLiquidGlassMode) {
+                                            if (isActive) Color.White.copy(alpha = 0.12f) else Color.Transparent
+                                        } else {
+                                            if (isActive) Color.White.copy(alpha = 0.22f) else Color(0xFF000000).copy(alpha = 0.35f)
+                                        },
+                                        borderWidth = if (isActive) 1.dp else 0.5.dp,
                                         specularBrush = if (isActive) me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush else me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderSubtle,
+                                        isFloatingControl = isLiquidGlassMode,
                                     )
                                     .clip(me.lucid.domchat.ui.theme.AppShapes.ButtonPill)
                                     .clickable(
@@ -1150,16 +1156,27 @@ private fun ModelItem(
 
     val activeBadge: @Composable RowScope.() -> Unit = {
         if (select) {
+            val badgeShape = RoundedCornerShape(8.dp)
             Surface(
-                shape = RoundedCornerShape(8.dp),
+                shape = badgeShape,
                 color = Color.Transparent,
                 contentColor = Color.White,
-                modifier = Modifier.liquidGlassSurface(
-                    shape = RoundedCornerShape(8.dp),
-                    borderWidth = 0.5.dp,
-                    specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                    fillColor = if (isLiquidGlass) Color.Transparent else Color(0xFF000000)
-                )
+                modifier = if (isLiquidGlass) {
+                    Modifier.liquidGlassSurface(
+                        shape = badgeShape,
+                        borderWidth = 0.5.dp,
+                        specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                        fillColor = Color.White.copy(alpha = 0.14f),
+                        glassMode = me.lucid.domchat.data.datastore.LiquidGlassMode.SOFT_FROSTED
+                    )
+                } else {
+                    Modifier.liquidGlassSurface(
+                        shape = badgeShape,
+                        borderWidth = 0.5.dp,
+                        specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                        fillColor = Color(0xFF000000)
+                    )
+                }
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),

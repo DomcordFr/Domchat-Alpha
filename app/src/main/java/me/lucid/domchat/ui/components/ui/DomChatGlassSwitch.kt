@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -25,9 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -57,7 +56,6 @@ import me.lucid.domchat.ui.component.backdrop.shadow.Shadow
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.LocalDarkMode
-import kotlin.math.abs
 
 /**
  * Liquid Glass Style Switch (`DomChatGlassSwitch`).
@@ -139,72 +137,21 @@ fun DomChatGlassSwitch(
                 if (enabled && onCheckedChange != null) {
                     Modifier.pointerInput(enabled) {
                         awaitEachGesture {
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            val downId = down.id
-                            var isDrag = false
-                            var totalDragX = 0f
-                            var completedNormally = false
-                            var wasCancelled = false
-
+                            awaitFirstDown(requireUnconsumed = false)
                             scope.launch {
                                 pressProgressAnim.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 600f))
                             }
-
-                            try {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    val change = event.changes.find { it.id == downId }
-                                    if (change == null || change.isConsumed) {
-                                        wasCancelled = true
-                                        break
-                                    }
-                                    if (change.changedToUp()) {
-                                        change.consume()
-                                        completedNormally = true
-                                        break
-                                    }
-                                    val dragDelta = change.positionChange()
-                                    totalDragX += dragDelta.x
-                                    if (abs(totalDragX) > viewConfiguration.touchSlop) {
-                                        isDrag = true
-                                    }
-                                    if (isDrag) {
-                                        change.consume()
-                                        val deltaFraction = if (isLtr) {
-                                            dragDelta.x / dragWidthPx
-                                        } else {
-                                            -dragDelta.x / dragWidthPx
-                                        }
-                                        val newFraction = (fractionAnim.value + deltaFraction).coerceIn(0f, 1f)
-                                        scope.launch { fractionAnim.snapTo(newFraction) }
-                                    }
-                                }
+                            val up = try {
+                                waitForUpOrCancellation()
                             } finally {
                                 scope.launch {
                                     pressProgressAnim.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 600f))
                                 }
                             }
-
-                            if (completedNormally && !wasCancelled) {
-                                if (isDrag) {
-                                    val newChecked = fractionAnim.value >= 0.5f
-                                    if (newChecked != currentChecked) {
-                                        haptics.perform(HapticPattern.Pop)
-                                        currentOnCheckedChange?.invoke(newChecked)
-                                    }
-                                    // Snap back to currentChecked; if parent accepts and updates `checked`,
-                                    // LaunchedEffect(checked) immediately overrides and springs to the new state.
-                                    scope.launch {
-                                        fractionAnim.animateTo(if (currentChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
-                                    }
-                                } else {
-                                    haptics.perform(HapticPattern.Pop)
-                                    currentOnCheckedChange?.invoke(!currentChecked)
-                                }
-                            } else {
-                                scope.launch {
-                                    fractionAnim.animateTo(if (currentChecked) 1f else 0f, spring(dampingRatio = 0.85f, stiffness = 400f))
-                                }
+                            if (up != null) {
+                                up.consume()
+                                haptics.perform(HapticPattern.Pop)
+                                currentOnCheckedChange?.invoke(!currentChecked)
                             }
                         }
                     }
