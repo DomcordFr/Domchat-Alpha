@@ -993,7 +993,7 @@ private fun ConversationMenuItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val color = if (destructive) MaterialTheme.colorScheme.error else Color.White
+    val color = if (destructive) Color(0xFFFF3B30) else Color.White
 
     Row(
         modifier = Modifier
@@ -1014,14 +1014,14 @@ private fun ConversationMenuItem(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
-            tint = color.copy(alpha = 0.9f),
+            tint = if (destructive) color else color.copy(alpha = 0.9f),
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Medium,
             ),
-            color = color.copy(alpha = 0.95f),
+            color = if (destructive) color else color.copy(alpha = 0.95f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

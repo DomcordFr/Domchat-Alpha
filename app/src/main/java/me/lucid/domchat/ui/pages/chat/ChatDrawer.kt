@@ -85,6 +85,7 @@ import me.lucid.domchat.data.datastore.getAssistantById
 import me.lucid.domchat.data.datastore.getCurrentAssistant
 import me.lucid.domchat.data.model.Avatar
 import me.lucid.domchat.data.model.Conversation
+import me.lucid.domchat.ui.components.dialog.UniversalDestructiveConfirmDialog
 import me.lucid.domchat.service.ChatPersistenceMode
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.domchat.ui.components.chat.PersonaPickerBottomSheet
@@ -140,6 +141,8 @@ fun ChatDrawerContent(
 
     // Search expansion state - hoisted here so drawer width can animate
     var isSearchExpanded by remember(vm) { mutableStateOf(false) }
+    var conversationToDelete by remember { mutableStateOf<Conversation?>(null) }
+    var showConfirmDelete by remember { mutableStateOf(false) }
     val drawerWidth by animateDpAsState(
         targetValue = if (isSearchExpanded) expandedWidth else collapsedWidth,
         animationSpec = if (isSearchExpanded) {
@@ -365,26 +368,8 @@ fun ChatDrawerContent(
                     vm.updateConversationTitle(conversation, title)
                 },
                 onDelete = {
-                    vm.deleteConversation(it)
-                    toaster.show(
-                        message = context.getString(R.string.conversation_deleted),
-                        duration = me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS,
-                        action = me.lucid.domchat.ui.components.ui.ToastAction(
-                            label = context.getString(R.string.undo),
-                            onClick = {
-                                if (!vm.undoDeleteConversation(it.id)) {
-                                    toaster.show(
-                                        message = context.getString(R.string.undo_no_longer_available),
-                                        type = me.lucid.domchat.ui.components.ui.ToastType.Error,
-                                    )
-                                }
-                            }
-                        )
-                    )
-                    if (it.id == current.id) {
-                        navigateToChatPage(navController)
-                        dismissDrawerAfterSelection()
-                    }
+                    conversationToDelete = it
+                    showConfirmDelete = true
                 },
                 onPin = {
                     vm.updatePinnedStatus(it)
@@ -618,6 +603,42 @@ fun ChatDrawerContent(
                 ) {
                     Text(stringResource(R.string.chat_page_cancel))
                 }
+            }
+        )
+    }
+
+    conversationToDelete?.let { target ->
+        UniversalDestructiveConfirmDialog(
+            visible = showConfirmDelete,
+            title = "Delete conversation?",
+            message = "This will permanently remove \"${target.title.ifBlank { "Unnamed conversation" }}\" from your history.",
+            onConfirm = {
+                vm.deleteConversation(target)
+                toaster.show(
+                    message = context.getString(R.string.conversation_deleted),
+                    duration = me.lucid.domchat.data.deletion.DESTRUCTIVE_UNDO_WINDOW_MS,
+                    action = me.lucid.domchat.ui.components.ui.ToastAction(
+                        label = context.getString(R.string.undo),
+                        onClick = {
+                            if (!vm.undoDeleteConversation(target.id)) {
+                                toaster.show(
+                                    message = context.getString(R.string.undo_no_longer_available),
+                                    type = me.lucid.domchat.ui.components.ui.ToastType.Error,
+                                )
+                            }
+                        }
+                    )
+                )
+                if (target.id == current.id) {
+                    navigateToChatPage(navController)
+                    dismissDrawerAfterSelection()
+                }
+                conversationToDelete = null
+                showConfirmDelete = false
+            },
+            onDismiss = {
+                conversationToDelete = null
+                showConfirmDelete = false
             }
         )
     }

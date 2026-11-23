@@ -11,6 +11,7 @@ import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
@@ -1168,8 +1169,9 @@ fun ChatPage(
         }
     }
 
-    when {
-        useWideLayout -> {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            useWideLayout -> {
             AssistantChatTheme(assistant = conversationAssistant) {
                 Surface(
                     color = MaterialTheme.colorScheme.background,
@@ -1461,30 +1463,31 @@ fun ChatPage(
                     )
                 }
             }
-
-            AnimatedVisibility(
-                visible = isChatSwitching,
-                enter = fadeIn(animationSpec = tween(600, easing = LinearOutSlowInEasing)),
-                exit = fadeOut(animationSpec = tween(800, easing = FastOutLinearInEasing)),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(9999f)
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-                                event.changes.forEach { it.consume() }
-                            }
-                        }
-                    }
-            ) {
-                ChatSwitchLoadingIndicator(
-                    assistant = conversationAssistant,
-                    conversationTitle = conversation.title,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
         }
+    }
+
+    AnimatedVisibility(
+        visible = isChatSwitching,
+        enter = EnterTransition.None,
+        exit = fadeOut(animationSpec = tween(800, easing = FastOutLinearInEasing)),
+        modifier = Modifier
+            .fillMaxSize()
+            .zIndex(9999f)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        event.changes.forEach { it.consume() }
+                    }
+                }
+            }
+    ) {
+        ChatSwitchLoadingIndicator(
+            assistant = conversationAssistant,
+            conversationTitle = conversation.title,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
     }
 }
 
