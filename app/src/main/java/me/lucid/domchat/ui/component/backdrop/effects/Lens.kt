@@ -29,10 +29,9 @@ fun BackdropEffectScope.lens(
     if (!isRuntimeShaderSupported()) return
     if (refractionHeight <= 0f || refractionAmount <= 0f) return
 
-    val neededPadding = refractionAmount.coerceAtLeast(refractionHeight)
-    if (padding < neededPadding) {
-        padding = neededPadding
-    }
+    val padPx = if (padding > 0f) kotlin.math.ceil(padding).toInt() else 0
+    val padF = padPx.toFloat()
+    padding = padF
 
     val cornerRadii = cornerRadii
     val effect =
@@ -55,7 +54,7 @@ fun BackdropEffectScope.lens(
                 val h = size.height
                 setFloatUniform("halfSize", w * 0.5f, h * 0.5f)
                 setFloatUniform("minHalf", minOf(w, h) * 0.5f)
-                setFloatUniform("offset", -padding, -padding)
+                setFloatUniform("offset", -padF, -padF)
                 setFloatUniform("cornerRadii", cornerRadii)
                 setFloatUniform("refractionHeight", refractionHeight)
                 setFloatUniform("refractionAmount", -refractionAmount)

@@ -150,6 +150,7 @@ import me.lucid.domchat.utils.getFileNameFromUri
 import me.lucid.domchat.utils.jsonPrimitiveOrNull
 import me.lucid.domchat.utils.openAttachmentUri
 import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
+import me.lucid.domchat.data.datastore.withAssistantOverrides
 import me.lucid.domchat.data.datastore.getEffectiveTTSProvider
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.ai.core.MessageRole as AIMessageRole
@@ -1121,10 +1122,13 @@ fun ChatMessageTurn(
     onAddCustomGreeting: () -> Unit = {},
 ) {
     val settings = LocalSettings.current
+    val baseDisplay = LocalDisplaySetting.current
     val context = LocalContext.current
     val navController = LocalNavController.current
     val colorScheme = MaterialTheme.colorScheme
-    val effectiveDisplay = settings.getEffectiveDisplaySetting(assistant)
+    val effectiveDisplay = remember(baseDisplay, assistant) {
+        baseDisplay.withAssistantOverrides(assistant)
+    }
     val ttsProviderOverride = remember(
         settings.ttsProviders,
         settings.selectedTTSVoiceId,
@@ -1353,8 +1357,10 @@ private fun UserMessageTurn(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val settings = LocalSettings.current
-    val effectiveDisplay = settings.getEffectiveDisplaySetting(assistant)
+    val baseDisplay = LocalDisplaySetting.current
+    val effectiveDisplay = remember(baseDisplay, assistant) {
+        baseDisplay.withAssistantOverrides(assistant)
+    }
     // History turns never animate; only turns that arrived this session do.
     val isHistoryTurn = group.firstNode.id.toString() in me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes.current
     val defaultVideoLabel = stringResource(R.string.chat_message_attachment_video)
@@ -1782,14 +1788,16 @@ private fun AssistantMessageTurn(
     modifier: Modifier = Modifier
 ) {
     val isTimelineLive = loading && isLastTurn
-    val settings = LocalSettings.current
+    val baseDisplay = LocalDisplaySetting.current
     val context = LocalContext.current
     // History turns never animate; only turns that arrived this session do.
     val isHistoryTurn = group.firstNode.id.toString() in me.lucid.domchat.ui.motion.LocalPreexistingMessageNodes.current
     val defaultAssistantName = stringResource(R.string.assistant_page_default_assistant)
     val defaultVideoLabel = stringResource(R.string.chat_message_attachment_video)
     val defaultAudioLabel = stringResource(R.string.chat_message_attachment_audio)
-    val effectiveDisplay = settings.getEffectiveDisplaySetting(assistant)
+    val effectiveDisplay = remember(baseDisplay, assistant) {
+        baseDisplay.withAssistantOverrides(assistant)
+    }
     val showIcon = effectiveDisplay.showModelIcon
     val showModelName = effectiveDisplay.showModelName
     val haptics = rememberPremiumHaptics()

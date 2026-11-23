@@ -646,32 +646,36 @@ fun Settings.getAssistantById(id: Uuid): Assistant? {
     return assistants.find { it.id == id }
 }
 
-fun Settings.getEffectiveDisplaySetting(assistant: Assistant? = null): DisplaySetting {
-    val ui = (assistant ?: getCurrentAssistant()).uiSettings
-    val effectiveShowModelIcon = ui.showAssistantAvatar ?: displaySetting.showModelIcon
-    return displaySetting.copy(
-        showUserAvatar = ui.showUserAvatar ?: displaySetting.showUserAvatar,
+fun DisplaySetting.withAssistantOverrides(assistant: Assistant?): DisplaySetting {
+    val ui = assistant?.uiSettings ?: return this
+    val effectiveShowModelIcon = ui.showAssistantAvatar ?: showModelIcon
+    return copy(
+        showUserAvatar = ui.showUserAvatar ?: showUserAvatar,
         showModelIcon = effectiveShowModelIcon,
         // The "Show character avatar and name" toggle controls both the avatar and the name;
         // hiding the avatar also hides the character name.
-        showModelName = effectiveShowModelIcon && displaySetting.showModelName,
-        showAssistantBubbles = ui.showAssistantBubbles ?: displaySetting.showAssistantBubbles,
-        showTokenUsage = ui.showTokenUsage ?: displaySetting.showTokenUsage,
-        autoCloseThinking = ui.autoCloseThinking ?: displaySetting.autoCloseThinking,
-        showMessageJumper = ui.showMessageJumper ?: displaySetting.showMessageJumper,
-        messageJumperOnLeft = ui.messageJumperOnLeft ?: displaySetting.messageJumperOnLeft,
-        fontSizeRatio = ui.fontSizeRatio ?: displaySetting.fontSizeRatio,
-        codeBlockAutoWrap = ui.codeBlockAutoWrap ?: displaySetting.codeBlockAutoWrap,
-        codeBlockAutoCollapse = ui.codeBlockAutoCollapse ?: displaySetting.codeBlockAutoCollapse,
-        showContextStacks = ui.showContextStacks ?: displaySetting.showContextStacks,
-        newChatHeaderStyle = ui.newChatHeaderStyle ?: displaySetting.newChatHeaderStyle,
-        newChatContentStyle = ui.newChatContentStyle ?: displaySetting.newChatContentStyle,
-        newChatShowAvatar = ui.newChatShowAvatar ?: displaySetting.newChatShowAvatar,
-        enableStreamingFadeIn = ui.enableStreamingFadeIn ?: displaySetting.enableStreamingFadeIn,
-        streamingFadeDurationMs = ui.streamingFadeDurationMs ?: displaySetting.streamingFadeDurationMs,
-        streamingFadeStartAlpha = ui.streamingFadeStartAlpha ?: displaySetting.streamingFadeStartAlpha,
-        streamingContinuousFlow = ui.streamingContinuousFlow ?: displaySetting.streamingContinuousFlow,
+        showModelName = effectiveShowModelIcon && showModelName,
+        showAssistantBubbles = ui.showAssistantBubbles ?: showAssistantBubbles,
+        showTokenUsage = ui.showTokenUsage ?: showTokenUsage,
+        autoCloseThinking = ui.autoCloseThinking ?: autoCloseThinking,
+        showMessageJumper = ui.showMessageJumper ?: showMessageJumper,
+        messageJumperOnLeft = ui.messageJumperOnLeft ?: messageJumperOnLeft,
+        fontSizeRatio = ui.fontSizeRatio ?: fontSizeRatio,
+        codeBlockAutoWrap = ui.codeBlockAutoWrap ?: codeBlockAutoWrap,
+        codeBlockAutoCollapse = ui.codeBlockAutoCollapse ?: codeBlockAutoCollapse,
+        showContextStacks = ui.showContextStacks ?: showContextStacks,
+        newChatHeaderStyle = ui.newChatHeaderStyle ?: newChatHeaderStyle,
+        newChatContentStyle = ui.newChatContentStyle ?: newChatContentStyle,
+        newChatShowAvatar = ui.newChatShowAvatar ?: newChatShowAvatar,
+        enableStreamingFadeIn = ui.enableStreamingFadeIn ?: enableStreamingFadeIn,
+        streamingFadeDurationMs = ui.streamingFadeDurationMs ?: streamingFadeDurationMs,
+        streamingFadeStartAlpha = ui.streamingFadeStartAlpha ?: streamingFadeStartAlpha,
+        streamingContinuousFlow = ui.streamingContinuousFlow ?: streamingContinuousFlow,
     )
+}
+
+fun Settings.getEffectiveDisplaySetting(assistant: Assistant? = null): DisplaySetting {
+    return displaySetting.withAssistantOverrides(assistant ?: getCurrentAssistant())
 }
 
 fun Settings.getSelectedTTSProvider(): TTSProviderSetting? {

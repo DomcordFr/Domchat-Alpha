@@ -141,7 +141,7 @@ private val parser by lazy {
  */
 private const val SYNC_PARSE_MAX_LENGTH = 200_000
 
-private const val MARKDOWN_AST_CACHE_SIZE = 64
+private const val MARKDOWN_AST_CACHE_SIZE = 256
 
 /**
  * Process-wide LRU cache of parsed markdown ASTs keyed by the raw (pre-`preProcess`) content.
@@ -161,27 +161,108 @@ private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNo
 
 private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>? {
     var inCodeFence = false
+    var codeFenceChar = ' '
+    var inThinkBlock = false
+    var inMathBlock = false
     val blocks = mutableListOf<String>()
     var blockStart = 0
     var i = 0
     val len = content.length
-    while (i < len - 1) {
-        if (content.startsWith("```", i)) {
-            inCodeFence = !inCodeFence
-            i += 3
-            continue
+
+    fun isLineStart(idx: Int): Boolean {
+        var j = idx - 1
+        var spaces = 0
+        while (j >= 0 && content[j] == ' ') {
+            spaces++
+            j--
         }
-        if (!inCodeFence && content[i] == '\n' && content[i + 1] == '\n') {
-            val blockEnd = i + 2
-            blocks.add(content.substring(blockStart, blockEnd))
-            blockStart = blockEnd
-            i += 2
-            continue
+        return (j < 0 || content[j] == '\n') && spaces <= 3
+    }
+
+    while (i < len) {
+        // Code fences at line start (``` or ~~~)
+        if (isLineStart(i)) {
+            if (!inCodeFence && !inThinkBlock && !inMathBlock) {
+                if (content.startsWith("```", i)) {
+                    inCodeFence = true
+                    codeFenceChar = '`'
+                    i += 3
+                    continue
+                } else if (content.startsWith("~~~", i)) {
+                    inCodeFence = true
+                    codeFenceChar = '~'
+                    i += 3
+                    continue
+                }
+            } else if (inCodeFence) {
+                if ((codeFenceChar == '`' && content.startsWith("```", i)) ||
+                    (codeFenceChar == '~' && content.startsWith("~~~", i))) {
+                    inCodeFence = false
+                    i += 3
+                    continue
+                }
+            }
+        }
+
+        // Think blocks (<think>...</think>)
+        if (!inCodeFence) {
+            if (!inThinkBlock && content.startsWith("<think>", i)) {
+                inThinkBlock = true
+                i += 7
+                continue
+            } else if (inThinkBlock && content.startsWith("</think>", i)) {
+                inThinkBlock = false
+                i += 8
+                continue
+            }
+        }
+
+        // Display math blocks ($$...$$ or \[...\])
+        if (!inCodeFence && !inThinkBlock) {
+            if (!inMathBlock) {
+                if (content.startsWith("$$", i)) {
+                    inMathBlock = true
+                    i += 2
+                    continue
+                } else if (content.startsWith("\\[", i)) {
+                    inMathBlock = true
+                    i += 2
+                    continue
+                }
+            } else {
+                if (content.startsWith("$$", i)) {
+                    inMathBlock = false
+                    i += 2
+                    continue
+                } else if (content.startsWith("\\]", i)) {
+                    inMathBlock = false
+                    i += 2
+                    continue
+                }
+            }
+        }
+
+        // Paragraph breaks (\n\n or \r\n\r\n) outside fences and special blocks
+        if (!inCodeFence && !inThinkBlock && !inMathBlock) {
+            if (content.startsWith("\r\n\r\n", i)) {
+                val blockEnd = i + 4
+                blocks.add(content.substring(blockStart, blockEnd))
+                blockStart = blockEnd
+                i += 4
+                continue
+            } else if (content.startsWith("\n\n", i)) {
+                val blockEnd = i + 2
+                blocks.add(content.substring(blockStart, blockEnd))
+                blockStart = blockEnd
+                i += 2
+                continue
+            }
         }
         i++
     }
-    if (inCodeFence || blocks.isEmpty() || blockStart >= len) return null
-    val tail = content.substring(blockStart)
+
+    if (inCodeFence || inThinkBlock || inMathBlock || blocks.isEmpty() || blockStart > len) return null
+    val tail = if (blockStart < len) content.substring(blockStart) else ""
     return blocks to tail
 }
 
@@ -227,8 +308,8 @@ private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
     if (split != null) {
         val (blocks, tail) = split
         val combinedPreprocessed = StringBuilder()
-        val tailPreprocessed = preProcess(tail)
-        val tailTree = parser.buildMarkdownTreeFromString(tailPreprocessed)
+        val tailPreprocessed = if (tail.isNotEmpty()) preProcess(tail) else ""
+        val tailTree = if (tail.isNotEmpty()) parser.buildMarkdownTreeFromString(tailPreprocessed) else null
 
         var totalLen = 0
         val parsedBlocks = blocks.map { block ->
@@ -238,7 +319,7 @@ private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
         }
         totalLen += tailPreprocessed.length
 
-        val rootType = parsedBlocks.firstOrNull()?.second?.type ?: tailTree.type
+        val rootType = parsedBlocks.first().second.type
         val mergedRoot = MergedRootASTNode(rootType, totalLen)
 
         var currentOffset = 0
@@ -250,9 +331,11 @@ private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
             currentOffset += preprocessedBlock.length
         }
 
-        combinedPreprocessed.append(tailPreprocessed)
-        for (child in tailTree.children) {
-            mergedRoot.allChildren.add(OffsetASTNode(child, currentOffset, mergedRoot))
+        if (tailTree != null) {
+            combinedPreprocessed.append(tailPreprocessed)
+            for (child in tailTree.children) {
+                mergedRoot.allChildren.add(OffsetASTNode(child, currentOffset, mergedRoot))
+            }
         }
 
         return combinedPreprocessed.toString() to mergedRoot

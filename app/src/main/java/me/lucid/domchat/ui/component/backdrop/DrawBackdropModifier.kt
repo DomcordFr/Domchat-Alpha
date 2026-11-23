@@ -316,9 +316,6 @@ private class DrawBackdropNode(
     private var recordedBackdropOffset: Offset? = null
     private var recordedBackdropSize: IntSize = IntSize.Zero
 
-    /** Last successfully applied draw-time translation; keeps the glass tracking when coordinates detach mid-scroll. */
-    private var lastDrawOffset: Offset = Offset.Zero
-
     /** Invalidates this sampler's draw when the backdrop source changes (e.g. wallpaper bitmap finished decoding). */
     private val invalidateSamplerDraw: () -> Unit = {
         surfaceDirty = true
@@ -360,11 +357,12 @@ private class DrawBackdropNode(
 
     private val recordBackdropBlock: (DrawScope.() -> Unit) = {
         val canvas = drawContext.canvas
-        val padding = padding
+        val padPx = kotlin.math.ceil(padding).toInt()
+        val padF = padPx.toFloat()
         val scale = backdropScale
 
-        if (padding != 0f) {
-            canvas.translate(padding, padding)
+        if (padPx != 0) {
+            canvas.translate(padF, padF)
         }
         if (scale != 1f) {
             canvas.scale(scale, scale)
@@ -381,8 +379,8 @@ private class DrawBackdropNode(
         if (scale != 1f) {
             canvas.scale(1f / scale, 1f / scale)
         }
-        if (padding != 0f) {
-            canvas.translate(-padding, -padding)
+        if (padPx != 0) {
+            canvas.translate(-padF, -padF)
         }
     }
 
@@ -390,11 +388,11 @@ private class DrawBackdropNode(
         val layer = graphicsLayer
         if (layer == null) return false
 
-        val padding = padding
+        val padPx = kotlin.math.ceil(padding).toInt()
         val scale = backdropScale
         val recordSize = IntSize(
-            ((size.width * scale).toInt() + padding.toInt() * 2).coerceAtLeast(1),
-            ((size.height * scale).toInt() + padding.toInt() * 2).coerceAtLeast(1)
+            ((size.width * scale).toInt() + padPx * 2).coerceAtLeast(1),
+            ((size.height * scale).toInt() + padPx * 2).coerceAtLeast(1)
         )
         val offset = currentBackdropOffset()
         val version = currentBackdropVersion()
@@ -406,21 +404,10 @@ private class DrawBackdropNode(
         val sourceHasRecording = (backdrop as? LayerBackdrop)?.hasRecording ?: true
         if (offset == null || !sourceHasRecording) {
             if (recordedBackdropSize != IntSize.Zero) {
-                val drawOffset = lastDrawOffset
-                if (drawOffset != Offset.Zero) {
-                    translate(drawOffset.x, drawOffset.y) {
-                        if (scale != 1f) {
-                            scale(1f / scale, pivot = Offset.Zero) { drawLayer(layer) }
-                        } else {
-                            drawLayer(layer)
-                        }
-                    }
+                if (scale != 1f) {
+                    scale(1f / scale, pivot = Offset.Zero) { drawLayer(layer) }
                 } else {
-                    if (scale != 1f) {
-                        scale(1f / scale, pivot = Offset.Zero) { drawLayer(layer) }
-                    } else {
-                        drawLayer(layer)
-                    }
+                    drawLayer(layer)
                 }
             } else {
                 surfaceDirty = true
@@ -438,13 +425,8 @@ private class DrawBackdropNode(
             recordSize != recordedBackdropSize
         val versionChanged = version == null || version != recordedBackdropVersion
         val contentChanged = contentVersion != recordedContentVersion
-        val hasRecording = recordedBackdropSize != IntSize.Zero
         val offsetChanged = recordedBackdropOffset == null || offset != recordedBackdropOffset
-        val needsRecord = if (frozen() && hasRecording && !versionChanged && !offsetChanged) {
-            geometryChanged || contentChanged
-        } else {
-            geometryChanged || versionChanged || contentChanged || offsetChanged
-        }
+        val needsRecord = geometryChanged || versionChanged || contentChanged || offsetChanged
 
         if (needsRecord) {
             recordLayer(
@@ -460,9 +442,8 @@ private class DrawBackdropNode(
         }
 
         layer.topLeft =
-            if (padding != 0f) IntOffset(-padding.toInt(), -padding.toInt())
+            if (padPx != 0) IntOffset(-padPx, -padPx)
             else IntOffset.Zero
-        lastDrawOffset = Offset.Zero
         if (scale != 1f) {
             scale(1f / scale, pivot = Offset.Zero) {
                 drawLayer(layer)
@@ -594,7 +575,5 @@ private class DrawBackdropNode(
         recordedContentVersion = -1
         recordedBackdropOffset = null
         recordedBackdropSize = IntSize.Zero
-        // Keep lastDrawOffset so a recycled node can still fall back to its last
-        // known translation if coordinates detach again before a fresh capture.
     }
 }

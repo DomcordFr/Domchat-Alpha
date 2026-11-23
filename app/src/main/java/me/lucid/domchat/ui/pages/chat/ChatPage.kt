@@ -1810,12 +1810,6 @@ private fun ChatPageContent(
                 contentBackdrop.geometryChanged()
             }
         }
-        LaunchedEffect(chatListState) {
-            snapshotFlow { chatListState.firstVisibleItemIndex to chatListState.firstVisibleItemScrollOffset }
-                .collect {
-                    contentBackdrop.invalidateSource()
-                }
-        }
 
         CompositionLocalProvider(LocalDomChatBlur provides blur) {
             Surface(
