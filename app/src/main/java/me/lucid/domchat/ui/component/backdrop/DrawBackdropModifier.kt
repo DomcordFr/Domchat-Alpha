@@ -423,7 +423,6 @@ private class DrawBackdropNode(
                     }
                 }
             } else {
-                drawRect(Color(0xFF141520).copy(alpha = 0.85f))
                 surfaceDirty = true
             }
             return false
@@ -441,7 +440,7 @@ private class DrawBackdropNode(
         val contentChanged = contentVersion != recordedContentVersion
         val hasRecording = recordedBackdropSize != IntSize.Zero
         val offsetChanged = recordedBackdropOffset == null || offset != recordedBackdropOffset
-        val needsRecord = if (frozen() && hasRecording && !versionChanged) {
+        val needsRecord = if (frozen() && hasRecording && !versionChanged && !offsetChanged) {
             geometryChanged || contentChanged
         } else {
             geometryChanged || versionChanged || contentChanged || offsetChanged

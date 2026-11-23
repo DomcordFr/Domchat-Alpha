@@ -558,11 +558,13 @@ class WebdavSync(
                                             val liveModelMap = liveProv.models.associateBy { it.id }
                                             val modelsWithPreservedOverwrites = restored.models.map { restoredModel ->
                                                 val liveModel = liveModelMap[restoredModel.id]
-                                                if (restoredModel.providerOverwrite != null && liveModel?.providerOverwrite != null) {
+                                                val restoredOverwrite = restoredModel.providerOverwrite
+                                                val liveOverwrite = liveModel?.providerOverwrite
+                                                if (restoredOverwrite != null && liveOverwrite != null) {
                                                     restoredModel.copy(
                                                         providerOverwrite = mergeProviderCredentials(
-                                                            restoredModel.providerOverwrite,
-                                                            liveModel.providerOverwrite,
+                                                            restoredOverwrite,
+                                                            liveOverwrite,
                                                         )
                                                     )
                                                 } else {

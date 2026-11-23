@@ -1532,7 +1532,6 @@ private fun ChatPageContent(
         else -> ChatPersistenceMode.NORMAL
     }
     val isTemporaryChat = activePersistenceMode == ChatPersistenceMode.TEMPORARY
-    val isTemporaryChat = activePersistenceMode == ChatPersistenceMode.TEMPORARY
 
     // State for user message regeneration confirmation dialog
     var showUserRegenerateConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -1775,6 +1774,12 @@ private fun ChatPageContent(
                 chatBackdrop.geometryChanged()
                 contentBackdrop.geometryChanged()
             }
+        }
+        LaunchedEffect(chatListState) {
+            snapshotFlow { chatListState.firstVisibleItemIndex to chatListState.firstVisibleItemScrollOffset }
+                .collect {
+                    contentBackdrop.invalidateSource()
+                }
         }
 
         CompositionLocalProvider(LocalDomChatBlur provides blur) {

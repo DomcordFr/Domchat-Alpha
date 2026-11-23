@@ -176,12 +176,13 @@ class GoogleProvider(
 
     override suspend fun listModels(providerSetting: ProviderSetting.Google): List<Model> =
         withContext(me.lucid.ai.util.providerIoDispatcher) {
-            val url = buildUrl(providerSetting = providerSetting, path = "models?pageSize=100")
+            val selectedKey = selectKey(providerSetting)
+            val url = buildUrl(providerSetting = providerSetting, path = "models?pageSize=100", selectedKey = selectedKey)
             val response = platformHttpClient.execute(
                 PlatformHttpRequest(
                     method = "GET",
                     url = url,
-                    headers = buildHeaders(providerSetting),
+                    headers = buildHeaders(providerSetting = providerSetting, selectedKey = selectedKey),
                     proxy = providerSetting.proxy.toPlatformProxy()
                 )
             )
@@ -399,8 +400,6 @@ class GoogleProvider(
             mediaType = "application/json",
             proxy = providerSetting.proxy.toPlatformProxy()
         )
-
-        PlatformLog.i(TAG, "streamText: $encodedRequestBody")
 
         var hasEmittedChunk = false
         val job = launch {
@@ -1024,17 +1023,18 @@ class GoogleProvider(
                 })
             }
 
+            val selectedKey = selectKey(providerSetting)
             val url = buildUrl(
                 providerSetting = providerSetting,
                 path = if (providerSetting.vertexAI) {
                     "publishers/google/models/${model.modelId}:embedContent"
                 } else {
                     "models/${model.modelId}:embedContent"
-                }
+                },
+                selectedKey = selectedKey
             )
 
             PlatformLog.d(TAG, "createEmbedding: url=$url")
-            PlatformLog.d(TAG, "createEmbedding: requestBody=${json.encodeToString(requestBody)}")
 
             val encodedRequestBody = json.encodeToString(requestBody)
             val response = platformHttpClient.execute(
@@ -1043,7 +1043,8 @@ class GoogleProvider(
                     url = url,
                     headers = buildHeaders(
                         providerSetting = providerSetting,
-                        includeJsonContentType = true
+                        includeJsonContentType = true,
+                        selectedKey = selectedKey
                     ),
                     body = encodedRequestBody.encodeToByteArray(),
                     mediaType = "application/json",
@@ -1086,13 +1087,15 @@ class GoogleProvider(
                 }
             }
 
+            val selectedKey = selectKey(providerSetting)
             val url = buildUrl(
                 providerSetting = providerSetting,
                 path = if (providerSetting.vertexAI) {
                     "publishers/google/models/${model.modelId}:batchEmbedContents"
                 } else {
                     "models/${model.modelId}:batchEmbedContents"
-                }
+                },
+                selectedKey = selectedKey
             )
 
             PlatformLog.d(TAG, "createEmbedding batch: url=$url")
@@ -1104,7 +1107,8 @@ class GoogleProvider(
                     url = url,
                     headers = buildHeaders(
                         providerSetting = providerSetting,
-                        includeJsonContentType = true
+                        includeJsonContentType = true,
+                        selectedKey = selectedKey
                     ),
                     body = encodedRequestBody.encodeToByteArray(),
                     mediaType = "application/json",

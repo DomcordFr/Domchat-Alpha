@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import me.lucid.domchat.ui.components.richtext.MarkdownBlock
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
@@ -53,6 +55,7 @@ fun UpdateDialog(
     onIgnore: () -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val haptics = rememberPremiumHaptics()
     var downloadId by remember(info.version) { mutableStateOf<Long?>(null) }
     val progress by remember(downloadId) {
@@ -196,7 +199,9 @@ fun UpdateDialog(
                                 when {
                                     isDownloaded && progress.localUri != null -> {
                                         val localUri = progress.localUri ?: return@Button
-                                        updateChecker.installDownloadedUpdate(context, localUri, primaryDownload?.sha256)
+                                        scope.launch {
+                                            updateChecker.installDownloadedUpdateAsync(context, localUri, primaryDownload?.sha256)
+                                        }
                                     }
                                     primaryDownload != null -> {
                                         downloadId = updateChecker.downloadUpdate(context, primaryDownload)

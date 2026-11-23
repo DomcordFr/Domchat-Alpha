@@ -12,13 +12,19 @@ import androidx.core.net.toFile
 import androidx.core.net.toUri
 import java.io.File
 import java.security.MessageDigest
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import me.lucid.common.platform.PlatformHttpClient
@@ -131,77 +137,95 @@ class UpdateChecker(private val client: PlatformHttpClient) {
         }
     }
 
-    fun downloadUpdate(context: Context, download: UpdateDownload): Long {
-        return runCatching {
-            val request = DownloadManager.Request(download.url.toUri()).apply {
-                setTitle("Domchat Update")
-                setDescription("Downloading ${download.name}...")
-                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-                val destDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                if (destDir != null) {
-                    val destFile = File(destDir, download.name)
-                    if (destFile.exists()) destFile.delete()
-                    setDestinationUri(android.net.Uri.fromFile(destFile))
-                } else {
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, download.name)
-                }
-                setMimeType("application/vnd.android.package-archive")
-            }
-            val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            dm.enqueue(request)
-        }.onFailure {
-            Toast.makeText(context, context.getString(R.string.update_download_failed), Toast.LENGTH_SHORT).show()
-            context.openUrl(download.url)
-        }.getOrDefault(-1L)
-    }
+    private val downloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val downloadProgressMap = java.util.concurrent.ConcurrentHashMap<Long, MutableStateFlow<DownloadProgress>>()
+    private val downloadCounter = java.util.concurrent.atomic.AtomicLong(1L)
 
-    fun observeDownload(context: Context, downloadId: Long): Flow<DownloadProgress> = flow {
-        val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val query = DownloadManager.Query().setFilterById(downloadId)
-        
-        while (true) {
-            var progress = DownloadProgress()
-            var finished = false
-            dm.query(query).use { cursor ->
-                if (cursor != null && cursor.moveToFirst()) {
-                    val bytesDownloadedIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
-                    val bytesTotalIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
-                    val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                    val uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                    
-                    if (bytesDownloadedIndex != -1 && bytesTotalIndex != -1 && statusIndex != -1) {
-                        val bytesDownloaded = cursor.getLong(bytesDownloadedIndex)
-                        val bytesTotal = cursor.getLong(bytesTotalIndex)
-                        val status = cursor.getInt(statusIndex)
-                        
-                        progress = progress.copy(
-                            bytesDownloaded = bytesDownloaded,
-                            totalBytes = bytesTotal,
-                            status = status,
-                            localUri = if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                                dm.getUriForDownloadedFile(downloadId)?.toString()
-                            } else if (uriIndex != -1) {
-                                cursor.getString(uriIndex)
-                            } else {
-                                null
+    fun downloadUpdate(context: Context, download: UpdateDownload): Long {
+        val id = downloadCounter.getAndIncrement()
+        val flow = MutableStateFlow(DownloadProgress(status = DownloadManager.STATUS_PENDING))
+        downloadProgressMap[id] = flow
+
+        downloadScope.launch {
+            try {
+                flow.value = flow.value.copy(status = DownloadManager.STATUS_RUNNING)
+                val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
+                val partFile = File(updatesDir, "update.apk.part")
+                val finalFile = File(updatesDir, "update.apk")
+                if (partFile.exists()) partFile.delete()
+                if (finalFile.exists()) finalFile.delete()
+
+                val okHttpClient = okhttp3.OkHttpClient.Builder()
+                    .followRedirects(true)
+                    .followSslRedirects(true)
+                    .build()
+
+                val request = okhttp3.Request.Builder()
+                    .url(download.url)
+                    .header("User-Agent", "Domchat-Android/${BuildConfig.VERSION_NAME}")
+                    .build()
+
+                okHttpClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw java.io.IOException("Unexpected HTTP response ${response.code}")
+                    }
+                    val body = response.body ?: throw java.io.IOException("Empty response body")
+                    val contentLength = body.contentLength()
+                    var downloaded = 0L
+
+                    body.byteStream().use { input ->
+                        partFile.outputStream().use { output ->
+                            val buffer = ByteArray(8192)
+                            var read: Int
+                            var lastEmitTime = 0L
+                            while (input.read(buffer).also { read = it } != -1) {
+                                output.write(buffer, 0, read)
+                                downloaded += read
+                                val now = System.currentTimeMillis()
+                                if (now - lastEmitTime > 150L || downloaded == contentLength) {
+                                    lastEmitTime = now
+                                    flow.value = DownloadProgress(
+                                        bytesDownloaded = downloaded,
+                                        totalBytes = if (contentLength > 0) contentLength else downloaded,
+                                        status = DownloadManager.STATUS_RUNNING,
+                                        localUri = null
+                                    )
+                                }
                             }
-                        )
-                        
-                        if (status == DownloadManager.STATUS_SUCCESSFUL || status == DownloadManager.STATUS_FAILED) {
-                            finished = true
                         }
                     }
+                }
+
+                if (partFile.renameTo(finalFile)) {
+                    flow.value = DownloadProgress(
+                        bytesDownloaded = finalFile.length(),
+                        totalBytes = finalFile.length(),
+                        status = DownloadManager.STATUS_SUCCESSFUL,
+                        localUri = android.net.Uri.fromFile(finalFile).toString()
+                    )
                 } else {
-                    finished = true
+                    throw java.io.IOException("Failed to rename temporary download file")
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("UpdateChecker", "Download failed", e)
+                File(context.cacheDir, "updates/update.apk.part").delete()
+                flow.value = DownloadProgress(
+                    status = DownloadManager.STATUS_FAILED,
+                )
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, context.getString(R.string.update_download_failed), Toast.LENGTH_SHORT).show()
+                    context.openUrl(download.url)
                 }
             }
-            emit(progress)
-            if (finished) break
-            kotlinx.coroutines.delay(250)
         }
-    }.flowOn(Dispatchers.IO)
-    
+        return id
+    }
+
+    fun observeDownload(context: Context, downloadId: Long): Flow<DownloadProgress> {
+        return downloadProgressMap[downloadId] ?: flowOf(DownloadProgress(status = DownloadManager.STATUS_FAILED))
+    }
+
     fun ignoreUpdate(context: Context, version: String) {
         val prefs = context.getSharedPreferences("update_prefs", Context.MODE_PRIVATE)
         prefs.edit()
@@ -214,52 +238,69 @@ class UpdateChecker(private val client: PlatformHttpClient) {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || context.packageManager.canRequestPackageInstalls()
     }
 
-    fun installDownloadedUpdate(context: Context, uriString: String, expectedSha256: String? = null): Boolean {
+    suspend fun installDownloadedUpdateAsync(
+        context: Context,
+        uriString: String,
+        expectedSha256: String? = null
+    ): Boolean = withContext(Dispatchers.IO) {
         if (!canInstallDownloadedUpdate(context)) {
-            val intent = Intent(
-                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                "package:${context.packageName}".toUri()
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            runCatching {
-                context.startActivity(intent)
-            }.onFailure {
-                Log.e("UpdateChecker", "Failed to launch unknown sources settings", it)
+            withContext(Dispatchers.Main) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    "package:${context.packageName}".toUri()
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                runCatching {
+                    context.startActivity(intent)
+                }.onFailure {
+                    Log.e("UpdateChecker", "Failed to launch unknown sources settings", it)
+                }
             }
-            return false
+            return@withContext false
         }
 
-        return runCatching {
+        try {
             val sourceUri = uriString.toUri()
             val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
             val localApk = File(updatesDir, "update.apk")
-            if (localApk.exists()) {
-                localApk.delete()
-            }
-            val digest = MessageDigest.getInstance("SHA-256")
-            val inputStream = when (sourceUri.scheme) {
-                "content" -> context.contentResolver.openInputStream(sourceUri)
-                "file" -> sourceUri.toFile().inputStream()
-                else -> null
-            } ?: error("Failed to open downloaded APK stream")
 
-            inputStream.use { input ->
-                localApk.outputStream().use { output ->
-                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                    while (true) {
-                        val read = input.read(buffer)
-                        if (read <= 0) break
-                        digest.update(buffer, 0, read)
-                        output.write(buffer, 0, read)
+            if (sourceUri.scheme == "file") {
+                val file = sourceUri.toFile()
+                if (file.absolutePath != localApk.absolutePath && file.exists()) {
+                    if (localApk.exists()) localApk.delete()
+                    file.copyTo(localApk, overwrite = true)
+                }
+            } else if (sourceUri.scheme == "content") {
+                if (localApk.exists()) localApk.delete()
+                context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                    localApk.outputStream().use { output ->
+                        input.copyTo(output)
                     }
                 }
             }
 
+            if (!localApk.exists()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Downloaded file not found", Toast.LENGTH_SHORT).show()
+                }
+                return@withContext false
+            }
+
             if (!expectedSha256.isNullOrBlank()) {
+                val digest = MessageDigest.getInstance("SHA-256")
+                localApk.inputStream().use { input ->
+                    val buffer = ByteArray(8192)
+                    var read: Int
+                    while (input.read(buffer).also { read = it } != -1) {
+                        digest.update(buffer, 0, read)
+                    }
+                }
                 val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
                 if (!actualSha256.equals(expectedSha256.trim(), ignoreCase = true)) {
                     localApk.delete()
-                    Toast.makeText(context, "Update verification failed: SHA-256 mismatch", Toast.LENGTH_LONG).show()
-                    return false
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Update verification failed: SHA-256 mismatch", Toast.LENGTH_LONG).show()
+                    }
+                    return@withContext false
                 }
             }
 
@@ -273,12 +314,24 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                 setDataAndType(contentUri, "application/vnd.android.package-archive")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
             }
-            context.startActivity(intent)
+            withContext(Dispatchers.Main) {
+                context.startActivity(intent)
+            }
             true
-        }.onFailure {
-            android.util.Log.e("UpdateChecker", "Failed to stage update APK", it)
-            Toast.makeText(context, "Failed to launch package installer", Toast.LENGTH_SHORT).show()
-        }.getOrDefault(false)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("UpdateChecker", "Failed to stage update APK", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Failed to launch package installer", Toast.LENGTH_SHORT).show()
+            }
+            false
+        }
+    }
+
+    fun installDownloadedUpdate(context: Context, uriString: String, expectedSha256: String? = null): Boolean {
+        return kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+            installDownloadedUpdateAsync(context, uriString, expectedSha256)
+        }
     }
     
     fun isUpdateIgnored(context: Context, version: String, forceCheck: Boolean): Boolean {

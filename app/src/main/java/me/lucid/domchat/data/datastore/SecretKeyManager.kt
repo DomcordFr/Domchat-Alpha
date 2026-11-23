@@ -317,9 +317,13 @@ class SecretKeyManager(
         val newProviderIds = newSettings.providers.asSequence().map { it.id }.toHashSet()
         oldSettings.providers
             .asSequence()
-            .map { it.id }
-            .filterNot(newProviderIds::contains)
-            .forEach(::removeProviderSecrets)
+            .filterNot { newProviderIds.contains(it.id) }
+            .forEach { oldProvider ->
+                removeProviderSecrets(oldProvider.id)
+                oldProvider.models.forEach { model ->
+                    model.providerOverwrite?.id?.let(::removeProviderSecrets)
+                }
+            }
 
         // Same for TTS providers: deleting a provider must wipe SecureStore keys
         // or re-adding the same preset silently restores the old API key.
@@ -346,36 +350,55 @@ class SecretKeyManager(
             .filterNot(newMcpIds::contains)
             .forEach(::removeMcpServerSecrets)
 
-        // Handle provider secrets (API keys and private keys)
+        // Handle provider secrets (API keys, private keys, pools, and nested model overwrites)
         for (newProvider in newSettings.providers) {
             val oldProvider = oldSettings.providers.find { it.id == newProvider.id } ?: continue
-            
-            // Handle pool entry deletions
-            val newEntryIds = newProvider.apiKeyPool.map { it.id }.toSet()
-            for (oldEntry in oldProvider.apiKeyPool) {
-                if (oldEntry.id !in newEntryIds) {
-                    removePoolApiKey(newProvider.id, oldEntry.id)
+            checkProviderCredentialDeletions(oldProvider, newProvider)
+
+            // Recurse into model.providerOverwrite
+            val newModelsMap = newProvider.models.associateBy { it.id }
+            for (oldModel in oldProvider.models) {
+                val oldOverwrite = oldModel.providerOverwrite
+                if (oldOverwrite != null) {
+                    val newModel = newModelsMap[oldModel.id]
+                    val newOverwrite = newModel?.providerOverwrite
+                    if (newOverwrite == null || newOverwrite.id != oldOverwrite.id) {
+                        removeProviderSecrets(oldOverwrite.id)
+                    } else {
+                        checkProviderCredentialDeletions(oldOverwrite, newOverwrite)
+                    }
                 }
             }
+        }
 
-            when {
-                oldProvider is ProviderSetting.OpenAI && newProvider is ProviderSetting.OpenAI -> {
-                    // Check if API key was explicitly cleared
-                    if (oldProvider.apiKey.isNotBlank() && newProvider.apiKey.isBlank()) {
-                        setApiKey(newProvider.id, "")
-                    }
+        // Handle Search service secrets clearing
+        for (newSearch in newSettings.searchServices) {
+            val oldSearch = oldSettings.searchServices.find { it.id == newSearch.id } ?: continue
+            if (oldSearch is SearchServiceOptions.SearXNGOptions && newSearch is SearchServiceOptions.SearXNGOptions) {
+                if (oldSearch.username.isNotBlank() && newSearch.username.isBlank()) {
+                    secureStore.removeSecret(searchServiceUser(newSearch.id))
                 }
-                oldProvider is ProviderSetting.Google && newProvider is ProviderSetting.Google -> {
-                    if (oldProvider.apiKey.isNotBlank() && newProvider.apiKey.isBlank()) {
-                        setApiKey(newProvider.id, "")
-                    }
-                    if (oldProvider.privateKey.isNotBlank() && newProvider.privateKey.isBlank()) {
-                        setPrivateKey(newProvider.id, "")
-                    }
+                if (oldSearch.password.isNotBlank() && newSearch.password.isBlank()) {
+                    secureStore.removeSecret(searchServicePass(newSearch.id))
                 }
-                oldProvider is ProviderSetting.Claude && newProvider is ProviderSetting.Claude -> {
-                    if (oldProvider.apiKey.isNotBlank() && newProvider.apiKey.isBlank()) {
-                        setApiKey(newProvider.id, "")
+            } else {
+                val oldKey = getSearchServiceApiKey(oldSearch)
+                val newKey = getSearchServiceApiKey(newSearch)
+                if (oldKey?.isNotBlank() == true && newKey.isNullOrBlank()) {
+                    secureStore.removeSecret(searchServiceKey(newSearch.id))
+                }
+            }
+        }
+
+        // Handle MCP Server auth headers clearing/removal
+        for (newMcp in newSettings.mcpServers) {
+            val oldMcp = oldSettings.mcpServers.find { it.id == newMcp.id } ?: continue
+            val newHeadersMap = newMcp.commonOptions.headers.toMap()
+            for ((oldK, oldV) in oldMcp.commonOptions.headers) {
+                if (isAuthHeader(oldK)) {
+                    val newV = newHeadersMap[oldK]
+                    if (newV == null || (oldV.isNotBlank() && newV.isBlank())) {
+                        secureStore.removeSecret("$MCP_SERVER_HEADER_PREFIX${newMcp.id}_$oldK")
                     }
                 }
             }
@@ -412,8 +435,53 @@ class SecretKeyManager(
                 setTtsApiKey(newTtsProvider.id, "")
             }
         }
+    }
 
+    private fun checkProviderCredentialDeletions(oldProvider: ProviderSetting, newProvider: ProviderSetting) {
+        val newEntryIds = newProvider.apiKeyPool.map { it.id }.toSet()
+        for (oldEntry in oldProvider.apiKeyPool) {
+            if (oldEntry.id !in newEntryIds) {
+                removePoolApiKey(newProvider.id, oldEntry.id)
+            }
+        }
 
+        when {
+            oldProvider is ProviderSetting.OpenAI && newProvider is ProviderSetting.OpenAI -> {
+                if (oldProvider.apiKey.isNotBlank() && newProvider.apiKey.isBlank()) {
+                    setApiKey(newProvider.id, "")
+                }
+            }
+            oldProvider is ProviderSetting.Google && newProvider is ProviderSetting.Google -> {
+                if (oldProvider.apiKey.isNotBlank() && newProvider.apiKey.isBlank()) {
+                    setApiKey(newProvider.id, "")
+                }
+                if (oldProvider.privateKey.isNotBlank() && newProvider.privateKey.isBlank()) {
+                    setPrivateKey(newProvider.id, "")
+                }
+            }
+            oldProvider is ProviderSetting.Claude && newProvider is ProviderSetting.Claude -> {
+                if (oldProvider.apiKey.isNotBlank() && newProvider.apiKey.isBlank()) {
+                    setApiKey(newProvider.id, "")
+                }
+            }
+        }
+    }
+
+    private fun getSearchServiceApiKey(service: SearchServiceOptions): String? = when (service) {
+        is SearchServiceOptions.ZhipuOptions -> service.apiKey
+        is SearchServiceOptions.TavilyOptions -> service.apiKey
+        is SearchServiceOptions.ExaOptions -> service.apiKey
+        is SearchServiceOptions.LinkUpOptions -> service.apiKey
+        is SearchServiceOptions.BraveOptions -> service.apiKey
+        is SearchServiceOptions.MetasoOptions -> service.apiKey
+        is SearchServiceOptions.OllamaOptions -> service.apiKey
+        is SearchServiceOptions.PerplexityOptions -> service.apiKey
+        is SearchServiceOptions.FirecrawlOptions -> service.apiKey
+        is SearchServiceOptions.JinaOptions -> service.apiKey
+        is SearchServiceOptions.BochaOptions -> service.apiKey
+        is SearchServiceOptions.NanoGPTOptions -> service.apiKey
+        is SearchServiceOptions.GrokOptions -> service.apiKey
+        else -> null
     }
 
     /**
