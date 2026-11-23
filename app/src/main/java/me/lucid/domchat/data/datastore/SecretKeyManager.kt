@@ -438,9 +438,12 @@ class SecretKeyManager(
     }
 
     private fun checkProviderCredentialDeletions(oldProvider: ProviderSetting, newProvider: ProviderSetting) {
-        val newEntryIds = newProvider.apiKeyPool.map { it.id }.toSet()
+        val newEntryMap = newProvider.apiKeyPool.associateBy { it.id }
         for (oldEntry in oldProvider.apiKeyPool) {
-            if (oldEntry.id !in newEntryIds) {
+            val surviving = newEntryMap[oldEntry.id]
+            if (surviving == null) {
+                removePoolApiKey(newProvider.id, oldEntry.id)
+            } else if (oldEntry.key.isNotBlank() && surviving.key.isBlank()) {
                 removePoolApiKey(newProvider.id, oldEntry.id)
             }
         }
@@ -481,7 +484,9 @@ class SecretKeyManager(
         is SearchServiceOptions.BochaOptions -> service.apiKey
         is SearchServiceOptions.NanoGPTOptions -> service.apiKey
         is SearchServiceOptions.GrokOptions -> service.apiKey
-        else -> null
+        is SearchServiceOptions.SearXNGOptions -> null
+        is SearchServiceOptions.KeylessOptions -> null
+        is SearchServiceOptions.BingLocalOptions -> null
     }
 
     /**

@@ -71,12 +71,13 @@ class ManagedFileRestoreTest {
             File(staged, "upload").mkdirs()
             File(staged, "upload/new.txt").writeText("new")
 
-            restoreManagedFileDirectories(
+            val session = restoreManagedFileDirectories(
                 liveFilesDir = live,
                 stagedFilesDir = staged,
                 directoriesToRestore = listOf("upload"),
                 liveBackupDir = bak,
             )
+            session?.cleanup()
 
             assertTrue(File(live, "upload/new.txt").exists())
             assertEquals("new", File(live, "upload/new.txt").readText())
@@ -99,15 +100,48 @@ class ManagedFileRestoreTest {
             File(live, "upload/old.txt").writeText("old")
             File(staged, "upload").mkdirs()
 
-            restoreManagedFileDirectories(
+            val session = restoreManagedFileDirectories(
+                liveFilesDir = live,
+                stagedFilesDir = staged,
+                directoriesToRestore = listOf("upload"),
+                liveBackupDir = bak,
+            )
+            session?.cleanup()
+
+            assertTrue(File(live, "upload").isDirectory)
+            assertFalse(File(live, "upload/old.txt").exists())
+        } finally {
+            temp.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun restoreSessionRollbackRestoresPreviousState() {
+        val temp = Files.createTempDirectory("restore-rollback-").toFile()
+        try {
+            val live = File(temp, "live").apply { mkdirs() }
+            val staged = File(temp, "staged").apply { mkdirs() }
+            val bak = File(temp, "bak")
+
+            File(live, "upload").mkdirs()
+            File(live, "upload/original.txt").writeText("original")
+            File(staged, "upload").mkdirs()
+            File(staged, "upload/modified.txt").writeText("modified")
+
+            val session = restoreManagedFileDirectories(
                 liveFilesDir = live,
                 stagedFilesDir = staged,
                 directoriesToRestore = listOf("upload"),
                 liveBackupDir = bak,
             )
 
-            assertTrue(File(live, "upload").isDirectory)
-            assertFalse(File(live, "upload/old.txt").exists())
+            assertTrue(File(live, "upload/modified.txt").exists())
+            session?.rollback()
+            session?.cleanup()
+
+            assertTrue(File(live, "upload/original.txt").exists())
+            assertEquals("original", File(live, "upload/original.txt").readText())
+            assertFalse(File(live, "upload/modified.txt").exists())
         } finally {
             temp.deleteRecursively()
         }

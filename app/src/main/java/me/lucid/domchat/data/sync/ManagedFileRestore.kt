@@ -29,14 +29,29 @@ internal fun resolveManagedDirsToRestore(
     return candidates.filter { dirName -> File(stagedFilesDir, dirName).exists() }
 }
 
+internal data class ManagedFileRestoreSession(
+    val liveFilesDir: File,
+    val liveBackupDir: File,
+    val replaced: List<String>,
+    val workspaceEntries: List<WorkspaceTouchedEntry>,
+) {
+    fun rollback() {
+        rollbackManagedFileDirectories(liveFilesDir, liveBackupDir, replaced, workspaceEntries)
+    }
+
+    fun cleanup() {
+        liveBackupDir.deleteRecursively()
+    }
+}
+
 internal fun restoreManagedFileDirectories(
     liveFilesDir: File,
     stagedFilesDir: File,
     directoriesToRestore: List<String>,
     liveBackupDir: File,
-) {
+): ManagedFileRestoreSession? {
     if (directoriesToRestore.isEmpty()) {
-        return
+        return null
     }
     liveBackupDir.mkdirs()
     val replaced = mutableListOf<String>()
@@ -61,28 +76,43 @@ internal fun restoreManagedFileDirectories(
             liveDir.mkdirs()
             mirrorDirectory(stagedDir, liveDir)
         }
-        liveBackupDir.deleteRecursively()
+        return ManagedFileRestoreSession(
+            liveFilesDir = liveFilesDir,
+            liveBackupDir = liveBackupDir,
+            replaced = replaced,
+            workspaceEntries = workspaceEntries,
+        )
     } catch (error: Exception) {
-        replaced.asReversed().forEach { dirName ->
-            val liveDir = File(liveFilesDir, dirName)
-            val backupDir = File(liveBackupDir, dirName)
-            if (dirName == BackupArchiveFormat.WORKSPACES_DIR) {
-                rollbackWorkspaceEntries(workspaceEntries)
-            } else {
-                if (liveDir.exists()) {
-                    liveDir.deleteRecursively()
-                }
-                if (backupDir.exists()) {
-                    liveDir.parentFile?.mkdirs()
-                    if (!backupDir.renameTo(liveDir)) {
-                        liveDir.mkdirs()
-                        mirrorDirectory(backupDir, liveDir)
-                        backupDir.deleteRecursively()
-                    }
+        rollbackManagedFileDirectories(liveFilesDir, liveBackupDir, replaced, workspaceEntries)
+        liveBackupDir.deleteRecursively()
+        throw error
+    }
+}
+
+internal fun rollbackManagedFileDirectories(
+    liveFilesDir: File,
+    liveBackupDir: File,
+    replaced: List<String>,
+    workspaceEntries: List<WorkspaceTouchedEntry>,
+) {
+    replaced.asReversed().forEach { dirName ->
+        val liveDir = File(liveFilesDir, dirName)
+        val backupDir = File(liveBackupDir, dirName)
+        if (dirName == BackupArchiveFormat.WORKSPACES_DIR) {
+            rollbackWorkspaceEntries(workspaceEntries)
+        } else {
+            if (liveDir.exists()) {
+                liveDir.deleteRecursively()
+            }
+            if (backupDir.exists()) {
+                liveDir.parentFile?.mkdirs()
+                if (!backupDir.renameTo(liveDir)) {
+                    liveDir.mkdirs()
+                    mirrorDirectory(backupDir, liveDir)
+                    backupDir.deleteRecursively()
                 }
             }
         }
-        throw error
     }
 }
 

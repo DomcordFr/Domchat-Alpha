@@ -1,6 +1,5 @@
 package me.lucid.domchat.ui.components.ui
 
-import android.app.DownloadManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +42,7 @@ import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.utils.DownloadProgress
 import me.lucid.domchat.utils.UpdateChecker
+import me.lucid.domchat.utils.UpdateDownloadStatus
 import me.lucid.domchat.utils.UpdateInfo
 import androidx.compose.ui.graphics.Color
 
@@ -68,11 +68,9 @@ fun UpdateDialog(
     }.collectAsState(initial = DownloadProgress())
 
     val primaryDownload = info.downloads.firstOrNull()
-    val isDownloading = progress.status == DownloadManager.STATUS_RUNNING ||
-        progress.status == DownloadManager.STATUS_PENDING ||
-        progress.status == DownloadManager.STATUS_PAUSED
-    val isDownloaded = progress.status == DownloadManager.STATUS_SUCCESSFUL
-    val downloadFailed = progress.status == DownloadManager.STATUS_FAILED
+    val isDownloading = progress.status == UpdateDownloadStatus.RUNNING
+    val isDownloaded = progress.status == UpdateDownloadStatus.SUCCESSFUL && progress.localUri != null
+    val downloadFailed = progress.status == UpdateDownloadStatus.FAILED
     val needsInstallPermission = isDownloaded && !updateChecker.canInstallDownloadedUpdate(context)
     val buttonShape = AppShapes.ButtonPill
 
@@ -107,11 +105,9 @@ fun UpdateDialog(
                     Text(
                         text = when {
                             permissionNeeded -> "Enable app installs for Domchat, then come back and continue."
-                            failed -> "The download failed. You can try again."
-                            status == DownloadManager.STATUS_RUNNING -> "Downloading update..."
-                            status == DownloadManager.STATUS_PENDING -> "Waiting to download..."
-                            status == DownloadManager.STATUS_PAUSED -> "Download paused."
-                            status == DownloadManager.STATUS_SUCCESSFUL -> "The update is downloaded and ready."
+                            failed -> progress.errorMessage ?: "The download failed. You can try again."
+                            status == UpdateDownloadStatus.RUNNING -> "Downloading update..."
+                            status == UpdateDownloadStatus.SUCCESSFUL -> "The update is downloaded and ready."
                             else -> "A new version is ready to download."
                         },
                         style = MaterialTheme.typography.bodyMedium,

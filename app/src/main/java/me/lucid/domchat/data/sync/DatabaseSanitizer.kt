@@ -132,7 +132,9 @@ object DatabaseSanitizer {
             try {
                 val writable = migrationRoomDb.openHelper.writableDatabase
                 writable.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
-                    cursor.moveToFirst()
+                    if (cursor.moveToFirst() && cursor.getInt(0) != 0) {
+                        throw java.io.IOException("Sanitized DB WAL checkpoint busy")
+                    }
                 }
             } finally {
                 migrationRoomDb.close()

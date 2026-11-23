@@ -1,10 +1,8 @@
 package me.lucid.domchat.utils
 
-import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Environment
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -140,32 +138,67 @@ class UpdateChecker(private val client: PlatformHttpClient) {
     private val downloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val downloadProgressMap = java.util.concurrent.ConcurrentHashMap<Long, MutableStateFlow<DownloadProgress>>()
     private val downloadCounter = java.util.concurrent.atomic.AtomicLong(1L)
+    private val downloadLock = Any()
+    private var activeDownloadJob: kotlinx.coroutines.Job? = null
+    private var activeCall: okhttp3.Call? = null
+
+    private val downloadHttpClient by lazy {
+        okhttp3.OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .build()
+    }
+
+    private fun sanitizeApkFilename(name: String): String {
+        val base = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+        val withExt = if (base.endsWith(".apk", ignoreCase = true)) base else "$base.apk"
+        return withExt.ifBlank { "update.apk" }
+    }
 
     fun downloadUpdate(context: Context, download: UpdateDownload): Long {
+        synchronized(downloadLock) {
+            activeDownloadJob?.cancel()
+            activeCall?.cancel()
+            activeCall = null
+
+            if (downloadProgressMap.size > 5) {
+                val oldest = downloadProgressMap.keys.sorted().dropLast(3)
+                oldest.forEach { downloadProgressMap.remove(it) }
+            }
+        }
+
         val id = downloadCounter.getAndIncrement()
-        val flow = MutableStateFlow(DownloadProgress(status = DownloadManager.STATUS_PENDING))
+        val flow = MutableStateFlow(DownloadProgress(status = UpdateDownloadStatus.RUNNING))
         downloadProgressMap[id] = flow
 
-        downloadScope.launch {
+        val job = downloadScope.launch {
+            val safeName = sanitizeApkFilename(download.name)
+            val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
+            val partFile = File(updatesDir, "$safeName.part")
+            val finalFile = File(updatesDir, safeName)
+            if (partFile.exists()) partFile.delete()
+            if (finalFile.exists()) finalFile.delete()
+
+            var call: okhttp3.Call? = null
             try {
-                flow.value = flow.value.copy(status = DownloadManager.STATUS_RUNNING)
-                val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
-                val partFile = File(updatesDir, "update.apk.part")
-                val finalFile = File(updatesDir, "update.apk")
-                if (partFile.exists()) partFile.delete()
-                if (finalFile.exists()) finalFile.delete()
-
-                val okHttpClient = okhttp3.OkHttpClient.Builder()
-                    .followRedirects(true)
-                    .followSslRedirects(true)
-                    .build()
-
                 val request = okhttp3.Request.Builder()
                     .url(download.url)
                     .header("User-Agent", "Domchat-Android/${BuildConfig.VERSION_NAME}")
                     .build()
 
-                okHttpClient.newCall(request).execute().use { response ->
+                val createdCall = downloadHttpClient.newCall(request)
+                call = createdCall
+                synchronized(downloadLock) {
+                    activeCall = createdCall
+                }
+
+                coroutineContext[kotlinx.coroutines.Job]?.invokeOnCancellation {
+                    createdCall.cancel()
+                }
+
+                createdCall.execute().use { response ->
                     if (!response.isSuccessful) {
                         throw java.io.IOException("Unexpected HTTP response ${response.code}")
                     }
@@ -187,7 +220,7 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                                     flow.value = DownloadProgress(
                                         bytesDownloaded = downloaded,
                                         totalBytes = if (contentLength > 0) contentLength else downloaded,
-                                        status = DownloadManager.STATUS_RUNNING,
+                                        status = UpdateDownloadStatus.RUNNING,
                                         localUri = null
                                     )
                                 }
@@ -200,7 +233,7 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                     flow.value = DownloadProgress(
                         bytesDownloaded = finalFile.length(),
                         totalBytes = finalFile.length(),
-                        status = DownloadManager.STATUS_SUCCESSFUL,
+                        status = UpdateDownloadStatus.SUCCESSFUL,
                         localUri = android.net.Uri.fromFile(finalFile).toString()
                     )
                 } else {
@@ -209,21 +242,32 @@ class UpdateChecker(private val client: PlatformHttpClient) {
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("UpdateChecker", "Download failed", e)
-                File(context.cacheDir, "updates/update.apk.part").delete()
+                if (partFile.exists()) partFile.delete()
                 flow.value = DownloadProgress(
-                    status = DownloadManager.STATUS_FAILED,
+                    status = UpdateDownloadStatus.FAILED,
+                    errorMessage = e.message ?: "Download failed"
                 )
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, context.getString(R.string.update_download_failed), Toast.LENGTH_SHORT).show()
-                    context.openUrl(download.url)
+                }
+            } finally {
+                synchronized(downloadLock) {
+                    if (activeCall === call) {
+                        activeCall = null
+                    }
                 }
             }
         }
+
+        synchronized(downloadLock) {
+            activeDownloadJob = job
+        }
+
         return id
     }
 
     fun observeDownload(context: Context, downloadId: Long): Flow<DownloadProgress> {
-        return downloadProgressMap[downloadId] ?: flowOf(DownloadProgress(status = DownloadManager.STATUS_FAILED))
+        return downloadProgressMap[downloadId] ?: flowOf(DownloadProgress(status = UpdateDownloadStatus.FAILED))
     }
 
     fun ignoreUpdate(context: Context, version: String) {
@@ -297,6 +341,13 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                 val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
                 if (!actualSha256.equals(expectedSha256.trim(), ignoreCase = true)) {
                     localApk.delete()
+                    downloadProgressMap.values.forEach { f ->
+                        f.value = DownloadProgress(
+                            status = UpdateDownloadStatus.FAILED,
+                            localUri = null,
+                            errorMessage = "Update verification failed: SHA-256 mismatch"
+                        )
+                    }
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, "Update verification failed: SHA-256 mismatch", Toast.LENGTH_LONG).show()
                     }
@@ -327,12 +378,6 @@ class UpdateChecker(private val client: PlatformHttpClient) {
             false
         }
     }
-
-    fun installDownloadedUpdate(context: Context, uriString: String, expectedSha256: String? = null): Boolean {
-        return kotlinx.coroutines.runBlocking(Dispatchers.IO) {
-            installDownloadedUpdateAsync(context, uriString, expectedSha256)
-        }
-    }
     
     fun isUpdateIgnored(context: Context, version: String, forceCheck: Boolean): Boolean {
         if (forceCheck) return false
@@ -345,11 +390,14 @@ class UpdateChecker(private val client: PlatformHttpClient) {
     }
 }
 
+enum class UpdateDownloadStatus { IDLE, RUNNING, SUCCESSFUL, FAILED }
+
 data class DownloadProgress(
     val bytesDownloaded: Long = 0,
     val totalBytes: Long = 0,
-    val status: Int = -1,
-    val localUri: String? = null
+    val status: UpdateDownloadStatus = UpdateDownloadStatus.IDLE,
+    val localUri: String? = null,
+    val errorMessage: String? = null
 ) {
     val progress: Float
         get() = if (totalBytes > 0) bytesDownloaded.toFloat() / totalBytes.toFloat() else 0f

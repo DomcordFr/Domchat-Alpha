@@ -11,7 +11,6 @@ import me.lucid.tts.provider.TTSProviderSetting
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.SecretKeyManager
-import me.lucid.domchat.data.datastore.WebDavConfig
 import me.lucid.domchat.data.datastore.sanitize
 import me.lucid.domchat.data.db.AppDatabase
 import me.lucid.domchat.utils.BoundedStreams
@@ -56,6 +55,7 @@ class WebdavSync(
             try {
                 restoreFromBackupFile(file)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 LogUtil.e(TAG, "restoreFromLocalFile: Failed to restore from local file", e)
                 throw Exception("Restore failed: ${e.message}")
             }
@@ -321,7 +321,7 @@ class WebdavSync(
                 webServerPort = defaults.webServerPort,
                 webServerJwtEnabled = defaults.webServerJwtEnabled,
                 webServerAccessPassword = defaults.webServerAccessPassword,
-                webDavConfig = WebDavConfig(),
+                webDavConfig = defaults.webDavConfig,
             )
         }
         return result
@@ -511,7 +511,9 @@ class WebdavSync(
                                 if (liveDbFile.exists()) {
                                     val tablesToPreserve = DatabaseSanitizer.PORTABLE_TABLES.filter { it !in tablesInBackup }
                                     if (tablesToPreserve.isNotEmpty()) {
-                                        checkpointDatabase()
+                                        if (!checkpointDatabase()) {
+                                            LogUtil.w(TAG, "restoreFromBackupFile: WAL checkpoint returned busy before table copy")
+                                        }
                                         DatabaseSanitizer.copyTablesBetweenDatabases(
                                             sourceDbFile = liveDbFile,
                                             targetDbFile = cleanDb,
@@ -537,6 +539,7 @@ class WebdavSync(
                             }.getOrThrow()
                             LogUtil.i(TAG, "restoreFromBackupFile: Staged database sanitized and shell states adjusted")
                         } catch (e: Exception) {
+                            if (e is CancellationException) throw e
                             LogUtil.e(TAG, "restoreFromBackupFile: Failed to stage database", e)
                             throw Exception("Database sanitization failed: ${e.message}")
                         }
@@ -702,13 +705,16 @@ class WebdavSync(
                     var dbTouched = false
                     var settingsCommitted = false
                     var prefsCommitted = false
+                    var managedFilesSession: ManagedFileRestoreSession? = null
                     var liveLlmModelsSnapshot: List<me.lucid.locallm.InstalledLocalModel>? = null
                     var liveSttModelsSnapshot: List<me.lucid.asr.local.InstalledSherpaModel>? = null
 
                     try {
                         // Step 1: Atomic Database Swap
                         if (stagedCleanDb != null && stagedCleanDb.exists()) {
-                            checkpointDatabase()
+                            if (!checkpointDatabase()) {
+                                LogUtil.w(TAG, "restoreFromBackupFile: WAL checkpoint returned busy before database swap")
+                            }
                             appDatabase.close()
                             liveDbBackupDir.mkdirs()
                             if (finalDbFile.exists()) {
@@ -753,7 +759,7 @@ class WebdavSync(
 
                         // Step 4: Managed Files Commit
                         if (directoriesToRestore.isNotEmpty()) {
-                            restoreManagedFileDirectories(
+                            managedFilesSession = restoreManagedFileDirectories(
                                 liveFilesDir = context.filesDir,
                                 stagedFilesDir = stagedFilesDir,
                                 directoriesToRestore = directoriesToRestore,
@@ -773,10 +779,17 @@ class WebdavSync(
                             stagedSttModels?.forEach { store.upsert(it) }
                         }
 
+                        managedFilesSession?.cleanup()
                         LogUtil.i(TAG, "restoreFromBackupFile: Restore completed successfully")
                     } catch (error: Exception) {
                         if (error is CancellationException) throw error
                         LogUtil.e(TAG, "restoreFromBackupFile: Commit failed, rolling back changes", error)
+                        if (managedFilesSession != null) {
+                            runCatching {
+                                managedFilesSession.rollback()
+                                managedFilesSession.cleanup()
+                            }
+                        }
                         if (liveLlmModelsSnapshot != null) {
                             runCatching {
                                 val store = me.lucid.locallm.LocalModelStore(context)
@@ -836,6 +849,8 @@ class WebdavSync(
                         workspacesMetadata = manifest?.workspacesMetadata ?: emptyList(),
                     )
                 } finally {
+                    managedFilesSession?.cleanup()
+                    liveFilesBackupDir.deleteRecursively()
                     restoreTempDir.deleteRecursively()
                 }
             }
