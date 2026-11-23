@@ -685,7 +685,7 @@ val LocalRpStyleRules = compositionLocalOf<List<RpStyleRule>> { emptyList() }
 @Stable
 internal class StreamingRevealState {
     val rangesState = mutableStateOf<List<StreamingSettleRange>>(emptyList())
-    var nowMillisState: State<Long> = mutableLongStateOf(0L)
+    var nowMillisState: State<Long> by mutableStateOf(mutableLongStateOf(0L))
     var color: Color = Color.White
     var smoothedCharsPerSecond: Float = 0f
     var blurEnabled: Boolean = false

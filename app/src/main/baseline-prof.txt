@@ -1955,7 +1955,7 @@ HSPLme/lucid/domchat/RouteActivity;->onCreate(Landroid/os/Bundle;)V
 # Liquid Glass & GPU Backdrop System
 Lme/lucid/domchat/ui/theme/LiquidGlassKt;
 Lme/lucid/domchat/ui/component/backdrop/Backdrop;
-Lme/lucid/domchat/ui/component/backdrop/LayerBackdrop;
+Lme/lucid/domchat/ui/component/backdrop/backdrops/LayerBackdrop;
 Lme/lucid/domchat/ui/component/backdrop/DrawBackdropModifierKt;
 Lme/lucid/domchat/ui/component/backdrop/DrawBackdropNode;
 Lme/lucid/domchat/ui/component/backdrop/RuntimeShaderCache;
@@ -1979,6 +1979,7 @@ Lme/lucid/domchat/ui/components/ui/UIAvatarKt;
 Lme/lucid/domchat/ui/components/ui/DomChatGlassSwitchKt;
 Lme/lucid/domchat/ui/components/richtext/MarkdownKt;
 Lme/lucid/domchat/ui/components/richtext/StreamingRevealState;
+Lme/lucid/domchat/ui/components/richtext/StreamingTextPresentationState;
 
 # Storage, Database & Persistence
 Lme/lucid/domchat/data/db/AppDatabase;
@@ -1993,5 +1994,4 @@ Lme/lucid/domchat/data/model/Assistant;
 Lme/lucid/ai/ui/MessageNode;
 Lme/lucid/ai/ui/UIMessage;
 Lme/lucid/ai/ui/UIMessagePart;
-Lme/lucid/ai/ui/StreamingTextPresentationState;
 Lme/lucid/ai/core/MessageRole;

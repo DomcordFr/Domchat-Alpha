@@ -643,9 +643,6 @@ class SettingsStore(
             .normalizeMemorySettings()
             .clearMissingModelReferences()
 
-        val current = settingsFlow.value
-        val isFirstSave = current.init
-
         // Handle explicit secret deletions (user cleared a field that had a value)
         // This must be called BEFORE migration to remove deleted secrets from SecureStore
         secretKeyManager.handleExplicitSecretDeletions(current, normalizedSettings)
@@ -658,6 +655,7 @@ class SettingsStore(
             .normalizeFontSettings()
             .normalizeTtsSettings()
         dataStore.edit { preferences ->
+            val isFirstSave = preferences.asMap().isEmpty()
             if (isFirstSave || current.dynamicColor != normalizedSettings.dynamicColor) {
                 preferences[DYNAMIC_COLOR] = normalizedSettings.dynamicColor
             }
