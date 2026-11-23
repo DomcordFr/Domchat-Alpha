@@ -216,6 +216,9 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
+                            val info = manualUpdateInfo
+                            val isNewer = info != null && Version(info.version) > Version(currentVersionName)
+
                             // Header Row: Icon, Title & Status Badge
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -243,8 +246,6 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                                     )
                                 }
 
-                                val info = manualUpdateInfo
-                                val isNewer = info != null && Version(info.version) > Version(currentVersionName)
                                 val badgeText = when {
                                     isCheckingForUpdate -> "Checking..."
                                     isNewer -> "Update Available"
@@ -253,10 +254,11 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                                 Surface(
                                     shape = RoundedCornerShape(50),
                                     color = Color(0xFF000000),
-                                    border = BorderStroke(
-                                        0.5.dp,
-                                        if (isNewer) Color(0xFF34C759).copy(alpha = 0.45f) else LiquidGlassTokens.SpecularBorderSubtle
-                                    )
+                                    border = if (isNewer) {
+                                        BorderStroke(0.5.dp, Color(0xFF34C759).copy(alpha = 0.45f))
+                                    } else {
+                                        BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                    }
                                 ) {
                                     Text(
                                         text = badgeText,
@@ -358,7 +360,6 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                             Button(
                                 onClick = {
                                     haptics.perform(HapticPattern.Pop)
-                                    val info = manualUpdateInfo
                                     if (info != null) {
                                         showManualUpdateDialog = true
                                     } else {
@@ -400,7 +401,6 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    val info = manualUpdateInfo
                                     val btnText = when {
                                         info != null && Version(info.version) > Version(currentVersionName) ->
                                             "Install Update (v${info.version})"
