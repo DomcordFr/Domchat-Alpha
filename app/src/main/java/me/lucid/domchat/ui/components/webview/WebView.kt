@@ -68,7 +68,7 @@ internal class MyWebViewClient(private val state: WebViewState) : WebViewClient(
         if (state.blockExternalNavigation) {
             val url = request?.url ?: return true
             val scheme = url.scheme?.lowercase() ?: return true
-            if (scheme == "file" && url.path?.startsWith("/android_asset/") == true) {
+            if (scheme == "file" && url.path?.startsWith("/android_asset/") == true && !url.path.orEmpty().contains("..")) {
                 return false
             }
             if (scheme == "about") {

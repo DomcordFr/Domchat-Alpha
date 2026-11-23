@@ -88,7 +88,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import me.lucid.domchat.R
-import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.liquidGlassBubbleSurface
@@ -562,14 +562,14 @@ private fun AnimatedSinglePill(
     
     val isMultipleMinimized = !surfaceExpanded && state is ActivityState.CompletedMultiple
 
-    val settings = LocalSettings.current
-    val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-    val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
-    val glassAlpha = settings.displaySetting.chatBubbleAlpha
-    val bubbleBlur = settings.displaySetting.chatBubbleBlur
-    val bubbleTone = settings.displaySetting.chatBubbleTone
-    val tintHue = settings.displaySetting.chatBubbleTintHue
-    val tintAmount = settings.displaySetting.chatBubbleTintAmount
+    val display = LocalDisplaySetting.current
+    val isTransparentStyle = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+    val isGlassy = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+    val glassAlpha = display.chatBubbleAlpha
+    val bubbleBlur = display.chatBubbleBlur
+    val bubbleTone = display.chatBubbleTone
+    val tintHue = display.chatBubbleTintHue
+    val tintAmount = display.chatBubbleTintAmount
 
     val tone = bubbleTone.coerceIn(0f, 1f)
     val effectiveAlpha = glassAlpha.coerceIn(0f, 1f)
@@ -661,14 +661,14 @@ private fun AnimatedSinglePill(
             .then(
                 if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
                     val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
-                        settings.displaySetting.bubbleSpecularIntensity > 0f
+                        display.bubbleSpecularIntensity > 0f
                     }
                     val bubbleFillColor = if (effectiveAlpha <= 0.02f) {
                         Color.Transparent
                     } else {
                         baseTone.copy(alpha = effectiveAlpha)
                     }
-                    when (settings.displaySetting.bubbleInterfaceStyle) {
+                    when (display.bubbleInterfaceStyle) {
                         InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
                             shape = pillShape,
                             borderWidth = 0.5.dp,
@@ -679,7 +679,7 @@ private fun AnimatedSinglePill(
                             borderWidth = 0.5.dp,
                             fillColor = bubbleFillColor,
                             specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                            glassMode = settings.displaySetting.liquidGlassMode,
+                            glassMode = display.liquidGlassMode,
                         )
                     }
                 } else Modifier
@@ -1341,14 +1341,14 @@ private fun SinglePill(
     isLoading: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val settings = LocalSettings.current
-    val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-    val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
-    val glassAlpha = settings.displaySetting.chatBubbleAlpha
-    val bubbleBlur = settings.displaySetting.chatBubbleBlur
-    val bubbleTone = settings.displaySetting.chatBubbleTone
-    val tintHue = settings.displaySetting.chatBubbleTintHue
-    val tintAmount = settings.displaySetting.chatBubbleTintAmount
+    val display = LocalDisplaySetting.current
+    val isTransparentStyle = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+    val isGlassy = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+    val glassAlpha = display.chatBubbleAlpha
+    val bubbleBlur = display.chatBubbleBlur
+    val bubbleTone = display.chatBubbleTone
+    val tintHue = display.chatBubbleTintHue
+    val tintAmount = display.chatBubbleTintAmount
 
     val tone = bubbleTone.coerceIn(0f, 1f)
     val effectiveAlpha = glassAlpha.coerceIn(0f, 1f)

@@ -90,6 +90,7 @@ import me.lucid.domchat.R
 import me.lucid.domchat.Screen
 import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.ui.modifier.fadeEdges
 import me.lucid.domchat.ui.hooks.HapticPattern
@@ -174,9 +175,8 @@ fun HighlightCodeBlock(
     val scope = rememberCoroutineScope()
     val navController = if (normalizedLanguage == "html") LocalNavController.current else null
     val context = LocalContext.current
-    val settings = LocalSettings.current
-    val effectiveDisplay = settings.getEffectiveDisplaySetting()
-    val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
+    val effectiveDisplay = LocalDisplaySetting.current
+    val haptics = rememberPremiumHaptics(enabled = effectiveDisplay.enableUIHaptics)
     val colorScheme = MaterialTheme.colorScheme
     val shellColor = colorScheme.surfaceContainerHigh
     val headerColor = colorScheme.surfaceContainerHighest
@@ -358,7 +358,7 @@ fun HighlightCodeBlock(
                     onPreview = {
                         navController?.navigate(Screen.WebView(content = code.base64Encode()))
                     },
-                    hapticsEnabled = settings.displaySetting.enableUIHaptics
+                    hapticsEnabled = effectiveDisplay.enableUIHaptics
                 )
             }
 

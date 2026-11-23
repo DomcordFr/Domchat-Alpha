@@ -104,7 +104,7 @@ import kotlinx.coroutines.flow.mapLatest
 import me.lucid.domchat.data.datastore.DisplaySetting
 import me.lucid.domchat.data.datastore.RpStyleRule
 import me.lucid.domchat.ui.components.table.DataTable
-import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.utils.BidiDirection
 import me.lucid.domchat.utils.appLocale
 import me.lucid.domchat.utils.resolveBidiDirection
@@ -159,26 +159,30 @@ private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNo
     }
 }
 
-private fun splitCompletedBlocksAndTail(content: String): Pair<String, String>? {
+private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>? {
     var inCodeFence = false
-    var lastSafeSplitIndex = -1
+    val blocks = mutableListOf<String>()
+    var blockStart = 0
     var i = 0
     val len = content.length
-    while (i < len - 2) {
+    while (i < len - 1) {
         if (content.startsWith("```", i)) {
             inCodeFence = !inCodeFence
             i += 3
             continue
         }
         if (!inCodeFence && content[i] == '\n' && content[i + 1] == '\n') {
-            lastSafeSplitIndex = i + 2
+            val blockEnd = i + 2
+            blocks.add(content.substring(blockStart, blockEnd))
+            blockStart = blockEnd
             i += 2
             continue
         }
         i++
     }
-    if (inCodeFence || lastSafeSplitIndex <= 0 || lastSafeSplitIndex >= len) return null
-    return content.substring(0, lastSafeSplitIndex) to content.substring(lastSafeSplitIndex)
+    if (inCodeFence || blocks.isEmpty() || blockStart >= len) return null
+    val tail = content.substring(blockStart)
+    return blocks to tail
 }
 
 @Synchronized
@@ -194,41 +198,64 @@ private fun parseMarkdownCached(content: String): Pair<String, ASTNode> {
 private class OffsetASTNode(
     private val delegate: ASTNode,
     private val offset: Int,
-    override val parent: ASTNode? = null,
+    private val parentOverride: ASTNode? = null,
 ) : ASTNode {
     override val type: IElementType get() = delegate.type
     override val startOffset: Int get() = delegate.startOffset + offset
     override val endOffset: Int get() = delegate.endOffset + offset
+    override val parent: ASTNode? get() = parentOverride ?: delegate.parent
     override val children: List<ASTNode> by lazy {
         delegate.children.map { OffsetASTNode(it, offset, this) }
     }
 }
 
 private class MergedRootASTNode(
-    private val prefixRoot: ASTNode,
-    private val tailRoot: ASTNode,
-    private val offset: Int,
+    private val rootType: IElementType,
+    private val totalEndOffset: Int,
 ) : ASTNode {
-    override val type: IElementType get() = prefixRoot.type
+    override val type: IElementType get() = rootType
     override val startOffset: Int get() = 0
-    override val endOffset: Int get() = tailRoot.endOffset + offset
+    override val endOffset: Int get() = totalEndOffset
     override val parent: ASTNode? get() = null
-    override val children: List<ASTNode> by lazy {
-        prefixRoot.children + tailRoot.children.map { OffsetASTNode(it, offset, this) }
-    }
+    val allChildren = mutableListOf<ASTNode>()
+    override val children: List<ASTNode> get() = allChildren
 }
 
 @Synchronized
 private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
-    val split = splitCompletedBlocksAndTail(content)
+    val split = splitIntoBlocksAndTail(content)
     if (split != null) {
-        val (prefix, tail) = split
-        val prefixParsed = parseMarkdownCached(prefix)
+        val (blocks, tail) = split
+        val combinedPreprocessed = StringBuilder()
         val tailPreprocessed = preProcess(tail)
-        val combinedPreprocessed = prefixParsed.first + tailPreprocessed
         val tailTree = parser.buildMarkdownTreeFromString(tailPreprocessed)
-        val mergedTree = MergedRootASTNode(prefixParsed.second, tailTree, prefixParsed.first.length)
-        return combinedPreprocessed to mergedTree
+
+        var totalLen = 0
+        val parsedBlocks = blocks.map { block ->
+            val parsed = parseMarkdownCached(block)
+            totalLen += parsed.first.length
+            parsed
+        }
+        totalLen += tailPreprocessed.length
+
+        val rootType = parsedBlocks.firstOrNull()?.second?.type ?: tailTree.type
+        val mergedRoot = MergedRootASTNode(rootType, totalLen)
+
+        var currentOffset = 0
+        for ((preprocessedBlock, blockTree) in parsedBlocks) {
+            combinedPreprocessed.append(preprocessedBlock)
+            for (child in blockTree.children) {
+                mergedRoot.allChildren.add(OffsetASTNode(child, currentOffset, mergedRoot))
+            }
+            currentOffset += preprocessedBlock.length
+        }
+
+        combinedPreprocessed.append(tailPreprocessed)
+        for (child in tailTree.children) {
+            mergedRoot.allChildren.add(OffsetASTNode(child, currentOffset, mergedRoot))
+        }
+
+        return combinedPreprocessed.toString() to mergedRoot
     }
     val preprocessed = preProcess(content)
     val astTree = parser.buildMarkdownTreeFromString(preprocessed)
@@ -855,8 +882,7 @@ fun MarkdownBlock(
     onClickCitation: (String) -> Unit = {}
 ) {
     // Read rpStyleRules and streaming animation settings (honoring assistant overrides if provided)
-    val settings = LocalSettings.current
-    val effectiveDisplay = displaySetting ?: settings.displaySetting
+    val effectiveDisplay = displaySetting ?: LocalDisplaySetting.current
     val rpStyleRules = effectiveDisplay.rpStyleRules
     val fadeInEnabled = effectiveDisplay.enableStreamingFadeIn
     val fadeDurationMs = effectiveDisplay.streamingFadeDurationMs.coerceIn(100, 1500)

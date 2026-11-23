@@ -140,6 +140,7 @@ import me.lucid.domchat.ui.context.LocalNavController
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
 import me.lucid.domchat.data.model.Avatar
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.ui.context.LocalSettings
 import me.lucid.domchat.utils.base64Encode
 import me.lucid.domchat.utils.copyMessageToClipboard
@@ -180,8 +181,7 @@ private fun rememberFormattedMessageText(
         }
     }
 
-    var lastFormatted by remember { mutableStateOf<String?>(null) }
-    val initial = lastFormatted ?: rawText.replacePersonaPlaceholders(assistant, userNickname)
+    val initial = remember { rawText.replacePersonaPlaceholders(assistant, userNickname) }
 
     return produceState(
         initial,
@@ -206,7 +206,6 @@ private fun rememberFormattedMessageText(
                 )
             )
         }
-        lastFormatted = formatted
         value = formatted
     }.value
 }
@@ -1405,8 +1404,8 @@ private fun UserMessageTurn(
     }
     
     var previewUserAvatarUrl by remember { mutableStateOf<String?>(null) }
-    val activePersona = settings.displaySetting.getActivePersona()
-    val personaName = activePersona.name.ifBlank { settings.displaySetting.userNickname.ifBlank { "User" } }
+    val activePersona = effectiveDisplay.getActivePersona()
+    val personaName = activePersona.name.ifBlank { effectiveDisplay.userNickname.ifBlank { "User" } }
     val personaAvatar = activePersona.avatar
     val messageTimestamp = remember(node.currentMessage.createdAt) {
         formatMessageTimestamp(node.currentMessage.createdAt)
@@ -1450,7 +1449,7 @@ private fun UserMessageTurn(
             )
             val onUserAvatarClick: () -> Unit = {
                 haptics.perform(HapticPattern.Pop)
-                val avatarToUse = personaAvatar.takeIf { it !is Avatar.Dummy } ?: settings.displaySetting.userAvatar
+                val avatarToUse = personaAvatar.takeIf { it !is Avatar.Dummy } ?: effectiveDisplay.userAvatar
                 val avatarUrl = when (avatarToUse) {
                     is Avatar.Image -> avatarToUse.url
                     is Avatar.Resource -> "android.resource://${context.packageName}/${safeDrawableResId(context, avatarToUse.id, me.lucid.domchat.R.drawable.default_generical_pfp)}"
@@ -1491,16 +1490,16 @@ private fun UserMessageTurn(
                     else -> BubblePosition.MIDDLE
                 }
                 
-                val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-                val isMessengerStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
-                val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
-                val bubbleInterfaceStyle = settings.displaySetting.bubbleInterfaceStyle
-                val glassAlpha = settings.displaySetting.chatBubbleAlpha
-                val bubbleBlur = settings.displaySetting.chatBubbleBlur
-                val bubbleTone = settings.displaySetting.chatBubbleTone
-                val baseLuminance = settings.displaySetting.glassBaseLuminance
-                val tintHue = settings.displaySetting.chatBubbleTintHue
-                val tintAmount = settings.displaySetting.chatBubbleTintAmount
+                val isTransparentStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+                val isMessengerStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
+                val isGlassy = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+                val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
+                val glassAlpha = effectiveDisplay.chatBubbleAlpha
+                val bubbleBlur = effectiveDisplay.chatBubbleBlur
+                val bubbleTone = effectiveDisplay.chatBubbleTone
+                val baseLuminance = effectiveDisplay.glassBaseLuminance
+                val tintHue = effectiveDisplay.chatBubbleTintHue
+                val tintAmount = effectiveDisplay.chatBubbleTintAmount
 
                 GroupedMessageBubble(
                     position = position,
@@ -1553,7 +1552,7 @@ private fun UserMessageTurn(
                             )
                             InterfaceStyle.GLASS -> {
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
-                                    settings.displaySetting.bubbleSpecularIntensity > 0f
+                                    effectiveDisplay.bubbleSpecularIntensity > 0f
                                 }
                                 val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
                                 m.liquidGlassBubbleSurface(
@@ -1561,7 +1560,7 @@ private fun UserMessageTurn(
                                     borderWidth = 0.5.dp,
                                     fillColor = bubbleFillColor,
                                     specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                                    glassMode = settings.displaySetting.liquidGlassMode,
+                                    glassMode = effectiveDisplay.liquidGlassMode,
                                 )
                             }
                         }
@@ -1594,7 +1593,7 @@ private fun UserMessageTurn(
                             )
                         } else null
                     )
-                    val userNickname = settings.displaySetting.getActivePersona().name
+                    val userNickname = effectiveDisplay.getActivePersona().name
                     AnimatedContent(
                         targetState = node.selectIndex,
                         transitionSpec = {
@@ -2081,16 +2080,16 @@ private fun AssistantMessageTurn(
                     else -> BubblePosition.MIDDLE
                 }
                 
-                val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-                val isMessengerStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
-                val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
-                val bubbleInterfaceStyle = settings.displaySetting.bubbleInterfaceStyle
-                val glassAlpha = settings.displaySetting.chatBubbleAlpha
-                val bubbleBlur = settings.displaySetting.chatBubbleBlur
-                val bubbleTone = settings.displaySetting.chatBubbleTone
-                val baseLuminance = settings.displaySetting.glassBaseLuminance
-                val tintHue = settings.displaySetting.chatBubbleTintHue
-                val tintAmount = settings.displaySetting.chatBubbleTintAmount
+                val isTransparentStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+                val isMessengerStyle = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.MESSENGER
+                val isGlassy = effectiveDisplay.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
+                val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
+                val glassAlpha = effectiveDisplay.chatBubbleAlpha
+                val bubbleBlur = effectiveDisplay.chatBubbleBlur
+                val bubbleTone = effectiveDisplay.chatBubbleTone
+                val baseLuminance = effectiveDisplay.glassBaseLuminance
+                val tintHue = effectiveDisplay.chatBubbleTintHue
+                val tintAmount = effectiveDisplay.chatBubbleTintAmount
 
                 GroupedMessageBubble(
                     position = position,
@@ -2136,7 +2135,7 @@ private fun AssistantMessageTurn(
                             )
                             InterfaceStyle.GLASS -> {
                                 val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
-                                    settings.displaySetting.bubbleSpecularIntensity > 0f
+                                    effectiveDisplay.bubbleSpecularIntensity > 0f
                                 }
                                 val bubbleFillColor = if (glassAlpha <= 0.02f) Color.Transparent else androidx.compose.ui.graphics.lerp(Color.Black, Color.White, bubbleTone.coerceIn(0f, 1f)).copy(alpha = glassAlpha.coerceIn(0f, 1f))
                                 m.liquidGlassBubbleSurface(
@@ -2144,7 +2143,7 @@ private fun AssistantMessageTurn(
                                     borderWidth = 0.5.dp,
                                     fillColor = bubbleFillColor,
                                     specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                                    glassMode = settings.displaySetting.liquidGlassMode,
+                                    glassMode = effectiveDisplay.liquidGlassMode,
                                 )
                             }
                         }
@@ -2165,7 +2164,7 @@ private fun AssistantMessageTurn(
                     ) { targetIdx ->
                         val targetMsg = assistantNode.messages.getOrNull(targetIdx) ?: assistantNode.currentMessage
                         val currentText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(index)?.text ?: part.text
-                        val userNickname = settings.displaySetting.getActivePersona().name
+                        val userNickname = effectiveDisplay.getActivePersona().name
                         val displayContent = rememberFormattedMessageText(
                             rawText = currentText,
                             assistant = assistant,
@@ -2294,7 +2293,7 @@ private fun AssistantMessageTurn(
                 ) {
                     val activeParts = if (currentTextParts.isNotEmpty()) currentTextParts else allTextBubbles.map { it.second }
                     activeParts.forEachIndexed { index, part ->
-                        val userNickname = settings.displaySetting.getActivePersona().name
+                        val userNickname = effectiveDisplay.getActivePersona().name
                         val displayContent = rememberFormattedMessageText(
                             rawText = part.text,
                             assistant = assistant,
@@ -2487,13 +2486,13 @@ private fun AssistantThinkingDropdown(
         label = "thinking_chevron"
     )
 
-    val settings = LocalSettings.current
-    val isTransparentStyle = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
-    val glassAlpha = settings.displaySetting.chatBubbleAlpha
-    val bubbleBlur = settings.displaySetting.chatBubbleBlur
-    val bubbleTone = settings.displaySetting.chatBubbleTone
-    val tintHue = settings.displaySetting.chatBubbleTintHue
-    val tintAmount = settings.displaySetting.chatBubbleTintAmount
+    val display = LocalDisplaySetting.current
+    val isTransparentStyle = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
+    val glassAlpha = display.chatBubbleAlpha
+    val bubbleBlur = display.chatBubbleBlur
+    val bubbleTone = display.chatBubbleTone
+    val tintHue = display.chatBubbleTintHue
+    val tintAmount = display.chatBubbleTintAmount
 
     val tone = bubbleTone.coerceIn(0f, 1f)
     val effectiveAlpha = glassAlpha.coerceIn(0f, 1f)
@@ -2529,7 +2528,7 @@ private fun AssistantThinkingDropdown(
             .then(
                 if (isTransparentStyle) {
                     Modifier
-                } else when (settings.displaySetting.bubbleInterfaceStyle) {
+                } else when (display.bubbleInterfaceStyle) {
                     InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
                         shape = shape,
                         borderWidth = 0.5.dp,
@@ -2537,7 +2536,7 @@ private fun AssistantThinkingDropdown(
                     )
                     InterfaceStyle.GLASS -> {
                         val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
-                            settings.displaySetting.bubbleSpecularIntensity > 0f
+                            display.bubbleSpecularIntensity > 0f
                         }
                         val bubbleFillColor = if (effectiveAlpha <= 0.02f) Color.Transparent else baseTone.copy(alpha = effectiveAlpha)
                         Modifier.liquidGlassBubbleSurface(
@@ -2545,7 +2544,7 @@ private fun AssistantThinkingDropdown(
                             borderWidth = 0.5.dp,
                             fillColor = bubbleFillColor,
                             specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                            glassMode = settings.displaySetting.liquidGlassMode,
+                            glassMode = display.liquidGlassMode,
                         )
                     }
                 }

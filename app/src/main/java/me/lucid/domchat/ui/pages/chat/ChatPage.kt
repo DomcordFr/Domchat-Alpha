@@ -1601,6 +1601,9 @@ private fun ChatPageContent(
         currentAssistant.id,
         debouncedPendingParts,
         isGenerating,
+        assistantMemories,
+        activePersistenceMode,
+        setting.displaySetting.contextBudgetConfig,
     ) {
         if (!showContextSummary) {
             value = null
@@ -1934,10 +1937,11 @@ private fun ChatPageContent(
                         } else {
                             conversationSnapshots[targetConversationId] ?: Conversation.ofId(targetConversationId)
                         }
+                        val fallbackListState = remember(targetConversationId) { LazyListState() }
                         val frameListState = if (targetConversationId == conversation.id) {
                             chatListState
                         } else {
-                            chatListStateSnapshots[targetConversationId] ?: LazyListState()
+                            chatListStateSnapshots[targetConversationId] ?: fallbackListState
                         }
                         val frameInitialSearchQuery = if (targetConversationId == conversation.id) {
                             initialSearchQuery
@@ -2743,11 +2747,11 @@ private fun ChatPageContent(
                         },
                         onWallpaperClick = {
                             showToolbarOverflowMenu = false
-                            navController.navigate(Screen.SettingDisplay)
+                            navController.navigate(Screen.SettingUICustomization)
                         },
                         onTextStylingClick = {
                             showToolbarOverflowMenu = false
-                            navController.navigate(Screen.SettingDisplay)
+                            navController.navigate(Screen.SettingFonts)
                         },
                     )
                 }
@@ -3998,44 +4002,6 @@ private fun ChatToolbar(
     }
 }
 
-@Composable
-private fun rememberContextMeterUsage(
-    enabled: Boolean,
-    model: Model?,
-    conversation: Conversation,
-    assistant: Assistant,
-    settings: Settings,
-    memoryCandidates: List<AssistantMemory>,
-    persistenceMode: ChatPersistenceMode,
-    pendingParts: List<UIMessagePart>,
-    requestUsage: ContextUsageBreakdown?,
-    isGenerating: Boolean = false,
-): ContextUsageBreakdown? {
-    if (!enabled) return null
-    return produceState<ContextUsageBreakdown?>(
-        requestUsage,
-        enabled,
-        model?.id,
-        conversation.updateAt,
-        assistant.id,
-        pendingParts,
-        isGenerating,
-    ) {
-        withContext(Dispatchers.Default) {
-            value = ContextBudgetCalculator.calculate(
-                model = model,
-                conversation = conversation,
-                assistant = assistant,
-                settings = settings,
-                memoryCandidates = memoryCandidates,
-                persistenceMode = persistenceMode,
-                pendingParts = pendingParts,
-                requestUsage = requestUsage,
-                isGenerating = isGenerating,
-            )
-        }
-    }.value
-}
 
 @Composable
 private fun ContextUsageOverlay(

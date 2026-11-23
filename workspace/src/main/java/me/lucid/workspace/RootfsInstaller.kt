@@ -202,7 +202,7 @@ class RootfsInstaller(
         val rootCanonicalPath = root.canonicalFile.toPath()
         var current: File? = file
         while (current != null) {
-            if (current.exists()) {
+            if (current.exists() || java.nio.file.Files.isSymbolicLink(current.toPath())) {
                 val currentCanonical = current.canonicalFile.toPath()
                 require(currentCanonical == rootCanonicalPath || currentCanonical.startsWith(rootCanonicalPath)) {
                     "Rootfs entry escapes target directory via symlink: ${file.path}"
@@ -228,8 +228,8 @@ class RootfsInstaller(
         val sourceForFallback = targetCanonical
         val linkTarget = if (File(linkName).isAbsolute) {
             val parentFile = (target.parentFile ?: rootFile).apply { mkdirs() }.canonicalFile
-            val relPath = parentFile.toPath().relativize(targetCanonical.toPath())
-            File(relPath.toString())
+            val relPath = parentFile.toPath().relativize(targetCanonical.toPath()).toString().ifEmpty { "." }
+            File(relPath)
         } else {
             File(linkName)
         }

@@ -32,7 +32,7 @@ import dev.chrisbanes.haze.hazeSource
 import me.lucid.domchat.ui.theme.AppSurface
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.ui.theme.liquidGlassSurfaceColor
-import me.lucid.domchat.ui.context.LocalSettings
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 
 data class DomChatBlur(
     val enabled: Boolean = false,
@@ -62,14 +62,14 @@ fun ApplyDialogWindowBlur(
     blurRadius: Dp? = null,
 ) {
     val view = LocalView.current
-    val settings = LocalSettings.current
-    val glassAlpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+    val display = LocalDisplaySetting.current
+    val glassAlpha = display.glassAlpha.coerceIn(0f, 1f)
     if (glassAlpha <= 0.02f) {
         return
     }
-    val effectiveRadius = blurRadius ?: settings.displaySetting.glassBlur.dp
-    val blurActive = settings.displaySetting.enableBlurEffect || 
-                     settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
+    val effectiveRadius = blurRadius ?: display.glassBlur.dp
+    val blurActive = display.enableBlurEffect || 
+                     display.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
 
     DisposableEffect(view, effectiveRadius, blurActive) {
         var resolvedWindow: android.view.Window? = null
@@ -147,9 +147,9 @@ fun Modifier.domChatBlurEffect(
 ): Modifier {
     val blur = LocalDomChatBlur.current
     val hazeState = blur.hazeState
-    val settings = LocalSettings.current
-    val glassAlpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
-    val effectiveRadius = blurRadius ?: settings.displaySetting.glassBlur.dp
+    val display = LocalDisplaySetting.current
+    val glassAlpha = display.glassAlpha.coerceIn(0f, 1f)
+    val effectiveRadius = blurRadius ?: display.glassBlur.dp
     val isEffectivelyTransparent = containerColor == Color.Transparent || containerColor.alpha <= 0.02f
     val isEffectivelyNoBlur = effectiveRadius <= 0.5.dp
 
@@ -207,8 +207,8 @@ fun Modifier.domChatBlurEffect(
 
 @Composable
 fun domChatBaseToneColor(): Color {
-    val settings = LocalSettings.current
-    val luminance = settings.displaySetting.glassBaseLuminance.coerceIn(0f, 1f)
+    val display = LocalDisplaySetting.current
+    val luminance = display.glassBaseLuminance.coerceIn(0f, 1f)
     return androidx.compose.ui.graphics.lerp(Color.Black, Color.White, luminance)
 }
 
@@ -220,10 +220,9 @@ fun domChatBaseToneColor(): Color {
  */
 @Composable
 fun domChatChromeSurfaceColor(): Color {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     if (!display.linkChromeToGlass) {
-        val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+        val alpha = display.glassAlpha.coerceIn(0f, 1f)
         if (alpha <= 0.001f) return Color.Transparent
         val base = Color(0xFF141520)
         return base.copy(alpha = alpha)
@@ -240,8 +239,7 @@ const val DOMCHAT_CHROME_FLOOR_ALPHA = 0.45f
  */
 @Composable
 fun domChatNeedsLegibilityShadow(): Boolean {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     return display.linkChromeToGlass && display.glassAlpha.coerceIn(0f, 1f) < 0.25f
 }
 
@@ -263,10 +261,9 @@ fun domChatChromeTextShadow(softText: Boolean = false): androidx.compose.ui.grap
  */
 @Composable
 fun domChatIconPillContainerColor(): Color {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     if (!display.linkChromeToGlass) {
-        val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+        val alpha = display.glassAlpha.coerceIn(0f, 1f)
         if (alpha <= 0.001f) return Color.Transparent
         val base = Color(0xFF141520)
         return base.copy(alpha = alpha)
@@ -282,10 +279,9 @@ fun domChatIconPillContainerColor(): Color {
 fun domChatFloatingSurfaceColor(
     charcoal: Color = AppSurface.fill(MaterialTheme.colorScheme),
 ): Color {
-    val settings = LocalSettings.current
-    val display = settings.displaySetting
+    val display = LocalDisplaySetting.current
     if (!display.linkChromeToGlass) {
-        val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+        val alpha = display.glassAlpha.coerceIn(0f, 1f)
         if (alpha <= 0.001f) return Color.Transparent
         val base = Color(0xFF141520)
         return base.copy(alpha = alpha)
@@ -297,8 +293,8 @@ fun domChatFloatingSurfaceColor(
 fun blurredContainerColor(
     fallback: Color,
 ): Color {
-    val settings = LocalSettings.current
-    val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+    val display = LocalDisplaySetting.current
+    val alpha = display.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
     return liquidGlassSurfaceColor()
 }
@@ -306,17 +302,17 @@ fun blurredContainerColor(
 /** Sheets use dynamic base luminance tone layered with glass alpha. Directly follows glassAlpha setting. */
 @Composable
 fun domChatSheetContainerColor(): Color {
-    val settings = LocalSettings.current
-    val alpha = settings.displaySetting.glassAlpha.coerceIn(0f, 1f)
+    val display = LocalDisplaySetting.current
+    val alpha = display.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
     return liquidGlassSurfaceColor()
 }
 
 @Composable
 fun domChatSheetContentColor(): Color {
-    val settings = LocalSettings.current
+    val display = LocalDisplaySetting.current
     val isDark = LocalDarkMode.current
-    val luminance = settings.displaySetting.glassBaseLuminance.coerceIn(0f, 1f)
+    val luminance = display.glassBaseLuminance.coerceIn(0f, 1f)
     return when {
         luminance >= 0.55f -> Color(0xFF000000)
         isDark -> Color(0xFFF2F2F7)
@@ -335,8 +331,8 @@ fun domChatCardContainerColor(): Color = liquidGlassSurfaceColor()
  */
 @Composable
 fun domChatFrostedContainerColor(base: Color): Color {
-    val settings = LocalSettings.current
-    val tintColor = Color(settings.displaySetting.glassTintColor)
+    val display = LocalDisplaySetting.current
+    val tintColor = Color(display.glassTintColor)
     val strength = tintColor.alpha.coerceIn(0f, 1f)
     return if (strength > 0.02f) {
         lerp(base, tintColor, strength)
@@ -347,9 +343,9 @@ fun domChatFrostedContainerColor(base: Color): Color {
 
 @Composable
 fun domChatCardContentColor(): Color {
-    val settings = LocalSettings.current
+    val display = LocalDisplaySetting.current
     val isDark = LocalDarkMode.current
-    val luminance = settings.displaySetting.glassBaseLuminance.coerceIn(0f, 1f)
+    val luminance = display.glassBaseLuminance.coerceIn(0f, 1f)
     return when {
         luminance >= 0.55f -> Color(0xFF000000)
         isDark -> Color(0xFFF2F2F7)

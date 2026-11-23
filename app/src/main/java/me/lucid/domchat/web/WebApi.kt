@@ -1388,10 +1388,11 @@ private fun String?.toUuid(name: String): Uuid {
 
 @Volatile
 private var cachedWebHmacSecret: ByteArray? = null
+private val webHmacLock = Any()
 
 internal fun getOrCreateWebHmacSecret(secureStore: SecureStore): ByteArray {
     cachedWebHmacSecret?.let { return it }
-    synchronized(WebAuthRateLimiter) {
+    synchronized(webHmacLock) {
         cachedWebHmacSecret?.let { return it }
         val existing = secureStore.getSecret(WEB_SERVER_HMAC_SECRET_KEY)
         if (!existing.isNullOrBlank()) {

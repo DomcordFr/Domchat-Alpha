@@ -812,7 +812,11 @@ private val JSON_STRUCTURAL_KEYS = hashSetOf(
     "modelid", "createdat", "versiontag"
 )
 
+private val JSON_SYNTAX_CHARS = charArrayOf('"', ':', '{', '}', '[', ']')
+
 private fun isJsonStructuralToken(query: String): Boolean {
     val q = query.trim().lowercase()
-    return q in JSON_STRUCTURAL_KEYS
+    if (q.length <= 2) return true
+    if (q.any { it in JSON_SYNTAX_CHARS }) return true
+    return JSON_STRUCTURAL_KEYS.any { it.contains(q) }
 }
