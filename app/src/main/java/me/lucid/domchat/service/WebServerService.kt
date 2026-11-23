@@ -74,6 +74,7 @@ class WebServerService : Service() {
     private val appScope: AppScope by inject()
 
     private var stoppedByUserOrError = false
+    private var persistedDisabled = false
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var stateObserverJob: Job? = null
     private var wifiLock: WifiManager.WifiLock? = null
@@ -83,6 +84,8 @@ class WebServerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                stoppedByUserOrError = false
+                persistedDisabled = false
                 val port = intent.getIntExtra(EXTRA_PORT, 8080)
                 if (!startForegroundCompat(buildStartingNotification())) {
                     return START_NOT_STICKY
@@ -94,6 +97,7 @@ class WebServerService : Service() {
 
             ACTION_STOP -> {
                 stoppedByUserOrError = true
+                persistedDisabled = true
                 webServerManager.stop()
                 appScope.launch(Dispatchers.IO) {
                     settingsStore.update { settings ->
@@ -105,6 +109,8 @@ class WebServerService : Service() {
             }
 
             null -> {
+                stoppedByUserOrError = false
+                persistedDisabled = false
                 if (!startForegroundCompat(buildStartingNotification())) {
                     return START_NOT_STICKY
                 }
@@ -176,6 +182,7 @@ class WebServerService : Service() {
                     WebServerPhase.Error -> {
                         hasSeenActivePhase = true
                         stoppedByUserOrError = true
+                        persistedDisabled = true
                         releaseWifiLock()
                         updateNotification(buildErrorNotification(state.error ?: getString(R.string.notification_web_server_error)))
                         appScope.launch(Dispatchers.IO) {
@@ -199,7 +206,8 @@ class WebServerService : Service() {
 
     override fun onDestroy() {
         webServerManager.stop()
-        if (stoppedByUserOrError) {
+        if (stoppedByUserOrError && !persistedDisabled) {
+            persistedDisabled = true
             appScope.launch(Dispatchers.IO) {
                 settingsStore.update { settings -> settings.copy(webServerEnabled = false) }
             }

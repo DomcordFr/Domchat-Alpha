@@ -560,7 +560,7 @@ class RouteActivity : ComponentActivity() {
                     ?.toResolvedSpontaneousTarget()
             },
             updateAssistantSelection = { assistantId ->
-                settingsStore.updateAssistant(assistantId)
+                settingsStore.updateAssistantSelection(assistantId)
                 settingsStore.markAssistantUsed(assistantId)
             },
             hasConversation = { conversationId ->

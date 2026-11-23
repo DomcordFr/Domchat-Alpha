@@ -311,6 +311,7 @@ fun ChatDrawerContent(
                         fromConversationId = current.id,
                         toConversationId = newConversation.id,
                         draft = draft,
+                        isTemporary = (activePersistenceMode == ChatPersistenceMode.TEMPORARY),
                     )
                     val draftNavigation = buildAssistantSwitchNavigation(
                         persistenceMode = activePersistenceMode,

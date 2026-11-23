@@ -492,7 +492,7 @@ internal object ChatSwitchSession {
 
 internal object ChatSessionDraftStore {
     private const val MAX_PERSISTED_DRAFTS = 20
-    private val drafts = mutableMapOf<Uuid, ChatInputDraft>()
+    private val drafts = java.util.concurrent.ConcurrentHashMap<Uuid, ChatInputDraft>()
     private val json = Json { ignoreUnknownKeys = true }
     private val prefs by lazy {
         runCatching {
@@ -521,16 +521,29 @@ internal object ChatSessionDraftStore {
     fun persistDraft(conversationId: Uuid, draft: ChatInputDraft) {
         val p = prefs ?: return
         if (draft.isEmpty) {
-            p.edit().remove(conversationId.toString()).apply()
+            p.edit()
+                .remove(conversationId.toString())
+                .remove("ts_$conversationId")
+                .apply()
         } else {
             runCatching {
                 val encoded = json.encodeToString(draft)
                 val all = p.all
                 val editor = p.edit()
+                val now = System.currentTimeMillis()
                 editor.putString(conversationId.toString(), encoded)
-                if (all.size >= MAX_PERSISTED_DRAFTS && !all.containsKey(conversationId.toString())) {
-                    val excess = all.size - MAX_PERSISTED_DRAFTS + 1
-                    all.keys.take(excess).forEach { editor.remove(it) }
+                editor.putLong("ts_$conversationId", now)
+
+                val draftKeys = all.keys.filter { !it.startsWith("ts_") && it != conversationId.toString() }
+                if (draftKeys.size >= MAX_PERSISTED_DRAFTS) {
+                    val excess = draftKeys.size - MAX_PERSISTED_DRAFTS + 1
+                    val oldestKeys = draftKeys.sortedBy { key ->
+                        (all["ts_$key"] as? Long) ?: 0L
+                    }.take(excess)
+                    oldestKeys.forEach { key ->
+                        editor.remove(key)
+                        editor.remove("ts_$key")
+                    }
                 }
                 editor.apply()
             }
@@ -540,16 +553,25 @@ internal object ChatSessionDraftStore {
     fun put(conversationId: Uuid, draft: ChatInputDraft, isTemporary: Boolean = false) {
         putInMemory(conversationId, draft)
         if (!isTemporary) {
-            persistDraft(conversationId, draft)
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                persistDraft(conversationId, draft)
+            }
         }
     }
 
     fun moveDraft(fromConversationId: Uuid, toConversationId: Uuid, draft: ChatInputDraft, isTemporary: Boolean = false) {
         drafts.remove(fromConversationId)
+        val switchedDraft = draft.forAssistantSwitch()
+        putInMemory(toConversationId, switchedDraft)
         if (!isTemporary) {
-            prefs?.edit()?.remove(fromConversationId.toString())?.apply()
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                prefs?.edit()
+                    ?.remove(fromConversationId.toString())
+                    ?.remove("ts_$fromConversationId")
+                    ?.apply()
+                persistDraft(toConversationId, switchedDraft)
+            }
         }
-        put(toConversationId, draft.forAssistantSwitch(), isTemporary = isTemporary)
     }
 
     fun clear() {
@@ -1122,6 +1144,7 @@ fun ChatPage(
                 fromConversationId = conversation.id,
                 toConversationId = newConversation.id,
                 draft = draft,
+                isTemporary = isTemporaryChat,
             )
             val draftNavigation = buildAssistantSwitchNavigation(
                 persistenceMode = activePersistenceMode,
@@ -1594,6 +1617,7 @@ private fun ChatPageContent(
     }
     val showContextSummary = settings.displaySetting.showContextTokenSummary
     val contextMeterUsage by produceState<ContextUsageBreakdown?>(
+        initialValue = requestContextUsage,
         requestContextUsage,
         showContextSummary,
         currentChatModel?.id,
@@ -1678,6 +1702,7 @@ private fun ChatPageContent(
                 fromConversationId = conversation.id,
                 toConversationId = newConversation.id,
                 draft = draft,
+                isTemporary = isTemporaryChat,
             )
             val draftNavigation = buildAssistantSwitchNavigation(
                 persistenceMode = activePersistenceMode,

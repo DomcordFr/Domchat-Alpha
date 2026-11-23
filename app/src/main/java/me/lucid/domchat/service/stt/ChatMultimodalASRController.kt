@@ -163,40 +163,43 @@ class ChatMultimodalASRController(
         recorderJob?.cancel()
         recorderJob = scope.launch(Dispatchers.IO) {
             val currentJob = coroutineContext[Job]
-            val sampleRate = model.sttOptions?.sampleRate ?: 16000
-            val minBufferSize = AudioRecord.getMinBufferSize(
-                sampleRate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-            )
-            val bufferSize = minBufferSize
-                .coerceAtLeast(sampleRate / 10 * 2)
-                .coerceAtLeast(4096)
-
-            val recorder = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufferSize * 2,
-            )
-            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-                recorder.release()
-                setError("AudioRecord failed to initialize")
-                return@launch
-            }
-            synchronized(recorderLock) {
-                audioRecord = recorder
-            }
-
+            if (!isActive) return@launch
+            var recorder: AudioRecord? = null
             try {
-                recorder.startRecording()
+                val sampleRate = model.sttOptions?.sampleRate ?: 16000
+                val minBufferSize = AudioRecord.getMinBufferSize(
+                    sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                )
+                val bufferSize = minBufferSize
+                    .coerceAtLeast(sampleRate / 10 * 2)
+                    .coerceAtLeast(4096)
+
+                if (!isActive) return@launch
+                val createdRecorder = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    bufferSize * 2,
+                )
+                recorder = createdRecorder
+                if (createdRecorder.state != AudioRecord.STATE_INITIALIZED) {
+                    setError("AudioRecord failed to initialize")
+                    return@launch
+                }
+                synchronized(recorderLock) {
+                    audioRecord = createdRecorder
+                }
+
+                createdRecorder.startRecording()
                 val buffer = ByteArray(bufferSize)
                 synchronized(bufferLock) {
                     sessionBuffer.reset()
                 }
                 while (isActive) {
-                    val read = recorder.read(buffer, 0, buffer.size)
+                    val read = createdRecorder.read(buffer, 0, buffer.size)
                     if (read > 0) {
                         val amplitude = calculateRmsAmplitude(buffer, read)
                         _state.update { it.copy(amplitudes = it.amplitudes.appendAmplitude(amplitude)) }
@@ -211,11 +214,12 @@ class ChatMultimodalASRController(
                 Log.e(TAG, "Audio recording error", e)
                 setError("Audio recording error: ${e.message}")
             } finally {
-                runCatching { recorder.stop() }
-                runCatching { recorder.release() }
                 synchronized(recorderLock) {
-                    if (audioRecord === recorder) {
+                    val record = recorder
+                    if (record != null && (audioRecord === record || audioRecord == null)) {
                         audioRecord = null
+                        runCatching { record.stop() }
+                        runCatching { record.release() }
                     }
                     if (recorderJob === currentJob) {
                         recorderJob = null
@@ -234,11 +238,9 @@ class ChatMultimodalASRController(
         }
     }
 
-    private fun releaseRecorder(callerJob: Job? = null) {
+    private fun releaseRecorder() {
         synchronized(recorderLock) {
-            if (callerJob == null || recorderJob === callerJob) {
-                recorderJob = null
-            }
+            recorderJob = null
             val record = audioRecord
             audioRecord = null
             runCatching { record?.stop() }

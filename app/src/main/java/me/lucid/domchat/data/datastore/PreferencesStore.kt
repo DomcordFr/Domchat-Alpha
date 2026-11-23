@@ -468,21 +468,26 @@ class SettingsStore(
         }
     }
 
-    private suspend fun updateInternal(settings: Settings) {
+    private suspend fun awaitInitializedSettings(caller: String): Settings? {
         val current = if (settingsFlow.value.init) {
             withTimeoutOrNull(5000L) {
                 settingsFlow.first { !it.init }
             } ?: run {
-                Log.e(TAG, "updateInternal: settingsFlow failed to initialize within timeout, aborting")
-                return
+                Log.e(TAG, "$caller: settingsFlow failed to initialize within timeout, aborting")
+                return null
             }
         } else {
             settingsFlow.value
         }
         if (current.init) {
-            Log.e(TAG, "updateInternal: settings are uninitialized, aborting write")
-            return
+            Log.e(TAG, "$caller: settings are uninitialized, aborting write")
+            return null
         }
+        return current
+    }
+
+    private suspend fun updateInternal(settings: Settings) {
+        val current = awaitInitializedSettings("updateInternal") ?: return
         val effectiveSettings = if (settings.init) {
             current.copy(
                 displaySetting = settings.displaySetting,
@@ -614,33 +619,14 @@ class SettingsStore(
 
     suspend fun update(fn: (Settings) -> Settings) = updateMutex.withLock {
         withContext(Dispatchers.IO) {
-            val current = if (settingsFlow.value.init) {
-                withTimeoutOrNull(5000L) {
-                    settingsFlow.first { !it.init }
-                } ?: run {
-                    Log.e(TAG, "update(fn): settingsFlow failed to initialize within timeout, aborting")
-                    return@withContext
-                }
-            } else {
-                settingsFlow.value
-            }
-            if (current.init) {
-                Log.e(TAG, "update(fn): settings are uninitialized, aborting")
-                return@withContext
-            }
+            val current = awaitInitializedSettings("update(fn)") ?: return@withContext
             updateInternal(fn(current))
         }
     }
 
     suspend fun updateDisplaySetting(displaySetting: DisplaySetting) = updateMutex.withLock {
         withContext(Dispatchers.IO) {
-            val current = if (settingsFlow.value.init) {
-                withTimeoutOrNull(5000L) {
-                    settingsFlow.first { !it.init }
-                } ?: settingsFlow.value
-            } else {
-                settingsFlow.value
-            }
+            val current = awaitInitializedSettings("updateDisplaySetting") ?: return@withContext
             if (current.displaySetting != displaySetting) {
                 dataStore.edit { preferences ->
                     preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(displaySetting)
@@ -652,13 +638,7 @@ class SettingsStore(
 
     suspend fun updateRecentlyUsedAssistants(assistants: List<Uuid>) = updateMutex.withLock {
         withContext(Dispatchers.IO) {
-            val current = if (settingsFlow.value.init) {
-                withTimeoutOrNull(5000L) {
-                    settingsFlow.first { !it.init }
-                } ?: settingsFlow.value
-            } else {
-                settingsFlow.value
-            }
+            val current = awaitInitializedSettings("updateRecentlyUsedAssistants") ?: return@withContext
             if (current.recentlyUsedAssistants != assistants) {
                 dataStore.edit { preferences ->
                     preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(assistants)
@@ -672,29 +652,28 @@ class SettingsStore(
 
     suspend fun updateAssistant(assistantId: Uuid) = updateMutex.withLock {
         withContext(Dispatchers.IO) {
-            val current = if (settingsFlow.value.init) {
-                withTimeoutOrNull(5000L) {
-                    settingsFlow.first { !it.init }
-                } ?: settingsFlow.value
-            } else {
-                settingsFlow.value
-            }
-            if (!current.init && current.assistants.any { it.id == assistantId }) {
-                val updatedRecentlyUsed = buildList {
+            val current = awaitInitializedSettings("updateAssistant") ?: return@withContext
+            var updatedRecentlyUsed: List<Uuid>? = null
+            if (current.assistants.any { it.id == assistantId }) {
+                val list = buildList {
                     add(assistantId)
                     current.recentlyUsedAssistants
                         .filter { it != assistantId }
                         .take(2)
                         .forEach { add(it) }
                 }
+                updatedRecentlyUsed = list
                 settingsFlow.value = current.copy(
                     assistantId = assistantId,
-                    recentlyUsedAssistants = updatedRecentlyUsed
+                    recentlyUsedAssistants = list
                 )
             }
             // Persist to DataStore
             dataStore.edit { preferences ->
                 preferences[SELECT_ASSISTANT] = assistantId.toString()
+                if (updatedRecentlyUsed != null) {
+                    preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(updatedRecentlyUsed)
+                }
             }
         }
     }
@@ -707,7 +686,7 @@ class SettingsStore(
         val current = settingsFlow.value
         // Only add if the assistant exists
         if (current.assistants.none { it.id == assistantId }) return
-        
+
         val updatedList = buildList {
             add(assistantId)
             current.recentlyUsedAssistants
@@ -715,9 +694,9 @@ class SettingsStore(
                 .take(2)
                 .forEach { add(it) }
         }
-        
+
         if (updatedList != current.recentlyUsedAssistants) {
-            update(current.copy(recentlyUsedAssistants = updatedList))
+            updateRecentlyUsedAssistants(updatedList)
         }
     }
 }
