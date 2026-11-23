@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,7 +32,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.State
 import me.lucid.domchat.data.model.Assistant
 import me.lucid.domchat.data.model.BackgroundBlurMode
-import me.lucid.domchat.ui.hooks.rememberUserSettingsState
+import me.lucid.domchat.ui.context.LocalDisplaySetting
 import me.lucid.domchat.ui.motion.LocalMotionPolicy
 import me.lucid.domchat.ui.theme.LocalDarkMode
 
@@ -45,22 +45,22 @@ fun AssistantBackground(
     onWallpaperLoaded: (() -> Unit)? = null,
 ) {
     val motionPolicy = LocalMotionPolicy.current
-    val settings by rememberUserSettingsState()
+    val displaySetting = LocalDisplaySetting.current
 
-    val perChatConfig = conversationId?.let { settings.displaySetting.conversationWallpapers[it] }
+    val perChatConfig = conversationId?.let { displaySetting.conversationWallpapers[it] }
 
     // 4-Tier Background Precedence: Per-Chat Config -> Conversation -> Assistant -> Global Setting
     val resolvedBackground = perChatConfig?.backgroundUri?.takeIf { it.isNotBlank() }
         ?: conversationBackground?.takeIf { it.isNotBlank() }
         ?: assistant.background?.takeIf { it.isNotBlank() }
-        ?: settings.displaySetting.globalBackground?.takeIf { it.isNotBlank() }
+        ?: displaySetting.globalBackground?.takeIf { it.isNotBlank() }
 
     val resolvedDim = if (perChatConfig != null && !perChatConfig.backgroundUri.isNullOrBlank()) {
         perChatConfig.backgroundDim
     } else if (!assistant.background.isNullOrBlank()) {
         assistant.backgroundDim
     } else {
-        settings.displaySetting.globalBackgroundDim
+        displaySetting.globalBackgroundDim
     }
 
     // Preserve explicit 0f blur on character wallpaper without wrongly falling back to global blur
@@ -69,19 +69,19 @@ fun AssistantBackground(
     } else if (!assistant.background.isNullOrBlank()) {
         assistant.backgroundBlur
     } else {
-        settings.displaySetting.globalBackgroundBlur
+        displaySetting.globalBackgroundBlur
     }
 
     val blurMode = if (perChatConfig != null && !perChatConfig.backgroundUri.isNullOrBlank()) {
         perChatConfig.blurMode
     } else {
-        settings.displaySetting.backgroundBlurMode
+        displaySetting.backgroundBlurMode
     }
 
     val blurHeightFraction = if (perChatConfig != null && !perChatConfig.backgroundUri.isNullOrBlank()) {
         perChatConfig.blurHeightFraction
     } else {
-        settings.displaySetting.globalBackgroundBlurHeightFraction
+        displaySetting.globalBackgroundBlurHeightFraction
     }
 
     AnimatedContent(
@@ -163,6 +163,13 @@ fun AssistantBackground(
                 // Optional Bottom Fade Blur Layer (blurs bottom, fades out near top)
                 if (cachedBlurRenderEffect != null && blurMode == BackgroundBlurMode.BOTTOM_FADE) {
                     val fadeStart = (1f - blurHeightFraction).coerceIn(0.01f, 0.95f)
+                    val bottomFadeBrush = remember(fadeStart) {
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            fadeStart to Color.Transparent,
+                            1f to Color.Black
+                        )
+                    }
                     AsyncImage(
                         model = bgUrl,
                         contentDescription = null,
@@ -177,11 +184,7 @@ fun AssistantBackground(
                             .drawWithContent {
                                 drawContent()
                                 drawRect(
-                                    brush = Brush.verticalGradient(
-                                        0f to Color.Transparent,
-                                        fadeStart to Color.Transparent,
-                                        1f to Color.Black
-                                    ),
+                                    brush = bottomFadeBrush,
                                     blendMode = BlendMode.DstIn
                                 )
                             }
@@ -214,7 +217,7 @@ fun AssistantBackground(
             // There is no async image decode here, so signal liquid glass samplers that
             // the backdrop is opaque and ready immediately on frame 0 (cold start /
             // blank chat) instead of leaving surfaces transparent until the next redraw.
-            SideEffect {
+            LaunchedEffect(Unit) {
                 onWallpaperLoaded?.invoke()
             }
             val isDark = LocalDarkMode.current

@@ -288,14 +288,14 @@ fun Modifier.liquidGlass(
             )
             .then(
                 if (shadowElevation > 0.dp) {
-                    this.shadow(
+                    Modifier.shadow(
                         elevation = shadowElevation,
                         shape = shape,
                         ambientColor = Color.Black.copy(alpha = 0.25f),
                         spotColor = Color.Black.copy(alpha = 0.35f)
                     )
                 } else {
-                    this
+                    Modifier
                 }
             )
     } else {
@@ -478,14 +478,14 @@ fun Modifier.liquidGlassBubbleSurface(
             )
             .then(
                 if (shadowElevation > 0.dp) {
-                    this.shadow(
+                    Modifier.shadow(
                         elevation = shadowElevation,
                         shape = shape,
                         ambientColor = Color.Black.copy(alpha = 0.25f),
                         spotColor = Color.Black.copy(alpha = 0.35f)
                     )
                 } else {
-                    this
+                    Modifier
                 }
             )
     } else {

@@ -333,6 +333,7 @@ fun String.replacePersonaPlaceholders(
     assistant: Assistant?,
     userNickname: String,
 ): String {
+    if (!contains('{') && !contains('<')) return this
     val charName = assistant?.name?.ifBlank { null } ?: "assistant"
     val userName = userNickname.ifBlank { "user" }
     val base = this

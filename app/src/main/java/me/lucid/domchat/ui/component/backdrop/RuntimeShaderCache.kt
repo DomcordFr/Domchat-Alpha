@@ -13,7 +13,7 @@ sealed interface RuntimeShaderCache {
 }
 
 /** Thread-safe cache of compiled AGSL RuntimeShaders keyed by shader source. */
-internal class RuntimeShaderCacheImpl : RuntimeShaderCache {
+internal class RuntimeShaderCacheImpl(private val allowClear: Boolean = true) : RuntimeShaderCache {
 
     private val runtimeShaders = mutableMapOf<String, RuntimeShader>()
 
@@ -24,8 +24,11 @@ internal class RuntimeShaderCacheImpl : RuntimeShaderCache {
     }
 
     fun clear() {
+        if (!allowClear) return
         synchronized(runtimeShaders) {
             runtimeShaders.clear()
         }
     }
 }
+
+internal val SharedRuntimeShaderCache = RuntimeShaderCacheImpl(allowClear = false)

@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 
 @Entity(
     indices = [
-        Index(value = ["assistant_id", "is_pinned", "update_at"])
+        Index(value = ["assistant_id", "is_pinned", "update_at"]),
+        Index(value = ["is_pinned", "update_at"]),
     ]
 )
 data class ConversationEntity(
@@ -49,4 +50,6 @@ data class ConversationEntity(
     val isFork: Boolean = false,
     @ColumnInfo(name = "last_model_id", defaultValue = "")
     val lastModelId: String = "",
+    @ColumnInfo(name = "assistant_message_count", defaultValue = "0")
+    val assistantMessageCount: Int = 0,
 )

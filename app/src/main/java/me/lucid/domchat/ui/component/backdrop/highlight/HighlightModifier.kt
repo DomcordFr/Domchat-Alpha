@@ -24,7 +24,7 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastCoerceAtMost
-import me.lucid.domchat.ui.component.backdrop.RuntimeShaderCacheImpl
+import me.lucid.domchat.ui.component.backdrop.SharedRuntimeShaderCache
 import me.lucid.domchat.ui.component.backdrop.internal.ShapeProvider
 import me.lucid.domchat.ui.component.backdrop.internal.blur
 import me.lucid.domchat.ui.component.backdrop.internal.clipOutline
@@ -85,7 +85,7 @@ internal class HighlightNode(
         }
     private var clipPath: Path? = null
 
-    private val runtimeShaderCache = RuntimeShaderCacheImpl()
+    private val runtimeShaderCache = SharedRuntimeShaderCache
 
     private var prevStyle: HighlightStyle? = null
 

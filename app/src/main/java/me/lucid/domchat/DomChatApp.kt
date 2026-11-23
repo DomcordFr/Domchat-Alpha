@@ -98,7 +98,9 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
         instance = this
         PlatformLog.isDebug = BuildConfig.DEBUG
         startKoin {
-            androidLogger()
+            if (BuildConfig.DEBUG) {
+                androidLogger()
+            }
             androidContext(this@DomChatApp)
             modules(appModule, viewModelModule, dataSourceModule, repositoryModule)
         }
@@ -332,9 +334,7 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW ||
-            level == android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
-        ) {
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             runCatching { get<LocalInferenceManager>().requestEviction() }
             runCatching { coil3.SingletonImageLoader.get(this).memoryCache?.clear() }
             runCatching { get<me.lucid.domchat.service.ChatService>().checkAllConversationsReferences() }

@@ -203,7 +203,7 @@ private class DrawBackdropElement(
     override fun update(node: DrawBackdropNode) {
         val captureChanged =
             node.backdrop !== backdrop ||
-                node.shapeProvider !== shapeProvider ||
+                node.shapeProvider != shapeProvider ||
                 node.effects !== effects ||
                 node.layerBlock !== layerBlock ||
                 node.frozen != frozen ||

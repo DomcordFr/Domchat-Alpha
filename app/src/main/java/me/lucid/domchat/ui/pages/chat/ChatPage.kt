@@ -858,6 +858,9 @@ fun ChatPage(
     val setting by vm.settings.collectAsStateWithLifecycle()
     val settings = setting
     val conversation by vm.conversation.collectAsStateWithLifecycle()
+    val conversationTitle by vm.conversationTitle.collectAsStateWithLifecycle()
+    val hasMessages by vm.hasMessages.collectAsStateWithLifecycle()
+    val messageCount by vm.messageCount.collectAsStateWithLifecycle()
     val conversationInitialized by vm.conversationInitialized.collectAsStateWithLifecycle()
     val conversationAssistant by vm.conversationAssistant.collectAsStateWithLifecycle()
     val onNewChat = {
@@ -1074,7 +1077,7 @@ fun ChatPage(
     LaunchedEffect(
         conversation.id,
         conversationInitialized,
-        conversation.messageNodes.size,
+        messageCount,
         chatListState,
     ) {
         if (!conversationInitialized) {
@@ -1114,11 +1117,11 @@ fun ChatPage(
         }
     }
 
-    LaunchedEffect(focusLatestMessageKey, conversation.id, conversation.messageNodes.isNotEmpty()) {
+    LaunchedEffect(focusLatestMessageKey, conversation.id, hasMessages) {
         if (
             focusLatestMessageKey != null &&
             consumedFocusLatestMessageKey != focusLatestMessageKey &&
-            conversation.messageNodes.isNotEmpty()
+            hasMessages
         ) {
             consumedFocusLatestMessageKey = focusLatestMessageKey
             // Same reasoning: use Int.MAX_VALUE instead of messageNodes.lastIndex because
@@ -1127,8 +1130,8 @@ fun ChatPage(
         }
     }
 
-    LaunchedEffect(conversation.id, conversation.messageNodes.isNotEmpty(), chatListReady, chatListState) {
-        if (conversation.messageNodes.isEmpty() || !chatListReady) {
+    LaunchedEffect(conversation.id, hasMessages, chatListReady, chatListState) {
+        if (!hasMessages || !chatListReady) {
             return@LaunchedEffect
         }
         snapshotFlow {
@@ -1484,7 +1487,7 @@ fun ChatPage(
     ) {
         ChatSwitchLoadingIndicator(
             assistant = conversationAssistant,
-            conversationTitle = conversation.title,
+            conversationTitle = conversationTitle,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -1599,7 +1602,12 @@ private fun ChatPageContent(
     val density = LocalDensity.current
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val hazeState = rememberHazeState()
-    val blurActive = settings.displaySetting.enableBlurEffect || settings.displaySetting.liquidGlassMode != me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
+    val effectiveBlurDisplay = settings.getEffectiveDisplaySetting(currentAssistant)
+    val usesHazeInChat = !me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported() ||
+        effectiveBlurDisplay.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED ||
+        effectiveBlurDisplay.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED ||
+        (effectiveBlurDisplay.chatMessageStyle != me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES && effectiveBlurDisplay.chatBubbleBlur > 0f)
+    val blurActive = settings.displaySetting.enableBlurEffect && usesHazeInChat
     val localBlur = remember(blurActive, hazeState) {
         DomChatBlur(
             enabled = blurActive,
@@ -1676,11 +1684,11 @@ private fun ChatPageContent(
     }
     
     // Auto-scroll to first matching message when opened from search
-    LaunchedEffect(initialSearchQuery, conversation.id, conversation.messageNodes.isNotEmpty()) {
+    LaunchedEffect(initialSearchQuery, conversation.id, hasMessages) {
         if (
             !initialSearchQuery.isNullOrBlank() &&
             consumedInitialSearchQuery != initialSearchQuery &&
-            conversation.messageNodes.isNotEmpty()
+            hasMessages
         ) {
             consumedInitialSearchQuery = initialSearchQuery
             // Find the first message containing the search query

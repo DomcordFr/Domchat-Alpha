@@ -139,7 +139,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.style.TextDirection
 import me.lucid.domchat.ui.modifier.blurredContainerColor
 import me.lucid.domchat.ui.modifier.domChatBlurEffect
-import me.lucid.domchat.ui.modifier.domChatBlurSource
 
 private const val TAG = "ChatList"
 private const val ScrollBottomKey = "ScrollBottomKey"
@@ -642,7 +641,6 @@ private fun SharedTransitionScope.ChatListNormal(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier
                     .imePadding()
-                    .domChatBlurSource()
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "conversation_list"),
                         animatedVisibilityScope = animatedVisibilityScope

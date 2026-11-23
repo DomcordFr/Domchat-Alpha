@@ -209,6 +209,10 @@ class ConversationRepository(
         } else null
     }
 
+    suspend fun conversationExists(uuid: Uuid): Boolean {
+        return conversationDAO.conversationExists(uuid.toString())
+    }
+
     suspend fun insertConversation(conversation: Conversation) {
         val syncedConversation = chatAttachmentRepository.syncConversationAttachments(conversation)
         conversationDAO.insert(
@@ -295,6 +299,10 @@ class ConversationRepository(
             ?.toString()
             ?: ""
 
+        val assistantMessageCount = conversation.messageNodes.sumOf { node ->
+            node.messages.count { it.role == me.lucid.ai.core.MessageRole.ASSISTANT }
+        }
+
         return ConversationEntity(
             id = conversation.id.toString(),
             title = conversation.title,
@@ -317,6 +325,7 @@ class ConversationRepository(
             lastRefreshTime = conversation.lastRefreshTime,
             isFork = conversation.isFork,
             lastModelId = lastModelId,
+            assistantMessageCount = assistantMessageCount,
         )
     }
 

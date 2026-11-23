@@ -60,7 +60,7 @@ internal abstract class BackdropEffectScopeImpl : BackdropEffectScope, RuntimeSh
     override var compositeColorFilter: ColorFilter? = null
     override var poolLens: PoolLens? = null
 
-    private val runtimeShaderCache = RuntimeShaderCacheImpl()
+    private val runtimeShaderCache = SharedRuntimeShaderCache
 
     override fun obtainRuntimeShader(key: String, string: String): RuntimeShader {
         return runtimeShaderCache.obtainRuntimeShader(key, string)

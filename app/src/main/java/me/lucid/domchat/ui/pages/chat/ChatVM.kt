@@ -163,14 +163,17 @@ class ChatVM(
 
         // 记住已保存的非临时对话ID, 方便下次启动恢复
         viewModelScope.launch(Dispatchers.IO) {
-            conversation.collect { conv ->
-                if (
-                    conversationPersistenceMode.value == ChatPersistenceMode.NORMAL &&
-                    conv.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER }
-                ) {
-                    context.writeStringPreference("lastConversationId", conv.id.toString())
+            conversation
+                .map { conv -> conv.id to conv.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER } }
+                .distinctUntilChanged()
+                .collect { (id, hasUserMessage) ->
+                    if (
+                        conversationPersistenceMode.value == ChatPersistenceMode.NORMAL &&
+                        hasUserMessage
+                    ) {
+                        context.writeStringPreference("lastConversationId", id.toString())
+                    }
                 }
-            }
         }
     }
 
@@ -185,18 +188,38 @@ class ChatVM(
         settingsStore.settingsFlow.stateIn(viewModelScope, SharingStarted.Lazily, Settings.dummy())
 
     val conversationContext: StateFlow<ConversationContext> =
-        combine(settings, conversation) { currentSettings, currentConversation ->
-            currentSettings.resolveConversationContext(currentConversation)
+        combine(
+            settings,
+            conversation
+                .map { it.assistantId }
+                .distinctUntilChanged()
+        ) { currentSettings, assistantId ->
+            currentSettings.resolveConversationContext(assistantId)
         }.stateIn(
             viewModelScope,
             SharingStarted.Lazily,
-            Settings.dummy().resolveConversationContext(conversation.value)
+            Settings.dummy().resolveConversationContext(conversation.value.assistantId)
         )
 
     val conversationAssistant: StateFlow<Assistant> =
         conversationContext
             .map { it.assistant }
             .stateIn(viewModelScope, SharingStarted.Lazily, conversationContext.value.assistant)
+
+    val conversationTitle: StateFlow<String> = conversation
+        .map { it.title }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, conversation.value.title)
+
+    val hasMessages: StateFlow<Boolean> = conversation
+        .map { it.messageNodes.isNotEmpty() }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, conversation.value.messageNodes.isNotEmpty())
+
+    val messageCount: StateFlow<Int> = conversation
+        .map { it.messageNodes.size }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, conversation.value.messageNodes.size)
 
     // 网络搜索 - 从当前会话助手的searchMode派生
     val enableWebSearch = conversationContext.map { context ->

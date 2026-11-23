@@ -74,7 +74,7 @@ import kotlinx.serialization.json.put
         MemoryIngestStateEntity::class,
         MemoryProjectionEntity::class,
     ],
-    version = 39,
+    version = 41,
     autoMigrations = [
         AutoMigration(from = 30, to = 31),
         AutoMigration(from = 1, to = 2),
@@ -544,6 +544,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_39_41 = object : Migration(39, 41) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                Log.i(TAG, "migrate: start migrate from 39 to 41")
+                db.execSQL("ALTER TABLE ConversationEntity ADD COLUMN assistant_message_count INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_ConversationEntity_is_pinned_update_at ON ConversationEntity (is_pinned, update_at)")
+                db.execSQL("""
+                    UPDATE ConversationEntity 
+                    SET assistant_message_count = (CASE WHEN nodes IS NULL OR nodes = '' THEN 0 ELSE (LENGTH(nodes) - LENGTH(REPLACE(REPLACE(UPPER(nodes), '"ROLE": "ASSISTANT"', ''), '"ROLE":"ASSISTANT"', ''))) / 18 END)
+                """.trimIndent())
+                Log.i(TAG, "migrate: migrate from 39 to 41 success")
+            }
+        }
+
+        val MIGRATION_40_41 = object : Migration(40, 41) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                Log.i(TAG, "migrate: start migrate from 40 to 41")
+                db.execSQL("ALTER TABLE ConversationEntity ADD COLUMN assistant_message_count INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_ConversationEntity_is_pinned_update_at ON ConversationEntity (is_pinned, update_at)")
+                db.execSQL("""
+                    UPDATE ConversationEntity 
+                    SET assistant_message_count = (CASE WHEN nodes IS NULL OR nodes = '' THEN 0 ELSE (LENGTH(nodes) - LENGTH(REPLACE(REPLACE(UPPER(nodes), '"ROLE": "ASSISTANT"', ''), '"ROLE":"ASSISTANT"', ''))) / 18 END)
+                """.trimIndent())
+                Log.i(TAG, "migrate: migrate from 40 to 41 success")
+            }
+        }
+
         val ALL_MIGRATIONS: Array<Migration> by lazy {
             arrayOf(
                 Migration_6_7,
@@ -561,6 +587,8 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_31_32,
                 MIGRATION_32_33,
                 MIGRATION_40_39,
+                MIGRATION_39_41,
+                MIGRATION_40_41,
             )
         }
     }

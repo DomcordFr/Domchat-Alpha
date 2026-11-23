@@ -57,6 +57,7 @@ private val CDN_IMAGE_REGEX = Regex("""(?<!\()https?://\S+\.(?:png|jpg|jpeg|webp
 private val HTML_IMG_REGEX = Regex("""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", RegexOption.IGNORE_CASE)
 
 fun formatRoleplayTextWithCdnImages(text: String): String {
+    if (!text.contains("http", ignoreCase = true)) return text
     return text.replace(CDN_IMAGE_REGEX) { match ->
         "\n![Image](${match.value})\n"
     }
@@ -68,6 +69,7 @@ fun formatRoleplayTextWithCdnImages(text: String): String {
  * Non-img HTML is left as-is for the markdown renderer to handle.
  */
 fun cleanHtmlImgToMarkdown(text: String): String {
+    if (!text.contains("<img", ignoreCase = true)) return text
     return text.replace(HTML_IMG_REGEX) { match ->
         val url = match.groupValues[1]
         "\n![Image]($url)\n"

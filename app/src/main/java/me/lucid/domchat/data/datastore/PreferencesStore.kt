@@ -170,6 +170,33 @@ class SettingsStore(
     private var hasPersistedLegacyModeMigration = false
     private var hasPersistedLegacySummarizerMigration = false
 
+    // Memoized JSON decodes to avoid full-tree deserialization on unchanged preference keys
+    private var lastProvidersJson: String? = null
+    private var cachedProviders: List<ProviderSetting> = emptyList()
+
+    private var lastAssistantsJson: String? = null
+    private var cachedAssistants: List<Assistant> = emptyList()
+
+    private var lastDisplaySettingJson: String? = null
+    private var cachedDisplaySetting: DisplaySetting = DisplaySetting()
+
+    private var lastLorebooksJson: String? = null
+    private var cachedLorebooks: List<Lorebook> = emptyList()
+
+    private var lastSkillsJson: String? = null
+    private var cachedSkills: List<Skill> = emptyList()
+
+    private var lastTtsProvidersJson: String? = null
+    private var cachedTtsProviders: List<TTSProviderSetting> = DEFAULT_TTS_PROVIDERS
+
+    private var lastModesJson: String? = null
+    private var cachedModes: List<Mode> = emptyList()
+
+    private var lastMcpServersJson: String? = null
+    private var cachedMcpServers: List<McpServerConfig> = emptyList()
+
+    private var lastTemplateSignature: Int? = null
+
     val settingsFlowRaw = dataStore.data
         .catch { exception ->
             if (exception is IOException) {
@@ -209,18 +236,48 @@ class SettingsStore(
                     assistantId = decodeUuid(preferences[SELECT_ASSISTANT], DEFAULT_ASSISTANT_ID),
                     assistantTags = decodePreferenceList(preferences[ASSISTANT_TAGS]) ?: emptyList(),
                     providerTags = decodePreferenceList(preferences[PROVIDER_TAGS]) ?: emptyList(),
-                    providers = decodePreferenceList<ProviderSetting>(preferences[PROVIDERS]) ?: emptyList(),
-                    assistants = decodePreferenceList<Assistant>(preferences[ASSISTANTS]) ?: emptyList(),
+                    providers = run {
+                        val json = preferences[PROVIDERS]
+                        if (json == lastProvidersJson && lastProvidersJson != null) {
+                            cachedProviders
+                        } else {
+                            val decoded = decodePreferenceList<ProviderSetting>(json) ?: emptyList()
+                            lastProvidersJson = json
+                            cachedProviders = decoded
+                            decoded
+                        }
+                    },
+                    assistants = run {
+                        val json = preferences[ASSISTANTS]
+                        if (json == lastAssistantsJson && lastAssistantsJson != null) {
+                            cachedAssistants
+                        } else {
+                            val decoded = decodePreferenceList<Assistant>(json) ?: emptyList()
+                            lastAssistantsJson = json
+                            cachedAssistants = decoded
+                            decoded
+                        }
+                    },
                     recentlyUsedAssistants = decodePreferenceList(preferences[RECENTLY_USED_ASSISTANTS])
                         ?: emptyList(),
                     dynamicColor = preferences[DYNAMIC_COLOR] == true,
                     themeId = preferences[THEME_ID] ?: PresetThemes[0].id,
                     developerMode = preferences[DEVELOPER_MODE] == true,
                     enableRagLogging = preferences[ENABLE_RAG_LOGGING] == true,
-                    displaySetting = decodePreferenceValue(
-                        preferences[DISPLAY_SETTING],
-                        DisplaySetting(),
-                    ).normalizeFontSettings(),
+                    displaySetting = run {
+                        val json = preferences[DISPLAY_SETTING]
+                        if (json == lastDisplaySettingJson && lastDisplaySettingJson != null) {
+                            cachedDisplaySetting
+                        } else {
+                            val decoded = decodePreferenceValue(
+                                json,
+                                DisplaySetting(),
+                            ).normalizeFontSettings()
+                            lastDisplaySettingJson = json
+                            cachedDisplaySetting = decoded
+                            decoded
+                        }
+                    },
                     searchServices = decodePreferenceList<SearchServiceOptions>(preferences[SEARCH_SERVICES])
                         ?: listOf(SearchServiceOptions.DEFAULT),
                     searchCommonOptions = decodePreferenceValue(
@@ -228,10 +285,29 @@ class SettingsStore(
                         SearchCommonOptions(),
                     ),
                     searchServiceSelected = preferences[SEARCH_SELECTED] ?: 0,
-                    mcpServers = decodePreferenceList(preferences[MCP_SERVERS]) ?: emptyList(),
+                    mcpServers = run {
+                        val json = preferences[MCP_SERVERS]
+                        if (json == lastMcpServersJson && lastMcpServersJson != null) {
+                            cachedMcpServers
+                        } else {
+                            val decoded = decodePreferenceList<McpServerConfig>(json) ?: emptyList()
+                            lastMcpServersJson = json
+                            cachedMcpServers = decoded
+                            decoded
+                        }
+                    },
                     webDavConfig = decodePreferenceValue(preferences[WEBDAV_CONFIG], WebDavConfig()).sanitize(),
-                    ttsProviders = decodePreferenceList<TTSProviderSetting>(preferences[TTS_PROVIDERS])
-                        ?: DEFAULT_TTS_PROVIDERS,
+                    ttsProviders = run {
+                        val json = preferences[TTS_PROVIDERS]
+                        if (json == lastTtsProvidersJson && lastTtsProvidersJson != null) {
+                            cachedTtsProviders
+                        } else {
+                            val decoded = decodePreferenceList<TTSProviderSetting>(json) ?: DEFAULT_TTS_PROVIDERS
+                            lastTtsProvidersJson = json
+                            cachedTtsProviders = decoded
+                            decoded
+                        }
+                    },
                     selectedTTSProviderId = decodeUuid(
                         preferences[SELECTED_TTS_PROVIDER],
                         DEFAULT_SYSTEM_TTS_ID,
@@ -252,9 +328,39 @@ class SettingsStore(
                     webServerJwtEnabled = preferences[WEB_SERVER_JWT_ENABLED] == true,
                     webServerAccessPassword = preferences[WEB_SERVER_ACCESS_PASSWORD] ?: "",
                     webServerBackgroundSetupShown = preferences[WEB_SERVER_BACKGROUND_SETUP_SHOWN] == true,
-                    modes = decodePreferenceList(preferences[MODES]) ?: emptyList(),
-                    lorebooks = decodePreferenceList(preferences[LOREBOOKS]) ?: emptyList(),
-                    skills = decodePreferenceList(preferences[SKILLS]) ?: emptyList(),
+                    modes = run {
+                        val json = preferences[MODES]
+                        if (json == lastModesJson && lastModesJson != null) {
+                            cachedModes
+                        } else {
+                            val decoded = decodePreferenceList<Mode>(json) ?: emptyList()
+                            lastModesJson = json
+                            cachedModes = decoded
+                            decoded
+                        }
+                    },
+                    lorebooks = run {
+                        val json = preferences[LOREBOOKS]
+                        if (json == lastLorebooksJson && lastLorebooksJson != null) {
+                            cachedLorebooks
+                        } else {
+                            val decoded = decodePreferenceList<Lorebook>(json) ?: emptyList()
+                            lastLorebooksJson = json
+                            cachedLorebooks = decoded
+                            decoded
+                        }
+                    },
+                    skills = run {
+                        val json = preferences[SKILLS]
+                        if (json == lastSkillsJson && lastSkillsJson != null) {
+                            cachedSkills
+                        } else {
+                            val decoded = decodePreferenceList<Skill>(json) ?: emptyList()
+                            lastSkillsJson = json
+                            cachedSkills = decoded
+                            decoded
+                        }
+                    },
                     chatStorage = decodePreferenceValue(
                         preferences[CHAT_STORAGE],
                         ChatStorageSettings(),
@@ -391,8 +497,18 @@ class SettingsStore(
             }
             migrated.normalizeFontSettings()
         }
-        .onEach {
-            get<MessageTemplateCache>().invalidateAll()
+        .onEach { settings ->
+            val signature = java.util.Objects.hash(
+                settings.assistants,
+                settings.titlePrompt,
+                settings.translatePrompt,
+                settings.suggestionPrompt,
+                settings.learningModePrompt
+            )
+            if (lastTemplateSignature != signature) {
+                lastTemplateSignature = signature
+                get<MessageTemplateCache>().invalidateAll()
+            }
         }
         .flowOn(Dispatchers.Default)
 
@@ -538,82 +654,192 @@ class SettingsStore(
         settingsFlow.value = secretKeyManager.populateSecretsForExport(migratedSettings)
             .normalizeFontSettings()
             .normalizeTtsSettings()
+        val current = settingsFlow.value
+        val isFirstSave = current.init
         dataStore.edit { preferences ->
-            preferences[DYNAMIC_COLOR] = normalizedSettings.dynamicColor
-            preferences[SETUP_COMPLETED] = normalizedSettings.setupCompleted
-            preferences[THEME_ID] = normalizedSettings.themeId
-            preferences[DEVELOPER_MODE] = normalizedSettings.developerMode
-            preferences[ENABLE_RAG_LOGGING] = normalizedSettings.enableRagLogging
-            preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(normalizedSettings.displaySetting)
-
-            preferences[ENABLE_WEB_SEARCH] = normalizedSettings.enableWebSearch
-            preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(normalizedSettings.favoriteModels)
-            preferences[RECENT_MODEL_IDS] = JsonInstant.encodeToString(normalizedSettings.recentModelIds)
-            preferences[SELECT_MODEL] = normalizedSettings.chatModelId.toString()
-            preferences[TITLE_MODEL] = normalizedSettings.titleModelId.toString()
-            preferences[TITLE_THINKING_BUDGET] = normalizedSettings.titleThinkingBudget
-            normalizedSettings.summarizerModelId?.let {
-                preferences[SUMMARIZER_MODEL] = it.toString()
-            } ?: preferences.remove(SUMMARIZER_MODEL)
-            preferences[SUMMARIZER_THINKING_BUDGET] = normalizedSettings.summarizerThinkingBudget
-            normalizedSettings.subagentModelId?.let {
-                preferences[SUBAGENT_MODEL] = it.toString()
-            } ?: preferences.remove(SUBAGENT_MODEL)
-            preferences[SUBAGENT_THINKING_BUDGET] = normalizedSettings.subagentThinkingBudget
-            preferences[TRANSLATE_MODEL] = normalizedSettings.translateModeId.toString()
-            preferences[SUGGESTION_MODEL] = normalizedSettings.suggestionModelId.toString()
-            preferences[SUGGESTION_THINKING_BUDGET] = normalizedSettings.suggestionThinkingBudget
-            preferences[IMAGE_GENERATION_MODEL] = normalizedSettings.imageGenerationModelId.toString()
-            preferences[TITLE_PROMPT] = normalizedSettings.titlePrompt
-            preferences[TRANSLATION_PROMPT] = normalizedSettings.translatePrompt
-            preferences[SUGGESTION_PROMPT] = normalizedSettings.suggestionPrompt
-            preferences[LEARNING_MODE_PROMPT] = normalizedSettings.learningModePrompt
-            preferences[OCR_MODEL] = normalizedSettings.ocrModelId.toString()
-            preferences[OCR_THINKING_BUDGET] = normalizedSettings.ocrThinkingBudget
-            preferences[OCR_PROMPT] = normalizedSettings.ocrPrompt
-            preferences[EMBEDDING_MODEL] = normalizedSettings.embeddingModelId.toString()
-
-            preferences[PROVIDERS] = JsonInstant.encodeToString(migratedSettings.providers)
-
-            preferences[ASSISTANTS] = JsonInstant.encodeToString(normalizedSettings.assistants)
-            preferences[SELECT_ASSISTANT] = normalizedSettings.assistantId.toString()
-            preferences[ASSISTANT_TAGS] = JsonInstant.encodeToString(normalizedSettings.assistantTags)
-            preferences[PROVIDER_TAGS] = JsonInstant.encodeToString(normalizedSettings.providerTags)
-            preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(normalizedSettings.recentlyUsedAssistants)
-
-            preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(migratedSettings.searchServices)
-            preferences[SEARCH_COMMON] = JsonInstant.encodeToString(normalizedSettings.searchCommonOptions)
-            preferences[SEARCH_SELECTED] = if (normalizedSettings.searchServices.isEmpty()) {
-                0
-            } else {
-                normalizedSettings.searchServiceSelected.coerceIn(0, normalizedSettings.searchServices.size - 1)
+            if (isFirstSave || current.dynamicColor != normalizedSettings.dynamicColor) {
+                preferences[DYNAMIC_COLOR] = normalizedSettings.dynamicColor
             }
-
-            preferences[MCP_SERVERS] = JsonInstant.encodeToString(migratedSettings.mcpServers)
-            preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(migratedSettings.webDavConfig)
-            preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(migratedSettings.ttsProviders)
-            normalizedSettings.selectedTTSProviderId?.let {
-                preferences[SELECTED_TTS_PROVIDER] = it.toString()
-            } ?: preferences.remove(SELECTED_TTS_PROVIDER)
-            preferences[SELECTED_TTS_VOICE] = normalizedSettings.selectedTTSVoiceId.toString()
-            preferences[TTS_AUTOPLAY_MODE] = JsonInstant.encodeToString(normalizedSettings.ttsAutoplayMode)
-            normalizedSettings.sttModelId?.let {
-                preferences[STT_MODEL] = it.toString()
-            } ?: preferences.remove(STT_MODEL)
-            preferences[STT_THINKING_BUDGET] = normalizedSettings.sttThinkingBudget
-            preferences[STT_PROMPT] = normalizedSettings.sttPrompt
-            preferences[WEB_SERVER_ENABLED] = normalizedSettings.webServerEnabled
-            preferences[WEB_SERVER_PORT] = normalizedSettings.webServerPort
-            preferences[WEB_SERVER_JWT_ENABLED] = normalizedSettings.webServerJwtEnabled
-            preferences[WEB_SERVER_ACCESS_PASSWORD] = migratedSettings.webServerAccessPassword
-            preferences[WEB_SERVER_BACKGROUND_SETUP_SHOWN] = normalizedSettings.webServerBackgroundSetupShown
-
-            preferences[MODES] = JsonInstant.encodeToString(normalizedSettings.modes)
-            preferences[LOREBOOKS] = JsonInstant.encodeToString(normalizedSettings.lorebooks)
-            preferences[SKILLS] = JsonInstant.encodeToString(normalizedSettings.skills)
-            preferences[CHAT_STORAGE] = JsonInstant.encodeToString(normalizedSettings.chatStorage)
-            preferences[TEXT_SELECTION_CONFIG] = JsonInstant.encodeToString(normalizedSettings.textSelectionConfig)
-            preferences[ASSISTANT_OVERLAY_CONFIG] = JsonInstant.encodeToString(normalizedSettings.assistantOverlayConfig)
+            if (isFirstSave || current.setupCompleted != normalizedSettings.setupCompleted) {
+                preferences[SETUP_COMPLETED] = normalizedSettings.setupCompleted
+            }
+            if (isFirstSave || current.themeId != normalizedSettings.themeId) {
+                preferences[THEME_ID] = normalizedSettings.themeId
+            }
+            if (isFirstSave || current.developerMode != normalizedSettings.developerMode) {
+                preferences[DEVELOPER_MODE] = normalizedSettings.developerMode
+            }
+            if (isFirstSave || current.enableRagLogging != normalizedSettings.enableRagLogging) {
+                preferences[ENABLE_RAG_LOGGING] = normalizedSettings.enableRagLogging
+            }
+            if (isFirstSave || current.displaySetting != normalizedSettings.displaySetting) {
+                preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(normalizedSettings.displaySetting)
+            }
+            if (isFirstSave || current.enableWebSearch != normalizedSettings.enableWebSearch) {
+                preferences[ENABLE_WEB_SEARCH] = normalizedSettings.enableWebSearch
+            }
+            if (isFirstSave || current.favoriteModels != normalizedSettings.favoriteModels) {
+                preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(normalizedSettings.favoriteModels)
+            }
+            if (isFirstSave || current.recentModelIds != normalizedSettings.recentModelIds) {
+                preferences[RECENT_MODEL_IDS] = JsonInstant.encodeToString(normalizedSettings.recentModelIds)
+            }
+            if (isFirstSave || current.chatModelId != normalizedSettings.chatModelId) {
+                preferences[SELECT_MODEL] = normalizedSettings.chatModelId.toString()
+            }
+            if (isFirstSave || current.titleModelId != normalizedSettings.titleModelId) {
+                preferences[TITLE_MODEL] = normalizedSettings.titleModelId.toString()
+            }
+            if (isFirstSave || current.titleThinkingBudget != normalizedSettings.titleThinkingBudget) {
+                preferences[TITLE_THINKING_BUDGET] = normalizedSettings.titleThinkingBudget
+            }
+            if (isFirstSave || current.summarizerModelId != normalizedSettings.summarizerModelId) {
+                normalizedSettings.summarizerModelId?.let {
+                    preferences[SUMMARIZER_MODEL] = it.toString()
+                } ?: preferences.remove(SUMMARIZER_MODEL)
+            }
+            if (isFirstSave || current.summarizerThinkingBudget != normalizedSettings.summarizerThinkingBudget) {
+                preferences[SUMMARIZER_THINKING_BUDGET] = normalizedSettings.summarizerThinkingBudget
+            }
+            if (isFirstSave || current.subagentModelId != normalizedSettings.subagentModelId) {
+                normalizedSettings.subagentModelId?.let {
+                    preferences[SUBAGENT_MODEL] = it.toString()
+                } ?: preferences.remove(SUBAGENT_MODEL)
+            }
+            if (isFirstSave || current.subagentThinkingBudget != normalizedSettings.subagentThinkingBudget) {
+                preferences[SUBAGENT_THINKING_BUDGET] = normalizedSettings.subagentThinkingBudget
+            }
+            if (isFirstSave || current.translateModeId != normalizedSettings.translateModeId) {
+                preferences[TRANSLATE_MODEL] = normalizedSettings.translateModeId.toString()
+            }
+            if (isFirstSave || current.suggestionModelId != normalizedSettings.suggestionModelId) {
+                preferences[SUGGESTION_MODEL] = normalizedSettings.suggestionModelId.toString()
+            }
+            if (isFirstSave || current.suggestionThinkingBudget != normalizedSettings.suggestionThinkingBudget) {
+                preferences[SUGGESTION_THINKING_BUDGET] = normalizedSettings.suggestionThinkingBudget
+            }
+            if (isFirstSave || current.imageGenerationModelId != normalizedSettings.imageGenerationModelId) {
+                preferences[IMAGE_GENERATION_MODEL] = normalizedSettings.imageGenerationModelId.toString()
+            }
+            if (isFirstSave || current.titlePrompt != normalizedSettings.titlePrompt) {
+                preferences[TITLE_PROMPT] = normalizedSettings.titlePrompt
+            }
+            if (isFirstSave || current.translatePrompt != normalizedSettings.translatePrompt) {
+                preferences[TRANSLATION_PROMPT] = normalizedSettings.translatePrompt
+            }
+            if (isFirstSave || current.suggestionPrompt != normalizedSettings.suggestionPrompt) {
+                preferences[SUGGESTION_PROMPT] = normalizedSettings.suggestionPrompt
+            }
+            if (isFirstSave || current.learningModePrompt != normalizedSettings.learningModePrompt) {
+                preferences[LEARNING_MODE_PROMPT] = normalizedSettings.learningModePrompt
+            }
+            if (isFirstSave || current.ocrModelId != normalizedSettings.ocrModelId) {
+                preferences[OCR_MODEL] = normalizedSettings.ocrModelId.toString()
+            }
+            if (isFirstSave || current.ocrThinkingBudget != normalizedSettings.ocrThinkingBudget) {
+                preferences[OCR_THINKING_BUDGET] = normalizedSettings.ocrThinkingBudget
+            }
+            if (isFirstSave || current.ocrPrompt != normalizedSettings.ocrPrompt) {
+                preferences[OCR_PROMPT] = normalizedSettings.ocrPrompt
+            }
+            if (isFirstSave || current.embeddingModelId != normalizedSettings.embeddingModelId) {
+                preferences[EMBEDDING_MODEL] = normalizedSettings.embeddingModelId.toString()
+            }
+            if (isFirstSave || current.providers != migratedSettings.providers) {
+                preferences[PROVIDERS] = JsonInstant.encodeToString(migratedSettings.providers)
+            }
+            if (isFirstSave || current.assistants != normalizedSettings.assistants) {
+                preferences[ASSISTANTS] = JsonInstant.encodeToString(normalizedSettings.assistants)
+            }
+            if (isFirstSave || current.assistantId != normalizedSettings.assistantId) {
+                preferences[SELECT_ASSISTANT] = normalizedSettings.assistantId.toString()
+            }
+            if (isFirstSave || current.assistantTags != normalizedSettings.assistantTags) {
+                preferences[ASSISTANT_TAGS] = JsonInstant.encodeToString(normalizedSettings.assistantTags)
+            }
+            if (isFirstSave || current.providerTags != normalizedSettings.providerTags) {
+                preferences[PROVIDER_TAGS] = JsonInstant.encodeToString(normalizedSettings.providerTags)
+            }
+            if (isFirstSave || current.recentlyUsedAssistants != normalizedSettings.recentlyUsedAssistants) {
+                preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(normalizedSettings.recentlyUsedAssistants)
+            }
+            if (isFirstSave || current.searchServices != migratedSettings.searchServices) {
+                preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(migratedSettings.searchServices)
+            }
+            if (isFirstSave || current.searchCommonOptions != normalizedSettings.searchCommonOptions) {
+                preferences[SEARCH_COMMON] = JsonInstant.encodeToString(normalizedSettings.searchCommonOptions)
+            }
+            if (isFirstSave || current.searchServiceSelected != normalizedSettings.searchServiceSelected || current.searchServices != normalizedSettings.searchServices) {
+                preferences[SEARCH_SELECTED] = if (normalizedSettings.searchServices.isEmpty()) {
+                    0
+                } else {
+                    normalizedSettings.searchServiceSelected.coerceIn(0, normalizedSettings.searchServices.size - 1)
+                }
+            }
+            if (isFirstSave || current.mcpServers != migratedSettings.mcpServers) {
+                preferences[MCP_SERVERS] = JsonInstant.encodeToString(migratedSettings.mcpServers)
+            }
+            if (isFirstSave || current.webDavConfig != migratedSettings.webDavConfig) {
+                preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(migratedSettings.webDavConfig)
+            }
+            if (isFirstSave || current.ttsProviders != migratedSettings.ttsProviders) {
+                preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(migratedSettings.ttsProviders)
+            }
+            if (isFirstSave || current.selectedTTSProviderId != normalizedSettings.selectedTTSProviderId) {
+                normalizedSettings.selectedTTSProviderId?.let {
+                    preferences[SELECTED_TTS_PROVIDER] = it.toString()
+                } ?: preferences.remove(SELECTED_TTS_PROVIDER)
+            }
+            if (isFirstSave || current.selectedTTSVoiceId != normalizedSettings.selectedTTSVoiceId) {
+                preferences[SELECTED_TTS_VOICE] = normalizedSettings.selectedTTSVoiceId.toString()
+            }
+            if (isFirstSave || current.ttsAutoplayMode != normalizedSettings.ttsAutoplayMode) {
+                preferences[TTS_AUTOPLAY_MODE] = JsonInstant.encodeToString(normalizedSettings.ttsAutoplayMode)
+            }
+            if (isFirstSave || current.sttModelId != normalizedSettings.sttModelId) {
+                normalizedSettings.sttModelId?.let {
+                    preferences[STT_MODEL] = it.toString()
+                } ?: preferences.remove(STT_MODEL)
+            }
+            if (isFirstSave || current.sttThinkingBudget != normalizedSettings.sttThinkingBudget) {
+                preferences[STT_THINKING_BUDGET] = normalizedSettings.sttThinkingBudget
+            }
+            if (isFirstSave || current.sttPrompt != normalizedSettings.sttPrompt) {
+                preferences[STT_PROMPT] = normalizedSettings.sttPrompt
+            }
+            if (isFirstSave || current.webServerEnabled != normalizedSettings.webServerEnabled) {
+                preferences[WEB_SERVER_ENABLED] = normalizedSettings.webServerEnabled
+            }
+            if (isFirstSave || current.webServerPort != normalizedSettings.webServerPort) {
+                preferences[WEB_SERVER_PORT] = normalizedSettings.webServerPort
+            }
+            if (isFirstSave || current.webServerJwtEnabled != normalizedSettings.webServerJwtEnabled) {
+                preferences[WEB_SERVER_JWT_ENABLED] = normalizedSettings.webServerJwtEnabled
+            }
+            if (isFirstSave || current.webServerAccessPassword != migratedSettings.webServerAccessPassword) {
+                preferences[WEB_SERVER_ACCESS_PASSWORD] = migratedSettings.webServerAccessPassword
+            }
+            if (isFirstSave || current.webServerBackgroundSetupShown != normalizedSettings.webServerBackgroundSetupShown) {
+                preferences[WEB_SERVER_BACKGROUND_SETUP_SHOWN] = normalizedSettings.webServerBackgroundSetupShown
+            }
+            if (isFirstSave || current.modes != normalizedSettings.modes) {
+                preferences[MODES] = JsonInstant.encodeToString(normalizedSettings.modes)
+            }
+            if (isFirstSave || current.lorebooks != normalizedSettings.lorebooks) {
+                preferences[LOREBOOKS] = JsonInstant.encodeToString(normalizedSettings.lorebooks)
+            }
+            if (isFirstSave || current.skills != normalizedSettings.skills) {
+                preferences[SKILLS] = JsonInstant.encodeToString(normalizedSettings.skills)
+            }
+            if (isFirstSave || current.chatStorage != normalizedSettings.chatStorage) {
+                preferences[CHAT_STORAGE] = JsonInstant.encodeToString(normalizedSettings.chatStorage)
+            }
+            if (isFirstSave || current.textSelectionConfig != normalizedSettings.textSelectionConfig) {
+                preferences[TEXT_SELECTION_CONFIG] = JsonInstant.encodeToString(normalizedSettings.textSelectionConfig)
+            }
+            if (isFirstSave || current.assistantOverlayConfig != normalizedSettings.assistantOverlayConfig) {
+                preferences[ASSISTANT_OVERLAY_CONFIG] = JsonInstant.encodeToString(normalizedSettings.assistantOverlayConfig)
+            }
         }
     }
 

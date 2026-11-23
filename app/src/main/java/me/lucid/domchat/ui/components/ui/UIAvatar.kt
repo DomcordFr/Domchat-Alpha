@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -81,20 +82,127 @@ fun TextAvatar(
 }
 
 @Composable
-fun UIAvatar(
-    name: String,
-    value: Avatar,
+private fun AvatarContent(
+    name: String = "",
+    value: Avatar = Avatar.Dummy,
+    rotation: Float = 0f,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .avatarCounterSpin(rotation)
+    ) {
+        when (value) {
+            is Avatar.Image -> {
+                val context = LocalContext.current
+                val density = LocalDensity.current
+                val avatarRequest = remember(value.url, context, density) {
+                    coil3.request.ImageRequest.Builder(context)
+                        .data(value.url)
+                        .crossfade(false)
+                        .size(with(density) { 64.dp.roundToPx() })
+                        .build()
+                }
+                AsyncImage(
+                    model = avatarRequest,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+
+            is Avatar.Emoji -> {
+                Text(
+                    text = value.content,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 15.sp,
+                        maxFontSize = 30.sp,
+                    ),
+                    lineHeight = 1.em,
+                    modifier = Modifier.padding(2.dp)
+                )
+            }
+
+            is Avatar.Resource -> {
+                val context = LocalContext.current
+                val safeId = remember(value.id, context) {
+                    safeDrawableResId(context, value.id, me.lucid.domchat.R.drawable.default_generical_pfp)
+                }
+                AsyncImage(
+                    model = safeId,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+
+            is Avatar.Dummy -> {
+                Text(
+                    text = name
+                        .ifBlank { stringResource(R.string.user_default_name) }
+                        .takeIf { it.isNotEmpty() }
+                        ?.firstOrNull()?.toString()?.uppercase() ?: "A",
+                    fontSize = 20.sp,
+                    lineHeight = 1.em
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReadOnlyUIAvatar(
+    name: String = "",
+    value: Avatar = Avatar.Dummy,
     modifier: Modifier = Modifier,
     loading: Boolean = false,
-    onUpdate: ((Avatar) -> Unit)? = null,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+) {
+    val rotation = rememberAvatarLoadingRotation(loading)
+    val shape = rememberAvatarShape(loading)
+
+    if (onClick != null) {
+        Surface(
+            shape = shape,
+            modifier = modifier
+                .size(32.dp)
+                .avatarLoadingSpin(rotation),
+            onClick = onClick,
+            tonalElevation = 4.dp,
+            color = Color(0xFF000000),
+        ) {
+            AvatarContent(name = name, value = value, rotation = rotation)
+        }
+    } else {
+        Surface(
+            shape = shape,
+            modifier = modifier
+                .size(32.dp)
+                .avatarLoadingSpin(rotation),
+            tonalElevation = 4.dp,
+            color = Color(0xFF000000),
+        ) {
+            AvatarContent(name = name, value = value, rotation = rotation)
+        }
+    }
+}
+
+@Composable
+private fun EditableUIAvatar(
+    name: String = "",
+    value: Avatar = Avatar.Dummy,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+    onUpdate: (Avatar) -> Unit = {},
+    onClick: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var showPickOption by remember { mutableStateOf(false) }
     var showEmojiPicker by remember { mutableStateOf(false) }
     var showUrlInput by remember { mutableStateOf(false) }
     var urlInput by remember { mutableStateOf("") }
-    
+
     // State for square cropper
     var showCropper by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -110,87 +218,21 @@ fun UIAvatar(
     }
 
     val rotation = rememberAvatarLoadingRotation(loading)
+    val shape = rememberAvatarShape(loading)
 
-    val avatarContent: @Composable () -> Unit = {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .avatarCounterSpin(rotation)
-        ) {
-            when (value) {
-                is Avatar.Image -> {
-                    AsyncImage(
-                        model = value.url,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
-
-                is Avatar.Emoji -> {
-                    Text(
-                        text = value.content,
-                        autoSize = TextAutoSize.StepBased(
-                            minFontSize = 15.sp,
-                            maxFontSize = 30.sp,
-                        ),
-                        lineHeight = 1.em,
-                        modifier = Modifier.padding(2.dp)
-                    )
-                }
-
-                is Avatar.Resource -> {
-                    val context = androidx.compose.ui.platform.LocalContext.current
-                    val safeId = androidx.compose.runtime.remember(value.id, context) {
-                        safeDrawableResId(context, value.id, me.lucid.domchat.R.drawable.default_generical_pfp)
-                    }
-                    AsyncImage(
-                        model = safeId,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
-
-                is Avatar.Dummy -> {
-                    Text(
-                        text = name
-                            .ifBlank { stringResource(R.string.user_default_name) }
-                            .takeIf { it.isNotEmpty() }
-                            ?.firstOrNull()?.toString()?.uppercase() ?: "A",
-                        fontSize = 20.sp,
-                        lineHeight = 1.em
-                    )
-                }
-            }
-        }
-    }
-
-    if (onClick != null || onUpdate != null) {
-        Surface(
-            shape = rememberAvatarShape(loading),
-            modifier = modifier
-                .size(32.dp)
-                .avatarLoadingSpin(rotation),
-            onClick = {
-                onClick?.invoke()
-                if (onUpdate != null) showPickOption = true
-            },
-            tonalElevation = 4.dp,
-            color = Color(0xFF000000),
-            content = avatarContent
-        )
-    } else {
-        Surface(
-            shape = rememberAvatarShape(loading),
-            modifier = modifier
-                .size(32.dp)
-                .avatarLoadingSpin(rotation),
-            tonalElevation = 4.dp,
-            color = Color(0xFF000000),
-            content = avatarContent
-        )
+    Surface(
+        shape = shape,
+        modifier = modifier
+            .size(32.dp)
+            .avatarLoadingSpin(rotation),
+        onClick = {
+            onClick?.invoke()
+            showPickOption = true
+        },
+        tonalElevation = 4.dp,
+        color = Color(0xFF000000),
+    ) {
+        AvatarContent(name = name, value = value, rotation = rotation)
     }
 
     if (showPickOption) {
@@ -336,12 +378,41 @@ fun UIAvatar(
             onCropComplete = { croppedUri ->
                 showCropper = false
                 selectedImageUri = null
-                onUpdate?.invoke(Avatar.Image(croppedUri.toString()))
+                onUpdate(Avatar.Image(croppedUri.toString()))
             },
             onCancel = {
                 showCropper = false
                 selectedImageUri = null
             }
+        )
+    }
+}
+
+@Composable
+fun UIAvatar(
+    name: String = "",
+    value: Avatar = Avatar.Dummy,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+    onUpdate: ((Avatar) -> Unit)? = null,
+    onClick: (() -> Unit)? = null
+) {
+    if (onUpdate == null) {
+        ReadOnlyUIAvatar(
+            name = name,
+            value = value,
+            modifier = modifier,
+            loading = loading,
+            onClick = onClick
+        )
+    } else {
+        EditableUIAvatar(
+            name = name,
+            value = value,
+            modifier = modifier,
+            loading = loading,
+            onUpdate = onUpdate,
+            onClick = onClick
         )
     }
 }
