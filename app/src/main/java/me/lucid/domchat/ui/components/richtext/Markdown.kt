@@ -162,8 +162,10 @@ private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNo
 private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>? {
     var inCodeFence = false
     var codeFenceChar = ' '
+    var fenceLength = 0
     var inThinkBlock = false
-    var inMathBlock = false
+    var mathDelimiter: String? = null
+    var inInlineCode = false
     val blocks = mutableListOf<String>()
     var blockStart = 0
     var i = 0
@@ -172,7 +174,7 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
     fun isLineStart(idx: Int): Boolean {
         var j = idx - 1
         var spaces = 0
-        while (j >= 0 && content[j] == ' ') {
+        while (j >= 0 && content[j] == ' ' && spaces <= 3) {
             spaces++
             j--
         }
@@ -180,32 +182,58 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
     }
 
     while (i < len) {
+        // Reset inline code on newline (inline code spans cannot cross empty lines or paragraphs)
+        if (content[i] == '\n') {
+            inInlineCode = false
+        }
+
         // Code fences at line start (``` or ~~~)
         if (isLineStart(i)) {
-            if (!inCodeFence && !inThinkBlock && !inMathBlock) {
-                if (content.startsWith("```", i)) {
-                    inCodeFence = true
-                    codeFenceChar = '`'
-                    i += 3
-                    continue
-                } else if (content.startsWith("~~~", i)) {
-                    inCodeFence = true
-                    codeFenceChar = '~'
-                    i += 3
-                    continue
+            val c = content[i]
+            if (!inCodeFence && !inThinkBlock && mathDelimiter == null) {
+                if (c == '`' || c == '~') {
+                    var count = 0
+                    while (i + count < len && content[i + count] == c) count++
+                    if (count >= 3) {
+                        inCodeFence = true
+                        codeFenceChar = c
+                        fenceLength = count
+                        inInlineCode = false
+                        i += count
+                        continue
+                    }
                 }
-            } else if (inCodeFence) {
-                if ((codeFenceChar == '`' && content.startsWith("```", i)) ||
-                    (codeFenceChar == '~' && content.startsWith("~~~", i))) {
-                    inCodeFence = false
-                    i += 3
-                    continue
+            } else if (inCodeFence && c == codeFenceChar) {
+                var count = 0
+                while (i + count < len && content[i + count] == codeFenceChar) count++
+                if (count >= fenceLength) {
+                    var k = i + count
+                    var hasInfo = false
+                    while (k < len && content[k] != '\n' && content[k] != '\r') {
+                        if (content[k] != ' ' && content[k] != '\t') {
+                            hasInfo = true
+                            break
+                        }
+                        k++
+                    }
+                    if (!hasInfo) {
+                        inCodeFence = false
+                        i += count
+                        continue
+                    }
                 }
             }
         }
 
-        // Think blocks (<think>...</think>)
-        if (!inCodeFence) {
+        // Inline code spans (` outside code fence)
+        if (!inCodeFence && content[i] == '`') {
+            inInlineCode = !inInlineCode
+            i++
+            continue
+        }
+
+        // Think blocks (<think>...</think>) outside code fence & inline code
+        if (!inCodeFence && !inInlineCode) {
             if (!inThinkBlock && content.startsWith("<think>", i)) {
                 inThinkBlock = true
                 i += 7
@@ -217,33 +245,33 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
             }
         }
 
-        // Display math blocks ($$...$$ or \[...\])
-        if (!inCodeFence && !inThinkBlock) {
-            if (!inMathBlock) {
+        // Display math blocks ($$...$$ or \[...\]) outside code fence, inline code & think blocks
+        if (!inCodeFence && !inInlineCode && !inThinkBlock) {
+            if (mathDelimiter == null) {
                 if (content.startsWith("$$", i)) {
-                    inMathBlock = true
+                    mathDelimiter = "$$"
                     i += 2
                     continue
                 } else if (content.startsWith("\\[", i)) {
-                    inMathBlock = true
+                    mathDelimiter = "\\["
                     i += 2
                     continue
                 }
             } else {
-                if (content.startsWith("$$", i)) {
-                    inMathBlock = false
+                if (mathDelimiter == "$$" && content.startsWith("$$", i)) {
+                    mathDelimiter = null
                     i += 2
                     continue
-                } else if (content.startsWith("\\]", i)) {
-                    inMathBlock = false
+                } else if (mathDelimiter == "\\[" && content.startsWith("\\]", i)) {
+                    mathDelimiter = null
                     i += 2
                     continue
                 }
             }
         }
 
-        // Paragraph breaks (\n\n or \r\n\r\n) outside fences and special blocks
-        if (!inCodeFence && !inThinkBlock && !inMathBlock) {
+        // Paragraph breaks (\n\n or \r\n\r\n) outside fences, inline code, and special blocks
+        if (!inCodeFence && !inInlineCode && !inThinkBlock && mathDelimiter == null) {
             if (content.startsWith("\r\n\r\n", i)) {
                 val blockEnd = i + 4
                 blocks.add(content.substring(blockStart, blockEnd))
@@ -261,7 +289,7 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
         i++
     }
 
-    if (inCodeFence || inThinkBlock || inMathBlock || blocks.isEmpty() || blockStart > len) return null
+    if (inCodeFence || inThinkBlock || mathDelimiter != null || blocks.isEmpty() || blockStart > len) return null
     val tail = if (blockStart < len) content.substring(blockStart) else ""
     return blocks to tail
 }

@@ -29,7 +29,8 @@ fun BackdropEffectScope.lens(
     if (!isRuntimeShaderSupported()) return
     if (refractionHeight <= 0f || refractionAmount <= 0f) return
 
-    val padPx = if (padding > 0f) kotlin.math.ceil(padding).toInt() else 0
+    val neededPadding = refractionAmount.coerceAtLeast(refractionHeight)
+    val padPx = kotlin.math.ceil(maxOf(padding, neededPadding)).toInt()
     val padF = padPx.toFloat()
     padding = padF
 
