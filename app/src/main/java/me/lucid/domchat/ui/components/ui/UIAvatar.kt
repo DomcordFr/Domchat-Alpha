@@ -3,6 +3,8 @@ package me.lucid.domchat.ui.components.ui
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,7 +87,7 @@ fun TextAvatar(
 private fun AvatarContent(
     name: String = "",
     value: Avatar = Avatar.Dummy,
-    rotation: Float = 0f,
+    rotation: Animatable<Float, AnimationVector1D>,
 ) {
     Box(
         contentAlignment = Alignment.Center,
