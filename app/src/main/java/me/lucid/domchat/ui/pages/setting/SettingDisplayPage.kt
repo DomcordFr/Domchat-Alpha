@@ -1108,19 +1108,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             )
                         }
                     )
-
-                    SettingGroupItem(
-                        title = stringResource(R.string.setting_display_check_updates_title),
-                        subtitle = stringResource(R.string.setting_display_check_updates_desc),
-                        trailing = {
-                            HapticSwitch(
-                                checked = displaySetting.checkForUpdates,
-                                onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(checkForUpdates = it))
-                                }
-                            )
-                        }
-                    )
                 }
             }
 

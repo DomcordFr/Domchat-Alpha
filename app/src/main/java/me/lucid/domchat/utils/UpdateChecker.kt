@@ -298,6 +298,19 @@ class UpdateChecker(private val client: PlatformHttpClient) {
             .apply()
     }
 
+    fun dismissVersion(context: Context, version: String) {
+        val prefs = context.getSharedPreferences("update_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString("dismissed_version", version)
+            .apply()
+    }
+
+    fun isUpdateDismissed(context: Context, version: String, forceCheck: Boolean = false): Boolean {
+        if (forceCheck) return false
+        val prefs = context.getSharedPreferences("update_prefs", Context.MODE_PRIVATE)
+        return prefs.getString("dismissed_version", null) == version
+    }
+
     fun canInstallDownloadedUpdate(context: Context): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || context.packageManager.canRequestPackageInstalls()
     }
@@ -403,14 +416,11 @@ class UpdateChecker(private val client: PlatformHttpClient) {
         }
     }
     
-    fun isUpdateIgnored(context: Context, version: String, forceCheck: Boolean): Boolean {
+    fun isUpdateIgnored(context: Context, version: String, forceCheck: Boolean = false): Boolean {
         if (forceCheck) return false
         val prefs = context.getSharedPreferences("update_prefs", Context.MODE_PRIVATE)
         val ignoredVersion = prefs.getString("ignored_version", null)
-        val ignoredTime = prefs.getLong("ignored_time", 0L)
-        val oneWeekMillis = 7 * 24 * 60 * 60 * 1000L
-        
-        return ignoredVersion == version && (System.currentTimeMillis() - ignoredTime) < oneWeekMillis
+        return ignoredVersion == version
     }
 }
 

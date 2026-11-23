@@ -3891,7 +3891,6 @@ private fun ChatToolbar(
             val isForcedCheck by vm.isForcedCheck.collectAsStateWithLifecycle()
             val context = LocalContext.current
             var showUpdateDialog by remember { mutableStateOf(false) }
-            var dismissedUpdateVersion by remember { mutableStateOf<String?>(null) }
             val currentVersion = remember { me.lucid.domchat.utils.Version(BuildConfig.VERSION_NAME) }
             val isNewChat = isEmpty
             val shouldObserveUpdates = (settings.displaySetting.checkForUpdates || isForcedCheck) &&
@@ -3911,6 +3910,18 @@ private fun ChatToolbar(
                     vm.updateChecker.isUpdateIgnored(context, updateInfo.version, forceCheck = isForcedCheck)
                 else true
             }
+            val isDismissed = remember(updateInfo, isForcedCheck) {
+                if (updateInfo != null)
+                    vm.updateChecker.isUpdateDismissed(context, updateInfo.version, forceCheck = isForcedCheck)
+                else true
+            }
+
+            LaunchedEffect(isNewer, isDismissed, isIgnored, shouldObserveUpdates) {
+                if (isNewer && !isDismissed && !isIgnored && shouldObserveUpdates) {
+                    showUpdateDialog = true
+                }
+            }
+
             // Top bar update badge removed per user request
             val showUpdatePill = false
 
@@ -3919,11 +3930,14 @@ private fun ChatToolbar(
                     info = updateInfo,
                     updateChecker = vm.updateChecker,
                     onDismiss = {
+                        vm.updateChecker.dismissVersion(context, updateInfo.version)
+                        vm.updateChecker.clearForcedCheck()
                         showUpdateDialog = false
                     },
                     onLater = {
+                        vm.updateChecker.dismissVersion(context, updateInfo.version)
+                        vm.updateChecker.clearForcedCheck()
                         showUpdateDialog = false
-                        dismissedUpdateVersion = updateInfo.version
                     },
                     onIgnore = {
                         vm.updateChecker.ignoreUpdate(context, updateInfo.version)

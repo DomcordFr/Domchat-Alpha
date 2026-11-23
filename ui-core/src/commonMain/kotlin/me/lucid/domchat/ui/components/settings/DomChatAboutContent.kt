@@ -62,6 +62,7 @@ fun DomChatAboutContent(
     onSourceCode: () -> Unit,
     onVersionLongPress: (() -> Unit)? = null,
     onHaptic: () -> Unit = {},
+    extraProjectContent: (@Composable () -> Unit)? = null,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -129,6 +130,7 @@ fun DomChatAboutContent(
                 onHaptic = onHaptic,
                 onClick = onSourceCode,
             )
+            extraProjectContent?.invoke()
         }
         Spacer(Modifier.height(24.dp))
         AboutSectionTitle("System Information")
@@ -171,19 +173,20 @@ private fun AboutSectionTitle(title: String) {
 }
 
 @Composable
-private fun DomChatAboutItem(
+fun DomChatAboutItem(
     icon: ImageVector,
     title: String,
-    darkTheme: Boolean,
+    darkTheme: Boolean = true,
     subtitle: String? = null,
     trailing: ImageVector? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
     onHaptic: () -> Unit = {},
     onClick: (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
+        targetValue = if (isPressed && onClick != null) 0.98f else 1f,
         animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
         label = "about_item_scale",
     )
@@ -241,7 +244,9 @@ private fun DomChatAboutItem(
                     )
                 }
             }
-            if (trailing != null) {
+            if (trailingContent != null) {
+                trailingContent()
+            } else if (trailing != null) {
                 Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
                     Icon(
                         trailing,
