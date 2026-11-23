@@ -22,11 +22,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
 import androidx.compose.material3.Button
@@ -113,7 +116,7 @@ fun UpdateDialog(
     val isDownloaded = progress.status == UpdateDownloadStatus.SUCCESSFUL && progress.localUri != null
     val downloadFailed = progress.status == UpdateDownloadStatus.FAILED
     val needsInstallPermission = isDownloaded && !updateChecker.canInstallDownloadedUpdate(context)
-    val buttonShape = RoundedCornerShape(50)
+    val buttonShape = RoundedCornerShape(12.dp)
 
     // Animated entrance and exit state
     var isVisible by remember { mutableStateOf(false) }
@@ -293,7 +296,7 @@ fun UpdateDialog(
                                             color = Color.White
                                         )
                                         Surface(
-                                            color = Color.White.copy(alpha = 0.08f),
+                                            color = Color(0xFF000000),
                                             shape = RoundedCornerShape(50),
                                             border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                         ) {
@@ -325,7 +328,7 @@ fun UpdateDialog(
 
                                 if (primaryDownload != null && primaryDownload.size.isNotBlank()) {
                                     Surface(
-                                        color = Color.White.copy(alpha = 0.08f),
+                                        color = Color(0xFF000000),
                                         shape = RoundedCornerShape(50),
                                         border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                     ) {
@@ -450,6 +453,7 @@ fun UpdateDialog(
                                 },
                                 enabled = (isDownloaded && progress.localUri != null) || primaryDownload != null,
                                 shape = buttonShape,
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush),
                                 interactionSource = primaryInteraction,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -459,27 +463,39 @@ fun UpdateDialog(
                                         scaleY = primaryScale
                                     },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color(0xFF000000),
-                                    disabledContainerColor = Color.White.copy(alpha = 0.3f),
-                                    disabledContentColor = Color(0xFF000000).copy(alpha = 0.5f)
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White,
+                                    disabledContainerColor = Color(0xFF000000).copy(alpha = 0.5f),
+                                    disabledContentColor = Color.White.copy(alpha = 0.4f)
                                 )
                             ) {
-                                AnimatedContent(
-                                    targetState = when {
-                                        isDownloaded && needsInstallPermission -> "Allow & Install"
-                                        isDownloaded -> "Install Now"
-                                        downloadFailed -> "Try Again"
-                                        currentVersionName == info.version -> "Install Latest"
-                                        else -> "Update Now"
-                                    },
-                                    label = "primary_btn_text_anim"
-                                ) { btnText ->
-                                    Text(
-                                        text = btnText,
-                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = Color(0xFF000000)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Download,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
                                     )
+                                    Spacer(Modifier.width(8.dp))
+                                    AnimatedContent(
+                                        targetState = when {
+                                            isDownloaded && needsInstallPermission -> "Allow & Install"
+                                            isDownloaded -> "Install"
+                                            downloadFailed -> "Try Again"
+                                            currentVersionName == info.version -> "Install Latest"
+                                            else -> "Update Now"
+                                        },
+                                        label = "primary_btn_text_anim"
+                                    ) { btnText ->
+                                        Text(
+                                            text = btnText,
+                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -514,8 +530,8 @@ fun UpdateDialog(
                                     interactionSource = ignoreInteraction,
                                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = Color.Transparent,
-                                        contentColor = Color.White.copy(alpha = 0.75f)
+                                        containerColor = Color(0xFF000000),
+                                        contentColor = Color.White.copy(alpha = 0.85f)
                                     ),
                                     modifier = Modifier
                                         .weight(1f)
@@ -536,8 +552,8 @@ fun UpdateDialog(
                                     interactionSource = laterInteraction,
                                     border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = Color.Transparent,
-                                        contentColor = Color.White.copy(alpha = 0.75f)
+                                        containerColor = Color(0xFF000000),
+                                        contentColor = Color.White.copy(alpha = 0.85f)
                                     ),
                                     modifier = Modifier
                                         .weight(1f)
@@ -568,8 +584,8 @@ fun UpdateDialog(
                                 interactionSource = hideInteraction,
                                 border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = Color.White.copy(alpha = 0.75f)
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White.copy(alpha = 0.85f)
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()

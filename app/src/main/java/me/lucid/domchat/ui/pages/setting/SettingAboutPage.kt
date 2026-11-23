@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,7 +33,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -47,12 +47,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import me.lucid.domchat.BuildConfig
@@ -66,6 +68,7 @@ import me.lucid.domchat.ui.components.ui.UpdateDialog
 import me.lucid.domchat.ui.context.LocalToaster
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberPremiumHaptics
+import me.lucid.domchat.ui.theme.LiquidGlassTokens
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.utils.UiState
 import me.lucid.domchat.utils.UpdateChecker
@@ -191,174 +194,230 @@ fun SettingAboutPage(settingVm: SettingVM = koinViewModel()) {
                         }
                     )
 
-                    // 2. Version Update card (current version, latest version, and install button)
-                    DomChatAboutItem(
-                        icon = Icons.Rounded.SystemUpdateAlt,
-                        title = "Version Update",
-                        darkTheme = LocalDarkMode.current,
-                        subtitleContent = {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    // 2. Version Update Hero Grid Card (Option C)
+                    Surface(
+                        color = Color(0xFF000000),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(
+                            0.5.dp,
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.22f),
+                                    Color.White.copy(alpha = 0.05f),
+                                    Color.Transparent
+                                )
+                            )
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            // Header Row: Icon, Title & Status Badge
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Line 1: Current version
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp)
                                 ) {
+                                    Box(
+                                        modifier = Modifier.size(24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.SystemUpdateAlt,
+                                            contentDescription = null,
+                                            tint = Color.White
+                                        )
+                                    }
                                     Text(
-                                        text = "Current Version:",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color(0xFF9A9AA2)
-                                    )
-                                    Text(
-                                        text = "v$currentVersionName",
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = Color.White
+                                        text = "Version Update",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color(0xFFF2F2F7)
                                     )
                                 }
 
-                                // Line 2: Latest version & status badge
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                val info = manualUpdateInfo
+                                val isNewer = info != null && Version(info.version) > Version(currentVersionName)
+                                val badgeText = when {
+                                    isCheckingForUpdate -> "Checking..."
+                                    isNewer -> "Update Available"
+                                    else -> "Up to Date"
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(
+                                        0.5.dp,
+                                        if (isNewer) Color(0xFF34C759).copy(alpha = 0.45f) else LiquidGlassTokens.SpecularBorderSubtle
+                                    )
                                 ) {
                                     Text(
-                                        text = "Latest Version:",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color(0xFF9A9AA2)
+                                        text = badgeText,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                        color = if (isNewer) Color(0xFF34C759) else Color.White.copy(alpha = 0.70f),
+                                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
                                     )
-                                    val info = manualUpdateInfo
-                                    val isNewer = info != null && Version(info.version) > Version(currentVersionName)
-                                    Text(
-                                        text = when {
-                                            isCheckingForUpdate -> "Checking..."
-                                            info != null -> "v${info.version}"
-                                            else -> "v$currentVersionName"
-                                        },
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = if (isNewer) Color(0xFF34C759) else Color.White
-                                    )
+                                }
+                            }
 
-                                    if (!isCheckingForUpdate && info != null) {
-                                        Surface(
-                                            shape = RoundedCornerShape(50),
-                                            color = if (isNewer) Color(0xFF34C759).copy(alpha = 0.15f) else Color.White.copy(alpha = 0.08f),
-                                            border = BorderStroke(
-                                                0.5.dp,
-                                                if (isNewer) Color(0xFF34C759).copy(alpha = 0.40f) else Color.White.copy(alpha = 0.15f)
-                                            )
-                                        ) {
-                                            Text(
-                                                text = if (isNewer) "Update Available" else "Up to Date",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                                color = if (isNewer) Color(0xFF34C759) else Color.White.copy(alpha = 0.70f),
-                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                                            )
-                                        }
+                            // Symmetrical Metric Tiles
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                // Installed Tile
+                                Surface(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        Text(
+                                            text = "INSTALLED",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.5.sp
+                                            ),
+                                            color = Color(0xFF8E8E93)
+                                        )
+                                        Text(
+                                            text = "v$currentVersionName",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.ExtraBold,
+                                                fontSize = 16.sp
+                                            ),
+                                            color = Color.White
+                                        )
                                     }
                                 }
 
-                                Spacer(Modifier.height(4.dp))
-
-                                // Button to get and install the latest version even if already on it
-                                val installBtnInteraction = remember { MutableInteractionSource() }
-                                val isInstallPressed by installBtnInteraction.collectIsPressedAsState()
-                                val installScale by animateFloatAsState(
-                                    targetValue = if (isInstallPressed) 0.96f else 1f,
-                                    animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
-                                    label = "about_install_btn_press"
-                                )
-
-                                Button(
-                                    onClick = {
-                                        haptics.perform(HapticPattern.Pop)
-                                        val info = manualUpdateInfo
-                                        if (info != null) {
-                                            showManualUpdateDialog = true
-                                        } else {
-                                            checkForUpdateManually(openDialogRegardless = true, notifyUpToDate = false)
-                                        }
-                                    },
-                                    shape = RoundedCornerShape(50),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.White,
-                                        contentColor = Color(0xFF000000)
-                                    ),
-                                    interactionSource = installBtnInteraction,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(42.dp)
-                                        .graphicsLayer {
-                                            scaleX = installScale
-                                            scaleY = installScale
-                                        }
+                                // Latest Release Tile
+                                Surface(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF000000),
+                                    border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
                                 ) {
-                                    if (isCheckingForUpdate) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            color = Color.Black,
-                                            strokeWidth = 2.dp
-                                        )
-                                        Spacer(Modifier.width(8.dp))
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
                                         Text(
-                                            text = "Checking...",
-                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                            color = Color.Black
+                                            text = "LATEST RELEASE",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.5.sp
+                                            ),
+                                            color = Color(0xFF8E8E93)
                                         )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Download,
-                                            contentDescription = null,
-                                            tint = Color.Black,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        val info = manualUpdateInfo
-                                        val btnText = when {
-                                            info != null && Version(info.version) > Version(currentVersionName) ->
-                                                "Install Update (v${info.version})"
-                                            info != null ->
-                                                "Install Latest (v${info.version})"
-                                            else ->
-                                                "Get Latest Version"
+                                        val latestVerText = when {
+                                            isCheckingForUpdate -> "Checking..."
+                                            info != null -> "v${info.version}"
+                                            else -> "v$currentVersionName"
                                         }
                                         Text(
-                                            text = btnText,
-                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                            color = Color.Black
+                                            text = latestVerText,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.ExtraBold,
+                                                fontSize = 16.sp
+                                            ),
+                                            color = if (isNewer) Color(0xFF34C759) else Color.White
                                         )
                                     }
                                 }
                             }
-                        },
-                        trailingContent = {
-                            IconButton(
+
+                            // Dedicated Action Button (12.dp radius, Black BG, Glassy Border, Download Icon)
+                            val installBtnInteraction = remember { MutableInteractionSource() }
+                            val isInstallPressed by installBtnInteraction.collectIsPressedAsState()
+                            val installScale by animateFloatAsState(
+                                targetValue = if (isInstallPressed) 0.96f else 1f,
+                                animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+                                label = "about_install_btn_press"
+                            )
+
+                            Button(
                                 onClick = {
                                     haptics.perform(HapticPattern.Pop)
-                                    checkForUpdateManually(openDialogRegardless = false, notifyUpToDate = true)
+                                    val info = manualUpdateInfo
+                                    if (info != null) {
+                                        showManualUpdateDialog = true
+                                    } else {
+                                        checkForUpdateManually(openDialogRegardless = true, notifyUpToDate = false)
+                                    }
                                 },
-                                enabled = !isCheckingForUpdate
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderBrush),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF000000),
+                                    contentColor = Color.White
+                                ),
+                                interactionSource = installBtnInteraction,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(46.dp)
+                                    .graphicsLayer {
+                                        scaleX = installScale
+                                        scaleY = installScale
+                                    }
                             ) {
                                 if (isCheckingForUpdate) {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.size(16.dp),
                                         color = Color.White,
                                         strokeWidth = 2.dp
                                     )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "Checking...",
+                                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                        color = Color.White
+                                    )
                                 } else {
                                     Icon(
-                                        imageVector = Icons.Rounded.Refresh,
-                                        contentDescription = "Check for updates",
-                                        tint = Color(0xFF9A9AA2),
-                                        modifier = Modifier.size(22.dp)
+                                        imageVector = Icons.Rounded.Download,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    val info = manualUpdateInfo
+                                    val btnText = when {
+                                        info != null && Version(info.version) > Version(currentVersionName) ->
+                                            "Install Update (v${info.version})"
+                                        info != null ->
+                                            "Install Latest (v${info.version})"
+                                        else ->
+                                            "Install Latest (v$currentVersionName)"
+                                    }
+                                    Text(
+                                        text = btnText,
+                                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                        color = Color.White
                                     )
                                 }
                             }
                         }
-                    )
+                    }
                 },
                 onVersionLongPress = {
                     updateChecker.forceUpdateCheck()
