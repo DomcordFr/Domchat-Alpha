@@ -708,7 +708,7 @@ internal data class StreamingSettleRange(
     val revealedAtMillis: Long
 )
 
-private val LocalStreamingRevealState = staticCompositionLocalOf<StreamingRevealState?> { null }
+private val LocalStreamingRevealState = staticCompositionLocalOf { StreamingRevealState() }
 val LocalMarkdownParagraphSpacing = compositionLocalOf { 4.dp }
 val LocalMarkdownWorkspaceId = compositionLocalOf<String?> { null }
 
@@ -1179,8 +1179,8 @@ fun MarkdownBlock(
     val revealRanges = if (isActivelyRevealing) settleRanges else finishRanges
     val revealNowMillisState: State<Long> = if (isActivelyRevealing) streamingFrameMillis else finishNowMillis
 
+    revealState.rangesState.value = revealRanges
     if (revealRanges.isNotEmpty()) {
-        revealState.rangesState.value = revealRanges
         revealState.nowMillisState = revealNowMillisState
         revealState.color = style.color.takeOrElse { Color.White }
         revealState.smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond
@@ -1188,16 +1188,12 @@ fun MarkdownBlock(
         revealState.fadeInEnabled = fadeInEnabled
         revealState.fadeDurationMs = fadeDurationMs
         revealState.startAlpha = effectiveDisplay.streamingFadeStartAlpha
-    } else {
-        revealState.rangesState.value = emptyList()
     }
-
-    val streamingReveal = if (revealRanges.isNotEmpty()) revealState else null
 
     // Provide rpStyleRules to entire tree via CompositionLocal
     CompositionLocalProvider(
         LocalRpStyleRules provides rpStyleRules,
-        LocalStreamingRevealState provides streamingReveal,
+        LocalStreamingRevealState provides revealState,
         LocalMarkdownParagraphSpacing provides paragraphSpacing,
         LocalMarkdownWorkspaceId provides workspaceId,
         LocalLayoutDirection provides blockDirection.toLayoutDirection(),
@@ -2069,13 +2065,12 @@ private fun MarkdownNode(
             }
             val hasActiveReveal = remember(node.startOffset, node.endOffset, streamingReveal) {
                 derivedStateOf {
-                    val reveal = streamingReveal ?: return@derivedStateOf false
-                    reveal.rangesState.value.any { range ->
+                    streamingReveal.rangesState.value.any { range ->
                         range.endOffset > node.startOffset && range.startOffset < node.endOffset
                     }
                 }
             }
-            val revealText = if (hasActiveReveal.value && streamingReveal != null) {
+            val revealText = if (hasActiveReveal.value) {
                 val now = streamingReveal.nowMillisState.value
                 AnnotatedString.Builder(baseAnnotatedText).apply {
                     applyStreamingRevealStyle(
@@ -2380,13 +2375,12 @@ private fun Paragraph(
     }
     val hasActiveReveal = remember(node.startOffset, node.endOffset, streamingReveal) {
         derivedStateOf {
-            val reveal = streamingReveal ?: return@derivedStateOf false
-            reveal.rangesState.value.any { range ->
+            streamingReveal.rangesState.value.any { range ->
                 range.endOffset > node.startOffset && range.startOffset < node.endOffset
             }
         }
     }
-    val annotatedString = if (hasActiveReveal.value && streamingReveal != null) {
+    val annotatedString = if (hasActiveReveal.value) {
         val now = streamingReveal.nowMillisState.value
         AnnotatedString.Builder(baseAnnotatedString).apply {
             applyStreamingRevealStyle(

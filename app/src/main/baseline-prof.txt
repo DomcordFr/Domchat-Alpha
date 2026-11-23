@@ -1949,8 +1949,8 @@ SPLru/noties/jlatexmath/JLatexMathInitProvider;->onCreate()Z
 # DomChat Core Application & Startup
 Lme/lucid/domchat/DomChatApp;
 HSPLme/lucid/domchat/DomChatApp;->onCreate()V
-Lme/lucid/domchat/MainActivity;
-HSPLme/lucid/domchat/MainActivity;->onCreate(Landroid/os/Bundle;)V
+Lme/lucid/domchat/RouteActivity;
+HSPLme/lucid/domchat/RouteActivity;->onCreate(Landroid/os/Bundle;)V
 
 # Liquid Glass & GPU Backdrop System
 Lme/lucid/domchat/ui/theme/LiquidGlassKt;
@@ -1973,14 +1973,11 @@ Lme/lucid/domchat/ui/pages/chat/ChatListKt;
 Lme/lucid/domchat/ui/pages/chat/ChatVM;
 Lme/lucid/domchat/ui/pages/chat/BackgroundKt;
 Lme/lucid/domchat/ui/components/chat/ChatMessageV2Kt;
-Lme/lucid/domchat/ui/components/chat/ChatMessageBubbleKt;
-Lme/lucid/domchat/ui/components/chat/GroupedMessageBubbleKt;
 Lme/lucid/domchat/ui/components/chat/ActivityPillKt;
-Lme/lucid/domchat/ui/components/chat/ReasoningCardKt;
+Lme/lucid/domchat/ui/components/message/ChatMessageActionsKt;
 Lme/lucid/domchat/ui/components/ui/UIAvatarKt;
 Lme/lucid/domchat/ui/components/ui/DomChatGlassSwitchKt;
 Lme/lucid/domchat/ui/components/richtext/MarkdownKt;
-Lme/lucid/domchat/ui/components/richtext/StreamingPresentationState;
 Lme/lucid/domchat/ui/components/richtext/StreamingRevealState;
 
 # Storage, Database & Persistence
@@ -1988,11 +1985,13 @@ Lme/lucid/domchat/data/db/AppDatabase;
 Lme/lucid/domchat/data/db/dao/ConversationDAO;
 Lme/lucid/domchat/data/db/entity/ConversationEntity;
 Lme/lucid/domchat/data/repository/ConversationRepository;
-Lme/lucid/domchat/data/datastore/PreferencesStore;
+Lme/lucid/domchat/data/datastore/SettingsStore;
+Lme/lucid/domchat/data/datastore/PreferencesStoreKt;
 Lme/lucid/domchat/service/ChatService;
 Lme/lucid/domchat/data/model/Conversation;
 Lme/lucid/domchat/data/model/Assistant;
 Lme/lucid/ai/ui/MessageNode;
 Lme/lucid/ai/ui/UIMessage;
 Lme/lucid/ai/ui/UIMessagePart;
+Lme/lucid/ai/ui/StreamingTextPresentationState;
 Lme/lucid/ai/core/MessageRole;

@@ -1602,12 +1602,7 @@ private fun ChatPageContent(
     val density = LocalDensity.current
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val hazeState = rememberHazeState()
-    val effectiveBlurDisplay = settings.getEffectiveDisplaySetting(currentAssistant)
-    val usesHazeInChat = !me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported() ||
-        effectiveBlurDisplay.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED ||
-        effectiveBlurDisplay.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED ||
-        (effectiveBlurDisplay.chatMessageStyle != me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES && effectiveBlurDisplay.chatBubbleBlur > 0f)
-    val blurActive = settings.displaySetting.enableBlurEffect && usesHazeInChat
+    val blurActive = settings.displaySetting.enableBlurEffect
     val localBlur = remember(blurActive, hazeState) {
         DomChatBlur(
             enabled = blurActive,
@@ -1684,11 +1679,11 @@ private fun ChatPageContent(
     }
     
     // Auto-scroll to first matching message when opened from search
-    LaunchedEffect(initialSearchQuery, conversation.id, hasMessages) {
+    LaunchedEffect(initialSearchQuery, conversation.id, conversation.messageNodes.isNotEmpty()) {
         if (
             !initialSearchQuery.isNullOrBlank() &&
             consumedInitialSearchQuery != initialSearchQuery &&
-            hasMessages
+            conversation.messageNodes.isNotEmpty()
         ) {
             consumedInitialSearchQuery = initialSearchQuery
             // Find the first message containing the search query

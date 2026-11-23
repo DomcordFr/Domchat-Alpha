@@ -643,19 +643,20 @@ class SettingsStore(
             .normalizeMemorySettings()
             .clearMissingModelReferences()
 
+        val current = settingsFlow.value
+        val isFirstSave = current.init
+
         // Handle explicit secret deletions (user cleared a field that had a value)
         // This must be called BEFORE migration to remove deleted secrets from SecureStore
-        secretKeyManager.handleExplicitSecretDeletions(settingsFlow.value, normalizedSettings)
+        secretKeyManager.handleExplicitSecretDeletions(current, normalizedSettings)
         
         // Migrate secrets from plaintext to SecureStore if needed
         val migratedSettings = secretKeyManager.migrateSecretsFromSettings(normalizedSettings)
             .normalizeFontSettings()
 
-        settingsFlow.value = secretKeyManager.populateSecretsForExport(migratedSettings)
+        val nextExportSettings = secretKeyManager.populateSecretsForExport(migratedSettings)
             .normalizeFontSettings()
             .normalizeTtsSettings()
-        val current = settingsFlow.value
-        val isFirstSave = current.init
         dataStore.edit { preferences ->
             if (isFirstSave || current.dynamicColor != normalizedSettings.dynamicColor) {
                 preferences[DYNAMIC_COLOR] = normalizedSettings.dynamicColor
@@ -745,7 +746,7 @@ class SettingsStore(
             if (isFirstSave || current.embeddingModelId != normalizedSettings.embeddingModelId) {
                 preferences[EMBEDDING_MODEL] = normalizedSettings.embeddingModelId.toString()
             }
-            if (isFirstSave || current.providers != migratedSettings.providers) {
+            if (isFirstSave || current.providers != normalizedSettings.providers) {
                 preferences[PROVIDERS] = JsonInstant.encodeToString(migratedSettings.providers)
             }
             if (isFirstSave || current.assistants != normalizedSettings.assistants) {
@@ -763,7 +764,7 @@ class SettingsStore(
             if (isFirstSave || current.recentlyUsedAssistants != normalizedSettings.recentlyUsedAssistants) {
                 preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(normalizedSettings.recentlyUsedAssistants)
             }
-            if (isFirstSave || current.searchServices != migratedSettings.searchServices) {
+            if (isFirstSave || current.searchServices != normalizedSettings.searchServices) {
                 preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(migratedSettings.searchServices)
             }
             if (isFirstSave || current.searchCommonOptions != normalizedSettings.searchCommonOptions) {
@@ -776,13 +777,13 @@ class SettingsStore(
                     normalizedSettings.searchServiceSelected.coerceIn(0, normalizedSettings.searchServices.size - 1)
                 }
             }
-            if (isFirstSave || current.mcpServers != migratedSettings.mcpServers) {
+            if (isFirstSave || current.mcpServers != normalizedSettings.mcpServers) {
                 preferences[MCP_SERVERS] = JsonInstant.encodeToString(migratedSettings.mcpServers)
             }
-            if (isFirstSave || current.webDavConfig != migratedSettings.webDavConfig) {
+            if (isFirstSave || current.webDavConfig != normalizedSettings.webDavConfig) {
                 preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(migratedSettings.webDavConfig)
             }
-            if (isFirstSave || current.ttsProviders != migratedSettings.ttsProviders) {
+            if (isFirstSave || current.ttsProviders != normalizedSettings.ttsProviders) {
                 preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(migratedSettings.ttsProviders)
             }
             if (isFirstSave || current.selectedTTSProviderId != normalizedSettings.selectedTTSProviderId) {
@@ -816,7 +817,7 @@ class SettingsStore(
             if (isFirstSave || current.webServerJwtEnabled != normalizedSettings.webServerJwtEnabled) {
                 preferences[WEB_SERVER_JWT_ENABLED] = normalizedSettings.webServerJwtEnabled
             }
-            if (isFirstSave || current.webServerAccessPassword != migratedSettings.webServerAccessPassword) {
+            if (isFirstSave || current.webServerAccessPassword != normalizedSettings.webServerAccessPassword) {
                 preferences[WEB_SERVER_ACCESS_PASSWORD] = migratedSettings.webServerAccessPassword
             }
             if (isFirstSave || current.webServerBackgroundSetupShown != normalizedSettings.webServerBackgroundSetupShown) {
@@ -841,6 +842,7 @@ class SettingsStore(
                 preferences[ASSISTANT_OVERLAY_CONFIG] = JsonInstant.encodeToString(normalizedSettings.assistantOverlayConfig)
             }
         }
+        settingsFlow.value = nextExportSettings
     }
 
     suspend fun update(fn: (Settings) -> Settings) = updateMutex.withLock {

@@ -560,6 +560,7 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_40_41 = object : Migration(40, 41) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 Log.i(TAG, "migrate: start migrate from 40 to 41")
+                db.execSQL("DROP INDEX IF EXISTS index_MemoryEntity_assistant_id")
                 db.execSQL("ALTER TABLE ConversationEntity ADD COLUMN assistant_message_count INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_ConversationEntity_is_pinned_update_at ON ConversationEntity (is_pinned, update_at)")
                 db.execSQL("""
