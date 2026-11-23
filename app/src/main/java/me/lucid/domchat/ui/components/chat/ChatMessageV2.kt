@@ -2498,8 +2498,8 @@ private fun AssistantMessageTurn(
                         .widthIn(max = maxWidth)
                         .animateContentSize(
                             animationSpec = spring(
-                                dampingRatio = 1.0f,
-                                stiffness = 200f
+                                dampingRatio = 0.80f,
+                                stiffness = 220f
                             ),
                             alignment = Alignment.TopStart
                         ),
