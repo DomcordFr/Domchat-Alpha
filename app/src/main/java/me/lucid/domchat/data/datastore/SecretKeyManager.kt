@@ -376,16 +376,16 @@ class SecretKeyManager(
             val oldSearch = oldSettings.searchServices.find { it.id == newSearch.id } ?: continue
             if (oldSearch is SearchServiceOptions.SearXNGOptions && newSearch is SearchServiceOptions.SearXNGOptions) {
                 if (oldSearch.username.isNotBlank() && newSearch.username.isBlank()) {
-                    secureStore.removeSecret(searchServiceUser(newSearch.id))
+                    secureStore.removeSecret("$SEARCH_SERVICE_USER_PREFIX${newSearch.id}")
                 }
                 if (oldSearch.password.isNotBlank() && newSearch.password.isBlank()) {
-                    secureStore.removeSecret(searchServicePass(newSearch.id))
+                    secureStore.removeSecret("$SEARCH_SERVICE_PASS_PREFIX${newSearch.id}")
                 }
             } else {
                 val oldKey = getSearchServiceApiKey(oldSearch)
                 val newKey = getSearchServiceApiKey(newSearch)
                 if (oldKey?.isNotBlank() == true && newKey.isNullOrBlank()) {
-                    secureStore.removeSecret(searchServiceKey(newSearch.id))
+                    secureStore.removeSecret("$SEARCH_SERVICE_KEY_PREFIX${newSearch.id}")
                 }
             }
         }
