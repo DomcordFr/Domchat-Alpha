@@ -2453,7 +2453,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )
@@ -2507,7 +2507,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )
@@ -2560,7 +2560,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )
@@ -2613,7 +2613,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )
@@ -2666,7 +2666,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )
@@ -2719,7 +2719,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )
@@ -2772,7 +2772,7 @@ fun MinimalChatInput(
                                 color = Color.Transparent,
                                 modifier = Modifier.liquidGlassSurface(
                                     shape = RoundedCornerShape(10.dp),
-                                    fillColor = Color.White.copy(alpha = 0.14f),
+                                    fillColor = Color.Transparent,
                                     borderWidth = 0.5.dp,
                                     specularBrush = LiquidGlassTokens.SpecularBorderSubtle
                                 )

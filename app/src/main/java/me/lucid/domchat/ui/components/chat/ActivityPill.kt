@@ -8,7 +8,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -59,10 +61,12 @@ import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Terminal
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -641,66 +645,67 @@ private fun AnimatedSinglePill(
         MaterialTheme.colorScheme.onSurface
     }
 
-    Surface(
-        modifier = Modifier
-            .then(
-                if (chatAnimationsEnabled) {
-                    Modifier.animateContentSize(
-                        animationSpec = PILL_MORPH_SPEC,
-                        alignment = Alignment.TopStart
-                    )
-                } else Modifier
-            )
-            .then(
-                if (surfaceExpanded || requestedContentState.isUnifiedReasoning()) {
-                    Modifier.widthIn(max = maxBubbleWidth)
-                } else {
-                    Modifier.height(PILL_HEIGHT)
-                }
-            )
-            .then(
-                if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                    val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
-                        display.bubbleSpecularIntensity > 0f
-                    }
-                    val bubbleFillColor = if (effectiveAlpha <= 0.02f) {
-                        Color.Transparent
+    val pillSurface = @Composable {
+        Surface(
+            modifier = Modifier
+                .then(
+                    if (chatAnimationsEnabled) {
+                        Modifier.animateContentSize(
+                            animationSpec = PILL_MORPH_SPEC,
+                            alignment = Alignment.TopStart
+                        )
+                    } else Modifier
+                )
+                .then(
+                    if (surfaceExpanded) {
+                        Modifier.widthIn(max = maxBubbleWidth)
                     } else {
-                        baseTone.copy(alpha = effectiveAlpha)
+                        Modifier.height(PILL_HEIGHT).widthIn(max = maxBubbleWidth)
                     }
-                    when (display.bubbleInterfaceStyle) {
-                        InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
-                            shape = pillShape,
-                            borderWidth = 0.5.dp,
-                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                        )
-                        InterfaceStyle.GLASS -> Modifier.liquidGlassBubbleSurface(
-                            shape = pillShape,
-                            borderWidth = 0.5.dp,
-                            fillColor = bubbleFillColor,
-                            specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
-                            glassMode = display.liquidGlassMode,
-                        )
-                    }
-                } else Modifier
-            )
-            .clip(pillShape)
-            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
-        shape = pillShape,
-        color = if (isGlassyPill) Color.Transparent else pillColor,
-        border = if (isGlassyPill) null else pillSpecularBorder,
-        contentColor = resolvedContentColor,
-        onClick = {
-            val clickType = when (state) {
-                is ActivityState.Ocr -> ActivityType.OCR
-                is ActivityState.Reasoning -> ActivityType.REASONING
-                is ActivityState.ToolUse -> categorizeToolName(state.toolName)
-                is ActivityState.CompletedSingle -> state.type
-                else -> null
+                )
+                .then(
+                    if (isGlassyPill && !isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
+                        val specularBorder = LiquidGlassTokens.SpecularBorderSubtle.takeIf {
+                            display.bubbleSpecularIntensity > 0f
+                        }
+                        val bubbleFillColor = if (effectiveAlpha <= 0.02f) {
+                            Color.Transparent
+                        } else {
+                            baseTone.copy(alpha = effectiveAlpha)
+                        }
+                        when (display.bubbleInterfaceStyle) {
+                            InterfaceStyle.FROSTED -> Modifier.frostedGlassBubbleSurface(
+                                shape = pillShape,
+                                borderWidth = 0.5.dp,
+                                specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                            )
+                            InterfaceStyle.GLASS -> Modifier.liquidGlassBubbleSurface(
+                                shape = pillShape,
+                                borderWidth = 0.5.dp,
+                                fillColor = bubbleFillColor,
+                                specularBrush = specularBorder ?: LiquidGlassTokens.SpecularBorderSubtle,
+                                glassMode = display.liquidGlassMode,
+                            )
+                        }
+                    } else Modifier
+                )
+                .clip(pillShape)
+                .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
+            shape = pillShape,
+            color = if (isGlassyPill) Color.Transparent else pillColor,
+            border = if (isGlassyPill) null else pillSpecularBorder,
+            contentColor = resolvedContentColor,
+            onClick = {
+                val clickType = when (state) {
+                    is ActivityState.Ocr -> ActivityType.OCR
+                    is ActivityState.Reasoning -> ActivityType.REASONING
+                    is ActivityState.ToolUse -> categorizeToolName(state.toolName)
+                    is ActivityState.CompletedSingle -> state.type
+                    else -> null
+                }
+                onClick(clickType)
             }
-            onClick(clickType)
-        }
-    ) {
+        ) {
         AnimatedContent(
             targetState = requestedContentState,
             transitionSpec = {
@@ -910,6 +915,15 @@ private fun AnimatedSinglePill(
             }
         }
     }
+    }
+
+    if (!surfaceExpanded) {
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+            pillSurface()
+        }
+    } else {
+        pillSurface()
+    }
 }
 
 @Composable
@@ -934,8 +948,8 @@ private fun LiveElapsedTimerText(
         }
         Text(
             text = formatDuration(elapsedMs),
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor.copy(alpha = 0.8f),
+            style = MaterialTheme.typography.labelMedium,
+            color = contentColor,
             modifier = modifier.shimmer(true)
         )
     } else {
@@ -947,8 +961,8 @@ private fun LiveElapsedTimerText(
         if (staticText.isNotBlank()) {
             Text(
                 text = staticText,
-                style = MaterialTheme.typography.labelSmall,
-                color = contentColor.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.labelMedium,
+                color = contentColor,
                 modifier = modifier
             )
         }
@@ -1085,9 +1099,12 @@ private fun UnifiedReasoningPill(
             AnimatedContent(
                 targetState = headerTitle,
                 transitionSpec = {
-                    (fadeIn(tween(220, easing = LinearOutSlowInEasing)) togetherWith
-                        fadeOut(tween(160, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
-                        PILL_MORPH_SPEC
+                    if (targetState == defaultReasoningTitle || targetState != "Reasoned") {
+                        (slideInVertically(animationSpec = tween(220)) { it / 2 } + fadeIn(animationSpec = tween(200))) togetherWith
+                            (slideOutVertically(animationSpec = tween(180)) { -it / 2 } + fadeOut(animationSpec = tween(150)))
+                    } else {
+                        (slideInVertically(animationSpec = tween(220)) { -it / 2 } + fadeIn(animationSpec = tween(200))) togetherWith
+                            (slideOutVertically(animationSpec = tween(180)) { it / 2 } + fadeOut(animationSpec = tween(150)))
                     }
                 },
                 label = "reasoning_header_title"
@@ -1101,16 +1118,44 @@ private fun UnifiedReasoningPill(
                     modifier = if (isLive) Modifier.shimmer(true) else Modifier
                 )
             }
+            AnimatedVisibility(
+                visible = !isExpanded && !isLive && completedDurationMs != null,
+                enter = fadeIn(tween(180)) + expandHorizontally(),
+                exit = fadeOut(tween(140)) + shrinkHorizontally()
+            ) {
+                if (completedDurationMs != null) {
+                    Text(
+                        text = "for ${formatDuration(completedDurationMs)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = contentColor
+                    )
+                }
+            }
+            if (isLive && !isExpanded) {
+                LiveElapsedTimerText(
+                    isLive = true,
+                    startTimeMs = startTimeMs,
+                    completedDurationMs = null,
+                    isExpanded = false,
+                    contentColor = contentColor
+                )
+            }
             if (isExpanded) {
                 Spacer(modifier = Modifier.weight(1f))
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = slideInHorizontally(tween(220)) { it / 2 } + fadeIn(tween(200)),
+                    exit = slideOutHorizontally(tween(160)) { it / 2 } + fadeOut(tween(140))
+                ) {
+                    LiveElapsedTimerText(
+                        isLive = isLive,
+                        startTimeMs = startTimeMs,
+                        completedDurationMs = completedDurationMs,
+                        isExpanded = true,
+                        contentColor = contentColor
+                    )
+                }
             }
-            LiveElapsedTimerText(
-                isLive = isLive,
-                startTimeMs = startTimeMs,
-                completedDurationMs = completedDurationMs,
-                isExpanded = isExpanded,
-                contentColor = contentColor
-            )
         }
 
         val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
@@ -1258,8 +1303,8 @@ private fun ExpandedActivityContent(item: ActivityItem) {
         if (item.durationMs != null) {
             Text(
                 text = "for ${formatDuration(item.durationMs)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = contentColor.copy(alpha = 0.8f)
+                style = MaterialTheme.typography.labelMedium,
+                color = contentColor
             )
         }
     } else {
@@ -1394,38 +1439,43 @@ private fun SinglePill(
     val pillShape = getCornerRadii(position, connectsToBubbleBelow)
     val chatAnimationsEnabled = me.lucid.domchat.ui.context.LocalChatAnimationsEnabled.current
 
-    Surface(
-        modifier = modifier
-            .height(PILL_HEIGHT)
-            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
-            .then(
-                if (chatAnimationsEnabled) {
-                    Modifier.animateContentSize(animationSpec = PILL_MORPH_SPEC)
-                } else Modifier
-            )
-            .then(
-                if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
-                    Modifier.domChatBlurEffect(
-                        containerColor = pillContainerColor,
-                        shape = pillShape,
-                        blurRadius = bubbleBlur.dp
-                    )
-                } else Modifier
-            )
-            .clip(pillShape),
-        shape = pillShape,
-        color = pillContainerColor,
-        border = pillSpecularBorder,
-        contentColor = resolvedContentColor,
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+    val pillSurface = @Composable {
+        Surface(
+            modifier = modifier
+                .height(PILL_HEIGHT)
+                .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
+                .then(
+                    if (chatAnimationsEnabled) {
+                        Modifier.animateContentSize(animationSpec = PILL_MORPH_SPEC)
+                    } else Modifier
+                )
+                .then(
+                    if (!isTransparentStyle && (isGlassy || bubbleBlur > 0f)) {
+                        Modifier.domChatBlurEffect(
+                            containerColor = pillContainerColor,
+                            shape = pillShape,
+                            blurRadius = bubbleBlur.dp
+                        )
+                    } else Modifier
+                )
+                .clip(pillShape),
+            shape = pillShape,
+            color = pillContainerColor,
+            border = pillSpecularBorder,
+            contentColor = resolvedContentColor,
+            onClick = onClick
         ) {
-            content()
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                content()
+            }
         }
+    }
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+        pillSurface()
     }
 }
 
