@@ -269,7 +269,7 @@ fun Modifier.liquidGlass(
     }
 
     val shapeProvider = remember(shape) { { shape } }
-    val frozenProvider = remember(isFloatingControl, backdrop?.hasRecording) {
+    val frozenProvider = remember(isFloatingControl, backdrop, backdrop?.hasRecording) {
         { isFloatingControl && (backdrop?.hasRecording == true) }
     }
 

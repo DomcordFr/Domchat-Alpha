@@ -26,12 +26,22 @@ class GenerationForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startForegroundSafely()
         return START_NOT_STICKY
     }
 
     override fun onCreate() {
         super.onCreate()
+        startForegroundSafely()
 
+        chatService.generationJobs.onEach { jobs ->
+            if (jobs.isEmpty()) {
+                stopForegroundService()
+            }
+        }.launchIn(scope)
+    }
+
+    private fun startForegroundSafely() {
         val notification = NotificationCompat.Builder(
             this,
             GENERATION_SERVICE_NOTIFICATION_CHANNEL_ID
@@ -57,14 +67,7 @@ class GenerationForegroundService : Service() {
         } catch (e: Exception) {
             LogUtil.e(TAG, "Failed to start foreground notification", e)
             stopSelf()
-            return
         }
-
-        chatService.generationJobs.onEach { jobs ->
-            if (jobs.isEmpty()) {
-                stopForegroundService()
-            }
-        }.launchIn(scope)
     }
 
     private fun stopForegroundService() {

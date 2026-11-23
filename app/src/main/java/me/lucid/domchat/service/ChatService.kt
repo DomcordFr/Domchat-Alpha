@@ -1337,6 +1337,7 @@ class ChatService(
             }
         }
 
+        val wasEmpty = _generationJobs.value.isEmpty()
         val previous = _generationJobs.getAndUpdate { it + (conversationId to job) }[conversationId]
         previous?.cancel()
         job.invokeOnCompletion {
@@ -1352,7 +1353,7 @@ class ChatService(
             }
         }
         job.start()
-        GenerationForegroundService.start(context)
+        ensureGenerationForegroundServiceStarted(wasEmpty)
     }
 
     fun sendMessage(
@@ -1457,6 +1458,7 @@ class ChatService(
                 _errorFlow.emit(e)
             }
         }
+        val wasEmpty = _generationJobs.value.isEmpty()
         val previous = _generationJobs.getAndUpdate { it + (conversationId to job) }[conversationId]
         previous?.cancel()
         job.invokeOnCompletion {
@@ -1473,7 +1475,7 @@ class ChatService(
             }
         }
         job.start()
-        GenerationForegroundService.start(context)
+        ensureGenerationForegroundServiceStarted(wasEmpty)
     }
 
     // Regenerate message - TURN-BASED for assistant messages
@@ -1562,6 +1564,7 @@ class ChatService(
             }
         }
 
+        val wasEmpty = _generationJobs.value.isEmpty()
         val previous = _generationJobs.getAndUpdate { it + (conversationId to job) }[conversationId]
         previous?.cancel()
         job.invokeOnCompletion {
@@ -1578,7 +1581,13 @@ class ChatService(
             }
         }
         job.start()
-        GenerationForegroundService.start(context)
+        ensureGenerationForegroundServiceStarted(wasEmpty)
+    }
+
+    private fun ensureGenerationForegroundServiceStarted(wasEmpty: Boolean) {
+        if (_isForeground.value && wasEmpty) {
+            GenerationForegroundService.start(context)
+        }
     }
 
     // 处理消息补全

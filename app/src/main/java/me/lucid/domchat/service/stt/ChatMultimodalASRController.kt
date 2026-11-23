@@ -50,7 +50,7 @@ class ChatMultimodalASRController(
     private val _state = MutableStateFlow(ASRState(isAvailable = true))
     override val state: StateFlow<ASRState> = _state.asStateFlow()
 
-    private var recorderJob: Job? = null
+    @Volatile private var recorderJob: Job? = null
     private var audioRecord: AudioRecord? = null
     private var onTranscriptChange: ((String) -> Unit)? = null
 
@@ -211,7 +211,16 @@ class ChatMultimodalASRController(
                 Log.e(TAG, "Audio recording error", e)
                 setError("Audio recording error: ${e.message}")
             } finally {
-                releaseRecorder(currentJob)
+                runCatching { recorder.stop() }
+                runCatching { recorder.release() }
+                synchronized(recorderLock) {
+                    if (audioRecord === recorder) {
+                        audioRecord = null
+                    }
+                    if (recorderJob === currentJob) {
+                        recorderJob = null
+                    }
+                }
             }
         }
     }
@@ -226,14 +235,14 @@ class ChatMultimodalASRController(
     }
 
     private fun releaseRecorder(callerJob: Job? = null) {
-        if (callerJob == null || recorderJob === callerJob) {
-            recorderJob = null
-            synchronized(recorderLock) {
-                val record = audioRecord
-                audioRecord = null
-                runCatching { record?.stop() }
-                runCatching { record?.release() }
+        synchronized(recorderLock) {
+            if (callerJob == null || recorderJob === callerJob) {
+                recorderJob = null
             }
+            val record = audioRecord
+            audioRecord = null
+            runCatching { record?.stop() }
+            runCatching { record?.release() }
         }
     }
 

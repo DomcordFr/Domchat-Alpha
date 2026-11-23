@@ -18,6 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import me.lucid.domchat.AppScope
 import me.lucid.domchat.R
 import me.lucid.domchat.RouteActivity
 import me.lucid.domchat.security.InternalIntentAuthenticator
@@ -70,7 +71,9 @@ class WebServerService : Service() {
 
     private val webServerManager: WebServerManager by inject()
     private val settingsStore: SettingsStore by inject()
+    private val appScope: AppScope by inject()
 
+    private var stoppedByUserOrError = false
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var stateObserverJob: Job? = null
     private var wifiLock: WifiManager.WifiLock? = null
@@ -90,12 +93,11 @@ class WebServerService : Service() {
             }
 
             ACTION_STOP -> {
+                stoppedByUserOrError = true
                 webServerManager.stop()
-                org.koin.core.context.GlobalContext.get().get<SettingsStore>().let { store ->
-                    org.koin.core.context.GlobalContext.get().get<CoroutineScope>().launch(Dispatchers.IO) {
-                        store.update { settings ->
-                            settings.copy(webServerEnabled = false)
-                        }
+                appScope.launch(Dispatchers.IO) {
+                    settingsStore.update { settings ->
+                        settings.copy(webServerEnabled = false)
                     }
                 }
                 ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -173,12 +175,11 @@ class WebServerService : Service() {
 
                     WebServerPhase.Error -> {
                         hasSeenActivePhase = true
+                        stoppedByUserOrError = true
                         releaseWifiLock()
                         updateNotification(buildErrorNotification(state.error ?: getString(R.string.notification_web_server_error)))
-                        org.koin.core.context.GlobalContext.get().get<SettingsStore>().let { store ->
-                            org.koin.core.context.GlobalContext.get().get<CoroutineScope>().launch(Dispatchers.IO) {
-                                store.update { settings -> settings.copy(webServerEnabled = false) }
-                            }
+                        appScope.launch(Dispatchers.IO) {
+                            settingsStore.update { settings -> settings.copy(webServerEnabled = false) }
                         }
                         stopForeground(STOP_FOREGROUND_DETACH)
                         stopSelf()
@@ -198,9 +199,9 @@ class WebServerService : Service() {
 
     override fun onDestroy() {
         webServerManager.stop()
-        org.koin.core.context.GlobalContext.get().get<SettingsStore>().let { store ->
-            org.koin.core.context.GlobalContext.get().get<CoroutineScope>().launch(Dispatchers.IO) {
-                store.update { settings -> settings.copy(webServerEnabled = false) }
+        if (stoppedByUserOrError) {
+            appScope.launch(Dispatchers.IO) {
+                settingsStore.update { settings -> settings.copy(webServerEnabled = false) }
             }
         }
         stateObserverJob?.cancel()

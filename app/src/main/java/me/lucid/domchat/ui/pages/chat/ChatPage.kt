@@ -184,6 +184,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import me.lucid.ai.core.MessageRole
 import me.lucid.ai.context.ContextCountConfidence
@@ -490,6 +491,7 @@ internal object ChatSwitchSession {
 }
 
 internal object ChatSessionDraftStore {
+    private const val MAX_PERSISTED_DRAFTS = 20
     private val drafts = mutableMapOf<Uuid, ChatInputDraft>()
     private val json = Json { ignoreUnknownKeys = true }
     private val prefs by lazy {
@@ -508,23 +510,46 @@ internal object ChatSessionDraftStore {
         }
     }
 
-    fun put(conversationId: Uuid, draft: ChatInputDraft) {
+    fun putInMemory(conversationId: Uuid, draft: ChatInputDraft) {
         if (draft.isEmpty) {
             drafts.remove(conversationId)
-            prefs?.edit()?.remove(conversationId.toString())?.apply()
         } else {
             drafts[conversationId] = draft
+        }
+    }
+
+    fun persistDraft(conversationId: Uuid, draft: ChatInputDraft) {
+        val p = prefs ?: return
+        if (draft.isEmpty) {
+            p.edit().remove(conversationId.toString()).apply()
+        } else {
             runCatching {
                 val encoded = json.encodeToString(draft)
-                prefs?.edit()?.putString(conversationId.toString(), encoded)?.apply()
+                val all = p.all
+                val editor = p.edit()
+                editor.putString(conversationId.toString(), encoded)
+                if (all.size >= MAX_PERSISTED_DRAFTS && !all.containsKey(conversationId.toString())) {
+                    val excess = all.size - MAX_PERSISTED_DRAFTS + 1
+                    all.keys.take(excess).forEach { editor.remove(it) }
+                }
+                editor.apply()
             }
         }
     }
 
-    fun moveDraft(fromConversationId: Uuid, toConversationId: Uuid, draft: ChatInputDraft) {
+    fun put(conversationId: Uuid, draft: ChatInputDraft, isTemporary: Boolean = false) {
+        putInMemory(conversationId, draft)
+        if (!isTemporary) {
+            persistDraft(conversationId, draft)
+        }
+    }
+
+    fun moveDraft(fromConversationId: Uuid, toConversationId: Uuid, draft: ChatInputDraft, isTemporary: Boolean = false) {
         drafts.remove(fromConversationId)
-        prefs?.edit()?.remove(fromConversationId.toString())?.apply()
-        put(toConversationId, draft.forAssistantSwitch())
+        if (!isTemporary) {
+            prefs?.edit()?.remove(fromConversationId.toString())?.apply()
+        }
+        put(toConversationId, draft.forAssistantSwitch(), isTemporary = isTemporary)
     }
 
     fun clear() {
@@ -818,6 +843,7 @@ fun ChatPage(
         conversationPersistenceMode == ChatPersistenceMode.PERSIST_ON_REPLY -> ChatPersistenceMode.PERSIST_ON_REPLY
         else -> ChatPersistenceMode.NORMAL
     }
+    val isTemporaryChat = activePersistenceMode == ChatPersistenceMode.TEMPORARY
     ChatTtsAutoplayEffect(
         settings = setting,
         assistant = conversationAssistant,
@@ -918,13 +944,13 @@ fun ChatPage(
             messageContent = importedParts,
         )
         val draft = routeDraft.takeUnless { it.isEmpty }
-            ?: ChatSessionDraftStore.get(id)
+            ?: withContext(Dispatchers.IO) { ChatSessionDraftStore.get(id) }
             ?: ChatInputDraft()
         inputState.applyDraft(draft)
         inputRestored = true
     }
 
-    LaunchedEffect(id, inputState) {
+    LaunchedEffect(id, inputState, isTemporaryChat) {
         snapshotFlow {
             if (inputRestored) {
                 inputState.toDraft()
@@ -933,9 +959,17 @@ fun ChatPage(
             }
         }
             .distinctUntilChanged()
-            .collect { draft ->
+            .onEach { draft ->
                 if (draft != null) {
-                    ChatSessionDraftStore.put(id, draft)
+                    ChatSessionDraftStore.putInMemory(id, draft)
+                }
+            }
+            .debounce(300)
+            .collect { draft ->
+                if (draft != null && !isTemporaryChat) {
+                    withContext(Dispatchers.IO) {
+                        ChatSessionDraftStore.persistDraft(id, draft)
+                    }
                 }
             }
     }
@@ -1497,6 +1531,7 @@ private fun ChatPageContent(
         conversationPersistenceMode == ChatPersistenceMode.PERSIST_ON_REPLY -> ChatPersistenceMode.PERSIST_ON_REPLY
         else -> ChatPersistenceMode.NORMAL
     }
+    val isTemporaryChat = activePersistenceMode == ChatPersistenceMode.TEMPORARY
     val isTemporaryChat = activePersistenceMode == ChatPersistenceMode.TEMPORARY
 
     // State for user message regeneration confirmation dialog

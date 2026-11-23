@@ -73,7 +73,6 @@ import me.lucid.domchat.ui.motion.lateralEnterTransition
 import me.lucid.domchat.ui.motion.lateralExitTransition
 import me.lucid.domchat.navigation.CHAT_ROUTE_TARGET_KEY
 import me.lucid.domchat.navigation.toChatRouteTarget
-import me.lucid.domchat.ui.pages.chat.ChatSessionDraftStore
 import me.lucid.domchat.ui.pages.assistant.AssistantPage
 import me.lucid.domchat.ui.pages.assistant.detail.AssistantDetailPage
 import me.lucid.domchat.ui.pages.backup.BackupPage
