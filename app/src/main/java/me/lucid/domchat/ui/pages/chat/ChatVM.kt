@@ -166,7 +166,7 @@ class ChatVM(
             conversation.collect { conv ->
                 if (
                     conversationPersistenceMode.value == ChatPersistenceMode.NORMAL &&
-                    (conv.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER } || conv.title.isNotBlank())
+                    conv.messageNodes.any { it.role == me.lucid.ai.core.MessageRole.USER }
                 ) {
                     context.writeStringPreference("lastConversationId", conv.id.toString())
                 }

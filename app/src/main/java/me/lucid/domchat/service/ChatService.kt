@@ -1605,29 +1605,36 @@ class ChatService(
     private suspend fun revertCancelledEmptyRegeneration(
         conversationId: Uuid,
         regeneration: AssistantRegenerationContext,
+        currentConversation: Conversation,
     ): Boolean {
-        val current = latestStreamingConversation ?: getConversationFlow(conversationId).value
         val turnStart = regeneration.turnStartNodeIndex
-        if (turnStart !in current.messageNodes.indices) return false
+        if (turnStart !in currentConversation.messageNodes.indices) return false
 
-        val turnEndIndex = current.messageNodes
-            .subList(turnStart, current.messageNodes.size)
+        val turnEndIndex = currentConversation.messageNodes
+            .subList(turnStart, currentConversation.messageNodes.size)
             .indexOfFirst { it.role == MessageRole.USER }
             .let { offset ->
-                if (offset == -1) current.messageNodes.size
+                if (offset == -1) currentConversation.messageNodes.size
                 else turnStart + offset
             }
 
+        val hasTaggedMessages = (turnStart until turnEndIndex).any { nodeIdx ->
+            currentConversation.messageNodes[nodeIdx].messages.any { msg ->
+                msg.versionTag == regeneration.versionTag
+            }
+        }
+        if (!hasTaggedMessages) return false
+
         // Check if ANY message in this regeneration turn has durable assistant progress
         val hasDurableProgress = (turnStart until turnEndIndex).any { nodeIdx ->
-            current.messageNodes[nodeIdx].messages.any { msg ->
+            currentConversation.messageNodes[nodeIdx].messages.any { msg ->
                 msg.versionTag == regeneration.versionTag && msg.hasDurableAssistantProgress()
             }
         }
         if (hasDurableProgress) return false
 
         // No durable progress: revert the empty regeneration branch!
-        val updatedNodes = current.messageNodes.mapIndexedNotNull { index, node ->
+        val updatedNodes = currentConversation.messageNodes.mapIndexedNotNull { index, node ->
             if (index in turnStart until turnEndIndex) {
                 val filteredMessages = node.messages.filter { it.versionTag != regeneration.versionTag }
                 if (filteredMessages.isEmpty()) {
@@ -1649,17 +1656,19 @@ class ChatService(
         }
 
         val reverted = normalizeConversation(
-            current.copy(
+            currentConversation.copy(
                 messageNodes = updatedNodes,
                 updateAt = Instant.now(),
             )
         )
         updateConversation(conversationId, reverted)
         if (getConversationPersistenceMode(conversationId) == ChatPersistenceMode.NORMAL) {
-            persistConversationToRepository(
-                conversation = reverted,
-                preserveConsolidation = true,
-            )
+            withContext(kotlinx.coroutines.NonCancellable) {
+                persistConversationToRepository(
+                    conversation = reverted,
+                    preserveConsolidation = true,
+                )
+            }
         }
         return true
     }
@@ -1809,7 +1818,8 @@ class ChatService(
                     return@onCompletion
                 }
                 if (cause != null && assistantRegeneration != null) {
-                    if (revertCancelledEmptyRegeneration(conversationId, assistantRegeneration)) {
+                    val snapshot = latestStreamingConversation ?: getConversationFlow(conversationId).value
+                    if (revertCancelledEmptyRegeneration(conversationId, assistantRegeneration, snapshot)) {
                         return@onCompletion
                     }
                 }
@@ -1958,7 +1968,8 @@ class ChatService(
         }.onFailure {
             if (it is CancellationException) {
                 if (assistantRegeneration != null) {
-                    revertCancelledEmptyRegeneration(conversationId, assistantRegeneration)
+                    val snapshot = latestStreamingConversation ?: getConversationFlow(conversationId).value
+                    revertCancelledEmptyRegeneration(conversationId, assistantRegeneration, snapshot)
                 }
                 return@onFailure
             }

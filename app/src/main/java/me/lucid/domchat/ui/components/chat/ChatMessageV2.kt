@@ -46,10 +46,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -115,7 +115,6 @@ import me.lucid.ai.core.MessageRole
 import me.lucid.ai.core.TokenUsage
 import me.lucid.ai.provider.Model
 import me.lucid.ai.ui.ToolApprovalState
-import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.UIMessageAnnotation
 import me.lucid.ai.ui.UIMessagePart
 import me.lucid.domchat.R
@@ -291,6 +290,57 @@ data class MessageTurnGroup(
             (selectedNodes + matchingToolResultNodes).sortedBy { node ->
                 nodes.indexOfFirst { it.id == node.id }.takeIf { it >= 0 } ?: Int.MAX_VALUE
             }
+        }
+    }
+
+    fun filteredNodesForVersion(versionSelectIndex: Int): List<MessageNode> {
+        val anchorNode = nodeWithMostVersions
+        val safeIndex = versionSelectIndex.coerceIn(0, anchorNode.messages.lastIndex.coerceAtLeast(0))
+        val targetMsg = anchorNode.messages.getOrNull(safeIndex) ?: anchorNode.currentMessage
+        val tag = targetMsg.versionTag
+        val selectedNodes = nodes.mapNotNull { node ->
+            if (node.id == anchorNode.id) {
+                node.copy(selectIndex = safeIndex)
+            } else {
+                val currentIndexMatchesTag = node.messages
+                    .getOrNull(node.selectIndex)
+                    ?.versionTag == tag
+                val matchingIndex = if (currentIndexMatchesTag) {
+                    node.selectIndex
+                } else {
+                    node.messages.indexOfLast { it.versionTag == tag }
+                }
+                if (matchingIndex != -1) {
+                    node.copy(selectIndex = matchingIndex)
+                } else {
+                    null
+                }
+            }
+        }
+        val activeToolCallIds = selectedNodes
+            .flatMap { node -> node.currentMessage.getToolCalls() }
+            .map { it.toolCallId }
+            .toSet()
+        if (activeToolCallIds.isEmpty()) {
+            return selectedNodes
+        }
+        val selectedNodeIds = selectedNodes.map { it.id }.toSet()
+        val matchingToolResultNodes = nodes.mapNotNull { node ->
+            if (node.id in selectedNodeIds || node.role != MessageRole.TOOL) {
+                null
+            } else {
+                val matchingIndex = node.messages.indexOfLast { message ->
+                    message.getToolResults().any { result -> result.toolCallId in activeToolCallIds }
+                }
+                if (matchingIndex >= 0) {
+                    node.copy(selectIndex = matchingIndex)
+                } else {
+                    null
+                }
+            }
+        }
+        return (selectedNodes + matchingToolResultNodes).sortedBy { node ->
+            nodes.indexOfFirst { it.id == node.id }.takeIf { it >= 0 } ?: Int.MAX_VALUE
         }
     }
     
@@ -1828,15 +1878,6 @@ private fun AssistantMessageTurn(
         prevLoading = loading
     }
     val isTurnActive = loading || isTextAnimating
-    val attachmentSignature = group.attachmentsSignature()
-    val attachments = remember(attachmentSignature, defaultVideoLabel, defaultAudioLabel, context) {
-        collectRenderableAttachments(
-            context = context,
-            parts = group.filteredNodes.flatMap { it.currentMessage.parts },
-            fallbackVideoLabel = defaultVideoLabel,
-            fallbackAudioLabel = defaultAudioLabel,
-        )
-    }
     val showName = showModelName && (!isLastTurn || !isTurnActive)
     val nameAlpha by animateFloatAsState(
         targetValue = if (showName) 1f else 0f,
@@ -1864,19 +1905,6 @@ private fun AssistantMessageTurn(
     // Check if there's interesting activity (reasoning or tools)
     val hasInterestingActivity = activityState !is ActivityState.Hidden
     
-    // Collect all text parts from filtered nodes (only nodes matching active versionTag)
-    val allTextBubbles = remember(group.filteredNodes) {
-        val list = mutableListOf<Pair<MessageNode, UIMessagePart.Text>>()
-        group.filteredNodes.forEach { node ->
-            node.currentMessage.parts.filterIsInstance<UIMessagePart.Text>().forEach { part ->
-                if (part.text.isNotBlank()) {
-                    list.add(node to part)
-                }
-            }
-        }
-        list
-    }
-    
     // Consistent spacing between all elements
     val elementSpacing = 4.dp
     
@@ -1886,6 +1914,13 @@ private fun AssistantMessageTurn(
     val density = LocalDensity.current
     val swipeThresholdPx = remember(density) { with(density) { 48.dp.toPx() } }
 
+    val latestVersionIndices by rememberUpdatedState(versionIndices)
+    val latestAssistantNode by rememberUpdatedState(assistantNode)
+    val latestOnUpdate by rememberUpdatedState(onUpdate)
+    val latestLoading by rememberUpdatedState(loading)
+    val latestOnRegenerate by rememberUpdatedState(onRegenerate)
+    val latestOnAddCustomGreeting by rememberUpdatedState(onAddCustomGreeting)
+
     val pagerState = if (versionIndices.size > 1) {
         rememberPagerState(
             initialPage = currentVersionPos.coerceIn(0, versionIndices.lastIndex),
@@ -1894,7 +1929,7 @@ private fun AssistantMessageTurn(
     } else null
 
     if (pagerState != null) {
-        LaunchedEffect(currentVersionPos) {
+        LaunchedEffect(currentVersionPos, versionIndices.size) {
             if (pagerState.currentPage != currentVersionPos && currentVersionPos in 0 until versionIndices.size) {
                 pagerState.animateScrollToPage(currentVersionPos)
             }
@@ -1903,16 +1938,17 @@ private fun AssistantMessageTurn(
         LaunchedEffect(pagerState) {
             snapshotFlow { pagerState.settledPage }
                 .collect { page ->
-                    val targetIndex = versionIndices.getOrNull(page)
-                    if (targetIndex != null && targetIndex != assistantNode.selectIndex) {
+                    val targetIndex = latestVersionIndices.getOrNull(page)
+                    val currentNode = latestAssistantNode
+                    if (targetIndex != null && targetIndex != currentNode.selectIndex) {
                         haptics.perform(HapticPattern.Pop)
-                        onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                        latestOnUpdate(currentNode.copy(selectIndex = targetIndex))
                     }
                 }
         }
     }
 
-    val pagerNestedScrollConnection = remember(pagerState, versionIndices.size, loading, isIntroMessage, swipeThresholdPx) {
+    val pagerNestedScrollConnection = remember(pagerState, isIntroMessage, swipeThresholdPx) {
         object : NestedScrollConnection {
             var accumulatedOverscroll = 0f
 
@@ -1924,19 +1960,19 @@ private fun AssistantMessageTurn(
             }
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (!loading && pagerState != null && pagerState.currentPage == versionIndices.lastIndex && available.x < 0f) {
+                if (!latestLoading && pagerState != null && pagerState.currentPage == latestVersionIndices.lastIndex && available.x < 0f) {
                     accumulatedOverscroll += available.x
                 }
                 return Offset.Zero
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (!loading && pagerState != null && pagerState.currentPage == versionIndices.lastIndex && accumulatedOverscroll < -swipeThresholdPx) {
+                if (!latestLoading && pagerState != null && pagerState.currentPage == latestVersionIndices.lastIndex && accumulatedOverscroll < -swipeThresholdPx) {
                     haptics.perform(HapticPattern.Pop)
                     if (isIntroMessage) {
-                        onAddCustomGreeting()
+                        latestOnAddCustomGreeting()
                     } else {
-                        onRegenerate()
+                        latestOnRegenerate()
                     }
                 }
                 accumulatedOverscroll = 0f
@@ -1975,16 +2011,18 @@ private fun AssistantMessageTurn(
         formatMessageTimestamp(assistantNode.currentMessage.createdAt)
     }
 
-    @Composable
-    fun AssistantTurnVersionContent(
+    val renderVersionContent: @Composable (
         targetIdx: Int,
-        targetMsg: UIMessage,
+        versionNodes: List<MessageNode>,
         versionSwipeModifier: Modifier,
-    ) {
-        val pageAttachments = remember(targetMsg, defaultVideoLabel, defaultAudioLabel, context) {
+    ) -> Unit = { targetIdx, versionNodes, versionSwipeModifier ->
+        val allParts = remember(versionNodes) {
+            versionNodes.flatMap { it.currentMessage.parts }
+        }
+        val pageAttachments = remember(allParts, defaultVideoLabel, defaultAudioLabel, context) {
             collectRenderableAttachments(
                 context = context,
-                parts = targetMsg.parts,
+                parts = allParts,
                 fallbackVideoLabel = defaultVideoLabel,
                 fallbackAudioLabel = defaultAudioLabel,
             )
@@ -2050,8 +2088,8 @@ private fun AssistantMessageTurn(
                     )
                 }
 
-                val textParts = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
-                val activeTextParts = if (textParts.isNotEmpty()) textParts else targetMsg.parts.filterIsInstance<UIMessagePart.Text>()
+                val textParts = allParts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
+                val activeTextParts = if (textParts.isNotEmpty()) textParts else allParts.filterIsInstance<UIMessagePart.Text>()
                 activeTextParts.forEachIndexed { index, part ->
                     val position = when {
                         activeTextParts.size == 1 -> BubblePosition.SINGLE
@@ -2117,7 +2155,7 @@ private fun AssistantMessageTurn(
                     )
                 }
 
-                val reasoningParts = targetMsg.parts
+                val reasoningParts = allParts
                     .filterIsInstance<UIMessagePart.Reasoning>()
                     .filter { it.reasoning.isNotBlank() }
 
@@ -2131,7 +2169,8 @@ private fun AssistantMessageTurn(
                     )
                 }
 
-                val activeTextParts = targetMsg.parts.filterIsInstance<UIMessagePart.Text>()
+                val activeTextParts = allParts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
+                    .ifEmpty { allParts.filterIsInstance<UIMessagePart.Text>() }
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(elementSpacing)
@@ -2395,20 +2434,16 @@ private fun AssistantMessageTurn(
                     .nestedScroll(pagerNestedScrollConnection),
             ) { page ->
                 val targetIdx = versionIndices.getOrNull(page) ?: assistantNode.selectIndex
-                val targetMsg = assistantNode.messages.getOrNull(targetIdx) ?: assistantNode.currentMessage
-                AssistantTurnVersionContent(
-                    targetIdx = targetIdx,
-                    targetMsg = targetMsg,
-                    versionSwipeModifier = Modifier,
-                )
+                val versionNodes = remember(group, targetIdx) {
+                    group.filteredNodesForVersion(targetIdx)
+                }
+                renderVersionContent(targetIdx, versionNodes, Modifier)
             }
         } else {
-            val targetIdx = assistantNode.selectIndex
-            val targetMsg = assistantNode.currentMessage
-            AssistantTurnVersionContent(
-                targetIdx = targetIdx,
-                targetMsg = targetMsg,
-                versionSwipeModifier = assistantSingleSwipeModifier,
+            renderVersionContent(
+                assistantNode.selectIndex,
+                group.filteredNodes,
+                assistantSingleSwipeModifier,
             )
         }
         
