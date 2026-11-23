@@ -284,6 +284,7 @@ fun ChatList(
     onUpdateMessage: (MessageNode) -> Unit = {},
     onAddCustomGreeting: () -> Unit = {},
     onJumpToMessage: (Int) -> Unit = {},
+    onAssistantTurnActiveChanged: ((Boolean) -> Unit)? = null,
 ) {
     SharedTransitionLayout {
         CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
@@ -323,6 +324,7 @@ fun ChatList(
                         onDelete = onDelete,
                         onUpdateMessage = onUpdateMessage,
                         onAddCustomGreeting = onAddCustomGreeting,
+                        onAssistantTurnActiveChanged = onAssistantTurnActiveChanged,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
                 }
@@ -349,6 +351,7 @@ private fun SharedTransitionScope.ChatListNormal(
     onDelete: (UIMessage) -> Unit,
     onUpdateMessage: (MessageNode) -> Unit,
     onAddCustomGreeting: () -> Unit,
+    onAssistantTurnActiveChanged: ((Boolean) -> Unit)? = null,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val scope = rememberCoroutineScope()
@@ -718,6 +721,11 @@ private fun SharedTransitionScope.ChatListNormal(
                                     previousGroup = previousGroup,
                                 )
                             }
+                            val isIntroMessage = remember(group.role, index, firstUserTurnIndex) {
+                                group.role == me.lucid.ai.core.MessageRole.ASSISTANT &&
+                                    (firstUserTurnIndex < 0 || index < firstUserTurnIndex)
+                            }
+                            val isIntroLocked = isIntroMessage && firstUserTurnIndex >= 0
                             ChatMessageTurn(
                                 group = group,
                                 isLastTurn = isLastTurn,
@@ -736,10 +744,9 @@ private fun SharedTransitionScope.ChatListNormal(
                                 showRegenerate = showRegenerate,
                                 onExpandedStreamingCodeBlockChanged = if (loading && isLastTurn) onStreamingCodeBlockExpanded else null,
                                 onStreamingRevealTick = if (isLastTurn) onStreamingTextRevealTick else null,
-                                isIntroMessage = remember(group.role, index, firstUserTurnIndex) {
-                                    group.role == me.lucid.ai.core.MessageRole.ASSISTANT &&
-                                        (firstUserTurnIndex < 0 || index < firstUserTurnIndex)
-                                },
+                                onTurnActiveChanged = if (isLastTurn) onAssistantTurnActiveChanged else null,
+                                isIntroMessage = isIntroMessage,
+                                isIntroLocked = isIntroLocked,
                                 onAddCustomGreeting = onAddCustomGreeting,
                                 modifier = if (loading && isLastTurn) {
                                     Modifier.onSizeChanged {

@@ -99,6 +99,7 @@ fun ColumnScope.ChatMessageActionButtons(
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)? = null,
     ttsProviderOverride: TTSProviderSetting? = null,
     onEdit: () -> Unit = {},
+    allowVersionSwitching: Boolean = true,
 ) {
     val context = LocalContext.current
     val settings = LocalSettings.current
@@ -200,11 +201,13 @@ fun ColumnScope.ChatMessageActionButtons(
                 .size(16.dp)
         )
 
-        ChatMessageBranchSelector(
-            node = node,
-            onUpdate = onUpdate,
-            onGenerateAlternate = onRegenerate,
-        )
+        if (allowVersionSwitching) {
+            ChatMessageBranchSelector(
+                node = node,
+                onUpdate = onUpdate,
+                onGenerateAlternate = onRegenerate,
+            )
+        }
     }
 }
 

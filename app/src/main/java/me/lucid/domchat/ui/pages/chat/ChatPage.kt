@@ -1753,8 +1753,10 @@ private fun ChatPageContent(
     }
 
 
-    LaunchedEffect(loadingJob) {
-        inputState.loading = loadingJob != null
+    var isAssistantTurnActive by remember(conversation.id) { mutableStateOf(false) }
+
+    LaunchedEffect(loadingJob, isAssistantTurnActive) {
+        inputState.loading = loadingJob != null || isAssistantTurnActive
     }
 
     AssistantChatTheme(assistant = currentAssistant) {
@@ -2087,6 +2089,9 @@ private fun ChatPageContent(
                                                     pendingDeleteMessage = message
                                                 },
                                                 onUpdateMessage = onUpdateMessage,
+                                                onAssistantTurnActiveChanged = { active ->
+                                                    isAssistantTurnActive = active
+                                                },
                                                 onForkMessage = {
                                                     scope.launch {
                                                         val forkConversation = vm.forkMessage(it)
@@ -2479,6 +2484,7 @@ private fun ChatPageContent(
                     onCancelClick = {
                         vm.stopGeneration()
                         loadingJob?.cancel()
+                        isAssistantTurnActive = false
                     },
                     enableSearch = enableWebSearch,
                     onToggleSearch = {

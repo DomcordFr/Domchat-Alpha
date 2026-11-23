@@ -653,7 +653,11 @@ private fun AnimatedSinglePill(
                 .then(
                     if (chatAnimationsEnabled) {
                         Modifier.animateContentSize(
-                            animationSpec = PILL_MORPH_SPEC,
+                            animationSpec = if (isExpandedReasoning) {
+                                spring(dampingRatio = 0.94f, stiffness = 420f)
+                            } else {
+                                PILL_MORPH_SPEC
+                            },
                             alignment = Alignment.TopStart
                         )
                     } else Modifier
@@ -1152,8 +1156,8 @@ private fun UnifiedReasoningPill(
 
             AnimatedVisibility(
                 visible = isExpanded,
-                enter = slideInHorizontally(tween(300, easing = LinearOutSlowInEasing)) { it / 2 } + fadeIn(tween(260)),
-                exit = slideOutHorizontally(tween(180, easing = FastOutLinearInEasing)) { it / 2 } + fadeOut(tween(160))
+                enter = fadeIn(tween(240, delayMillis = 140, easing = LinearOutSlowInEasing)),
+                exit = ExitTransition.None
             ) {
                 LiveElapsedTimerText(
                     isLive = isLive,
@@ -1189,14 +1193,14 @@ private fun UnifiedReasoningPill(
                 content = lastPreviewText.value,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp)
                     .fadeEdges(
                         topProgress = topFadeProgress,
-                        bottomProgress = bottomFadeProgress,
-                        fadeHeight = 64f
+                        bottomProgress = if (isLive) bottomFadeProgress * 0.45f else bottomFadeProgress,
+                        fadeHeight = if (isLive) 36f else 64f
                     )
                     .heightIn(max = if (isExpanded && isLive && !timelineOpen) 120.dp else 280.dp)
-                    .verticalScroll(scrollState),
+                    .verticalScroll(scrollState)
+                    .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = contentColor
                 ),

@@ -1176,7 +1176,9 @@ fun ChatMessageTurn(
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)? = null,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)? = null,
     onStreamingRevealTick: (() -> Unit)? = null,
+    onTurnActiveChanged: ((Boolean) -> Unit)? = null,
     isIntroMessage: Boolean = false,
+    isIntroLocked: Boolean = false,
     onAddCustomGreeting: () -> Unit = {},
 ) {
     val settings = LocalSettings.current
@@ -1326,8 +1328,10 @@ fun ChatMessageTurn(
                     onMemoryClick = onMemoryClick,
                     onExpandedStreamingCodeBlockChanged = onExpandedStreamingCodeBlockChanged,
                     onStreamingRevealTick = onStreamingRevealTick,
+                    onTurnActiveChanged = onTurnActiveChanged,
                     ttsProviderOverride = ttsProviderOverride,
                     isIntroMessage = isIntroMessage,
+                    isIntroLocked = isIntroLocked,
                     onAddCustomGreeting = onAddCustomGreeting,
                     onEdit = onEdit,
                     modifier = modifier
@@ -1841,8 +1845,10 @@ private fun AssistantMessageTurn(
     onMemoryClick: ((me.lucid.ai.ui.UsedMemory) -> Unit)?,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)?,
     onStreamingRevealTick: (() -> Unit)? = null,
+    onTurnActiveChanged: ((Boolean) -> Unit)? = null,
     ttsProviderOverride: me.lucid.tts.provider.TTSProviderSetting?,
     isIntroMessage: Boolean = false,
+    isIntroLocked: Boolean = false,
     onAddCustomGreeting: () -> Unit = {},
     onEdit: ((MessageNode) -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -1874,6 +1880,18 @@ private fun AssistantMessageTurn(
         prevLoading = loading
     }
     val isTurnActive = loading || isTextAnimating
+    LaunchedEffect(isTurnActive, isLastTurn) {
+        if (isLastTurn) {
+            onTurnActiveChanged?.invoke(isTurnActive)
+        }
+    }
+    androidx.compose.runtime.DisposableEffect(isLastTurn) {
+        onDispose {
+            if (isLastTurn) {
+                onTurnActiveChanged?.invoke(false)
+            }
+        }
+    }
     val showName = showModelName && (!isLastTurn || !isTurnActive)
     val nameAlpha by animateFloatAsState(
         targetValue = if (showName) 1f else 0f,
@@ -1910,7 +1928,7 @@ private fun AssistantMessageTurn(
     val density = LocalDensity.current
     val swipeThresholdPx = remember(density) { with(density) { 48.dp.toPx() } }
 
-    val assistantSwipeModifier = if (!loading) {
+    val assistantSwipeModifier = if (!loading && !isIntroLocked) {
         Modifier.pointerInput(assistantNode.id, currentVersionPos, versionIndices.size) {
             var totalDrag = 0f
             detectHorizontalDragGestures(
@@ -2426,7 +2444,7 @@ private fun AssistantMessageTurn(
         }
         
         // Action buttons
-        val showActions = !isTurnActive && (actionsExpanded || isIntroMessage)
+        val showActions = !isTurnActive && (actionsExpanded || (isIntroMessage && !isIntroLocked))
         
         AnimatedVisibility(
             visible = showActions,
@@ -2450,6 +2468,7 @@ private fun AssistantMessageTurn(
                     onMemoryClick = onMemoryClick,
                     ttsProviderOverride = ttsProviderOverride,
                     onEdit = { onEdit?.invoke(group.lastNode) },
+                    allowVersionSwitching = !isIntroLocked,
                 )
             }
         }
