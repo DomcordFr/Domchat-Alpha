@@ -149,7 +149,6 @@ import me.lucid.domchat.utils.getFileMimeType
 import me.lucid.domchat.utils.getFileNameFromUri
 import me.lucid.domchat.utils.jsonPrimitiveOrNull
 import me.lucid.domchat.utils.openAttachmentUri
-import me.lucid.domchat.data.datastore.getEffectiveDisplaySetting
 import me.lucid.domchat.data.datastore.withAssistantOverrides
 import me.lucid.domchat.data.datastore.getEffectiveTTSProvider
 import me.lucid.domchat.data.datastore.getActivePersona

@@ -3,6 +3,7 @@ package me.lucid.domchat.data.sync
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import me.lucid.ai.provider.ProviderSetting
@@ -781,59 +782,60 @@ class WebdavSync(
 
                         managedFilesSession?.cleanup()
                         LogUtil.i(TAG, "restoreFromBackupFile: Restore completed successfully")
-                    } catch (error: Exception) {
-                        if (error is CancellationException) throw error
+                    } catch (error: Throwable) {
                         LogUtil.e(TAG, "restoreFromBackupFile: Commit failed, rolling back changes", error)
-                        if (managedFilesSession != null) {
-                            runCatching {
-                                managedFilesSession.rollback()
-                                managedFilesSession.cleanup()
-                            }
-                        }
-                        if (liveLlmModelsSnapshot != null) {
-                            runCatching {
-                                val store = me.lucid.locallm.LocalModelStore(context)
-                                store.clear()
-                                liveLlmModelsSnapshot.forEach { store.upsert(it) }
-                            }
-                        }
-                        if (liveSttModelsSnapshot != null) {
-                            runCatching {
-                                val store = me.lucid.asr.local.SherpaModelStore(context)
-                                store.clear()
-                                liveSttModelsSnapshot.forEach { store.upsert(it) }
-                            }
-                        }
-                        if (prefsCommitted) {
-                            runCatching {
-                                livePrefsSnapshots.forEach { (storeName, snapshot) ->
-                                    val prefs = context.applicationContext.getSharedPreferences(storeName, Context.MODE_PRIVATE)
-                                    restoreSharedPreferencesSnapshot(prefs, snapshot)
+                        withContext(NonCancellable) {
+                            if (managedFilesSession != null) {
+                                runCatching {
+                                    managedFilesSession.rollback()
+                                    managedFilesSession.cleanup()
                                 }
                             }
-                        }
-                        if (settingsCommitted) {
-                            runCatching { settingsStore.update(liveSettings) }
-                        }
-                        if (dbTouched) {
-                            runCatching {
-                                context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
-                                val backupDb = File(liveDbBackupDir, BackupArchiveFormat.DB_ENTRY)
-                                if (backupDb.exists()) {
-                                    finalDbFile.parentFile?.mkdirs()
-                                    if (!backupDb.renameTo(finalDbFile)) {
-                                        backupDb.copyTo(finalDbFile, overwrite = true)
+                            if (liveLlmModelsSnapshot != null) {
+                                runCatching {
+                                    val store = me.lucid.locallm.LocalModelStore(context)
+                                    store.clear()
+                                    liveLlmModelsSnapshot.forEach { store.upsert(it) }
+                                }
+                            }
+                            if (liveSttModelsSnapshot != null) {
+                                runCatching {
+                                    val store = me.lucid.asr.local.SherpaModelStore(context)
+                                    store.clear()
+                                    liveSttModelsSnapshot.forEach { store.upsert(it) }
+                                }
+                            }
+                            if (prefsCommitted) {
+                                runCatching {
+                                    livePrefsSnapshots.forEach { (storeName, snapshot) ->
+                                        val prefs = context.applicationContext.getSharedPreferences(storeName, Context.MODE_PRIVATE)
+                                        restoreSharedPreferencesSnapshot(prefs, snapshot)
                                     }
                                 }
-                                val backupWal = File(liveDbBackupDir, BackupArchiveFormat.WAL_ENTRY)
-                                if (backupWal.exists()) {
-                                    val finalWal = File(finalDbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
-                                    backupWal.copyTo(finalWal, overwrite = true)
-                                }
-                                val backupShm = File(liveDbBackupDir, BackupArchiveFormat.SHM_ENTRY)
-                                if (backupShm.exists()) {
-                                    val finalShm = File(finalDbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
-                                    backupShm.copyTo(finalShm, overwrite = true)
+                            }
+                            if (settingsCommitted) {
+                                runCatching { settingsStore.update(liveSettings) }
+                            }
+                            if (dbTouched) {
+                                runCatching {
+                                    context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
+                                    val backupDb = File(liveDbBackupDir, BackupArchiveFormat.DB_ENTRY)
+                                    if (backupDb.exists()) {
+                                        finalDbFile.parentFile?.mkdirs()
+                                        if (!backupDb.renameTo(finalDbFile)) {
+                                            backupDb.copyTo(finalDbFile, overwrite = true)
+                                        }
+                                    }
+                                    val backupWal = File(liveDbBackupDir, BackupArchiveFormat.WAL_ENTRY)
+                                    if (backupWal.exists()) {
+                                        val finalWal = File(finalDbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
+                                        backupWal.copyTo(finalWal, overwrite = true)
+                                    }
+                                    val backupShm = File(liveDbBackupDir, BackupArchiveFormat.SHM_ENTRY)
+                                    if (backupShm.exists()) {
+                                        val finalShm = File(finalDbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
+                                        backupShm.copyTo(finalShm, overwrite = true)
+                                    }
                                 }
                             }
                         }

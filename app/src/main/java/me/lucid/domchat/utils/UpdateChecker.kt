@@ -12,8 +12,12 @@ import java.io.File
 import java.security.MessageDigest
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
@@ -153,35 +157,28 @@ class UpdateChecker(private val client: PlatformHttpClient) {
 
     private fun sanitizeApkFilename(name: String): String {
         val base = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        val withExt = if (base.endsWith(".apk", ignoreCase = true)) base else "$base.apk"
-        return withExt.ifBlank { "update.apk" }
+            .trimStart('.')
+            .removeSuffix(".apk")
+            .trim('.')
+        val safeBase = if (base.isBlank()) "update" else base
+        return "$safeBase.apk"
     }
 
     fun downloadUpdate(context: Context, download: UpdateDownload): Long {
-        synchronized(downloadLock) {
-            activeDownloadJob?.cancel()
-            activeCall?.cancel()
-            activeCall = null
-
-            if (downloadProgressMap.size > 5) {
-                val oldest = downloadProgressMap.keys.sorted().dropLast(3)
-                oldest.forEach { downloadProgressMap.remove(it) }
-            }
-        }
-
         val id = downloadCounter.getAndIncrement()
         val flow = MutableStateFlow(DownloadProgress(status = UpdateDownloadStatus.RUNNING))
         downloadProgressMap[id] = flow
 
-        val job = downloadScope.launch {
-            val safeName = sanitizeApkFilename(download.name)
-            val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
-            val partFile = File(updatesDir, "$safeName.part")
-            val finalFile = File(updatesDir, safeName)
+        val safeName = sanitizeApkFilename(download.name)
+        val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
+        val partFile = File(updatesDir, "$safeName.$id.part")
+        val finalFile = File(updatesDir, safeName)
+
+        var call: okhttp3.Call? = null
+        val job = downloadScope.launch(start = CoroutineStart.LAZY) {
             if (partFile.exists()) partFile.delete()
             if (finalFile.exists()) finalFile.delete()
 
-            var call: okhttp3.Call? = null
             try {
                 val request = okhttp3.Request.Builder()
                     .url(download.url)
@@ -191,10 +188,12 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                 val createdCall = downloadHttpClient.newCall(request)
                 call = createdCall
                 synchronized(downloadLock) {
-                    activeCall = createdCall
+                    if (activeDownloadJob === coroutineContext[Job]) {
+                        activeCall = createdCall
+                    }
                 }
 
-                coroutineContext[kotlinx.coroutines.Job]?.invokeOnCompletion { cause ->
+                coroutineContext[Job]?.invokeOnCompletion { cause ->
                     if (cause != null) {
                         createdCall.cancel()
                     }
@@ -214,6 +213,7 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                             var read: Int
                             var lastEmitTime = 0L
                             while (input.read(buffer).also { read = it } != -1) {
+                                coroutineContext.ensureActive()
                                 output.write(buffer, 0, read)
                                 downloaded += read
                                 val now = System.currentTimeMillis()
@@ -242,7 +242,10 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                     throw java.io.IOException("Failed to rename temporary download file")
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
+                if (e is CancellationException || !coroutineContext.isActive) {
+                    if (partFile.exists()) partFile.delete()
+                    throw (e as? CancellationException ?: CancellationException("Download cancelled", e))
+                }
                 Log.e("UpdateChecker", "Download failed", e)
                 if (partFile.exists()) partFile.delete()
                 flow.value = DownloadProgress(
@@ -257,14 +260,26 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                     if (activeCall === call) {
                         activeCall = null
                     }
+                    if (activeDownloadJob === coroutineContext[Job]) {
+                        activeDownloadJob = null
+                    }
                 }
             }
         }
 
         synchronized(downloadLock) {
+            activeDownloadJob?.cancel()
+            activeCall?.cancel()
+            activeCall = null
             activeDownloadJob = job
+
+            if (downloadProgressMap.size > 5) {
+                val oldest = downloadProgressMap.keys.sorted().dropLast(3)
+                oldest.forEach { downloadProgressMap.remove(it) }
+            }
         }
 
+        job.start()
         return id
     }
 
@@ -308,10 +323,11 @@ class UpdateChecker(private val client: PlatformHttpClient) {
             val sourceUri = uriString.toUri()
             val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
             val localApk = File(updatesDir, "update.apk")
+            val originalFile = if (sourceUri.scheme == "file") runCatching { sourceUri.toFile() }.getOrNull() else null
 
             if (sourceUri.scheme == "file") {
-                val file = sourceUri.toFile()
-                if (file.absolutePath != localApk.absolutePath && file.exists()) {
+                val file = originalFile
+                if (file != null && file.absolutePath != localApk.absolutePath && file.exists()) {
                     if (localApk.exists()) localApk.delete()
                     file.copyTo(localApk, overwrite = true)
                 }
@@ -343,6 +359,9 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                 val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
                 if (!actualSha256.equals(expectedSha256.trim(), ignoreCase = true)) {
                     localApk.delete()
+                    if (originalFile != null && originalFile.absolutePath != localApk.absolutePath && originalFile.exists()) {
+                        originalFile.delete()
+                    }
                     downloadProgressMap.values.forEach { f ->
                         f.value = DownloadProgress(
                             status = UpdateDownloadStatus.FAILED,
