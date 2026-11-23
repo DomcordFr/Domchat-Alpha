@@ -47,14 +47,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
@@ -1914,75 +1906,8 @@ private fun AssistantMessageTurn(
     val density = LocalDensity.current
     val swipeThresholdPx = remember(density) { with(density) { 48.dp.toPx() } }
 
-    val latestVersionIndices by rememberUpdatedState(versionIndices)
-    val latestAssistantNode by rememberUpdatedState(assistantNode)
-    val latestOnUpdate by rememberUpdatedState(onUpdate)
-    val latestLoading by rememberUpdatedState(loading)
-    val latestOnRegenerate by rememberUpdatedState(onRegenerate)
-    val latestOnAddCustomGreeting by rememberUpdatedState(onAddCustomGreeting)
-
-    val pagerState = if (versionIndices.size > 1) {
-        rememberPagerState(
-            initialPage = currentVersionPos.coerceIn(0, versionIndices.lastIndex),
-            pageCount = { versionIndices.size }
-        )
-    } else null
-
-    if (pagerState != null) {
-        LaunchedEffect(currentVersionPos, versionIndices.size) {
-            if (pagerState.currentPage != currentVersionPos && currentVersionPos in 0 until versionIndices.size) {
-                pagerState.animateScrollToPage(currentVersionPos)
-            }
-        }
-
-        LaunchedEffect(pagerState) {
-            snapshotFlow { pagerState.settledPage }
-                .collect { page ->
-                    val targetIndex = latestVersionIndices.getOrNull(page)
-                    val currentNode = latestAssistantNode
-                    if (targetIndex != null && targetIndex != currentNode.selectIndex) {
-                        haptics.perform(HapticPattern.Pop)
-                        latestOnUpdate(currentNode.copy(selectIndex = targetIndex))
-                    }
-                }
-        }
-    }
-
-    val pagerNestedScrollConnection = remember(pagerState, isIntroMessage, swipeThresholdPx) {
-        object : NestedScrollConnection {
-            var accumulatedOverscroll = 0f
-
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.x > 0f && accumulatedOverscroll < 0f) {
-                    accumulatedOverscroll = 0f
-                }
-                return Offset.Zero
-            }
-
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (!latestLoading && pagerState != null && pagerState.currentPage == latestVersionIndices.lastIndex && available.x < 0f) {
-                    accumulatedOverscroll += available.x
-                }
-                return Offset.Zero
-            }
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (!latestLoading && pagerState != null && pagerState.currentPage == latestVersionIndices.lastIndex && accumulatedOverscroll < -swipeThresholdPx) {
-                    haptics.perform(HapticPattern.Pop)
-                    if (isIntroMessage) {
-                        latestOnAddCustomGreeting()
-                    } else {
-                        latestOnRegenerate()
-                    }
-                }
-                accumulatedOverscroll = 0f
-                return Velocity.Zero
-            }
-        }
-    }
-
-    val assistantSingleSwipeModifier = if (!loading && versionIndices.size <= 1) {
-        Modifier.pointerInput(assistantNode.id) {
+    val assistantSwipeModifier = if (!loading) {
+        Modifier.pointerInput(assistantNode.id, currentVersionPos, versionIndices.size) {
             var totalDrag = 0f
             detectHorizontalDragGestures(
                 onHorizontalDrag = { change, dragAmount ->
@@ -1990,7 +1915,19 @@ private fun AssistantMessageTurn(
                     totalDrag += dragAmount
                 },
                 onDragEnd = {
-                    if (totalDrag < -swipeThresholdPx) {
+                    if (totalDrag > swipeThresholdPx && currentVersionPos > 0) {
+                        val targetIndex = versionIndices.getOrNull(currentVersionPos - 1)
+                        if (targetIndex != null) {
+                            haptics.perform(HapticPattern.Pop)
+                            onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                        }
+                    } else if (totalDrag < -swipeThresholdPx && currentVersionPos < versionIndices.lastIndex) {
+                        val targetIndex = versionIndices.getOrNull(currentVersionPos + 1)
+                        if (targetIndex != null) {
+                            haptics.perform(HapticPattern.Pop)
+                            onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                        }
+                    } else if (totalDrag < -swipeThresholdPx && currentVersionPos >= versionIndices.lastIndex) {
                         haptics.perform(HapticPattern.Pop)
                         if (isIntroMessage) {
                             onAddCustomGreeting()
@@ -2088,8 +2025,7 @@ private fun AssistantMessageTurn(
                     )
                 }
 
-                val textParts = allParts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
-                val activeTextParts = if (textParts.isNotEmpty()) textParts else allParts.filterIsInstance<UIMessagePart.Text>()
+                val activeTextParts = allParts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
                 activeTextParts.forEachIndexed { index, part ->
                     val position = when {
                         activeTextParts.size == 1 -> BubblePosition.SINGLE
@@ -2170,7 +2106,6 @@ private fun AssistantMessageTurn(
                 }
 
                 val activeTextParts = allParts.filterIsInstance<UIMessagePart.Text>().filter { it.text.isNotBlank() }
-                    .ifEmpty { allParts.filterIsInstance<UIMessagePart.Text>() }
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(elementSpacing)
@@ -2207,12 +2142,11 @@ private fun AssistantMessageTurn(
     }
 
     val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
-    val isPagerScrolling = pagerState?.isScrollInProgress == true
     Column(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (chatAnimationsEnabled && !isPagerScrolling) {
+                if (chatAnimationsEnabled) {
                     Modifier.animateContentSize(
                         animationSpec = spring(
                             dampingRatio = 0.88f,
@@ -2425,25 +2359,32 @@ private fun AssistantMessageTurn(
             }
         }
 
-        if (versionIndices.size > 1 && pagerState != null) {
-            HorizontalPager(
-                state = pagerState,
-                beyondViewportPageCount = 1,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .nestedScroll(pagerNestedScrollConnection),
-            ) { page ->
-                val targetIdx = versionIndices.getOrNull(page) ?: assistantNode.selectIndex
+        if (versionIndices.size > 1) {
+            AnimatedContent(
+                targetState = assistantNode.selectIndex,
+                transitionSpec = {
+                    val forward = targetState >= initialState
+                    (slideInHorizontally(animationSpec = tween(260, easing = LinearOutSlowInEasing)) { width ->
+                        if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
+                    } + fadeIn(animationSpec = tween(260, easing = LinearOutSlowInEasing))) togetherWith
+                    (slideOutHorizontally(animationSpec = tween(200, easing = FastOutLinearInEasing)) { width ->
+                        if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
+                    } + fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using
+                    SizeTransform(clip = false)
+                },
+                contentAlignment = Alignment.TopStart,
+                label = "assistant_version_content_switch"
+            ) { targetIdx ->
                 val versionNodes = remember(group, targetIdx) {
                     group.filteredNodesForVersion(targetIdx)
                 }
-                renderVersionContent(targetIdx, versionNodes, Modifier)
+                renderVersionContent(targetIdx, versionNodes, assistantSwipeModifier)
             }
         } else {
             renderVersionContent(
                 assistantNode.selectIndex,
                 group.filteredNodes,
-                assistantSingleSwipeModifier,
+                assistantSwipeModifier,
             )
         }
         
@@ -2458,7 +2399,7 @@ private fun AssistantMessageTurn(
         }
         
         // Action buttons
-        val showActions = !isTurnActive && actionsExpanded
+        val showActions = !isTurnActive && (actionsExpanded || isIntroMessage)
         
         AnimatedVisibility(
             visible = showActions,

@@ -314,6 +314,7 @@ private class OffsetASTNode(
     private val offset: Int,
     private val parentOverride: ASTNode? = null,
 ) : ASTNode {
+    val isLeaf: Boolean get() = delegate is LeafASTNode
     override val type: IElementType get() = delegate.type
     override val startOffset: Int get() = delegate.startOffset + offset
     override val endOffset: Int get() = delegate.endOffset + offset
@@ -2548,7 +2549,7 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
             }
         }
 
-        node is LeafASTNode -> {
+        node is LeafASTNode || (node is OffsetASTNode && node.isLeaf) -> {
             val text = node.getTextInNode(content).let {
                 if (trim) {
                     it.trim()
