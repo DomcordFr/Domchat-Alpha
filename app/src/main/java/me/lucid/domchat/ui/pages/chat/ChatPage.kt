@@ -499,14 +499,17 @@ internal object ChatSessionDraftStore {
             DomChatApp.instance.getSharedPreferences("chat_session_drafts", Context.MODE_PRIVATE)
         }.getOrNull()
     }
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val ioDispatcher = kotlinx.coroutines.Dispatchers.IO.limitedParallelism(1)
+    private val ioScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher)
 
     fun get(conversationId: Uuid): ChatInputDraft? {
         drafts[conversationId]?.let { return it }
         val raw = prefs?.getString(conversationId.toString(), null) ?: return null
         return runCatching {
             json.decodeFromString<ChatInputDraft>(raw)
-        }.getOrNull()?.also { restored ->
-            drafts[conversationId] = restored
+        }.getOrNull()?.let { restored ->
+            drafts.putIfAbsent(conversationId, restored) ?: restored
         }
     }
 
@@ -553,7 +556,7 @@ internal object ChatSessionDraftStore {
     fun put(conversationId: Uuid, draft: ChatInputDraft, isTemporary: Boolean = false) {
         putInMemory(conversationId, draft)
         if (!isTemporary) {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            ioScope.launch {
                 persistDraft(conversationId, draft)
             }
         }
@@ -564,7 +567,7 @@ internal object ChatSessionDraftStore {
         val switchedDraft = draft.forAssistantSwitch()
         putInMemory(toConversationId, switchedDraft)
         if (!isTemporary) {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            ioScope.launch {
                 prefs?.edit()
                     ?.remove(fromConversationId.toString())
                     ?.remove("ts_$fromConversationId")
@@ -576,7 +579,9 @@ internal object ChatSessionDraftStore {
 
     fun clear() {
         drafts.clear()
-        prefs?.edit()?.clear()?.apply()
+        ioScope.launch {
+            prefs?.edit()?.clear()?.apply()
+        }
     }
 }
 

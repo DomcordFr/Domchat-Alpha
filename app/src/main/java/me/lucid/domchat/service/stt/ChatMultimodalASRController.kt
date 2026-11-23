@@ -160,72 +160,77 @@ class ChatMultimodalASRController(
 
     @SuppressLint("MissingPermission")
     private fun startRecorder() {
-        recorderJob?.cancel()
-        recorderJob = scope.launch(Dispatchers.IO) {
-            val currentJob = coroutineContext[Job]
-            if (!isActive) return@launch
-            var recorder: AudioRecord? = null
-            try {
-                val sampleRate = model.sttOptions?.sampleRate ?: 16000
-                val minBufferSize = AudioRecord.getMinBufferSize(
-                    sampleRate,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                )
-                val bufferSize = minBufferSize
-                    .coerceAtLeast(sampleRate / 10 * 2)
-                    .coerceAtLeast(4096)
+        synchronized(recorderLock) {
+            recorderJob?.cancel()
+            val newJob = scope.launch(Dispatchers.IO) {
+                val currentJob = coroutineContext[Job]
+                var ownedRecorder: AudioRecord? = null
+                try {
+                    if (!isActive) return@launch
+                    val sampleRate = model.sttOptions?.sampleRate ?: 16000
+                    val minBufferSize = AudioRecord.getMinBufferSize(
+                        sampleRate,
+                        AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                    )
+                    val bufferSize = minBufferSize
+                        .coerceAtLeast(sampleRate / 10 * 2)
+                        .coerceAtLeast(4096)
 
-                if (!isActive) return@launch
-                val createdRecorder = AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    sampleRate,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    bufferSize * 2,
-                )
-                recorder = createdRecorder
-                if (createdRecorder.state != AudioRecord.STATE_INITIALIZED) {
-                    setError("AudioRecord failed to initialize")
-                    return@launch
-                }
-                synchronized(recorderLock) {
-                    audioRecord = createdRecorder
-                }
+                    if (!isActive) return@launch
+                    val createdRecorder = AudioRecord(
+                        MediaRecorder.AudioSource.MIC,
+                        sampleRate,
+                        AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                        bufferSize * 2,
+                    )
+                    ownedRecorder = createdRecorder
+                    if (createdRecorder.state != AudioRecord.STATE_INITIALIZED) {
+                        setError("AudioRecord failed to initialize")
+                        return@launch
+                    }
+                    synchronized(recorderLock) {
+                        if (!isActive || recorderJob !== currentJob) {
+                            return@launch
+                        }
+                        audioRecord = createdRecorder
+                    }
 
-                createdRecorder.startRecording()
-                val buffer = ByteArray(bufferSize)
-                synchronized(bufferLock) {
-                    sessionBuffer.reset()
-                }
-                while (isActive) {
-                    val read = createdRecorder.read(buffer, 0, buffer.size)
-                    if (read > 0) {
-                        val amplitude = calculateRmsAmplitude(buffer, read)
-                        _state.update { it.copy(amplitudes = it.amplitudes.appendAmplitude(amplitude)) }
+                    createdRecorder.startRecording()
+                    val buffer = ByteArray(bufferSize)
+                    synchronized(bufferLock) {
+                        sessionBuffer.reset()
+                    }
+                    while (isActive) {
+                        val read = createdRecorder.read(buffer, 0, buffer.size)
+                        if (read > 0) {
+                            val amplitude = calculateRmsAmplitude(buffer, read)
+                            _state.update { it.copy(amplitudes = it.amplitudes.appendAmplitude(amplitude)) }
 
-                        synchronized(bufferLock) {
-                            sessionBuffer.write(buffer, 0, read)
+                            synchronized(bufferLock) {
+                                sessionBuffer.write(buffer, 0, read)
+                            }
                         }
                     }
-                }
-            } catch (e: Exception) {
-                if (e is kotlin.coroutines.cancellation.CancellationException) throw e
-                Log.e(TAG, "Audio recording error", e)
-                setError("Audio recording error: ${e.message}")
-            } finally {
-                synchronized(recorderLock) {
-                    val record = recorder
-                    if (record != null && (audioRecord === record || audioRecord == null)) {
-                        audioRecord = null
-                        runCatching { record.stop() }
-                        runCatching { record.release() }
-                    }
-                    if (recorderJob === currentJob) {
-                        recorderJob = null
+                } catch (e: Exception) {
+                    if (e is kotlin.coroutines.cancellation.CancellationException) throw e
+                    Log.e(TAG, "Audio recording error", e)
+                    setError("Audio recording error: ${e.message}")
+                } finally {
+                    synchronized(recorderLock) {
+                        if (audioRecord === ownedRecorder) {
+                            audioRecord = null
+                        }
+                        if (recorderJob === currentJob) {
+                            recorderJob = null
+                        }
+                        runCatching { ownedRecorder?.stop() }
+                        runCatching { ownedRecorder?.release() }
                     }
                 }
             }
+            recorderJob = newJob
         }
     }
 
@@ -240,11 +245,17 @@ class ChatMultimodalASRController(
 
     private fun releaseRecorder() {
         synchronized(recorderLock) {
+            val job = recorderJob
             recorderJob = null
             val record = audioRecord
-            audioRecord = null
-            runCatching { record?.stop() }
-            runCatching { record?.release() }
+            if (job != null) {
+                job.cancel()
+                runCatching { record?.stop() }
+            } else {
+                audioRecord = null
+                runCatching { record?.stop() }
+                runCatching { record?.release() }
+            }
         }
     }
 

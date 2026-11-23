@@ -648,32 +648,36 @@ class SettingsStore(
         }
     }
 
-    suspend fun updateAssistantSelection(assistantId: Uuid) = updateAssistant(assistantId)
-
     suspend fun updateAssistant(assistantId: Uuid) = updateMutex.withLock {
         withContext(Dispatchers.IO) {
             val current = awaitInitializedSettings("updateAssistant") ?: return@withContext
-            var updatedRecentlyUsed: List<Uuid>? = null
-            if (current.assistants.any { it.id == assistantId }) {
-                val list = buildList {
+            val exists = current.assistants.any { it.id == assistantId }
+            if (!exists && assistantId != DEFAULT_ASSISTANT_ID) return@withContext
+
+            val updatedRecentlyUsed = if (exists) {
+                buildList {
                     add(assistantId)
                     current.recentlyUsedAssistants
                         .filter { it != assistantId }
                         .take(2)
                         .forEach { add(it) }
                 }
-                updatedRecentlyUsed = list
-                settingsFlow.value = current.copy(
-                    assistantId = assistantId,
-                    recentlyUsedAssistants = list
-                )
-            }
-            // Persist to DataStore
+            } else null
+
+            // Persist to DataStore first
             dataStore.edit { preferences ->
                 preferences[SELECT_ASSISTANT] = assistantId.toString()
                 if (updatedRecentlyUsed != null) {
                     preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(updatedRecentlyUsed)
                 }
+            }
+
+            // Update in-memory state after successful persistence
+            if (exists) {
+                settingsFlow.value = current.copy(
+                    assistantId = assistantId,
+                    recentlyUsedAssistants = updatedRecentlyUsed ?: current.recentlyUsedAssistants
+                )
             }
         }
     }
@@ -682,21 +686,26 @@ class SettingsStore(
      * Mark an assistant as recently used for app shortcuts.
      * Moves it to the front of the list and keeps only the 3 most recent.
      */
-    suspend fun markAssistantUsed(assistantId: Uuid) {
-        val current = settingsFlow.value
-        // Only add if the assistant exists
-        if (current.assistants.none { it.id == assistantId }) return
+    suspend fun markAssistantUsed(assistantId: Uuid) = updateMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val current = awaitInitializedSettings("markAssistantUsed") ?: return@withContext
+            // Only add if the assistant exists
+            if (current.assistants.none { it.id == assistantId }) return@withContext
 
-        val updatedList = buildList {
-            add(assistantId)
-            current.recentlyUsedAssistants
-                .filter { it != assistantId }
-                .take(2)
-                .forEach { add(it) }
-        }
+            val updatedList = buildList {
+                add(assistantId)
+                current.recentlyUsedAssistants
+                    .filter { it != assistantId }
+                    .take(2)
+                    .forEach { add(it) }
+            }
 
-        if (updatedList != current.recentlyUsedAssistants) {
-            updateRecentlyUsedAssistants(updatedList)
+            if (updatedList != current.recentlyUsedAssistants) {
+                dataStore.edit { preferences ->
+                    preferences[RECENTLY_USED_ASSISTANTS] = JsonInstant.encodeToString(updatedList)
+                }
+                settingsFlow.value = current.copy(recentlyUsedAssistants = updatedList)
+            }
         }
     }
 }

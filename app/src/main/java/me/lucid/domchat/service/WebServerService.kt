@@ -73,8 +73,8 @@ class WebServerService : Service() {
     private val settingsStore: SettingsStore by inject()
     private val appScope: AppScope by inject()
 
-    private var stoppedByUserOrError = false
-    private var persistedDisabled = false
+    private var nullIntentStartupJob: Job? = null
+    private var stopPersistJob: Job? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var stateObserverJob: Job? = null
     private var wifiLock: WifiManager.WifiLock? = null
@@ -84,8 +84,10 @@ class WebServerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                stoppedByUserOrError = false
-                persistedDisabled = false
+                nullIntentStartupJob?.cancel()
+                nullIntentStartupJob = null
+                stopPersistJob?.cancel()
+                stopPersistJob = null
                 val port = intent.getIntExtra(EXTRA_PORT, 8080)
                 if (!startForegroundCompat(buildStartingNotification())) {
                     return START_NOT_STICKY
@@ -93,28 +95,32 @@ class WebServerService : Service() {
                 startObservingState()
                 acquireWifiLock()
                 webServerManager.start(port = port)
+                return START_STICKY
             }
 
             ACTION_STOP -> {
-                stoppedByUserOrError = true
-                persistedDisabled = true
+                nullIntentStartupJob?.cancel()
+                nullIntentStartupJob = null
                 webServerManager.stop()
-                appScope.launch(Dispatchers.IO) {
+                stopPersistJob?.cancel()
+                stopPersistJob = appScope.launch(Dispatchers.IO) {
                     settingsStore.update { settings ->
                         settings.copy(webServerEnabled = false)
                     }
                 }
                 ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
                 stopSelf()
+                return START_NOT_STICKY
             }
 
             null -> {
-                stoppedByUserOrError = false
-                persistedDisabled = false
+                stopPersistJob?.cancel()
+                stopPersistJob = null
                 if (!startForegroundCompat(buildStartingNotification())) {
                     return START_NOT_STICKY
                 }
-                serviceScope.launch {
+                nullIntentStartupJob?.cancel()
+                nullIntentStartupJob = serviceScope.launch {
                     val settings = settingsStore.settingsFlowRaw.first()
                     if (settings.webServerEnabled) {
                         startObservingState()
@@ -126,6 +132,7 @@ class WebServerService : Service() {
                         stopSelf()
                     }
                 }
+                return START_STICKY
             }
         }
         return START_STICKY
@@ -181,11 +188,10 @@ class WebServerService : Service() {
 
                     WebServerPhase.Error -> {
                         hasSeenActivePhase = true
-                        stoppedByUserOrError = true
-                        persistedDisabled = true
                         releaseWifiLock()
                         updateNotification(buildErrorNotification(state.error ?: getString(R.string.notification_web_server_error)))
-                        appScope.launch(Dispatchers.IO) {
+                        stopPersistJob?.cancel()
+                        stopPersistJob = appScope.launch(Dispatchers.IO) {
                             settingsStore.update { settings -> settings.copy(webServerEnabled = false) }
                         }
                         stopForeground(STOP_FOREGROUND_DETACH)
@@ -205,13 +211,9 @@ class WebServerService : Service() {
     }
 
     override fun onDestroy() {
+        nullIntentStartupJob?.cancel()
+        nullIntentStartupJob = null
         webServerManager.stop()
-        if (stoppedByUserOrError && !persistedDisabled) {
-            persistedDisabled = true
-            appScope.launch(Dispatchers.IO) {
-                settingsStore.update { settings -> settings.copy(webServerEnabled = false) }
-            }
-        }
         stateObserverJob?.cancel()
         stateObserverJob = null
         releaseWifiLock()
