@@ -849,8 +849,6 @@ class WebdavSync(
                         workspacesMetadata = manifest?.workspacesMetadata ?: emptyList(),
                     )
                 } finally {
-                    managedFilesSession?.cleanup()
-                    liveFilesBackupDir.deleteRecursively()
                     restoreTempDir.deleteRecursively()
                 }
             }

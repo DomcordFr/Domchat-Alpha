@@ -194,8 +194,10 @@ class UpdateChecker(private val client: PlatformHttpClient) {
                     activeCall = createdCall
                 }
 
-                coroutineContext[kotlinx.coroutines.Job]?.invokeOnCancellation {
-                    createdCall.cancel()
+                coroutineContext[kotlinx.coroutines.Job]?.invokeOnCompletion { cause ->
+                    if (cause != null) {
+                        createdCall.cancel()
+                    }
                 }
 
                 createdCall.execute().use { response ->
