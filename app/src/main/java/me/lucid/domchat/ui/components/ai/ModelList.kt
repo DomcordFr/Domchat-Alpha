@@ -1001,7 +1001,7 @@ internal fun ColumnScope.ModelList(
                                     .liquidGlassSurface(
                                         shape = me.lucid.domchat.ui.theme.AppShapes.ButtonPill,
                                         fillColor = if (isLiquidGlassMode) {
-                                            if (isActive) Color.White.copy(alpha = 0.12f) else Color.Transparent
+                                            Color.Transparent
                                         } else {
                                             if (isActive) Color.White.copy(alpha = 0.22f) else Color(0xFF000000).copy(alpha = 0.35f)
                                         },
@@ -1166,7 +1166,7 @@ private fun ModelItem(
                         shape = badgeShape,
                         borderWidth = 0.5.dp,
                         specularBrush = me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
-                        fillColor = Color.White.copy(alpha = 0.14f),
+                        fillColor = Color.Transparent,
                         glassMode = me.lucid.domchat.data.datastore.LiquidGlassMode.SOFT_FROSTED
                     )
                 } else {
