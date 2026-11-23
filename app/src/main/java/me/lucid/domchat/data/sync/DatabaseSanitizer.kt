@@ -131,7 +131,9 @@ object DatabaseSanitizer {
                 .build()
             try {
                 val writable = migrationRoomDb.openHelper.writableDatabase
-                writable.query("PRAGMA wal_checkpoint(TRUNCATE)").close()
+                writable.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
+                    cursor.moveToFirst()
+                }
             } finally {
                 migrationRoomDb.close()
             }

@@ -2,6 +2,7 @@ package me.lucid.domchat.ui.pages.assistant
 
 import android.content.Context
 import android.net.Uri
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.lucid.domchat.data.model.Assistant
@@ -14,7 +15,7 @@ object AssistantExportHelper {
         uri: Uri,
         mode: String = "card_v2",
     ): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
+        try {
             val jsonStr = when (mode) {
                 "card_v2" -> AssistantExportImport.exportToCharacterCardV2(assistant, context)
                 "lastchat_memories" -> AssistantExportImport.exportToLastChatBundle(assistant, context, includeMemories = true, includeLorebooks = false)
@@ -25,6 +26,11 @@ object AssistantExportHelper {
             context.contentResolver.openOutputStream(uri)?.use { output ->
                 output.write(jsonStr.toByteArray())
             } ?: error("Unable to open output stream for $uri")
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -33,9 +39,9 @@ object AssistantExportHelper {
         assistant: Assistant,
         uri: Uri,
     ): Result<Boolean> = withContext(Dispatchers.IO) {
-        runCatching {
+        try {
             val bytes = AssistantExportImport.exportToCharacterCardPng(assistant, context)
-            if (bytes != null && bytes.isNotEmpty()) {
+            val success = if (bytes != null && bytes.isNotEmpty()) {
                 context.contentResolver.openOutputStream(uri)?.use { output ->
                     output.write(bytes)
                 } ?: error("Unable to open output stream for $uri")
@@ -43,6 +49,11 @@ object AssistantExportHelper {
             } else {
                 false
             }
+            Result.success(success)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

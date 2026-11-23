@@ -40,6 +40,7 @@ internal fun restoreManagedFileDirectories(
     }
     liveBackupDir.mkdirs()
     val replaced = mutableListOf<String>()
+    var workspaceEntries = emptyList<WorkspaceTouchedEntry>()
     try {
         directoriesToRestore.forEach { dirName ->
             val liveDir = File(liveFilesDir, dirName)
@@ -48,7 +49,7 @@ internal fun restoreManagedFileDirectories(
                 return@forEach
             }
             if (dirName == BackupArchiveFormat.WORKSPACES_DIR) {
-                restoreWorkspacesDir(stagedDir, liveDir, File(liveBackupDir, dirName))
+                workspaceEntries = restoreWorkspacesDir(stagedDir, liveDir, File(liveBackupDir, dirName))
                 replaced += dirName
                 return@forEach
             }
@@ -66,16 +67,7 @@ internal fun restoreManagedFileDirectories(
             val liveDir = File(liveFilesDir, dirName)
             val backupDir = File(liveBackupDir, dirName)
             if (dirName == BackupArchiveFormat.WORKSPACES_DIR) {
-                // Never delete files/workspaces/ recursively - that would destroy the Linux rootfs!
-                // Roll back only the modified workspace files from backupDir
-                if (backupDir.exists()) {
-                    backupDir.walkTopDown().filter { it.isFile }.forEach { backupFile ->
-                        val relPath = backupFile.relativeTo(backupDir).path
-                        val liveTarget = File(liveDir, relPath)
-                        liveTarget.parentFile?.mkdirs()
-                        backupFile.copyTo(liveTarget, overwrite = true)
-                    }
-                }
+                rollbackWorkspaceEntries(workspaceEntries)
             } else {
                 if (liveDir.exists()) {
                     liveDir.deleteRecursively()
@@ -94,6 +86,12 @@ internal fun restoreManagedFileDirectories(
     }
 }
 
+internal data class WorkspaceTouchedEntry(
+    val liveTarget: File,
+    val backupSource: File,
+    val existedBefore: Boolean,
+)
+
 /**
  * Restores the workspaces directory without disturbing the on-device Linux rootfs.
  *
@@ -106,11 +104,11 @@ internal fun restoreWorkspacesDir(
     stagedDir: File,
     liveDir: File,
     workspacesBackupDir: File? = null,
-) {
+): List<WorkspaceTouchedEntry> {
     liveDir.mkdirs()
-    if (!stagedDir.exists()) return
+    if (!stagedDir.exists()) return emptyList()
 
-    val backedUpEntries = mutableListOf<Pair<File, File>>() // (liveFile, backupFile)
+    val touchedEntries = mutableListOf<WorkspaceTouchedEntry>()
     try {
         stagedDir.listFiles()?.forEach { stagedChild ->
             val liveChild = File(liveDir, stagedChild.name)
@@ -121,9 +119,10 @@ internal fun restoreWorkspacesDir(
                         return@forEach
                     }
                     val liveSub = File(liveChild, stagedSub.name)
-                    if (liveSub.exists() && workspacesBackupDir != null) {
-                        val relPath = liveSub.relativeTo(liveDir).path
-                        val backupFile = File(workspacesBackupDir, relPath)
+                    val relPath = liveSub.relativeTo(liveDir).path
+                    val backupFile = File(workspacesBackupDir ?: File(liveDir.parentFile, "backup"), relPath)
+                    val existedBefore = liveSub.exists()
+                    if (existedBefore && workspacesBackupDir != null) {
                         backupFile.parentFile?.mkdirs()
                         if (liveSub.isDirectory) {
                             backupFile.mkdirs()
@@ -131,8 +130,8 @@ internal fun restoreWorkspacesDir(
                         } else {
                             liveSub.copyTo(backupFile, overwrite = true)
                         }
-                        backedUpEntries.add(liveSub to backupFile)
                     }
+                    touchedEntries.add(WorkspaceTouchedEntry(liveSub, backupFile, existedBefore))
                     if (liveSub.exists()) {
                         liveSub.deleteRecursively()
                     }
@@ -145,13 +144,14 @@ internal fun restoreWorkspacesDir(
                     }
                 }
             } else {
-                if (liveChild.exists() && workspacesBackupDir != null) {
-                    val relPath = liveChild.relativeTo(liveDir).path
-                    val backupFile = File(workspacesBackupDir, relPath)
+                val relPath = liveChild.relativeTo(liveDir).path
+                val backupFile = File(workspacesBackupDir ?: File(liveDir.parentFile, "backup"), relPath)
+                val existedBefore = liveChild.exists()
+                if (existedBefore && workspacesBackupDir != null) {
                     backupFile.parentFile?.mkdirs()
                     liveChild.copyTo(backupFile, overwrite = true)
-                    backedUpEntries.add(liveChild to backupFile)
                 }
+                touchedEntries.add(WorkspaceTouchedEntry(liveChild, backupFile, existedBefore))
                 if (liveChild.exists()) {
                     liveChild.deleteRecursively()
                 }
@@ -159,22 +159,27 @@ internal fun restoreWorkspacesDir(
                 stagedChild.copyTo(liveChild, overwrite = true)
             }
         }
+        return touchedEntries
     } catch (error: Exception) {
-        backedUpEntries.asReversed().forEach { (liveTarget, backupSource) ->
-            if (liveTarget.exists()) {
-                liveTarget.deleteRecursively()
-            }
-            if (backupSource.exists()) {
-                liveTarget.parentFile?.mkdirs()
-                if (backupSource.isDirectory) {
-                    liveTarget.mkdirs()
-                    mirrorDirectory(backupSource, liveTarget)
-                } else {
-                    backupSource.copyTo(liveTarget, overwrite = true)
-                }
+        rollbackWorkspaceEntries(touchedEntries)
+        throw error
+    }
+}
+
+internal fun rollbackWorkspaceEntries(entries: List<WorkspaceTouchedEntry>) {
+    entries.asReversed().forEach { (liveTarget, backupSource, existedBefore) ->
+        if (liveTarget.exists()) {
+            liveTarget.deleteRecursively()
+        }
+        if (existedBefore && backupSource.exists()) {
+            liveTarget.parentFile?.mkdirs()
+            if (backupSource.isDirectory) {
+                liveTarget.mkdirs()
+                mirrorDirectory(backupSource, liveTarget)
+            } else {
+                backupSource.copyTo(liveTarget, overwrite = true)
             }
         }
-        throw error
     }
 }
 

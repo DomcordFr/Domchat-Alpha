@@ -19,7 +19,6 @@ import kotlin.uuid.Uuid
  * - Provider API key: "provider_apikey_{providerId}"
  * - Provider API key pool: "provider_apikey_pool_{providerId}_{entryId}"
  * - Provider private key (Vertex AI): "provider_privatekey_{providerId}"
- * - WebDAV password: "webdav_password"
  */
 class SecretKeyManager(
     private val secureStore: SecureStore
@@ -30,7 +29,6 @@ class SecretKeyManager(
         private const val PROVIDER_PRIVATEKEY_PREFIX = "provider_privatekey_"
         private const val TTS_PROVIDER_APIKEY_PREFIX = "tts_provider_apikey_"
         private const val STT_PROVIDER_APIKEY_PREFIX = "stt_provider_apikey_"
-        private const val WEBDAV_PASSWORD_KEY = "webdav_password"
         private const val WEB_SERVER_ACCESS_PASSWORD_KEY = "web_server_access_password"
         private const val HUGGINGFACE_TOKEN_KEY = "huggingface_token"
         private const val MCP_OAUTH_PREFIX = "mcp_oauth_"
@@ -165,20 +163,6 @@ class SecretKeyManager(
         }
     }
 
-    // ========== WebDAV Password Management ==========
-
-    fun getWebDavPassword(plaintextFallback: String): String {
-        return secureStore.getSecret(WEBDAV_PASSWORD_KEY) ?: plaintextFallback
-    }
-
-    fun setWebDavPassword(password: String) {
-        if (password.isNotBlank()) {
-            secureStore.putSecret(WEBDAV_PASSWORD_KEY, password)
-        } else {
-            secureStore.removeSecret(WEBDAV_PASSWORD_KEY)
-        }
-    }
-
     // ========== Web Server Access Password Management ==========
 
     fun getWebServerAccessPassword(plaintextFallback: String): String {
@@ -246,11 +230,10 @@ class SecretKeyManager(
             }
         }
 
-        // Migrate WebDAV password
+        // Clear any residual plaintext WebDAV password
         val migratedWebDav = if (settings.webDavConfig.password.isNotBlank()) {
-            setWebDavPassword(settings.webDavConfig.password)
             migrated = true
-            settings.webDavConfig.copy(password = "") // Clear plaintext
+            settings.webDavConfig.copy(password = "")
         } else {
             settings.webDavConfig
         }
@@ -430,11 +413,7 @@ class SecretKeyManager(
             }
         }
 
-        // Handle WebDAV password
-        if (oldSettings.webDavConfig.password.isNotBlank() && 
-            newSettings.webDavConfig.password.isBlank()) {
-            setWebDavPassword("")
-        }
+
     }
 
     /**
@@ -671,13 +650,7 @@ class SecretKeyManager(
             }
         }
 
-        val webDavWithPassword = if (includeSettings && includeApiKeys) {
-            settings.webDavConfig.copy(
-                password = getWebDavPassword(settings.webDavConfig.password)
-            )
-        } else {
-            settings.webDavConfig.copy(password = "")
-        }
+        val webDavWithPassword = settings.webDavConfig.copy(password = "")
 
         val ttsProvidersWithSecrets = if (includeApiKeys) {
             settings.ttsProviders.map { provider ->

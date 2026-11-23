@@ -199,7 +199,7 @@ fun AssistantDetailPage(
             scope.launch {
                 try {
                     val currentSettings = vm.settings.first { !it.init }
-                    val currentAssistant = currentSettings.assistants.find { it.id == assistant.id } ?: assistant
+                    val currentAssistant = currentSettings.assistants.find { it.id.toString() == id } ?: assistant
                     val result = me.lucid.domchat.ui.pages.assistant.AssistantExportHelper.exportJson(
                         context = context,
                         assistant = currentAssistant,
@@ -242,7 +242,7 @@ fun AssistantDetailPage(
         scope.launch {
             try {
                 val currentSettings = vm.settings.first { !it.init }
-                val currentAssistant = currentSettings.assistants.find { it.id == assistant.id } ?: assistant
+                val currentAssistant = currentSettings.assistants.find { it.id.toString() == id } ?: assistant
                 val result = me.lucid.domchat.ui.pages.assistant.AssistantExportHelper.exportPng(
                     context = context,
                     assistant = currentAssistant,

@@ -472,9 +472,16 @@ class SettingsStore(
         val current = if (settingsFlow.value.init) {
             withTimeoutOrNull(5000L) {
                 settingsFlow.first { !it.init }
-            } ?: settingsFlow.value
+            } ?: run {
+                Log.e(TAG, "updateInternal: settingsFlow failed to initialize within timeout, aborting")
+                return
+            }
         } else {
             settingsFlow.value
+        }
+        if (current.init) {
+            Log.e(TAG, "updateInternal: settings are uninitialized, aborting write")
+            return
         }
         val effectiveSettings = if (settings.init) {
             current.copy(
@@ -610,9 +617,16 @@ class SettingsStore(
             val current = if (settingsFlow.value.init) {
                 withTimeoutOrNull(5000L) {
                     settingsFlow.first { !it.init }
-                } ?: settingsFlow.value
+                } ?: run {
+                    Log.e(TAG, "update(fn): settingsFlow failed to initialize within timeout, aborting")
+                    return@withContext
+                }
             } else {
                 settingsFlow.value
+            }
+            if (current.init) {
+                Log.e(TAG, "update(fn): settings are uninitialized, aborting")
+                return@withContext
             }
             updateInternal(fn(current))
         }

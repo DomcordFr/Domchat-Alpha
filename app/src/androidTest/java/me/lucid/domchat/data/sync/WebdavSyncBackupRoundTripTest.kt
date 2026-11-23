@@ -25,7 +25,6 @@ import me.lucid.domchat.data.datastore.SecureStore
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.SettingsStore
 import me.lucid.domchat.data.datastore.SpontaneousMessagingStateStore
-import me.lucid.domchat.data.datastore.WebDavConfig
 import me.lucid.domchat.data.db.AppDatabase
 import me.lucid.domchat.data.db.Migration_6_7
 import me.lucid.domchat.data.db.entity.ChatAttachmentEntity
@@ -73,21 +72,11 @@ class WebdavSyncBackupRoundTripTest {
     fun backupRoundTripRestoresPortableData() = runBlocking<Unit> {
         val env = createEnvironment("roundtrip")
         val fixture = seedRoundTripFixture(env)
-        val backupFile = env.webdavSync.prepareBackupFile(
-            WebDavConfig(
-                items = listOf(
-                    WebDavConfig.BackupItem.DATABASE,
-                    WebDavConfig.BackupItem.FILES,
-                )
-            )
-        )
+        val backupFile = env.webdavSync.prepareBackupFile()
 
         mutateAfterBackup(env)
 
-        val result = env.webdavSync.restoreFromLocalFile(
-            backupFile,
-            WebDavConfig(items = emptyList()),
-        )
+        val result = env.webdavSync.restoreFromLocalFile(backupFile)
 
         assertEquals(0L, result.settingsCleanup.unsupportedZipEntriesBytes)
         assertTrue(File(env.context.filesDir, "avatars/stale-avatar.png").notExists())
@@ -254,10 +243,7 @@ class WebdavSyncBackupRoundTripTest {
         env.appDatabase.close()
         env.context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
 
-        env.webdavSync.restoreFromLocalFile(
-            backupFile,
-            WebDavConfig(items = emptyList()),
-        )
+        env.webdavSync.restoreFromLocalFile(backupFile)
 
         val restoredDb = env.reopenDatabase()
         try {
@@ -273,14 +259,7 @@ class WebdavSyncBackupRoundTripTest {
     fun restoreUsesArchiveContentsEvenWhenCurrentBackupSelectionIsEmpty() = runBlocking<Unit> {
         val env = createEnvironment("archive-driven")
         val fixture = seedRoundTripFixture(env)
-        val backupFile = env.webdavSync.prepareBackupFile(
-            WebDavConfig(
-                items = listOf(
-                    WebDavConfig.BackupItem.DATABASE,
-                    WebDavConfig.BackupItem.FILES,
-                )
-            )
-        )
+        val backupFile = env.webdavSync.prepareBackupFile()
 
         env.appDatabase.close()
         env.context.deleteDatabase(BackupArchiveFormat.DB_ENTRY)
@@ -289,10 +268,7 @@ class WebdavSyncBackupRoundTripTest {
         }
         env.settingsStore.update(Settings(textSelectionConfig = TextSelectionConfig()))
 
-        env.webdavSync.restoreFromLocalFile(
-            backupFile,
-            WebDavConfig(items = emptyList()),
-        )
+        env.webdavSync.restoreFromLocalFile(backupFile)
 
         val restoredDb = env.reopenDatabase()
         try {

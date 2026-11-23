@@ -72,11 +72,8 @@ class WebdavSync(
             backupFile.delete()
         }
 
-        val includesDatabase = selectedContent == null || selectedContent.any { it in setOf(BackupContentOption.SETTINGS, BackupContentOption.CHARACTERS, BackupContentOption.CHATS, BackupContentOption.LOREBOOKS, BackupContentOption.SKILLS) }
-        val includesFiles = selectedContent == null || selectedContent.any { it in setOf(BackupContentOption.CHARACTERS, BackupContentOption.CHATS, BackupContentOption.SETTINGS) }
-
         // Determine which managed dirs and DB table sets to include based on selectedContent.
-        // When selectedContent is null (e.g., WebDAV full backup), everything is included.
+        // When selectedContent is null (e.g., full backup), everything is included.
         val managedDirsToExport = if (selectedContent == null) {
             BackupArchiveFormat.MANAGED_FILE_DIRS
         } else {
@@ -122,6 +119,9 @@ class WebdavSync(
                 if (BackupContentOption.WORKSPACES in selectedContent) addAll(DatabaseSanitizer.WORKSPACE_TABLES)
             }
         }
+
+        val includesDatabase = allowedDbTables == null || allowedDbTables.isNotEmpty()
+        val includesFiles = managedDirsToExport.isNotEmpty()
 
         val manifest = BackupManifest(
             includesDatabase = includesDatabase,
@@ -196,7 +196,9 @@ class WebdavSync(
             }
 
             if (includesDatabase) {
-                checkpointDatabase()
+                if (!checkpointDatabase()) {
+                    throw java.io.IOException("Database is busy and could not be checkpointed safely")
+                }
                 if (allowedDbTables != null && allowedDbTables.isEmpty()) {
                     // No DB tables selected — skip database entirely
                     LogUtil.i(TAG, "prepareBackupFile: Skipping database (no DB content selected)")
@@ -526,9 +528,13 @@ class WebdavSync(
                                     null,
                                     android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
                                 ).use { db ->
-                                    db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null)?.close()
+                                    db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null).use { cursor ->
+                                        if (cursor.moveToFirst() && cursor.getInt(0) != 0) {
+                                            throw java.io.IOException("Staged DB WAL checkpoint busy")
+                                        }
+                                    }
                                 }
-                            }
+                            }.getOrThrow()
                             LogUtil.i(TAG, "restoreFromBackupFile: Staged database sanitized and shell states adjusted")
                         } catch (e: Exception) {
                             LogUtil.e(TAG, "restoreFromBackupFile: Failed to stage database", e)
@@ -552,8 +558,13 @@ class WebdavSync(
                                             val liveModelMap = liveProv.models.associateBy { it.id }
                                             val modelsWithPreservedOverwrites = restored.models.map { restoredModel ->
                                                 val liveModel = liveModelMap[restoredModel.id]
-                                                if (liveModel?.providerOverwrite != null) {
-                                                    restoredModel.copy(providerOverwrite = liveModel.providerOverwrite)
+                                                if (restoredModel.providerOverwrite != null && liveModel?.providerOverwrite != null) {
+                                                    restoredModel.copy(
+                                                        providerOverwrite = mergeProviderCredentials(
+                                                            restoredModel.providerOverwrite,
+                                                            liveModel.providerOverwrite,
+                                                        )
+                                                    )
                                                 } else {
                                                     restoredModel
                                                 }
@@ -749,12 +760,12 @@ class WebdavSync(
                         }
 
                         // Step 5: Local Models Commit (staged in memory, committed after DB/settings swap)
-                        if (stagedLlmModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent)) {
+                        if (stagedLlmModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent || BackupContentOption.PROVIDERS.name in manifest.selectedContent)) {
                             val store = me.lucid.locallm.LocalModelStore(context)
                             liveLlmModelsSnapshot = store.current()
                             stagedLlmModels?.forEach { store.upsert(it) }
                         }
-                        if (stagedSttModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent)) {
+                        if (stagedSttModels != null && (manifest == null || manifest.selectedContent.isEmpty() || BackupContentOption.SETTINGS.name in manifest.selectedContent || BackupContentOption.PROVIDERS.name in manifest.selectedContent)) {
                             val store = me.lucid.asr.local.SherpaModelStore(context)
                             liveSttModelsSnapshot = store.current()
                             stagedSttModels?.forEach { store.upsert(it) }
@@ -767,12 +778,14 @@ class WebdavSync(
                         if (liveLlmModelsSnapshot != null) {
                             runCatching {
                                 val store = me.lucid.locallm.LocalModelStore(context)
+                                store.clear()
                                 liveLlmModelsSnapshot.forEach { store.upsert(it) }
                             }
                         }
                         if (liveSttModelsSnapshot != null) {
                             runCatching {
                                 val store = me.lucid.asr.local.SherpaModelStore(context)
+                                store.clear()
                                 liveSttModelsSnapshot.forEach { store.upsert(it) }
                             }
                         }
@@ -875,20 +888,7 @@ class WebdavSync(
             if (success && tempSnapshot.exists()) {
                 addFileToZip(zipOut, tempSnapshot, BackupArchiveFormat.LEGACY_DB_ENTRY)
             } else {
-                val dbFile = context.getDatabasePath(BackupArchiveFormat.DB_ENTRY)
-                if (dbFile.exists()) {
-                    addFileToZip(zipOut, dbFile, BackupArchiveFormat.LEGACY_DB_ENTRY)
-                }
-
-                val walFile = File(dbFile.parentFile, BackupArchiveFormat.WAL_ENTRY)
-                if (walFile.exists()) {
-                    addFileToZip(zipOut, walFile, BackupArchiveFormat.WAL_ENTRY)
-                }
-
-                val shmFile = File(dbFile.parentFile, BackupArchiveFormat.SHM_ENTRY)
-                if (shmFile.exists()) {
-                    addFileToZip(zipOut, shmFile, BackupArchiveFormat.SHM_ENTRY)
-                }
+                throw java.io.IOException("Database snapshot failed and database is busy")
             }
         } finally {
             if (tempSnapshot.exists()) {
@@ -1080,5 +1080,22 @@ private fun addVirtualFileToZip(zipOut: ZipOutputStream, name: String, content: 
     zipOut.write(content.toByteArray())
     zipOut.closeEntry()
     LogUtil.i(TAG, "addVirtualFileToZip: $name (${content.length} bytes)")
+}
+
+private fun mergeProviderCredentials(restored: ProviderSetting, live: ProviderSetting?): ProviderSetting {
+    if (live == null) return restored
+    return when (restored) {
+        is ProviderSetting.OpenAI -> (live as? ProviderSetting.OpenAI)?.let {
+            restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
+        } ?: restored
+        is ProviderSetting.Google -> (live as? ProviderSetting.Google)?.let {
+            restored.copy(apiKey = it.apiKey, privateKey = it.privateKey, apiKeyPool = it.apiKeyPool)
+        } ?: restored
+        is ProviderSetting.Claude -> (live as? ProviderSetting.Claude)?.let {
+            restored.copy(apiKey = it.apiKey, apiKeyPool = it.apiKeyPool)
+        } ?: restored
+        is ProviderSetting.ComfyUI -> restored
+        is ProviderSetting.LiteRtLocal -> restored
+    }
 }
 

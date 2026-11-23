@@ -238,7 +238,8 @@ class AssistantVM(
                 .getString(PREFS_KEY_GROUPS, null)?.let {
                     me.lucid.domchat.utils.JsonInstant.decodeFromString<Map<String, String>>(it)
                 } ?: emptyMap()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emptyMap()
         }
     }
@@ -249,7 +250,8 @@ class AssistantVM(
                 .getString(PREFS_KEY_ORDER, null)?.let {
                     me.lucid.domchat.utils.JsonInstant.decodeFromString<List<String>>(it)
                 } ?: emptyList()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emptyList()
         }
     }
@@ -260,7 +262,8 @@ class AssistantVM(
                 .getString(PREFS_KEY_ASSIGNMENTS, null)?.let {
                     me.lucid.domchat.utils.JsonInstant.decodeFromString<Map<String, String>>(it)
                 } ?: emptyMap()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             emptyMap()
         }
     }
@@ -277,7 +280,10 @@ class AssistantVM(
             prefs.putString(PREFS_KEY_ORDER, me.lucid.domchat.utils.JsonInstant.encodeToString(order))
             prefs.putString(PREFS_KEY_ASSIGNMENTS, me.lucid.domchat.utils.JsonInstant.encodeToString(assignments))
             prefs.apply()
-        } catch (_: Exception) { /* best-effort persistence */ }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            /* best-effort persistence */
+        }
     }
 }
 
