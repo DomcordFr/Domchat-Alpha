@@ -1177,25 +1177,6 @@ private fun JanitorCharacterInspectorSheet(
                             )
                         }
                     }
-                    // Close/cross button top-end corner over hero image
-                    val sheetDismiss = LocalSheetDismiss.current
-                    IconButton(
-                        onClick = { sheetDismiss?.invoke() ?: onDismiss() },
-                        modifier = Modifier
-                            .padding(top = 12.dp, end = 12.dp)
-                            .align(Alignment.TopEnd)
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF000000))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
                 }
 
                 // Content below hero image with 20.dp horizontal padding
@@ -1697,6 +1678,26 @@ private fun JanitorCharacterInspectorSheet(
                     }
 
                     Spacer(modifier = Modifier.height(10.dp).navigationBarsPadding())
+                }
+
+                // Close button floating at top-right with safe margin (sticky, matching Character Hub)
+                val sheetDismiss = LocalSheetDismiss.current
+                IconButton(
+                    onClick = { sheetDismiss?.invoke() ?: onDismiss() },
+                    modifier = Modifier
+                        .padding(top = 16.dp, end = 16.dp)
+                        .align(Alignment.TopEnd)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF000000))
+                        .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }

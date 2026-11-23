@@ -49,7 +49,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -399,27 +398,17 @@ fun PromptPresetsBottomSheet(
                 },
                 actions = {
                     if (!isEditingOrCreating) {
-                        Surface(
+                        IconButton(
                             onClick = {
                                 haptics.perform(HapticPattern.Pop)
                                 openCreate()
-                            },
-                            shape = CircleShape,
-                            color = Color.Transparent,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .liquidGlassSurface(
-                                    shape = CircleShape,
-                                    fillColor = Color.Transparent,
-                                    borderWidth = 0.5.dp,
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                ),
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Add,
                                 contentDescription = "New Preset",
                                 tint = Color.White.copy(alpha = 0.92f),
-                                modifier = Modifier.padding(8.dp).size(20.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
