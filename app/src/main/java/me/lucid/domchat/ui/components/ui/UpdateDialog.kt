@@ -221,6 +221,7 @@ fun UpdateDialog(
                                     isDownloaded -> "Ready to Install"
                                     downloadFailed -> "Download Failed"
                                     isDownloading -> "Downloading Update"
+                                    currentVersionName == info.version -> "Latest Release"
                                     else -> "Update Available"
                                 },
                                 transitionSpec = {
@@ -253,6 +254,7 @@ fun UpdateDialog(
                                         failed -> progress.errorMessage ?: "Download failed. Please try again."
                                         status == UpdateDownloadStatus.RUNNING -> "Downloading the latest version..."
                                         status == UpdateDownloadStatus.SUCCESSFUL -> "Update verified and ready to install."
+                                        currentVersionName == info.version -> "You are on the latest release."
                                         else -> "A new version of Domchat is ready."
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
@@ -284,21 +286,41 @@ fun UpdateDialog(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Text(
-                                        text = "v$currentVersionName",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White.copy(alpha = 0.50f)
-                                    )
-                                    Text(
-                                        text = "→",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color.White.copy(alpha = 0.40f)
-                                    )
-                                    Text(
-                                        text = "v${info.version}",
-                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = Color.White
-                                    )
+                                    if (currentVersionName == info.version) {
+                                        Text(
+                                            text = "v$currentVersionName",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
+                                        )
+                                        Surface(
+                                            color = Color.White.copy(alpha = 0.08f),
+                                            shape = RoundedCornerShape(50),
+                                            border = BorderStroke(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle)
+                                        ) {
+                                            Text(
+                                                text = "Latest",
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                                color = Color.White.copy(alpha = 0.70f),
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = "v$currentVersionName",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White.copy(alpha = 0.50f)
+                                        )
+                                        Text(
+                                            text = "→",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White.copy(alpha = 0.40f)
+                                        )
+                                        Text(
+                                            text = "v${info.version}",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
+                                        )
+                                    }
                                 }
 
                                 if (primaryDownload != null && primaryDownload.size.isNotBlank()) {
@@ -448,6 +470,7 @@ fun UpdateDialog(
                                         isDownloaded && needsInstallPermission -> "Allow & Install"
                                         isDownloaded -> "Install Now"
                                         downloadFailed -> "Try Again"
+                                        currentVersionName == info.version -> "Install Latest"
                                         else -> "Update Now"
                                     },
                                     label = "primary_btn_text_anim"

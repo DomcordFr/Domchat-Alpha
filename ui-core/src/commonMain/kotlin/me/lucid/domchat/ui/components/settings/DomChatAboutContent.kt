@@ -178,6 +178,8 @@ fun DomChatAboutItem(
     title: String,
     darkTheme: Boolean = true,
     subtitle: String? = null,
+    subtitleMaxLines: Int = Int.MAX_VALUE,
+    subtitleContent: (@Composable () -> Unit)? = null,
     trailing: ImageVector? = null,
     trailingContent: (@Composable () -> Unit)? = null,
     onHaptic: () -> Unit = {},
@@ -190,6 +192,7 @@ fun DomChatAboutItem(
         animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
         label = "about_item_scale",
     )
+    val alignTop = subtitleContent != null || subtitleMaxLines > 1
     Surface(
         onClick = {
             if (onClick != null) {
@@ -219,10 +222,15 @@ fun DomChatAboutItem(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = if (alignTop) Alignment.Top else Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .then(if (alignTop) Modifier.padding(top = 2.dp) else Modifier),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(icon, null, tint = Color.White)
             }
             Column(
@@ -234,20 +242,32 @@ fun DomChatAboutItem(
                     style = MaterialTheme.typography.titleMedium,
                     color = Color(0xFFF2F2F7),
                 )
-                if (subtitle != null) {
+                if (subtitleContent != null) {
+                    subtitleContent()
+                } else if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF9A9AA2),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        maxLines = subtitleMaxLines,
+                        overflow = if (subtitleMaxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
                     )
                 }
             }
             if (trailingContent != null) {
-                trailingContent()
+                Box(
+                    modifier = if (alignTop) Modifier.padding(top = 2.dp) else Modifier,
+                    contentAlignment = Alignment.Center
+                ) {
+                    trailingContent()
+                }
             } else if (trailing != null) {
-                Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .then(if (alignTop) Modifier.padding(top = 2.dp) else Modifier),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         trailing,
                         null,
