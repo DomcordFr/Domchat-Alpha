@@ -2251,7 +2251,8 @@ private fun AssistantMessageTurn(
                             haptics.perform(HapticPattern.Pop)
                             onTimelineDismiss()
                         },
-                        key = group.firstNode.id
+                        key = group.firstNode.id,
+                        displaySetting = effectiveDisplay,
                     )
                 }
             } else {
@@ -2355,7 +2356,8 @@ private fun AssistantMessageTurn(
                         haptics.perform(HapticPattern.Pop)
                         onTimelineDismiss()
                     },
-                    key = group.firstNode.id
+                    key = group.firstNode.id,
+                    displaySetting = effectiveDisplay,
                 )
             }
         }

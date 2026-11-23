@@ -1148,7 +1148,8 @@ fun MinimalChatInput(
                                             } else if (isToolApprovalActive) {
                                                 stringResource(R.string.tool_approval_input_placeholder)
                                             } else {
-                                                stringResource(R.string.minimal_chat_input_placeholder, assistant.name)
+                                                val charName = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+                                                stringResource(R.string.minimal_chat_input_placeholder, charName)
                                             },
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
@@ -1482,7 +1483,8 @@ fun MinimalChatInput(
                                         } else if (isToolApprovalActive) {
                                             stringResource(R.string.tool_approval_input_placeholder)
                                         } else {
-                                            stringResource(R.string.minimal_chat_input_placeholder, assistant.name)
+                                            val charName = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+                                            stringResource(R.string.minimal_chat_input_placeholder, charName)
                                         }
                                     )
                                 },

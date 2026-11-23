@@ -319,8 +319,8 @@ fun buildActivityItemsFromMultiple(state: ActivityState.CompletedMultiple): List
 private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
-private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 0.88f, stiffness = 220f)
-private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 0.88f, stiffness = 220f)
+private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 0.90f, stiffness = 135f)
+private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 0.90f, stiffness = 135f)
 
 /**
  * Position of a pill in a row of pills.
@@ -397,6 +397,7 @@ internal fun ActivityPillRow(
     timelineLive: Boolean = false,
     onTimelineDismiss: () -> Unit = { onClick(null) },
     key: Any? = null,
+    displaySetting: me.lucid.domchat.data.datastore.DisplaySetting? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -738,7 +739,8 @@ private fun AnimatedSinglePill(
                         contentState = liveContentState,
                         parentState = state,
                         timelineOpen = timelineOpen,
-                        onHeaderDismiss = onTimelineDismiss
+                        onHeaderDismiss = onTimelineDismiss,
+                        displaySetting = displaySetting,
                     )
                 }
                 else -> {
@@ -963,6 +965,7 @@ private fun UnifiedReasoningPill(
     parentState: ActivityState,
     timelineOpen: Boolean,
     onHeaderDismiss: () -> Unit,
+    displaySetting: me.lucid.domchat.data.datastore.DisplaySetting? = null,
 ) {
     val expandedState = contentState as? SinglePillContentState.ExpandedReasoning
     val isExpanded = expandedState != null
@@ -1117,8 +1120,8 @@ private fun UnifiedReasoningPill(
                     }
                     AnimatedVisibility(
                         visible = !isExpanded && !isLive && completedDurationMs != null,
-                        enter = fadeIn(tween(140, delayMillis = 110)),
-                        exit = fadeOut(tween(90))
+                        enter = fadeIn(tween(220, delayMillis = 260, easing = LinearOutSlowInEasing)),
+                        exit = fadeOut(tween(120))
                     ) {
                         if (completedDurationMs != null) {
                             Text(
@@ -1146,8 +1149,8 @@ private fun UnifiedReasoningPill(
 
             AnimatedVisibility(
                 visible = isExpanded,
-                enter = slideInHorizontally(tween(220)) { it / 2 } + fadeIn(tween(200)),
-                exit = slideOutHorizontally(tween(110)) { it / 2 } + fadeOut(tween(110))
+                enter = slideInHorizontally(tween(300, easing = LinearOutSlowInEasing)) { it / 2 } + fadeIn(tween(260)),
+                exit = slideOutHorizontally(tween(180, easing = FastOutLinearInEasing)) { it / 2 } + fadeOut(tween(160))
             ) {
                 LiveElapsedTimerText(
                     isLive = isLive,
@@ -1174,10 +1177,10 @@ private fun UnifiedReasoningPill(
 
         AnimatedVisibility(
             visible = isExpanded && lastPreviewText.value.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) +
-                    expandVertically(animationSpec = tween(220, easing = LinearOutSlowInEasing), expandFrom = Alignment.Top),
-            exit = fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing)) +
-                   shrinkVertically(animationSpec = tween(160, easing = FastOutLinearInEasing), shrinkTowards = Alignment.Top)
+            enter = fadeIn(animationSpec = tween(320, easing = LinearOutSlowInEasing)) +
+                    expandVertically(animationSpec = tween(360, easing = LinearOutSlowInEasing), expandFrom = Alignment.Top),
+            exit = fadeOut(animationSpec = tween(220, easing = FastOutLinearInEasing)) +
+                   shrinkVertically(animationSpec = tween(280, easing = FastOutLinearInEasing), shrinkTowards = Alignment.Top)
         ) {
             MarkdownBlock(
                 content = lastPreviewText.value,
@@ -1196,6 +1199,7 @@ private fun UnifiedReasoningPill(
                 ),
                 paragraphSpacing = 8.dp,
                 streamingTextReveal = isLive,
+                displaySetting = displaySetting,
                 onExpandedStreamingCodeBlockChanged = {
                     if (isLive) streamingLayoutTick++
                 }
