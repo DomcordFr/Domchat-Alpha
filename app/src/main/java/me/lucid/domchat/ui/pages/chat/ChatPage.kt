@@ -2198,19 +2198,23 @@ private fun ChatPageContent(
                 val showNewChatContent = headerStyle != me.lucid.domchat.data.datastore.NewChatHeaderStyle.NONE || contentStyle != me.lucid.domchat.data.datastore.NewChatContentStyle.NONE
                 val showModeComposer = previewMode || isChatShareSelecting
                 
-                // Detect keyboard visibility
-                val isKeyboardOpen = WindowInsets.isImeVisible
-                
-                // Hide new chat content when keyboard is open or text/media is in input
-                val hasTextInput = inputState.textContent.text.isNotEmpty() || inputState.messageContent.isNotEmpty()
-                val shouldShowNewChatContent = shouldShowNewChatContent(
-                    isTemporaryChat = isTemporaryChat,
-                    hasConversationMessages = hasConversationContent,
-                    hasAnyPresetMessages = hasAnyPresetMessages,
-                    showNewChatContent = showNewChatContent,
-                    hasTextInput = hasTextInput,
-                    isKeyboardOpen = isKeyboardOpen,
-                ) && !showModeComposer
+                // Only observe WindowInsets.isImeVisible when the chat is empty and NewChatContent could show;
+                // reading isImeVisible unconditionally at top-level forces full ChatPage + ChatList recomposition on IME open.
+                val canPotentiallyShowNewChat = !hasConversationContent && showNewChatContent && !showModeComposer
+                val shouldShowNewChatContent = if (canPotentiallyShowNewChat) {
+                    val isKeyboardOpen = WindowInsets.isImeVisible
+                    val hasTextInput = inputState.textContent.text.isNotEmpty() || inputState.messageContent.isNotEmpty()
+                    shouldShowNewChatContent(
+                        isTemporaryChat = isTemporaryChat,
+                        hasConversationMessages = hasConversationContent,
+                        hasAnyPresetMessages = hasAnyPresetMessages,
+                        showNewChatContent = showNewChatContent,
+                        hasTextInput = hasTextInput,
+                        isKeyboardOpen = isKeyboardOpen,
+                    )
+                } else {
+                    false
+                }
                 
                 // State for assistant picker triggered from header avatar
                 var showHeaderAssistantPicker by remember { mutableStateOf(false) }

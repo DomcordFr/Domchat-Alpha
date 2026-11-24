@@ -66,9 +66,13 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -531,16 +535,13 @@ fun MinimalChatInput(
         toolApprovalTextState.setTextAndPlaceCursorAtEnd("")
     }
 
-    // Collapse picker when keyboard opens
-    val imeVisible = WindowInsets.isImeVisible
+    // Isolate WindowInsets.isImeVisible read in a leaf composable so opening the keyboard
+    // never recomposes the entire MinimalChatInput tree.
     val focusManager = LocalFocusManager.current
-    LaunchedEffect(imeVisible) {
-        if (imeVisible) {
-            showPicker = false
-        } else {
-            focusManager.clearFocus()
-        }
-    }
+    ImeFocusSyncEffect(
+        onImeOpened = { showPicker = false },
+        onImeClosed = { focusManager.clearFocus() },
+    )
     LaunchedEffect(isQuestionnaireActive, isToolApprovalActive) {
         if (isQuestionnaireActive || isToolApprovalActive) {
             showPicker = false
@@ -722,10 +723,8 @@ fun MinimalChatInput(
     ) {
         Column(
             modifier = Modifier
-                .imePadding()
-                .navigationBarsPadding()
-                .padding(bottom = bottomPadding, start = 16.dp, end = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+                .padding(bottom = bottomPadding, start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val showScrollToBottom = !isQuestionnaireActive && !isToolApprovalActive && showScrollToBottomButton
@@ -4764,6 +4763,21 @@ private fun ExpandButtonOverlay(
                 modifier = Modifier.size(20.dp),
                 tint = Color.White.copy(alpha = 0.65f)
             )
+        }
+    }
+}
+
+@Composable
+private fun ImeFocusSyncEffect(
+    onImeOpened: () -> Unit,
+    onImeClosed: () -> Unit,
+) {
+    val imeVisible = WindowInsets.isImeVisible
+    LaunchedEffect(imeVisible) {
+        if (imeVisible) {
+            onImeOpened()
+        } else {
+            onImeClosed()
         }
     }
 }
