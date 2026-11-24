@@ -1,9 +1,7 @@
 <div align="center">
 
-<!-- BANNER PLACEHOLDER: Recommended 1280x480 wide banner on pure AMOLED black with the Domchat logo and subtle Liquid Glass glow -->
-<img src="./assets/banner-hero.png" alt="Domchat Banner" width="100%" />
-
-<br />
+<!-- BANNER PLACEHOLDER: Drop your hero banner at ./assets/banner-hero.png and uncomment the line below when ready -->
+<!-- <img src="./assets/banner-hero.png" alt="Domchat Banner" width="100%" /> -->
 
 # Domchat
 
@@ -87,8 +85,7 @@ Long roleplays break down when bots forget side characters, locations, or plot p
 
 <div align="center">
 
-<!-- SCREENSHOT PLACEHOLDER: Dual screenshot showing Personas manager and Lorebook / World Info editor -->
-<img src="./assets/screen-personas-lorebooks.png" alt="Personas and Lorebooks" width="80%" />
+<img src="./assets/screen-rp-tools.png" alt="Roleplay Tools, Context Stats, and Model Controls" width="90%" />
 
 </div>
 
