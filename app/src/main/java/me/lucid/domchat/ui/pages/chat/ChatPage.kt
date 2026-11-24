@@ -182,6 +182,14 @@ import me.lucid.domchat.ui.components.ui.UpdateDialog
 import me.lucid.domchat.ui.components.ui.ToastType
 import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
+import me.lucid.domchat.ui.component.backdrop.drawBackdrop
+import me.lucid.domchat.ui.component.backdrop.effects.blur
+import me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.RectangleShape
+import me.lucid.domchat.ui.modifier.domChatBlurEffect
 import me.lucid.domchat.ui.component.backdrop.backdrops.LayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
@@ -331,40 +339,112 @@ internal fun completedGenerationIdsAfterDone(
 }
 
 @Composable
+private fun Modifier.barProgressiveBackdropBlur(
+    blurDp: Float,
+    fromTop: Boolean,
+): Modifier {
+    if (blurDp <= 0.1f) return this
+    val backdrop = LocalAppBackdrop.current
+    val density = LocalDensity.current
+    val blurPx = with(density) { blurDp.coerceIn(0f, 100f).dp.toPx() }
+    val useBackdrop = backdrop != null && isRuntimeShaderSupported()
+    val maskBrush = remember(fromTop) {
+        if (fromTop) {
+            androidx.compose.ui.graphics.Brush.verticalGradient(
+                0.0f to Color.Black,
+                0.55f to Color.Black.copy(alpha = 0.75f),
+                1.0f to Color.Transparent,
+            )
+        } else {
+            androidx.compose.ui.graphics.Brush.verticalGradient(
+                0.0f to Color.Transparent,
+                0.45f to Color.Black.copy(alpha = 0.75f),
+                1.0f to Color.Black,
+            )
+        }
+    }
+    val shapeProvider = remember { { RectangleShape } }
+    val effects: me.lucid.domchat.ui.component.backdrop.BackdropEffectScope.() -> Unit = remember(blurPx) {
+        {
+            if (blurPx > 0f) {
+                blur(blurPx)
+            }
+        }
+    }
+    return if (useBackdrop) {
+        this
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = shapeProvider,
+                effects = effects,
+                highlight = null,
+                shadow = null,
+                onDrawSurface = null,
+                backdropScale = 0.5f,
+            )
+            .drawWithContent {
+                drawContent()
+                drawRect(brush = maskBrush, blendMode = BlendMode.DstIn)
+            }
+    } else {
+        this.domChatBlurEffect(
+            containerColor = Color.Transparent,
+            shape = RectangleShape,
+            blurRadius = blurDp.coerceIn(0f, 100f).dp,
+        )
+    }
+}
+
+@Composable
 private fun ChatTopFadeOverlay(
     fadeHeight: Dp,
     settings: Settings,
     modifier: Modifier = Modifier,
 ) {
     val density = settings.displaySetting.barGradientDensity.coerceIn(0f, 1f)
-    if (density <= 0.001f) return
+    val blur = settings.displaySetting.barGradientBlur
+    if (density <= 0.001f && blur <= 0.1f) return
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val blur = settings.displaySetting.barGradientBlur
 
-    Column(
-        modifier = modifier.fillMaxWidth()
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(statusBarHeight + fadeHeight)
     ) {
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(statusBarHeight)
-                .background(Color.Black.copy(alpha = 0.98f * density))
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(fadeHeight)
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.98f * density),
-                            Color.Transparent
-                        )
-                    )
+        if (blur > 0.1f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .barProgressiveBackdropBlur(blurDp = blur, fromTop = true)
+            )
+        }
+        if (density > 0.001f) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(statusBarHeight)
+                        .background(Color.Black.copy(alpha = 0.98f * density))
                 )
-                .then(if (blur > 0f) Modifier.blur(blur.dp) else Modifier)
-        )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(fadeHeight)
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.98f * density),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+            }
+        }
     }
 }
 
@@ -405,16 +485,29 @@ private fun ChatWidePanelEdgeFadeOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(topFadeHeight)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.98f * density),
-                                Color.Transparent
-                            )
-                        )
+            ) {
+                if (blur > 0.1f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .barProgressiveBackdropBlur(blurDp = blur, fromTop = true)
                     )
-                    .then(if (blur > 0f) Modifier.blur(blur.dp) else Modifier)
-            )
+                }
+                if (density > 0.001f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.98f * density),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
+            }
         }
         Box(
             modifier = Modifier
@@ -428,29 +521,39 @@ private fun ChatWidePanelEdgeFadeOverlay(
                 exit = androidx.compose.animation.fadeOut(),
                 modifier = Modifier.fillMaxSize()
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                        brush = if (placement == ChatToolbarPlacement.Bottom) {
-                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.72f * density),
-                                    Color.Black.copy(alpha = 0.97f * density)
-                                )
-                            )
-                        } else {
-                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.92f * density)
-                                )
-                            )
-                        }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (blur > 0.1f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .barProgressiveBackdropBlur(blurDp = blur, fromTop = false)
                         )
-                        .then(if (blur > 0f) Modifier.blur(blur.dp) else Modifier)
-                )
+                    }
+                    if (density > 0.001f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = if (placement == ChatToolbarPlacement.Bottom) {
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.72f * density),
+                                                Color.Black.copy(alpha = 0.97f * density)
+                                            )
+                                        )
+                                    } else {
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.92f * density)
+                                            )
+                                        )
+                                    }
+                                )
+                        )
+                    }
+                }
             }
         }
     }
@@ -2494,26 +2597,39 @@ private fun ChatPageContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .background(
-                                brush = if (toolbarPlacement == ChatToolbarPlacement.Bottom) {
-                                    androidx.compose.ui.graphics.Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.72f * barDensity),
-                                            Color.Black.copy(alpha = 0.97f * barDensity)
-                                        )
-                                    )
-                                } else {
-                                    androidx.compose.ui.graphics.Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.92f * barDensity)
-                                        )
-                                    )
-                                }
+                    ) {
+                        if (barBlur > 0.1f) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .barProgressiveBackdropBlur(blurDp = barBlur, fromTop = false)
                             )
-                            .then(if (barBlur > 0f) Modifier.blur(barBlur.dp) else Modifier)
-                    )
+                        }
+                        if (barDensity > 0.001f) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        brush = if (toolbarPlacement == ChatToolbarPlacement.Bottom) {
+                                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(alpha = 0.72f * barDensity),
+                                                    Color.Black.copy(alpha = 0.97f * barDensity)
+                                                )
+                                            )
+                                        } else {
+                                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(alpha = 0.92f * barDensity)
+                                                )
+                                            )
+                                        }
+                                    )
+                            )
+                        }
+                    }
                 }
 
                 val bottomToolbarContent: (@Composable () -> Unit)? = if (toolbarPlacement == ChatToolbarPlacement.Bottom) {

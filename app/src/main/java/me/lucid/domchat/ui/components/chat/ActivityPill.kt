@@ -22,7 +22,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -318,10 +317,10 @@ fun buildActivityItemsFromMultiple(state: ActivityState.CompletedMultiple): List
 private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
-private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 550f)
-private val PILL_COLLAPSE_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 750f)
+private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 240f)
+private val PILL_COLLAPSE_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 620f)
 private val PILL_LIVE_GROWTH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 600f)
-private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 550f)
+private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 240f)
 
 /**
  * Position of a pill in a row of pills.
@@ -574,7 +573,7 @@ private fun AnimatedSinglePill(
     val isGlassy = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
     val glassAlpha = display.chatBubbleAlpha
     val bubbleBlur = display.chatBubbleBlur
-    val bubbleTone = display.chatBubbleTone
+    val bubbleTone = 0f
     val tintHue = display.chatBubbleTintHue
     val tintAmount = display.chatBubbleTintAmount
 
@@ -700,7 +699,7 @@ private fun AnimatedSinglePill(
             modifier = if (chatAnimationsEnabled) {
                 val sizeSpec = when {
                     isExpandedReasoning && state is ActivityState.Reasoning -> PILL_LIVE_GROWTH_SPEC
-                    !surfaceExpanded -> PILL_COLLAPSE_SPEC
+                    !surfaceExpanded && !timelineOpen && state is ActivityState.Replying -> PILL_COLLAPSE_SPEC
                     else -> PILL_MORPH_SPEC
                 }
                 Modifier.animateContentSize(
@@ -709,8 +708,8 @@ private fun AnimatedSinglePill(
                 )
             } else Modifier,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(180, easing = LinearOutSlowInEasing)) togetherWith
-                    fadeOut(animationSpec = tween(100, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
+                (fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
+                    fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
                     snap()
                 }
             },
@@ -1196,9 +1195,8 @@ private fun UnifiedReasoningPill(
 
         AnimatedVisibility(
             visible = isExpanded && lastPreviewText.value.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(220, delayMillis = 40, easing = LinearOutSlowInEasing)),
-            exit = shrinkVertically(animationSpec = tween(140, easing = FastOutLinearInEasing)) +
-                fadeOut(animationSpec = tween(90, easing = FastOutLinearInEasing))
+            enter = fadeIn(animationSpec = tween(240, delayMillis = 60, easing = LinearOutSlowInEasing)),
+            exit = fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing))
         ) {
             MarkdownBlock(
                 content = lastPreviewText.value,
@@ -1414,7 +1412,7 @@ private fun SinglePill(
     val isGlassy = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
     val glassAlpha = display.chatBubbleAlpha
     val bubbleBlur = display.chatBubbleBlur
-    val bubbleTone = display.chatBubbleTone
+    val bubbleTone = 0f
     val tintHue = display.chatBubbleTintHue
     val tintAmount = display.chatBubbleTintAmount
 

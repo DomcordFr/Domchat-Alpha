@@ -1673,10 +1673,16 @@ class ChatService(
                     conversation.messageNodes.indexOf(userNode)
                 } else {
                     val clickedNode = conversation.getMessageNodeByMessage(message)
-                    val clickedIndex = conversation.messageNodes.indexOf(clickedNode)
-                    conversation.messageNodes
-                        .subList(0, clickedIndex + 1)
-                        .indexOfLast { it.role == MessageRole.USER }
+                    val clickedIndex = conversation.messageNodes.indexOf(clickedNode).let { idx ->
+                        if (idx >= 0) idx else conversation.messageNodes.indexOfLast { it.role != MessageRole.USER }
+                    }
+                    if (clickedIndex >= 0) {
+                        conversation.messageNodes
+                            .subList(0, clickedIndex + 1)
+                            .indexOfLast { it.role == MessageRole.USER }
+                    } else {
+                        conversation.messageNodes.indexOfLast { it.role == MessageRole.USER }
+                    }
                 }
 
                 if (lastUserIndex >= 0) {
@@ -1690,7 +1696,8 @@ class ChatService(
                             parts = emptyList(),
                             versionTag = versionTag,
                         )
-                        val newMessages = oldFirstAssistant.messages + blankMessage
+                        val cleanedExisting = oldFirstAssistant.messages.filter { it.parts.isNotEmpty() }
+                        val newMessages = cleanedExisting + blankMessage
                         val seededNodes = conversation.messageNodes.toMutableList().apply {
                             this[firstAssistantIndex] = oldFirstAssistant.copy(
                                 messages = newMessages,
@@ -1700,6 +1707,12 @@ class ChatService(
                         val inputMessages = conversation.messageNodes
                             .subList(0, lastUserIndex + 1)
                             .currentVersionMessages()
+                            .filter { it.parts.isNotEmpty() }
+                            .ifEmpty {
+                                conversation.messageNodes
+                                    .subList(0, lastUserIndex + 1)
+                                    .currentVersionMessages()
+                            }
                         saveConversation(
                             conversationId = conversationId,
                             conversation = conversation.copy(messageNodes = seededNodes),
@@ -1934,12 +1947,15 @@ class ChatService(
                 conversation = getConversationFlow(conversationId).value
                 lastStreamingChunkMessages = null
                 targetDeletedDuringStreaming = false
-                val requestMessages = assistantRegeneration?.inputMessages ?: conversation.currentMessages.let {
+                val requestMessages = (assistantRegeneration?.inputMessages ?: conversation.currentMessages.let {
                     if (messageRange != null) {
                         it.subList(messageRange.start, messageRange.endInclusive + 1)
                     } else {
                         it
                     }
+                }).let { msgs ->
+                    val nonEmpty = msgs.filter { it.parts.isNotEmpty() }
+                    nonEmpty.ifEmpty { msgs }
                 }
                 val anchorMessageId = requestMessages.lastOrNull()?.id
                 try {

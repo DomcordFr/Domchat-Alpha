@@ -1675,7 +1675,7 @@ private fun UserMessageTurn(
                 val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
                 val glassAlpha = effectiveDisplay.chatBubbleAlpha
                 val bubbleBlur = effectiveDisplay.chatBubbleBlur
-                val bubbleTone = effectiveDisplay.chatBubbleTone
+                val bubbleTone = 0f
                 val baseLuminance = effectiveDisplay.glassBaseLuminance
                 val tintHue = effectiveDisplay.chatBubbleTintHue
                 val tintAmount = effectiveDisplay.chatBubbleTintAmount
@@ -2023,8 +2023,16 @@ private fun AssistantMessageTurn(
     val density = LocalDensity.current
     val swipeThresholdPx = remember(density) { with(density) { 48.dp.toPx() } }
 
+    val latestAssistantNode by androidx.compose.runtime.rememberUpdatedState(assistantNode)
+    val latestVersionIndices by androidx.compose.runtime.rememberUpdatedState(versionIndices)
+    val latestCurrentVersionPos by androidx.compose.runtime.rememberUpdatedState(currentVersionPos)
+    val latestIsIntroMessage by androidx.compose.runtime.rememberUpdatedState(isIntroMessage)
+    val latestOnUpdate by androidx.compose.runtime.rememberUpdatedState(onUpdate)
+    val latestOnRegenerate by androidx.compose.runtime.rememberUpdatedState(onRegenerate)
+    val latestOnAddCustomGreeting by androidx.compose.runtime.rememberUpdatedState(onAddCustomGreeting)
+
     val assistantSwipeModifier = if (!loading && !isIntroLocked) {
-        Modifier.pointerInput(assistantNode.id, currentVersionPos, versionIndices.size) {
+        Modifier.pointerInput(assistantNode.id) {
             var totalDrag = 0f
             detectHorizontalDragGestures(
                 onHorizontalDrag = { change, dragAmount ->
@@ -2032,24 +2040,26 @@ private fun AssistantMessageTurn(
                     totalDrag += dragAmount
                 },
                 onDragEnd = {
-                    if (totalDrag > swipeThresholdPx && currentVersionPos > 0) {
-                        val targetIndex = versionIndices.getOrNull(currentVersionPos - 1)
+                    val pos = latestCurrentVersionPos
+                    val indices = latestVersionIndices
+                    if (totalDrag > swipeThresholdPx && pos > 0) {
+                        val targetIndex = indices.getOrNull(pos - 1)
                         if (targetIndex != null) {
                             haptics.perform(HapticPattern.Pop)
-                            onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                            latestOnUpdate(latestAssistantNode.copy(selectIndex = targetIndex))
                         }
-                    } else if (totalDrag < -swipeThresholdPx && currentVersionPos < versionIndices.lastIndex) {
-                        val targetIndex = versionIndices.getOrNull(currentVersionPos + 1)
+                    } else if (totalDrag < -swipeThresholdPx && pos < indices.lastIndex) {
+                        val targetIndex = indices.getOrNull(pos + 1)
                         if (targetIndex != null) {
                             haptics.perform(HapticPattern.Pop)
-                            onUpdate(assistantNode.copy(selectIndex = targetIndex))
+                            latestOnUpdate(latestAssistantNode.copy(selectIndex = targetIndex))
                         }
-                    } else if (totalDrag < -swipeThresholdPx && currentVersionPos >= versionIndices.lastIndex) {
+                    } else if (totalDrag < -swipeThresholdPx && pos >= indices.lastIndex) {
                         haptics.perform(HapticPattern.Pop)
-                        if (isIntroMessage) {
-                            onAddCustomGreeting()
+                        if (latestIsIntroMessage) {
+                            latestOnAddCustomGreeting()
                         } else {
-                            onRegenerate()
+                            latestOnRegenerate()
                         }
                     }
                     totalDrag = 0f
@@ -2091,7 +2101,7 @@ private fun AssistantMessageTurn(
             val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
             val glassAlpha = effectiveDisplay.chatBubbleAlpha
             val bubbleBlur = effectiveDisplay.chatBubbleBlur
-            val bubbleTone = effectiveDisplay.chatBubbleTone
+            val bubbleTone = 0f
             val baseLuminance = effectiveDisplay.glassBaseLuminance
             val tintHue = effectiveDisplay.chatBubbleTintHue
             val tintAmount = effectiveDisplay.chatBubbleTintAmount
@@ -2503,7 +2513,7 @@ private fun AssistantMessageTurn(
             val bubbleInterfaceStyle = effectiveDisplay.bubbleInterfaceStyle
             val glassAlpha = effectiveDisplay.chatBubbleAlpha
             val bubbleBlur = effectiveDisplay.chatBubbleBlur
-            val bubbleTone = effectiveDisplay.chatBubbleTone
+            val bubbleTone = 0f
             val baseLuminance = effectiveDisplay.glassBaseLuminance
             val tintHue = effectiveDisplay.chatBubbleTintHue
             val tintAmount = effectiveDisplay.chatBubbleTintAmount
@@ -2848,7 +2858,7 @@ private fun AssistantThinkingDropdown(
     val isTransparentStyle = display.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.TRANSPARENT_BOTTOM_BLUR
     val glassAlpha = display.chatBubbleAlpha
     val bubbleBlur = display.chatBubbleBlur
-    val bubbleTone = display.chatBubbleTone
+    val bubbleTone = 0f
     val tintHue = display.chatBubbleTintHue
     val tintAmount = display.chatBubbleTintAmount
 

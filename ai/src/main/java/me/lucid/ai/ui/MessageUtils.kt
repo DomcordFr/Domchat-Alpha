@@ -321,12 +321,9 @@ data class UsedMemory(
  * @return 新消息列表
  */
 fun List<UIMessage>.handleMessageChunk(chunk: MessageChunk, model: Model? = null): List<UIMessage> {
-    require(this.isNotEmpty()) {
-        "messages must not be empty"
-    }
     val choice = chunk.choices.getOrNull(0)
     if (choice == null) {
-        if (chunk.usage != null) {
+        if (chunk.usage != null && this.isNotEmpty()) {
             val last = this.last().copy(usage = chunk.usage)
             return this.dropLast(1) + last
         }
@@ -334,13 +331,13 @@ fun List<UIMessage>.handleMessageChunk(chunk: MessageChunk, model: Model? = null
     }
     val message = choice.delta ?: choice.message
     if (message == null) {
-        if (chunk.usage != null) {
+        if (chunk.usage != null && this.isNotEmpty()) {
             val last = this.last().copy(usage = chunk.usage)
             return this.dropLast(1) + last
         }
         return this
     }
-    if (this.last().role != message.role) {
+    if (this.isEmpty() || this.last().role != message.role) {
         return this + message.copy(modelId = model?.id, usage = chunk.usage ?: message.usage)
     } else {
         val last = this.last() + chunk

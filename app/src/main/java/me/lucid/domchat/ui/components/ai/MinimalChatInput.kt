@@ -1900,7 +1900,7 @@ fun MinimalChatInput(
     if (showTextStylingDialog) {
         val currentRules = settings.displaySetting.rpStyleRules
         var expandedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
-        val existingCustom = currentRules.find { it.pattern !in listOf(">", "*", "`") }
+        val existingCustom = currentRules.find { it.pattern !in listOf("\"", "*", "`") }
         var customSymbols by rememberSaveable { mutableStateOf(existingCustom?.pattern ?: "**") }
 
         fun parseColor(hex: String): Color {
@@ -1962,7 +1962,7 @@ fun MinimalChatInput(
         }
 
         val styleDefs = listOf(
-            Triple("Quote", ">", "#808080"),
+            Triple("Quote", "\"", "#808080"),
             Triple("Italic", "*", "#A0A0A0"),
             Triple("Code", "`", "#7EC8E3"),
             Triple("Custom", customSymbols.ifBlank { "**" }, "#E57373"),
@@ -2031,6 +2031,31 @@ fun MinimalChatInput(
                     var draftB by remember(effectivePattern, savedHex) { mutableIntStateOf(savedB) }
                     var draftHex by remember(effectivePattern, savedHex) { mutableStateOf(savedHex) }
                     val currentColor = parseColor(draftHex)
+
+                    // Auto-save whenever the user sets a valid color (live debounced + on leave)
+                    val latestDraftHex by rememberUpdatedState(draftHex)
+                    val latestSavedHex by rememberUpdatedState(savedHex)
+                    LaunchedEffect(effectivePattern, draftHex) {
+                        val hexDigits = draftHex.trim().removePrefix("#").uppercase()
+                        if (hexDigits.length == 6 && hexDigits.all { it in "0123456789ABCDEF" }) {
+                            val normalized = "#$hexDigits"
+                            if (normalized != savedHex) {
+                                kotlinx.coroutines.delay(150L)
+                                updateRule(effectivePattern, normalized)
+                            }
+                        }
+                    }
+                    androidx.compose.runtime.DisposableEffect(effectivePattern) {
+                        onDispose {
+                            val hexDigits = latestDraftHex.trim().removePrefix("#").uppercase()
+                            if (hexDigits.length == 6 && hexDigits.all { it in "0123456789ABCDEF" }) {
+                                val normalized = "#$hexDigits"
+                                if (normalized != latestSavedHex) {
+                                    updateRule(effectivePattern, normalized)
+                                }
+                            }
+                        }
+                    }
 
                     Surface(
                         shape = RoundedCornerShape(14.dp),
@@ -2118,11 +2143,11 @@ fun MinimalChatInput(
                                         onValueChange = { newSym ->
                                             val oldSym = customSymbols
                                             customSymbols = newSym
-                                            if (newSym.isNotBlank() && newSym !in listOf(">", "*", "`")) {
+                                            if (newSym.isNotBlank() && newSym !in listOf("\"", "*", "`")) {
                                                 scope.launch {
                                                     settingsStore.update { cur ->
                                                         val list = cur.displaySetting.rpStyleRules.toMutableList()
-                                                        val existingIdx = list.indexOfFirst { it.pattern == oldSym && it.pattern !in listOf(">", "*", "`") }
+                                                        val existingIdx = list.indexOfFirst { it.pattern == oldSym && it.pattern !in listOf("\"", "*", "`") }
                                                         if (existingIdx >= 0) {
                                                             list[existingIdx] = list[existingIdx].copy(pattern = newSym, enabled = true)
                                                         } else {
@@ -2149,7 +2174,13 @@ fun MinimalChatInput(
                                     )
                                 }
 
-                                // Liquid glass Hex Code input
+                                // Liquid glass Hex Code input with label positioned cleanly above
+                                Text(
+                                    text = "Hex Code",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                    color = Color.White.copy(alpha = 0.72f),
+                                    modifier = Modifier.padding(start = 2.dp, bottom = 6.dp)
+                                )
                                 OutlinedTextField(
                                     value = draftHex,
                                     onValueChange = { rawInput ->
@@ -2165,8 +2196,7 @@ fun MinimalChatInput(
                                             updateRule(effectivePattern, normalized)
                                         }
                                     },
-                                    label = { Text("Hex Code") },
-                                    placeholder = { Text("#FFFFFF") },
+                                    placeholder = { Text("#FFFFFF", color = Color.White.copy(alpha = 0.45f)) },
                                     singleLine = true,
                                     leadingIcon = {
                                         Box(

@@ -716,26 +716,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     valueRange = 0f..100f,
                                 )
 
-                                var localBubbleTone by remember(settings.displaySetting.chatBubbleTone) {
-                                    mutableFloatStateOf(settings.displaySetting.chatBubbleTone)
-                                }
-                                glassSliderRow(
-                                    label = "Bubble Tone / Luminance",
-                                    valueText = "${(localBubbleTone * 100).roundToInt()}%",
-                                    value = localBubbleTone,
-                                    onValueChange = {
-                                        val rounded = (it * 100f).roundToInt() / 100f
-                                        if (rounded != localBubbleTone) {
-                                            haptics.perform(HapticPattern.Tick)
-                                            localBubbleTone = rounded
-                                        }
-                                    },
-                                    onFinished = {
-                                        updateDisplaySetting(vm.settings.value.displaySetting.copy(chatBubbleTone = localBubbleTone))
-                                    },
-                                    valueRange = 0f..1.0f,
-                                )
-
                                 var localBubbleDepth by remember(settings.displaySetting.bubbleDepthScale) {
                                     mutableFloatStateOf(settings.displaySetting.bubbleDepthScale)
                                 }

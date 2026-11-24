@@ -523,7 +523,7 @@ internal fun ActivityTimelinePanel(
     val isGlassy = settings.displaySetting.chatMessageStyle == me.lucid.domchat.data.model.ChatMessageStyle.BUBBLES
     val glassAlpha = settings.displaySetting.chatBubbleAlpha
     val bubbleBlur = settings.displaySetting.chatBubbleBlur
-    val bubbleTone = settings.displaySetting.chatBubbleTone
+    val bubbleTone = 0f
     val tintHue = settings.displaySetting.chatBubbleTintHue
     val tintAmount = settings.displaySetting.chatBubbleTintAmount
 

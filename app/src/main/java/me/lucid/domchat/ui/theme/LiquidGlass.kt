@@ -150,7 +150,7 @@ fun liquidBubbleSurfaceColor(): Color {
     val display = LocalDisplaySetting.current
     val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
-    val base = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, display.chatBubbleTone.coerceIn(0f, 1f))
+    val base = Color.Black
     return base.copy(alpha = alpha)
 }
 
@@ -386,7 +386,7 @@ fun Modifier.liquidGlassBubbleSurface(
     val refractionAmount = (depthScale * 12f).dp
     val specularIntensity = display.bubbleSpecularIntensity.coerceIn(0f, 1f)
     val alpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
-    val tone = display.chatBubbleTone.coerceIn(0f, 1f)
+    val tone = 0f
 
     val bubbleFrostedMode = display.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED || (display.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED && glassMode == LiquidGlassMode.SOFT_FROSTED)
 
@@ -583,7 +583,7 @@ fun Modifier.frostedGlassBubbleSurface(
     val display = LocalDisplaySetting.current
 
     val effectiveAlpha = display.chatBubbleAlpha.coerceIn(0f, 1f)
-    val effectiveTone = display.chatBubbleTone.coerceIn(0f, 1f)
+    val effectiveTone = 0f
     val effectiveBlur = display.chatBubbleBlur.coerceIn(0f, 100f)
 
     val tonedColor = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, effectiveTone)

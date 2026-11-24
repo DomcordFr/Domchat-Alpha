@@ -84,8 +84,6 @@ import me.lucid.domchat.ui.modifier.domChatCardContainerColor
 import me.lucid.domchat.ui.modifier.domChatDialogContainerColor
 import me.lucid.domchat.ui.modifier.domChatSheetContainerColor
 import me.lucid.domchat.data.model.UserPersona
-import me.lucid.domchat.ui.components.ui.Tag
-import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.components.ui.UIAvatar
 import me.lucid.domchat.ui.hooks.HapticPattern
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
@@ -323,10 +321,22 @@ fun PersonaPickerBottomSheet(
                                     )
 
                                     if (persona.pronouns.isNotBlank()) {
-                                        Tag(type = TagType.DEFAULT) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = Color.Transparent,
+                                            modifier = Modifier.liquidGlassSurface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                borderWidth = 0.5.dp,
+                                                specularBrush = LiquidGlassTokens.SpecularBorderBrush,
+                                                fillColor = Color.Transparent
+                                            )
+                                        ) {
                                             Text(
                                                 text = persona.pronouns,
-                                                fontSize = 10.sp
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 10.sp,
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
                                     }

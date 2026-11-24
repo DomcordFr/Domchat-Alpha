@@ -63,7 +63,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -268,29 +267,6 @@ fun ChatDrawerContent(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            if (activePersona.pronouns.isNotBlank()) {
-                                val badgeShape = RoundedCornerShape(6.dp)
-                                Surface(
-                                    color = Color.Transparent,
-                                    shape = badgeShape,
-                                    modifier = Modifier.liquidGlassSurface(
-                                        shape = badgeShape,
-                                        borderWidth = 0.5.dp,
-                                        fillColor = Color.Transparent,
-                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                    ),
-                                ) {
-                                    Text(
-                                        text = activePersona.pronouns,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 10.sp,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                                        ),
-                                        color = Color.White,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
-                                    )
-                                }
-                            }
                         }
                         Greeting(
                             style = MaterialTheme.typography.labelMedium.copy(

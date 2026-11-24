@@ -289,7 +289,7 @@ data class DisplaySetting(
     val liquidGlassMode: me.lucid.domchat.data.model.LiquidGlassMode = me.lucid.domchat.data.model.LiquidGlassMode.BALANCED_BLEND,
     val chatBubbleAlpha: Float = 0.55f,
     val chatBubbleBlur: Float = 16f,
-    val chatBubbleTone: Float = 0.50f,
+    val chatBubbleTone: Float = 0f,
     val chatBubbleTintHue: Float = 0f,
     val chatBubbleTintAmount: Float = 0f,
     val chatBubbleTintColor: Long = 0x00FFFFFFL,
