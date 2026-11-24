@@ -762,7 +762,7 @@ private fun SharedTransitionScope.ChatListNormal(
                                 isIntroMessage = isIntroMessage,
                                 isIntroLocked = isIntroLocked,
                                 onAddCustomGreeting = onAddCustomGreeting,
-                                modifier = if (isLastTurn && (loading || isLastTurnActive || !isPreexisting)) {
+                                modifier = if (isLastTurn && (loading || isLastTurnActive)) {
                                     Modifier.onSizeChanged {
                                         if (followStreamingBottom && !state.isScrollInProgress) {
                                             requestSnapToStreamingBottom()
