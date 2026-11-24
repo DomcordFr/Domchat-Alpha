@@ -599,10 +599,8 @@ private fun SharedTransitionScope.ChatListNormal(
                 navController.navigate(Screen.SettingLorebookDetail(entry.lorebookId, entry.entryId))
             }
         }
-        val onModeClick = remember(navController) {
-            { mode: me.lucid.ai.ui.UsedMode ->
-                navController.navigate(Screen.SettingSkills(scrollToSkillId = mode.modeId))
-            }
+        val onModeClick = remember {
+            { _: me.lucid.ai.ui.UsedMode -> }
         }
         val onMemoryClick = remember(navController, conversation.assistantId) {
             { memory: me.lucid.ai.ui.UsedMemory ->

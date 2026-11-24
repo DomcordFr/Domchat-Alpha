@@ -313,7 +313,6 @@ fun AssistantDetailPage(
                 AssistantDetailRoutes.CONTEXT_MANAGEMENT -> "Context & Budget"
                 AssistantDetailRoutes.UI -> stringResource(R.string.assistant_detail_ui_customization)
                 AssistantDetailRoutes.TOOLS -> "Tools"
-                AssistantDetailRoutes.SKILLS -> "Character Skills"
                 AssistantDetailRoutes.ADVANCED -> stringResource(R.string.assistant_detail_advanced)
                 else -> assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
             }
@@ -567,15 +566,6 @@ fun AssistantDetailPage(
                     onUpdate = { onUpdate(it) },
                     vm = vm,
                     mcpServerConfigs = mcpServerConfigs
-                )
-            }
-
-            // Skills
-            composable(AssistantDetailRoutes.SKILLS) {
-                AssistantSkillsSubPage(
-                    assistant = assistant,
-                    onUpdate = { onUpdate(it) },
-                    vm = vm
                 )
             }
 

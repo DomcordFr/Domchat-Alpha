@@ -108,7 +108,6 @@ import me.lucid.domchat.ui.pages.setting.SettingPresetsPage
 import me.lucid.domchat.ui.pages.setting.SettingLorebooksPage
 import me.lucid.domchat.ui.pages.setting.SettingLorebookDetailPage
 import me.lucid.domchat.ui.pages.setting.SettingJanitorPage
-import me.lucid.domchat.ui.pages.setting.SettingSkillsPage
 import me.lucid.domchat.ui.pages.share.handler.ShareHandlerPage
 import me.lucid.domchat.ui.pages.webview.WebViewPage
 import me.lucid.domchat.ui.pages.setting.SettingAndroidIntegrationPage
@@ -1320,62 +1319,6 @@ class RouteActivity : ComponentActivity() {
                         }
                     }
 
-                    composable<Screen.SettingSkills>(
-                        enterTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (initialState.destination.route?.contains("SettingLorebooks") == true) {
-                                lateralEnterTransition(
-                                    offset = { -it },
-                                    motionPolicy = motionPolicy
-                                )
-                            } else {
-                                null
-                            }
-                        },
-                        exitTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (targetState.destination.route?.contains("SettingLorebooks") == true) {
-                                lateralExitTransition(
-                                    offset = { -it },
-                                    motionPolicy = motionPolicy
-                                )
-                            } else {
-                                null
-                            }
-                        },
-                        popEnterTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (initialState.destination.route?.contains("SettingLorebooks") == true) {
-                                lateralEnterTransition(
-                                    offset = { -it },
-                                    motionPolicy = motionPolicy
-                                )
-                            } else {
-                                null
-                            }
-                        },
-                        popExitTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (targetState.destination.route?.contains("SettingLorebooks") == true) {
-                                lateralExitTransition(
-                                    offset = { -it },
-                                    motionPolicy = motionPolicy
-                                )
-                            } else {
-                                null
-                            }
-                        }
-                    ) { backStackEntry ->
-                        val route = backStackEntry.toRoute<Screen.SettingSkills>()
-                        AdaptiveSettingsScaffold(selected = SettingsDestination.Skills) {
-                            SettingSkillsPage(scrollToSkillId = route.scrollToSkillId)
-                        }
-                    }
-
                     composable<Screen.SettingJanitor> {
                         SettingJanitorPage()
                     }
@@ -1545,9 +1488,6 @@ sealed interface Screen {
 
     @Serializable
     data object Developer : Screen
-
-    @Serializable
-    data class SettingSkills(val scrollToSkillId: String? = null) : Screen
 
     @Serializable
     data object SettingJanitor : Screen

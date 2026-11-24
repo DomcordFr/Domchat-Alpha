@@ -1,6 +1,11 @@
 package me.lucid.domchat.ui.components.chat
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -99,6 +104,8 @@ fun ContextBudgetBottomSheet(
     var historyPercent by remember { mutableIntStateOf(initialBudget.chatHistoryBudgetPercent) }
     var memoryPercent by remember { mutableIntStateOf(initialBudget.memoryLorebookBudgetPercent) }
     var autoPrune by remember { mutableStateOf(initialBudget.autoPruneOverflow) }
+    var enableCompaction by remember { mutableStateOf(initialBudget.enableCompaction) }
+    var compactionThreshold by remember { mutableIntStateOf(initialBudget.compactionThresholdPercent) }
 
     fun commitChanges() {
         val newConfig = ContextBudgetConfig(
@@ -107,7 +114,9 @@ fun ContextBudgetBottomSheet(
             characterSystemBudgetPercent = systemPercent,
             chatHistoryBudgetPercent = historyPercent,
             memoryLorebookBudgetPercent = memoryPercent,
-            autoPruneOverflow = autoPrune
+            autoPruneOverflow = autoPrune,
+            enableCompaction = enableCompaction,
+            compactionThresholdPercent = compactionThreshold
         )
         if (isPerChatMode) {
             onSavePerChatBudget?.invoke(if (inheritGlobal) null else newConfig)
@@ -130,14 +139,14 @@ fun ContextBudgetBottomSheet(
             shape = shape,
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
-            fillColor = Color.White.copy(alpha = 0.06f),
+            fillColor = Color.Transparent,
         )
     } else {
         Modifier.liquidGlassSurface(
             shape = shape,
             borderWidth = 0.5.dp,
             specularBrush = borderBrush,
-            fillColor = Color.White.copy(alpha = 0.06f),
+            fillColor = Color.Transparent,
             glassMode = LiquidGlassMode.BALANCED_BLEND,
         )
     }
@@ -180,7 +189,10 @@ fun ContextBudgetBottomSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(
+                                modifier = Modifier.weight(1f).padding(end = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 Text(
                                     text = "Inherit Global Context Settings",
                                     fontSize = 14.sp,
@@ -190,6 +202,7 @@ fun ContextBudgetBottomSheet(
                                 Text(
                                     text = if (inheritGlobal) "Following app global context sliders" else "Custom context allocation for this chat",
                                     fontSize = 11.5.sp,
+                                    lineHeight = 15.sp,
                                     color = Color(0xFF888888)
                                 )
                             }
@@ -202,7 +215,13 @@ fun ContextBudgetBottomSheet(
                     Spacer(modifier = Modifier.height(14.dp))
                 }
 
-                AnimatedVisibility(visible = !inheritGlobal || !isPerChatMode) {
+                AnimatedVisibility(
+                    visible = !inheritGlobal || !isPerChatMode,
+                    enter = fadeIn(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)) +
+                        expandVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)),
+                    exit = fadeOut(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)) +
+                        shrinkVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)),
+                ) {
                     Column {
                         // Visual Segmented Allocation Bar
                         Text(
@@ -315,6 +334,7 @@ fun ContextBudgetBottomSheet(
                                 Text(
                                     text = "Supported for 128k+ / 1M+ context models. Context Meter gauges against this limit.",
                                     fontSize = 11.sp,
+                                    lineHeight = 15.sp,
                                     color = Color(0xFF777777)
                                 )
                             }
@@ -360,6 +380,7 @@ fun ContextBudgetBottomSheet(
                                 Text(
                                     text = "Tokens safely reserved for AI message generation to prevent mid-sentence cutoff.",
                                     fontSize = 11.sp,
+                                    lineHeight = 15.sp,
                                     color = Color(0xFF777777)
                                 )
                             }
@@ -408,6 +429,7 @@ fun ContextBudgetBottomSheet(
                                 Text(
                                     text = "Allocated to character card definition, user persona, scenario, and prompt presets.",
                                     fontSize = 11.sp,
+                                    lineHeight = 15.sp,
                                     color = Color(0xFF777777)
                                 )
                             }
@@ -455,6 +477,7 @@ fun ContextBudgetBottomSheet(
                                 Text(
                                     text = "Maximum historical conversational turns packed into prompt before summarization.",
                                     fontSize = 11.sp,
+                                    lineHeight = 15.sp,
                                     color = Color(0xFF777777)
                                 )
                             }
@@ -502,6 +525,7 @@ fun ContextBudgetBottomSheet(
                                 Text(
                                     text = "Reserved for dynamic world info entries triggered by keywords and associative memories.",
                                     fontSize = 11.sp,
+                                    lineHeight = 15.sp,
                                     color = Color(0xFF777777)
                                 )
                             }
@@ -522,7 +546,10 @@ fun ContextBudgetBottomSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(
+                                    modifier = Modifier.weight(1f).padding(end = 12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
                                     Text(
                                         text = "Smart Overflow Auto-Pruning",
                                         fontSize = 14.sp,
@@ -532,6 +559,7 @@ fun ContextBudgetBottomSheet(
                                     Text(
                                         text = "Gracefully trims oldest non-essential turns to fit inside target context",
                                         fontSize = 11.5.sp,
+                                        lineHeight = 15.sp,
                                         color = Color(0xFF888888)
                                     )
                                 }
@@ -539,6 +567,90 @@ fun ContextBudgetBottomSheet(
                                     checked = autoPrune,
                                     onCheckedChange = { autoPrune = it }
                                 )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Context Compaction card
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(glassCard(RoundedCornerShape(16.dp)))
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(
+                                        modifier = Modifier.weight(1f).padding(end = 12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Context Compaction",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isDark) Color.White else Color.Black
+                                        )
+                                        Text(
+                                            text = "Condenses older turns into a rolling summary when approaching the threshold",
+                                            fontSize = 11.5.sp,
+                                            lineHeight = 15.sp,
+                                            color = Color(0xFF888888)
+                                        )
+                                    }
+                                    DomChatGlassSwitch(
+                                        checked = enableCompaction,
+                                        onCheckedChange = { enableCompaction = it }
+                                    )
+                                }
+
+                                AnimatedVisibility(
+                                    visible = enableCompaction,
+                                    enter = fadeIn(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)) +
+                                        expandVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)),
+                                    exit = fadeOut(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)) +
+                                        shrinkVertically(animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f)),
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Compaction Threshold",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = if (isDark) Color.White else Color.Black
+                                            )
+                                            Text(
+                                                text = "$compactionThreshold%",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                        }
+                                        DomChatSlider(
+                                            value = compactionThreshold.toFloat(),
+                                            onValueChange = { newVal: Float ->
+                                                compactionThreshold = newVal.toInt().coerceIn(50, 95)
+                                            },
+                                            valueRange = 50f..95f,
+                                            steps = 44,
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -559,6 +671,8 @@ fun ContextBudgetBottomSheet(
                                     historyPercent = 60
                                     memoryPercent = 15
                                     autoPrune = true
+                                    enableCompaction = false
+                                    compactionThreshold = 75
                                 }
                             )
                         }

@@ -975,9 +975,9 @@ fun SettingJanitorPage() {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(if (isSelected) Color.White.copy(alpha = 0.20f) else Color.Transparent)
+                                    .background(Color.Transparent)
                                     .border(
-                                        0.5.dp,
+                                        if (isSelected) 1.dp else 0.5.dp,
                                         if (isSelected) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle,
                                         RoundedCornerShape(20.dp)
                                     )
@@ -990,8 +990,8 @@ fun SettingJanitorPage() {
                                 Text(
                                     text = tag,
                                     fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.72f),
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                                 )
                             }
                         }
