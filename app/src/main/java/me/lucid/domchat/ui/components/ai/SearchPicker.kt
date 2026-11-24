@@ -69,7 +69,6 @@ import me.lucid.domchat.ui.components.ui.Tag
 import me.lucid.domchat.ui.components.ui.TagType
 import me.lucid.domchat.ui.components.ui.ToggleSurface
 import me.lucid.domchat.ui.context.LocalNavController
-import me.lucid.domchat.ui.pages.setting.SearchAbilityTagLine
 import me.lucid.search.SearchService
 import me.lucid.search.SearchServiceOptions
 import me.lucid.domchat.ui.hooks.rememberAmoledDarkMode
