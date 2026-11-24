@@ -3781,6 +3781,11 @@ private fun CharacterActionPopover(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss
+                )
                 .padding(20.dp)
                 .imePadding(),
             contentAlignment = Alignment.Center
@@ -3793,6 +3798,11 @@ private fun CharacterActionPopover(
                     .fillMaxWidth()
                     .widthIn(max = 440.dp)
                     .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.82f).dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    )
             ) {
                 var isExporting by remember { mutableStateOf(false) }
                 AnimatedContent(

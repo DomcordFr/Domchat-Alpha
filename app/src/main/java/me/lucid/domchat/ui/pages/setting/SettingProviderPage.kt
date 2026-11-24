@@ -47,7 +47,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.geometry.Offset
-import me.lucid.search.SearchServiceOptions
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -221,11 +220,8 @@ fun SettingProviderPage(
     val pager = rememberPagerState(initialPage = initialTab.ordinal) { ProvidersTab.entries.size }
     val currentTab = ProvidersTab.entries[pager.currentPage]
     
-    var showSearchCommonOptions by remember { mutableStateOf(false) }
     var showTtsFilterSettings by remember { mutableStateOf(false) }
-    var editingSearchService by remember { mutableStateOf<SearchServiceOptions?>(null) }
     var showAddProviderSheet by remember { mutableStateOf(false) }
-    var showAddSearchSheet by remember { mutableStateOf(false) }
     var showAddTtsSheet by remember { mutableStateOf(false) }
     val providerPresets = remember(catalogSnapshot, settings.providers) {
         (catalogSnapshot?.toProviderPresets()?.takeIf { it.isNotEmpty() }
@@ -338,16 +334,11 @@ fun SettingProviderPage(
                             onAdd = { addProvider(it) }
                         )
 
-                        ProvidersTab.Search,
                         ProvidersTab.Tts -> {
                             FloatingActionButton(
                                 onClick = {
                                     haptics.perform(HapticPattern.Pop)
-                                    if (currentTab == ProvidersTab.Search) {
-                                        showSearchCommonOptions = true
-                                    } else {
-                                        showTtsFilterSettings = true
-                                    }
+                                    showTtsFilterSettings = true
                                 },
                                 shape = CircleShape,
                                 containerColor = Color(0xFF000000),
@@ -356,10 +347,7 @@ fun SettingProviderPage(
                             ) {
                                 Icon(
                                     Icons.Rounded.Settings,
-                                    contentDescription = when (currentTab) {
-                                        ProvidersTab.Search -> stringResource(R.string.setting_page_search_common_options)
-                                        else -> stringResource(R.string.setting_tts_settings_title)
-                                    },
+                                    contentDescription = stringResource(R.string.setting_tts_settings_title),
                                     tint = Color.White
                                 )
                             }
@@ -370,12 +358,6 @@ fun SettingProviderPage(
                             enableHaptics = settings.displaySetting.enableUIHaptics,
                             asFab = true,
                             onClick = { showAddProviderSheet = true }
-                        )
-
-                        ProvidersTab.Search -> AddSearchServiceButton(
-                            enableHaptics = settings.displaySetting.enableUIHaptics,
-                            asFab = true,
-                            onClick = { showAddSearchSheet = true }
                         )
 
                         ProvidersTab.Tts -> AddTTSProviderButton(
@@ -477,29 +459,10 @@ fun SettingProviderPage(
                     }
                 }
 
-                ProvidersTab.Search -> SearchProvidersContent(
-                    vm = vm,
-                    contentPadding = innerPadding,
-                    onEditService = { editingSearchService = it }
-                )
                 ProvidersTab.Tts -> TtsProvidersContent(vm = vm, contentPadding = innerPadding)
             }
         }
         }
-    }
-
-    if (showSearchCommonOptions) {
-        CommonOptionsDialog(
-            settings = settings,
-            onDismissRequest = { showSearchCommonOptions = false },
-            onUpdate = { options ->
-                vm.updateSettings(
-                    settings.copy(
-                        searchCommonOptions = options
-                    )
-                )
-            }
-        )
     }
 
     if (showTtsFilterSettings) {
@@ -534,22 +497,6 @@ fun SettingProviderPage(
         )
     }
 
-    if (showAddSearchSheet) {
-        AddSearchServiceSheet(
-            visible = true,
-            catalogSnapshot = catalogSnapshot,
-            onDismissRequest = { showAddSearchSheet = false },
-            onAdd = { newService ->
-                vm.updateSettings(
-                    settings.copy(
-                        searchServices = listOf(newService) + settings.searchServices
-                    )
-                )
-                showAddSearchSheet = false
-            }
-        )
-    }
-
     if (showAddTtsSheet) {
         AddTTSProviderSheet(
             visible = true,
@@ -573,20 +520,6 @@ fun SettingProviderPage(
             onDismissRequest = { customDialogState.dismiss() }
         )
     }
-
-    SearchServiceEditorSheet(
-        service = editingSearchService,
-        settings = settings,
-        catalogSnapshot = catalogSnapshot,
-        onDismiss = { editingSearchService = null },
-        onSave = { original, updated ->
-            val newServices = settings.searchServices.map {
-                if (it.id == original.id) updated else it
-            }
-            vm.updateSettings(settings.copy(searchServices = newServices))
-            editingSearchService = null
-        }
-    )
     }
 }
 

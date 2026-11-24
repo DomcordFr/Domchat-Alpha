@@ -183,7 +183,6 @@ fun Modifier.domChatBlurEffect(
             clipToAreasBounds = true
             expandLayerBounds = false
             forceInvalidateOnPreDraw = false
-            canDrawArea = { true }
             blurEffect {
                 if (!isEffectivelyTransparent) {
                     this.style = style

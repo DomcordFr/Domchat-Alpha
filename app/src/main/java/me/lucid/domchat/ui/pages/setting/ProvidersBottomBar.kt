@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -43,7 +42,6 @@ enum class ProvidersTab(
     val titleRes: Int,
 ) {
     Models(Screen.SettingProvider, Icons.Rounded.Cloud, R.string.setting_provider_page_title),
-    Search(Screen.SettingSearch, Icons.Rounded.Public, R.string.setting_page_search_title),
     Tts(Screen.SettingTTS, Icons.AutoMirrored.Rounded.VolumeUp, R.string.setting_tts_page_title),
 }
 

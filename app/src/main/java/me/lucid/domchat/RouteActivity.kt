@@ -89,7 +89,6 @@ import me.lucid.domchat.ui.pages.setting.SettingContextBudgetPage
 import me.lucid.domchat.ui.pages.setting.SettingDisplayPage
 import me.lucid.domchat.ui.pages.setting.SettingPersonaPage
 
-import me.lucid.domchat.ui.pages.setting.SettingMcpPage
 // import me.lucid.domchat.ui.pages.setting.locallm.SettingLocalLlmPage
 import me.lucid.domchat.ui.pages.extensions.workspace.WorkspacePage
 import me.lucid.domchat.ui.pages.extensions.workspace.WorkspaceDetailPage
@@ -98,7 +97,6 @@ import me.lucid.domchat.ui.pages.setting.SettingModelPage
 import me.lucid.domchat.ui.pages.setting.SettingPage
 import me.lucid.domchat.ui.pages.setting.SettingProviderDetailPage
 import me.lucid.domchat.ui.pages.setting.SettingProviderPage
-import me.lucid.domchat.ui.pages.setting.SettingSearchPage
 import me.lucid.domchat.ui.pages.setting.SettingTTSProviderDetailPage
 import me.lucid.domchat.ui.pages.setting.SettingTTSPage
 import me.lucid.domchat.ui.pages.setting.SettingWebPage
@@ -1121,57 +1119,6 @@ class RouteActivity : ComponentActivity() {
                         }
                     }
 
-                    composable<Screen.SettingSearch>(
-                        enterTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (initialState.destination.route?.contains("SettingProvider") == true) {
-                                lateralEnterTransition(offset = { it }, motionPolicy = motionPolicy)
-                            } else if (initialState.destination.route?.contains("SettingTTS") == true) {
-                                lateralEnterTransition(offset = { -it }, motionPolicy = motionPolicy)
-                            } else {
-                                null
-                            }
-                        },
-                        exitTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (targetState.destination.route?.contains("SettingProvider") == true) {
-                                lateralExitTransition(offset = { it }, motionPolicy = motionPolicy)
-                            } else if (targetState.destination.route?.contains("SettingTTS") == true) {
-                                lateralExitTransition(offset = { -it }, motionPolicy = motionPolicy)
-                            } else {
-                                null
-                            }
-                        },
-                        popEnterTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (initialState.destination.route?.contains("SettingProvider") == true) {
-                                lateralEnterTransition(offset = { it }, motionPolicy = motionPolicy)
-                            } else if (initialState.destination.route?.contains("SettingTTS") == true) {
-                                lateralEnterTransition(offset = { -it }, motionPolicy = motionPolicy)
-                            } else {
-                                null
-                            }
-                        },
-                        popExitTransition = {
-                            if (useWideSettingsLayout) {
-                                null
-                            } else if (targetState.destination.route?.contains("SettingProvider") == true) {
-                                lateralExitTransition(offset = { it }, motionPolicy = motionPolicy)
-                            } else if (targetState.destination.route?.contains("SettingTTS") == true) {
-                                lateralExitTransition(offset = { -it }, motionPolicy = motionPolicy)
-                            } else {
-                                null
-                            }
-                        }
-                    ) {
-                        AdaptiveSettingsScaffold(selected = SettingsDestination.Search) {
-                            SettingProviderPage(initialTab = me.lucid.domchat.ui.pages.setting.ProvidersTab.Search)
-                        }
-                    }
-
                     composable<Screen.SettingTTS>(
                         enterTransition = {
                             if (useWideSettingsLayout) {
@@ -1230,12 +1177,6 @@ class RouteActivity : ComponentActivity() {
                     composable<Screen.SettingWeb> {
                         AdaptiveSettingsScaffold(selected = SettingsDestination.Web) {
                             SettingWebPage()
-                        }
-                    }
-
-                    composable<Screen.SettingMcp> {
-                        AdaptiveSettingsScaffold(selected = SettingsDestination.Mcp) {
-                            SettingMcpPage()
                         }
                     }
 
@@ -1460,16 +1401,10 @@ sealed interface Screen {
     data object SettingChats : Screen
 
     @Serializable
-    data object SettingSearch : Screen
-
-    @Serializable
     data object SettingTTS : Screen
 
     @Serializable
     data object SettingWeb : Screen
-
-    @Serializable
-    data object SettingMcp : Screen
 
     @Serializable
     data object SettingRpOptimizations : Screen

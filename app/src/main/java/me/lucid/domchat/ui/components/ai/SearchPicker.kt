@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.MaterialTheme
@@ -61,7 +60,6 @@ import androidx.compose.foundation.border
 import me.lucid.domchat.ui.theme.AppShapes
 import me.lucid.domchat.ui.theme.LocalDarkMode
 import me.lucid.domchat.R
-import me.lucid.domchat.Screen
 import me.lucid.domchat.data.ai.models.ModelCatalogService
 import me.lucid.domchat.data.ai.models.ModelCatalogSnapshot
 import me.lucid.domchat.data.datastore.Settings
@@ -410,14 +408,6 @@ private fun SearchToggleItem(
             color = contentColor,
             modifier = Modifier.weight(1f)
         )
-        IconButton(
-            onClick = {
-                onDismiss()
-                navBackStack.navigate(Screen.SettingSearch)
-            }
-        ) {
-            Icon(Icons.Rounded.Settings, null, tint = contentColor)
-        }
         DomChatGlassSwitch(
             checked = enableSearch,
             onCheckedChange = onToggleSearch

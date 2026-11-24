@@ -2003,7 +2003,6 @@ private fun ChatPageContent(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .domChatBlurSource()
                                     .layerBackdrop(contentBackdrop)
                                     .graphicsLayer {
                                         alpha = contentAlpha
