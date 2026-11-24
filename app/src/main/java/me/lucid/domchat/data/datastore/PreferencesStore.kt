@@ -619,7 +619,7 @@ class SettingsStore(
         // Auto-update recently used assistants when assistant changes
         val settingsToSave = if (effectiveSettings.assistantId != settingsFlow.value.assistantId && 
             !settingsFlow.value.init &&
-            effectiveSettings.assistants.any { it.id == effectiveSettings.assistantId }) {
+            effectiveSettings.assistants.any { it.id == effectiveSettings.assistantId && !it.isDeleted }) {
             val updatedList = buildList {
                 add(effectiveSettings.assistantId)
                 effectiveSettings.recentlyUsedAssistants
@@ -877,7 +877,7 @@ class SettingsStore(
     suspend fun updateAssistant(assistantId: Uuid) = updateMutex.withLock {
         withContext(Dispatchers.IO) {
             val current = awaitInitializedSettings("updateAssistant") ?: return@withContext
-            val exists = current.assistants.any { it.id == assistantId }
+            val exists = current.assistants.any { it.id == assistantId && !it.isDeleted }
             if (!exists && assistantId != DEFAULT_ASSISTANT_ID) return@withContext
 
             val updatedRecentlyUsed: List<Uuid>? = if (exists) {
@@ -914,7 +914,7 @@ class SettingsStore(
         withContext(Dispatchers.IO) {
             val current = awaitInitializedSettings("markAssistantUsed") ?: return@withContext
             // Only add if the assistant exists
-            if (current.assistants.none { it.id == assistantId }) return@withContext
+            if (current.assistants.none { it.id == assistantId && !it.isDeleted }) return@withContext
 
             val updatedList = buildList {
                 add(assistantId)

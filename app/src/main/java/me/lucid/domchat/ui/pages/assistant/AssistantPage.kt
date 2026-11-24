@@ -186,9 +186,9 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
     // Tag filter state
     var selectedTagIds by remember { mutableStateOf(emptySet<kotlin.uuid.Uuid>()) }
     
-    // Filter assistants by both search query and tags
+    // Filter assistants by both search query and tags (excluding soft-deleted characters)
     val filteredAssistants = remember(settings.assistants, searchQuery, selectedTagIds) {
-        var result = settings.assistants
+        var result = settings.assistants.filter { !it.isDeleted }
         
         // Filter by search query
         if (searchQuery.isNotBlank()) {
@@ -275,7 +275,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
             }
             
             val haptics = rememberPremiumHaptics(enabled = settings.displaySetting.enableUIHaptics)
-            val canDelete = settings.assistants.size > 1
+            val canDelete = settings.assistants.count { !it.isDeleted } > 1
 
             androidx.compose.runtime.key(useWideSettingsLayout) {
                 if (useWideSettingsLayout) {

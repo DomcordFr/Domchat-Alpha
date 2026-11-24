@@ -37,7 +37,7 @@
     <!-- AGP lint can fail to resolve ComponentActivity/Glance inheritance here during lintVitalRelease. -->
     <activity
       android:name=".RouteActivity"
-      android:configChanges="keyboardHidden|orientation|screenSize"
+      android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
       android:exported="true"
       android:importantForAutofill="noExcludeDescendants"
       android:theme="@style/Theme.Domchat"
@@ -75,7 +75,7 @@
         android:exported="true"
         android:label="@string/text_selection_menu_label"
         android:theme="@style/Theme.Domchat.Translucent"
-        android:configChanges="keyboardHidden|orientation|screenSize"
+        android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout"
         android:windowSoftInputMode="adjustResize"
         tools:ignore="Instantiatable">
       <intent-filter>

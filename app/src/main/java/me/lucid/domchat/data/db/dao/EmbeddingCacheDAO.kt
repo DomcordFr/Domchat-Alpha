@@ -20,6 +20,9 @@ interface EmbeddingCacheDAO {
      */
     @Query("SELECT * FROM embedding_cache WHERE memory_id = :memoryId AND memory_type = :memoryType AND model_id = :modelId LIMIT 1")
     suspend fun getEmbedding(memoryId: Int, memoryType: Int, modelId: String): EmbeddingCacheEntity?
+
+    @Query("SELECT * FROM embedding_cache WHERE memory_id IN (:memoryIds) AND memory_type = :memoryType AND model_id = :modelId")
+    suspend fun getEmbeddingsForMemories(memoryIds: List<Int>, memoryType: Int, modelId: String): List<EmbeddingCacheEntity>
     
     /**
      * Insert or replace an embedding in the cache.

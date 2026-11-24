@@ -148,8 +148,9 @@ data class UIMessage(
             copy(
                 parts = newParts,
                 annotations = newAnnotations,
+                usage = chunk.usage ?: usage,
             )
-        } ?: this
+        } ?: if (chunk.usage != null) copy(usage = chunk.usage) else this
     }
 
     fun summaryAsText(): String {
@@ -323,10 +324,24 @@ fun List<UIMessage>.handleMessageChunk(chunk: MessageChunk, model: Model? = null
     require(this.isNotEmpty()) {
         "messages must not be empty"
     }
-    val choice = chunk.choices.getOrNull(0) ?: return this
-    val message = choice.delta ?: choice.message ?: return this
+    val choice = chunk.choices.getOrNull(0)
+    if (choice == null) {
+        if (chunk.usage != null) {
+            val last = this.last().copy(usage = chunk.usage)
+            return this.dropLast(1) + last
+        }
+        return this
+    }
+    val message = choice.delta ?: choice.message
+    if (message == null) {
+        if (chunk.usage != null) {
+            val last = this.last().copy(usage = chunk.usage)
+            return this.dropLast(1) + last
+        }
+        return this
+    }
     if (this.last().role != message.role) {
-        return this + message.copy(modelId = model?.id)
+        return this + message.copy(modelId = model?.id, usage = chunk.usage ?: message.usage)
     } else {
         val last = this.last() + chunk
         return this.dropLast(1) + last

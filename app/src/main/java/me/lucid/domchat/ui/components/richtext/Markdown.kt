@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import android.content.Intent
 import android.util.Log
+import android.util.LruCache
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import android.content.Context
@@ -132,27 +133,23 @@ private val flavour by lazy {
     )
 }
 
-private val parser by lazy {
+private val threadLocalParser = ThreadLocal.withInitial {
     MarkdownParser(flavour)
 }
 
+private fun getThreadParser(): MarkdownParser = threadLocalParser.get() ?: MarkdownParser(flavour)
+
 /**
  * Maximum content length that is still parsed synchronously on the UI thread for complete
- * (non-streaming) messages. Realistic assistant/tool messages are far below this; the cap only
- * exists as a safety valve so a single pathologically huge message (e.g. a large embedded base64
- * blob) can still fall back to background parsing instead of risking a long UI-thread hang.
+ * (non-streaming) messages. Realistic assistant/tool messages below this parse immediately
+ * to avoid height jumps, while larger messages parse on Dispatchers.Default to keep scroll smooth.
  */
-private const val SYNC_PARSE_MAX_LENGTH = 200_000
+private const val SYNC_PARSE_MAX_LENGTH = 4_000
 
 private const val MARKDOWN_AST_CACHE_SIZE = 256
 
 /**
  * Process-wide LRU cache of parsed markdown ASTs keyed by the raw (pre-`preProcess`) content.
- *
- * This lets [MarkdownBlock] parse a complete message synchronously on first composition (so the
- * item has its correct height immediately, avoiding a scroll-anchor "jump") while paying the parse
- * cost at most once per unique message — repeated compositions (e.g. scrolling a turn off screen
- * and back) reuse the cached AST instantly.
  */
 private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNode>>(
     16, 0.75f, /* accessOrder = */ true
@@ -161,6 +158,9 @@ private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNo
         return size > MARKDOWN_AST_CACHE_SIZE
     }
 }
+
+private fun peekMarkdownCache(content: String): Pair<String, ASTNode>? =
+    synchronized(markdownAstCache) { markdownAstCache[content] }
 
 private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>? {
     var inCodeFence = false
@@ -302,13 +302,16 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
     return blocks to tail
 }
 
-@Synchronized
 private fun parseMarkdownCached(content: String): Pair<String, ASTNode> {
-    markdownAstCache[content]?.let { return it }
+    synchronized(markdownAstCache) {
+        markdownAstCache[content]?.let { return it }
+    }
     val preprocessed = preProcess(content)
-    val astTree = parser.buildMarkdownTreeFromString(preprocessed)
+    val astTree = getThreadParser().buildMarkdownTreeFromString(preprocessed)
     val result = preprocessed to astTree
-    markdownAstCache[content] = result
+    synchronized(markdownAstCache) {
+        markdownAstCache[content] = result
+    }
     return result
 }
 
@@ -339,14 +342,13 @@ private class MergedRootASTNode(
     override val children: List<ASTNode> get() = allChildren
 }
 
-@Synchronized
 private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
     val split = splitIntoBlocksAndTail(content)
     if (split != null) {
         val (blocks, tail) = split
         val combinedPreprocessed = StringBuilder()
         val tailPreprocessed = if (tail.isNotEmpty()) preProcess(tail) else ""
-        val tailTree = if (tail.isNotEmpty()) parser.buildMarkdownTreeFromString(tailPreprocessed) else null
+        val tailTree = if (tail.isNotEmpty()) getThreadParser().buildMarkdownTreeFromString(tailPreprocessed) else null
 
         var totalLen = 0
         val parsedBlocks = blocks.map { block ->
@@ -378,7 +380,7 @@ private fun parseMarkdownStreaming(content: String): Pair<String, ASTNode> {
         return combinedPreprocessed.toString() to mergedRoot
     }
     val preprocessed = preProcess(content)
-    val astTree = parser.buildMarkdownTreeFromString(preprocessed)
+    val astTree = getThreadParser().buildMarkdownTreeFromString(preprocessed)
     return preprocessed to astTree
 }
 
@@ -486,10 +488,12 @@ private class InlineHtmlStyleContext {
     }
 }
 
+private val STYLE_ATTR_REGEX = Regex("""(?i)\bstyle\s*=\s*["']([^"']*)["']""")
+private val COLOR_ATTR_REGEX = Regex("""(?i)\bcolor\s*=\s*["']([^"']*)["']""")
+
 private fun parseInlineCssStyles(attrsString: String): Map<String, String> {
     if (attrsString.isBlank()) return emptyMap()
-    val styleAttrRegex = Regex("""(?i)\bstyle\s*=\s*["']([^"']*)["']""")
-    val styleMatch = styleAttrRegex.find(attrsString) ?: return emptyMap()
+    val styleMatch = STYLE_ATTR_REGEX.find(attrsString) ?: return emptyMap()
     val styleContent = styleMatch.groupValues[1]
     return styleContent.split(';')
         .mapNotNull { prop ->
@@ -664,8 +668,7 @@ internal fun resolveInlineHtmlStyle(
         }
 
         "font" -> {
-            val colorAttrRegex = Regex("""(?i)\bcolor\s*=\s*["']([^"']*)["']""")
-            val colorVal = colorAttrRegex.find(attrsString)?.groupValues?.get(1)
+            val colorVal = COLOR_ATTR_REGEX.find(attrsString)?.groupValues?.get(1)
             val color = colorVal?.let { parseColorSafe(it) }
             if (color != null) SpanStyle(color = color) else null
         }
@@ -740,6 +743,15 @@ private val STANDARD_PATTERNS = setOf(
 
 private val INLINE_BOLD_ITALIC_REGEX = Regex("""\*\*\*([^*\n]+?)\*\*\*""")
 private val INLINE_BOLD_REGEX = Regex("""\*\*([^*\n]+?)\*\*""")
+private val customRpRegexCache = LruCache<String, Regex>(128)
+
+private fun getCachedCustomRpRegex(pattern: String): Regex {
+    customRpRegexCache[pattern]?.let { return it }
+    val escaped = Regex.escape(pattern)
+    val compiled = Regex("$escaped(.+?)$escaped")
+    customRpRegexCache.put(pattern, compiled)
+    return compiled
+}
 
 /**
  * Append text to AnnotatedString.Builder, scanning for custom RP patterns
@@ -796,10 +808,9 @@ private fun AnnotatedString.Builder.appendTextWithCustomPatterns(
 
     // 3. Scan for custom RP patterns
     customRules.forEach { rule ->
-        val escaped = Regex.escape(rule.pattern)
-        val color = runCatching { Color(android.graphics.Color.parseColor(rule.colorHex)) }.getOrNull()
+        val color = parseColorSafe(rule.colorHex)
         if (color != null) {
-            Regex("$escaped(.+?)$escaped").findAll(text).forEach { matchResult ->
+            getCachedCustomRpRegex(rule.pattern).findAll(text).forEach { matchResult ->
                 allMatches.add(
                     StyledMatch(
                         range = matchResult.range,
@@ -1039,19 +1050,27 @@ fun MarkdownBlock(
     streamingPresentation.isDrainingFinish = isDrainingFinish
     
     var (data, setData) = remember {
-        val parseSynchronously = displayContent.length < 4000 ||
-            (!streamingTextReveal && !isDrainingFinish && displayContent.length <= SYNC_PARSE_MAX_LENGTH)
-        if (parseSynchronously) {
+        val cached = peekMarkdownCache(displayContent)
+        if (cached != null) {
             mutableStateOf(
-                value = parseMarkdownCached(displayContent),
+                value = cached,
                 policy = referentialEqualityPolicy(),
             )
         } else {
-            val astTree = parser.buildMarkdownTreeFromString("")
-            mutableStateOf(
-                value = "" to astTree,
-                policy = referentialEqualityPolicy(),
-            )
+            val parseSynchronously = displayContent.length < 4000 ||
+                (!streamingTextReveal && !isDrainingFinish && displayContent.length <= SYNC_PARSE_MAX_LENGTH)
+            if (parseSynchronously) {
+                mutableStateOf(
+                    value = parseMarkdownCached(displayContent),
+                    policy = referentialEqualityPolicy(),
+                )
+            } else {
+                val astTree = getThreadParser().buildMarkdownTreeFromString("")
+                mutableStateOf(
+                    value = "" to astTree,
+                    policy = referentialEqualityPolicy(),
+                )
+            }
         }
     }
 
@@ -1132,7 +1151,9 @@ fun MarkdownBlock(
             streamingFrameMillis.longValue = now
             if (changed) {
                 displayContent = streamingPresentation.displayContent
-                onExpandedStreamingCodeBlockChanged?.invoke()
+                if (displayContent.contains("```")) {
+                    onExpandedStreamingCodeBlockChanged?.invoke()
+                }
             }
             settleRanges = streamingPresentation.settleRanges
 
@@ -2350,7 +2371,17 @@ private fun Paragraph(
     val density = LocalDensity.current
     val rpStyleRules = LocalRpStyleRules.current
     val streamingReveal = LocalStreamingRevealState.current
-    val baseAnnotatedString = remember(content, rpStyleRules) {
+    val paragraphStart = node.startOffset.coerceIn(0, content.length)
+    val paragraphEnd = node.endOffset.coerceIn(paragraphStart, content.length)
+    val paragraphSlice = content.substring(paragraphStart, paragraphEnd)
+    val baseAnnotatedString = remember(
+        paragraphSlice,
+        node.startOffset,
+        rpStyleRules,
+        textStyle,
+        colorScheme,
+        trim,
+    ) {
         buildAnnotatedString {
             val htmlContext = InlineHtmlStyleContext()
             node.children.fastForEach { child ->
@@ -2451,10 +2482,10 @@ private fun TableNode(node: ASTNode, content: String, modifier: Modifier = Modif
         }
     )
 
-    // 创建表头composable列表
+    // 创建表头composable列表 (lightweight cell renderer instead of full nested MarkdownBlock per cell)
     val headers = List(columnCount) { columnIndex ->
         @Composable {
-            MarkdownBlock(
+            MarkdownTableCellText(
                 content = if (columnIndex < headerCells.size) headerCells[columnIndex] else "",
             )
         }
@@ -2464,7 +2495,7 @@ private fun TableNode(node: ASTNode, content: String, modifier: Modifier = Modif
     val rowComposables = rows.map { rowData ->
         List(columnCount) { columnIndex ->
             @Composable {
-                MarkdownBlock(
+                MarkdownTableCellText(
                     content = if (columnIndex < rowData.size) rowData[columnIndex] else "",
                 )
             }
@@ -2482,6 +2513,42 @@ private fun TableNode(node: ASTNode, content: String, modifier: Modifier = Modif
             columnMaxWidths = List(columnCount) { 200.dp },
         )
     }
+}
+
+@Composable
+private fun MarkdownTableCellText(content: String) {
+    if (content.isBlank()) return
+    val colorScheme = MaterialTheme.colorScheme
+    val textStyle = LocalTextStyle.current
+    val density = LocalDensity.current
+    val rpStyleRules = LocalRpStyleRules.current
+    val parsed = remember(content) { parseMarkdownCached(content) }
+    val inlineContents = remember(parsed.first) { mutableStateMapOf<String, InlineTextContent>() }
+    val annotated = remember(parsed.first, rpStyleRules, textStyle, colorScheme) {
+        buildAnnotatedString {
+            val htmlContext = InlineHtmlStyleContext()
+            appendMarkdownNodeContent(
+                node = parsed.second,
+                content = parsed.first,
+                inlineContents = inlineContents,
+                colorScheme = colorScheme,
+                density = density,
+                style = textStyle,
+                trim = true,
+                rpStyleRules = rpStyleRules,
+                streamingReveal = null,
+                htmlContext = htmlContext,
+            )
+            htmlContext.closeAllRemaining(length) { spanStyle, start, end ->
+                addStyle(spanStyle, start, end)
+            }
+        }
+    }
+    Text(
+        text = annotated,
+        style = textStyle,
+        inlineContent = inlineContents,
+    )
 }
 
 private fun AnnotatedString.Builder.appendMarkdownNodeContent(

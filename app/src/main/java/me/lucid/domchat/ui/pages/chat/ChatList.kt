@@ -245,6 +245,11 @@ internal fun isChatListAtStreamingBottom(
     return visibleItems.isNotEmpty() && !canScrollForward
 }
 
+private class IdentityKey(val ref: Any?) {
+    override fun equals(other: Any?): Boolean = other is IdentityKey && ref === other.ref
+    override fun hashCode(): Int = System.identityHashCode(ref)
+}
+
 private fun BidiDirection.toLayoutDirection(): LayoutDirection {
     return if (this == BidiDirection.Rtl) LayoutDirection.Rtl else LayoutDirection.Ltr
 }
@@ -280,6 +285,7 @@ fun ChatList(
     onEdit: (UIMessage) -> Unit = {},
     onForkMessage: (UIMessage) -> Unit = {},
     onDelete: (UIMessage) -> Unit = {},
+    onDeleteSwipe: ((UIMessage) -> Unit)? = null,
     onUpdateMessage: (MessageNode) -> Unit = {},
     onAddCustomGreeting: () -> Unit = {},
     onJumpToMessage: (Int) -> Unit = {},
@@ -321,6 +327,7 @@ fun ChatList(
                         onEdit = onEdit,
                         onForkMessage = onForkMessage,
                         onDelete = onDelete,
+                        onDeleteSwipe = onDeleteSwipe,
                         onUpdateMessage = onUpdateMessage,
                         onAddCustomGreeting = onAddCustomGreeting,
                         onAssistantTurnActiveChanged = onAssistantTurnActiveChanged,
@@ -348,6 +355,7 @@ private fun SharedTransitionScope.ChatListNormal(
     onEdit: (UIMessage) -> Unit,
     onForkMessage: (UIMessage) -> Unit,
     onDelete: (UIMessage) -> Unit,
+    onDeleteSwipe: ((UIMessage) -> Unit)? = null,
     onUpdateMessage: (MessageNode) -> Unit,
     onAddCustomGreeting: () -> Unit,
     onAssistantTurnActiveChanged: ((Boolean) -> Unit)? = null,
@@ -534,8 +542,8 @@ private fun SharedTransitionScope.ChatListNormal(
                 var groups: List<MessageTurnGroup>? = null
             }
         }
-        val turnGroupsKey = conversation.messageNodes.messageNodesSignature()
-        val turnGroups = remember(turnGroupsKey) {
+        val nodesIdentityKey = IdentityKey(conversation.messageNodes)
+        val turnGroups = remember(nodesIdentityKey) {
             val nextGroups = conversation.messageNodes.groupIntoTurns(cachedTurnGroupsHolder.groups)
             cachedTurnGroupsHolder.groups = nextGroups
             nextGroups
@@ -591,6 +599,9 @@ private fun SharedTransitionScope.ChatListNormal(
         val onDeleteNode = remember(onDelete) {
             { node: MessageNode -> onDelete(node.currentMessage) }
         }
+        val onDeleteSwipeCallback = remember(onDeleteSwipe) {
+            if (onDeleteSwipe != null) { msg: UIMessage -> onDeleteSwipe(msg) } else null
+        }
         val onUpdateNode = remember(onUpdateMessage) {
             { node: MessageNode -> onUpdateMessage(node) }
         }
@@ -622,7 +633,7 @@ private fun SharedTransitionScope.ChatListNormal(
             }
         }
         
-        val truncateTargetNodeId = remember(conversation.messageNodes, conversation.truncateIndex) {
+        val truncateTargetNodeId = remember(nodesIdentityKey, conversation.truncateIndex) {
             conversation.messageNodes.getOrNull(conversation.truncateIndex - 1)?.id
         }
 
@@ -733,6 +744,7 @@ private fun SharedTransitionScope.ChatListNormal(
                                 onEdit = onEditNode,
                                 onFork = onForkNode,
                                 onDelete = onDeleteNode,
+                                onDeleteSwipe = onDeleteSwipeCallback,
                                 onUpdate = onUpdateNode,
                                 onEditLorebookEntry = onEditLorebookEntry,
                                 onModeClick = onModeClick,

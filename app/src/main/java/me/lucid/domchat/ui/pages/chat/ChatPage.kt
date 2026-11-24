@@ -96,6 +96,7 @@ import androidx.compose.material3.adaptive.currentWindowDpSize
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -104,6 +105,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -137,6 +139,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.lucid.domchat.ui.components.message.ActiveChatMessageAction
 import me.lucid.domchat.ui.components.message.ChatMessageActionsSheet
@@ -723,6 +728,7 @@ private fun ChatTtsAutoplayEffect(
     assistant: Assistant,
     conversation: Conversation,
     loadingJob: Job?,
+    isGenerationCancelled: () -> Boolean = { false },
 ) {
     val tts = LocalTTSState.current
     val mode = settings.getEffectiveTtsAutoplayMode(assistant)
@@ -757,6 +763,10 @@ private fun ChatTtsAutoplayEffect(
         if (loadingJob == null) {
             if (!wasGenerating) return@LaunchedEffect
             wasGenerating = false
+            if (isGenerationCancelled()) {
+                tts.stop()
+                return@LaunchedEffect
+            }
             val latestMessage = latestAssistantSpeechMessage(conversation) ?: return@LaunchedEffect
             val text = latestMessage.toContentText()
             if (latestMessage.id == generationBaselineMessageId && text == generationBaselineText) {
@@ -845,13 +855,43 @@ fun ChatPage(
     val navController = LocalNavController.current
     val toaster = LocalToaster.current
     val context = LocalContext.current
+    val tts = LocalTTSState.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val genericErrorMessage = context.getString(R.string.common_error)
 
-    // Handle Error
-    LaunchedEffect(vm) {
-        vm.errorFlow.collect { error ->
+    DisposableEffect(id) {
+        vm.ensureActiveReference()
+        onDispose {
+            tts.stop()
+            vm.releaseReference()
+        }
+    }
+
+    // Handle Error (scoped to this conversation + recover errors missed while backgrounded)
+    LaunchedEffect(vm, id) {
+        vm.scopedErrorFlow.collect { (errConvId, error) ->
+            if (errConvId == null || errConvId == id) {
+                toaster.show(error.toLocalInferenceUserMessage(context) ?: genericErrorMessage, type = ToastType.Error)
+            }
+        }
+    }
+    LaunchedEffect(id) {
+        vm.consumePendingError(id)?.let { error ->
             toaster.show(error.toLocalInferenceUserMessage(context) ?: genericErrorMessage, type = ToastType.Error)
+        }
+    }
+    DisposableEffect(id, lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.consumePendingError(id)?.let { error ->
+                    toaster.show(error.toLocalInferenceUserMessage(context) ?: genericErrorMessage, type = ToastType.Error)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -886,6 +926,7 @@ fun ChatPage(
         assistant = conversationAssistant,
         conversation = conversation,
         loadingJob = loadingJob,
+        isGenerationCancelled = { vm.wasGenerationCancelled(conversation.id) },
     )
 
     LaunchedEffect(conversation.id) {
@@ -1151,8 +1192,13 @@ fun ChatPage(
 
     fun navigateToAssistantConversation(selectedAssistant: Assistant) {
         scope.launch {
+            val targetAssistant = if (selectedAssistant.isDeleted) {
+                settings.getCurrentAssistant()
+            } else {
+                selectedAssistant
+            }
             val draft = inputState.toDraft()
-            val newConversation = vm.createConversationForAssistant(selectedAssistant.id)
+            val newConversation = vm.createConversationForAssistant(targetAssistant.id)
             ChatSessionDraftStore.moveDraft(
                 fromConversationId = conversation.id,
                 toConversationId = newConversation.id,
@@ -1620,7 +1666,7 @@ private fun ChatPageContent(
         snapshotFlow {
             inputState.textContent.text.toString() to inputState.pendingAttachments
         }
-            .debounce(120)
+            .debounce(400)
             .flowOn(Dispatchers.Default)
             .collect { (text, attachments) ->
                 value = if (text.isBlank() && attachments.isEmpty()) {
@@ -1636,7 +1682,7 @@ private fun ChatPageContent(
         requestContextUsage,
         showContextSummary,
         currentChatModel?.id,
-        conversation.updateAt,
+        if (isGenerating) 0L else conversation.updateAt.toEpochMilliseconds(),
         currentAssistant.id,
         debouncedPendingParts,
         isGenerating,
@@ -1714,8 +1760,13 @@ private fun ChatPageContent(
 
     fun navigateToAssistantConversation(selectedAssistant: Assistant) {
         scope.launch {
+            val targetAssistant = if (selectedAssistant.isDeleted) {
+                settings.getCurrentAssistant()
+            } else {
+                selectedAssistant
+            }
             val draft = inputState.toDraft()
-            val newConversation = vm.createConversationForAssistant(selectedAssistant.id)
+            val newConversation = vm.createConversationForAssistant(targetAssistant.id)
             ChatSessionDraftStore.moveDraft(
                 fromConversationId = conversation.id,
                 toConversationId = newConversation.id,
@@ -2035,32 +2086,117 @@ private fun ChatPageContent(
                                             )
                                         }
                                     }
-                                    val onUpdateMessage = { newNode: MessageNode ->
-                                        val oldNode = frameConversation.messageNodes.find { it.id == newNode.id }
-                                        if (oldNode != null) {
-                                            if (oldNode.messages.size != newNode.messages.size) {
-                                                vm.updateConversation(
-                                                    frameConversation.copy(
-                                                        messageNodes = frameConversation.messageNodes.map { node ->
-                                                            if (node.id == newNode.id) newNode else node
-                                                        },
-                                                        updateAt = java.time.Instant.now()
-                                                    )
-                                                )
-                                            } else if (oldNode.selectIndex != newNode.selectIndex) {
-                                                vm.selectMessageNode(newNode.id, newNode.selectIndex)
-                                            } else {
-                                                vm.updateConversation(
-                                                    frameConversation.copy(
-                                                        messageNodes = frameConversation.messageNodes.map { node ->
-                                                            if (node.id == newNode.id) {
-                                                                newNode
-                                                            } else {
-                                                                node
-                                                            }
-                                                        }
-                                                    )
-                                                )
+                                    val latestFrameConversation by rememberUpdatedState(frameConversation)
+                                    val onUpdateMessage = remember(targetConversationId, vm) {
+                                        { newNode: MessageNode ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                val currentFrame = latestFrameConversation
+                                                val oldNode = currentFrame.messageNodes.find { it.id == newNode.id }
+                                                if (oldNode != null) {
+                                                    if (oldNode.messages.size != newNode.messages.size) {
+                                                        vm.updateConversation(
+                                                            currentFrame.copy(
+                                                                messageNodes = currentFrame.messageNodes.map { node ->
+                                                                    if (node.id == newNode.id) newNode else node
+                                                                },
+                                                                updateAt = java.time.Instant.now()
+                                                            )
+                                                        )
+                                                    } else if (oldNode.selectIndex != newNode.selectIndex) {
+                                                        vm.selectMessageNode(newNode.id, newNode.selectIndex)
+                                                    } else {
+                                                        vm.updateConversation(
+                                                            currentFrame.copy(
+                                                                messageNodes = currentFrame.messageNodes.map { node ->
+                                                                    if (node.id == newNode.id) newNode else node
+                                                                },
+                                                                updateAt = java.time.Instant.now()
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    val onJumpToMessageCallback = remember(targetConversationId, vm, frameListState, scope) {
+                                        { index: Int ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                previewMode = false
+                                                scope.launch {
+                                                    delay(350)
+                                                    frameListState.animateScrollToItem(index)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    val onRegenerateCallback = remember(targetConversationId, vm) {
+                                        { message: UIMessage ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                vm.regenerateAtMessage(message)
+                                            }
+                                        }
+                                    }
+                                    val onEditCallback = remember(targetConversationId, vm, inputState) {
+                                        { message: UIMessage ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                inputState.editingMessage = message.id
+                                                inputState.setContents(message.parts)
+                                            }
+                                        }
+                                    }
+                                    val onDeleteCallback = remember(targetConversationId, vm) {
+                                        { message: UIMessage ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                pendingDeleteMessage = message
+                                            }
+                                        }
+                                    }
+                                    val onDeleteSwipeCallback = remember(targetConversationId, vm, scope) {
+                                        { message: UIMessage ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                scope.launch {
+                                                    vm.deleteMessage(message)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    val onForkCallback = remember(targetConversationId, vm, scope, navController) {
+                                        { message: UIMessage ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                scope.launch {
+                                                    val forkConversation = vm.forkMessage(message)
+                                                    if (forkConversation != null) {
+                                                        navigateToChatPage(navController, forkConversation.id)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    val onSearchQueryChangeCallback = remember(targetConversationId, vm) {
+                                        { q: String ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                chatSearchQuery = q
+                                            }
+                                        }
+                                    }
+                                    val onSelectedShareItemsChangeCallback = remember(targetConversationId, vm) {
+                                        { items: Set<Uuid> ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                selectedChatShareItems = items
+                                            }
+                                        }
+                                    }
+                                    val onAssistantTurnActiveChangedCallback = remember(targetConversationId, vm) {
+                                        { active: Boolean ->
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                isAssistantTurnActive = active
+                                            }
+                                        }
+                                    }
+                                    val onAddCustomGreetingCallback = remember(targetConversationId, vm) {
+                                        {
+                                            if (vm.conversation.value.id == targetConversationId) {
+                                                showCustomGreetingDialog = true
                                             }
                                         }
                                     }
@@ -2083,42 +2219,20 @@ private fun ChatPageContent(
                                                 recentlyRestoredNodeIds = recentlyRestoredNodeIds,
                                                 initialSearchQuery = frameInitialSearchQuery,
                                                 searchQuery = chatSearchQuery,
-                                                onSearchQueryChange = { chatSearchQuery = it },
+                                                onSearchQueryChange = onSearchQueryChangeCallback,
                                                 shareSelecting = isChatShareSelecting,
                                                 selectedShareItems = selectedChatShareItems,
-                                                onSelectedShareItemsChange = { selectedChatShareItems = it },
+                                                onSelectedShareItemsChange = onSelectedShareItemsChangeCallback,
                                                 contentMaxWidth = contentMaxWidth,
-                                                onJumpToMessage = { index ->
-                                                    previewMode = false
-                                                    scope.launch {
-                                                        // Wait for AnimatedContent transition to complete before scrolling
-                                                        delay(350)
-                                                        frameListState.animateScrollToItem(index)
-                                                    }
-                                                },
-                                                onRegenerate = { message ->
-                                                    vm.regenerateAtMessage(message)
-                                                },
-                                                onEdit = {
-                                                    inputState.editingMessage = it.id
-                                                    inputState.setContents(it.parts)
-                                                },
-                                                onDelete = { message ->
-                                                    pendingDeleteMessage = message
-                                                },
+                                                onJumpToMessage = onJumpToMessageCallback,
+                                                onRegenerate = onRegenerateCallback,
+                                                onEdit = onEditCallback,
+                                                onDelete = onDeleteCallback,
+                                                onDeleteSwipe = onDeleteSwipeCallback,
                                                 onUpdateMessage = onUpdateMessage,
-                                                onAssistantTurnActiveChanged = { active ->
-                                                    isAssistantTurnActive = active
-                                                },
-                                                onForkMessage = {
-                                                    scope.launch {
-                                                        val forkConversation = vm.forkMessage(it)
-                                                        if (forkConversation != null) {
-                                                            navigateToChatPage(navController, forkConversation.id)
-                                                        }
-                                                    }
-                                                },
-                                                onAddCustomGreeting = { showCustomGreetingDialog = true },
+                                                onAssistantTurnActiveChanged = onAssistantTurnActiveChangedCallback,
+                                                onForkMessage = onForkCallback,
+                                                onAddCustomGreeting = onAddCustomGreetingCallback,
                                             )
                                         }
                                     }
@@ -2213,19 +2327,30 @@ private fun ChatPageContent(
                 // Only observe WindowInsets.isImeVisible when the chat is empty and NewChatContent could show;
                 // reading isImeVisible unconditionally at top-level forces full ChatPage + ChatList recomposition on IME open.
                 val canPotentiallyShowNewChat = !hasConversationContent && showNewChatContent && !showModeComposer
-                val shouldShowNewChatContent = if (canPotentiallyShowNewChat) {
-                    val isKeyboardOpen = WindowInsets.isImeVisible
-                    val hasTextInput = inputState.textContent.text.isNotEmpty() || inputState.messageContent.isNotEmpty()
-                    shouldShowNewChatContent(
-                        isTemporaryChat = isTemporaryChat,
-                        hasConversationMessages = hasConversationContent,
-                        hasAnyPresetMessages = hasAnyPresetMessages,
-                        showNewChatContent = showNewChatContent,
-                        hasTextInput = hasTextInput,
-                        isKeyboardOpen = isKeyboardOpen,
-                    )
-                } else {
-                    false
+                val isImeVisibleNow = if (canPotentiallyShowNewChat) WindowInsets.isImeVisible else false
+                val shouldShowNewChatContent by remember(
+                    canPotentiallyShowNewChat,
+                    isTemporaryChat,
+                    hasConversationContent,
+                    hasAnyPresetMessages,
+                    showNewChatContent,
+                    isImeVisibleNow,
+                ) {
+                    derivedStateOf {
+                        if (!canPotentiallyShowNewChat) {
+                            false
+                        } else {
+                            val hasTextInput = inputState.textContent.text.isNotEmpty() || inputState.messageContent.isNotEmpty()
+                            shouldShowNewChatContent(
+                                isTemporaryChat = isTemporaryChat,
+                                hasConversationMessages = hasConversationContent,
+                                hasAnyPresetMessages = hasAnyPresetMessages,
+                                showNewChatContent = showNewChatContent,
+                                hasTextInput = hasTextInput,
+                                isKeyboardOpen = isImeVisibleNow,
+                            )
+                        }
+                    }
                 }
                 
                 // State for assistant picker triggered from header avatar
@@ -2527,6 +2652,7 @@ private fun ChatPageContent(
                                 messageId = editingId,
                             )
                         } else {
+                            if (loadingJob != null) return@MinimalChatInput
                             if (currentChatModel == null) {
                                 toaster.show(modelRequiredMessage, type = ToastType.Error)
                                 return@MinimalChatInput
@@ -2546,6 +2672,7 @@ private fun ChatPageContent(
                                 messageId = editingId,
                             )
                         } else {
+                            if (loadingJob != null) return@MinimalChatInput
                             if (currentChatModel == null) {
                                 toaster.show(modelRequiredMessage, type = ToastType.Error)
                                 return@MinimalChatInput
@@ -3881,9 +4008,12 @@ private fun ChatToolbar(
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
+                    enabled = !currentAssistant.isDeleted,
                     onClick = {
-                        haptics.perform(HapticPattern.Pop)
-                        showCharacterNotesSheet = true
+                        if (!currentAssistant.isDeleted) {
+                            haptics.perform(HapticPattern.Pop)
+                            showCharacterNotesSheet = true
+                        }
                     },
                     shape = RoundedCornerShape(12.dp),
                     color = Color.Transparent,
@@ -4069,13 +4199,6 @@ private fun ChatToolbar(
                         onClick = { vm.undoRemoveAssistant(toDelete) }
                     )
                 )
-                val remaining = settings.assistants.filter { it.id != toDelete.id }
-                val fallback = remaining.firstOrNull()
-                if (fallback != null) {
-                    onSwitchAssistant(fallback)
-                } else {
-                    onCloseAction()
-                }
             },
             onDismiss = { showDeleteConfirm = false }
         )

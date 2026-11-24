@@ -696,7 +696,7 @@ class ChatCompletionsAPI(
                                                 PlatformLog.w(TAG, "encode image failed: ${it.message}")
 
                                                 put("type", "text")
-                                                put("text", "")
+                                                put("text", "[Image unavailable]")
                                             }
                                         })
                                     }
@@ -715,7 +715,7 @@ class ChatCompletionsAPI(
                                                 PlatformLog.w(TAG, "encode audio failed: ${it.message}")
 
                                                 put("type", "text")
-                                                put("text", "")
+                                                put("text", "[Image unavailable]")
                                             }
                                         })
                                     }

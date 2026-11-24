@@ -169,10 +169,10 @@ fun AssistantPickerSheet(
     val defaultAssistantName = stringResource(R.string.assistant_page_default_assistant)
     val noSystemPromptLabel = stringResource(R.string.assistant_page_no_system_prompt)
     val assistantsById = remember(settings.assistants) {
-        settings.assistants.associateBy { it.id.toString() }
+        settings.assistants.filter { !it.isDeleted }.associateBy { it.id.toString() }
     }
     val pickerItems = remember(settings.assistants, defaultAssistantName) {
-        settings.assistants.map { assistant ->
+        settings.assistants.filter { !it.isDeleted }.map { assistant ->
             DomChatAssistantPickerItem(
                 id = assistant.id.toString(),
                 name = assistant.name.ifEmpty { defaultAssistantName },

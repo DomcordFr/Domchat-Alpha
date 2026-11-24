@@ -180,7 +180,10 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
                 .collect { (recentlyUsed, assistants, isInit) ->
                     if (!isInit) {
                         withContext(Dispatchers.IO) {
-                            appShortcutManager.updateAssistantShortcuts(recentlyUsed, assistants)
+                            appShortcutManager.updateAssistantShortcuts(
+                                recentlyUsed,
+                                assistants.filter { !it.isDeleted },
+                            )
                         }
                     }
                 }
@@ -190,13 +193,29 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
             runCatching {
                 val settingsStore = get<SettingsStore>()
                 val conversationRepo = get<me.lucid.domchat.data.repository.ConversationRepository>()
+                val memoryRepository = get<me.lucid.domchat.data.repository.MemoryRepository>()
                 val settings = settingsStore.settingsFlow.first { !it.init }
                 val recovered = settings.withRecoveredAssistantsFromConversations(
                     conversationRepo.getDistinctAssistantIds(),
                 )
-                if (recovered != settings) {
-                    Log.i(TAG, "Restored ${recovered.assistants.size - settings.assistants.size} assistants from existing chats")
-                    settingsStore.update(recovered)
+                val deletedAssistants = recovered.assistants.filter { it.isDeleted }
+                val unusedDeletedIds = deletedAssistants
+                    .filter { conversationRepo.getConversationCountOfAssistant(it.id) == 0 }
+                    .map { it.id }
+                    .toSet()
+                val cleaned = if (unusedDeletedIds.isNotEmpty()) {
+                    unusedDeletedIds.forEach { assistantId ->
+                        memoryRepository.deleteMemoriesOfAssistant(assistantId.toString())
+                    }
+                    recovered.copy(
+                        assistants = recovered.assistants.filterNot { it.id in unusedDeletedIds }
+                    )
+                } else {
+                    recovered
+                }
+                if (cleaned != settings) {
+                    Log.i(TAG, "Assistant sync updated (${cleaned.assistants.size} assistants)")
+                    settingsStore.update(cleaned)
                 }
                 conversationRepo.backfillGeneratedMessageCountsIfNeeded(this@DomChatApp)
             }.onFailure {

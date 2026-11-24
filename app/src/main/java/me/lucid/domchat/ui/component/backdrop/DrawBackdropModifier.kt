@@ -542,10 +542,11 @@ private class DrawBackdropNode(
             if (sizeChanged || recordedBackdropSize == IntSize.Zero) {
                 surfaceDirty = true
                 invalidateDrawCache() // ONLY rebuild RenderEffect/shaders when size changes!
+                invalidateDraw()
             } else if (positionChanged) {
                 surfaceDirty = true   // Fast RenderNode re-record only; DO NOT rebuild shaders!
+                invalidateDraw()
             }
-            invalidateDraw()
         }
     }
 

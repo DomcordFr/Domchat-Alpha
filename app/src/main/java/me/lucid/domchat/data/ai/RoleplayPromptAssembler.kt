@@ -36,9 +36,8 @@ object RoleplayPromptAssembler {
     ): String {
         if (text.isBlank()) return ""
 
-        val now = Date()
-        val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(now)
-        val dateStr = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(now)
+        val timeStr by lazy { SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date()) }
+        val dateStr by lazy { SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date()) }
 
         return MACRO_SINGLE_PASS_REGEX.replace(text) { match ->
             val value = match.value

@@ -639,7 +639,10 @@ fun Settings.resolveConversationContext(conversation: Conversation): Conversatio
 }
 
 fun Settings.getCurrentAssistant(): Assistant {
-    return assistants.find { it.id == assistantId } ?: assistants.firstOrNull() ?: DEFAULT_ASSISTANTS.first()
+    return assistants.find { it.id == assistantId && !it.isDeleted }
+        ?: assistants.firstOrNull { !it.isDeleted }
+        ?: assistants.firstOrNull()
+        ?: DEFAULT_ASSISTANTS.first()
 }
 
 fun Settings.getAssistantById(id: Uuid): Assistant? {

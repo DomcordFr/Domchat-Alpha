@@ -317,8 +317,13 @@ fun ChatDrawerContent(
 
             fun navigateToAssistantConversation(assistant: me.lucid.domchat.data.model.Assistant) {
                 scope.launch {
+                    val targetAssistant = if (assistant.isDeleted) {
+                        settings.getCurrentAssistant()
+                    } else {
+                        assistant
+                    }
                     val draft = inputState.toDraft()
-                    val newConversation = vm.createConversationForAssistant(assistant.id)
+                    val newConversation = vm.createConversationForAssistant(targetAssistant.id)
                     ChatSessionDraftStore.moveDraft(
                         fromConversationId = current.id,
                         toConversationId = newConversation.id,

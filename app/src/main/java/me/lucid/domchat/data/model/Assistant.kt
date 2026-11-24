@@ -138,6 +138,9 @@ data class Assistant(
 
     // Per-assistant UI customization (null = use global setting)
     val uiSettings: AssistantUISettings = AssistantUISettings(),
+
+    // Soft-deleted characters are hidden everywhere except existing chats until their last chat is deleted
+    val isDeleted: Boolean = false,
 ) {
     val firstMessage: String
         get() = presetMessages.firstOrNull { it.role == me.lucid.ai.core.MessageRole.ASSISTANT }?.toText().orEmpty()

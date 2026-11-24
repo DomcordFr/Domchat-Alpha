@@ -8,12 +8,14 @@ import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -44,8 +46,11 @@ class ConversationListVM(
     val searchQuery: StateFlow<String> = _searchQuery
 
     // 聊天列表 (使用 Paging 分页加载，展示所有角色的全部会话)
+    @OptIn(FlowPreview::class)
     val conversations: Flow<PagingData<ConversationListItem>> =
         _searchQuery
+            .debounce(300L)
+            .distinctUntilChanged()
             .flatMapLatest { query ->
                 if (query.isBlank()) {
                     conversationRepo.getAllConversationsPaging()

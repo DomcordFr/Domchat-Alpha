@@ -20,6 +20,7 @@ import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -148,10 +150,21 @@ class ChatVM(
         }
     }
 
-    init {
-        // 添加对话引用
-        chatService.addConversationReference(_conversationId)
+    private val hasActiveReference = java.util.concurrent.atomic.AtomicBoolean(false)
 
+    fun ensureActiveReference() {
+        if (hasActiveReference.compareAndSet(false, true)) {
+            chatService.addConversationReference(_conversationId)
+        }
+    }
+
+    fun releaseReference() {
+        if (hasActiveReference.compareAndSet(true, false)) {
+            chatService.removeConversationReference(_conversationId)
+        }
+    }
+
+    init {
         // 初始化对话
         viewModelScope.launch {
             try {
@@ -180,7 +193,7 @@ class ChatVM(
     override fun onCleared() {
         super.onCleared()
         // 移除对话引用
-        chatService.removeConversationReference(_conversationId)
+        releaseReference()
     }
 
     // 用户设置
@@ -260,8 +273,11 @@ class ChatVM(
     val searchQuery: StateFlow<String> = _searchQuery
 
     // 聊天列表 (使用 Paging 分页加载，展示所有角色的全部会话)
+    @OptIn(FlowPreview::class)
     val conversations: Flow<PagingData<ConversationListItem>> =
         _searchQuery
+            .debounce(300L)
+            .distinctUntilChanged()
             .flatMapLatest { query ->
                 // 根据搜索关键词决定使用哪个数据源
                 if (query.isBlank()) {
@@ -346,6 +362,15 @@ class ChatVM(
 
     // 错误流 (从ChatService获取)
     val errorFlow: SharedFlow<Throwable> = chatService.errorFlow
+    val scopedErrorFlow: SharedFlow<Pair<Uuid?, Throwable>> = chatService.scopedErrorFlow
+
+    fun consumePendingError(conversationId: Uuid = _conversationId): Throwable? {
+        return chatService.consumePendingError(conversationId)
+    }
+
+    fun wasGenerationCancelled(conversationId: Uuid = _conversationId): Boolean {
+        return chatService.wasGenerationCancelled(conversationId)
+    }
 
     // 生成完成 (从ChatService获取)
     val generationDoneFlow: SharedFlow<Uuid> = chatService.generationDoneFlow
@@ -402,15 +427,48 @@ class ChatVM(
 
     fun removeAssistant(assistant: Assistant) {
         if (assistant.id == me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID) return
-        viewModelScope.launch {
+        appScope.launch {
+            val chatCount = withContext(Dispatchers.IO) {
+                conversationRepo.getConversationCountOfAssistant(assistant.id)
+            }
             settingsStore.update { settings ->
-                settings.copy(assistants = settings.assistants.filter { it.id != assistant.id })
+                val fallbackAssistantId = if (settings.assistantId == assistant.id) {
+                    settings.assistants.firstOrNull { it.id != assistant.id && !it.isDeleted }?.id
+                        ?: me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
+                } else {
+                    settings.assistantId
+                }
+                val updatedAssistants = if (chatCount > 0) {
+                    settings.assistants.map {
+                        if (it.id == assistant.id) it.copy(isDeleted = true) else it
+                    }
+                } else {
+                    settings.assistants.filter { it.id != assistant.id }
+                }
+                settings.copy(
+                    assistantId = fallbackAssistantId,
+                    assistants = updatedAssistants,
+                    recentlyUsedAssistants = settings.recentlyUsedAssistants.filter { it != assistant.id },
+                )
             }
         }
     }
 
     fun undoRemoveAssistant(assistant: Assistant) {
-        addAssistant(assistant)
+        val restored = assistant.copy(isDeleted = false)
+        appScope.launch {
+            settingsStore.update { settings ->
+                val hasExisting = settings.assistants.any { it.id == assistant.id }
+                val updated = if (hasExisting) {
+                    settings.assistants.map {
+                        if (it.id == assistant.id) it.copy(isDeleted = false) else it
+                    }
+                } else {
+                    settings.assistants.plus(restored)
+                }
+                settings.copy(assistants = updated)
+            }
+        }
     }
 
     // 设置聊天模型

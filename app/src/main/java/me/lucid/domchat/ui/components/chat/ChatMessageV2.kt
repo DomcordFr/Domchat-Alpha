@@ -155,6 +155,8 @@ import me.lucid.domchat.data.datastore.getEffectiveTTSProvider
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.ai.core.MessageRole as AIMessageRole
 
+private val rpFormattedTextCache = android.util.LruCache<String, String>(512)
+
 @Composable
 private fun rememberFormattedMessageText(
     rawText: String,
@@ -164,8 +166,17 @@ private fun rememberFormattedMessageText(
     isStreaming: Boolean
 ): String {
     if (!isStreaming) {
-        return remember(rawText, assistant, userNickname, scope) {
-            formatRoleplayTextWithCdnImages(
+        val assistantKey = remember(assistant, scope) {
+            if (assistant == null) {
+                "null"
+            } else {
+                val regexSig = assistant.regexes.hashCode()
+                "${assistant.id}:${assistant.effectiveChatName}:$regexSig"
+            }
+        }
+        return remember(rawText, assistantKey, userNickname, scope) {
+            val cacheKey = "${scope.ordinal}:${userNickname.hashCode()}:${assistantKey.hashCode()}:${rawText.length}:${rawText.hashCode()}:$rawText"
+            rpFormattedTextCache.get(cacheKey) ?: formatRoleplayTextWithCdnImages(
                 cleanHtmlImgToMarkdown(
                     rawText.trimStart()
                         .replacePersonaPlaceholders(
@@ -178,7 +189,11 @@ private fun rememberFormattedMessageText(
                             visual = true,
                         )
                 )
-            )
+            ).also { formatted ->
+                if (cacheKey.length <= 16_384) {
+                    rpFormattedTextCache.put(cacheKey, formatted)
+                }
+            }
         }
     }
 
@@ -1170,6 +1185,7 @@ fun ChatMessageTurn(
     onEdit: (MessageNode) -> Unit = {},
     onDelete: (MessageNode) -> Unit = {},
     onUpdate: (MessageNode) -> Unit = {},
+    onDeleteSwipe: ((UIMessage) -> Unit)? = null,
     showRegenerate: Boolean,
     onEditLorebookEntry: ((me.lucid.ai.ui.UsedLorebookEntry) -> Unit)? = null,
     onModeClick: ((me.lucid.ai.ui.UsedMode) -> Unit)? = null,
@@ -1334,6 +1350,7 @@ fun ChatMessageTurn(
                     isIntroLocked = isIntroLocked,
                     onAddCustomGreeting = onAddCustomGreeting,
                     onEdit = onEdit,
+                    onDeleteSwipe = onDeleteSwipe,
                     modifier = modifier
                 )
             }
@@ -1827,6 +1844,7 @@ private fun AssistantMessageTurn(
     isIntroLocked: Boolean = false,
     onAddCustomGreeting: () -> Unit = {},
     onEdit: ((MessageNode) -> Unit)? = null,
+    onDeleteSwipe: ((UIMessage) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isTimelineLive = loading && isLastTurn
@@ -2600,6 +2618,9 @@ private fun AssistantMessageTurn(
                     ttsProviderOverride = ttsProviderOverride,
                     onEdit = { onEdit?.invoke(group.lastNode) },
                     allowVersionSwitching = !isIntroLocked,
+                    isIntroMessage = isIntroMessage,
+                    onAddCustomGreeting = onAddCustomGreeting,
+                    onDeleteSwipe = onDeleteSwipe,
                 )
             }
         }

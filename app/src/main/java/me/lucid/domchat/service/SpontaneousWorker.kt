@@ -109,7 +109,7 @@ class SpontaneousWorker(
 
         val currentHour = LocalTime.now().hour
         val eligibleAssistants = settings.assistants
-            .filter { it.enableSpontaneous }
+            .filter { !it.isDeleted && it.enableSpontaneous }
             .mapNotNull { assistant ->
                 if (!SpontaneousMessaging.isWithinActiveHours(
                         currentHour = currentHour,

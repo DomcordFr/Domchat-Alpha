@@ -2,7 +2,10 @@ package me.lucid.domchat.data.ai
 
 import android.content.Context
 import android.util.Log
+import android.util.LruCache
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
@@ -89,6 +92,34 @@ import kotlin.uuid.Uuid
 private const val TAG = "GenerationHandler"
 private const val SKILL_MANAGEMENT_TOOL_NAME = "manage_skills"
 internal const val MEMORY_SEARCH_TOOL_NAME = "search_memory"
+private val lorebookRegexCache = LruCache<String, Regex>(256)
+
+private fun getCachedLorebookRegex(keyword: String, caseSensitive: Boolean): Regex {
+    val key = "${if (caseSensitive) '1' else '0'}:$keyword"
+    lorebookRegexCache[key]?.let { return it }
+    val compiled = if (caseSensitive) {
+        Regex(keyword)
+    } else {
+        Regex(keyword, RegexOption.IGNORE_CASE)
+    }
+    lorebookRegexCache.put(key, compiled)
+    return compiled
+}
+
+private fun UIMessage.hasAnyNonEmptyResponsePart(): Boolean = parts.any { part ->
+    when (part) {
+        is UIMessagePart.Text -> part.text.isNotBlank()
+        is UIMessagePart.Reasoning -> part.reasoning.isNotBlank()
+        is UIMessagePart.Thinking -> part.thinking.isNotBlank()
+        is UIMessagePart.Image -> part.url.isNotBlank()
+        is UIMessagePart.Audio -> part.url.isNotBlank()
+        is UIMessagePart.Video -> part.url.isNotBlank()
+        is UIMessagePart.Document -> part.url.isNotBlank()
+        is UIMessagePart.ToolCall -> part.toolName.isNotBlank() || part.arguments.isNotBlank()
+        is UIMessagePart.ToolResult -> true
+        else -> false
+    }
+}
 
 private val SMART_CONTEXT_PROTECTED_BODY_KEYS = setOf(
     "messages",
@@ -798,7 +829,7 @@ class GenerationHandler(
             messages = messages.recoverInlineAskUserToolCall(json)
             send(GenerationChunk.Messages(messages))
 
-            val toolCalls = messages.last().getToolCalls()
+            val toolCalls = messages.lastOrNull()?.getToolCalls().orEmpty()
             if (toolCalls.isEmpty()) {
                 val stripped = messages.stripEphemeralToolImagePayloads()
                 if (stripped !== messages) {
@@ -969,23 +1000,20 @@ class GenerationHandler(
         
         // Helper to check if and why lorebook entry activated, respecting entry.scanDepth
         val allMessageTexts = messages.map { it.toText() }
+        val scanTextByDepth = hashMapOf<Int, String>()
         fun getLorebookEntryActivationReason(entry: LorebookEntry, queryEmbedding: List<Float>? = null): String? {
             if (!entry.enabled) return null
             return when (entry.activationType) {
                 LorebookActivationType.ALWAYS -> "Always Active"
                 LorebookActivationType.KEYWORDS -> {
                     val scanDepth = entry.scanDepth.coerceAtLeast(1)
-                    val recentMessages = allMessageTexts.takeLast(scanDepth)
-                    val searchText = recentMessages.joinToString(" ")
+                    val searchText = scanTextByDepth.getOrPut(scanDepth) {
+                        allMessageTexts.takeLast(scanDepth).joinToString(" ")
+                    }
                     val matchingKeyword = entry.keywords.firstOrNull { keyword ->
                         if (entry.useRegex) {
                             try {
-                                val regex = if (entry.caseSensitive) {
-                                    Regex(keyword)
-                                } else {
-                                    Regex(keyword, RegexOption.IGNORE_CASE)
-                                }
-                                regex.containsMatchIn(searchText)
+                                getCachedLorebookRegex(keyword, entry.caseSensitive).containsMatchIn(searchText)
                             } catch (e: Exception) {
                                 Log.w(TAG, "Invalid regex in lorebook entry: $keyword", e)
                                 false
@@ -2159,6 +2187,8 @@ class GenerationHandler(
                 }
             }
         }
+        val initialMessagesSize = messages.size
+        val initialLastMessageId = messages.lastOrNull()?.id
         if (stream) {
             aiLoggingManager.addLog(AILogging.Generation(
                 params = params,
@@ -2197,7 +2227,7 @@ class GenerationHandler(
                     }
                 }
                 val now = System.currentTimeMillis()
-                if (now - lastEmitTime >= 16L || it.usage != null) {
+                if (now - lastEmitTime >= 75L || it.usage != null) {
                     lastEmitTime = now
                     onUpdateMessages(messages)
                 }
@@ -2272,7 +2302,14 @@ class GenerationHandler(
             }
             onUpdateMessages(messages)
         }
-        
+        currentCoroutineContext().ensureActive()
+        val lastGeneratedMsg = messages.lastOrNull()
+        val noNewAssistantReply = messages.size <= initialMessagesSize && lastGeneratedMsg?.id == initialLastMessageId
+        val isEmptyAssistantReply = lastGeneratedMsg?.role != MessageRole.ASSISTANT || !lastGeneratedMsg.hasAnyNonEmptyResponsePart()
+        if (noNewAssistantReply || isEmptyAssistantReply) {
+            throw IllegalStateException("Model returned an empty response. Please try again.")
+        }
+
         // Persist token usage to cumulative stats
         messages.lastOrNull()?.usage?.let { usage ->
             if (usage.promptTokens > 0 || usage.completionTokens > 0) {

@@ -136,36 +136,44 @@ class AssistantVM(
         // Cancel any existing job for this assistant
         deletionJobs[assistant.id]?.cancel()
 
-        viewModelScope.launch {
-            // Optimistic update: Remove from settings immediately
-            try {
-                settingsStore.update { settings ->
-                    settings.copy(
-                        assistants = settings.assistants.filter { it.id != assistant.id }
-                    )
-                }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                PlatformLog.e("AssistantVM", e.message ?: e.toString())
-            }
-        }
-
-        // Start delayed deletion of data — same window as the undo tombstone window.
         val job = appScope.launch {
             try {
-                kotlinx.coroutines.delay(DESTRUCTIVE_UNDO_WINDOW_MS)
-                val conversations = conversationRepo.getConversationsOfAssistant(assistant.id).first()
-                conversations.forEach { conversation ->
-                    chatService.tombstoneConversation(conversation.id)
+                val chatCount = withContext(Dispatchers.IO) {
+                    conversationRepo.getConversationCountOfAssistant(assistant.id)
                 }
-                memoryRepository.deleteMemoriesOfAssistant(assistant.id.toString())
-                conversationRepo.deleteConversationOfAssistant(assistant.id)
-                appStorageRepository.deleteFilesIfUnreferenced(assistant.collectMediaFileRefs())
+                settingsStore.update { settings ->
+                    val fallbackAssistantId = if (settings.assistantId == assistant.id) {
+                        settings.assistants.firstOrNull { it.id != assistant.id && !it.isDeleted }?.id
+                            ?: me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
+                    } else {
+                        settings.assistantId
+                    }
+                    val updatedAssistants = if (chatCount > 0) {
+                        settings.assistants.map {
+                            if (it.id == assistant.id) it.copy(isDeleted = true) else it
+                        }
+                    } else {
+                        settings.assistants.filter { it.id != assistant.id }
+                    }
+                    settings.copy(
+                        assistantId = fallbackAssistantId,
+                        assistants = updatedAssistants,
+                        recentlyUsedAssistants = settings.recentlyUsedAssistants.filter { it != assistant.id },
+                    )
+                }
+                if (chatCount == 0) {
+                    // Delayed purge for unused character so Undo restores instantly
+                    kotlinx.coroutines.delay(DESTRUCTIVE_UNDO_WINDOW_MS)
+                    val latestCount = withContext(Dispatchers.IO) {
+                        conversationRepo.getConversationCountOfAssistant(assistant.id)
+                    }
+                    if (latestCount == 0) {
+                        memoryRepository.deleteMemoriesOfAssistant(assistant.id.toString())
+                        appStorageRepository.deleteFilesIfUnreferenced(assistant.collectMediaFileRefs())
+                    }
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                // Room/query failure during deferred deletion must not crash the host process;
-                // the assistant remains removed from settings (optimistic update above) and can be
-                // retried via undo or a subsequent hub open.
                 PlatformLog.e("AssistantVM", "Deferred deletion failed for ${assistant.id}: ${e.message ?: e.toString()}")
             }
             deletionJobs.remove(assistant.id)
@@ -174,20 +182,23 @@ class AssistantVM(
     }
 
     fun undoRemoveAssistant(assistant: Assistant): Boolean {
-        val job = deletionJobs.remove(assistant.id) ?: return false
-        job.cancel()
+        val job = deletionJobs.remove(assistant.id)
+        job?.cancel()
+        val restored = assistant.copy(isDeleted = false)
 
         viewModelScope.launch {
             // Restore to settings
             try {
                 settingsStore.update { settings ->
-                    if (settings.assistants.none { it.id == assistant.id }) {
-                        settings.copy(
-                            assistants = settings.assistants.plus(assistant)
-                        )
+                    val hasExisting = settings.assistants.any { it.id == assistant.id }
+                    val updated = if (hasExisting) {
+                        settings.assistants.map {
+                            if (it.id == assistant.id) it.copy(isDeleted = false) else it
+                        }
                     } else {
-                        settings
+                        settings.assistants.plus(restored)
                     }
+                    settings.copy(assistants = updated)
                 }
             } catch (e: Exception) {
                 PlatformLog.e("AssistantVM", e.message ?: e.toString())

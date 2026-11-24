@@ -31,6 +31,7 @@ import me.lucid.domchat.R
 import me.lucid.domchat.ui.components.dialog.ChatDestructiveConfirmDialog
 import me.lucid.ai.core.MessageRole
 import me.lucid.ai.ui.MessageNode
+import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.versionSelectionIndices
 import me.lucid.ai.ui.versionSelectionPosition
 
@@ -40,6 +41,7 @@ fun ChatMessageBranchSelector(
     modifier: Modifier = Modifier,
     onUpdate: (MessageNode) -> Unit,
     onGenerateAlternate: (() -> Unit)? = null,
+    onDeleteSwipe: ((UIMessage) -> Unit)? = null,
 ) {
     val versionIndices = remember(node.messages) {
         node.versionSelectionIndices()
@@ -141,13 +143,18 @@ fun ChatMessageBranchSelector(
             message = "This branch will be permanently removed.",
             onConfirm = {
                 branchDeletePending = false
-                val updatedMessages = node.messages.toMutableList()
-                if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
-                    updatedMessages.removeAt(node.selectIndex)
-                    val nonEmpty = updatedMessages.filter { it.parts.isNotEmpty() }
-                    val finalMessages = if (nonEmpty.isNotEmpty()) nonEmpty else updatedMessages
-                    val newSelectIndex = (node.selectIndex - 1).coerceIn(0, finalMessages.lastIndex)
-                    onUpdate(node.copy(messages = finalMessages, selectIndex = newSelectIndex))
+                val activeMsg = node.messages.getOrNull(node.selectIndex)
+                if (onDeleteSwipe != null && activeMsg != null && node.messages.size > 1) {
+                    onDeleteSwipe(activeMsg)
+                } else {
+                    val updatedMessages = node.messages.toMutableList()
+                    if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
+                        updatedMessages.removeAt(node.selectIndex)
+                        val nonEmpty = updatedMessages.filter { it.parts.isNotEmpty() }
+                        val finalMessages = if (nonEmpty.isNotEmpty()) nonEmpty else updatedMessages
+                        val newSelectIndex = (node.selectIndex - 1).coerceIn(0, finalMessages.lastIndex)
+                        onUpdate(node.copy(messages = finalMessages, selectIndex = newSelectIndex))
+                    }
                 }
             },
             onDismiss = { branchDeletePending = false },

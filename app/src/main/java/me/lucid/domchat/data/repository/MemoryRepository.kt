@@ -140,6 +140,43 @@ class MemoryRepository(
         return core + episodic
     }
 
+    private suspend fun prefetchStoredEmbeddings(
+        ids: List<Int>,
+        memoryType: Int,
+        modelId: String,
+    ): Map<Int, List<FloatArray>> {
+        if (ids.isEmpty()) return emptyMap()
+        val result = HashMap<Int, List<FloatArray>>(ids.size)
+        val missingIds = ArrayList<Int>(ids.size)
+        for (id in ids) {
+            val cacheKey = "$memoryType:$id:$modelId"
+            val cached = embeddingCache[cacheKey]
+            if (cached != null) {
+                result[id] = cached
+            } else {
+                missingIds.add(id)
+            }
+        }
+        if (missingIds.isNotEmpty()) {
+            missingIds.chunked(500).forEach { chunk ->
+                val entities = embeddingCacheDAO.getEmbeddingsForMemories(
+                    memoryIds = chunk,
+                    memoryType = memoryType,
+                    modelId = modelId,
+                )
+                for (entity in entities) {
+                    val vectors = decodeEmbeddings(entity.embedding, entity.embeddingBlob)
+                    if (vectors != null) {
+                        val cacheKey = "$memoryType:${entity.memoryId}:$modelId"
+                        embeddingCache[cacheKey] = vectors
+                        result[entity.memoryId] = vectors
+                    }
+                }
+            }
+        }
+        return result
+    }
+
     private suspend fun getStoredEmbeddings(
         memoryId: Int,
         memoryType: Int,
@@ -521,16 +558,39 @@ class MemoryRepository(
         val memories = if (includeCore) memoryDAO.getMemoriesOfAssistantLimited(assistantId, fetchLimit) else emptyList()
         val episodes = if (includeEpisodes) chatEpisodeDAO.getEpisodesOfAssistantLimited(assistantId, fetchLimit) else emptyList()
         var hasCompatibleStoredEmbedding = false
-        
+
+        val activeEmbeddingModelId = if (queryEmbedding != null) {
+            embeddingService.getEmbeddingModelId(assistantId)
+        } else {
+            ""
+        }
+        val prefetchedMemoryEmbeddings = if (queryEmbedding != null && memories.isNotEmpty()) {
+            prefetchStoredEmbeddings(memories.map { it.id }, MemoryType.CORE, activeEmbeddingModelId)
+        } else {
+            emptyMap()
+        }
+        val prefetchedEpisodeEmbeddings = if (queryEmbedding != null && episodes.isNotEmpty()) {
+            prefetchStoredEmbeddings(episodes.map { it.id }, MemoryType.EPISODIC, activeEmbeddingModelId)
+        } else {
+            emptyMap()
+        }
+
         val memoryScores = memories.mapNotNull { memory ->
-                val embeddings = if (queryEmbedding != null) getStoredEmbeddings(
-                    memoryId = memory.id,
-                    memoryType = MemoryType.CORE,
-                    assistantId = assistantId,
-                    existingEmbedding = memory.embedding,
-                    existingBlob = memory.embeddingBlob,
-                    existingModelId = memory.embeddingModelId
-                ) else null
+                val embeddings = if (queryEmbedding != null) {
+                    prefetchedMemoryEmbeddings[memory.id] ?: if (
+                        memory.embeddingModelId == activeEmbeddingModelId &&
+                        (!memory.embedding.isNullOrBlank() || memory.embeddingBlob != null)
+                    ) {
+                        getStoredEmbeddings(
+                            memoryId = memory.id,
+                            memoryType = MemoryType.CORE,
+                            assistantId = assistantId,
+                            existingEmbedding = memory.embedding,
+                            existingBlob = memory.embeddingBlob,
+                            existingModelId = memory.embeddingModelId
+                        )
+                    } else null
+                } else null
 
                 val compatibleEmbeddings = if (queryEmbedding != null) {
                     embeddings.orEmpty().filter { it.isNotEmpty() && it.size == queryEmbedding.size }
@@ -555,14 +615,21 @@ class MemoryRepository(
         }
         
         val episodeScores = episodes.mapNotNull { episode ->
-                val embeddings = if (queryEmbedding != null) getStoredEmbeddings(
-                    memoryId = episode.id,
-                    memoryType = MemoryType.EPISODIC,
-                    assistantId = assistantId,
-                    existingEmbedding = episode.embedding,
-                    existingBlob = episode.embeddingBlob,
-                    existingModelId = episode.embeddingModelId
-                ) else null
+                val embeddings = if (queryEmbedding != null) {
+                    prefetchedEpisodeEmbeddings[episode.id] ?: if (
+                        episode.embeddingModelId == activeEmbeddingModelId &&
+                        (!episode.embedding.isNullOrBlank() || episode.embeddingBlob != null)
+                    ) {
+                        getStoredEmbeddings(
+                            memoryId = episode.id,
+                            memoryType = MemoryType.EPISODIC,
+                            assistantId = assistantId,
+                            existingEmbedding = episode.embedding,
+                            existingBlob = episode.embeddingBlob,
+                            existingModelId = episode.embeddingModelId
+                        )
+                    } else null
+                } else null
 
                 val compatibleEmbeddings = if (queryEmbedding != null) {
                     embeddings.orEmpty().filter { it.isNotEmpty() && it.size == queryEmbedding.size }

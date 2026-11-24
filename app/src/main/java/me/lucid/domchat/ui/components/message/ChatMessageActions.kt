@@ -100,6 +100,9 @@ fun ColumnScope.ChatMessageActionButtons(
     ttsProviderOverride: TTSProviderSetting? = null,
     onEdit: () -> Unit = {},
     allowVersionSwitching: Boolean = true,
+    isIntroMessage: Boolean = false,
+    onAddCustomGreeting: (() -> Unit)? = null,
+    onDeleteSwipe: ((UIMessage) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val settings = LocalSettings.current
@@ -205,7 +208,8 @@ fun ColumnScope.ChatMessageActionButtons(
             ChatMessageBranchSelector(
                 node = node,
                 onUpdate = onUpdate,
-                onGenerateAlternate = onRegenerate,
+                onGenerateAlternate = if (isIntroMessage) onAddCustomGreeting else if (showRegenerate) onRegenerate else null,
+                onDeleteSwipe = if (!isIntroMessage) onDeleteSwipe else null,
             )
         }
     }

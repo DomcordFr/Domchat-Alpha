@@ -130,7 +130,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -449,11 +448,14 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         }
     }
 
-    var baseFilteredAssistants by remember { mutableStateOf(settings.assistants) }
+    val visibleAssistants = remember(settings.assistants) {
+        settings.assistants.filter { !it.isDeleted }
+    }
+    var baseFilteredAssistants by remember { mutableStateOf(visibleAssistants) }
 
     // Fast indexed background search: searches name, creator without scanning multi-KB prompt blobs
     LaunchedEffect(
-        settings.assistants,
+        visibleAssistants,
         debouncedQuery,
         sortOption,
         selectedTagIds
@@ -461,9 +463,9 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
         try {
             withContext(Dispatchers.Default) {
                 val base = if (debouncedQuery.isEmpty()) {
-                    settings.assistants
+                    visibleAssistants
                 } else {
-                    settings.assistants.filter { char ->
+                    visibleAssistants.filter { char ->
                         char.name.lowercase().contains(debouncedQuery) ||
                             (char.creator?.lowercase()?.contains(debouncedQuery) == true)
                     }
@@ -921,7 +923,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
                             groupOrder = groupOrder,
-                            allCount = settings.assistants.size,
+                            allCount = visibleAssistants.size,
                             isInitialized = isGroupTabsInitialized,
                             onGroupSelected = { groupId ->
                                 if (selectedGroupId != groupId) {
@@ -1313,7 +1315,7 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                             selectedGroupId = selectedGroupId,
                             groupNames = groupNames,
                             groupOrder = groupOrder,
-                            allCount = settings.assistants.size,
+                            allCount = visibleAssistants.size,
                             isInitialized = isGroupTabsInitialized,
                             onGroupSelected = { groupId ->
                                 if (selectedGroupId != groupId) {
@@ -1795,9 +1797,6 @@ fun CharacterPortraitCard(
                 else Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.3f), Color.Transparent)),
                 RoundedCornerShape(18.dp)
             )
-            .graphicsLayer {
-                compositingStrategy = CompositingStrategy.Offscreen
-            }
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         // Full-bleed avatar background

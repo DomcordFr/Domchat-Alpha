@@ -536,9 +536,9 @@ class ClaudeProvider(
                                         }.onFailure {
                                             it.printStackTrace()
                                             PlatformLog.w(TAG, "encode image failed: ${part.url}")
-                                            // 如果图片编码失败，添加一个空文本块
+                                            // 如果图片编码失败，添加非空占位文本块以避免 API HTTP 400
                                             put("type", "text")
-                                            put("text", "")
+                                            put("text", "[Image unavailable]")
                                         }
                                     })
                                 }
