@@ -184,6 +184,8 @@ private object SmoothExpandingHeightElement : ModifierNodeElement<SmoothExpandin
     override fun InspectorInfo.inspectableProperties() {
         name = "smoothExpandingHeight"
     }
+    override fun equals(other: Any?): Boolean = other === this
+    override fun hashCode(): Int = System.identityHashCode(this)
 }
 
 private class SmoothExpandingHeightNode : Modifier.Node(), LayoutModifierNode {
