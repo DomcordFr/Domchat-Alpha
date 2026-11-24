@@ -2075,21 +2075,7 @@ private fun AssistantMessageTurn(
                         bubbleAlpha = glassAlpha,
                         largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
                         smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
-                        modifier = Modifier
-                            .widthIn(max = maxWidth)
-                            .then(
-                                if (chatAnimationsEnabled) {
-                                    Modifier.animateContentSize(
-                                        animationSpec = spring(
-                                            dampingRatio = 1.0f,
-                                            stiffness = 200f
-                                        ),
-                                        alignment = Alignment.TopStart
-                                    )
-                                } else {
-                                    Modifier
-                                }
-                            ),
+                        modifier = Modifier.widthIn(max = maxWidth),
                         onClick = handleBubbleClick,
                         bubbleModifier = bubbleModifierLambda,
                     ) {
@@ -2102,23 +2088,37 @@ private fun AssistantMessageTurn(
                             scope = AssistantAffectScope.ASSISTANT,
                             isStreaming = isStreaming,
                         )
-                        MarkdownBlock(
-                            workspaceId = assistant?.workspaceId?.toString(),
-                            content = displayContent,
-                            paragraphSpacing = 12.dp,
-                            streamingTextReveal = isStreaming,
-                            displaySetting = effectiveDisplay,
-                            onRevealComplete = {
-                                if (index == activeTextParts.lastIndex) {
-                                    isTextAnimating = false
-                                }
-                            },
-                            onExpandedStreamingCodeBlockChanged = {
-                                onExpandedStreamingCodeBlockChanged?.invoke()
-                                onStreamingRevealTick?.invoke()
-                            },
-                            onClickCitation = { id -> onCitationClick(id) }
-                        )
+                        Box(
+                            modifier = if (chatAnimationsEnabled) {
+                                Modifier.animateContentSize(
+                                    animationSpec = spring(
+                                        dampingRatio = 0.95f,
+                                        stiffness = 135f
+                                    ),
+                                    alignment = Alignment.TopStart
+                                )
+                            } else {
+                                Modifier
+                            }
+                        ) {
+                            MarkdownBlock(
+                                workspaceId = assistant?.workspaceId?.toString(),
+                                content = displayContent,
+                                paragraphSpacing = 12.dp,
+                                streamingTextReveal = isStreaming,
+                                displaySetting = effectiveDisplay,
+                                onRevealComplete = {
+                                    if (index == activeTextParts.lastIndex) {
+                                        isTextAnimating = false
+                                    }
+                                },
+                                onExpandedStreamingCodeBlockChanged = {
+                                    onExpandedStreamingCodeBlockChanged?.invoke()
+                                    onStreamingRevealTick?.invoke()
+                                },
+                                onClickCitation = { id -> onCitationClick(id) }
+                            )
+                        }
                     }
                 }
             }
