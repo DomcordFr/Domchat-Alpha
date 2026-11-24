@@ -401,6 +401,7 @@ class ChatVM(
     }
 
     fun removeAssistant(assistant: Assistant) {
+        if (assistant.id == me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID) return
         viewModelScope.launch {
             settingsStore.update { settings ->
                 settings.copy(assistants = settings.assistants.filter { it.id != assistant.id })
@@ -604,7 +605,7 @@ class ChatVM(
     }
 
     fun selectMessageNode(nodeId: Uuid, selectIndex: Int) {
-        viewModelScope.launch {
+        appScope.launch {
             chatService.selectMessageNode(_conversationId, nodeId, selectIndex)
         }
     }
@@ -673,7 +674,7 @@ class ChatVM(
     }
 
     fun updateConversation(newConversation: Conversation) {
-        viewModelScope.launch {
+        appScope.launch {
             chatService.saveConversation(_conversationId, newConversation)
         }
     }

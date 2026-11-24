@@ -56,7 +56,7 @@ data class Conversation(
 ) {
     val totalAssistantMessageCount: Int
         get() = if (messageNodes.isNotEmpty()) {
-            messageNodes.sumOf { node -> node.messages.count { it.role == me.lucid.ai.core.MessageRole.ASSISTANT } }
+            countGeneratedAssistantMessages(messageNodes)
         } else {
             assistantMessageCount
         }
@@ -126,6 +126,23 @@ data class Conversation(
     }
 
     companion object {
+        fun countGeneratedAssistantMessages(nodes: List<MessageNode>): Int {
+            val afterGreetings = nodes.dropWhile { node ->
+                node.messages.none { it.role == me.lucid.ai.core.MessageRole.USER }
+            }
+            return afterGreetings.sumOf { node ->
+                node.messages.count { msg ->
+                    msg.role == me.lucid.ai.core.MessageRole.ASSISTANT && msg.parts.any { part ->
+                        when (part) {
+                            is UIMessagePart.Text -> part.text.isNotBlank()
+                            is UIMessagePart.Reasoning -> part.reasoning.isNotBlank()
+                            else -> true
+                        }
+                    }
+                }
+            }
+        }
+
         fun ofId(
             id: Uuid,
             assistantId: Uuid = DEFAULT_ASSISTANT_ID,

@@ -132,6 +132,7 @@ class AssistantVM(
     }
 
     fun removeAssistant(assistant: Assistant) {
+        if (assistant.id == me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID) return
         // Cancel any existing job for this assistant
         deletionJobs[assistant.id]?.cancel()
 

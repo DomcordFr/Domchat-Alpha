@@ -47,7 +47,7 @@ fun Modifier.domChatBlurSource(): Modifier {
     val hazeState = blur.hazeState
     val hostAttached = rememberHazeHostAttached()
     return if (blur.enabled && hazeState != null && hostAttached) {
-        this.hazeSource(hazeState)
+        this.hazeSource(state = hazeState, zIndex = -1f)
     } else {
         this
     }

@@ -2028,7 +2028,8 @@ private fun ChatPageContent(
                                                     frameConversation.copy(
                                                         messageNodes = frameConversation.messageNodes.map { node ->
                                                             if (node.id == newNode.id) newNode else node
-                                                        }
+                                                        },
+                                                        updateAt = java.time.Instant.now()
                                                     )
                                                 )
                                             } else if (oldNode.selectIndex != newNode.selectIndex) {

@@ -2426,16 +2426,25 @@ fun CharacterInspectorSheet(
                             }
                         }
 
+                        val isDefaultGenerical = assistant.id == me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
                         Button(
                             onClick = onDelete,
+                            enabled = !isDefaultGenerical,
                             modifier = Modifier.height(40.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFFE53935),
-                                contentColor = Color.White
+                                contentColor = Color.White,
+                                disabledContainerColor = Color.White.copy(alpha = 0.12f),
+                                disabledContentColor = Color.White.copy(alpha = 0.35f),
                             )
                         ) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Rounded.Delete,
+                                contentDescription = "Delete",
+                                tint = if (isDefaultGenerical) Color.White.copy(alpha = 0.35f) else Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
 
@@ -4044,10 +4053,12 @@ private fun CharacterActionPopover(
                                     }
                                 }
 
+                                val isDefaultGenerical = assistant.id == me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
                                 Surface(
-                                    onClick = { onDelete() },
+                                    onClick = { if (!isDefaultGenerical) onDelete() },
+                                    enabled = !isDefaultGenerical,
                                     shape = RoundedCornerShape(16.dp),
-                                    color = Color(0xFFE53935),
+                                    color = if (isDefaultGenerical) Color.White.copy(alpha = 0.12f) else Color(0xFFE53935),
                                     border = null,
                                     modifier = Modifier
                                         .weight(1f)
@@ -4063,14 +4074,14 @@ private fun CharacterActionPopover(
                                         Icon(
                                             imageVector = Icons.Rounded.Delete,
                                             contentDescription = "Delete",
-                                            tint = Color.White,
+                                            tint = if (isDefaultGenerical) Color.White.copy(alpha = 0.35f) else Color.White,
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Delete",
                                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                            color = Color.White
+                                            color = if (isDefaultGenerical) Color.White.copy(alpha = 0.35f) else Color.White
                                         )
                                     }
                                 }

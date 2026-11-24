@@ -299,9 +299,7 @@ class ConversationRepository(
             ?.toString()
             ?: ""
 
-        val assistantMessageCount = conversation.messageNodes.sumOf { node ->
-            node.messages.count { it.role == me.lucid.ai.core.MessageRole.ASSISTANT }
-        }
+        val assistantMessageCount = Conversation.countGeneratedAssistantMessages(conversation.messageNodes)
 
         return ConversationEntity(
             id = conversation.id.toString(),
@@ -422,7 +420,7 @@ class ConversationRepository(
                                 isFork = entity.isFork,
                                 assistantMessageCount = runCatching {
                                     val decoded = JsonInstant.decodeFromString<List<MessageNode>>(entity.nodes)
-                                    decoded.sumOf { node -> node.messages.count { it.role == me.lucid.ai.core.MessageRole.ASSISTANT } }
+                                    Conversation.countGeneratedAssistantMessages(decoded)
                                 }.getOrDefault(0),
                             )
                         )

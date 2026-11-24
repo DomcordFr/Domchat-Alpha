@@ -21,7 +21,6 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.snap
@@ -1593,13 +1592,7 @@ private fun UserMessageTurn(
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
                     modifier = Modifier
                         .widthIn(max = maxWidth)
-                        .then(swipeModifier)
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = 0.86f,
-                                stiffness = 140f
-                            )
-                        ),
+                        .then(swipeModifier),
                     onClick = {
                         haptics.perform(HapticPattern.Pop)
                         onToggleToolbar()
@@ -1641,31 +1634,14 @@ private fun UserMessageTurn(
                 ) {
                     var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
                     var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
-                    var userEntranceTarget by remember(node.id) { mutableFloatStateOf(if (isHistoryTurn || hasAnimated) 1f else 0f) }
-                    val userEntrance by animateFloatAsState(
-                        targetValue = userEntranceTarget,
-                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
-                        label = "user_message_glow_settle"
-                    )
                     LaunchedEffect(node.id) {
                         if (!hasAnimated) {
-                            userEntranceTarget = 1f
                             // Safety timeout so state eventually settles even if scrolled away
                             kotlinx.coroutines.delay(8000L)
                             hasAnimated = true
                             isRevealing = false
                         }
                     }
-                    val userBlurRadius = (1f - userEntrance) * 6f
-                    val userEntranceStyle = LocalTextStyle.current.copy(
-                        shadow = if (userBlurRadius > 0.01f) {
-                            Shadow(
-                                color = Color(0xFF141520).copy(alpha = 0.6f * (1f - userEntrance)),
-                                offset = Offset.Zero,
-                                blurRadius = userBlurRadius,
-                            )
-                        } else null
-                    )
                     val userNickname = effectiveDisplay.getActivePersona().name
                     AnimatedContent(
                         targetState = node.selectIndex,
@@ -1693,7 +1669,6 @@ private fun UserMessageTurn(
                             workspaceId = assistant?.workspaceId?.toString(),
                             content = displayContent,
                             paragraphSpacing = 12.dp,
-                            style = userEntranceStyle,
                             streamingTextReveal = isRevealing,
                             freshReveal = isRevealing,
                             displaySetting = effectiveDisplay,
@@ -1701,9 +1676,6 @@ private fun UserMessageTurn(
                                 hasAnimated = true
                                 isRevealing = false
                             },
-                            modifier = Modifier
-                                .alpha(userEntrance)
-                                .graphicsLayer { translationY = (1f - userEntrance) * 8.dp.toPx() },
                             onClickCitation = {}
                         )
                     }
@@ -2089,11 +2061,11 @@ private fun AssistantMessageTurn(
                             isStreaming = isStreaming,
                         )
                         Box(
-                            modifier = if (chatAnimationsEnabled) {
+                            modifier = if (chatAnimationsEnabled && !isStreaming && !isTurnActive) {
                                 Modifier.animateContentSize(
                                     animationSpec = spring(
-                                        dampingRatio = 0.95f,
-                                        stiffness = 135f
+                                        dampingRatio = 0.92f,
+                                        stiffness = 220f
                                     ),
                                     alignment = Alignment.TopStart
                                 )
@@ -2493,15 +2465,7 @@ private fun AssistantMessageTurn(
                     bubbleAlpha = glassAlpha,
                     largeRadius = if (isMessengerStyle) 14.dp else 20.dp,
                     smallRadius = if (isMessengerStyle) 4.dp else 6.dp,
-                    modifier = Modifier
-                        .widthIn(max = maxWidth)
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = 0.80f,
-                                stiffness = 220f
-                            ),
-                            alignment = Alignment.TopStart
-                        ),
+                    modifier = Modifier.widthIn(max = maxWidth),
                     onClick = handleBubbleClick,
                     bubbleModifier = morphBubbleModifierLambda,
                 ) {

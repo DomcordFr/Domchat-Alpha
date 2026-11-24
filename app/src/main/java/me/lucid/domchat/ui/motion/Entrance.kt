@@ -61,11 +61,10 @@ fun Modifier.entrance(
     allow: Boolean = true,
     blur: Dp = 0.dp,
 ): Modifier {
-    if (
-        !allow ||
-        motionPolicy.reduceMotion ||
-        !EntrancePlayed.markIfNew(key)
-    ) {
+    val shouldAnimate = remember(key) {
+        allow && !motionPolicy.reduceMotion && EntrancePlayed.markIfNew(key)
+    }
+    if (!shouldAnimate) {
         return this
     }
     val progress = remember(key) { Animatable(0f) }
@@ -79,16 +78,16 @@ fun Modifier.entrance(
         progress.animateTo(
             1f,
             animationSpec = spring(
-                dampingRatio = 0.72f,
-                stiffness = 320f,
+                dampingRatio = 0.86f,
+                stiffness = 220f,
             )
         )
     }
     var result = this.graphicsLayer {
         val p = progress.value
         alpha = p
-        // Organic Apple-style scale pop: 0.93f -> 1.0f, settling with the spring.
-        val scale = 0.93f + 0.07f * p
+        // Smooth organic scale-in: 0.96f -> 1.0f, settling gently with the spring.
+        val scale = 0.96f + 0.04f * p
         scaleX = scale
         scaleY = scale
         val d = distancePx * (1f - p)

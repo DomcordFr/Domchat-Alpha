@@ -588,24 +588,35 @@ private fun RpStyleRuleDialog(
                 
                 OutlinedTextField(
                     value = colorHex,
-                    onValueChange = { 
-                        colorHex = it
-                        // Try to update RGB sliders from hex
-                        try {
-                            val c = Color(android.graphics.Color.parseColor(it))
-                            red = (c.red * 255).toInt()
-                            green = (c.green * 255).toInt()
-                            blue = (c.blue * 255).toInt()
-                        } catch (e: Exception) { }
+                    onValueChange = { raw ->
+                        val cleaned = raw.trim().uppercase().take(7)
+                        colorHex = cleaned
+                        val hexDigits = cleaned.removePrefix("#")
+                        if (hexDigits.length == 6 && hexDigits.all { it in "0123456789ABCDEF" }) {
+                            try {
+                                val c = Color(android.graphics.Color.parseColor("#$hexDigits"))
+                                red = kotlin.math.round(c.red * 255f).toInt().coerceIn(0, 255)
+                                green = kotlin.math.round(c.green * 255f).toInt().coerceIn(0, 255)
+                                blue = kotlin.math.round(c.blue * 255f).toInt().coerceIn(0, 255)
+                            } catch (_: Exception) { }
+                        }
                     },
                     label = { Text(stringResource(R.string.setting_rp_color_hex)) },
                     placeholder = { Text("#808080") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassSurface(
+                            shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
+                            fillColor = Color.Transparent,
+                            borderWidth = 0.5.dp,
+                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                        ),
                     leadingIcon = {
+                        val normalized = if (colorHex.startsWith("#")) colorHex else "#$colorHex"
                         val color = try {
-                            Color(android.graphics.Color.parseColor(colorHex))
-                        } catch (e: Exception) {
+                            Color(android.graphics.Color.parseColor(normalized))
+                        } catch (_: Exception) {
                             Color.Gray
                         }
                         Box(
@@ -616,7 +627,8 @@ private fun RpStyleRuleDialog(
                         )
                     },
                     shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                    colors = me.lucid.domchat.ui.theme.appFieldColors(),                )
+                    colors = me.lucid.domchat.ui.theme.appFieldColors(),
+                )
                 
                 // Color presets row
                 Text(
@@ -707,11 +719,17 @@ private fun RpStyleRuleDialog(
                 accent = true,
                 onClick = {
                     if (pattern.isNotBlank()) {
+                        val digits = colorHex.trim().removePrefix("#").uppercase()
+                        val safeHex = if (digits.length == 6 && digits.all { it in "0123456789ABCDEF" }) {
+                            "#$digits"
+                        } else {
+                            String.format("#%02X%02X%02X", red.coerceIn(0, 255), green.coerceIn(0, 255), blue.coerceIn(0, 255))
+                        }
                         onSave(
                             RpStyleRule(
                                 id = rule?.id ?: kotlin.uuid.Uuid.random().toString(),
                                 pattern = pattern,
-                                colorHex = colorHex,
+                                colorHex = safeHex,
                                 enabled = rule?.enabled ?: true
                             )
                         )

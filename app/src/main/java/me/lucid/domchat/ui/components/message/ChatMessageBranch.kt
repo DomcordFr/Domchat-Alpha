@@ -144,8 +144,10 @@ fun ChatMessageBranchSelector(
                 val updatedMessages = node.messages.toMutableList()
                 if (node.selectIndex in updatedMessages.indices && updatedMessages.size > 1) {
                     updatedMessages.removeAt(node.selectIndex)
-                    val newSelectIndex = (node.selectIndex - 1).coerceAtLeast(0)
-                    onUpdate(node.copy(messages = updatedMessages, selectIndex = newSelectIndex))
+                    val nonEmpty = updatedMessages.filter { it.parts.isNotEmpty() }
+                    val finalMessages = if (nonEmpty.isNotEmpty()) nonEmpty else updatedMessages
+                    val newSelectIndex = (node.selectIndex - 1).coerceIn(0, finalMessages.lastIndex)
+                    onUpdate(node.copy(messages = finalMessages, selectIndex = newSelectIndex))
                 }
             },
             onDismiss = { branchDeletePending = false },

@@ -1851,14 +1851,15 @@ fun MinimalChatInput(
             "#${r.coerceIn(0, 255).toString(16).padStart(2, '0')}${g.coerceIn(0, 255).toString(16).padStart(2, '0')}${b.coerceIn(0, 255).toString(16).padStart(2, '0')}"
 
         fun updateRule(pattern: String, newHex: String) {
+            val normalizedHex = if (newHex.startsWith("#")) newHex.uppercase() else "#${newHex.uppercase()}"
             scope.launch {
                 settingsStore.update { cur ->
                     val list = cur.displaySetting.rpStyleRules.toMutableList()
                     val idx = list.indexOfFirst { it.pattern == pattern }
                     if (idx >= 0) {
-                        list[idx] = list[idx].copy(colorHex = newHex)
+                        list[idx] = list[idx].copy(colorHex = normalizedHex, enabled = true)
                     } else {
-                        list.add(me.lucid.domchat.data.datastore.RpStyleRule(pattern = pattern, colorHex = newHex))
+                        list.add(me.lucid.domchat.data.datastore.RpStyleRule(pattern = pattern, colorHex = normalizedHex, enabled = true))
                     }
                     cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = list))
                 }
@@ -1938,9 +1939,13 @@ fun MinimalChatInput(
                     val isExpanded = expandedIndex == idx
                     val effectivePattern = if (idx == 3) customSymbols.ifBlank { "**" } else pattern
                     val activeRule = currentRules.find { it.pattern == effectivePattern }
-                    val currentHex = activeRule?.colorHex ?: defaultHex
-                    val currentColor = parseColor(currentHex)
-                    val (r, g, b) = parseRgb(currentHex)
+                    val savedHex = (activeRule?.colorHex ?: defaultHex).uppercase()
+                    val (savedR, savedG, savedB) = parseRgb(savedHex)
+                    var draftR by remember(effectivePattern, savedHex) { mutableIntStateOf(savedR) }
+                    var draftG by remember(effectivePattern, savedHex) { mutableIntStateOf(savedG) }
+                    var draftB by remember(effectivePattern, savedHex) { mutableIntStateOf(savedB) }
+                    var draftHex by remember(effectivePattern, savedHex) { mutableStateOf(savedHex) }
+                    val currentColor = parseColor(draftHex)
 
                     Surface(
                         shape = RoundedCornerShape(14.dp),
@@ -1950,7 +1955,7 @@ fun MinimalChatInput(
                             .fillMaxWidth()
                             .liquidGlassSurface(
                                 shape = RoundedCornerShape(14.dp),
-                                fillColor = Color(0xFF000000).copy(alpha = 0.35f),
+                                fillColor = Color.Transparent,
                                 borderWidth = 0.5.dp,
                                 specularBrush = if (isExpanded) LiquidGlassTokens.SpecularBorderBrush else LiquidGlassTokens.SpecularBorderSubtle
                             )
@@ -2001,9 +2006,9 @@ fun MinimalChatInput(
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
                                     Text(
-                                        text = currentHex.uppercase(),
+                                        text = draftHex.uppercase(),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White.copy(alpha = 0.75f),
+                                        color = Color.White.copy(alpha = 0.85f),
                                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                                     )
                                 }
@@ -2028,15 +2033,15 @@ fun MinimalChatInput(
                                         onValueChange = { newSym ->
                                             val oldSym = customSymbols
                                             customSymbols = newSym
-                                            if (newSym.isNotBlank()) {
+                                            if (newSym.isNotBlank() && newSym !in listOf(">", "*", "`")) {
                                                 scope.launch {
                                                     settingsStore.update { cur ->
                                                         val list = cur.displaySetting.rpStyleRules.toMutableList()
-                                                        val existingIdx = list.indexOfFirst { it.pattern == oldSym }
+                                                        val existingIdx = list.indexOfFirst { it.pattern == oldSym && it.pattern !in listOf(">", "*", "`") }
                                                         if (existingIdx >= 0) {
-                                                            list[existingIdx] = list[existingIdx].copy(pattern = newSym)
+                                                            list[existingIdx] = list[existingIdx].copy(pattern = newSym, enabled = true)
                                                         } else {
-                                                            list.add(me.lucid.domchat.data.datastore.RpStyleRule(pattern = newSym, colorHex = currentHex))
+                                                            list.add(me.lucid.domchat.data.datastore.RpStyleRule(pattern = newSym, colorHex = draftHex, enabled = true))
                                                         }
                                                         cur.copy(displaySetting = cur.displaySetting.copy(rpStyleRules = list))
                                                     }
@@ -2059,10 +2064,59 @@ fun MinimalChatInput(
                                     )
                                 }
 
-                                // RGB sliders with live color updates and immediate auto-save
+                                // Liquid glass Hex Code input
+                                OutlinedTextField(
+                                    value = draftHex,
+                                    onValueChange = { rawInput ->
+                                        val cleaned = rawInput.trim().uppercase().take(7)
+                                        draftHex = cleaned
+                                        val hexDigits = cleaned.removePrefix("#")
+                                        if (hexDigits.length == 6 && hexDigits.all { it in "0123456789ABCDEF" }) {
+                                            val normalized = "#$hexDigits"
+                                            val (nr, ng, nb) = parseRgb(normalized)
+                                            draftR = nr
+                                            draftG = ng
+                                            draftB = nb
+                                            updateRule(effectivePattern, normalized)
+                                        }
+                                    },
+                                    label = { Text("Hex Code") },
+                                    placeholder = { Text("#FFFFFF") },
+                                    singleLine = true,
+                                    leadingIcon = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clip(CircleShape)
+                                                .background(currentColor)
+                                                .border(0.5.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .liquidGlassSurface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            fillColor = Color.Transparent,
+                                            borderWidth = 0.5.dp,
+                                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle
+                                        ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        cursorColor = Color.White,
+                                    )
+                                )
+                                Spacer(Modifier.height(12.dp))
+
+                                // Smooth RGB sliders with local drag state and commit on release
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     // Red Slider
                                     Row(
@@ -2070,17 +2124,21 @@ fun MinimalChatInput(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("Red", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
-                                        Text("$r", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                        Text("Red", style = MaterialTheme.typography.bodySmall, color = Color(0xFFFF5252), fontWeight = FontWeight.SemiBold)
+                                        Text("$draftR", style = MaterialTheme.typography.labelSmall, color = Color.White)
                                     }
                                     DomChatSlider(
-                                        value = r.toFloat(),
+                                        value = draftR.toFloat(),
                                         onValueChange = { newR ->
-                                            val newHex = rgbToHex(newR.toInt(), g, b)
-                                            updateRule(effectivePattern, newHex)
+                                            draftR = newR.toInt().coerceIn(0, 255)
+                                            draftHex = rgbToHex(draftR, draftG, draftB).uppercase()
+                                        },
+                                        onValueChangeFinished = {
+                                            updateRule(effectivePattern, rgbToHex(draftR, draftG, draftB))
                                         },
                                         valueRange = 0f..255f,
-                                        steps = 255
+                                        activeTrackColorOverride = Color(0xFFFF5252),
+                                        thumbColorOverride = Color(0xFFFF5252),
                                     )
 
                                     // Green Slider
@@ -2089,17 +2147,21 @@ fun MinimalChatInput(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("Green", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
-                                        Text("$g", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                        Text("Green", style = MaterialTheme.typography.bodySmall, color = Color(0xFF4CAF50), fontWeight = FontWeight.SemiBold)
+                                        Text("$draftG", style = MaterialTheme.typography.labelSmall, color = Color.White)
                                     }
                                     DomChatSlider(
-                                        value = g.toFloat(),
+                                        value = draftG.toFloat(),
                                         onValueChange = { newG ->
-                                            val newHex = rgbToHex(r, newG.toInt(), b)
-                                            updateRule(effectivePattern, newHex)
+                                            draftG = newG.toInt().coerceIn(0, 255)
+                                            draftHex = rgbToHex(draftR, draftG, draftB).uppercase()
+                                        },
+                                        onValueChangeFinished = {
+                                            updateRule(effectivePattern, rgbToHex(draftR, draftG, draftB))
                                         },
                                         valueRange = 0f..255f,
-                                        steps = 255
+                                        activeTrackColorOverride = Color(0xFF4CAF50),
+                                        thumbColorOverride = Color(0xFF4CAF50),
                                     )
 
                                     // Blue Slider
@@ -2108,17 +2170,21 @@ fun MinimalChatInput(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("Blue", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
-                                        Text("$b", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                        Text("Blue", style = MaterialTheme.typography.bodySmall, color = Color(0xFF448AFF), fontWeight = FontWeight.SemiBold)
+                                        Text("$draftB", style = MaterialTheme.typography.labelSmall, color = Color.White)
                                     }
                                     DomChatSlider(
-                                        value = b.toFloat(),
+                                        value = draftB.toFloat(),
                                         onValueChange = { newB ->
-                                            val newHex = rgbToHex(r, g, newB.toInt())
-                                            updateRule(effectivePattern, newHex)
+                                            draftB = newB.toInt().coerceIn(0, 255)
+                                            draftHex = rgbToHex(draftR, draftG, draftB).uppercase()
+                                        },
+                                        onValueChangeFinished = {
+                                            updateRule(effectivePattern, rgbToHex(draftR, draftG, draftB))
                                         },
                                         valueRange = 0f..255f,
-                                        steps = 255
+                                        activeTrackColorOverride = Color(0xFF448AFF),
+                                        thumbColorOverride = Color(0xFF448AFF),
                                     )
                                 }
                             }

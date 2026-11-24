@@ -150,6 +150,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
     }
 
     fun requestDeleteAssistant(assistant: Assistant) {
+        if (assistant.id == me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID) return
         scope.launch {
             pendingAssistantImpact = vm.loadDeleteImpact(assistant)
             pendingAssistantDelete = assistant

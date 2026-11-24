@@ -362,13 +362,25 @@ internal fun mergeRegeneratedAssistantTurn(
         if (nodeIndex < currentTurnEnd) {
             val node = nodes[nodeIndex]
             val existingIndex = node.messages.indexOfFirst { it.id == taggedMessage.id }
-            val updatedMessages = node.messages.toMutableList()
-            val selectedIndex = if (existingIndex >= 0) {
-                updatedMessages[existingIndex] = taggedMessage
-                existingIndex
+            val blankPlaceholderIndex = if (existingIndex < 0) {
+                node.messages.indexOfLast { it.versionTag == versionTag && it.parts.isEmpty() }
             } else {
-                updatedMessages += taggedMessage
-                updatedMessages.lastIndex
+                -1
+            }
+            val updatedMessages = node.messages.toMutableList()
+            val selectedIndex = when {
+                existingIndex >= 0 -> {
+                    updatedMessages[existingIndex] = taggedMessage
+                    existingIndex
+                }
+                blankPlaceholderIndex >= 0 -> {
+                    updatedMessages[blankPlaceholderIndex] = taggedMessage
+                    blankPlaceholderIndex
+                }
+                else -> {
+                    updatedMessages += taggedMessage
+                    updatedMessages.lastIndex
+                }
             }
             nodes[nodeIndex] = node.copy(messages = updatedMessages, selectIndex = selectedIndex)
         } else {
@@ -1867,14 +1879,16 @@ class ChatService(
                     updateAt = Instant.now()
                 )
                 val cleanedConversation = updatedConversation.removeTrailingEmptyOcrPlaceholder()
-                updateConversation(conversationId, cleanedConversation)
-                val completionPersisted = if (getConversationPersistenceMode(conversationId) == ChatPersistenceMode.NORMAL) {
-                    persistConversationToRepository(
-                        conversation = cleanedConversation,
-                        preserveConsolidation = preserveConsolidation,
-                    )
-                } else {
-                    true
+                val completionPersisted = withContext(kotlinx.coroutines.NonCancellable) {
+                    updateConversation(conversationId, cleanedConversation)
+                    if (getConversationPersistenceMode(conversationId) == ChatPersistenceMode.NORMAL) {
+                        persistConversationToRepository(
+                            conversation = cleanedConversation,
+                            preserveConsolidation = preserveConsolidation,
+                        )
+                    } else {
+                        true
+                    }
                 }
 
                 // Show notification if app is not in foreground
@@ -2757,36 +2771,32 @@ class ChatService(
 
         return if (node.messages.size == 1 && deleteVersionTag == null) {
             conversation.copy(
-                messageNodes = conversation.messageNodes.filterIndexed { index, _ -> index != nodeIndex }
+                messageNodes = conversation.messageNodes.filterIndexed { index, _ -> index != nodeIndex },
+                updateAt = Instant.now()
             )
         } else {
             val updatedNodes = conversation.messageNodes.mapIndexedNotNull { index, messageNode ->
-                val canDeleteByVersionTag = deleteVersionTag != null &&
-                    index in turnStartIndex until turnEndIndex &&
-                    messageNode.role != MessageRole.USER
-
-                val remainingMessages = messageNode.messages.filter { currentMessage ->
-                    if (canDeleteByVersionTag && currentMessage.versionTag == deleteVersionTag) {
-                        false
+                if (index == nodeIndex) {
+                    val removedIndex = messageNode.messages.indexOfFirst { it.id == message.id }
+                    val remainingMessages = messageNode.messages
+                        .filter { it.id != message.id && it.parts.isNotEmpty() }
+                    if (remainingMessages.isEmpty()) {
+                        null
                     } else {
-                        currentMessage.id != message.id
-                    }
-                }
-
-                if (remainingMessages.isEmpty()) {
-                    null
-                } else {
-                    messageNode.copy(
-                        messages = remainingMessages,
-                        selectIndex = if (messageNode.selectIndex >= remainingMessages.size) {
-                            remainingMessages.lastIndex
-                        } else {
-                            messageNode.selectIndex
+                        val nextSelectIndex = when {
+                            removedIndex > 0 -> (removedIndex - 1).coerceIn(0, remainingMessages.lastIndex)
+                            else -> messageNode.selectIndex.coerceIn(0, remainingMessages.lastIndex)
                         }
-                    )
+                        messageNode.copy(
+                            messages = remainingMessages,
+                            selectIndex = nextSelectIndex
+                        )
+                    }
+                } else {
+                    messageNode
                 }
             }
-            conversation.copy(messageNodes = updatedNodes)
+            conversation.copy(messageNodes = updatedNodes, updateAt = Instant.now())
         }
     }
 
