@@ -66,8 +66,7 @@ Already have a folder of SillyTavern cards? Domchat also supports importing stan
 
 <div align="center">
 
-<!-- SCREENSHOT PLACEHOLDER: JanitorAI Hub screen showing bot discovery and one-tap import -->
-<img src="./assets/screen-jai-hub.png" alt="JanitorAI Hub in Domchat" width="75%" />
+<img src="./assets/screen-jai-hub.png" alt="JanitorAI Hub browsing, bot pop-over, and greetings preview" width="90%" />
 
 </div>
 
@@ -103,8 +102,7 @@ Domchat is built to keep you inside the story, not staring at a sterile chatbot 
 
 <div align="center">
 
-<!-- SCREENSHOT PLACEHOLDER: Active roleplay chat showcasing AMOLED black / Liquid Glass theme and custom wallpaper -->
-<img src="./assets/screen-chat-glass.png" alt="Liquid Glass Chat Interface" width="75%" />
+<img src="./assets/screen-chat-glass.png" alt="Liquid Glass chat with user message, reasoning badge, and swipeable replies" width="90%" />
 
 </div>
 
