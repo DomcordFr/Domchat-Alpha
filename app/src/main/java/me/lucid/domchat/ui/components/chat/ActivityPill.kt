@@ -15,12 +15,14 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -316,9 +318,10 @@ fun buildActivityItemsFromMultiple(state: ActivityState.CompletedMultiple): List
 private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
-private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 1.0f, stiffness = 200f)
-private val PILL_LIVE_GROWTH_SPEC = spring<IntSize>(dampingRatio = 1.0f, stiffness = 600f)
-private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 1.0f, stiffness = 200f)
+private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 550f)
+private val PILL_COLLAPSE_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 750f)
+private val PILL_LIVE_GROWTH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 600f)
+private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 550f)
 
 /**
  * Position of a pill in a row of pills.
@@ -695,10 +698,10 @@ private fun AnimatedSinglePill(
         AnimatedContent(
             targetState = requestedContentState,
             modifier = if (chatAnimationsEnabled) {
-                val sizeSpec = if (isExpandedReasoning && state is ActivityState.Reasoning) {
-                    PILL_LIVE_GROWTH_SPEC
-                } else {
-                    PILL_MORPH_SPEC
+                val sizeSpec = when {
+                    isExpandedReasoning && state is ActivityState.Reasoning -> PILL_LIVE_GROWTH_SPEC
+                    !surfaceExpanded -> PILL_COLLAPSE_SPEC
+                    else -> PILL_MORPH_SPEC
                 }
                 Modifier.animateContentSize(
                     animationSpec = sizeSpec,
@@ -706,9 +709,9 @@ private fun AnimatedSinglePill(
                 )
             } else Modifier,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
-                    fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
-                    PILL_MORPH_SPEC
+                (fadeIn(animationSpec = tween(180, easing = LinearOutSlowInEasing)) togetherWith
+                    fadeOut(animationSpec = tween(100, easing = FastOutLinearInEasing))) using SizeTransform(clip = false) { _, _ ->
+                    snap()
                 }
             },
             contentAlignment = Alignment.TopStart,
@@ -1193,8 +1196,9 @@ private fun UnifiedReasoningPill(
 
         AnimatedVisibility(
             visible = isExpanded && lastPreviewText.value.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(240, delayMillis = 60, easing = LinearOutSlowInEasing)),
-            exit = fadeOut(animationSpec = tween(120, easing = FastOutLinearInEasing))
+            enter = fadeIn(animationSpec = tween(220, delayMillis = 40, easing = LinearOutSlowInEasing)),
+            exit = shrinkVertically(animationSpec = tween(140, easing = FastOutLinearInEasing)) +
+                fadeOut(animationSpec = tween(90, easing = FastOutLinearInEasing))
         ) {
             MarkdownBlock(
                 content = lastPreviewText.value,

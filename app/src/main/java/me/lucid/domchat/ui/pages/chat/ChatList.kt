@@ -375,6 +375,7 @@ private fun SharedTransitionScope.ChatListNormal(
     var isRecentScroll by remember { mutableStateOf(false) }
     var followStreamingBottom by remember { mutableStateOf(true) }
     var forceBottomAttachPending by remember(conversation.id) { mutableStateOf(false) }
+    var isLastTurnActive by remember(conversation.id) { mutableStateOf(false) }
     val conversationUpdated by rememberUpdatedState(conversation)
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -402,7 +403,7 @@ private fun SharedTransitionScope.ChatListNormal(
             do {
                 hasPendingStreamingSnap = false
                 snapToStreamingBottom()
-                delay(64)
+                withFrameNanos { }
             } while (hasPendingStreamingSnap)
         }
     }
@@ -752,11 +753,16 @@ private fun SharedTransitionScope.ChatListNormal(
                                 showRegenerate = showRegenerate,
                                 onExpandedStreamingCodeBlockChanged = if (loading && isLastTurn) onStreamingCodeBlockExpanded else null,
                                 onStreamingRevealTick = if (isLastTurn) onStreamingTextRevealTick else null,
-                                onTurnActiveChanged = if (isLastTurn) onAssistantTurnActiveChanged else null,
+                                onTurnActiveChanged = if (isLastTurn) {
+                                    { active ->
+                                        isLastTurnActive = active
+                                        onAssistantTurnActiveChanged?.invoke(active)
+                                    }
+                                } else null,
                                 isIntroMessage = isIntroMessage,
                                 isIntroLocked = isIntroLocked,
                                 onAddCustomGreeting = onAddCustomGreeting,
-                                modifier = if (isLastTurn) {
+                                modifier = if (isLastTurn && (loading || isLastTurnActive || !isPreexisting)) {
                                     Modifier.onSizeChanged {
                                         if (followStreamingBottom && !state.isScrollInProgress) {
                                             requestSnapToStreamingBottom()

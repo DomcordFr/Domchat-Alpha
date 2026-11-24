@@ -1,5 +1,6 @@
 package me.lucid.domchat.ui.components.ai
 
+import me.lucid.domchat.ui.theme.liquidGlass
 import me.lucid.domchat.ui.theme.liquidGlassSurface
 import me.lucid.domchat.ui.theme.frostedGlassSurface
 import me.lucid.domchat.ui.theme.liquidInteractiveGlass
@@ -1256,6 +1257,7 @@ fun MinimalChatInput(
                                 ) { action ->
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
+                                            val display = settings.displaySetting
                                             val stopBorderBrush = Brush.verticalGradient(
                                                 listOf(
                                                     Color(0xFFFF4D4D).copy(alpha = 0.50f),
@@ -1266,12 +1268,29 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color(0xFF5A0C0C).copy(alpha = 0.55f))
-                                                    .border(
-                                                        width = 0.5.dp,
-                                                        brush = stopBorderBrush,
-                                                        shape = CircleShape,
+                                                    .then(
+                                                        if (display.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlass(
+                                                                shape = CircleShape,
+                                                                blurRadius = display.glassBlur.dp,
+                                                                refractionHeight = (display.glassDepthScale * 8f).dp,
+                                                                refractionAmount = (display.glassDepthScale * 12f).dp,
+                                                                depthEffect = true,
+                                                                tintColor = Color.Transparent,
+                                                                specularIntensity = display.glassSpecularIntensity,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
+                                                                isFloatingControl = true,
+                                                            )
+                                                        }
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1285,15 +1304,33 @@ fun MinimalChatInput(
                                         }
                                         DomChatComposerAction.Send,
                                         DomChatComposerAction.QuestionnaireSubmit -> {
+                                            val display = settings.displaySetting
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color.White.copy(alpha = 0.14f))
-                                                    .border(
-                                                        width = 0.5.dp,
-                                                        brush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                        shape = CircleShape,
+                                                    .then(
+                                                        if (display.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = Color.Transparent,
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlass(
+                                                                shape = CircleShape,
+                                                                blurRadius = display.glassBlur.dp,
+                                                                refractionHeight = (display.glassDepthScale * 8f).dp,
+                                                                refractionAmount = (display.glassDepthScale * 12f).dp,
+                                                                depthEffect = true,
+                                                                tintColor = Color.Transparent,
+                                                                specularIntensity = display.glassSpecularIntensity,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = Color.Transparent,
+                                                                isFloatingControl = true,
+                                                            )
+                                                        }
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1577,6 +1614,7 @@ fun MinimalChatInput(
                                 ) { action ->
                                     when (action) {
                                         DomChatComposerAction.Loading -> {
+                                            val display = settings.displaySetting
                                             val stopBorderBrush = Brush.verticalGradient(
                                                 listOf(
                                                     Color(0xFFFF4D4D).copy(alpha = 0.50f),
@@ -1587,12 +1625,29 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color(0xFF5A0C0C).copy(alpha = 0.55f))
-                                                    .border(
-                                                        width = 0.5.dp,
-                                                        brush = stopBorderBrush,
-                                                        shape = CircleShape,
+                                                    .then(
+                                                        if (display.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlass(
+                                                                shape = CircleShape,
+                                                                blurRadius = display.glassBlur.dp,
+                                                                refractionHeight = (display.glassDepthScale * 8f).dp,
+                                                                refractionAmount = (display.glassDepthScale * 12f).dp,
+                                                                depthEffect = true,
+                                                                tintColor = Color.Transparent,
+                                                                specularIntensity = display.glassSpecularIntensity,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = stopBorderBrush,
+                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
+                                                                isFloatingControl = true,
+                                                            )
+                                                        }
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1606,15 +1661,33 @@ fun MinimalChatInput(
                                         }
                                         DomChatComposerAction.Send,
                                         DomChatComposerAction.QuestionnaireSubmit -> {
+                                            val display = settings.displaySetting
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color.White.copy(alpha = 0.14f))
-                                                    .border(
-                                                        width = 0.5.dp,
-                                                        brush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                        shape = CircleShape,
+                                                    .then(
+                                                        if (display.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = Color.Transparent,
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlass(
+                                                                shape = CircleShape,
+                                                                blurRadius = display.glassBlur.dp,
+                                                                refractionHeight = (display.glassDepthScale * 8f).dp,
+                                                                refractionAmount = (display.glassDepthScale * 12f).dp,
+                                                                depthEffect = true,
+                                                                tintColor = Color.Transparent,
+                                                                specularIntensity = display.glassSpecularIntensity,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = Color.Transparent,
+                                                                isFloatingControl = true,
+                                                            )
+                                                        }
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {

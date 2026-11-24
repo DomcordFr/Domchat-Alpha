@@ -20,6 +20,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -53,11 +54,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.Constraints
 import kotlin.math.roundToInt
-import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -165,68 +170,72 @@ import me.lucid.ai.core.MessageRole as AIMessageRole
 private val rpFormattedTextCache = android.util.LruCache<String, String>(512)
 
 /**
- * Smoothly animates vertical height changes without hard clipping via clipToBounds().
- * Snaps synchronously on the initial layout pass so preexisting messages never flash or
- * collapse to 0 height, and caps lag to ~1 line height during rapid streaming chunks.
+ * Smoothly animates vertical height changes using a LayoutModifierNode without
+ * hard clipping via clipToBounds(). Snaps immediately on the first measurement
+ * and resets cleanly when recycled by LazyColumn, avoiding layout-phase state
+ * mutations or snapshotFlow frame lag on line wraps.
  */
-@Composable
-private fun Modifier.smoothExpandingHeight(
-    enabled: Boolean,
-): Modifier {
-    if (!enabled) return this
-    val density = LocalDensity.current
-    val maxLagPx = with(density) { 44.dp.toPx() }
-    var targetHeight by remember { mutableIntStateOf(-1) }
-    var hasSnappedInitial by remember { mutableStateOf(false) }
-    val animatedHeight = remember { Animatable(0f) }
+private fun Modifier.smoothExpandingHeight(enabled: Boolean = true): Modifier =
+    if (enabled) this.then(SmoothExpandingHeightElement) else this
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { targetHeight }.collectLatest { next ->
-            if (next < 0) return@collectLatest
-            val target = next.toFloat()
-            if (!hasSnappedInitial) {
-                animatedHeight.snapTo(target)
-                hasSnappedInitial = true
-                return@collectLatest
-            }
-            val current = animatedHeight.value
-            if (target > current) {
-                if (target - current > maxLagPx) {
-                    animatedHeight.snapTo(target - maxLagPx)
-                }
-                animatedHeight.animateTo(
-                    targetValue = target,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = 520f,
-                    ),
-                    initialVelocity = animatedHeight.velocity,
-                )
-            } else if (target < current) {
-                animatedHeight.animateTo(
-                    targetValue = target,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = 380f,
-                    ),
-                    initialVelocity = animatedHeight.velocity,
-                )
-            }
-        }
+private object SmoothExpandingHeightElement : ModifierNodeElement<SmoothExpandingHeightNode>() {
+    override fun create(): SmoothExpandingHeightNode = SmoothExpandingHeightNode()
+    override fun update(node: SmoothExpandingHeightNode) = Unit
+    override fun InspectorInfo.inspectableProperties() {
+        name = "smoothExpandingHeight"
+    }
+}
+
+private class SmoothExpandingHeightNode : Modifier.Node(), LayoutModifierNode {
+    private data class AnimData(
+        val anim: Animatable<Float, AnimationVector1D>,
+        var targetHeight: Int,
+    )
+
+    private var animData: AnimData? = null
+
+    override fun onReset() {
+        super.onReset()
+        animData = null
     }
 
-    return this.layout { measurable, constraints ->
+    override fun onDetach() {
+        super.onDetach()
+        animData = null
+    }
+
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints,
+    ): MeasureResult {
         val placeable = measurable.measure(constraints)
-        val measuredHeight = placeable.height
-        if (targetHeight != measuredHeight) {
-            targetHeight = measuredHeight
+        val targetHeight = placeable.height
+        if (isLookingAhead) {
+            return layout(placeable.width, targetHeight) {
+                placeable.placeRelative(0, 0)
+            }
         }
-        val displayHeight = if (hasSnappedInitial) {
-            animatedHeight.value.roundToInt().coerceAtLeast(0)
-        } else {
-            measuredHeight
+        val data = animData
+        if (data == null) {
+            animData = AnimData(Animatable(targetHeight.toFloat()), targetHeight)
+            return layout(placeable.width, targetHeight) {
+                placeable.placeRelative(0, 0)
+            }
         }
-        layout(placeable.width, displayHeight) {
+        if (targetHeight != data.targetHeight) {
+            data.targetHeight = targetHeight
+            coroutineScope.launch {
+                data.anim.animateTo(
+                    targetValue = targetHeight.toFloat(),
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = if (targetHeight > data.anim.value) 480f else 380f,
+                    ),
+                )
+            }
+        }
+        val displayHeight = data.anim.value.roundToInt().coerceAtLeast(0)
+        return layout(placeable.width, displayHeight) {
             placeable.placeRelative(0, 0)
         }
     }
@@ -1201,9 +1210,13 @@ internal fun deriveActivityState(
         }
     }
     
-    // Check for active reasoning
+    // Check for active reasoning (close immediately once response text begins after it)
+    val lastReasoningIndex = parts.indexOfLast { it is UIMessagePart.Reasoning }
+    val hasTextAfterLastReasoning = lastReasoningIndex >= 0 && parts.drop(lastReasoningIndex + 1)
+        .filterIsInstance<UIMessagePart.Text>()
+        .any { it.text.isNotBlank() }
     val activeReasoning = reasoningParts.lastOrNull { it.finishedAt == null }
-    if (activeReasoning != null) {
+    if (activeReasoning != null && !hasTextAfterLastReasoning) {
         return ActivityState.Reasoning(
             startTimeMs = activeReasoning.createdAt.toEpochMilliseconds(),
             title = activeReasoning.title,
