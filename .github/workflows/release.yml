@@ -132,19 +132,25 @@ jobs:
           tag_name: v1.0
           name: "Domchat v1.0"
           body: |
-            ### Domchat v1.0
-            - **Commit**: `${{ github.sha }}`
-            - **Branch**: `${{ github.ref_name }}`
-            
-            Android client for roleplay and character interactions with LLMs, SillyTavern cards, lorebooks, and voice playback.
-            
-            #### Features & Fixes:
-            - **Reasoning Badge & Glass Styling**: Synchronized reasoning badges (active, expanded thought view, "Reasoned for [time]", and waiting dots) with chat bubble blur, tone, luminance, and transparency controls.
-            - **Persona Picker Glass Theme**: Enhanced user persona picker popup with comfortable button spacing, dark glassy surfaces, and specular highlights.
-            - **Chat Bar Layout**: Resolved message input text overlap with optical context circle icon.
-            - **All-in-One Lossless Backup & Restore**: Added one-tap complete export and seamless import for all settings, prompts, exact values, images, avatars, backgrounds, characters, and chats.
-            - **Backup Sanitization**: Purged legacy names and defaulted cloud backup folder to `domchat_backups`.
-            - **TTS Player Background Blur**: Integrated with active chat blur provider for real-time frosted glass effects.
+            ## Welcome to Domchat v1.0
+
+            Domchat is a native Android AI roleplay app built for immersion, privacy, and actually owning your chats. No ads, no pop-ups, no paywalls, and no accounts.
+
+            ### Highlights
+            - **Built-In JanitorAI Hub**: Browse and import bots directly from JanitorAI straight into your local library, plus full support for SillyTavern Character Card V2 (`.png` and `.json`).
+            - **AMOLED Black & Liquid Glass Design**: Customize wallpapers, glass blur, transparency, and fonts in a smooth native Android interface built for long reading sessions.
+            - **Roleplay Tools Included**: Multiple user personas, keyword-triggered Lorebooks (World Info), swipe-to-regenerate alternate replies, message editing, Context Budget controls, and Character Notes.
+            - **Bring Your Own AI (or Run Offline)**: Connect OpenRouter, Nano-GPT, Featherless, DeepSeek, Claude, OpenAI, or any OpenAI-compatible proxy, or run local on-device models with Google LiteRT.
+            - **Natural Voice (TTS & STT)**: Listen to character replies with Fish Audio, ElevenLabs, OpenAI Audio, or free Android system voices, plus local on-device Speech-to-Text.
+            - **100% Local Ownership**: All chats, characters, personas, and lorebooks stay on your phone with one-tap lossless backup and restore.
+
+            ### Which APK Should I Download?
+            - **`Domchat_1.0_stable-arm64-v8a-release.apk`** (Recommended): Best choice for almost all modern Android phones.
+            - **`Domchat_1.0_stable-universal-release.apk`**: Works on all Android architectures if you are unsure.
+
+            ### Links & Community
+            - **Discord Server**: [discord.gg/domcord](https://discord.gg/domcord)
+            - **Full Guide & Source Code**: [DomcordFr/Domchat](https://github.com/DomcordFr/Domchat)
           files: app/build/outputs/apk/**/*.apk
           draft: false
           prerelease: false

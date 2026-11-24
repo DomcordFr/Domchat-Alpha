@@ -1,7 +1,8 @@
 <div align="center">
 
-<!-- BANNER PLACEHOLDER: Drop your hero banner at ./assets/banner-hero.png and uncomment the line below when ready -->
-<!-- <img src="./assets/banner-hero.png" alt="Domchat Banner" width="100%" /> -->
+<img src="./assets/banner-hero.png" alt="Domchat Banner" width="100%" />
+
+<br />
 
 # Domchat
 
@@ -32,13 +33,6 @@ If you roleplay on your phone, you have probably felt stuck between frustrating 
 - **Commercial RP apps** feel smooth at first, until they hit you with subscriptions, ads, strict filters, and accounts that keep your stories locked on someone else's servers.
 
 **Domchat is the simple way out.** It is a clean, native Android app with a low barrier of entry. Install the APK, connect a model (or run one offline), pull in your favorite bots directly from JanitorAI Hub, and get back to your story.
-
-<div align="center">
-
-<!-- SCREENSHOT PLACEHOLDER: 3-phone horizontal showcase (1. Active RP chat in AMOLED Liquid Glass mode, 2. JanitorAI Hub import screen, 3. Character & Persona setup) -->
-<img src="./assets/showcase-screens.png" alt="Domchat App Showcase" width="100%" />
-
-</div>
 
 ---
 
