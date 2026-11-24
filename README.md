@@ -100,11 +100,11 @@ Domchat is built to keep you inside the story, not staring at a sterile chatbot 
 
 </div>
 
-### Character Voices (TTS)
-Bring scenes to life with natural voice playback using **Fish Audio**, **ElevenLabs**, **OpenAI Audio**, or free built-in **Android System Voices**. Tap the speaker icon on any message and control playback from a floating glass player.
-
 ### Bring Your Own AI
 Connect your own API keys or proxies with a clean provider manager: **OpenRouter**, **Nano-GPT**, **Featherless**, **DeepSeek**, **Claude**, **OpenAI**, or any OpenAI-compatible endpoint.
+
+### Character Voices
+Bring scenes to life with natural voice playback using **Fish Audio**, **ElevenLabs**, **OpenAI Audio**, or free built-in **Android System Voices**. Tap the speaker icon on any message and control playback from a floating glass player.
 
 ### True Local Ownership & One-Tap Backups
 There are no Domchat accounts, no central servers holding your chats, and no tracking scripts. Every chat, character, persona, wallpaper, and lorebook lives on your phone. You can export a complete lossless backup of your entire setup anytime and restore it whenever you switch devices.
