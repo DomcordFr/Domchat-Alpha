@@ -49,11 +49,9 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":ai"))
 
-    // LiteRT-LM on-device inference engine (Google AI Edge)
-    implementation(libs.litertlm.android)
-    // AI Edge RAG library — on-device text embedding (EmbeddingGemma via GemmaEmbeddingModel).
-    // Native embedding libs are arm64-v8a only; the runtime gates the feature by ABI.
-    implementation(libs.localagents.rag) {
+    // Compile-only stubs; native LiteRT-LM / AI Edge RAG binaries are excluded from the APK.
+    compileOnly(libs.litertlm.android)
+    compileOnly(libs.localagents.rag) {
         exclude(group = "org.json", module = "json")
     }
     implementation(libs.protobuf.javalite)

@@ -32,7 +32,7 @@ If you roleplay on your phone, you have probably felt stuck between frustrating 
 - **Power-user frontends (like SillyTavern)** give you freedom and privacy, but getting them working on Android means installing Termux, setting up Node.js, running terminal commands, and fighting a desktop layout crammed onto a phone screen.
 - **Commercial RP apps** feel smooth at first, until they hit you with subscriptions, ads, strict filters, and accounts that keep your stories locked on someone else's servers.
 
-**Domchat is the simple way out.** It is a clean, native Android app with a low barrier of entry. Install the APK, connect a model (or run one offline), pull in your favorite bots directly from JanitorAI Hub, and get back to your story.
+**Domchat is the simple way out.** It is a clean, lightweight, native Android app with a low barrier of entry. Install the APK, connect your AI provider, pull in your favorite bots directly from JanitorAI Hub, and get back to your story.
 
 ---
 
@@ -45,7 +45,7 @@ If you roleplay on your phone, you have probably felt stuck between frustrating 
 | **Ads & Paywalls** | In-chat ads & promo pop-ups | None | Subscriptions & ads | **Zero ads. Zero paywalls.** |
 | **Chat Ownership** | Stored on third-party servers | Local | Stored on their servers | **100% local on your phone** |
 | **Characters** | Huge web library | Manual card hunting & importing | Closed platform bots | **Built-in JanitorAI Hub + SillyTavern cards** |
-| **Outages & Queues** | Downtime & slow peak queues | Depends on your API | Rate limits & lag | **Direct APIs or offline local models** |
+| **Outages & Queues** | Downtime & slow peak queues | Depends on your API | Rate limits & lag | **Direct APIs & custom proxies** |
 
 ---
 
@@ -100,11 +100,11 @@ Domchat is built to keep you inside the story, not staring at a sterile chatbot 
 
 </div>
 
-### Character Voices (TTS) & Local Voice Input (STT)
-Bring scenes to life with natural voice playback using **Fish Audio**, **ElevenLabs**, **OpenAI Audio**, or free built-in **Android System Voices**. Tap the speaker icon on any message and control playback from a floating glass player. Domchat also supports local on-device Speech-to-Text (STT) if you prefer speaking your replies.
+### Character Voices (TTS)
+Bring scenes to life with natural voice playback using **Fish Audio**, **ElevenLabs**, **OpenAI Audio**, or free built-in **Android System Voices**. Tap the speaker icon on any message and control playback from a floating glass player.
 
-### Bring Your Own AI (or Run Completely Offline)
-Connect your own API keys or proxies with a clean provider manager: **OpenRouter**, **Nano-GPT**, **Featherless**, **DeepSeek**, **Claude**, **OpenAI**, or any OpenAI-compatible endpoint. If you want total offline privacy with zero API keys, Domchat also supports running local on-device models through **Google LiteRT**.
+### Bring Your Own AI
+Connect your own API keys or proxies with a clean provider manager: **OpenRouter**, **Nano-GPT**, **Featherless**, **DeepSeek**, **Claude**, **OpenAI**, or any OpenAI-compatible endpoint.
 
 ### True Local Ownership & One-Tap Backups
 There are no Domchat accounts, no central servers holding your chats, and no tracking scripts. Every chat, character, persona, wallpaper, and lorebook lives on your phone. You can export a complete lossless backup of your entire setup anytime and restore it whenever you switch devices.
@@ -122,7 +122,6 @@ Grab the latest APK straight from the **[Latest Release](https://github.com/Domc
 1. Open Domchat and go to **Settings > Providers**.
 2. Tap **+** and choose a provider (such as **OpenRouter**, **Nano-GPT**, **Featherless**, **DeepSeek**, **Claude**, or **OpenAI**). *(Tip for beginners: OpenRouter has free models you can test right away with a free account.)*
 3. Paste your API key, tap **Save**, and pick the models you want available in chat.
-4. *(Optional)* Prefer 100% offline chat? Load a local model directly on your phone using **Google LiteRT**.
 
 ### 3. Import Your First Character
 - Open **JanitorAI Hub** inside the app to search and import any bot directly from JanitorAI.

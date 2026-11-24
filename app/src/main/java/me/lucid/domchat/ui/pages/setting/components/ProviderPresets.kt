@@ -99,14 +99,12 @@ val SPECIAL_PROVIDER_PRESETS = listOf(
 )
 
 fun List<ProviderPreset>.withSpecialProviderPresets(): List<ProviderPreset> {
-    val localPreset = firstOrNull { it.type == ProviderSetting.LiteRtLocal::class }
-        ?: SPECIAL_PROVIDER_PRESETS.first { it.type == ProviderSetting.LiteRtLocal::class }
     val presetsWithoutLocal = filterNot { it.type == ProviderSetting.LiteRtLocal::class }
-    val existingNames = (listOf(localPreset) + presetsWithoutLocal)
+    val existingNames = presetsWithoutLocal
         .map { it.name.lowercase() }
         .toSet()
 
-    return listOf(localPreset) + presetsWithoutLocal + SPECIAL_PROVIDER_PRESETS.filter { preset ->
+    return presetsWithoutLocal + SPECIAL_PROVIDER_PRESETS.filter { preset ->
         preset.type != ProviderSetting.LiteRtLocal::class &&
             preset.name.lowercase() !in existingNames
     }

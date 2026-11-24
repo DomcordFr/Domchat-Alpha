@@ -57,15 +57,10 @@
 }
 -dontwarn com.termux.**
 
-# On-device embeddings (EmbeddingGemma via the AI Edge RAG library). The library ships no consumer
-# R8 rules and reaches its model/proto classes through name-based JNI + native RegisterNatives
-# callbacks, so keep the RAG + MediaPipe boundary intact in release builds.
--keep class com.google.ai.edge.litertlm.** { *; }
--keep class com.google.ai.edge.localagents.** { *; }
--keep class com.google.mediapipe.** { *; }
--dontwarn com.google.ai.edge.litertlm.**
--dontwarn com.google.ai.edge.localagents.**
+# Local LLM and offline Sherpa-ONNX are excluded from the packaged APK (compileOnly).
+-dontwarn com.google.ai.edge.**
 -dontwarn com.google.mediapipe.**
+-dontwarn com.k2fsa.sherpa.**
 
 # -dontobfuscate removed to enable release R8 obfuscation
 

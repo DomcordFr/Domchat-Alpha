@@ -243,7 +243,7 @@ fun SettingProviderPage(
     
     // Filter providers based on search and tags
     val filteredProviders = remember(settings.providers, searchQuery, selectedTagIds) {
-        var result = settings.providers
+        var result = settings.providers.filterNot { it is ProviderSetting.LiteRtLocal }
         
         // Filter by search query
         if (searchQuery.isNotBlank()) {

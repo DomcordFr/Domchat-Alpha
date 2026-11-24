@@ -1222,12 +1222,6 @@ fun MinimalChatInput(
                                     isToolApprovalActive -> DomChatComposerAction.ToolApprovalDeny
                                     state.loading -> DomChatComposerAction.Loading
                                     !state.isEmpty() -> DomChatComposerAction.Send
-                                    hasSelectedSttProvider && sttRecording ->
-                                        DomChatComposerAction.SttRecording
-                                    hasSelectedSttProvider && sttFinalizing ->
-                                        DomChatComposerAction.SttFinalizing
-                                    hasSelectedSttProvider && settings.displaySetting.sttReplaceModelIcon ->
-                                        DomChatComposerAction.Stt
                                     else -> DomChatComposerAction.Picker
                                 }
                                 DomChatComposerActionButton(

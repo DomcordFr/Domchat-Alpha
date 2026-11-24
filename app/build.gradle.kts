@@ -25,8 +25,6 @@ val enableReleaseShrinker = providers.gradleProperty("domchat.release.minify")
     .map(String::toBoolean)
     .orElse(true)
 
-val webUiDir = rootProject.file("web-ui")
-val webUiBuildDir = File(webUiDir, "build/client")
 val catalogDir = rootProject.file("catalog")
 val generatedCatalogAssetsDir = layout.buildDirectory.dir("generated/assets/catalog")
 
@@ -47,36 +45,12 @@ val prepareBundledCatalogAssets by tasks.registering(Sync::class) {
     into(generatedCatalogAssetsDir)
 }
 
-val buildWebUi by tasks.registering(Exec::class) {
-    group = "build"
-    description = "Builds the React web UI bundle used by the Android app."
-    workingDir = webUiDir
-
-    inputs.dir(File(webUiDir, "app"))
-    inputs.dir(File(webUiDir, "public"))
-    inputs.file(File(webUiDir, "package.json"))
-    inputs.file(File(webUiDir, "react-router.config.ts"))
-    inputs.file(File(webUiDir, "tsconfig.json"))
-    inputs.file(File(webUiDir, "vite.config.ts"))
-    val packageLock = File(webUiDir, "package-lock.json")
-    if (packageLock.exists()) {
-        inputs.file(packageLock)
-    }
-    outputs.dir(webUiBuildDir)
-
-    commandLine(
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) listOf("cmd", "/c", "npm", "run", "build")
-        else listOf("npm", "run", "build")
-    )
-}
-
 android {
     namespace = "me.lucid.domchat"
     compileSdk = 36
 
     sourceSets {
         getByName("main") {
-            assets.srcDir("../web-ui/build/client")
             assets.srcDir(prepareBundledCatalogAssets.map { it.destinationDir })
         }
     }
@@ -281,7 +255,6 @@ tasks.register("buildAll") {
 }
 
 tasks.named("preBuild") {
-    dependsOn(buildWebUi)
     dependsOn(":speech:downloadSherpaOnnxAar")
 }
 
@@ -432,9 +405,6 @@ dependencies {
     implementation(project(":search"))
     implementation(project(":tts"))
     implementation(project(":speech"))
-    // sherpa-onnx AAR must be provided at the app level because :speech uses compileOnly
-    // (AGP forbids direct local AAR deps inside library modules)
-    implementation(files(rootProject.file("speech/build/sherpa/sherpa-onnx-1.13.4.aar")))
     implementation(project(":common"))
     implementation(project(":workspace"))
     implementation(project(":local-llm"))

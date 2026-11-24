@@ -167,7 +167,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             }
             item { DefaultChatModelSetting(settings = settings, vm = vm) }
             item { DefaultTtsVoiceSetting(settings = settings, vm = vm) }
-            item { DefaultSTTModelSetting(settings = settings, vm = vm) }
+            // Default STT model hidden (offline speech recognition removed)
             item { DefaultTitleModelSetting(settings = settings, vm = vm) }
             item { DefaultSummarizerModelSetting(settings = settings, vm = vm) }
             item { DefaultSubagentModelSetting(settings = settings, vm = vm) }
