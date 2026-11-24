@@ -3915,7 +3915,7 @@ private fun CharacterActionPopover(
                                         horizontalArrangement = Arrangement.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Download,
+                                            imageVector = Icons.Rounded.Share,
                                             contentDescription = "Export",
                                             tint = Color.White,
                                             modifier = Modifier.size(18.dp)
