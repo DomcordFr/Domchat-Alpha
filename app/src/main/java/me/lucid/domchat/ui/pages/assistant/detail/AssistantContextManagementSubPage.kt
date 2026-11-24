@@ -2,28 +2,21 @@ package me.lucid.domchat.ui.pages.assistant.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.rounded.Book
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import me.lucid.domchat.ui.components.ui.DomChatSlider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,7 +28,6 @@ import me.lucid.domchat.ui.components.ui.HapticSwitch
 import me.lucid.domchat.ui.components.ui.SummarizerModelTipBanner
 import me.lucid.domchat.ui.pages.setting.components.SettingsGroup
 import me.lucid.domchat.ui.pages.setting.components.SettingGroupItem
-import me.lucid.domchat.ui.theme.LocalDarkMode
 import kotlin.math.roundToInt
 
 @Composable
@@ -52,25 +44,6 @@ fun AssistantContextManagementSubPage(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-
-        SettingsGroup(title = stringResource(R.string.context_time_awareness_title)) {
-            SettingGroupItem(
-                title = stringResource(R.string.context_time_awareness_toggle_title),
-                subtitle = stringResource(R.string.context_time_awareness_desc),
-                trailing = {
-                    HapticSwitch(
-                        checked = assistant.enableTimeAwareness,
-                        onCheckedChange = { enabled ->
-                            onUpdate(assistant.copy(enableTimeAwareness = enabled))
-                        }
-                    )
-                },
-                onClick = {
-                    onUpdate(assistant.copy(enableTimeAwareness = !assistant.enableTimeAwareness))
-                }
-            )
-        }
-
         // ═══════════════════════════════════════════════════════════════════
         // MESSAGE HISTORY
         // ═══════════════════════════════════════════════════════════════════
@@ -142,34 +115,6 @@ fun AssistantContextManagementSubPage(
                     steps = 44
                 )
             }
-        }
-
-        // ═══════════════════════════════════════════════════════════════════
-        // SEARCH RESULTS
-        // ═══════════════════════════════════════════════════════════════════
-        SettingsGroup(title = stringResource(R.string.context_search_results_title)) {
-            val maxSearchResults = assistant.maxSearchResultsRetained ?: 10
-            var searchSliderValue by remember(maxSearchResults) { mutableFloatStateOf(maxSearchResults.toFloat()) }
-            
-            SliderSettingCard(
-                title = if (searchSliderValue.roundToInt() == 0) {
-                    stringResource(R.string.context_max_search_results_unlimited)
-                } else {
-                    stringResource(R.string.context_max_search_results, searchSliderValue.roundToInt())
-                },
-                value = searchSliderValue,
-                valueText = "", // Title already shows the value
-                description = stringResource(R.string.context_max_search_results_desc),
-                onValueChange = { searchSliderValue = it },
-                onValueChangeFinished = {
-                    val newValue = searchSliderValue.roundToInt()
-                    onUpdate(assistant.copy(
-                        maxSearchResultsRetained = if (newValue == 0) null else newValue
-                    ))
-                },
-                valueRange = 0f..50f,
-                steps = 49
-            )
         }
 
         SettingsGroup(title = stringResource(R.string.assistant_context_image_context)) {

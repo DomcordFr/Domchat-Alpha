@@ -471,7 +471,10 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 val tagFiltered = if (selectedTagIds.isEmpty()) {
                     base
                 } else {
-                    base.filter { char -> char.tags.any { tagId -> selectedTagIds.contains(tagId.toString()) } }
+                    base.filter { char ->
+                        val charTagIds = char.tags.map { it.toString() }.toSet()
+                        selectedTagIds.all { it in charTagIds }
+                    }
                 }
                 val sorted = when (sortOption) {
                     CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }

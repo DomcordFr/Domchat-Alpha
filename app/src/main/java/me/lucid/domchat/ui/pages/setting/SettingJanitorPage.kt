@@ -344,9 +344,12 @@ fun SettingJanitorPage() {
     val sortedFilteredItems: List<JanitorCharacter> = when (activeState) {
         is JanitorLoadState.Success -> {
             val normalizedFilterTags = filterTags.map { normalizeTag(it) }.toSet()
-            val items = activeState.items.filter { character ->
-                normalizedFilterTags.isEmpty() || character.tags.any { tag ->
-                    normalizedFilterTags.contains(normalizeTag(tag))
+            val items = if (normalizedFilterTags.isEmpty()) {
+                activeState.items
+            } else {
+                activeState.items.filter { character ->
+                    val charNormalizedTags = character.tags.map { normalizeTag(it) }.toSet()
+                    normalizedFilterTags.all { it in charNormalizedTags }
                 }
             }
             when (sortMode) {
@@ -849,7 +852,11 @@ fun SettingJanitorPage() {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = if (searchQuery.isNotBlank()) "No characters found for \"$searchQuery\"" else "No characters loaded",
+                                    text = when {
+                                        filterTags.isNotEmpty() -> "No characters match all selected tags"
+                                        searchQuery.isNotBlank() -> "No characters found for \"$searchQuery\""
+                                        else -> "No characters loaded"
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color(0xFF8A8A96),
                                 )

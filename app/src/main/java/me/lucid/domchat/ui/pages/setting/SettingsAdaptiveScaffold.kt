@@ -337,7 +337,6 @@ private fun settingsPaneGroups(): List<SettingsPaneGroup> {
                 SettingsPaneEntry(SettingsDestination.Mcp, R.string.setting_page_mcp, null, Icons.Rounded.Extension, Screen.SettingMcp),
                 SettingsPaneEntry(SettingsDestination.Web, R.string.setting_page_web_server, null, Icons.Rounded.Language, Screen.SettingWeb),
                 SettingsPaneEntry(SettingsDestination.AndroidIntegration, R.string.setting_android_integration, null, Icons.Rounded.PhoneAndroid, Screen.SettingAndroidIntegration),
-                SettingsPaneEntry(SettingsDestination.Workspaces, R.string.extensions_page_workspace, null, Icons.Rounded.Code, Screen.Workspaces),
             )
         ),
         SettingsPaneGroup(

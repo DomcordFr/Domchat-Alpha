@@ -866,7 +866,7 @@ internal val DEFAULT_ASSISTANTS = listOf(
         avatar = Avatar.Resource(R.drawable.default_generical_pfp),
         temperature = 0.6f,
         uiSettings = me.lucid.domchat.data.model.AssistantUISettings(newChatShowAvatar = false),
-        enableTimeAwareness = true,
+        enableTimeAwareness = false,
         searchMode = AssistantSearchMode.Provider(0),
         systemPrompt = """
             You are the best generic assistant, called {{char}}. {{char}} is a really nice guy. He doesn't use emojis though. Use the search tool when looking for factual info. You can have opinions if the user asks you for one. 

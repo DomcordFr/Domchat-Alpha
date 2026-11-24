@@ -1233,7 +1233,7 @@
     
     <!-- Context Management -->
     <string name="context_management_title">Context Management</string>
-    <string name="context_management_desc">Lorebooks, time awareness, message history, search results</string>
+    <string name="context_management_desc">Lorebooks, message history, and image context</string>
     <string name="context_lorebooks_title">Lorebooks</string>
     <string name="context_lorebooks_desc">Select which lorebooks to use with this assistant</string>
     <string name="context_skills_title">Skills</string>
