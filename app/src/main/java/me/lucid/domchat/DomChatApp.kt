@@ -198,6 +198,7 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
                     Log.i(TAG, "Restored ${recovered.assistants.size - settings.assistants.size} assistants from existing chats")
                     settingsStore.update(recovered)
                 }
+                conversationRepo.backfillGeneratedMessageCountsIfNeeded(this@DomChatApp)
             }.onFailure {
                 Log.w(TAG, "Conversation assistant recovery failed", it)
             }

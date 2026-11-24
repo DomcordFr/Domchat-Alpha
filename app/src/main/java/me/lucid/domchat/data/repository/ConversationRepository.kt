@@ -791,6 +791,22 @@ class ConversationRepository(
             if (id != null && update != null) id to update else null
         }.toMap()
     }
+
+    suspend fun backfillGeneratedMessageCountsIfNeeded(context: android.content.Context) = withContext(Dispatchers.IO) {
+        val prefs = context.getSharedPreferences("domchat_migrations", android.content.Context.MODE_PRIVATE)
+        if (prefs.getBoolean("msg_count_no_greetings_v1", false)) return@withContext
+        val rows = conversationDAO.getAllNodesForCountBackfill()
+        for (row in rows) {
+            val accurateCount = runCatching {
+                val decoded = JsonInstant.decodeFromString<List<MessageNode>>(row.nodes)
+                Conversation.countGeneratedAssistantMessages(decoded)
+            }.getOrDefault(row.assistantMessageCount)
+            if (accurateCount != row.assistantMessageCount) {
+                conversationDAO.updateAssistantMessageCount(row.id, accurateCount)
+            }
+        }
+        prefs.edit().putBoolean("msg_count_no_greetings_v1", true).apply()
+    }
 }
 
 internal fun shouldInvalidateConsolidation(

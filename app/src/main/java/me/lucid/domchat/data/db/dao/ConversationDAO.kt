@@ -87,6 +87,12 @@ interface ConversationDAO {
     @Query("UPDATE conversationentity SET title = :title, update_at = :updateAt WHERE id = :id")
     suspend fun updateTitle(id: String, title: String, updateAt: Long)
 
+    @Query("UPDATE conversationentity SET assistant_message_count = :count WHERE id = :id")
+    suspend fun updateAssistantMessageCount(id: String, count: Int)
+
+    @Query("SELECT id, nodes, assistant_message_count as assistantMessageCount FROM conversationentity")
+    suspend fun getAllNodesForCountBackfill(): List<ConversationCountRow>
+
     // Stats queries for MenuVM optimization
     @Query("SELECT COUNT(*) FROM conversationentity")
     fun getConversationCountFlow(): Flow<Int>
@@ -120,4 +126,10 @@ interface ConversationDAO {
 data class AssistantLastUpdate(
     val assistantId: String,
     val lastUpdateAt: Long?,
+)
+
+data class ConversationCountRow(
+    val id: String,
+    val nodes: String,
+    val assistantMessageCount: Int,
 )

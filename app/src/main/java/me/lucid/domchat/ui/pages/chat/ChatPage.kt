@@ -1648,6 +1648,9 @@ private fun ChatPageContent(
             value = null
             return@produceState
         }
+        if (isGenerating) {
+            kotlinx.coroutines.delay(350L)
+        }
         withContext(Dispatchers.Default) {
             value = ContextBudgetCalculator.calculate(
                 model = currentChatModel,

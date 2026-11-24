@@ -298,10 +298,11 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                                 initialValue = emptyList(),
                             )
 
-                            androidx.compose.runtime.key(canDelete) {
+                            val canDeleteThis = canDelete && assistant.id != me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
+                            androidx.compose.runtime.key(canDeleteThis) {
                                 PhysicsSwipeToDelete(
                                     position = position,
-                                    deleteEnabled = canDelete,
+                                    deleteEnabled = canDeleteThis,
                                     onDelete = {
                                         requestDeleteAssistant(assistant)
                                     },
@@ -408,11 +409,12 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                         state = reorderableState,
                         key = assistant.id
                     ) { isDragging ->
-                        // Key on canDelete to force complete PhysicsSwipeToDelete recreation when list size changes
-                        androidx.compose.runtime.key(canDelete) {
+                        val canDeleteThis = canDelete && assistant.id != me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
+                        // Key on canDeleteThis to force complete PhysicsSwipeToDelete recreation when list size changes
+                        androidx.compose.runtime.key(canDeleteThis) {
                             PhysicsSwipeToDelete(
                                 position = position,
-                                deleteEnabled = canDelete,
+                                deleteEnabled = canDeleteThis,
                                 neighborOffset = neighborOffset,
                                 onDragProgress = { offset, unlocked ->
                                     draggingIndex = index
