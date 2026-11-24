@@ -56,15 +56,12 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudUpload
-import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Tune
@@ -144,14 +141,6 @@ fun SettingPage(
                 keywords = listOf("lorebook", "world", "info", "memory", "keywords", "triggers")
             ),
             SettingNavItem(
-                title = "Skills & Autonomous Tools",
-                subtitle = "Autonomous capabilities, web retrieval, and agent extensions",
-                category = "Roleplay & Characters",
-                icon = Icons.Rounded.Category,
-                target = Screen.SettingSkills(),
-                keywords = listOf("skills", "tools", "automation", "capabilities", "autonomous", "extensions")
-            ),
-            SettingNavItem(
                 title = "Text Styling & Dialogue Rules",
                 subtitle = "Colors for speech, actions, thoughts, and narration",
                 category = "Roleplay & Characters",
@@ -219,14 +208,6 @@ fun SettingPage(
                 target = Screen.SettingContextBudget,
                 keywords = listOf("token", "budget", "context", "window", "tokens", "allocation", "history", "prune")
             ),
-            SettingNavItem(
-                title = "MCP Tools & Extensions",
-                subtitle = "External capabilities, plugins, and custom agent tools",
-                category = "AI Models & Endpoints",
-                icon = Icons.Rounded.Extension,
-                target = Screen.SettingMcp,
-                keywords = listOf("mcp", "tools", "plugins", "skills", "extensions")
-            ),
 
             // Data & Storage
             SettingNavItem(
@@ -255,22 +236,6 @@ fun SettingPage(
             ),
 
             // System & About
-            SettingNavItem(
-                title = "Android Integration",
-                subtitle = "Quick settings tiles, system share target, and shortcuts",
-                category = "System & About",
-                icon = Icons.Rounded.PhoneAndroid,
-                target = Screen.SettingAndroidIntegration,
-                keywords = listOf("android", "tile", "share", "shortcuts", "notification")
-            ),
-            SettingNavItem(
-                title = "Local Web Server",
-                subtitle = "Access chats and characters from your desktop browser",
-                category = "System & About",
-                icon = Icons.Rounded.Language,
-                target = Screen.SettingWeb,
-                keywords = listOf("web", "server", "browser", "desktop", "port", "lan")
-            ),
             SettingNavItem(
                 title = "About Domchat",
                 subtitle = "Version, license, updates, and credits",

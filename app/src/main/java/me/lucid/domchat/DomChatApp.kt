@@ -34,9 +34,6 @@ import me.lucid.domchat.data.datastore.withRecoveredAssistantsFromConversations
 import me.lucid.domchat.data.ai.models.ModelMetadataResolver
 import me.lucid.domchat.data.ai.models.ModelCatalogService
 import me.lucid.domchat.data.ai.models.mergeCatalogIntoSettings
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -49,7 +46,6 @@ import me.lucid.domchat.service.SPONTANEOUS_NOTIFICATION_CHANNEL_ID
 import me.lucid.domchat.service.SPONTANEOUS_WORK_INTERVAL_MINUTES
 import me.lucid.domchat.service.SPONTANEOUS_WORK_NAME
 import me.lucid.domchat.service.SpontaneousWorker
-import me.lucid.domchat.service.WebServerService
 import me.lucid.domchat.service.initializeAetherWorkManager
 import me.lucid.domchat.data.search.AndroidBingSearchClient
 import java.util.concurrent.TimeUnit
@@ -190,19 +186,6 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
                 }
         }
 
-        // Restricted FGS types cannot start from BOOT_COMPLETED / WorkManager process starts.
-        // Defer until the app is in the foreground (Activity), which is a permitted start path.
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) {
-                get<AppScope>().launch {
-                    val settings = get<SettingsStore>().settingsFlowRaw.first()
-                    if (settings.webServerEnabled) {
-                        WebServerService.start(this@DomChatApp, settings.webServerPort)
-                    }
-                }
-            }
-        })
-        
         get<AppScope>().launch(Dispatchers.IO) {
             runCatching {
                 val settingsStore = get<SettingsStore>()

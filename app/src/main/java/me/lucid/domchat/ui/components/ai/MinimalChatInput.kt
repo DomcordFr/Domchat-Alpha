@@ -40,8 +40,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.animation.animateContentSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.lucid.domchat.ui.components.ui.SearchProviderIcon
-import me.lucid.search.SearchServiceOptions
 import coil3.compose.AsyncImage
 import me.lucid.ai.ui.UIMessagePart
 import androidx.compose.foundation.horizontalScroll
@@ -128,7 +126,6 @@ import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Summarize
 import androidx.compose.material.icons.rounded.Terminal
@@ -4291,37 +4288,7 @@ private fun MinimalPickerContent(
                         onClick = onOpenStreamingAnimation
                     )
 
-                    // Search picker - show selected provider if enabled (use effectiveProviderIndex to track current selection)
-                    val searchService = settings.searchServices.getOrNull(effectiveProviderIndex)
-                    val searchProviderName = if (searchService != null) {
-                        SearchServiceOptions.TYPES[searchService::class]
-                    } else null
-                    
-                    MinimalPickerItem(
-                        icon = {
-                            if (enableSearch && searchProviderName != null) {
-                                SearchProviderIcon(
-                                    name = searchProviderName,
-                                    service = searchService,
-                                    catalogSnapshot = catalogSnapshot,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Rounded.Search,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (enableSearch) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.65f)
-                                )
-                            }
-                        },
-                        title = if (enableSearch && searchProviderName != null) searchProviderName else stringResource(R.string.minimal_input_search),
-                        subtitle = if (enableSearch) stringResource(R.string.web_search_enabled) else stringResource(R.string.minimal_input_search_desc),
-                        onClick = onOpenSearchPicker
-                    )
-                    
-                    // Skills card hidden from plus icon menu per user request
-                    // Plugins card removed from plus icon menu per user request
+                    // Search, Skills, and Plugins cards hidden from plus icon menu
                     
                 }
             }
