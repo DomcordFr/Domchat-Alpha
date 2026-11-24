@@ -239,7 +239,7 @@ private val BLOCK_TAG_REGEX = Regex("(?i)</?(p|div|h[1-6]|blockquote|li)[^>]*>")
 private val MULTI_NEWLINE_REGEX = Regex("\n{3,}")
 
 enum class CharacterSortOption {
-    NAME, RECENT, CREATOR
+    NAME, RECENT, CREATOR, NEWEST, OLDEST
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -479,6 +479,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                 val sorted = when (sortOption) {
                     CharacterSortOption.NAME -> tagFiltered.sortedBy { it.name.lowercase() }
                     CharacterSortOption.CREATOR -> tagFiltered.sortedBy { it.creator?.lowercase() ?: "" }
+                    CharacterSortOption.NEWEST -> tagFiltered.asReversed()
+                    CharacterSortOption.OLDEST -> tagFiltered
                     CharacterSortOption.RECENT -> {
                         val activityMap = runCatching { vm.getAllAssistantsLastUpdateAt() }.getOrDefault(emptyMap())
                         tagFiltered.sortedByDescending { activityMap[it.id] ?: Instant.MIN }
@@ -684,6 +686,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                     CharacterSortOption.RECENT -> "Recent"
                                                     CharacterSortOption.NAME -> "Name A-Z"
                                                     CharacterSortOption.CREATOR -> "Creator"
+                                                    CharacterSortOption.NEWEST -> "Newest"
+                                                    CharacterSortOption.OLDEST -> "Oldest"
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
@@ -773,6 +777,54 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Newest",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (sortOption == CharacterSortOption.NEWEST) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.NEWEST
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.NEWEST) {
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Oldest",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (sortOption == CharacterSortOption.OLDEST) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.OLDEST
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.OLDEST) {
                                                 {
                                                     Icon(
                                                         imageVector = Icons.Rounded.Check,
@@ -1026,6 +1078,8 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                     CharacterSortOption.RECENT -> "Recent"
                                                     CharacterSortOption.NAME -> "Name A-Z"
                                                     CharacterSortOption.CREATOR -> "Creator"
+                                                    CharacterSortOption.NEWEST -> "Newest"
+                                                    CharacterSortOption.OLDEST -> "Oldest"
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
@@ -1115,6 +1169,54 @@ fun CharacterHubPage(vm: AssistantVM = koinViewModel()) {
                                                 sortMenuOpen = false
                                             },
                                             trailingIcon = if (sortOption == CharacterSortOption.CREATOR) {
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Newest",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (sortOption == CharacterSortOption.NEWEST) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.NEWEST
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.NEWEST) {
+                                                {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            } else null
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "Oldest",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (sortOption == CharacterSortOption.OLDEST) Color.White else Color(0xFFCCCCCC)
+                                                )
+                                            },
+                                            onClick = {
+                                                haptics.perform(HapticPattern.Pop)
+                                                sortOption = CharacterSortOption.OLDEST
+                                                sortMenuOpen = false
+                                            },
+                                            trailingIcon = if (sortOption == CharacterSortOption.OLDEST) {
                                                 {
                                                     Icon(
                                                         imageVector = Icons.Rounded.Check,
