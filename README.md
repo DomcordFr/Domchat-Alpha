@@ -36,7 +36,7 @@ If you roleplay on your phone, you have probably felt stuck between frustrating 
 <div align="center">
 
 <!-- SCREENSHOT PLACEHOLDER: 3-phone horizontal showcase (1. Active RP chat in AMOLED Liquid Glass mode, 2. JanitorAI Hub import screen, 3. Character & Persona setup) -->
-<img src="./assets/showcase-screens.png" alt="Domchat App Showcase" width="90%" />
+<img src="./assets/showcase-screens.png" alt="Domchat App Showcase" width="100%" />
 
 </div>
 
@@ -66,7 +66,7 @@ Already have a folder of SillyTavern cards? Domchat also supports importing stan
 
 <div align="center">
 
-<img src="./assets/screen-jai-hub.png" alt="JanitorAI Hub browsing, bot pop-over, and greetings preview" width="90%" />
+<img src="./assets/screen-jai-hub.png" alt="JanitorAI Hub browsing, bot pop-over, and creator notes" width="100%" />
 
 </div>
 
@@ -84,7 +84,7 @@ Long roleplays break down when bots forget side characters, locations, or plot p
 
 <div align="center">
 
-<img src="./assets/screen-rp-tools.png" alt="Roleplay Tools, Context Stats, and Model Controls" width="90%" />
+<img src="./assets/screen-rp-tools.png" alt="Roleplay Tools, Context Stats, and Model Controls" width="100%" />
 
 </div>
 
@@ -102,7 +102,7 @@ Domchat is built to keep you inside the story, not staring at a sterile chatbot 
 
 <div align="center">
 
-<img src="./assets/screen-chat-glass.png" alt="Liquid Glass chat with user message, reasoning badge, and swipeable replies" width="90%" />
+<img src="./assets/screen-chat-glass.png" alt="Liquid Glass chat with user message, reasoning badge, and swipeable replies" width="100%" />
 
 </div>
 
