@@ -12,6 +12,7 @@ import androidx.core.net.toUri
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -57,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -408,6 +410,42 @@ fun ChatDrawerContent(
                             },
                             onHaptic = { haptics.perform(HapticPattern.Tick) },
                             icon = { DomChatBarChartIcon(contentDescription = null, tint = if (isDark) Color(0xFFF2F2F7) else Color.Unspecified) },
+                        )
+                        DomChatDrawerQuickAction(
+                            label = "JanitorAI Hub",
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
+                            containerColor = Color.Transparent,
+                            onClick = {
+                                navController.navigate(Screen.SettingJanitor)
+                                dismissDrawerAfterSelection()
+                            },
+                            onHaptic = { haptics.perform(HapticPattern.Tick) },
+                            icon = {
+                                Image(
+                                    painter = painterResource(id = R.drawable.janitorai_logo),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                    contentScale = ContentScale.Fit,
+                                )
+                            },
+                        )
+                        DomChatDrawerQuickAction(
+                            label = "Character Hub",
+                            modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
+                            containerColor = Color.Transparent,
+                            onClick = {
+                                navController.navigate(Screen.CharacterHub)
+                                dismissDrawerAfterSelection()
+                            },
+                            onHaptic = { haptics.perform(HapticPattern.Tick) },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Group,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (isDark) Color(0xFFF2F2F7) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
                         )
                     }
                 },
