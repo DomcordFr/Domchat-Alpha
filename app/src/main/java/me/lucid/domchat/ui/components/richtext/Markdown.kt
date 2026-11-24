@@ -1031,9 +1031,10 @@ fun MarkdownBlock(
         (450f / fadeDurationMs.toFloat()).coerceIn(1.0f, 3.0f)
     }
 
+    val startEmptyForFreshReveal = freshReveal && streamingTextReveal
     val streamingPresentation = remember {
         StreamingTextPresentationState(
-            initialRawContent = content,
+            initialRawContent = if (startEmptyForFreshReveal) "" else content,
             maxSettleDurationMillis = maxSettleDurationMillis,
             continuousFlow = continuousFlow,
             speedScale = speedScale
@@ -1042,18 +1043,24 @@ fun MarkdownBlock(
     streamingPresentation.maxSettleDurationMillis = maxSettleDurationMillis
     streamingPresentation.continuousFlow = continuousFlow
     streamingPresentation.speedScale = speedScale
-    var displayContent by remember { mutableStateOf(content) }
+    var displayContent by remember { mutableStateOf(if (startEmptyForFreshReveal) "" else content) }
     var settleRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
     val streamingFrameMillis = remember { mutableLongStateOf(0L) }
     var isDrainingFinish by remember { mutableStateOf(false) }
-    var wasStreaming by remember { mutableStateOf(false) }
+    var wasStreaming by remember { mutableStateOf(streamingTextReveal) }
     streamingPresentation.isDrainingFinish = isDrainingFinish
     
     var (data, setData) = remember {
-        val cached = peekMarkdownCache(displayContent)
+        val cached = if (displayContent.isEmpty()) null else peekMarkdownCache(displayContent)
         if (cached != null) {
             mutableStateOf(
                 value = cached,
+                policy = referentialEqualityPolicy(),
+            )
+        } else if (displayContent.isEmpty()) {
+            val astTree = getThreadParser().buildMarkdownTreeFromString("")
+            mutableStateOf(
+                value = "" to astTree,
                 policy = referentialEqualityPolicy(),
             )
         } else {
@@ -1159,7 +1166,12 @@ fun MarkdownBlock(
 
             // Check if fresh reveal (user message) reached completion
             if (freshReveal && streamingPresentation.displayContent == streamingPresentation.rawContent) {
+                wasStreaming = false
+                finishRanges = settleRanges
+                finishNowMillis.longValue = now
+                finishActive = settleRanges.isNotEmpty()
                 onRevealComplete?.invoke()
+                break
             }
 
             // Check if draining completed after generation ended
@@ -1327,8 +1339,11 @@ internal class StreamingTextPresentationState(
         displayContent = ""
         settleRanges = emptyList()
         val length = targetContent.length
-        val targetSec = (length * 0.010f).coerceIn(0.20f, 0.50f)
-        val initialSpeed = (length / targetSec.coerceAtLeast(0.1f)).coerceIn(60f, 220f)
+        val targetSec = (length * 0.018f).coerceIn(0.28f, 1.10f)
+        val minFreshSpeed = (28f * speedScale).coerceAtLeast(18f)
+        val maxFreshSpeed = (110f * speedScale).coerceAtLeast(minFreshSpeed * 1.5f)
+        val initialSpeed = ((length / targetSec.coerceAtLeast(0.1f)) * speedScale.coerceIn(0.45f, 1.5f))
+            .coerceIn(minFreshSpeed, maxFreshSpeed)
         smoothedCharsPerSecond = initialSpeed
         lastRawUpdateMillis = nowMillis
         firstPendingSinceMillis = nowMillis
@@ -1362,8 +1377,11 @@ internal class StreamingTextPresentationState(
         val maxChars = (STREAMING_MAX_CHARS_PER_SECOND * speedScale).coerceAtLeast(minChars * 1.5f)
         val baseRevealChars = if (isFreshReveal) {
             val length = rawContent.length
-            val targetSec = (length * 0.010f).coerceIn(0.20f, 0.50f)
-            (length / targetSec.coerceAtLeast(0.1f)).coerceIn(60f, 220f)
+            val targetSec = (length * 0.018f).coerceIn(0.28f, 1.10f)
+            val minFreshSpeed = (28f * speedScale).coerceAtLeast(18f)
+            val maxFreshSpeed = (110f * speedScale).coerceAtLeast(minFreshSpeed * 1.5f)
+            ((length / targetSec.coerceAtLeast(0.1f)) * speedScale.coerceIn(0.45f, 1.5f))
+                .coerceIn(minFreshSpeed, maxFreshSpeed)
         } else {
             val pacedRate = (smoothedCharsPerSecond * speedScale).coerceIn(minChars, maxChars)
             val backlogMillis = pendingLength * 1000f / pacedRate.coerceAtLeast(1f)

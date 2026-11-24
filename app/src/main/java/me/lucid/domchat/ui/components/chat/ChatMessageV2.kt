@@ -19,6 +19,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -52,6 +53,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -157,6 +163,74 @@ import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.ai.core.MessageRole as AIMessageRole
 
 private val rpFormattedTextCache = android.util.LruCache<String, String>(512)
+
+/**
+ * Smoothly animates vertical height changes without hard clipping via clipToBounds().
+ * Snaps synchronously on the initial layout pass so preexisting messages never flash or
+ * collapse to 0 height, and caps lag to ~1 line height during rapid streaming chunks.
+ */
+@Composable
+private fun Modifier.smoothExpandingHeight(
+    enabled: Boolean,
+): Modifier {
+    if (!enabled) return this
+    val density = LocalDensity.current
+    val maxLagPx = with(density) { 44.dp.toPx() }
+    var targetHeight by remember { mutableIntStateOf(-1) }
+    var hasSnappedInitial by remember { mutableStateOf(false) }
+    val animatedHeight = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { targetHeight }.collectLatest { next ->
+            if (next < 0) return@collectLatest
+            val target = next.toFloat()
+            if (!hasSnappedInitial) {
+                animatedHeight.snapTo(target)
+                hasSnappedInitial = true
+                return@collectLatest
+            }
+            val current = animatedHeight.value
+            if (target > current) {
+                if (target - current > maxLagPx) {
+                    animatedHeight.snapTo(target - maxLagPx)
+                }
+                animatedHeight.animateTo(
+                    targetValue = target,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = 520f,
+                    ),
+                    initialVelocity = animatedHeight.velocity,
+                )
+            } else if (target < current) {
+                animatedHeight.animateTo(
+                    targetValue = target,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = 380f,
+                    ),
+                    initialVelocity = animatedHeight.velocity,
+                )
+            }
+        }
+    }
+
+    return this.layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val measuredHeight = placeable.height
+        if (targetHeight != measuredHeight) {
+            targetHeight = measuredHeight
+        }
+        val displayHeight = if (hasSnappedInitial) {
+            animatedHeight.value.roundToInt().coerceAtLeast(0)
+        } else {
+            measuredHeight
+        }
+        layout(placeable.width, displayHeight) {
+            placeable.placeRelative(0, 0)
+        }
+    }
+}
 
 @Composable
 private fun rememberFormattedMessageText(
@@ -1650,6 +1724,7 @@ private fun UserMessageTurn(
                         }
                     }
                 ) {
+                    val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
                     var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
                     var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
                     LaunchedEffect(node.id) {
@@ -1661,19 +1736,7 @@ private fun UserMessageTurn(
                         }
                     }
                     val userNickname = effectiveDisplay.getActivePersona().name
-                    AnimatedContent(
-                        targetState = node.selectIndex,
-                        transitionSpec = {
-                            val forward = targetState >= initialState
-                            (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
-                                if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
-                            } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
-                            (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
-                                if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
-                            } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)))
-                        },
-                        label = "UserMessageVersionAnimatedContent"
-                    ) { targetIdx ->
+                    val renderUserBubbleContent: @Composable (Int) -> Unit = { targetIdx ->
                         val targetMsg = node.messages.getOrNull(targetIdx) ?: bubbleNode.currentMessage
                         val targetText = targetMsg.parts.filterIsInstance<UIMessagePart.Text>().getOrNull(partIndex)?.text ?: part.text
                         val displayContent = rememberFormattedMessageText(
@@ -1696,6 +1759,28 @@ private fun UserMessageTurn(
                             },
                             onClickCitation = {}
                         )
+                    }
+                    Box(modifier = Modifier.smoothExpandingHeight(enabled = chatAnimationsEnabled)) {
+                        if (node.messages.size > 1 && chatAnimationsEnabled) {
+                            AnimatedContent(
+                                targetState = node.selectIndex,
+                                transitionSpec = {
+                                    val forward = targetState >= initialState
+                                    (slideInHorizontally(animationSpec = tween(280, easing = LinearOutSlowInEasing)) { width ->
+                                        if (forward) (width * 0.35f).toInt() else (-width * 0.35f).toInt()
+                                    } + fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing))) togetherWith
+                                    (slideOutHorizontally(animationSpec = tween(220, easing = FastOutLinearInEasing)) { width ->
+                                        if (forward) (-width * 0.35f).toInt() else (width * 0.35f).toInt()
+                                    } + fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing))) using
+                                    SizeTransform(clip = false) { _, _ -> snap() }
+                                },
+                                label = "UserMessageVersionAnimatedContent"
+                            ) { targetIdx ->
+                                renderUserBubbleContent(targetIdx)
+                            }
+                        } else {
+                            renderUserBubbleContent(node.selectIndex)
+                        }
                     }
                 }
             }
@@ -2080,17 +2165,7 @@ private fun AssistantMessageTurn(
                             isStreaming = isStreaming,
                         )
                         Box(
-                            modifier = if (chatAnimationsEnabled && !isStreaming && !isTurnActive) {
-                                Modifier.animateContentSize(
-                                    animationSpec = spring(
-                                        dampingRatio = 0.92f,
-                                        stiffness = 220f
-                                    ),
-                                    alignment = Alignment.TopStart
-                                )
-                            } else {
-                                Modifier
-                            }
+                            modifier = Modifier.smoothExpandingHeight(enabled = chatAnimationsEnabled)
                         ) {
                             MarkdownBlock(
                                 workspaceId = assistant?.workspaceId?.toString(),
@@ -2488,61 +2563,63 @@ private fun AssistantMessageTurn(
                     onClick = handleBubbleClick,
                     bubbleModifier = morphBubbleModifierLambda,
                 ) {
-                    AnimatedContent(
-                        targetState = assistantNode.selectIndex,
-                        transitionSpec = {
-                            val forward = targetState >= initialState
-                            (fadeIn(animationSpec = tween(240, delayMillis = 50, easing = LinearOutSlowInEasing)) +
-                                slideInHorizontally(animationSpec = tween(260, easing = LinearOutSlowInEasing)) { width ->
-                                    if (forward) (width * 0.14f).toInt() else (-width * 0.14f).toInt()
-                                }) togetherWith
-                            (fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing)) +
-                                slideOutHorizontally(animationSpec = tween(180, easing = FastOutLinearInEasing)) { width ->
-                                    if (forward) (-width * 0.14f).toInt() else (width * 0.14f).toInt()
-                                }) using
-                            SizeTransform(clip = false) { _, _ -> snap() }
-                        },
-                        contentAlignment = Alignment.TopStart,
-                        label = "assistant_bubble_inner_version_switch"
-                    ) { targetIdx ->
-                        val versionNodes = remember(group, targetIdx) {
-                            group.filteredNodesForVersion(targetIdx)
-                        }
-                        val versionTextParts = remember(versionNodes) {
-                            versionNodes
-                                .flatMap { it.currentMessage.parts }
-                                .filterIsInstance<UIMessagePart.Text>()
-                                .filter { it.text.isNotBlank() }
-                        }
-                        val userNickname = effectiveDisplay.getActivePersona().name
-                        val isStreaming = loading && targetIdx == assistantNode.selectIndex
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            versionTextParts.forEachIndexed { index, part ->
-                                val isPartStreaming = isStreaming && index == versionTextParts.lastIndex
-                                val displayContent = rememberFormattedMessageText(
-                                    rawText = part.text,
-                                    assistant = assistant,
-                                    userNickname = userNickname,
-                                    scope = AssistantAffectScope.ASSISTANT,
-                                    isStreaming = isPartStreaming,
-                                )
-                                MarkdownBlock(
-                                    workspaceId = assistant?.workspaceId?.toString(),
-                                    content = displayContent,
-                                    paragraphSpacing = 12.dp,
-                                    streamingTextReveal = isPartStreaming,
-                                    displaySetting = effectiveDisplay,
-                                    onRevealComplete = {
-                                        if (index == versionTextParts.lastIndex) {
-                                            isTextAnimating = false
-                                        }
-                                    },
-                                    onExpandedStreamingCodeBlockChanged = {
-                                        onExpandedStreamingCodeBlockChanged?.invoke()
-                                        onStreamingRevealTick?.invoke()
-                                    },
-                                    onClickCitation = { id -> onCitationClick(id) }
-                                )
+                    Box(modifier = Modifier.smoothExpandingHeight(enabled = chatAnimationsEnabled)) {
+                        AnimatedContent(
+                            targetState = assistantNode.selectIndex,
+                            transitionSpec = {
+                                val forward = targetState >= initialState
+                                (fadeIn(animationSpec = tween(240, delayMillis = 50, easing = LinearOutSlowInEasing)) +
+                                    slideInHorizontally(animationSpec = tween(260, easing = LinearOutSlowInEasing)) { width ->
+                                        if (forward) (width * 0.14f).toInt() else (-width * 0.14f).toInt()
+                                    }) togetherWith
+                                (fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing)) +
+                                    slideOutHorizontally(animationSpec = tween(180, easing = FastOutLinearInEasing)) { width ->
+                                        if (forward) (-width * 0.14f).toInt() else (width * 0.14f).toInt()
+                                    }) using
+                                SizeTransform(clip = false) { _, _ -> snap() }
+                            },
+                            contentAlignment = Alignment.TopStart,
+                            label = "assistant_bubble_inner_version_switch"
+                        ) { targetIdx ->
+                            val versionNodes = remember(group, targetIdx) {
+                                group.filteredNodesForVersion(targetIdx)
+                            }
+                            val versionTextParts = remember(versionNodes) {
+                                versionNodes
+                                    .flatMap { it.currentMessage.parts }
+                                    .filterIsInstance<UIMessagePart.Text>()
+                                    .filter { it.text.isNotBlank() }
+                            }
+                            val userNickname = effectiveDisplay.getActivePersona().name
+                            val isStreaming = loading && targetIdx == assistantNode.selectIndex
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                versionTextParts.forEachIndexed { index, part ->
+                                    val isPartStreaming = isStreaming && index == versionTextParts.lastIndex
+                                    val displayContent = rememberFormattedMessageText(
+                                        rawText = part.text,
+                                        assistant = assistant,
+                                        userNickname = userNickname,
+                                        scope = AssistantAffectScope.ASSISTANT,
+                                        isStreaming = isPartStreaming,
+                                    )
+                                    MarkdownBlock(
+                                        workspaceId = assistant?.workspaceId?.toString(),
+                                        content = displayContent,
+                                        paragraphSpacing = 12.dp,
+                                        streamingTextReveal = isPartStreaming,
+                                        displaySetting = effectiveDisplay,
+                                        onRevealComplete = {
+                                            if (index == versionTextParts.lastIndex) {
+                                                isTextAnimating = false
+                                            }
+                                        },
+                                        onExpandedStreamingCodeBlockChanged = {
+                                            onExpandedStreamingCodeBlockChanged?.invoke()
+                                            onStreamingRevealTick?.invoke()
+                                        },
+                                        onClickCitation = { id -> onCitationClick(id) }
+                                    )
+                                }
                             }
                         }
                     }

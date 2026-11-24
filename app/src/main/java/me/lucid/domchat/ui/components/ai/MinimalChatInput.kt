@@ -1266,22 +1266,12 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .then(
-                                                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                                                            Modifier.frostedGlassSurface(
-                                                                shape = CircleShape,
-                                                                borderWidth = 0.5.dp,
-                                                                specularBrush = stopBorderBrush,
-                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
-                                                            )
-                                                        } else {
-                                                            Modifier.liquidGlassSurface(
-                                                                shape = CircleShape,
-                                                                borderWidth = 0.5.dp,
-                                                                specularBrush = stopBorderBrush,
-                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
-                                                            )
-                                                        }
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF5A0C0C).copy(alpha = 0.55f))
+                                                    .border(
+                                                        width = 0.5.dp,
+                                                        brush = stopBorderBrush,
+                                                        shape = CircleShape,
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1298,22 +1288,12 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .then(
-                                                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                                                            Modifier.frostedGlassSurface(
-                                                                shape = CircleShape,
-                                                                borderWidth = 0.5.dp,
-                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = Color.Transparent,
-                                                            )
-                                                        } else {
-                                                            Modifier.liquidGlassSurface(
-                                                                shape = CircleShape,
-                                                                borderWidth = 0.5.dp,
-                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                                                fillColor = Color.Transparent,
-                                                            )
-                                                        }
+                                                    .clip(CircleShape)
+                                                    .background(Color.White.copy(alpha = 0.14f))
+                                                    .border(
+                                                        width = 0.5.dp,
+                                                        brush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                        shape = CircleShape,
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1585,7 +1565,11 @@ fun MinimalChatInput(
                                     modifier = Modifier.size(AppSize.ChromePill),
                                     containerColorOverride = if (currentAction == DomChatComposerAction.Picker) {
                                         Color(0xFF000000)
-                                    } else if (currentAction == DomChatComposerAction.Loading) {
+                                    } else if (
+                                        currentAction == DomChatComposerAction.Loading ||
+                                        currentAction == DomChatComposerAction.Send ||
+                                        currentAction == DomChatComposerAction.QuestionnaireSubmit
+                                    ) {
                                         Color.Transparent
                                     } else {
                                         null
@@ -1603,22 +1587,12 @@ fun MinimalChatInput(
                                             Box(
                                                 modifier = Modifier
                                                     .size(36.dp)
-                                                    .then(
-                                                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
-                                                            Modifier.frostedGlassSurface(
-                                                                shape = CircleShape,
-                                                                borderWidth = 0.5.dp,
-                                                                specularBrush = stopBorderBrush,
-                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
-                                                            )
-                                                        } else {
-                                                            Modifier.liquidGlassSurface(
-                                                                shape = CircleShape,
-                                                                borderWidth = 0.5.dp,
-                                                                specularBrush = stopBorderBrush,
-                                                                fillColor = Color(0xFF5A0C0C).copy(alpha = 0.45f),
-                                                            )
-                                                        }
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF5A0C0C).copy(alpha = 0.55f))
+                                                    .border(
+                                                        width = 0.5.dp,
+                                                        brush = stopBorderBrush,
+                                                        shape = CircleShape,
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1632,12 +1606,25 @@ fun MinimalChatInput(
                                         }
                                         DomChatComposerAction.Send,
                                         DomChatComposerAction.QuestionnaireSubmit -> {
-                                            Icon(
-                                                imageVector = Icons.Rounded.ArrowUpward,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(24.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimary,
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color.White.copy(alpha = 0.14f))
+                                                    .border(
+                                                        width = 0.5.dp,
+                                                        brush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                        shape = CircleShape,
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.ArrowUpward,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp),
+                                                    tint = Color.White,
+                                                )
+                                            }
                                         }
                                         DomChatComposerAction.QuestionnaireNext -> {
                                             Icon(
