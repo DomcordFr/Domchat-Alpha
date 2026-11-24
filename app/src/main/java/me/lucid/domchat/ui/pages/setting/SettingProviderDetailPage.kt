@@ -1570,20 +1570,28 @@ private fun ModelSettingsForm(
             )
         }
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth().weight(1f)
-        ) { page ->
-            when (page) {
-                0 -> {
-                    // 基本设置页面
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 16.dp)
-                            .verticalScroll(rememberScrollState())
-                    ) {
+        val basicScrollState = rememberScrollState()
+        val advancedScrollState = rememberScrollState()
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        // 基本设置页面
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(basicScrollState)
+                                .padding(top = 16.dp, bottom = 16.dp)
+                        ) {
                         OutlinedTextField(
                             value = model.modelId,
                             onValueChange = {
@@ -1769,15 +1777,15 @@ private fun ModelSettingsForm(
                     }
                 }
 
-                1 -> {
-                    // 高级设置页面
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
+                    1 -> {
+                        // 高级设置页面
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(advancedScrollState)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
                         ProviderOverrideSettings(
                             providerOverride = model.providerOverwrite,
                             onUpdateProviderOverride = { providerOverride ->
@@ -1806,9 +1814,28 @@ private fun ModelSettingsForm(
                                 onModelChange = onModelChange,
                             )
                         }
-                        Spacer(modifier = Modifier.height(88.dp))
+                            Spacer(modifier = Modifier.height(88.dp))
+                        }
                     }
                 }
+            }
+
+            val activeScrollPx = if (pagerState.currentPage == 0) basicScrollState.value else advancedScrollState.value
+            val topFadeAlpha = (activeScrollPx / 40f).coerceIn(0f, 1f)
+            if (topFadeAlpha > 0.01f) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to Color(0xFF000000).copy(alpha = topFadeAlpha),
+                                0.55f to Color(0xFF000000).copy(alpha = 0.60f * topFadeAlpha),
+                                1.0f to Color.Transparent,
+                            )
+                        )
+                )
             }
         }
     }
@@ -2222,20 +2249,6 @@ private fun AddNewModelSheet(
                         parentProvider = parentProvider
                     )
                 }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(24.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                0.0f to Color(0xFF000000),
-                                0.60f to Color(0xFF000000).copy(alpha = 0.60f),
-                                1.0f to Color.Transparent,
-                            )
-                        )
-                )
 
                 Box(
                     modifier = Modifier
@@ -3545,20 +3558,6 @@ private fun EditModelSheet(
                         parentProvider = parentProvider
                     )
                 }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(24.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                0.0f to Color(0xFF000000),
-                                0.60f to Color(0xFF000000).copy(alpha = 0.60f),
-                                1.0f to Color.Transparent,
-                            )
-                        )
-                )
 
                 Box(
                     modifier = Modifier
