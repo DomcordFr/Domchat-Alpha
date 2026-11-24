@@ -269,9 +269,16 @@ fun ChatDrawerContent(
                                 overflow = TextOverflow.Ellipsis,
                             )
                             if (activePersona.pronouns.isNotBlank()) {
+                                val badgeShape = RoundedCornerShape(6.dp)
                                 Surface(
-                                    color = Color(0xFFA78BFA).copy(alpha = 0.20f),
-                                    shape = RoundedCornerShape(6.dp)
+                                    color = Color.Transparent,
+                                    shape = badgeShape,
+                                    modifier = Modifier.liquidGlassSurface(
+                                        shape = badgeShape,
+                                        borderWidth = 0.5.dp,
+                                        fillColor = Color.Transparent,
+                                        specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                    ),
                                 ) {
                                     Text(
                                         text = activePersona.pronouns,
@@ -279,7 +286,7 @@ fun ChatDrawerContent(
                                             fontSize = 10.sp,
                                             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                                         ),
-                                        color = Color(0xFFA78BFA),
+                                        color = Color.White,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
                                     )
                                 }
