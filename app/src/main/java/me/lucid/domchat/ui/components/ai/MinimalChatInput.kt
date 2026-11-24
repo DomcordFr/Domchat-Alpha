@@ -1225,7 +1225,11 @@ fun MinimalChatInput(
                                 }
                                 DomChatComposerActionButton(
                                     action = currentAction,
-                                    containerColorOverride = if (currentAction == DomChatComposerAction.Loading) Color.Transparent else null,
+                                    containerColorOverride = if (
+                                        currentAction == DomChatComposerAction.Loading ||
+                                        currentAction == DomChatComposerAction.Send ||
+                                        currentAction == DomChatComposerAction.QuestionnaireSubmit
+                                    ) Color.Transparent else null,
                                     onClick = {
                                         when (currentAction) {
                                             DomChatComposerAction.Send,
@@ -1292,12 +1296,35 @@ fun MinimalChatInput(
                                         }
                                         DomChatComposerAction.Send,
                                         DomChatComposerAction.QuestionnaireSubmit -> {
-                                            Icon(
-                                                imageVector = Icons.Rounded.ArrowUpward,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimary,
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .then(
+                                                        if (settings.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED) {
+                                                            Modifier.frostedGlassSurface(
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = Color.Transparent,
+                                                            )
+                                                        } else {
+                                                            Modifier.liquidGlassSurface(
+                                                                shape = CircleShape,
+                                                                borderWidth = 0.5.dp,
+                                                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                                                fillColor = Color.Transparent,
+                                                            )
+                                                        }
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.ArrowUpward,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp),
+                                                    tint = Color.White,
+                                                )
+                                            }
                                         }
                                         DomChatComposerAction.QuestionnaireNext -> {
                                             Icon(

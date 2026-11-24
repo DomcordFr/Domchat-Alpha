@@ -147,7 +147,7 @@ import kotlin.uuid.Uuid
 
 private const val TAG = "ChatService"
 private const val STREAMING_CHECKPOINT_INTERVAL_MS = 1_000L
-private const val STREAMING_UI_UPDATE_INTERVAL_MS = 45L
+private const val STREAMING_UI_UPDATE_INTERVAL_MS = 85L
 private const val SMART_CONTEXT_OVERFLOW_RETRIES = 6
 
 private fun Throwable.isContextWindowOverflow(): Boolean = generateSequence(this) { it.cause }

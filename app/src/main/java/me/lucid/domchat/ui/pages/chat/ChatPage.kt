@@ -1794,7 +1794,8 @@ private fun ChatPageContent(
         // Overlay floaters sample the chat content once it is opaque and ready;
         // everything else (bubbles, chat list, new-chat content) samples wallpaper.
         // `chatListReady` and `contentBackdrop.hasRecording` are reactive Compose state.
-        val overlayBackdrop = if (emptyChat || !chatListReady || !contentBackdrop.hasRecording) {
+        val isScrollingWhileStreaming = isGenerating && chatListState.isScrollInProgress
+        val overlayBackdrop = if (emptyChat || !chatListReady || !contentBackdrop.hasRecording || isScrollingWhileStreaming) {
             wallpaperBackdrop
         } else {
             contentBackdrop
@@ -1978,16 +1979,27 @@ private fun ChatPageContent(
                         label = "chat_conversation_content",
                         modifier = Modifier.fillMaxSize(),
                     ) { targetConversationId ->
-                        val frameConversation = if (targetConversationId == conversation.id) {
-                            conversation
-                        } else {
-                            conversationSnapshots[targetConversationId] ?: Conversation.ofId(targetConversationId)
-                        }
                         val fallbackListState = remember(targetConversationId) { LazyListState() }
                         val frameListState = if (targetConversationId == conversation.id) {
                             chatListState
                         } else {
                             chatListStateSnapshots[targetConversationId] ?: fallbackListState
+                        }
+                        val frozenDuringScrollHolder = remember(targetConversationId) {
+                            object {
+                                var snapshot: Conversation? = null
+                            }
+                        }
+                        val liveFrameConversation = if (targetConversationId == conversation.id) {
+                            conversation
+                        } else {
+                            conversationSnapshots[targetConversationId] ?: Conversation.ofId(targetConversationId)
+                        }
+                        val frameConversation = if (isGenerating && frameListState.isScrollInProgress && targetConversationId == conversation.id) {
+                            frozenDuringScrollHolder.snapshot ?: liveFrameConversation.also { frozenDuringScrollHolder.snapshot = it }
+                        } else {
+                            frozenDuringScrollHolder.snapshot = null
+                            liveFrameConversation
                         }
                         val frameInitialSearchQuery = if (targetConversationId == conversation.id) {
                             initialSearchQuery

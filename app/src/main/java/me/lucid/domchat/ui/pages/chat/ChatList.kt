@@ -487,7 +487,7 @@ private fun SharedTransitionScope.ChatListNormal(
 
         LaunchedEffect(state) {
             snapshotFlow {
-                isChatListAtStreamingBottom(
+                !state.isScrollInProgress && isChatListAtStreamingBottom(
                     visibleItems = state.layoutInfo.visibleItemsInfo,
                     canScrollForward = state.canScrollForward,
                 )
