@@ -108,6 +108,7 @@ import me.lucid.ai.core.MessageRole
 import me.lucid.ai.core.TokenUsage
 import me.lucid.ai.provider.Model
 import me.lucid.ai.ui.ToolApprovalState
+import me.lucid.ai.ui.UIMessage
 import me.lucid.ai.ui.UIMessageAnnotation
 import me.lucid.ai.ui.UIMessagePart
 import me.lucid.domchat.R

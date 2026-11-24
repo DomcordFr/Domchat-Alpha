@@ -217,6 +217,7 @@ import me.lucid.domchat.Screen
 import me.lucid.domchat.data.datastore.Settings
 import me.lucid.domchat.data.datastore.TtsAutoplayMode
 import me.lucid.domchat.data.datastore.findProvider
+import me.lucid.domchat.data.datastore.getCurrentAssistant
 import me.lucid.domchat.data.datastore.getEffectiveTTSProvider
 import me.lucid.domchat.data.datastore.getEffectiveTtsAutoplayMode
 import me.lucid.domchat.data.ai.contextUsageSourceKey
@@ -1682,7 +1683,7 @@ private fun ChatPageContent(
         requestContextUsage,
         showContextSummary,
         currentChatModel?.id,
-        if (isGenerating) 0L else conversation.updateAt.toEpochMilliseconds(),
+        if (isGenerating) 0L else conversation.updateAt.toEpochMilli(),
         currentAssistant.id,
         debouncedPendingParts,
         isGenerating,
