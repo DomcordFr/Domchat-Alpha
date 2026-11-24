@@ -2033,8 +2033,8 @@ fun MinimalChatInput(
                     val currentColor = parseColor(draftHex)
 
                     // Auto-save whenever the user sets a valid color (live debounced + on leave)
-                    val latestDraftHex by rememberUpdatedState(draftHex)
-                    val latestSavedHex by rememberUpdatedState(savedHex)
+                    val latestDraftHex by androidx.compose.runtime.rememberUpdatedState(draftHex)
+                    val latestSavedHex by androidx.compose.runtime.rememberUpdatedState(savedHex)
                     LaunchedEffect(effectivePattern, draftHex) {
                         val hexDigits = draftHex.trim().removePrefix("#").uppercase()
                         if (hexDigits.length == 6 && hexDigits.all { it in "0123456789ABCDEF" }) {
