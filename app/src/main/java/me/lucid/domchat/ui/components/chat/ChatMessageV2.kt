@@ -24,7 +24,6 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -236,8 +235,8 @@ private class SmoothExpandingHeightNode : Modifier.Node(), LayoutModifierNode {
                 data.anim.animateTo(
                     targetValue = targetHeight.toFloat(),
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = if (targetHeight > data.anim.value) 480f else 380f,
+                        dampingRatio = 0.76f,
+                        stiffness = if (targetHeight > data.anim.value) 260f else 300f,
                     ),
                 )
             }
@@ -2902,8 +2901,8 @@ private fun AssistantThinkingDropdown(
 
     val reasoningMotionSpec = remember {
         spring<androidx.compose.ui.unit.IntSize>(
-            dampingRatio = 0.88f,
-            stiffness = 220f
+            dampingRatio = 0.72f,
+            stiffness = 280f
         )
     }
 
@@ -2980,13 +2979,13 @@ private fun AssistantThinkingDropdown(
         AnimatedVisibility(
             visible = expanded,
             enter = expandVertically(
-                animationSpec = spring(dampingRatio = 0.88f, stiffness = 220f),
+                animationSpec = spring(dampingRatio = 0.72f, stiffness = 280f),
                 expandFrom = Alignment.Top
-            ) + fadeIn(animationSpec = tween(240, easing = LinearOutSlowInEasing)),
+            ) + fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)),
             exit = shrinkVertically(
-                animationSpec = spring(dampingRatio = 0.88f, stiffness = 220f),
+                animationSpec = spring(dampingRatio = 0.76f, stiffness = 320f),
                 shrinkTowards = Alignment.Top
-            ) + fadeOut(animationSpec = tween(200, easing = LinearOutSlowInEasing))
+            ) + fadeOut(animationSpec = tween(180, easing = LinearOutSlowInEasing))
         ) {
             Column(
                 modifier = Modifier

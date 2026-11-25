@@ -12,7 +12,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -317,10 +316,10 @@ fun buildActivityItemsFromMultiple(state: ActivityState.CompletedMultiple): List
 private val LARGE_RADIUS = 20.dp
 private val SMALL_RADIUS = 6.dp
 private val PILL_HEIGHT = 36.dp
-private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 240f)
-private val PILL_COLLAPSE_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 620f)
-private val PILL_LIVE_GROWTH_SPEC = spring<IntSize>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 600f)
-private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 240f)
+private val PILL_MORPH_SPEC = spring<IntSize>(dampingRatio = 0.72f, stiffness = 280f)
+private val PILL_COLLAPSE_SPEC = spring<IntSize>(dampingRatio = 0.78f, stiffness = 440f)
+private val PILL_LIVE_GROWTH_SPEC = spring<IntSize>(dampingRatio = 0.80f, stiffness = 340f)
+private val PILL_CORNER_SPEC = spring<Dp>(dampingRatio = 0.72f, stiffness = 280f)
 
 /**
  * Position of a pill in a row of pills.
@@ -1185,8 +1184,14 @@ private fun UnifiedReasoningPill(
 
         AnimatedVisibility(
             visible = isExpanded && lastPreviewText.value.isNotBlank(),
-            enter = fadeIn(animationSpec = tween(240, delayMillis = 60, easing = LinearOutSlowInEasing)),
-            exit = fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing))
+            enter = androidx.compose.animation.expandVertically(
+                animationSpec = spring(dampingRatio = 0.74f, stiffness = 280f),
+                expandFrom = Alignment.Top
+            ) + fadeIn(animationSpec = tween(220, delayMillis = 50, easing = LinearOutSlowInEasing)),
+            exit = androidx.compose.animation.shrinkVertically(
+                animationSpec = spring(dampingRatio = 0.78f, stiffness = 340f),
+                shrinkTowards = Alignment.Top
+            ) + fadeOut(animationSpec = tween(140, easing = FastOutLinearInEasing))
         ) {
             MarkdownBlock(
                 content = lastPreviewText.value,

@@ -78,16 +78,16 @@ fun Modifier.entrance(
         progress.animateTo(
             1f,
             animationSpec = spring(
-                dampingRatio = 0.86f,
-                stiffness = 220f,
+                dampingRatio = 0.74f,
+                stiffness = 260f,
             )
         )
     }
     var result = this.graphicsLayer {
         val p = progress.value
-        alpha = p
-        // Smooth organic scale-in: 0.96f -> 1.0f, settling gently with the spring.
-        val scale = 0.96f + 0.04f * p
+        alpha = p.coerceIn(0f, 1f)
+        // Smooth organic scale-in: 0.94f -> 1.0f, with subtle spring settle.
+        val scale = 0.94f + 0.06f * p
         scaleX = scale
         scaleY = scale
         val d = distancePx * (1f - p)
