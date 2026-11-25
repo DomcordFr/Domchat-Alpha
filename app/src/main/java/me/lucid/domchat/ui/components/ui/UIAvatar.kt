@@ -58,10 +58,12 @@ fun TextAvatar(
     color: Color = Color(0xFF000000),
     contentColor: Color = MaterialTheme.colorScheme.onSecondary
 ) {
-    val rotation = rememberAvatarLoadingRotation(loading)
+    val rotation = if (loading) rememberAvatarLoadingRotation(true) else null
+    val spinModifier = if (rotation != null) Modifier.avatarLoadingSpin(rotation) else Modifier
+    val counterSpinModifier = if (rotation != null) Modifier.avatarCounterSpin(rotation) else Modifier
     Box(
         modifier = modifier
-            .avatarLoadingSpin(rotation)
+            .then(spinModifier)
             .clip(shape = rememberAvatarShape(loading))
             .background(color)
             .size(32.dp),
@@ -78,7 +80,7 @@ fun TextAvatar(
                 stepSize = 1.sp
             ),
             lineHeight = 0.8.em,
-            modifier = Modifier.avatarCounterSpin(rotation)
+            modifier = counterSpinModifier
         )
     }
 }
@@ -87,13 +89,14 @@ fun TextAvatar(
 private fun AvatarContent(
     name: String = "",
     value: Avatar = Avatar.Dummy,
-    rotation: Animatable<Float, AnimationVector1D>,
+    rotation: Animatable<Float, AnimationVector1D>? = null,
 ) {
+    val counterSpinModifier = if (rotation != null) Modifier.avatarCounterSpin(rotation) else Modifier
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .avatarCounterSpin(rotation)
+            .then(counterSpinModifier)
     ) {
         when (value) {
             is Avatar.Image -> {
@@ -159,10 +162,10 @@ private fun ReadOnlyUIAvatar(
     loading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val rotation = if (loading) rememberAvatarLoadingRotation(true) else 0f
+    val rotation = if (loading) rememberAvatarLoadingRotation(true) else null
     val shape = rememberAvatarShape(loading)
 
-    val spinModifier = if (loading) Modifier.avatarLoadingSpin(rotation) else Modifier
+    val spinModifier = if (rotation != null) Modifier.avatarLoadingSpin(rotation) else Modifier
     if (onClick != null) {
         Surface(
             shape = shape,
@@ -218,14 +221,15 @@ private fun EditableUIAvatar(
         }
     }
 
-    val rotation = rememberAvatarLoadingRotation(loading)
+    val rotation = if (loading) rememberAvatarLoadingRotation(true) else null
     val shape = rememberAvatarShape(loading)
+    val spinModifier = if (rotation != null) Modifier.avatarLoadingSpin(rotation) else Modifier
 
     Surface(
         shape = shape,
         modifier = modifier
             .size(32.dp)
-            .avatarLoadingSpin(rotation),
+            .then(spinModifier),
         onClick = {
             onClick?.invoke()
             showPickOption = true
