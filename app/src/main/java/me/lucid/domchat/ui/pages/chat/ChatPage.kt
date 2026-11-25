@@ -186,7 +186,6 @@ import me.lucid.domchat.ui.components.ui.Tooltip
 import me.lucid.domchat.ui.component.backdrop.LocalAppBackdrop
 import me.lucid.domchat.ui.component.backdrop.effects.blur
 import me.lucid.domchat.ui.component.backdrop.isRuntimeShaderSupported
-import androidx.compose.ui.graphics.BlendMode
 import me.lucid.domchat.ui.component.backdrop.backdrops.LayerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.layerBackdrop
 import me.lucid.domchat.ui.component.backdrop.backdrops.rememberLayerBackdrop
@@ -335,11 +334,61 @@ internal fun completedGenerationIdsAfterDone(
     }
 }
 
+private const val PROGRESSIVE_EDGE_BLUR_AGSL = """
+    uniform shader content;
+    uniform float2 direction;
+    uniform float maxRadius;
+    uniform float topHeight;
+    uniform float bottomHeight;
+    uniform float height;
+    uniform float width;
+
+    half4 main(float2 coord) {
+        float t = 0.0;
+        if (topHeight > 0.5 && coord.y < topHeight) {
+            float u = clamp(1.0 - coord.y / topHeight, 0.0, 1.0);
+            t = max(t, u * u * (3.0 - 2.0 * u));
+        }
+        if (bottomHeight > 0.5 && coord.y > height - bottomHeight) {
+            float u = clamp((coord.y - (height - bottomHeight)) / bottomHeight, 0.0, 1.0);
+            t = max(t, u * u * (3.0 - 2.0 * u));
+        }
+        float radius = maxRadius * t;
+        if (radius < 0.35) {
+            return content.eval(coord);
+        }
+
+        float stepPx = radius / 8.0;
+        float2 minC = float2(0.5, 0.5);
+        float2 maxC = float2(max(width - 0.5, 0.5), max(height - 0.5, 0.5));
+
+        half4 acc = content.eval(coord) * 0.12564;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 1.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 1.0), minC, maxC))) * 0.11964;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 2.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 2.0), minC, maxC))) * 0.10334;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 3.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 3.0), minC, maxC))) * 0.08096;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 4.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 4.0), minC, maxC))) * 0.05752;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 5.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 5.0), minC, maxC))) * 0.03706;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 6.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 6.0), minC, maxC))) * 0.02166;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 7.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 7.0), minC, maxC))) * 0.01148;
+        acc += (content.eval(clamp(coord + direction * (stepPx * 8.0), minC, maxC)) +
+                content.eval(clamp(coord - direction * (stepPx * 8.0), minC, maxC))) * 0.00552;
+        return acc;
+    }
+"""
+
 /**
- * Direct hardware progressive edge blur (inspired by Essentials' ProgressiveBlurModifier)
- * built with Android 12+ (API 31+) RenderEffect. Applies a native GPU Gaussian blur
- * smoothly blended into the sharp content at the top and bottom bar zones with zero
- * Offscreen/DstIn compositing and zero backdrop self-sampling.
+ * Direct 2-pass separable AGSL progressive edge blur (Android 13+ / API 33+).
+ * Scales the actual Gaussian blur radius smoothly from maxRadius at the top/bottom
+ * screen edges down to 0px into the chat area, with an instant 1-fetch pass-through
+ * in the middle of the screen. Zero alpha fade-out, zero Offscreen/DstIn artifacts,
+ * and zero backdrop self-sampling.
  */
 @Composable
 private fun Modifier.progressiveEdgeBlur(
@@ -347,91 +396,51 @@ private fun Modifier.progressiveEdgeBlur(
     topHeightDp: Dp,
     bottomHeightDp: Dp,
 ): Modifier {
-    if (blurDp <= 0.1f || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+    if (blurDp <= 0.1f || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
         return this
     }
     if (topHeightDp <= 0.dp && bottomHeightDp <= 0.dp) return this
 
     val density = LocalDensity.current
-    val blurPx = with(density) { blurDp.coerceIn(0f, 60f).dp.toPx() }
+    val maxRadiusPx = with(density) { blurDp.coerceIn(0f, 60f).dp.toPx() * 1.4f }
     val topPx = with(density) { topHeightDp.coerceAtLeast(0.dp).toPx() }
     val bottomPx = with(density) { bottomHeightDp.coerceAtLeast(0.dp).toPx() }
+    var containerWidthPx by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var containerHeightPx by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
-    val effect = remember(blurPx, topPx, bottomPx, containerHeightPx) {
+    val effect = remember(maxRadiusPx, topPx, bottomPx, containerWidthPx, containerHeightPx) {
+        val w = containerWidthPx.toFloat()
         val h = containerHeightPx.toFloat()
-        if (h <= 1f || blurPx <= 0.5f) {
+        if (w <= 1f || h <= 1f || maxRadiusPx <= 0.5f) {
             null
         } else {
-            val topFrac = (topPx / h).coerceIn(0f, 0.5f)
-            val bottomFrac = (bottomPx / h).coerceIn(0f, 0.5f)
-            val topMid = (topFrac * 0.55f).coerceIn(0f, topFrac)
-            val botStart = (1f - bottomFrac).coerceIn(topFrac, 1f)
-            val botMid = (1f - bottomFrac * 0.45f).coerceIn(botStart, 1f)
-
-            val topEdgeAlpha = if (topFrac > 0.001f) 255 else 0
-            val topMidAlpha = if (topFrac > 0.001f) 190 else 0
-            val botEdgeAlpha = if (bottomFrac > 0.001f) 255 else 0
-            val botMidAlpha = if (bottomFrac > 0.001f) 190 else 0
-
-            val positions = floatArrayOf(0f, topMid, topFrac, botStart, botMid, 1f)
-            val maskColors = intArrayOf(
-                android.graphics.Color.argb(topEdgeAlpha, 0, 0, 0),
-                android.graphics.Color.argb(topMidAlpha, 0, 0, 0),
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.argb(botMidAlpha, 0, 0, 0),
-                android.graphics.Color.argb(botEdgeAlpha, 0, 0, 0),
-            )
-            val invMaskColors = intArrayOf(
-                android.graphics.Color.argb(255 - topEdgeAlpha, 0, 0, 0),
-                android.graphics.Color.argb(255 - topMidAlpha, 0, 0, 0),
-                android.graphics.Color.BLACK,
-                android.graphics.Color.BLACK,
-                android.graphics.Color.argb(255 - botMidAlpha, 0, 0, 0),
-                android.graphics.Color.argb(255 - botEdgeAlpha, 0, 0, 0),
-            )
-
-            val blurEffect = android.graphics.RenderEffect.createBlurEffect(
-                blurPx,
-                blurPx,
-                android.graphics.Shader.TileMode.CLAMP,
-            )
-            val sharpEffect = android.graphics.RenderEffect.createOffsetEffect(0f, 0f)
-            val maskEffect = android.graphics.RenderEffect.createShaderEffect(
-                android.graphics.LinearGradient(
-                    0f, 0f, 0f, h,
-                    maskColors, positions,
-                    android.graphics.Shader.TileMode.CLAMP,
-                )
-            )
-            val invMaskEffect = android.graphics.RenderEffect.createShaderEffect(
-                android.graphics.LinearGradient(
-                    0f, 0f, 0f, h,
-                    invMaskColors, positions,
-                    android.graphics.Shader.TileMode.CLAMP,
-                )
-            )
-            val maskedBlur = android.graphics.RenderEffect.createBlendModeEffect(
-                maskEffect,
-                blurEffect,
-                android.graphics.BlendMode.SRC_IN,
-            )
-            val maskedSharp = android.graphics.RenderEffect.createBlendModeEffect(
-                invMaskEffect,
-                sharpEffect,
-                android.graphics.BlendMode.SRC_IN,
-            )
-            android.graphics.RenderEffect.createBlendModeEffect(
-                maskedSharp,
-                maskedBlur,
-                android.graphics.BlendMode.PLUS,
-            ).asComposeRenderEffect()
+            val horizShader = android.graphics.RuntimeShader(PROGRESSIVE_EDGE_BLUR_AGSL).apply {
+                setFloatUniform("direction", 1f, 0f)
+                setFloatUniform("maxRadius", maxRadiusPx)
+                setFloatUniform("topHeight", topPx)
+                setFloatUniform("bottomHeight", bottomPx)
+                setFloatUniform("height", h)
+                setFloatUniform("width", w)
+            }
+            val vertShader = android.graphics.RuntimeShader(PROGRESSIVE_EDGE_BLUR_AGSL).apply {
+                setFloatUniform("direction", 0f, 1f)
+                setFloatUniform("maxRadius", maxRadiusPx)
+                setFloatUniform("topHeight", topPx)
+                setFloatUniform("bottomHeight", bottomPx)
+                setFloatUniform("height", h)
+                setFloatUniform("width", w)
+            }
+            val horizEffect = android.graphics.RenderEffect.createRuntimeShaderEffect(horizShader, "content")
+            val vertEffect = android.graphics.RenderEffect.createRuntimeShaderEffect(vertShader, "content")
+            android.graphics.RenderEffect.createChainEffect(vertEffect, horizEffect).asComposeRenderEffect()
         }
     }
 
     return this
         .onSizeChanged { size ->
+            if (size.width != containerWidthPx) {
+                containerWidthPx = size.width
+            }
             if (size.height != containerHeightPx) {
                 containerHeightPx = size.height
             }
