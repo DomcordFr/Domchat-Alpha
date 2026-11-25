@@ -339,11 +339,12 @@ internal fun completedGenerationIdsAfterDone(
 }
 
 @Composable
-private fun Modifier.barProgressiveBackdropBlur(
+private fun BarProgressiveBackdropBlur(
     blurDp: Float,
     fromTop: Boolean,
-): Modifier {
-    if (blurDp <= 0.1f) return this
+    modifier: Modifier = Modifier,
+) {
+    if (blurDp <= 0.1f) return
     val backdrop = LocalAppBackdrop.current
     val density = LocalDensity.current
     val blurPx = with(density) { blurDp.coerceIn(0f, 100f).dp.toPx() }
@@ -371,29 +372,40 @@ private fun Modifier.barProgressiveBackdropBlur(
             }
         }
     }
-    return if (useBackdrop) {
-        this
-            .graphicsLayer {
-                compositingStrategy = CompositingStrategy.Offscreen
-            }
-            .drawBackdrop(
-                backdrop = backdrop,
-                shape = shapeProvider,
-                effects = effects,
-                highlight = null,
-                shadow = null,
-                onDrawSurface = null,
-                backdropScale = 0.5f,
+    if (useBackdrop) {
+        // Parent Box isolates the child's DrawBackdropNode output into an offscreen buffer
+        // so BlendMode.DstIn cleanly feathers the blurred backdrop to transparent.
+        Box(
+            modifier = modifier
+                .graphicsLayer {
+                    compositingStrategy = CompositingStrategy.Offscreen
+                }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(brush = maskBrush, blendMode = BlendMode.DstIn)
+                }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = shapeProvider,
+                        effects = effects,
+                        highlight = null,
+                        shadow = null,
+                        onDrawSurface = null,
+                        backdropScale = 0.5f,
+                    )
             )
-            .drawWithContent {
-                drawContent()
-                drawRect(brush = maskBrush, blendMode = BlendMode.DstIn)
-            }
+        }
     } else {
-        this.domChatBlurEffect(
-            containerColor = Color.Transparent,
-            shape = RectangleShape,
-            blurRadius = blurDp.coerceIn(0f, 100f).dp,
+        Box(
+            modifier = modifier.domChatBlurEffect(
+                containerColor = Color.Transparent,
+                shape = RectangleShape,
+                blurRadius = blurDp.coerceIn(0f, 100f).dp,
+            )
         )
     }
 }
@@ -416,10 +428,10 @@ private fun ChatTopFadeOverlay(
             .height(statusBarHeight + fadeHeight)
     ) {
         if (blur > 0.1f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .barProgressiveBackdropBlur(blurDp = blur, fromTop = true)
+            BarProgressiveBackdropBlur(
+                blurDp = blur,
+                fromTop = true,
+                modifier = Modifier.fillMaxSize(),
             )
         }
         if (density > 0.001f) {
@@ -487,10 +499,10 @@ private fun ChatWidePanelEdgeFadeOverlay(
                     .height(topFadeHeight)
             ) {
                 if (blur > 0.1f) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .barProgressiveBackdropBlur(blurDp = blur, fromTop = true)
+                    BarProgressiveBackdropBlur(
+                        blurDp = blur,
+                        fromTop = true,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
                 if (density > 0.001f) {
@@ -523,10 +535,10 @@ private fun ChatWidePanelEdgeFadeOverlay(
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (blur > 0.1f) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .barProgressiveBackdropBlur(blurDp = blur, fromTop = false)
+                        BarProgressiveBackdropBlur(
+                            blurDp = blur,
+                            fromTop = false,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                     if (density > 0.001f) {
@@ -2591,43 +2603,45 @@ private fun ChatPageContent(
                     exit = androidx.compose.animation.fadeOut(),
                     modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
-                    val barDensity = settings.displaySetting.barGradientDensity.coerceIn(0f, 1f)
-                    val barBlur = settings.displaySetting.barGradientBlur
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    ) {
-                        if (barBlur > 0.1f) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .barProgressiveBackdropBlur(blurDp = barBlur, fromTop = false)
-                            )
-                        }
-                        if (barDensity > 0.001f) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        brush = if (toolbarPlacement == ChatToolbarPlacement.Bottom) {
-                                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color.Black.copy(alpha = 0.72f * barDensity),
-                                                    Color.Black.copy(alpha = 0.97f * barDensity)
+                    CompositionLocalProvider(LocalAppBackdrop provides overlayBackdrop) {
+                        val barDensity = settings.displaySetting.barGradientDensity.coerceIn(0f, 1f)
+                        val barBlur = settings.displaySetting.barGradientBlur
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                        ) {
+                            if (barBlur > 0.1f) {
+                                BarProgressiveBackdropBlur(
+                                    blurDp = barBlur,
+                                    fromTop = false,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                            if (barDensity > 0.001f) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = if (toolbarPlacement == ChatToolbarPlacement.Bottom) {
+                                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(alpha = 0.72f * barDensity),
+                                                        Color.Black.copy(alpha = 0.97f * barDensity)
+                                                    )
                                                 )
-                                            )
-                                        } else {
-                                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color.Black.copy(alpha = 0.92f * barDensity)
+                                            } else {
+                                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(alpha = 0.92f * barDensity)
+                                                    )
                                                 )
-                                            )
-                                        }
-                                    )
-                            )
+                                            }
+                                        )
+                                )
+                            }
                         }
                     }
                 }
