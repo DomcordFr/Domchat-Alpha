@@ -107,8 +107,7 @@ interface ConversationDAO {
         """
         SELECT EXISTS(
             SELECT 1 FROM conversationentity
-            WHERE (nodes LIKE '%"role":"USER"%' OR nodes LIKE '%"role":"user"%')
-              AND (nodes LIKE '%"role":"ASSISTANT"%' OR nodes LIKE '%"role":"assistant"%')
+            WHERE assistant_message_count > 0
             LIMIT 1
         )
         """

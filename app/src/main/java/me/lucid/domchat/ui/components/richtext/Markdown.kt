@@ -146,21 +146,24 @@ private fun getThreadParser(): MarkdownParser = threadLocalParser.get() ?: Markd
  */
 private const val SYNC_PARSE_MAX_LENGTH = 4_000
 
-private const val MARKDOWN_AST_CACHE_SIZE = 256
+private const val MARKDOWN_AST_CACHE_MAX_BYTES = 3 * 1024 * 1024 // 3 MB soft budget
 
 /**
  * Process-wide LRU cache of parsed markdown ASTs keyed by the raw (pre-`preProcess`) content.
  */
-private val markdownAstCache = object : LinkedHashMap<String, Pair<String, ASTNode>>(
-    16, 0.75f, /* accessOrder = */ true
-) {
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Pair<String, ASTNode>>): Boolean {
-        return size > MARKDOWN_AST_CACHE_SIZE
+private val markdownAstCache = object : android.util.LruCache<String, Pair<String, ASTNode>>(MARKDOWN_AST_CACHE_MAX_BYTES) {
+    override fun sizeOf(key: String, value: Pair<String, ASTNode>): Int {
+        // Approximate heap footprint: raw key + preprocessed string + AST node overhead
+        return ((key.length + value.first.length) * 6).coerceAtLeast(1024)
     }
 }
 
+internal fun clearMarkdownAstCache() {
+    markdownAstCache.evictAll()
+}
+
 private fun peekMarkdownCache(content: String): Pair<String, ASTNode>? =
-    synchronized(markdownAstCache) { markdownAstCache[content] }
+    markdownAstCache.get(content)
 
 private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>? {
     var inCodeFence = false
@@ -303,15 +306,11 @@ private fun splitIntoBlocksAndTail(content: String): Pair<List<String>, String>?
 }
 
 private fun parseMarkdownCached(content: String): Pair<String, ASTNode> {
-    synchronized(markdownAstCache) {
-        markdownAstCache[content]?.let { return it }
-    }
+    markdownAstCache.get(content)?.let { return it }
     val preprocessed = preProcess(content)
     val astTree = getThreadParser().buildMarkdownTreeFromString(preprocessed)
     val result = preprocessed to astTree
-    synchronized(markdownAstCache) {
-        markdownAstCache[content] = result
-    }
+    markdownAstCache.put(content, result)
     return result
 }
 

@@ -963,7 +963,6 @@ fun ChatPage(
     val persistenceMode = target.persistenceMode
     val focusLatestMessageKey = target.focusLatestMessageKey
     val vm: ChatVM = koinViewModel(
-        key = id.toString(),
         parameters = {
             parametersOf(id.toString())
         }
@@ -977,7 +976,7 @@ fun ChatPage(
     val genericErrorMessage = context.getString(R.string.common_error)
 
     DisposableEffect(id) {
-        vm.ensureActiveReference()
+        vm.setConversationId(id)
         onDispose {
             tts.stop()
             vm.releaseReference()
@@ -1030,7 +1029,7 @@ fun ChatPage(
     val currentChatModel by vm.currentChatModel.collectAsStateWithLifecycle()
     val enableWebSearch by vm.enableWebSearch.collectAsStateWithLifecycle()
     val currentSearchMode by vm.currentSearchMode.collectAsStateWithLifecycle()
-    var manualTemporaryChat by rememberSaveable(id) { mutableStateOf(false) }
+    var manualTemporaryChat by remember(id) { mutableStateOf(false) }
     val activePersistenceMode = when {
         manualTemporaryChat || conversationPersistenceMode == ChatPersistenceMode.TEMPORARY -> ChatPersistenceMode.TEMPORARY
         conversationPersistenceMode == ChatPersistenceMode.PERSIST_ON_REPLY -> ChatPersistenceMode.PERSIST_ON_REPLY
@@ -1577,7 +1576,15 @@ fun ChatPage(
                         }
                     }
                 ) {
-                    Box(modifier = Modifier.fillMaxSize().layerBackdrop(pageBackdrop)) {
+                    val recordPageBackdrop = drawerState.isOpen ||
+                        drawerState.targetValue == DrawerValue.Open ||
+                        drawerState.isAnimationRunning ||
+                        showModalAssistantPicker
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(if (recordPageBackdrop) Modifier.layerBackdrop(pageBackdrop) else Modifier)
+                    ) {
                         ChatPageContent(
                             inheritedBlur = modalBlur,
                             chatBackdrop = chatBackdrop,
@@ -1755,7 +1762,7 @@ private fun ChatPageContent(
     var selectedChatShareItems by remember(conversation.id) { mutableStateOf<Set<Uuid>>(emptySet()) }
     var showExportSheet by remember { mutableStateOf(false) }
     var showCustomGreetingDialog by remember { mutableStateOf(false) }
-    var chatSearchQuery by rememberSaveable(conversation.id) { mutableStateOf(initialSearchQuery.orEmpty()) }
+    var chatSearchQuery by remember(conversation.id) { mutableStateOf(initialSearchQuery.orEmpty()) }
     var consumedInitialSearchQuery by remember(conversation.id) { mutableStateOf<String?>(null) }
     val toolbarPlacement = chatTopBarPlacement(setting)
     val motionPolicy = LocalMotionPolicy.current
@@ -2010,12 +2017,14 @@ private fun ChatPageContent(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
+                    val needsHazeBlurSource = !isRuntimeShaderSupported() ||
+                        setting.displaySetting.liquidGlassMode == me.lucid.domchat.data.model.LiquidGlassMode.SOFT_FROSTED
                     if (renderBackground) {
                         AssistantBackground(
                             assistant = currentAssistant,
                             conversationId = conversation.id.toString(),
                             modifier = Modifier
-                                .domChatBlurSource()
+                                .then(if (needsHazeBlurSource) Modifier.domChatBlurSource() else Modifier)
                                 .layerBackdrop(wallpaperBackdrop),
                             // Wallpaper bitmap decoded: invalidate all backdrops so all
                             // liquid glass samplers re-record against the real background.
@@ -2033,7 +2042,7 @@ private fun ChatPageContent(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background)
-                                .domChatBlurSource()
+                                .then(if (needsHazeBlurSource) Modifier.domChatBlurSource() else Modifier)
                                 .layerBackdrop(wallpaperBackdrop)
                         )
                     }

@@ -79,10 +79,12 @@ half4 main(float2 coord) {
     float radius = radiusAt(centeredCoord, cornerRadii);
     
     float sd = sdRoundedRect(centeredCoord, halfSize, radius);
-    float mask = step(-sd, refractionHeight);
+    if (-sd >= refractionHeight) {
+        return content.eval(coord);
+    }
     sd = min(sd, 0.0);
     
-    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount * mask;
+    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount;
     float gradRadius = min(radius * 1.5, minHalf);
     float2 gradBase = gradSdRoundedRect(centeredCoord, halfSize, gradRadius);
     float2 grad = mix(gradBase, normalize(gradBase + normalize(centeredCoord + 1e-5)), step(0.5, depthEffect));
@@ -168,10 +170,12 @@ half4 main(float2 coord) {
     float radius = radiusAt(centeredCoord, cornerRadii);
     
     float sd = sdRoundedRect(centeredCoord, halfSize, radius);
-    float mask = step(-sd, refractionHeight);
+    if (-sd >= refractionHeight) {
+        return content.eval(coord);
+    }
     sd = min(sd, 0.0);
     
-    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount * mask;
+    float d = circleMap(1.0 - -sd / refractionHeight) * refractionAmount;
     float gradRadius = min(radius * 1.5, minHalf);
     float2 gradBase = gradSdRoundedRect(centeredCoord, halfSize, gradRadius);
     float2 grad = mix(gradBase, normalize(gradBase + normalize(centeredCoord + 1e-5)), step(0.5, depthEffect));

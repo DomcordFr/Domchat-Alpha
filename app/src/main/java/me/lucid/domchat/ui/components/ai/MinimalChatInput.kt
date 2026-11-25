@@ -316,7 +316,7 @@ fun MinimalChatInput(
 ) {
     val context = LocalContext.current
     val toaster = LocalToaster.current
-    val conversationContext = remember(settings, conversation) {
+    val conversationContext = remember(settings, conversation.id, conversation.assistantId) {
         settings.resolveConversationContext(conversation)
     }
     val assistant = conversationContext.assistant
@@ -355,12 +355,12 @@ fun MinimalChatInput(
     val assistantAvailableSkillIds = remember(settings.skills, assistant.id) {
         settings.skills.filter { it.isAvailableForAssistant(assistant.id) }.map { it.id }.toSet()
     }
-    val pendingQuestionnaire = remember(conversation.messageNodes) {
-        conversation.currentMessages.findPendingAskUserToolCall()
+    val pendingQuestionnaire = remember(conversation.messageNodes, state.loading) {
+        if (state.loading) null else conversation.currentMessages.findPendingAskUserToolCall()
     }
     val isQuestionnaireActive = pendingQuestionnaire != null
-    val pendingToolApproval = remember(conversation.messageNodes, pendingQuestionnaire?.toolCallId) {
-        if (pendingQuestionnaire != null) {
+    val pendingToolApproval = remember(conversation.messageNodes, pendingQuestionnaire?.toolCallId, state.loading) {
+        if (state.loading || pendingQuestionnaire != null) {
             null
         } else {
             conversation.currentMessages.findPendingToolApproval()
@@ -1107,10 +1107,8 @@ fun MinimalChatInput(
                                 else -> state.textContent
                             }
                             var visualLineCount by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(1) }
-                            val lineCount = androidx.compose.runtime.remember(activeTextState) {
-                                androidx.compose.runtime.derivedStateOf {
-                                    maxOf(activeTextState.text.count { it == '\n' } + 1, visualLineCount)
-                                }
+                            val lineCount = androidx.compose.runtime.remember {
+                                androidx.compose.runtime.derivedStateOf { visualLineCount }
                             }
                             TextField(
                                 state = activeTextState,
@@ -1214,15 +1212,18 @@ fun MinimalChatInput(
                                 AttachmentImportAction(
                                     isImporting = isImportingAttachments,
                                 ) {
+                                    val isComposerInputEmpty by remember(state) {
+                                        derivedStateOf { state.isEmpty() }
+                                    }
                                     val currentAction = when {
-                                    isQuestionnaireActive && isFinalQuestion ->
-                                        DomChatComposerAction.QuestionnaireSubmit
-                                    isQuestionnaireActive -> DomChatComposerAction.QuestionnaireNext
-                                    isToolApprovalActive -> DomChatComposerAction.ToolApprovalDeny
-                                    state.loading -> DomChatComposerAction.Loading
-                                    !state.isEmpty() -> DomChatComposerAction.Send
-                                    else -> DomChatComposerAction.Picker
-                                }
+                                        isQuestionnaireActive && isFinalQuestion ->
+                                            DomChatComposerAction.QuestionnaireSubmit
+                                        isQuestionnaireActive -> DomChatComposerAction.QuestionnaireNext
+                                        isToolApprovalActive -> DomChatComposerAction.ToolApprovalDeny
+                                        state.loading -> DomChatComposerAction.Loading
+                                        !isComposerInputEmpty -> DomChatComposerAction.Send
+                                        else -> DomChatComposerAction.Picker
+                                    }
                                 DomChatComposerActionButton(
                                     action = currentAction,
                                     containerColorOverride = if (

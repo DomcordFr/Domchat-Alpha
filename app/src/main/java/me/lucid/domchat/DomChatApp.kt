@@ -342,6 +342,8 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
             runCatching { coil3.SingletonImageLoader.get(this).memoryCache?.clear() }
             runCatching { get<me.lucid.domchat.service.ChatService>().checkAllConversationsReferences() }
             runCatching { me.lucid.domchat.data.model.clearCompiledRegexCache() }
+            runCatching { me.lucid.domchat.ui.components.richtext.clearMarkdownAstCache() }
+            runCatching { me.lucid.domchat.ui.components.chat.clearRpFormattedTextCache() }
             runCatching { me.lucid.domchat.service.assist.AssistScreenHolder.clear() }
         }
         if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL) {
@@ -355,6 +357,8 @@ class DomChatApp : Application(), SingletonImageLoader.Factory, Configuration.Pr
         runCatching { coil3.SingletonImageLoader.get(this).memoryCache?.clear() }
         runCatching { get<me.lucid.domchat.service.ChatService>().checkAllConversationsReferences() }
         runCatching { me.lucid.domchat.data.model.clearCompiledRegexCache() }
+        runCatching { me.lucid.domchat.ui.components.richtext.clearMarkdownAstCache() }
+        runCatching { me.lucid.domchat.ui.components.chat.clearRpFormattedTextCache() }
         runCatching { get<me.lucid.domchat.data.ai.AILoggingManager>().clearLogs() }
         runCatching { me.lucid.domchat.service.assist.AssistScreenHolder.clear() }
     }

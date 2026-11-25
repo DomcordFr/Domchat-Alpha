@@ -159,15 +159,16 @@ private fun ReadOnlyUIAvatar(
     loading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val rotation = rememberAvatarLoadingRotation(loading)
+    val rotation = if (loading) rememberAvatarLoadingRotation(true) else 0f
     val shape = rememberAvatarShape(loading)
 
+    val spinModifier = if (loading) Modifier.avatarLoadingSpin(rotation) else Modifier
     if (onClick != null) {
         Surface(
             shape = shape,
             modifier = modifier
                 .size(32.dp)
-                .avatarLoadingSpin(rotation),
+                .then(spinModifier),
             onClick = onClick,
             tonalElevation = 4.dp,
             color = Color(0xFF000000),
@@ -179,7 +180,7 @@ private fun ReadOnlyUIAvatar(
             shape = shape,
             modifier = modifier
                 .size(32.dp)
-                .avatarLoadingSpin(rotation),
+                .then(spinModifier),
             tonalElevation = 4.dp,
             color = Color(0xFF000000),
         ) {

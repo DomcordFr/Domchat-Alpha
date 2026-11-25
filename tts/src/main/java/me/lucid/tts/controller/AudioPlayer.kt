@@ -139,6 +139,7 @@ class AudioPlayer(context: Context) : TtsAudioPlayer {
     override fun release() {
         stop()
         player.release()
+        scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
     override fun seekBy(ms: Long) {

@@ -199,9 +199,10 @@ fun Modifier.liquidGlass(
     val backdrop = LocalAppBackdrop.current
     val useGlass = backdrop != null && isRuntimeShaderSupported()
 
-    val blurPx = with(density) { blurRadius.toPx() }
-    val heightPx = with(density) { refractionHeight.toPx() }
-    val amountPx = with(density) { refractionAmount.toPx() }
+    val glassBackdropScale = 0.5f
+    val blurPx = with(density) { blurRadius.toPx() } * glassBackdropScale
+    val heightPx = with(density) { refractionHeight.toPx() } * glassBackdropScale
+    val amountPx = with(density) { refractionAmount.toPx() } * glassBackdropScale
     val specular = specularIntensity.coerceIn(0f, 1f)
 
     val tint = if (tintColor == Color.Unspecified) Color.Transparent else tintColor
@@ -280,7 +281,7 @@ fun Modifier.liquidGlass(
                 highlight = highlight,
                 shadow = null,
                 onDrawSurface = surfaceBlock,
-                backdropScale = 1f,
+                backdropScale = glassBackdropScale,
                 // Floating controls (input row, chips, floaters) freeze the backdrop
                 // capture so streaming content behind them does not keep re-recording;
                 // pure position changes are still tracked via draw-time translation.
@@ -390,10 +391,11 @@ fun Modifier.liquidGlassBubbleSurface(
 
     val bubbleFrostedMode = display.bubbleInterfaceStyle == me.lucid.domchat.data.datastore.InterfaceStyle.FROSTED || (display.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED && glassMode == LiquidGlassMode.SOFT_FROSTED)
 
-    val blurPx = with(density) { blurRadius.toPx() }
+    val bubbleBackdropScale = 0.5f
+    val blurPx = with(density) { blurRadius.toPx() } * bubbleBackdropScale
     val specular = specularIntensity.coerceIn(0f, 1f)
-    val heightPx = if (bubbleFrostedMode) 0f else with(density) { (depthScale * 8f).dp.toPx() }
-    val amountPx = if (bubbleFrostedMode) 0f else with(density) { (depthScale * 12f).dp.toPx() }
+    val heightPx = if (bubbleFrostedMode) 0f else with(density) { (depthScale * 8f).dp.toPx() } * bubbleBackdropScale
+    val amountPx = if (bubbleFrostedMode) 0f else with(density) { (depthScale * 12f).dp.toPx() } * bubbleBackdropScale
 
     val tintColor = if (display.chatBubbleTintColor != 0L) {
         Color(display.chatBubbleTintColor)
@@ -474,7 +476,7 @@ fun Modifier.liquidGlassBubbleSurface(
                 highlight = highlight,
                 shadow = null,
                 onDrawSurface = surfaceBlock,
-                backdropScale = 1f
+                backdropScale = bubbleBackdropScale
             )
             .then(
                 if (shadowElevation > 0.dp) {

@@ -977,10 +977,6 @@ class ChatService(
 
         val conversation = withContext(Dispatchers.IO) {
             conversationRepo.getConversationById(conversationId)
-        }?.let { loadedConversation ->
-            withContext(Dispatchers.IO) {
-                chatAttachmentRepository.syncConversationAttachments(loadedConversation)
-            }
         }
         if (conversation != null) {
             updateConversation(conversationId, conversation)
@@ -3373,17 +3369,13 @@ class ChatService(
             liveConversation = getConversationState(conversationId)?.value,
             incomingConversation = normalizeConversation(conversation),
         )
-        val synchronizedConversation = withContext(Dispatchers.IO) {
-            chatAttachmentRepository.syncConversationAttachments(normalizedConversation)
-        }
-
         // 临时对话不持久化到数据库
         if (getConversationPersistenceMode(conversationId) != ChatPersistenceMode.NORMAL) {
-            updateConversation(conversationId, synchronizedConversation)
+            updateConversation(conversationId, normalizedConversation)
             return
         }
 
-        val updatedConversation = synchronizedConversation.copy()
+        val updatedConversation = normalizedConversation.copy()
         // Always update in-memory state (even for empty conversations)
         // This ensures mode toggles work on new chats before first message
         updateConversation(conversationId, updatedConversation)

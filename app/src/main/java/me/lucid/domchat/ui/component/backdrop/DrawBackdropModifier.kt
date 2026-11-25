@@ -582,7 +582,6 @@ private class DrawBackdropNode(
 
         surfaceDirty = true
         observeEffects()
-        invalidateDrawCache()
         registerSampler(backdrop)
     }
 

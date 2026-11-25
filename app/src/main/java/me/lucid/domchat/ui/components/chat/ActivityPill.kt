@@ -544,27 +544,16 @@ private fun AnimatedSinglePill(
     // otherwise the outer pill background peeks out around the inner corners.
     val expandedRadius = 24.dp
 
-    // Animate corner radii for smooth transitions (18.dp = PILL_HEIGHT / 2 for perfect compact capsule)
-    val topStartRadius by animateDpAsState(
+    // Animate corner radius once (all 4 corners share the same radius)
+    val animatedCornerRadius by animateDpAsState(
         targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
         animationSpec = PILL_CORNER_SPEC,
-        label = "corner_top_start"
+        label = "pill_corner_radius"
     )
-    val topEndRadius by animateDpAsState(
-        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
-        animationSpec = PILL_CORNER_SPEC,
-        label = "corner_top_end"
-    )
-    val bottomStartRadius by animateDpAsState(
-        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
-        animationSpec = PILL_CORNER_SPEC,
-        label = "corner_bottom_start"
-    )
-    val bottomEndRadius by animateDpAsState(
-        targetValue = if (surfaceExpanded) expandedRadius else 18.dp,
-        animationSpec = PILL_CORNER_SPEC,
-        label = "corner_bottom_end"
-    )
+    val topStartRadius = animatedCornerRadius
+    val topEndRadius = animatedCornerRadius
+    val bottomStartRadius = animatedCornerRadius
+    val bottomEndRadius = animatedCornerRadius
     
     val isMultipleMinimized = !surfaceExpanded && state is ActivityState.CompletedMultiple
 
@@ -941,8 +930,9 @@ private fun LiveElapsedTimerText(
         LaunchedEffect(startTimeMs, lifecycleOwner) {
             lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (isActive) {
-                    elapsedMs = (System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)
-                    delay(100)
+                    val nowElapsed = (System.currentTimeMillis() - startTimeMs).coerceAtLeast(0L)
+                    elapsedMs = nowElapsed
+                    delay(if (nowElapsed < 10_000L) 100L else 1000L)
                 }
             }
         }

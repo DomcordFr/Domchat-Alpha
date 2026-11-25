@@ -27,6 +27,8 @@ class SecureStore(context: Context) {
     }
 
     private var fallbackMap: MutableMap<String, String>? = null
+    private val secretCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val missingKeySentinel = "\u0000__DOMCHAT_MISSING_SECRET__"
 
     private val encryptedPrefs: SharedPreferences? by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         try {
@@ -66,6 +68,7 @@ class SecureStore(context: Context) {
      * @param value The secret value to encrypt and store
      */
     fun putSecret(key: String, value: String) {
+        secretCache[key] = value
         val prefs = encryptedPrefs
         if (prefs != null) {
             prefs.edit().putString(key, value).apply()
@@ -83,7 +86,12 @@ class SecureStore(context: Context) {
      * @return The decrypted secret value, or null if not found
      */
     fun getSecret(key: String): String? {
-        return encryptedPrefs?.getString(key, null) ?: fallbackMap?.get(key)
+        secretCache[key]?.let { cached ->
+            return if (cached === missingKeySentinel) null else cached
+        }
+        val resolved = encryptedPrefs?.getString(key, null) ?: fallbackMap?.get(key)
+        secretCache[key] = resolved ?: missingKeySentinel
+        return resolved
     }
 
     /**
@@ -91,6 +99,7 @@ class SecureStore(context: Context) {
      * @param key The identifier to remove
      */
     fun removeSecret(key: String) {
+        secretCache[key] = missingKeySentinel
         val prefs = encryptedPrefs
         if (prefs != null) {
             prefs.edit().remove(key).apply()
@@ -140,6 +149,7 @@ class SecureStore(context: Context) {
      * Use with caution - typically only for debugging or factory reset.
      */
     fun clearAll() {
+        secretCache.clear()
         val prefs = encryptedPrefs
         if (prefs != null) {
             prefs.edit().clear().apply()

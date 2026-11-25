@@ -2190,12 +2190,14 @@ class GenerationHandler(
         val initialMessagesSize = messages.size
         val initialLastMessageId = messages.lastOrNull()?.id
         if (stream) {
-            aiLoggingManager.addLog(AILogging.Generation(
-                params = params,
-                messages = messages,
-                providerSetting = provider,
-                stream = true
-            ))
+            if (settings.developerMode) {
+                aiLoggingManager.addLog(AILogging.Generation(
+                    params = params,
+                    messages = messages,
+                    providerSetting = provider,
+                    stream = true
+                ))
+            }
             var lastEmitTime = 0L
             providerImpl.streamText(
                 providerSetting = provider,
@@ -2249,12 +2251,14 @@ class GenerationHandler(
                 onUpdateMessages(messages)
             }
         } else {
-            aiLoggingManager.addLog(AILogging.Generation(
-                params = params,
-                messages = messages,
-                providerSetting = provider,
-                stream = false
-            ))
+            if (settings.developerMode) {
+                aiLoggingManager.addLog(AILogging.Generation(
+                    params = params,
+                    messages = messages,
+                    providerSetting = provider,
+                    stream = false
+                ))
+            }
             val chunk = providerImpl.generateText(
                 providerSetting = provider,
                 messages = internalMessages,

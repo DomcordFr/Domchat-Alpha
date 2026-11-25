@@ -180,6 +180,19 @@ fun WebView(
                     }
                 }
                 onUpdated(webView)
+            },
+            onRelease = { webView ->
+                state.interfaces.keys.forEach { name ->
+                    webView.removeJavascriptInterface(name)
+                }
+                webView.stopLoading()
+                webView.loadUrl("about:blank")
+                webView.clearHistory()
+                webView.removeAllViews()
+                webView.destroy()
+                if (state.webView === webView) {
+                    state.webView = null
+                }
             }
         )
 

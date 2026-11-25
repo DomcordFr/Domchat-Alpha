@@ -55,18 +55,32 @@ class QuickSettingsCache(context: Context) {
             try { NewChatContentStyle.valueOf(it) } catch (e: Exception) { null }
         }
     
+    @Volatile
+    private var lastCachedAssistantId: kotlin.uuid.Uuid? = null
+    @Volatile
+    private var lastCachedDisplaySetting: DisplaySetting? = null
+
     /**
      * Update the cache with current settings values.
      * Call this whenever settings are updated.
      */
     fun updateCache(settings: Settings) {
         if (settings.init) return // Don't cache dummy settings
-        
+        val assistantChanged = lastCachedAssistantId != settings.assistantId
+        val displayChanged = lastCachedDisplaySetting != settings.displaySetting
+        if (!assistantChanged && !displayChanged) return
+        lastCachedAssistantId = settings.assistantId
+        lastCachedDisplaySetting = settings.displaySetting
+
         prefs.edit {
-            putString(KEY_ASSISTANT_ID, settings.assistantId.toString())
-            putString(KEY_NEW_CHAT_HEADER_STYLE, settings.displaySetting.newChatHeaderStyle.name)
-            putString(KEY_NEW_CHAT_CONTENT_STYLE, settings.displaySetting.newChatContentStyle.name)
-            putString(KEY_DISPLAY_SETTING_JSON, me.lucid.domchat.utils.JsonInstant.encodeToString(settings.displaySetting))
+            if (assistantChanged) {
+                putString(KEY_ASSISTANT_ID, settings.assistantId.toString())
+            }
+            if (displayChanged) {
+                putString(KEY_NEW_CHAT_HEADER_STYLE, settings.displaySetting.newChatHeaderStyle.name)
+                putString(KEY_NEW_CHAT_CONTENT_STYLE, settings.displaySetting.newChatContentStyle.name)
+                putString(KEY_DISPLAY_SETTING_JSON, me.lucid.domchat.utils.JsonInstant.encodeToString(settings.displaySetting))
+            }
             putBoolean(KEY_HAS_CACHED_VALUES, true)
         }
     }

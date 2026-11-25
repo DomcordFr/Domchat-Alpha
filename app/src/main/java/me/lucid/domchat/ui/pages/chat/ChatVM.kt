@@ -90,20 +90,32 @@ class ChatVM(
     private val appStorageRepository: AppStorageRepository,
     private val modelMetadataResolver: ModelMetadataResolver,
 ) : ViewModel() {
-    private val _conversationId: Uuid = Uuid.parse(id)
-    val conversation: StateFlow<Conversation> = chatService.getConversationFlow(_conversationId)
+    private val activeConversationId = MutableStateFlow(Uuid.parse(id))
+    private val _conversationId: Uuid get() = activeConversationId.value
+    private var initConversationJob: Job? = null
+
+    val conversation: StateFlow<Conversation> = activeConversationId
+        .flatMapLatest { convId -> chatService.getConversationFlow(convId) }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            chatService.getConversationFlow(Uuid.parse(id)).value
+        )
     val assistantMemories: StateFlow<List<AssistantMemory>> = conversation
         .map { current -> current.assistantId.toString() }
         .distinctUntilChanged()
         .flatMapLatest(memoryRepository::getCombinedMemoriesFlow)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val contextUsage: StateFlow<ContextUsageBreakdown?> = chatService.contextUsage
-        .map { usageByConversation -> usageByConversation[_conversationId] }
+    val contextUsage: StateFlow<ContextUsageBreakdown?> = activeConversationId
+        .flatMapLatest { convId ->
+            chatService.contextUsage.map { usageByConversation -> usageByConversation[convId] }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    val contextManagementActivity: StateFlow<ContextManagementActivity?> =
-        chatService.contextManagementActivity
-            .map { activityByConversation -> activityByConversation[_conversationId] }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val contextManagementActivity: StateFlow<ContextManagementActivity?> = activeConversationId
+        .flatMapLatest { convId ->
+            chatService.contextManagementActivity.map { activityByConversation -> activityByConversation[convId] }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     private val _conversationInitialized = MutableStateFlow(false)
     val conversationInitialized: StateFlow<Boolean> = _conversationInitialized
     internal var chatListScrollPosition: ChatListScrollPosition? = null
@@ -121,19 +133,17 @@ class ChatVM(
     var chatListInitialized by mutableStateOf(false) // 聊天列表是否已经滚动到底部
 
     // 异步任务 (从ChatService获取，响应式)
-    val conversationJob: StateFlow<Job?> =
-        chatService
-            .getGenerationJobStateFlow(_conversationId)
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+    val conversationJob: StateFlow<Job?> = activeConversationId
+        .flatMapLatest { convId -> chatService.getGenerationJobStateFlow(convId) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val conversationPersistenceMode: StateFlow<ChatPersistenceMode> =
-        chatService
-            .getConversationPersistenceModeFlow(_conversationId)
-            .stateIn(viewModelScope, SharingStarted.Lazily, ChatPersistenceMode.NORMAL)
+    val conversationPersistenceMode: StateFlow<ChatPersistenceMode> = activeConversationId
+        .flatMapLatest { convId -> chatService.getConversationPersistenceModeFlow(convId) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatPersistenceMode.NORMAL)
 
     val conversationJobs = chatService
         .getConversationJobs()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     // Track recently restored conversations for fade-in animation
     val recentlyRestoredIds: StateFlow<Set<Uuid>> = chatService.recentlyRestoredIds
@@ -150,27 +160,59 @@ class ChatVM(
         }
     }
 
-    private val hasActiveReference = java.util.concurrent.atomic.AtomicBoolean(false)
+    private var referencedConversationId: Uuid? = null
 
+    @Synchronized
     fun ensureActiveReference() {
-        if (hasActiveReference.compareAndSet(false, true)) {
-            chatService.addConversationReference(_conversationId)
+        val currentId = activeConversationId.value
+        if (referencedConversationId == currentId) return
+        referencedConversationId?.let { oldId ->
+            chatService.removeConversationReference(oldId)
         }
+        chatService.addConversationReference(currentId)
+        referencedConversationId = currentId
     }
 
+    @Synchronized
     fun releaseReference() {
-        if (hasActiveReference.compareAndSet(true, false)) {
-            chatService.removeConversationReference(_conversationId)
+        val oldId = referencedConversationId ?: return
+        referencedConversationId = null
+        chatService.removeConversationReference(oldId)
+    }
+
+    fun setConversationId(newId: Uuid) {
+        if (activeConversationId.value == newId) {
+            ensureActiveReference()
+            return
+        }
+        releaseReference()
+        chatListScrollPosition = null
+        chatListInitialized = false
+        _conversationInitialized.value = false
+        activeConversationId.value = newId
+        ensureActiveReference()
+        initConversationJob?.cancel()
+        initConversationJob = viewModelScope.launch {
+            try {
+                chatService.initializeConversation(newId)
+            } finally {
+                if (activeConversationId.value == newId) {
+                    _conversationInitialized.value = true
+                }
+            }
         }
     }
 
     init {
         // 初始化对话
-        viewModelScope.launch {
+        val initialId = activeConversationId.value
+        initConversationJob = viewModelScope.launch {
             try {
-                chatService.initializeConversation(_conversationId)
+                chatService.initializeConversation(initialId)
             } finally {
-                _conversationInitialized.value = true
+                if (activeConversationId.value == initialId) {
+                    _conversationInitialized.value = true
+                }
             }
         }
 
@@ -198,7 +240,7 @@ class ChatVM(
 
     // 用户设置
     val settings: StateFlow<Settings> =
-        settingsStore.settingsFlow.stateIn(viewModelScope, SharingStarted.Lazily, Settings.dummy())
+        settingsStore.settingsFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings.dummy())
 
     val conversationContext: StateFlow<ConversationContext> =
         combine(
@@ -210,29 +252,29 @@ class ChatVM(
             currentSettings.resolveConversationContext(assistantId)
         }.stateIn(
             viewModelScope,
-            SharingStarted.Lazily,
+            SharingStarted.WhileSubscribed(5_000),
             Settings.dummy().resolveConversationContext(conversation.value.assistantId)
         )
 
     val conversationAssistant: StateFlow<Assistant> =
         conversationContext
             .map { it.assistant }
-            .stateIn(viewModelScope, SharingStarted.Lazily, conversationContext.value.assistant)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), conversationContext.value.assistant)
 
     val conversationTitle: StateFlow<String> = conversation
         .map { it.title }
         .distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.Lazily, conversation.value.title)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), conversation.value.title)
 
     val hasMessages: StateFlow<Boolean> = conversation
         .map { it.messageNodes.isNotEmpty() }
         .distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.Lazily, conversation.value.messageNodes.isNotEmpty())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), conversation.value.messageNodes.isNotEmpty())
 
     val messageCount: StateFlow<Int> = conversation
         .map { it.messageNodes.size }
         .distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.Lazily, conversation.value.messageNodes.size)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), conversation.value.messageNodes.size)
 
     // 网络搜索 - 从当前会话助手的searchMode派生
     val enableWebSearch = conversationContext.map { context ->
@@ -241,13 +283,13 @@ class ChatVM(
             is me.lucid.domchat.data.model.AssistantSearchMode.BuiltIn -> true
             is me.lucid.domchat.data.model.AssistantSearchMode.Provider -> true
         }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     // 获取当前会话助手的searchMode
     val currentSearchMode = conversationContext.map { it.searchMode }
         .stateIn(
             viewModelScope,
-            SharingStarted.Lazily,
+            SharingStarted.WhileSubscribed(5_000),
             me.lucid.domchat.data.model.AssistantSearchMode.Off
         )
 
@@ -358,7 +400,7 @@ class ChatVM(
 
     // 当前模型
     val currentChatModel = conversationContext.map { it.chatModel }
-        .stateIn(viewModelScope, SharingStarted.Lazily, conversationContext.value.chatModel)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), conversationContext.value.chatModel)
 
     // 错误流 (从ChatService获取)
     val errorFlow: SharedFlow<Throwable> = chatService.errorFlow

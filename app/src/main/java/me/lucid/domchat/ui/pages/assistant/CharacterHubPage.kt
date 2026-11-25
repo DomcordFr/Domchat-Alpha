@@ -1774,12 +1774,12 @@ fun CharacterPortraitCard(
     onLongClick: () -> Unit = {}
 ) {
     val tagList = assistant.tags
-    val tagListState = rememberLazyListState()
 
     // Resolve tag UUIDs to display names via settings.assistantTags; filter out raw UUIDs and missing names
     val resolvedTagNames = remember(tagList, settings?.assistantTags) {
+        val tagMap = settings?.assistantTags?.associateBy { it.id }.orEmpty()
         tagList.mapNotNull { tagId ->
-            settings?.assistantTags?.find { it.id == tagId }?.name?.takeIf { name ->
+            tagMap[tagId]?.name?.takeIf { name ->
                 name.isNotBlank() && name.length <= 20 && !name.contains("-")
             }
         }.distinct()
@@ -1844,30 +1844,33 @@ fun CharacterPortraitCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Horizontal scrollable tag pill row
-            LazyRow(
-                state = tagListState,
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                items(resolvedTagNames, key = { it }) { tagName ->
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0xFF000000))
-                            .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                    ) {
-                    Text(
-                        text = tagName.replace("_", " "),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.92f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+            // Horizontal scrollable tag pill row (lightweight Row avoids SubcomposeLayout per card)
+            if (resolvedTagNames.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    resolvedTagNames.forEach { tagName ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0xFF000000))
+                                .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp),
+                        ) {
+                            Text(
+                                text = tagName.replace("_", " "),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White.copy(alpha = 0.92f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
                 }
-            }
             }
 
 
@@ -1993,9 +1996,11 @@ fun CharacterListRow(
                 }
                 val rawBlurb: String? = assistant.creatorNotes?.takeIf { it.isNotBlank() } ?: assistant.authorsNote?.takeIf { it.isNotBlank() }
                 if (!rawBlurb.isNullOrBlank()) {
-                    val cleaned = cleanHtmlText(rawBlurb)
-                    if (cleaned.isNotBlank()) {
-                        val blurb = if (cleaned.length > 120) "${cleaned.take(120).trim()}..." else cleaned
+                    val blurb = remember(rawBlurb) {
+                        val cleaned = cleanHtmlText(rawBlurb)
+                        if (cleaned.length > 120) "${cleaned.take(120).trim()}..." else cleaned
+                    }
+                    if (blurb.isNotBlank()) {
                         Text(
                             text = blurb,
                             fontSize = 11.5.sp,

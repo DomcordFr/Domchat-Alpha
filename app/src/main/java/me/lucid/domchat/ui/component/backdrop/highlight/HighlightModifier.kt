@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastCoerceAtMost
-import me.lucid.domchat.ui.component.backdrop.RuntimeShaderCacheImpl
 import me.lucid.domchat.ui.component.backdrop.internal.ShapeProvider
 import me.lucid.domchat.ui.component.backdrop.internal.blur
 import me.lucid.domchat.ui.component.backdrop.internal.clipOutline
@@ -42,9 +41,12 @@ internal class HighlightElement(
     }
 
     override fun update(node: HighlightNode) {
+        val changed = node.shapeProvider != shapeProvider || node.highlight !== highlight
         node.shapeProvider = shapeProvider
         node.highlight = highlight
-        node.invalidateDraw()
+        if (changed) {
+            node.invalidateDraw()
+        }
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -85,7 +87,7 @@ internal class HighlightNode(
         }
     private var clipPath: Path? = null
 
-    private val runtimeShaderCache = RuntimeShaderCacheImpl()
+    private val runtimeShaderCache = me.lucid.domchat.ui.component.backdrop.SharedRuntimeShaderCache
 
     private var prevStyle: HighlightStyle? = null
 
@@ -165,7 +167,6 @@ internal class HighlightNode(
             highlightLayer = null
         }
         clipPath = null
-        runtimeShaderCache.clear()
         prevStyle = null
         recordedHighlight = null
         recordedSize = IntSize.Zero

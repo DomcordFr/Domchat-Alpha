@@ -690,6 +690,7 @@ private fun ConversationItem(
 
     val assistant = getAssistant(conversation.assistantId)
 
+    val rowCoordinatesRef = remember { object { var coordinates: androidx.compose.ui.layout.LayoutCoordinates? = null } }
     Box(modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         ConversationRowSurface(
             selected = selected,
@@ -700,6 +701,11 @@ private fun ConversationItem(
                 onClick(conversation)
             },
             onLongClick = {
+                val coords = rowCoordinatesRef.coordinates
+                if (coords != null && coords.isAttached) {
+                    val pos = coords.positionInWindow()
+                    onMenuAnchor(IntOffset(pos.x.toInt(), pos.y.toInt()))
+                }
                 haptics.perform(HapticPattern.Buildup)
                 onOpenMenu()
             },
@@ -710,13 +716,18 @@ private fun ConversationItem(
                     .height(72.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .onGloballyPositioned { coordinates ->
-                        val pos = coordinates.positionInWindow()
-                        onMenuAnchor(IntOffset(pos.x.toInt(), pos.y.toInt()))
+                        rowCoordinatesRef.coordinates = coordinates
                     }
-                    .border(
-                        width = 0.5.dp,
-                        brush = if (selected) LiquidGlassTokens.SpecularBorderSubtle else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)),
-                        shape = RoundedCornerShape(16.dp)
+                    .then(
+                        if (selected) {
+                            Modifier.border(
+                                width = 0.5.dp,
+                                brush = LiquidGlassTokens.SpecularBorderSubtle,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                        } else {
+                            Modifier
+                        }
                     )
                     .background(
                         if (selected) Color(0xFF000000) else Color.Transparent

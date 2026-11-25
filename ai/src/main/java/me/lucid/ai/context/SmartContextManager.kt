@@ -160,11 +160,30 @@ fun smartFitContext(
     val preparedSystem = candidate.filter { it.role == MessageRole.SYSTEM }
     val preparedConversation = candidate.filterNot { it.role == MessageRole.SYSTEM }
     val minimumRecentCount = minOf(plan.protectedRecentTurns * 2, preparedConversation.size).coerceAtLeast(1)
-    val fitted = (preparedConversation.size downTo minimumRecentCount)
-        .asSequence()
-        .map { size -> preparedSystem + preparedConversation.limitContext(size) }
-        .firstOrNull { ContextTokenEstimator.messagesTokens(it, model) <= budget }
-    if (fitted != null) return fitted
+    // Precompute per-message tokens once for O(N) suffix fitting instead of O(N^2) recounting.
+    val systemTokens = ContextTokenEstimator.messagesTokens(preparedSystem, model)
+    val convCount = preparedConversation.size
+    val convTokens = IntArray(convCount) { idx ->
+        ContextTokenEstimator.messageTokens(preparedConversation[idx], model)
+    }
+    val suffixTokens = IntArray(convCount + 1)
+    for (i in convCount - 1 downTo 0) {
+        suffixTokens[i] = suffixTokens[i + 1] + convTokens[i]
+    }
+    var bestSize = -1
+    for (size in convCount downTo minimumRecentCount) {
+        val startIdx = (convCount - size).coerceAtLeast(0)
+        if (systemTokens + suffixTokens[startIdx] <= budget) {
+            bestSize = size
+            break
+        }
+    }
+    if (bestSize > 0) {
+        val candidateFit = preparedSystem + preparedConversation.limitContext(bestSize)
+        if (ContextTokenEstimator.messagesTokens(candidateFit, model) <= budget) {
+            return candidateFit
+        }
+    }
 
     val minimum = preparedSystem + preparedConversation.limitContext(minimumRecentCount)
     val compacted = minimum.compactToTokenBudget(model, budget)

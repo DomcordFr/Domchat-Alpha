@@ -92,7 +92,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -167,7 +166,14 @@ import me.lucid.domchat.data.datastore.getEffectiveTTSProvider
 import me.lucid.domchat.data.datastore.getActivePersona
 import me.lucid.ai.core.MessageRole as AIMessageRole
 
-private val rpFormattedTextCache = android.util.LruCache<String, String>(512)
+private val rpFormattedTextCache = object : android.util.LruCache<String, String>(2 * 1024 * 1024) {
+    override fun sizeOf(key: String, value: String): Int =
+        ((key.length + value.length) * 2).coerceAtLeast(256)
+}
+
+internal fun clearRpFormattedTextCache() {
+    rpFormattedTextCache.evictAll()
+}
 
 /**
  * Smoothly animates vertical height changes using a LayoutModifierNode without
@@ -281,6 +287,18 @@ private fun rememberFormattedMessageText(
                 }
             }
         }
+    }
+
+    val needsFormatting = remember(assistant, rawText) {
+        !assistant?.regexes.isNullOrEmpty() ||
+            rawText.contains("<img", ignoreCase = true) ||
+            rawText.contains("{{") ||
+            rawText.contains("<char>", ignoreCase = true) ||
+            rawText.contains("<user>", ignoreCase = true) ||
+            rawText.contains("http", ignoreCase = true)
+    }
+    if (!needsFormatting) {
+        return rawText.trimStart()
     }
 
     val initial = remember { rawText.replacePersonaPlaceholders(assistant, userNickname) }
@@ -1740,7 +1758,7 @@ private fun UserMessageTurn(
                     }
                 ) {
                     val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
-                    var hasAnimated by rememberSaveable(key = node.id.toString()) { mutableStateOf(isHistoryTurn) }
+                    var hasAnimated by remember(node.id) { mutableStateOf(isHistoryTurn) }
                     var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
                     LaunchedEffect(node.id) {
                         if (!hasAnimated) {

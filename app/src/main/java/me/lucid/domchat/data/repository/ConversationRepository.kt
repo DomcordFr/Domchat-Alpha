@@ -468,8 +468,13 @@ class ConversationRepository(
      * This is safe to run repeatedly and fills gaps caused by imports/restores.
      */
     suspend fun backfillDailyActivityFromConversationHistoryIfNeeded() {
+        val prefs = context.getSharedPreferences("domchat_migrations", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("daily_activity_backfill_v1_done", false)) return
         val totalConversations = conversationDAO.getConversationCountFlow().first()
-        if (totalConversations == 0) return
+        if (totalConversations == 0) {
+            prefs.edit().putBoolean("daily_activity_backfill_v1_done", true).apply()
+            return
+        }
 
         val existingDates = dailyActivityDAO.getAllDatesFlow().first().toHashSet()
         val dateCounts = mutableMapOf<String, Int>()
@@ -499,8 +504,10 @@ class ConversationRepository(
             offset += batchSize
         }
 
-        if (dateCounts.isEmpty()) return
-        if (dateCounts.keys.all { it in existingDates }) return
+        if (dateCounts.isEmpty() || dateCounts.keys.all { it in existingDates }) {
+            prefs.edit().putBoolean("daily_activity_backfill_v1_done", true).apply()
+            return
+        }
 
         dateCounts.forEach { (date, count) ->
             val timestamp = runCatching {
@@ -519,6 +526,7 @@ class ConversationRepository(
                 timestamp = timestamp
             )
         }
+        prefs.edit().putBoolean("daily_activity_backfill_v1_done", true).apply()
     }
 
     private fun conversationSummaryToConversation(entity: LightConversationEntity): Conversation {
