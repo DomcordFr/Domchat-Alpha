@@ -107,9 +107,7 @@ fun liquidGlassSurfaceColor(): Color {
     val alpha = display.glassAlpha.coerceIn(0f, 1f)
     if (alpha <= 0.001f) return Color.Transparent
     var base = androidx.compose.ui.graphics.lerp(Color.Black, Color.White, display.glassBaseLuminance.coerceIn(0f, 1f))
-    // Depth / refraction scale modulates how much of the background the glass surface retains.
-    val depth = display.glassDepthScale.coerceIn(0f, 2.5f)
-    base = base.copy(alpha = (alpha * depth).coerceIn(0f, 1f))
+    base = base.copy(alpha = alpha)
     // Non-clear tint applies a wash over the glass surface (tint alpha = wash strength).
     val tint = display.glassTintColor
     val tintColor = Color(tint)

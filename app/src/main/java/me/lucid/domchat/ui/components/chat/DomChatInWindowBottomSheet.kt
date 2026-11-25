@@ -312,7 +312,6 @@ fun DomChatInWindowBottomSheet(
 
     val scope = rememberCoroutineScope()
     val motionPolicy = me.lucid.domchat.ui.motion.LocalMotionPolicy.current
-    val isDark = LocalDarkMode.current
     val settings = LocalSettings.current
     val borderBrush = liquidGlassBorderBrush()
     val maxSheetHeight = maxHeight
@@ -324,12 +323,7 @@ fun DomChatInWindowBottomSheet(
             .background(containerColor, shape = shape)
             .border(0.5.dp, LiquidGlassTokens.SpecularBorderSubtle, shape)
     } else {
-        val dynamicFill = domChatSheetContainerColor()
-        val sheetFillColor = if (dynamicFill != Color.Transparent) {
-            dynamicFill
-        } else {
-            if (isDark) Color(0xFF141520).copy(alpha = 0.22f) else Color.White.copy(alpha = 0.45f)
-        }
+        val sheetFillColor = domChatSheetContainerColor()
         // Liquid glass in BALANCED_BLEND, frosted glass in SOFT_FROSTED.
         if (settings.displaySetting.liquidGlassMode == LiquidGlassMode.SOFT_FROSTED) {
             Modifier.frostedGlassSurface(
