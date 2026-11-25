@@ -218,38 +218,29 @@ fun PersonaPickerBottomSheet(
             DomChatSheetHeader(
                 title = "Select Persona",
                 actions = {
-                    val isDark = LocalDarkMode.current
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            onClick = {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .liquidGlassSurface(
+                                shape = CircleShape,
+                                borderWidth = 0.5.dp,
+                                specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
+                                isFloatingControl = true,
+                            )
+                            .clip(CircleShape)
+                            .clickable {
                                 haptics.perform(HapticPattern.Pop)
                                 onDismissRequest()
                                 navController.navigate(Screen.SettingPersonas)
                             },
-                            shape = CircleShape,
-                            color = Color.Transparent,
-                            modifier = Modifier
-                                .size(38.dp)
-                                .liquidGlassSurface(
-                                    shape = CircleShape,
-                                    borderWidth = 0.5.dp,
-                                    specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                                    fillColor = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.25f),
-                                    isFloatingControl = true,
-                                )
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Add,
-                                    contentDescription = "New Persona",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = "New Persona",
+                            tint = Color.White.copy(alpha = 0.92f),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
             )
