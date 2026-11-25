@@ -22,21 +22,24 @@ import me.lucid.domchat.ui.component.backdrop.internal.recordLayer
  */
 fun Modifier.layerBackdrop(
     backdrop: LayerBackdrop,
-    frozen: () -> Boolean = { false }
-): Modifier = this then LayerBackdropElement(backdrop, frozen)
+    frozen: () -> Boolean = { false },
+    enabled: Boolean = true,
+): Modifier = this then LayerBackdropElement(backdrop, frozen, enabled)
 
 private class LayerBackdropElement(
     val backdrop: LayerBackdrop,
-    val frozen: () -> Boolean
+    val frozen: () -> Boolean,
+    val enabled: Boolean,
 ) : ModifierNodeElement<LayerBackdropNode>() {
 
     override fun create(): LayerBackdropNode {
-        return LayerBackdropNode(backdrop, frozen)
+        return LayerBackdropNode(backdrop, frozen, enabled)
     }
 
     override fun update(node: LayerBackdropNode) {
         val backdropChanged = node.backdrop !== backdrop
         val frozenChanged = node.frozen !== frozen
+        val enabledChanged = node.enabled != enabled
         if (backdropChanged) {
             node.backdrop.sourceInvalidator = null
             node.backdrop.layerCoordinates = null
@@ -45,7 +48,8 @@ private class LayerBackdropElement(
             node.invalidateDraw()
         }
         node.frozen = frozen
-        if (frozenChanged) {
+        node.enabled = enabled
+        if (frozenChanged || (enabledChanged && enabled)) {
             node.invalidateDraw()
         }
     }
@@ -53,6 +57,7 @@ private class LayerBackdropElement(
     override fun InspectorInfo.inspectableProperties() {
         name = "layerBackdrop"
         properties["backdrop"] = backdrop
+        properties["enabled"] = enabled
     }
 
     override fun equals(other: Any?): Boolean {
@@ -61,18 +66,22 @@ private class LayerBackdropElement(
 
         if (backdrop != other.backdrop) return false
         if (frozen != other.frozen) return false
+        if (enabled != other.enabled) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return 31 * backdrop.hashCode() + frozen.hashCode()
+        var result = 31 * backdrop.hashCode() + frozen.hashCode()
+        result = 31 * result + enabled.hashCode()
+        return result
     }
 }
 
 private class LayerBackdropNode(
     var backdrop: LayerBackdrop,
-    var frozen: () -> Boolean
+    var frozen: () -> Boolean,
+    var enabled: Boolean,
 ) : Modifier.Node(), DrawModifierNode, GlobalPositionAwareModifierNode {
 
     override fun onAttach() {
@@ -80,6 +89,13 @@ private class LayerBackdropNode(
     }
 
     override fun ContentDrawScope.draw() {
+        // When disabled and already primed with a recording, skip offscreen recording
+        // so normal chat scrolling/typing pays zero RenderNode copy overhead, while
+        // keeping the node attached and ready the instant the drawer or sheet opens.
+        if (!enabled && backdrop.hasRecording) {
+            drawContent()
+            return
+        }
         // Record once and composite to the screen; glass samplers reuse this layer.
         recordLayer(this@LayerBackdropNode, backdrop.graphicsLayer) { backdrop.onDraw(this@draw) }
         drawLayer(backdrop.graphicsLayer)
