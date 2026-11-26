@@ -1998,7 +1998,8 @@ private fun ChatPageContent(
         // Overlay floaters sample the chat content once it is opaque and ready;
         // everything else (bubbles, chat list, new-chat content) samples wallpaper.
         // `chatListReady` and `contentBackdrop.hasRecording` are reactive Compose state.
-        val isScrollingWhileStreaming = isGenerating && chatListState.isScrollInProgress
+        var isStreamingAutoScrolling by remember { mutableStateOf(false) }
+        val isScrollingWhileStreaming = isGenerating && chatListState.isScrollInProgress && !isStreamingAutoScrolling
         val overlayBackdrop = if (emptyChat || !chatListReady || !contentBackdrop.hasRecording || isScrollingWhileStreaming) {
             wallpaperBackdrop
         } else {
@@ -2222,7 +2223,7 @@ private fun ChatPageContent(
                         } else {
                             conversationSnapshots[targetConversationId] ?: Conversation.ofId(targetConversationId)
                         }
-                        val frameConversation = if (isGenerating && frameListState.isScrollInProgress && targetConversationId == conversation.id) {
+                        val frameConversation = if (isGenerating && frameListState.isScrollInProgress && !isStreamingAutoScrolling && targetConversationId == conversation.id) {
                             frozenDuringScrollHolder.snapshot ?: liveFrameConversation.also { frozenDuringScrollHolder.snapshot = it }
                         } else {
                             frozenDuringScrollHolder.snapshot = null
@@ -2412,6 +2413,7 @@ private fun ChatPageContent(
                                                 onDeleteSwipe = onDeleteSwipeCallback,
                                                 onUpdateMessage = onUpdateMessage,
                                                 onAssistantTurnActiveChanged = onAssistantTurnActiveChangedCallback,
+                                                onStreamingAutoScrollingChanged = { isStreamingAutoScrolling = it },
                                                 onForkMessage = onForkCallback,
                                                 onAddCustomGreeting = onAddCustomGreetingCallback,
                                             )

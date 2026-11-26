@@ -1114,13 +1114,21 @@ fun MarkdownBlock(
                 streamingPresentation.acceptRawContent(content, now)
                 return@LaunchedEffect
             }
-            if (!isDrainingFinish) {
-                streamingPresentation.snapTo(content)
-                displayContent = streamingPresentation.displayContent
-                settleRanges = emptyList()
-                wasStreaming = false
-                onRevealComplete?.invoke()
+            if (isDrainingFinish) {
+                if (content.startsWith(displayContent) && displayContent.length < content.length) {
+                    streamingPresentation.acceptRawContent(content, now)
+                    return@LaunchedEffect
+                }
+                isDrainingFinish = false
+                streamingPresentation.isDrainingFinish = false
             }
+            streamingPresentation.snapTo(content)
+            displayContent = streamingPresentation.displayContent
+            settleRanges = emptyList()
+            finishRanges = emptyList()
+            finishActive = false
+            wasStreaming = false
+            onRevealComplete?.invoke()
             return@LaunchedEffect
         }
 

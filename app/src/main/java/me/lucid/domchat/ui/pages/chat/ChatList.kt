@@ -291,6 +291,7 @@ fun ChatList(
     onAddCustomGreeting: () -> Unit = {},
     onJumpToMessage: (Int) -> Unit = {},
     onAssistantTurnActiveChanged: ((Boolean) -> Unit)? = null,
+    onStreamingAutoScrollingChanged: ((Boolean) -> Unit)? = null,
 ) {
     SharedTransitionLayout {
         CompositionLocalProvider(LocalAppBackdrop provides wallpaperBackdrop) {
@@ -332,6 +333,7 @@ fun ChatList(
                         onUpdateMessage = onUpdateMessage,
                         onAddCustomGreeting = onAddCustomGreeting,
                         onAssistantTurnActiveChanged = onAssistantTurnActiveChanged,
+                        onStreamingAutoScrollingChanged = onStreamingAutoScrollingChanged,
                         animatedVisibilityScope = this@AnimatedContent,
                     )
                 }
@@ -360,6 +362,7 @@ private fun SharedTransitionScope.ChatListNormal(
     onUpdateMessage: (MessageNode) -> Unit,
     onAddCustomGreeting: () -> Unit,
     onAssistantTurnActiveChanged: ((Boolean) -> Unit)? = null,
+    onStreamingAutoScrollingChanged: ((Boolean) -> Unit)? = null,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val scope = rememberCoroutineScope()
@@ -392,6 +395,7 @@ private fun SharedTransitionScope.ChatListNormal(
         if (totalCount <= 0) return
         val targetIndex = totalCount - 1
         val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()
+        onStreamingAutoScrollingChanged?.invoke(true)
         try {
             if (lastVisible != null && lastVisible.index == targetIndex) {
                 val overflowPx = (lastVisible.offset + lastVisible.size) - layoutInfo.viewportEndOffset
@@ -409,6 +413,8 @@ private fun SharedTransitionScope.ChatListNormal(
             }
         } catch (_: Exception) {
             // The lazy list can be between measure passes while a streaming turn morphs.
+        } finally {
+            onStreamingAutoScrollingChanged?.invoke(false)
         }
     }
 
