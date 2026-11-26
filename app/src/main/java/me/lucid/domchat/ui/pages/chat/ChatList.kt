@@ -15,6 +15,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -382,35 +383,51 @@ private fun SharedTransitionScope.ChatListNormal(
 
     var scrollJob: Job? by remember { mutableStateOf(null) }
     var hasPendingStreamingSnap by remember { mutableStateOf(false) }
+    var isUserInteracting by remember { mutableStateOf(false) }
 
     suspend fun snapToStreamingBottom() {
-        if (!loadingState || !followStreamingBottom || state.isScrollInProgress) return
-        val totalCount = state.layoutInfo.totalItemsCount
+        if (!loadingState || !followStreamingBottom || isUserInteracting) return
+        val layoutInfo = state.layoutInfo
+        val totalCount = layoutInfo.totalItemsCount
         if (totalCount <= 0) return
         val targetIndex = totalCount - 1
+        val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()
         try {
-            state.scrollToItem(targetIndex)
+            if (lastVisible != null && lastVisible.index == targetIndex) {
+                val overflowPx = (lastVisible.offset + lastVisible.size) - layoutInfo.viewportEndOffset
+                if (overflowPx > 2) {
+                    state.animateScrollBy(
+                        value = overflowPx.toFloat(),
+                        animationSpec = androidx.compose.animation.core.tween(
+                            durationMillis = 110,
+                            easing = androidx.compose.animation.core.LinearOutSlowInEasing,
+                        ),
+                    )
+                }
+            } else {
+                state.animateScrollToItem(targetIndex)
+            }
         } catch (_: Exception) {
             // The lazy list can be between measure passes while a streaming turn morphs.
         }
     }
 
     fun requestSnapToStreamingBottom() {
-        if (!loadingState || !followStreamingBottom || state.isScrollInProgress) return
+        if (!loadingState || !followStreamingBottom || isUserInteracting) return
         if (scrollJob?.isActive == true) {
             hasPendingStreamingSnap = true
             return
         }
         scrollJob = scope.launch {
             do {
-                if (!loadingState || !followStreamingBottom || state.isScrollInProgress) {
+                if (!loadingState || !followStreamingBottom || isUserInteracting) {
                     hasPendingStreamingSnap = false
                     break
                 }
                 hasPendingStreamingSnap = false
                 snapToStreamingBottom()
                 withFrameNanos { }
-            } while (hasPendingStreamingSnap && loadingState && followStreamingBottom && !state.isScrollInProgress)
+            } while (hasPendingStreamingSnap && loadingState && followStreamingBottom && !isUserInteracting)
         }
     }
 
@@ -464,14 +481,23 @@ private fun SharedTransitionScope.ChatListNormal(
         // Empty chat state removed - assistant icon now shown in TopBar
 
         // Detach immediately when the user starts dragging during streaming,
-        // before scrollToItem can override their touch gesture.
+        // before programmatic scroll can override their touch gesture.
         LaunchedEffect(state) {
             state.interactionSource.interactions.collect { interaction ->
-                if (interaction is androidx.compose.foundation.interaction.DragInteraction.Start && loadingState) {
-                    followStreamingBottom = false
-                    hasPendingStreamingSnap = false
-                    scrollJob?.cancel()
-                    scrollJob = null
+                when (interaction) {
+                    is androidx.compose.foundation.interaction.DragInteraction.Start -> {
+                        isUserInteracting = true
+                        if (loadingState) {
+                            followStreamingBottom = false
+                            hasPendingStreamingSnap = false
+                            scrollJob?.cancel()
+                            scrollJob = null
+                        }
+                    }
+                    is androidx.compose.foundation.interaction.DragInteraction.Stop,
+                    is androidx.compose.foundation.interaction.DragInteraction.Cancel -> {
+                        isUserInteracting = false
+                    }
                 }
             }
         }
@@ -520,7 +546,7 @@ private fun SharedTransitionScope.ChatListNormal(
 
         LaunchedEffect(state) {
             snapshotFlow {
-                !state.isScrollInProgress && isChatListAtStreamingBottom(
+                !state.isScrollInProgress && !isUserInteracting && isChatListAtStreamingBottom(
                     visibleItems = state.layoutInfo.visibleItemsInfo,
                     canScrollForward = state.canScrollForward,
                 )

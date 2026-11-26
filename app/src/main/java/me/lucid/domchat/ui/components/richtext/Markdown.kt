@@ -1140,7 +1140,6 @@ fun MarkdownBlock(
 
     val isActivelyRevealing = streamingTextReveal || isDrainingFinish
     var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
-    val finishNowMillis = remember { mutableLongStateOf(0L) }
     var finishActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(isActivelyRevealing) {
@@ -1167,7 +1166,6 @@ fun MarkdownBlock(
             if (freshReveal && streamingPresentation.displayContent == streamingPresentation.rawContent) {
                 wasStreaming = false
                 finishRanges = settleRanges
-                finishNowMillis.longValue = now
                 finishActive = settleRanges.isNotEmpty()
                 onRevealComplete?.invoke()
                 break
@@ -1179,7 +1177,6 @@ fun MarkdownBlock(
                 streamingPresentation.isDrainingFinish = false
                 wasStreaming = false
                 finishRanges = settleRanges
-                finishNowMillis.longValue = now
                 finishActive = settleRanges.isNotEmpty()
                 onRevealComplete?.invoke()
                 break
@@ -1197,7 +1194,7 @@ fun MarkdownBlock(
         LaunchedEffect(finishActive) {
             while (finishActive && !isActivelyRevealing) {
                 val now = withFrameMillis { it }
-                finishNowMillis.longValue = now
+                streamingFrameMillis.longValue = now
                 if (finishRanges.none { now - it.revealedAtMillis < maxSettleDurationMillis }) {
                     finishActive = false
                     finishRanges = emptyList()
@@ -1209,11 +1206,10 @@ fun MarkdownBlock(
 
     val revealState = remember { StreamingRevealState() }
     val revealRanges = if (isActivelyRevealing) settleRanges else finishRanges
-    val revealNowMillisState: State<Long> = if (isActivelyRevealing) streamingFrameMillis else finishNowMillis
 
     revealState.rangesState.value = revealRanges
     if (revealRanges.isNotEmpty()) {
-        revealState.nowMillisState = revealNowMillisState
+        revealState.nowMillisState = streamingFrameMillis
         revealState.color = style.color.takeOrElse { Color.White }
         revealState.smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond
         revealState.blurEnabled = effectiveDisplay.enableBlurEffect

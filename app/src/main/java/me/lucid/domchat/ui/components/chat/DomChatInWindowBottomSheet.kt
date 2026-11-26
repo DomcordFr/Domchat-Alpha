@@ -352,17 +352,20 @@ fun DomChatInWindowBottomSheet(
         if (isDismissing) return
         isDismissing = true
         scope.launch {
-            launch {
-                scrimAlpha.animateTo(
-                    0f,
-                    animationSpec = androidx.compose.animation.core.tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)
+            try {
+                launch {
+                    scrimAlpha.animateTo(
+                        0f,
+                        animationSpec = androidx.compose.animation.core.tween(180, easing = androidx.compose.animation.core.FastOutLinearInEasing)
+                    )
+                }
+                offsetY.animateTo(
+                    targetValue = sheetHeightPx.coerceAtLeast(1200f),
+                    animationSpec = androidx.compose.animation.core.tween(220, easing = androidx.compose.animation.core.FastOutLinearInEasing)
                 )
+            } finally {
+                onDismissRequest()
             }
-            offsetY.animateTo(
-                targetValue = sheetHeightPx.coerceAtLeast(1200f),
-                animationSpec = androidx.compose.animation.core.tween(220, easing = androidx.compose.animation.core.FastOutLinearInEasing)
-            )
-            onDismissRequest()
         }
     }
 
@@ -387,6 +390,7 @@ fun DomChatInWindowBottomSheet(
         detectVerticalDragGestures(
             onDragStart = {},
             onDragEnd = {
+                if (isDismissing) return@detectVerticalDragGestures
                 scope.launch {
                     if (offsetY.value > sheetHeightPx * 0.20f || offsetY.value > 150f) {
                         dismissWithAnimation()
@@ -399,6 +403,7 @@ fun DomChatInWindowBottomSheet(
                 }
             },
             onDragCancel = {
+                if (isDismissing) return@detectVerticalDragGestures
                 scope.launch {
                     offsetY.animateTo(
                         0f,
@@ -407,6 +412,7 @@ fun DomChatInWindowBottomSheet(
                 }
             },
             onVerticalDrag = { change, dragAmount ->
+                if (isDismissing) return@detectVerticalDragGestures
                 change.consume()
                 scope.launch {
                     val nextOffset = if (offsetY.value + dragAmount >= 0) {

@@ -1254,9 +1254,10 @@ internal fun deriveActivityState(
         )
     }
     
-    // Check if we have any text AFTER the last tool activity
-    if (hasRecentText) {
-        // Text is being generated after all tools completed - show "Replying" state
+    // Check if we have any text AFTER the last tool activity, or if reasoning/tools already completed
+    // and we are waiting for the first response text tokens to arrive.
+    if (hasRecentText || reasoningParts.isNotEmpty() || toolCalls.isNotEmpty()) {
+        // Text is being generated (or about to start after reasoning/tools) - show "Replying" state
         return ActivityState.Replying
     }
 

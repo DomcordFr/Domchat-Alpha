@@ -361,18 +361,20 @@ internal fun ColumnScope.ModelList(
 
     val displayedFavoriteIds = settings.value.favoriteModels
 
-    val favoriteModels = displayedFavoriteIds.mapNotNull { modelId ->
-        val model = providers.findModelById(modelId) ?: return@mapNotNull null
+    val favoriteModels = remember(displayedFavoriteIds, providers, modelType, modelFilter) {
+        displayedFavoriteIds.mapNotNull { modelId ->
+            val model = providers.findModelById(modelId) ?: return@mapNotNull null
 
-        val provider = model.findProvider(providers = providers, checkOverwrite = false) ?: return@mapNotNull null
-        val isTypeMatch = if (modelType == ModelType.STT) {
-            val resolvedModel = modelMetadataResolver.applyToModel(model, provider)
-            resolvedModel.type == ModelType.STT
-        } else {
-            model.type == modelType
+            val provider = model.findProvider(providers = providers, checkOverwrite = false) ?: return@mapNotNull null
+            val isTypeMatch = if (modelType == ModelType.STT) {
+                val resolvedModel = modelMetadataResolver.applyToModel(model, provider)
+                resolvedModel.type == ModelType.STT
+            } else {
+                model.type == modelType
+            }
+            if (!isTypeMatch || !modelFilter(model)) return@mapNotNull null
+            model to provider
         }
-        if (!isTypeMatch || !modelFilter(model)) return@mapNotNull null
-        model to provider
     }
     val favoriteListItems = remember(favoriteModels) {
         favoriteModels.mapIndexed { index, (model, provider) ->
@@ -511,8 +513,10 @@ internal fun ColumnScope.ModelList(
     var viewportHeight by remember { mutableStateOf(0) }
     
     // Scroll to selected model centered on first composition
+    var didInitialScroll by remember { mutableStateOf(false) }
     LaunchedEffect(currentModel, viewportHeight) {
-        if (currentModel != null && selectedModelPosition > 0 && viewportHeight > 0) {
+        if (!didInitialScroll && currentModel != null && selectedModelPosition > 0 && viewportHeight > 0) {
+            didInitialScroll = true
             // Small delay to ensure list is composed
             delay(100)
             // Scroll with negative offset to center the item (approximate item height ~60dp)
