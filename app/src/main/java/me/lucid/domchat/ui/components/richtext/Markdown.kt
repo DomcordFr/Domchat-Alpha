@@ -1127,7 +1127,7 @@ fun MarkdownBlock(
         wasStreaming = true
         isDrainingFinish = false
         streamingPresentation.isDrainingFinish = false
-        if (freshReveal) {
+        if (freshReveal && displayContent.isEmpty()) {
             streamingPresentation.resetForFreshReveal(content, now)
         } else {
             streamingPresentation.acceptRawContent(content, now)

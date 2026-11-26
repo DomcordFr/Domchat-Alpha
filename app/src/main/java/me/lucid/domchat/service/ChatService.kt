@@ -747,6 +747,7 @@ class ChatService(
     private val cancelledGenerationConversations = ConcurrentHashMap.newKeySet<Uuid>()
     private val streamingCheckpointJobs = ConcurrentHashMap<Uuid, Job>()
     private val swipeSaveJobs = ConcurrentHashMap<Uuid, Job>()
+    private val initJobs = ConcurrentHashMap<Uuid, Job>()
 
     fun consumePendingError(conversationId: Uuid): Throwable? {
         return pendingErrorsByConversation.remove(conversationId)
@@ -796,6 +797,9 @@ class ChatService(
     }
 
     // 添加引用
+    fun hasInMemoryConversation(conversationId: Uuid): Boolean =
+        getConversationState(conversationId) != null
+
     private fun getConversationState(conversationId: Uuid): MutableStateFlow<Conversation>? =
         synchronized(conversationsLock) {
             conversations[conversationId]
@@ -964,52 +968,79 @@ class ChatService(
 
     // 初始化对话
     suspend fun initializeConversation(conversationId: Uuid) {
-        val inMemoryConversation = getConversationState(conversationId)?.value
-        if (shouldPreserveInMemoryConversation(
-                conversation = inMemoryConversation,
-                persistenceMode = getConversationPersistenceMode(conversationId),
-            )
-        ) {
-            val preservedConversation = inMemoryConversation ?: return
-            updateConversation(conversationId, preservedConversation)
-            return
+        val currentJob = currentCoroutineContext()[Job]
+        if (currentJob != null) {
+            initJobs[conversationId] = currentJob
         }
+        try {
+            val inMemoryConversation = getConversationState(conversationId)?.value
+            if (shouldPreserveInMemoryConversation(
+                    conversation = inMemoryConversation,
+                    persistenceMode = getConversationPersistenceMode(conversationId),
+                )
+            ) {
+                val preservedConversation = inMemoryConversation ?: return
+                updateConversation(conversationId, preservedConversation)
+                return
+            }
 
-        val conversation = withContext(Dispatchers.IO) {
-            conversationRepo.getConversationById(conversationId)
-        }
-        if (conversation != null) {
-            updateConversation(conversationId, conversation)
-        } else {
-            // 新建对话, 并添加预设消息
-            val currentSettings = settingsStore.settingsFlowRaw.first()
-            val assistant = currentSettings.getCurrentAssistant()
-            
-            var initialNodes = assistant.getInitialMessageNodes()
-            if (assistant.cycleIntrosOnNewChat) {
-                val introCount = initialNodes.firstOrNull()?.messages?.size ?: 0
-                if (introCount > 1) {
-                    val pastCount = withContext(Dispatchers.IO) {
-                        conversationRepo.getConversationCountOfAssistant(assistant.id)
-                    }
-                    val index = pastCount % introCount
-                    initialNodes = initialNodes.map { node ->
-                        if (node.role == me.lucid.ai.core.MessageRole.ASSISTANT && node.messages.size > 1) {
-                            node.copy(selectIndex = index)
-                        } else {
-                            node
+            val conversation = withContext(Dispatchers.IO) {
+                conversationRepo.getConversationById(conversationId)
+            }
+            val latestInMemory = getConversationState(conversationId)?.value
+            if (shouldPreserveInMemoryConversation(
+                    conversation = latestInMemory,
+                    persistenceMode = getConversationPersistenceMode(conversationId),
+                )
+            ) {
+                return
+            }
+            if (conversation != null) {
+                updateConversation(conversationId, conversation)
+            } else {
+                // 新建对话, 并添加预设消息
+                val currentSettings = settingsStore.settingsFlowRaw.first()
+                val assistant = currentSettings.getCurrentAssistant()
+
+                var initialNodes = assistant.getInitialMessageNodes()
+                if (assistant.cycleIntrosOnNewChat) {
+                    val introCount = initialNodes.firstOrNull()?.messages?.size ?: 0
+                    if (introCount > 1) {
+                        val pastCount = withContext(Dispatchers.IO) {
+                            conversationRepo.getConversationCountOfAssistant(assistant.id)
+                        }
+                        val index = pastCount % introCount
+                        initialNodes = initialNodes.map { node ->
+                            if (node.role == me.lucid.ai.core.MessageRole.ASSISTANT && node.messages.size > 1) {
+                                node.copy(selectIndex = index)
+                            } else {
+                                node
+                            }
                         }
                     }
                 }
-            }
 
-            val newConversation = Conversation.ofId(
-                id = conversationId,
-                assistantId = assistant.id,
-                messages = initialNodes
-            )
-            setConversationPersistenceMode(conversationId, ChatPersistenceMode.NORMAL)
-            updateConversation(conversationId, newConversation)
+                val postSettingsInMemory = getConversationState(conversationId)?.value
+                if (shouldPreserveInMemoryConversation(
+                        conversation = postSettingsInMemory,
+                        persistenceMode = getConversationPersistenceMode(conversationId),
+                    )
+                ) {
+                    return
+                }
+
+                val newConversation = Conversation.ofId(
+                    id = conversationId,
+                    assistantId = assistant.id,
+                    messages = initialNodes
+                )
+                setConversationPersistenceMode(conversationId, ChatPersistenceMode.NORMAL)
+                updateConversation(conversationId, newConversation)
+            }
+        } finally {
+            if (currentJob != null) {
+                initJobs.remove(conversationId, currentJob)
+            }
         }
     }
 
@@ -1536,6 +1567,10 @@ class ChatService(
             activeGenerationTokens[conversationId] = genToken
             cancelledGenerationConversations.remove(conversationId)
             try {
+                initJobs[conversationId]?.join()
+                if (!hasInMemoryConversation(conversationId)) {
+                    initializeConversation(conversationId)
+                }
                 var effectiveContent = content
                 val currentConversation = getConversationFlow(conversationId).value
                 val settings = settingsStore.settingsFlow.first()

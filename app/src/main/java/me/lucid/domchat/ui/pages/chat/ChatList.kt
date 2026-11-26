@@ -384,6 +384,7 @@ private fun SharedTransitionScope.ChatListNormal(
     var hasPendingStreamingSnap by remember { mutableStateOf(false) }
 
     suspend fun snapToStreamingBottom() {
+        if (!loadingState || !followStreamingBottom || state.isScrollInProgress) return
         val totalCount = state.layoutInfo.totalItemsCount
         if (totalCount <= 0) return
         val targetIndex = totalCount - 1
@@ -395,16 +396,21 @@ private fun SharedTransitionScope.ChatListNormal(
     }
 
     fun requestSnapToStreamingBottom() {
+        if (!loadingState || !followStreamingBottom || state.isScrollInProgress) return
         if (scrollJob?.isActive == true) {
             hasPendingStreamingSnap = true
             return
         }
         scrollJob = scope.launch {
             do {
+                if (!loadingState || !followStreamingBottom || state.isScrollInProgress) {
+                    hasPendingStreamingSnap = false
+                    break
+                }
                 hasPendingStreamingSnap = false
                 snapToStreamingBottom()
                 withFrameNanos { }
-            } while (hasPendingStreamingSnap)
+            } while (hasPendingStreamingSnap && loadingState && followStreamingBottom && !state.isScrollInProgress)
         }
     }
 
@@ -457,6 +463,19 @@ private fun SharedTransitionScope.ChatListNormal(
     ) {
         // Empty chat state removed - assistant icon now shown in TopBar
 
+        // Detach immediately when the user starts dragging during streaming,
+        // before scrollToItem can override their touch gesture.
+        LaunchedEffect(state) {
+            state.interactionSource.interactions.collect { interaction ->
+                if (interaction is androidx.compose.foundation.interaction.DragInteraction.Start && loadingState) {
+                    followStreamingBottom = false
+                    hasPendingStreamingSnap = false
+                    scrollJob?.cancel()
+                    scrollJob = null
+                }
+            }
+        }
+
         // User scrolls detach live following; reaching the bottom reattaches it.
         LaunchedEffect(state) {
             var previousFirstIndex = state.firstVisibleItemIndex
@@ -467,10 +486,15 @@ private fun SharedTransitionScope.ChatListNormal(
                 if (isScrolling && loadingState) {
                     val scrolledUp = firstIndex < previousFirstIndex ||
                         (firstIndex == previousFirstIndex && firstOffset < previousFirstOffset)
+                    val scrolledDown = firstIndex > previousFirstIndex ||
+                        (firstIndex == previousFirstIndex && firstOffset > previousFirstOffset)
                     if (scrolledUp) {
                         followStreamingBottom = false
-                    }
-                    if (
+                        hasPendingStreamingSnap = false
+                        scrollJob?.cancel()
+                        scrollJob = null
+                    } else if (
+                        scrolledDown &&
                         isChatListAtStreamingBottom(
                             visibleItems = state.layoutInfo.visibleItemsInfo,
                             canScrollForward = state.canScrollForward,

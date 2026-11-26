@@ -183,6 +183,18 @@ class ChatVM(
     fun setConversationId(newId: Uuid) {
         if (activeConversationId.value == newId) {
             ensureActiveReference()
+            if (!chatService.hasInMemoryConversation(newId) && initConversationJob?.isActive != true) {
+                _conversationInitialized.value = false
+                initConversationJob = viewModelScope.launch {
+                    try {
+                        chatService.initializeConversation(newId)
+                    } finally {
+                        if (activeConversationId.value == newId) {
+                            _conversationInitialized.value = true
+                        }
+                    }
+                }
+            }
             return
         }
         releaseReference()

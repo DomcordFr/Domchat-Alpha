@@ -41,6 +41,25 @@ object EntrancePlayed {
     }
 }
 
+/**
+ * Process-lifetime registry of message text reveal animations that already played.
+ * Prevents LazyColumn item recycling (scrolling up/down) or greeting switches from
+ * replaying the character/fade reveal on messages from the current session.
+ */
+object MessageRevealPlayed {
+    private const val MAX = 4096
+    private val played = mutableSetOf<String>()
+
+    fun markIfNew(key: String): Boolean {
+        if (played.size >= MAX) played.clear()
+        return played.add(key)
+    }
+
+    fun reset() {
+        played.clear()
+    }
+}
+
 /** Screen-space entrance direction, chosen by the caller from element position. */
 enum class EntranceDirection { UP, DOWN, LEFT, RIGHT, DIAGONAL, NONE }
 

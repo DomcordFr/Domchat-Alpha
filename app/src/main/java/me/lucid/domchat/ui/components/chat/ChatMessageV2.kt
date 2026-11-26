@@ -1757,9 +1757,14 @@ private fun UserMessageTurn(
                     }
                 ) {
                     val chatAnimationsEnabled = LocalChatAnimationsEnabled.current
-                    var hasAnimated by remember(node.id) { mutableStateOf(isHistoryTurn) }
-                    var isRevealing by remember(node.id) { mutableStateOf(!isHistoryTurn && !hasAnimated) }
-                    LaunchedEffect(node.id) {
+                    val revealKey = "user:${node.id}:$partIndex"
+                    var hasAnimated by remember(revealKey) {
+                        mutableStateOf(
+                            isHistoryTurn || !me.lucid.domchat.ui.motion.MessageRevealPlayed.markIfNew(revealKey)
+                        )
+                    }
+                    var isRevealing by remember(revealKey) { mutableStateOf(!hasAnimated) }
+                    LaunchedEffect(revealKey) {
                         if (!hasAnimated) {
                             // Safety timeout so state eventually settles even if scrolled away
                             kotlinx.coroutines.delay(8000L)
@@ -2266,6 +2271,11 @@ private fun AssistantMessageTurn(
                     activeTextParts.forEachIndexed { index, part ->
                         val userNickname = effectiveDisplay.getActivePersona().name
                         val isStreaming = loading && targetIdx == assistantNode.selectIndex && index == activeTextParts.lastIndex
+                        val shouldFreshReveal = remember(assistantNode.id, targetIdx, index) {
+                            isStreaming && me.lucid.domchat.ui.motion.MessageRevealPlayed.markIfNew(
+                                "assistant:${assistantNode.id}:$targetIdx:$index"
+                            )
+                        }
                         val displayContent = rememberFormattedMessageText(
                             rawText = part.text,
                             assistant = assistant,
@@ -2278,6 +2288,7 @@ private fun AssistantMessageTurn(
                             content = displayContent,
                             paragraphSpacing = 12.dp,
                             streamingTextReveal = isStreaming,
+                            freshReveal = shouldFreshReveal,
                             displaySetting = effectiveDisplay,
                             onRevealComplete = {
                                 if (index == activeTextParts.lastIndex) {
@@ -2637,6 +2648,11 @@ private fun AssistantMessageTurn(
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 versionTextParts.forEachIndexed { index, part ->
                                     val isPartStreaming = isStreaming && index == versionTextParts.lastIndex
+                                    val shouldFreshReveal = remember(assistantNode.id, targetIdx, index) {
+                                        isPartStreaming && me.lucid.domchat.ui.motion.MessageRevealPlayed.markIfNew(
+                                            "assistant:${assistantNode.id}:$targetIdx:$index"
+                                        )
+                                    }
                                     val displayContent = rememberFormattedMessageText(
                                         rawText = part.text,
                                         assistant = assistant,
@@ -2649,6 +2665,7 @@ private fun AssistantMessageTurn(
                                         content = displayContent,
                                         paragraphSpacing = 12.dp,
                                         streamingTextReveal = isPartStreaming,
+                                        freshReveal = shouldFreshReveal,
                                         displaySetting = effectiveDisplay,
                                         onRevealComplete = {
                                             if (index == versionTextParts.lastIndex) {
