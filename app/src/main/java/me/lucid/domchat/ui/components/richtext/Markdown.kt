@@ -1102,6 +1102,8 @@ fun MarkdownBlock(
 
     val (preprocessed, astTree) = data
     val blockDirection = rememberContentDirection(preprocessed)
+    var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
+    var finishActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(content, streamingTextReveal, freshReveal) {
         val now = withFrameMillis { it }
@@ -1147,8 +1149,6 @@ fun MarkdownBlock(
     }
 
     val isActivelyRevealing = streamingTextReveal || isDrainingFinish
-    var finishRanges by remember { mutableStateOf(emptyList<StreamingSettleRange>()) }
-    var finishActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(isActivelyRevealing) {
         if (!isActivelyRevealing) return@LaunchedEffect
