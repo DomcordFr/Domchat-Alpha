@@ -375,8 +375,16 @@ fun ChatDrawerContent(
                             modifier = Modifier.liquidGlassSurface(shape = RoundedCornerShape(12.dp), borderWidth = 0.5.dp, fillColor = if (isDark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.30f)),
                             containerColor = Color.Transparent,
                             onClick = {
-                                navigateToChatPage(navController)
-                                dismissDrawerAfterSelection()
+                                scope.launch {
+                                    val newConversation = vm.createConversationForAssistant(
+                                        me.lucid.domchat.data.datastore.DEFAULT_ASSISTANT_ID
+                                    )
+                                    navigateToChatPage(
+                                        navController = navController,
+                                        chatId = newConversation.id,
+                                    )
+                                    dismissDrawerAfterSelection()
+                                }
                             },
                             onHaptic = { haptics.perform(HapticPattern.Tick) },
                             icon = {
