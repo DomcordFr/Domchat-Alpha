@@ -398,7 +398,8 @@ private fun SharedTransitionScope.ChatListNormal(
         onStreamingAutoScrollingChanged?.invoke(true)
         try {
             if (lastVisible != null && lastVisible.index == targetIndex) {
-                val overflowPx = (lastVisible.offset + lastVisible.size) - layoutInfo.viewportEndOffset
+                val contentBottomEdge = layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
+                val overflowPx = (lastVisible.offset + lastVisible.size) - contentBottomEdge
                 if (overflowPx > 2) {
                     state.animateScrollBy(
                         value = overflowPx.toFloat(),

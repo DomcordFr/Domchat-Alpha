@@ -2192,16 +2192,15 @@ class ChatService(
                     sendGenerationDoneNotification(conversationId)
                 }
             }.collect { chunk ->
-                // Set first token time on first chunk arrival (excludes TTFT from tok/s)
-                val isFirstTokenArrival = firstTokenTime == null
-                if (isFirstTokenArrival) {
-                    firstTokenTime = System.currentTimeMillis()
-                }
-                
                 when (chunk) {
                     is GenerationChunk.Messages -> {
                         lastStreamingChunkMessages = chunk.messages
                         val nowMs = System.currentTimeMillis()
+                        val hasDurableContent = chunk.messages.lastOrNull()?.hasDurableAssistantProgress() == true
+                        val isFirstTokenArrival = firstTokenTime == null && hasDurableContent
+                        if (isFirstTokenArrival) {
+                            firstTokenTime = nowMs
+                        }
                         val hasNewToolCall = chunk.messages.lastOrNull()?.getToolCalls()?.isNotEmpty() == true
                         val hasPendingInChunk = chunk.messages.any { msg ->
                             msg.getToolCalls().any { it.approvalState is ToolApprovalState.Pending }

@@ -2205,6 +2205,11 @@ private fun AssistantMessageTurn(
                     ) {
                         val userNickname = effectiveDisplay.getActivePersona().name
                         val isStreaming = loading && targetIdx == assistantNode.selectIndex && index == activeTextParts.lastIndex
+                        val shouldFreshReveal = remember(assistantNode.id, targetIdx, index) {
+                            isStreaming && me.lucid.domchat.ui.motion.MessageRevealPlayed.markIfNew(
+                                "assistant:${assistantNode.id}:$targetIdx:$index"
+                            )
+                        }
                         val displayContent = rememberFormattedMessageText(
                             rawText = part.text,
                             assistant = assistant,
@@ -2220,6 +2225,7 @@ private fun AssistantMessageTurn(
                                 content = displayContent,
                                 paragraphSpacing = 12.dp,
                                 streamingTextReveal = isStreaming,
+                                freshReveal = shouldFreshReveal,
                                 displaySetting = effectiveDisplay,
                                 onRevealComplete = {
                                     if (index == activeTextParts.lastIndex) {
