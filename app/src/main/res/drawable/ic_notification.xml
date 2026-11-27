@@ -3,8 +3,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- Left tapered facet -->
     <path
         android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M12,2 L20.66,7 L20.66,17 L12,22 L3.34,17 L3.34,7 Z M12,6.4 L7.15,9.2 L7.15,14.8 L12,17.6 L16.85,14.8 L16.85,9.2 Z" />
+        android:pathData="M4.2,7.9 C4.2,7.4 4.7,7.1 5.1,7.3 L10.3,10.0 C10.6,10.2 10.7,10.4 10.7,10.8 L10.7,13.2 C10.7,13.6 10.6,13.8 10.3,14.0 L5.1,16.7 C4.7,16.9 4.2,16.6 4.2,16.1 Z" />
+    <!-- Outer ribbon wrapping top, right, and bottom around the center aperture -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5.2,6.0 L10.3,3.0 C11.4,2.3 12.6,2.3 13.7,3.0 L18.3,5.7 C19.3,6.3 19.8,7.3 19.8,8.5 L19.8,15.5 C19.8,16.7 19.3,17.7 18.3,18.3 L13.7,21.0 C12.6,21.7 11.4,21.7 10.3,21.0 L5.2,18.0 C4.8,17.8 4.8,17.3 5.2,17.1 L11.1,14.1 C11.4,14.0 11.7,14.0 12.1,14.0 C13.2,14.0 14.0,13.3 14.0,12.0 C14.0,10.7 13.2,10.0 12.1,10.0 C11.7,10.0 11.4,10.0 11.1,9.9 L5.2,6.9 C4.8,6.7 4.8,6.2 5.2,6.0 Z" />
 </vector>
