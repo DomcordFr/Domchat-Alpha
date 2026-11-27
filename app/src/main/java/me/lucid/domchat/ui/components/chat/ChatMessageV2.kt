@@ -1790,6 +1790,7 @@ private fun UserMessageTurn(
                             paragraphSpacing = 12.dp,
                             streamingTextReveal = isRevealing,
                             freshReveal = isRevealing,
+                            oneShotReveal = isRevealing,
                             displaySetting = effectiveDisplay,
                             onRevealComplete = {
                                 hasAnimated = true

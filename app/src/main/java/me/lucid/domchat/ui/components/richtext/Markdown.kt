@@ -1007,6 +1007,7 @@ fun MarkdownBlock(
     paragraphSpacing: Dp = 4.dp,
     streamingTextReveal: Boolean = false,
     freshReveal: Boolean = false,
+    oneShotReveal: Boolean = false,
     workspaceId: String? = null,
     displaySetting: DisplaySetting? = null,
     onRevealComplete: (() -> Unit)? = null,
@@ -1131,9 +1132,14 @@ fun MarkdownBlock(
             }
             streamingPresentation.snapTo(content)
             displayContent = streamingPresentation.displayContent
+            if (wasStreaming && settleRanges.isNotEmpty() && !oneShotReveal) {
+                finishRanges = settleRanges
+                finishActive = true
+            } else {
+                finishRanges = emptyList()
+                finishActive = false
+            }
             settleRanges = emptyList()
-            finishRanges = emptyList()
-            finishActive = false
             wasStreaming = false
             onRevealComplete?.invoke()
             return@LaunchedEffect
@@ -1177,8 +1183,9 @@ fun MarkdownBlock(
             }
             settleRanges = streamingPresentation.settleRanges
 
-            // Check if fresh reveal (user message) reached completion
-            if (freshReveal && streamingPresentation.displayContent == streamingPresentation.rawContent) {
+            // Check if one-shot reveal (e.g. user message) reached completion.
+            // Do not break during an active assistant stream, because more chunks will arrive.
+            if (oneShotReveal && streamingPresentation.displayContent == streamingPresentation.rawContent) {
                 wasStreaming = false
                 finishRanges = settleRanges
                 finishActive = settleRanges.isNotEmpty()
