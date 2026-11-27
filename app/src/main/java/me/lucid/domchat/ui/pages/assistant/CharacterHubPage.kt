@@ -2528,14 +2528,24 @@ fun CharacterInspectorSheet(
                     ) {
                         tabTitles.forEachIndexed { index, title ->
                             val isSelected = selectedTab == index
+                            val tabShape = RoundedCornerShape(10.dp)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(tabShape)
                                     .background(
                                         if (isSelected) {
-                                            Color.White.copy(alpha = 0.16f)
+                                            Color(0xFF000000)
                                         } else Color.Transparent
+                                    )
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier.border(
+                                                0.5.dp,
+                                                me.lucid.domchat.ui.theme.LiquidGlassTokens.SpecularBorderBrush,
+                                                tabShape,
+                                            )
+                                        } else Modifier
                                     )
                                     .clickable { selectedTab = index }
                                     .padding(horizontal = 4.dp, vertical = 9.dp),

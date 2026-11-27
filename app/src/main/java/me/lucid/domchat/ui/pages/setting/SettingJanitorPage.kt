@@ -1434,14 +1434,24 @@ private fun JanitorCharacterInspectorSheet(
                     ) {
                         sheetTabTitles.forEachIndexed { index, title ->
                             val isSelected = sheetSelectedTab == index
+                            val tabShape = RoundedCornerShape(10.dp)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(tabShape)
                                     .background(
                                         if (isSelected) {
-                                            Color.White.copy(alpha = 0.16f)
+                                            Color(0xFF000000)
                                         } else Color.Transparent
+                                    )
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier.border(
+                                                0.5.dp,
+                                                LiquidGlassTokens.SpecularBorderBrush,
+                                                tabShape,
+                                            )
+                                        } else Modifier
                                     )
                                     .clickable { sheetSelectedTab = index }
                                     .padding(horizontal = 4.dp, vertical = 9.dp),
