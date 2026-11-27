@@ -238,6 +238,7 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             val defaultRpPresets = listOf(
+                                Triple("Plain Text (normal)", "plain", "#E5E5EA"),
                                 Triple("Actions (*action*)", "*", "#87CEEB"),
                                 Triple("Dialogue (\"speech\")", "\"", "#FFD700"),
                                 Triple("Thoughts (~thought~)", "~", "#FFB6C1"),
@@ -368,7 +369,11 @@ fun SettingRpOptimizationsPage(vm: SettingVM = koinViewModel()) {
                                             .background(color)
                                     )
                                     Text(
-                                        text = stringResource(R.string.setting_rp_example_text, rule.pattern),
+                                        text = if (rule.pattern == "plain") {
+                                            "Plain text example"
+                                        } else {
+                                            stringResource(R.string.setting_rp_example_text, rule.pattern)
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = color
                                     )
@@ -536,6 +541,7 @@ private fun RpStyleRuleDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
+                        Triple("Plain Text (normal)", "plain", "#E5E5EA"),
                         Triple("Actions (*action*)", "*", "#87CEEB"),
                         Triple("Dialogue (\"speech\")", "\"", "#FFD700"),
                         Triple("Thoughts (~thought~)", "~", "#FFB6C1"),
@@ -570,6 +576,7 @@ private fun RpStyleRuleDialog(
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = {
                         when (pattern) {
+                            "plain" -> Text("Applies to normal plain text with no formatting symbols")
                             "#", "##", "###", "####", "#####", "######" -> 
                                 Text(stringResource(R.string.setting_rp_heading_level, pattern.length))
                             ">" -> Text(stringResource(R.string.setting_rp_blockquotes))
@@ -605,14 +612,7 @@ private fun RpStyleRuleDialog(
                     label = { Text(stringResource(R.string.setting_rp_color_hex)) },
                     placeholder = { Text("#808080") },
                     singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlassSurface(
-                            shape = me.lucid.domchat.ui.theme.AppShapes.InputField,
-                            fillColor = Color.Transparent,
-                            borderWidth = 0.5.dp,
-                            specularBrush = LiquidGlassTokens.SpecularBorderSubtle,
-                        ),
+                    modifier = Modifier.fillMaxWidth(),
                     leadingIcon = {
                         val normalized = if (colorHex.startsWith("#")) colorHex else "#$colorHex"
                         val color = try {

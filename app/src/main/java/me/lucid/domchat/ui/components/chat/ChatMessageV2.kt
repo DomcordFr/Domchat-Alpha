@@ -2228,6 +2228,8 @@ private fun AssistantMessageTurn(
                                 },
                                 onExpandedStreamingCodeBlockChanged = {
                                     onExpandedStreamingCodeBlockChanged?.invoke()
+                                },
+                                onStreamingRevealTick = {
                                     onStreamingRevealTick?.invoke()
                                 },
                                 onClickCitation = { id -> onCitationClick(id) }
@@ -2298,6 +2300,8 @@ private fun AssistantMessageTurn(
                             },
                             onExpandedStreamingCodeBlockChanged = {
                                 onExpandedStreamingCodeBlockChanged?.invoke()
+                            },
+                            onStreamingRevealTick = {
                                 onStreamingRevealTick?.invoke()
                             },
                             onClickCitation = { id -> onCitationClick(id) },
@@ -2675,6 +2679,8 @@ private fun AssistantMessageTurn(
                                         },
                                         onExpandedStreamingCodeBlockChanged = {
                                             onExpandedStreamingCodeBlockChanged?.invoke()
+                                        },
+                                        onStreamingRevealTick = {
                                             onStreamingRevealTick?.invoke()
                                         },
                                         onClickCitation = { id -> onCitationClick(id) }

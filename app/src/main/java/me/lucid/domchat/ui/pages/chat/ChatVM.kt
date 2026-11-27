@@ -670,7 +670,7 @@ class ChatVM(
             parts
         }
 
-        viewModelScope.launch {
+        appScope.launch {
             chatService.editMessage(_conversationId, messageId, processedParts)
         }
     }

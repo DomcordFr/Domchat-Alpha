@@ -1242,6 +1242,16 @@ class ChatService(
 
         val currentConversation = ensureConversationLoaded(conversationId) ?: return
         val assistant = settingsStore.settingsFlow.value.getAssistantById(currentConversation.assistantId)
+        val targetIndex = currentConversation.messageNodes.indexOfFirst { node ->
+            node.messages.any { it.id == messageId }
+        }
+        if (targetIndex == -1) return
+        val targetOriginalMessage = currentConversation.messageNodes[targetIndex].messages.find { it.id == messageId } ?: return
+        val affectScope = if (targetOriginalMessage.role == MessageRole.USER) {
+            AssistantAffectScope.USER
+        } else {
+            AssistantAffectScope.ASSISTANT
+        }
         val processedParts = if (assistant != null) {
             parts.map { part ->
                 when (part) {
@@ -1249,7 +1259,7 @@ class ChatService(
                         part.copy(
                             text = part.text.replaceRegexes(
                                 assistant = assistant,
-                                scope = AssistantAffectScope.USER,
+                                scope = affectScope,
                                 visual = false
                             )
                         )
@@ -1262,11 +1272,6 @@ class ChatService(
             parts
         }
 
-        val targetIndex = currentConversation.messageNodes.indexOfFirst { node ->
-            node.messages.any { it.id == messageId }
-        }
-        if (targetIndex == -1) return
-        val targetOriginalMessage = currentConversation.messageNodes[targetIndex].messages.find { it.id == messageId } ?: return
         val newTag = kotlin.uuid.Uuid.random().toString()
         val isAssistantTurnEdit = targetOriginalMessage.role != MessageRole.USER
         val turnStart = if (isAssistantTurnEdit) {
@@ -1289,15 +1294,27 @@ class ChatService(
             messageNodes = currentConversation.messageNodes.mapIndexed { index, node ->
                 when {
                     index == targetIndex -> {
-                        node.copy(
-                            messages = node.messages + UIMessage(
-                                role = targetOriginalMessage.role,
-                                parts = processedParts,
-                                modelId = targetOriginalMessage.modelId,
-                                versionTag = newTag,
-                            ),
-                            selectIndex = node.messages.size,
-                        )
+                        if (node.messages.size <= 1) {
+                            node.copy(
+                                messages = listOf(
+                                    targetOriginalMessage.copy(
+                                        parts = processedParts,
+                                        versionTag = targetOriginalMessage.versionTag ?: newTag,
+                                    )
+                                ),
+                                selectIndex = 0,
+                            )
+                        } else {
+                            node.copy(
+                                messages = node.messages + UIMessage(
+                                    role = targetOriginalMessage.role,
+                                    parts = processedParts,
+                                    modelId = targetOriginalMessage.modelId,
+                                    versionTag = newTag,
+                                ),
+                                selectIndex = node.messages.size,
+                            )
+                        }
                     }
                     isAssistantTurnEdit && index in turnStart until turnEnd && node.role != MessageRole.USER -> {
                         val activeSibling = node.currentMessage

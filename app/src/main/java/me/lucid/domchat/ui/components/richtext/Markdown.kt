@@ -737,7 +737,7 @@ private fun getRpColor(pattern: String): Color? {
 // Standard markdown patterns that are handled by the AST parser
 private val STANDARD_PATTERNS = setOf(
     "*", "**", "~~", "`", "#", "##", "###", "####", "#####", "######", ">",
-    "==", "++", "<mark>", "<u>"
+    "==", "++", "<mark>", "<u>", "plain"
 )
 
 private val INLINE_BOLD_ITALIC_REGEX = Regex("""\*\*\*([^*\n]+?)\*\*\*""")
@@ -1011,11 +1011,16 @@ fun MarkdownBlock(
     displaySetting: DisplaySetting? = null,
     onRevealComplete: (() -> Unit)? = null,
     onExpandedStreamingCodeBlockChanged: (() -> Unit)? = null,
+    onStreamingRevealTick: (() -> Unit)? = null,
     onClickCitation: (String) -> Unit = {}
 ) {
     // Read rpStyleRules and streaming animation settings (honoring assistant overrides if provided)
     val effectiveDisplay = displaySetting ?: LocalDisplaySetting.current
     val rpStyleRules = effectiveDisplay.rpStyleRules
+    val plainTextColor = remember(rpStyleRules) {
+        rpStyleRules.find { it.pattern == "plain" && it.enabled }?.let { parseColorSafe(it.colorHex) }
+    }
+    val effectiveTextStyle = if (plainTextColor != null) style.copy(color = plainTextColor) else style
     val fadeInEnabled = effectiveDisplay.enableStreamingFadeIn
     val fadeDurationMs = effectiveDisplay.streamingFadeDurationMs.coerceIn(100, 1500)
     val continuousFlow = effectiveDisplay.streamingContinuousFlow
@@ -1146,6 +1151,7 @@ fun MarkdownBlock(
         settleRanges = streamingPresentation.settleRanges
         streamingFrameMillis.longValue = now
         onExpandedStreamingCodeBlockChanged?.invoke()
+        onStreamingRevealTick?.invoke()
     }
 
     val isActivelyRevealing = streamingTextReveal || isDrainingFinish
@@ -1164,6 +1170,7 @@ fun MarkdownBlock(
             streamingFrameMillis.longValue = now
             if (changed) {
                 displayContent = streamingPresentation.displayContent
+                onStreamingRevealTick?.invoke()
                 if (displayContent.contains("```")) {
                     onExpandedStreamingCodeBlockChanged?.invoke()
                 }
@@ -1218,7 +1225,7 @@ fun MarkdownBlock(
     revealState.rangesState.value = revealRanges
     if (revealRanges.isNotEmpty()) {
         revealState.nowMillisState = streamingFrameMillis
-        revealState.color = style.color.takeOrElse { Color.White }
+        revealState.color = effectiveTextStyle.color.takeOrElse { Color.White }
         revealState.smoothedCharsPerSecond = streamingPresentation.smoothedCharsPerSecond
         revealState.blurEnabled = effectiveDisplay.enableBlurEffect
         revealState.fadeInEnabled = fadeInEnabled
@@ -1234,7 +1241,7 @@ fun MarkdownBlock(
         LocalMarkdownWorkspaceId provides workspaceId,
         LocalLayoutDirection provides blockDirection.toLayoutDirection(),
     ) {
-        ProvideTextStyle(style) {
+        ProvideTextStyle(effectiveTextStyle) {
             Column(
                 modifier = modifier,
             ) {
@@ -2066,11 +2073,25 @@ private fun MarkdownNode(
                 codeContentStartOffset, codeContentEndOffset
             ).trimIndent()
 
-            val language =
-                node.findChildOfTypeRecursive(MarkdownTokenTypes.FENCE_LANG)?.getTextInNode(content) ?: "plaintext"
-            val normalizedLanguage = normalizeCodeBlockLanguage(language)
+            val fenceLang = node.findChildOfTypeRecursive(MarkdownTokenTypes.FENCE_LANG)?.getTextInNode(content)
             val hasEnd = node.findChildOfTypeRecursive(MarkdownTokenTypes.CODE_FENCE_END) != null
             val paragraphSpacing = LocalMarkdownParagraphSpacing.current
+
+            if (fenceLang.isNullOrBlank()) {
+                // Untagged ``` ... ``` blocks are commonly used in RP greetings/status HUDs;
+                // render them cleanly as inline prose without the "plaintext" code card chrome.
+                val bottomPadding = if (node.nextRenderableSibling() != null && paragraphSpacing > 0.dp) paragraphSpacing else 0.dp
+                Text(
+                    text = code,
+                    style = LocalTextStyle.current,
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .padding(bottom = bottomPadding),
+                )
+                return
+            }
+
+            val normalizedLanguage = normalizeCodeBlockLanguage(fenceLang)
 
             // Mermaid diagrams: render directly without HighlightCodeBlock wrapper
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
