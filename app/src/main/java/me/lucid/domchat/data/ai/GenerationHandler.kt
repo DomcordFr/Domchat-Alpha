@@ -1654,9 +1654,15 @@ class GenerationHandler(
             fun skillMessage(skill: me.lucid.domchat.data.model.Skill): UIMessage = UIMessage.user(
                 "<system>\n[Skill: ${skill.name}]\n${skill.instructions}\nSkill directory: ${skill.workspaceDirectory()}\n</system>"
             )
-            fun lorebookMessage(entry: LorebookEntry): UIMessage = UIMessage.user(
-                "<system>\n${entry.prompt}\n</system>"
-            )
+            fun lorebookMessage(entry: LorebookEntry): UIMessage {
+                val evaluated = RoleplayPromptAssembler.evaluateMacros(
+                    text = entry.prompt,
+                    charName = charName,
+                    userName = userName,
+                    modelName = effectiveModelName
+                )
+                return UIMessage.user("<system>\n$evaluated\n</system>")
+            }
             fun presetMessage(preset: me.lucid.domchat.data.model.PromptPreset): UIMessage {
                 val evaluated = RoleplayPromptAssembler.evaluateMacros(
                     text = preset.content,

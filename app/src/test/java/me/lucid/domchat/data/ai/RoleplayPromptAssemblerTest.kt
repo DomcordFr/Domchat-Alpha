@@ -40,6 +40,17 @@ class RoleplayPromptAssemblerTest {
     }
 
     @Test
+    fun testSingleBraceUserCharAndBotVariants() {
+        val text = "{User} meets {user} and {user_name}; {Char}, {char}, {char_name}, {bot}, {{User}}, {{{user}}}."
+        val result = RoleplayPromptAssembler.evaluateMacros(
+            text = text,
+            charName = "Seraphina",
+            userName = "Bob"
+        )
+        assertEquals("Bob meets Bob and Bob; Seraphina, Seraphina, Seraphina, Seraphina, Bob, {Bob}.", result)
+    }
+
+    @Test
     fun testRandomMacroEvaluation() {
         val text = "The weather is {{random::sunny,rainy,cloudy}} today."
         val result = RoleplayPromptAssembler.evaluateMacros(

@@ -16,7 +16,7 @@ import kotlin.random.Random
 object RoleplayPromptAssembler {
 
     private val MACRO_SINGLE_PASS_REGEX = Regex(
-        """\{\{(char|char_name|user|user_name|user_pronouns|user_pronoun|pronouns|sub|obj|poss|poss_p|ref|bot|model|time|date|lastMessage|lastUserMessage|lastCharMessage|random::[^}]+)\}\}|<(?i:char|user|bot)>""",
+        """\{\{(char|char_name|user|user_name|user_pronouns|user_pronoun|pronouns|sub|obj|poss|poss_p|ref|bot|model|time|date|lastMessage|lastUserMessage|lastCharMessage|random::[^}]+)\}\}|\{(char|char_name|user|user_name|bot)\}|<(?i:char|user|bot)>""",
         RegexOption.IGNORE_CASE
     )
 
@@ -41,42 +41,32 @@ object RoleplayPromptAssembler {
 
         return MACRO_SINGLE_PASS_REGEX.replace(text) { match ->
             val value = match.value
+            val macroKey = when {
+                value.startsWith("{{") && value.endsWith("}}") -> value.substring(2, value.length - 2)
+                value.startsWith("{") && value.endsWith("}") -> value.substring(1, value.length - 1)
+                value.startsWith("<") && value.endsWith(">") -> value.substring(1, value.length - 1)
+                else -> value
+            }.lowercase(Locale.ROOT)
             when {
-                value.equals("{{char}}", ignoreCase = true) ||
-                value.equals("{{char_name}}", ignoreCase = true) ||
-                value.equals("<char>", ignoreCase = true) -> charName
-
-                value.equals("{{user}}", ignoreCase = true) ||
-                value.equals("{{user_name}}", ignoreCase = true) ||
-                value.equals("<user>", ignoreCase = true) -> userName
-
-                value.equals("{{user_pronouns}}", ignoreCase = true) ||
-                value.equals("{{user_pronoun}}", ignoreCase = true) ||
-                value.equals("{{pronouns}}", ignoreCase = true) -> userPronouns
-
-                value.equals("{{sub}}", ignoreCase = true) -> pronounParts(userPronouns).sub
-                value.equals("{{obj}}", ignoreCase = true) -> pronounParts(userPronouns).obj
-                value.equals("{{poss}}", ignoreCase = true) -> pronounParts(userPronouns).poss
-                value.equals("{{poss_p}}", ignoreCase = true) -> pronounParts(userPronouns).possP
-                value.equals("{{ref}}", ignoreCase = true) -> pronounParts(userPronouns).ref
-
-                value.equals("{{bot}}", ignoreCase = true) ||
-                value.equals("<bot>", ignoreCase = true) -> charName
-
-                value.equals("{{model}}", ignoreCase = true) -> modelName
-                value.equals("{{time}}", ignoreCase = true) -> timeStr
-                value.equals("{{date}}", ignoreCase = true) -> dateStr
-
-                value.startsWith("{{random::", ignoreCase = true) -> {
+                macroKey == "char" || macroKey == "char_name" || macroKey == "bot" -> charName
+                macroKey == "user" || macroKey == "user_name" -> userName
+                macroKey == "user_pronouns" || macroKey == "user_pronoun" || macroKey == "pronouns" -> userPronouns
+                macroKey == "sub" -> pronounParts(userPronouns).sub
+                macroKey == "obj" -> pronounParts(userPronouns).obj
+                macroKey == "poss" -> pronounParts(userPronouns).poss
+                macroKey == "poss_p" -> pronounParts(userPronouns).possP
+                macroKey == "ref" -> pronounParts(userPronouns).ref
+                macroKey == "model" -> modelName
+                macroKey == "time" -> timeStr
+                macroKey == "date" -> dateStr
+                macroKey.startsWith("random::") -> {
                     val rawOptions = value.removePrefix("{{").substringAfter("::").removeSuffix("}}")
                     val options = rawOptions.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                     if (options.isNotEmpty()) options[Random.nextInt(options.size)] else ""
                 }
-
-                value.equals("{{lastMessage}}", ignoreCase = true) -> lastMessage
-                value.equals("{{lastUserMessage}}", ignoreCase = true) -> lastUserMessage
-                value.equals("{{lastCharMessage}}", ignoreCase = true) -> lastCharMessage
-
+                macroKey == "lastmessage" -> lastMessage
+                macroKey == "lastusermessage" -> lastUserMessage
+                macroKey == "lastcharmessage" -> lastCharMessage
                 else -> match.value
             }
         }

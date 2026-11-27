@@ -8,13 +8,13 @@ class PersonaPlaceholderTest {
     fun replacesUserAndCharPlaceholdersForDisplay() {
         val assistant = Assistant(name = "Rikka")
 
-        val rendered = "{{char}} smiles at {{user}}. {CHAR}: ready for {USER}."
+        val rendered = "{{char}} smiles at {{user}}. {CHAR}: ready for {User} and {user} and {user_name}?"
             .replacePersonaPlaceholders(
                 assistant = assistant,
                 userNickname = "Julian",
             )
 
-        assertEquals("Rikka smiles at Julian. Rikka: ready for Julian.", rendered)
+        assertEquals("Rikka smiles at Julian. Rikka: ready for Julian and Julian and Julian?", rendered)
     }
 
     @Test

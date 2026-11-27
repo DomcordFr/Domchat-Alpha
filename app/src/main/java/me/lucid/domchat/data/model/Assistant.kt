@@ -339,13 +339,8 @@ fun String.replacePersonaPlaceholders(
     if (!contains('{') && !contains('<')) return this
     val charName = assistant?.name?.ifBlank { null } ?: "assistant"
     val userName = userNickname.ifBlank { "user" }
-    val base = this
-        .replace(oldValue = "{{char}}", newValue = charName, ignoreCase = true)
-        .replace(oldValue = "{char}", newValue = charName, ignoreCase = true)
-        .replace(oldValue = "{{user}}", newValue = userName, ignoreCase = true)
-        .replace(oldValue = "{user}", newValue = userName, ignoreCase = true)
     return me.lucid.domchat.data.ai.RoleplayPromptAssembler.evaluateMacros(
-        text = base,
+        text = this,
         charName = charName,
         userName = userName
     )

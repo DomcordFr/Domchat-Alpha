@@ -292,8 +292,12 @@ private fun rememberFormattedMessageText(
         !assistant?.regexes.isNullOrEmpty() ||
             rawText.contains("<img", ignoreCase = true) ||
             rawText.contains("{{") ||
+            rawText.contains("{user", ignoreCase = true) ||
+            rawText.contains("{char", ignoreCase = true) ||
+            rawText.contains("{bot}", ignoreCase = true) ||
             rawText.contains("<char>", ignoreCase = true) ||
             rawText.contains("<user>", ignoreCase = true) ||
+            rawText.contains("<bot>", ignoreCase = true) ||
             rawText.contains("http", ignoreCase = true)
     }
     if (!needsFormatting) {
